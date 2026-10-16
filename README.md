@@ -28,3 +28,41 @@ O trabalho de implementação inicial ficará em uma branch e em PR para revisã
 ## Licenciamento do código
 
 **Ainda não foi concedida uma licença aberta para este código.** A visibilidade pública do repositório não deve ser interpretada como permissão genérica de cópia ou sublicenciamento. Componentes de terceiros só serão incorporados após exame das respectivas licenças.
+
+## Núcleo v0.1 (branch de desenvolvimento)
+
+Primeira implementação **executável offline**. Componentes:
+
+- `src/nivon/motores.py`: crescimento geométrico de consumo (3–5 anos) e cenário com última taxa; referência CEPEA exclusiva para margens com alerta de balanço físico; cálculo inverso somente quando a matéria-prima e tipo de etanol são conhecidos; classificação amostral de fluxos ANTT por NCM e zona ambígua; fonte bloqueada por padrão.
+- `src/nivon/portos.py`: contrato programado de dez portos e contagem prudente de escalas. IMO sozinho não é identificador de escala.
+- `config/portos_brasil.v1.json`: **catálogo**, sem conectores ativados nem fontes homologadas.
+- `tests/test_motores.py`: **18 testes offline com dados sintéticos**.
+
+### Executar sem instalação ou credenciais
+
+Python **3.11+**, em Linux/macOS:
+
+```sh
+PYTHONPATH=src python -m unittest discover -s tests -v
+PYTHONPATH=src python -m nivon
+```
+
+Windows PowerShell:
+
+```powershell
+$env:PYTHONPATH="src"
+python -m unittest discover -s tests -v
+python -m nivon
+```
+
+O script de demonstração usa apenas **valores sintéticos**, sem acessar a internet.
+
+### Próximos gates
+
+1. Conferir direitos por operação antes de qualquer conector real.
+2. Preparar contratos canônicos e importadores offline para CONAB/Sindirações/ANTT/MAPA com schemas baseados em arquivos reais, **sem publicar os arquivos**.
+3. Adaptar e validar individualmente parsers marítimos de fontes oficiais, com aquisição repetida e cobertura.
+4. Reconciliar balanços (safra vs. ano civil, transporte vs. consumo, soja esmagada vs. farelo).
+5. Testar persistência, segredos, segurança e operação sem dependência de outros projetos.
+
+**Não há deploy, API exposta, banco em nuvem ou coleta operacional nesta versão.**
