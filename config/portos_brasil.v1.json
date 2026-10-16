@@ -1,0 +1,77 @@
+{
+  "versao": "1.0",
+  "objetivo": "catalogo_de_cobertura_sem_homologacao",
+  "politica": "PENDENTE_NAO_COLETAR",
+  "portos": [
+    {
+      "codigo": "RIO_GRANDE",
+      "fonte": "https://www.portosrs.com.br/site/transparencia/atas_programacao_navio",
+      "formato": "HTML/PDF",
+      "estado": "FONTE_LOCALIZADA",
+      "homologado": false
+    },
+    {
+      "codigo": "SAO_FRANCISCO_DO_SUL",
+      "fonte": "https://www.portosaofrancisco.com.br/public/uploads/pdfs/lineup.pdf",
+      "formato": "PDF",
+      "estado": "FONTE_LOCALIZADA",
+      "homologado": false
+    },
+    {
+      "codigo": "PARANAGUA",
+      "fonte": "https://www.portosdoparana.pr.gov.br/Operacional/Pagina/Atas-do-Corredor-de-Exportacao",
+      "formato": "PDF",
+      "estado": "PARSER_LEGADO_NAO_HOMOLOGADO",
+      "homologado": false
+    },
+    {
+      "codigo": "SANTOS",
+      "fonte": "https://www.portodesantos.com.br/informacoes-operacionais/operacoes-portuarias/navegacao-e-movimento-de-navios/atracacoes-programadas/",
+      "formato": "HTML",
+      "estado": "PARSER_LEGADO_NAO_HOMOLOGADO",
+      "homologado": false
+    },
+    {
+      "codigo": "TUBARAO",
+      "fonte": null,
+      "formato": "RESTRITO",
+      "estado": "SOLICITAR_AUTORIZACAO_VALE",
+      "homologado": false
+    },
+    {
+      "codigo": "ILHEUS",
+      "fonte": "https://www.codeba.gov.br/",
+      "formato": "HTML",
+      "estado": "INDICE_A_CONFIRMAR",
+      "homologado": false
+    },
+    {
+      "codigo": "SALVADOR",
+      "fonte": "https://www.codeba.gov.br/",
+      "formato": "HTML",
+      "estado": "INDICE_A_CONFIRMAR",
+      "homologado": false
+    },
+    {
+      "codigo": "ITAQUI",
+      "fonte": "https://www.portodoitaqui.com.br/porto-agora/navios/esperados",
+      "formato": "HTML/PDF",
+      "estado": "PARSER_LEGADO_NAO_HOMOLOGADO",
+      "homologado": false
+    },
+    {
+      "codigo": "BARCARENA_VILA_DO_CONDE",
+      "fonte": "https://www.cdp.com.br/programacao-de-navio-do-porto-de-vila-do-conde/",
+      "formato": "HTML",
+      "estado": "PARSER_LEGADO_NAO_HOMOLOGADO",
+      "homologado": false
+    },
+    {
+      "codigo": "SANTAREM",
+      "fonte": "https://www.cdp.com.br/programacao-de-navios-do-porto-de-santarem/",
+      "formato": "HTML",
+      "estado": "PARSER_LEGADO_NAO_HOMOLOGADO",
+      "homologado": false
+    }
+  ]
+}
