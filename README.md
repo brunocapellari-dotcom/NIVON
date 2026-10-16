@@ -36,7 +36,7 @@ Primeira implementação **executável offline**. Componentes:
 - `src/nivon/motores.py`: crescimento geométrico de consumo (3–5 anos) e cenário com última taxa; referência CEPEA exclusiva para margens com alerta de balanço físico; cálculo inverso somente quando a matéria-prima e tipo de etanol são conhecidos; classificação amostral de fluxos ANTT por NCM e zona ambígua; fonte bloqueada por padrão.
 - `src/nivon/portos.py`: contrato programado de dez portos e contagem prudente de escalas. IMO sozinho não é identificador de escala.
 - `config/portos_brasil.v1.json`: **catálogo**, sem conectores ativados nem fontes homologadas.
-- `tests/test_motores.py`: **18 testes offline com dados sintéticos**.
+- `src/nivon/ingestao.py`: leitura local de CSV separado por ponto e vírgula com permissão por operação, limites, rejeição de nulos e schema, quatro datas e SHA-256; sem rede.\n- `tests/test_motores.py` e `tests/test_ingestao.py`: **25 testes offline com dados sintéticos**.
 
 ### Executar sem instalação ou credenciais
 
