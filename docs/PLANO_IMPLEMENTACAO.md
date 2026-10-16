@@ -1,0 +1,56 @@
+# Plano de implementação e critérios de conclusão — NIVON
+
+Estado: **IMPLEMENTANDO**, não homologado. Auditorias de 16/10/2026: GO COM CONDIÇÕES, nenhum P0 documental.
+
+## Prioridade 0 — base reprodutível
+
+- [x] Repositório público sem dados reais restritos ou credenciais.
+- [x] Núcleo matemático independente: consumo, checagem de margem CEPEA, ANTT NCM amostral e contratos portuários.
+- [x] Ingestão de CSV **local** com contrato obrigatório e proveniência SHA-256.
+- [x] Balanço físico de safra/ano civil com conservação e decomposição de demanda, sem duplicar componentes.
+- [ ] Executar a suíte **completa no commit do PR**; até então, testes novos = NÃO VERIFICADOS.
+- [ ] Inspecionar o diff, dependências e segurança antes de merge. Sem runners disponíveis não equivale a CI aprovado.
+
+**Aceite:** `python -m unittest discover -s tests -v` retorna sucesso com Python >=3.11, em ambiente limpo, sem segredos e rede; import `nivon` sem qualquer GCP/Hermes/Holding.
+
+## Prioridade 1 — dados reais governados, sem publicação de arquivos
+
+**CONAB:** definir contrato de balanços por produto/UF/safra e edições históricas; validar mapeamento de períodos. Comparar invariantes físicos e registrar residual; `SOURCE_LAG` em atraso.
+
+**Sindirações/ABIOVE:** registrar termos por finalidade e permitir somente operações habilitadas; recortes de ração e macroingredientes compõem consumo interno já existente, não soma adicional. Séries devem ter edição/vintage. Se restritos, manter conector PENDENTE e usar alternativa licenciada.
+
+**MAPA SIPEAGRO:** baixar CSV apenas após verificar licença e campos reais. Resolver município IBGE, categoria fabricante, situação cadastral, vigência e mudança de nome; localização NÃO é capacidade ou consumo.
+
+**ANTT:** primeiro testar arquivos oficiais e documentação. NCM/MDF-e é amostral; registrar volume com NCM e cobertura quando disponível. Não utilizar endpoint interno Power BI como API oficial sem verificação. Considerar carga própria. Classificar TRANSBORDO_PROVAVEL/CONSUMO_POTENCIAL/AMBIGUO/SEM_EVIDENCIA; preservar todas as linhas.
+
+**Aceite:** para cada fonte, registrar URL, direitos por operação, arquivo analisado fora do GitHub, campos, validações, quatro datas, hash, rejeições e reconciliação com publicação oficial.
+
+## Prioridade 2 — engenharia portuária
+
+- Reutilização preferencial de parsers puros do AgroLog mediante revisão jurídica de proveniência/licença; nunca importar dependências em BigQuery/Cloud Run.
+- Dez portos nacionais cadastrados, todos sem homologação na v0.1.
+- Uma ficha por porto (fonte, formato, identidades, datas, produtos, volume, acesso, parser, frescor).
+- Parser por formato; para cada porto habilitado, exigir >=3 aquisições reais em dias diferentes, contagem confrontada com documento, testes de layout alterado, deduplicação de escala preferencialmente por DUV, e status programado x realizado separado.
+- Tubarão requer autorização Vale ou alternativa legítima com campos menores.
+- AIS contínuo/ETA próprio/filas somente quando houver histórico, cobertura e infraestrutura explícitos; uma coleta local periódica não é observação contínua.
+
+## Prioridade 3 — inteligência e previsões
+
+- Consumo: CAGR 3–5 anos cenário principal, última taxa como sensibilidade, horizonte inicial <=2 anos e comparação com projeções institucionais.
+- Indústria: parâmetros CEPEA de margens; oferecer balanço físico somente com coeficientes de rota e umidade física compatíveis.
+- Soja/milho: balances Brasil e MT; para MT conservar movimentos interestaduais e evitar declarar destino final só pelo município.
+- Diesel, algodão, bovinos, açúcar, trigo, sorgo e fertilizantes: contratos e motores por domínio, evoluindo sem duplicar o núcleo.
+- Modelos estatísticos só recebem status VALIDADO após backtesting temporal as-of e comparação fora da amostra com baseline.
+
+## Prioridade 4 — operação e interface
+
+- Primeira interface útil somente após dados reconciliados e API com autenticação mínima quando exposta.
+- Primeiro uso local **é apenas desenvolvimento**. O objetivo final do projeto é operar em nuvem, independente do notebook, dentro de serviços gratuitos e cotas verificadas; essa transição exige decisão técnica, testes de segurança, persistência e custo e não pode ser prometida 24/7 sem infraestrutura aprovada.
+- Nenhum deploy, uso de credencial, fonte restrita ou serviço pago antes de gate correspondente.
+- Backup e restauração, saúde de fontes, logs sem payload sensível, testes de segurança e go-live com evidências.
+
+## Bloqueadores de go-live
+
+Não declarar final se falta fonte para dado exibido, CI/testes suficientes, ingestão real homologada, direitos, integridade dos balanços, backup/restore, política de segurança ou controle de custos.
+
+A aprovação metodológica externa não valida o software automaticamente.
