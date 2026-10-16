@@ -38,7 +38,7 @@ def contar_escalas(programacoes: Iterable[Programacao]) -> dict:
     chaves: set[tuple[str, str]] = set()
     sem_id = 0
     for p in programacoes:
-        identificador = (p.duv or p.imo or "").strip()
+        identificador = (p.duv or "").strip()  # IMO identifica o navio, não cada escala
         if not identificador:
             sem_id += 1
             continue
