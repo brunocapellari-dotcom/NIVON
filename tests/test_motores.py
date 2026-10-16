@@ -120,6 +120,12 @@ class TestPortos(unittest.TestCase):
         self.assertEqual(r["escalas_distintas_identificadas"], 2)
         self.assertEqual(r["linhas_sem_identificador_confiavel"], 1)
 
+    def test_mesmo_imo_sem_duv_nao_une_escalas_distintas(self):
+        linha = Programacao("SANTOS", "NAVIO A", None, "IMO1234567", "soja", 100, "exemplo", "2026-10-16")
+        r = contar_escalas([linha, linha])
+        self.assertEqual(r["escalas_distintas_identificadas"], 0)
+        self.assertEqual(r["linhas_sem_identificador_confiavel"], 2)
+
 
 if __name__ == "__main__":
     unittest.main()
