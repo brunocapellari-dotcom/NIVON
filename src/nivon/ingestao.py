@@ -40,7 +40,7 @@ def ler_csv_local(caminho: str | Path, contrato: ContratoCSV, *,
         raise DadoInvalido("arquivo CSV regular necessário; links simbólicos proibidos")
     if contrato.tamanho_maximo <= 0 or contrato.linhas_maximas <= 0:
         raise DadoInvalido("limites inválidos")
-    if contrato.delimitador not in (";", ",", "\\t") or contrato.codificacao not in ("utf-8-sig", "utf-8", "cp1252"):
+    if contrato.delimitador not in (";", ",") or contrato.codificacao not in ("utf-8-sig", "utf-8", "cp1252"):
         raise DadoInvalido("delimitador/codificação não homologados")
     with arquivo.open("rb") as stream:
         payload = stream.read(contrato.tamanho_maximo + 1)
