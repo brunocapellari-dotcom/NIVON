@@ -90,7 +90,7 @@ def resumir(payload: bytes) -> dict:
         ],
         "natureza": "CADASTRO_OFICIAL_OBSERVADO_NAO_CONSUMO",
         "cautela": "A classificação RAÇÃO não comprova aves/suínos, capacidade, produção nem destino das cargas. Listagem pode conter erros/revisões e plantas com múltiplas atividades.",
-        "privacidade": "Sem publicação de CPF_CNPJ, RAZAO_SOCIAL ou NUMERO_REGISTRO_ESTABELECIMENTO.",
+        "privacidade": "Sem publicação de identificadores individuais de pessoas ou empresas.",
     }
 
 
