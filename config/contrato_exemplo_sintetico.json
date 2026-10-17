@@ -18,7 +18,8 @@
       "municipio": "cidade",
       "situacao": "situacao",
       "atividade": "atividade",
-      "area": "area"
+      "area": "area",
+      "classificacao": "classe"
     },
     "dominios": {
       "situacoes_ativas": [
