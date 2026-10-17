@@ -60,7 +60,7 @@ class TestDestinosANTTMAPA(unittest.TestCase):
         self.assertEqual(r["destinos"][0]["toneladas_terceiros"], 30)
 
     def test_recorrencia_3_meses_distintos_nao_numero_de_linhas(self):
-        entradas = [self.fluxo(periodo="2026-01"), self.fluxo(periodo="2026-01"),
+        entradas = [self.fluxo(periodo="2026-01"), self.fluxo(periodo="2026-01", propria=True),
                     self.fluxo(periodo="2026-02"), self.fluxo(periodo="2026-03")]
         r = self.analisar(entradas)
         self.assertTrue(r["destinos"][0]["recorrente"])
@@ -70,6 +70,10 @@ class TestDestinosANTTMAPA(unittest.TestCase):
         entradas = [self.fluxo(periodo="2026-01"), self.fluxo(periodo="2026-01"),
                     self.fluxo(periodo="2026-02")]
         self.assertFalse(self.analisar(entradas)["destinos"][0]["recorrente"])
+
+    def test_mesmo_recorte_mensal_duplicado_e_erro(self):
+        with self.assertRaises(ErroFluxo):
+            self.analisar([self.fluxo(), self.fluxo()])
 
     def test_periodo_fora_da_janela_ignorado(self):
         r = self.analisar([self.fluxo(periodo="2024-01"), self.fluxo(periodo="2026-04")])
