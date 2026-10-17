@@ -64,7 +64,7 @@ def mapear_fabricas(
     areas_nao_alimentacao_animal: frozenset[str],
 ) -> list[FabricaMAPA]:
     """A ausência de domínio conhecido é ERRO, não classificação adivinhada."""
-    exigidos = {"uf", "municipio", "situacao", "atividade", "area"}
+    exigidos = {"uf", "municipio", "situacao", "atividade", "area", "classificacao"}
     _validar_mapeamento(mapa, exigidos)
     grupos = (
         (situacoes_ativas, situacoes_inativas),
@@ -94,6 +94,7 @@ def mapear_fabricas(
             fabricante=interpretar(_campo(linha, mapa, "atividade"), 1),
             alimentacao_animal=interpretar(_campo(linha, mapa, "area"), 2),
             fonte_id=fonte_id,
+            classe_produto=_campo(linha, mapa, "classificacao"),
         ))
     return resultados
 
