@@ -67,7 +67,7 @@ class TestDestinosANTTMAPA(unittest.TestCase):
         self.assertEqual(r["destinos"][0]["meses_com_fluxo"], 3)
 
     def test_recorrencia_nao_confunde_dois_meses_com_tres_viagens(self):
-        entradas = [self.fluxo(periodo="2026-01"), self.fluxo(periodo="2026-01"),
+        entradas = [self.fluxo(periodo="2026-01"), self.fluxo(periodo="2026-01", propria=True),
                     self.fluxo(periodo="2026-02")]
         self.assertFalse(self.analisar(entradas)["destinos"][0]["recorrente"])
 
