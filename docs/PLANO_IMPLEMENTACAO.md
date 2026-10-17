@@ -15,15 +15,22 @@ Estado: **IMPLEMENTANDO**, não homologado. Auditorias de 16/10/2026: GO COM CON
 
 ## Prioridade 1 — dados reais governados, sem publicação de arquivos
 
-**CONAB:** definir contrato de balanços por produto/UF/safra e edições históricas; validar mapeamento de períodos. Comparar invariantes físicos e registrar residual; `SOURCE_LAG` em atraso.
+**CONAB — CATÁLOGO DE FONTES ADICIONADO:** identificação offline das cinco planilhas oficiais de séries de soja e milho, com seis testes sintéticos; arquivos e URLs descritos em `config/fontes_conab_historicas.v1.json`. **Ainda não existe parser XLS homologado, coleta numérica ou série histórica ingerida.** O milho Total não deve ser somado novamente à primeira/segunda/terceira safras. Necessário validar direitos por operação, edições, cabeçalhos e unidade e introduzir `SOURCE_LAG` em atraso.
 
 **Sindirações/ABIOVE:** registrar termos por finalidade e permitir somente operações habilitadas; recortes de ração e macroingredientes compõem consumo interno já existente, não soma adicional. Séries devem ter edição/vintage. Se restritos, manter conector PENDENTE e usar alternativa licenciada.
 
-**MAPA SIPEAGRO — PROGRESSO REAL:** CSV aberto licenciado CC Attribution foi lido integralmente em execução efêmera do GitHub; 18.003 linhas, 2.029 registros filtrados (Ativo + Fabricante + Alimentação Animal + Ração), 1.168 municípios. Cabeçalho de nove colunas e categorias amostrais inspecionados. Nenhum CPF/CNPJ/nome foi persistido ou divulgado; somente agregado com validação anti-identificadores foi publicado como artefato temporário de 3 dias. Falta validar alias/código IBGE, vigência, recaptura histórica e distinção por espécie de criação. **Não é capacidade ou consumo**.
+**MAPA SIPEAGRO — COLETA REAL E HISTÓRICO LOCAL EXPERIMENTAL:** CSV aberto licenciado CC Attribution foi lido integralmente em execução efêmera do GitHub; 18.003 linhas, 2.029 registros filtrados (Ativo + Fabricante + Alimentação Animal + Ração), 1.168 municípios. Cabeçalho de nove colunas e categorias amostrais inspecionados. Nenhum CPF/CNPJ/nome foi persistido ou divulgado; somente agregado com validação anti-identificadores foi publicado como artefato temporário de 3 dias. Falta validar alias/código IBGE, vigência, recaptura histórica e distinção por espécie de criação. **Não é capacidade ou consumo**. Implementado `src/nivon/historico_municipal.py` com SQLite de edições deduplicadas por SHA-256 e múltiplos eventos de coleta; 8 testes sintéticos em CI. Ainda não há armazenamento persistente em nuvem, backup/restore, nem coleta agendada.
 
 **ANTT — PENDENTE DADO REAL:** obter/exportar base oficial detalhada e verificável, com cobertura NCM e terminal por município. A entrada CSV e a junção com agregado MAPA estão implementadas e testadas apenas sinteticamente; não confundir isso com volumes medidos de MT. Primeiro testar arquivos oficiais e documentação. NCM/MDF-e é amostral; registrar volume com NCM e cobertura quando disponível. Não utilizar endpoint interno Power BI como API oficial sem verificação. Considerar carga própria. Classificar TRANSBORDO_PROVAVEL/CONSUMO_POTENCIAL/AMBIGUO/SEM_EVIDENCIA; preservar todas as linhas.
 
 **Aceite:** para cada fonte, registrar URL, direitos por operação, arquivo analisado fora do GitHub, campos, validações, quatro datas, hash, rejeições e reconciliação com publicação oficial.
+
+## Gate imediato de armazenamento
+
+- [x] Histórico SQLite local, apenas de geografia agregada MAPA, com edições imutáveis por hash, registros de coletas repetidas e consultas as-of.
+- [ ] Armazenamento durável independente do notebook e backup/restauração testados; **não depender do artefato de 3 dias como base definitiva**.
+- [ ] Índice cronológico com publicação/referência reais quando fornecidas, sem inventar datas; auditoria de direitos e minimização de dados.
+- [ ] Automatização de horário de coleta aprovada com tratamento de indisponibilidade e idempotência; não ativar fontes ainda bloqueadas.
 
 ## Prioridade 2 — engenharia portuária
 
@@ -63,3 +70,8 @@ A aprovação metodológica externa não valida o software automaticamente.
 - Cadastro municipal derivado passa a ser entrada alternativa do `analise_local`, testada com JSON sintético.
 
 **Nenhum desses resultados homologa fluxos reais da ANTT, produção de ração ou movimentos portuários.**
+
+## Execuções recentes
+
+- Testes do histórico SQLite: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39039872966
+- Testes de identificação das séries CONAB: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39039983616
