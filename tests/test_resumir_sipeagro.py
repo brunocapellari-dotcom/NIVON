@@ -32,6 +32,17 @@ class TestResumoSIPEAGRO(unittest.TestCase):
         self.assertNotIn("REG-001", s)
         self.assertNotIn("CPF_CNPJ", s)
 
+    def test_exportacao_aggregada_so_municipio(self):
+        r = resumir(self.cadastro().encode("utf-8"), incluir_municipios=True)
+        self.assertEqual(len(r["municipios_candidatos"]), 2)
+        s = json.dumps(r, ensure_ascii=False)
+        self.assertNotIn("FAKE COMPANY", s)
+        self.assertNotIn("REG-001", s)
+
+    def test_por_padrao_nao_imprime_lista_completa(self):
+        r = resumir(self.cadastro().encode("utf-8"))
+        self.assertNotIn("municipios_candidatos", r)
+
     def test_schema_incompativel_bloqueado(self):
         with self.assertRaises(ValueError):
             resumir(b"UF;MUNICIPIO\nGO;Rio Verde\n")
