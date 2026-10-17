@@ -66,6 +66,7 @@ class FabricaMAPA:
     ativa: bool
     alimentacao_animal: bool
     fonte_id: str
+    classe_produto: str = ""
 
     def __post_init__(self):
         chave_municipio(self.uf, self.municipio)
@@ -78,6 +79,11 @@ class FabricaMAPA:
     @property
     def elegivel(self) -> bool:
         return self.fabricante and self.ativa and self.alimentacao_animal
+
+    @property
+    def racao_registrada(self) -> bool:
+        # SIPEAGRO classifica produto/atividade, não a espécie consumidora.
+        return self.elegivel and normalizar_municipio(self.classe_produto) == "RACAO" if self.classe_produto else False
 
 
 @dataclass(frozen=True)
@@ -150,7 +156,7 @@ def analisar_destinos(
     janela = _janela_meses(mes_corte, janela_meses)
     if not 1 <= min_meses_recorrentes <= janela_meses:
         raise ErroFluxo("mínimo de recorrência inválido")
-    mapa_fabricas = {chave_municipio(f.uf, f.municipio) for f in fabricas if f.elegivel}
+    mapa_fabricas = {chave_municipio(f.uf, f.municipio) for f in fabricas if f.racao_registrada}
     mapa_terminais: set[tuple[str, str, str]] = set()
     for t in terminais:
         mapa_terminais.update((t.uf.upper(), normalizar_municipio(t.municipio), p) for p in t.produtos)
