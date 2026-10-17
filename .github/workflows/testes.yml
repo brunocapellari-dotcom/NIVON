@@ -9,6 +9,7 @@ on:
       - 'pyproject.toml'
       - '.github/workflows/testes.yml'
       - 'scripts/inspecionar_sipeagro.py'
+      - 'scripts/resumir_sipeagro.py'
   workflow_dispatch:
 
 permissions:
@@ -63,3 +64,6 @@ jobs:
       - name: Inspecao nao bloqueante de cabecalho CSV publico MAPA
         continue-on-error: true
         run: python scripts/inspecionar_sipeagro.py
+      - name: Resumo agregado por municipio sem identificadores pessoais
+        continue-on-error: true
+        run: python scripts/resumir_sipeagro.py
