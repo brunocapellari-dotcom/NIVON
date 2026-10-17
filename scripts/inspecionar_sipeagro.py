@@ -58,9 +58,9 @@ def inspecionar() -> dict:
         campos_categoricos = ("STATUS_DO_REGISTRO", "AREA_ATUACAO", "ATIVIDADE", "CLASSIFICACAO")
         contagens = {campo: Counter() for campo in campos_categoricos}
         linhas_completas = texto.splitlines()
-        if not texto.endswith(("\\n", "\\r")):
+        if not texto.endswith(("\n", "\r")):
             linhas_completas = linhas_completas[:-1]
-        for linha in list(csv.DictReader(io.StringIO("\\n".join(linhas_completas)),
+        for linha in list(csv.DictReader(io.StringIO("\n".join(linhas_completas)),
                                          delimiter=delimitador))[:1500]:
             for campo in campos_categoricos:
                 valor = (linha.get(campo) or "").strip()
