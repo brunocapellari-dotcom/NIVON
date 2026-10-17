@@ -33,7 +33,7 @@ class TestAnaliseLocal(unittest.TestCase):
                 "competencia": "2026", "referencia": "2026-04-01",
                 "publicacao": "2026-04-02",
                 "colunas": {"uf": "uf", "municipio": "cidade",
-                            "situacao": "situacao", "atividade": "atividade", "area": "area"},
+                            "situacao": "situacao", "atividade": "atividade", "area": "area", "classificacao": "classe"},
                 "dominios": {
                     "situacoes_ativas": ["ATIVO"], "situacoes_inativas": ["INATIVO"],
                     "atividades_fabricante": ["FABRICANTE"], "atividades_nao_fabricante": ["IMPORTADOR"],
