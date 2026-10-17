@@ -13,9 +13,9 @@ class TestAnaliseLocal(unittest.TestCase):
         pasta = Path(self.tmp.name)
         mapa_path = pasta / "cadastro-sintetico.csv"
         mapa_path.write_text(
-            "uf;cidade;situacao;atividade;area\n"
-            "GO;Rio Verde;ATIVO;FABRICANTE;ALIMENTACAO ANIMAL\n"
-            "SC;Chapeco;INATIVO;FABRICANTE;ALIMENTACAO ANIMAL\n", encoding="utf-8"
+            "uf;cidade;situacao;atividade;area;classe\n"
+            "GO;Rio Verde;ATIVO;FABRICANTE;ALIMENTACAO ANIMAL;RAÇÃO\n"
+            "SC;Chapeco;INATIVO;FABRICANTE;ALIMENTACAO ANIMAL;RAÇÃO\n", encoding="utf-8"
         )
         antt_path = pasta / "fluxos-sinteticos.csv"
         antt_path.write_text(
