@@ -19,6 +19,8 @@ class ContratoCSV:
     operacoes_autorizadas: frozenset[str] = frozenset()
     tamanho_maximo: int = 5_000_000
     linhas_maximas: int = 100_000
+    delimitador: str = ";"
+    codificacao: str = "utf-8-sig"
 
 
 def ler_csv_local(caminho: str | Path, contrato: ContratoCSV, *,
@@ -38,16 +40,18 @@ def ler_csv_local(caminho: str | Path, contrato: ContratoCSV, *,
         raise DadoInvalido("arquivo CSV regular necessário; links simbólicos proibidos")
     if contrato.tamanho_maximo <= 0 or contrato.linhas_maximas <= 0:
         raise DadoInvalido("limites inválidos")
+    if contrato.delimitador not in (";", ",", "\\t") or contrato.codificacao not in ("utf-8-sig", "utf-8", "cp1252"):
+        raise DadoInvalido("delimitador/codificação não homologados")
     with arquivo.open("rb") as stream:
         payload = stream.read(contrato.tamanho_maximo + 1)
     if len(payload) > contrato.tamanho_maximo:
         raise DadoInvalido("CSV maior que limite permitido")
     try:
-        texto = payload.decode("utf-8-sig", errors="strict")
+        texto = payload.decode(contrato.codificacao, errors="strict")
     except UnicodeDecodeError as exc:
-        raise DadoInvalido("CSV não UTF-8") from exc
+        raise DadoInvalido("codificação CSV inválida") from exc
     linhas = []
-    leitor = csv.DictReader(io.StringIO(texto, newline=""), delimiter=";")
+    leitor = csv.DictReader(io.StringIO(texto, newline=""), delimiter=contrato.delimitador)
     campos = leitor.fieldnames or []
     if not campos or len(campos) != len(set(campos)) or not set(contrato.campos_obrigatorios) <= set(campos):
         raise DadoInvalido("cabeçalho CSV ausente, duplicado ou incompatível")
@@ -68,5 +72,7 @@ def ler_csv_local(caminho: str | Path, contrato: ContratoCSV, *,
                   "publicacao": publicacao,
                   "coleta": datetime.now(timezone.utc).isoformat()},
         "classificacao": "ARQUIVO_LOCAL_NAO_HOMOLOGA_FONTE",
-        "parser_versao": "csv-local-0.1",
+        "parser_versao": "csv-local-0.2",
+        "delimitador": contrato.delimitador,
+        "codificacao": contrato.codificacao,
     }
