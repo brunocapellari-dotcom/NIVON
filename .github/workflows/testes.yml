@@ -2,15 +2,6 @@ name: Testes locais NIVON
 
 on:
   pull_request:
-    paths:
-      - 'src/**'
-      - 'tests/**'
-      - 'config/**'
-      - 'pyproject.toml'
-      - '.github/workflows/testes.yml'
-      - 'scripts/inspecionar_sipeagro.py'
-      - 'scripts/resumir_sipeagro.py'
-      - 'scripts/validar_agregado.py'
   workflow_dispatch:
 
 permissions:
