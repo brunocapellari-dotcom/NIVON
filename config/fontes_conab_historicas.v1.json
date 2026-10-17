@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "finalidade": "descoberta_documental_sem_ingestao_numerica",
+  "fonte": "CONAB_SERIES_HISTORICAS_GRAOS",
+  "situacao_direitos": "PENDENTE_VERIFICACAO_POR_OPERACAO",
+  "coleta_automatica_habilitada": false,
+  "download_xls_habilitado": false,
+  "publicacao_redistribuicao_habilitada": false,
+  "referencia": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/series-historicas/graos",
+  "produtos": [
+    {
+      "produto": "SOJA",
+      "pagina": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/series-historicas/graos/soja/",
+      "arquivos": [
+        "SojaSerieHist.xls"
+      ]
+    },
+    {
+      "produto": "MILHO",
+      "pagina": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/series-historicas/graos/milho",
+      "arquivos": [
+        "Milho1aSerieHist.xls",
+        "Milho2aSerieHist.xls",
+        "Milho3aSerieHist.xls",
+        "MilhoTotalSerieHist.xls"
+      ]
+    }
+  ],
+  "riscos": [
+    "XLS possui varias abas e cabeçalhos a validar por versao",
+    "safra milho TOTAL nao deve ser somada a safras individuais",
+    "milho por safra exige calendario safra explicito",
+    "publicacao e coleta devem ser distintas",
+    "tabelas revisadas substituem vintages apenas em visao de estado atual"
+  ],
+  "estado": "CATALOGO_VERIFICADO_LINKS; PARSER_XLS_NAO_IMPLEMENTADO; DADOS_NAO_COLETADOS"
+}
