@@ -55,8 +55,7 @@ class TestColetaWeb(unittest.TestCase):
 
     def test_host_externo_bloqueado(self):
         with self.assertRaises(ErroAquisicao):
-            self.fonte().verificar() if False else replace(
-                self.fonte(), url="https://evil.example/lineup.html").verificar()
+            replace(self.fonte(), url="https://evil.example/lineup.html").verificar()
 
     def test_url_com_usuario_ou_http_bloqueado(self):
         for url in ("http://porto.example/lineup.html",
