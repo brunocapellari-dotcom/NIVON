@@ -6,6 +6,7 @@ A unidade de observação é cadastro, NÃO capacidade ou consumo de milho.
 """
 from __future__ import annotations
 
+import argparse
 import csv
 import hashlib
 import io
@@ -13,6 +14,7 @@ import json
 import unicodedata
 from collections import defaultdict
 from datetime import datetime, timezone
+from pathlib import Path
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
@@ -34,7 +36,7 @@ def _norm(v: str) -> str:
     return " ".join("".join(x for x in s if not unicodedata.combining(x)).upper().split())
 
 
-def resumir(payload: bytes) -> dict:
+def resumir(payload: bytes, *, incluir_municipios: bool = False) -> dict:
     texto = payload.decode("utf-8-sig", errors="strict")
     reader = csv.DictReader(io.StringIO(texto, newline=""), delimiter=";")
     if reader.fieldnames is None or not CAMPOS <= set(reader.fieldnames):
@@ -72,7 +74,7 @@ def resumir(payload: bytes) -> dict:
         ((uf, cidade, len(regs)) for (uf, cidade), regs in registros_por_municipio.items()),
         key=lambda x: (-x[2], x[0], x[1]),
     )[:25]
-    return {
+    resultado = {
         "licenca_catalogo": "Creative Commons Attribution",
         "fonte": "MAPA SIPEAGRO ALIMENTAÇÃO ANIMAL",
         "url": URL,
@@ -92,9 +94,16 @@ def resumir(payload: bytes) -> dict:
         "cautela": "A classificação RAÇÃO não comprova aves/suínos, capacidade, produção nem destino das cargas. Listagem pode conter erros/revisões e plantas com múltiplas atividades.",
         "privacidade": "Sem publicação de identificadores individuais de pessoas ou empresas.",
     }
+    if incluir_municipios:
+        resultado["municipios_candidatos"] = [
+            {"uf": uf, "municipio": cidade,
+             "registros_distintos": len(registros_por_municipio[(uf, cidade)])}
+            for uf, cidade in sorted(cidades)
+        ]
+    return resultado
 
 
-def executar() -> dict:
+def executar(*, incluir_municipios: bool = False) -> dict:
     req = Request(URL, headers={
         "Accept": "text/csv,application/octet-stream,text/plain",
         "User-Agent": "NIVON/0.1 (resumo geográfico de dados abertos MAPA)",
@@ -108,12 +117,25 @@ def executar() -> dict:
         raw = response.read(MAX_BYTES + 1)
         if not raw or len(raw) > MAX_BYTES:
             raise ValueError("arquivo vazio ou acima do teto")
-    return resumir(raw)
+    return resumir(raw, incluir_municipios=incluir_municipios)
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--saida-agregada", default=None,
+                        help="Grava SOMENTE lista agregada por município em JSON local")
+    args = parser.parse_args()
     try:
-        print(json.dumps(executar(), ensure_ascii=False, indent=2))
+        resumo = executar(incluir_municipios=bool(args.saida_agregada))
+        if args.saida_agregada:
+            destino = Path(args.saida_agregada)
+            if destino.suffix != ".json":
+                raise ValueError("arquivo agregado precisa de extensão .json")
+            destino.parent.mkdir(parents=True, exist_ok=True)
+            destino.write_text(json.dumps(resumo, ensure_ascii=False, indent=2),
+                               encoding="utf-8")
+            resumo.pop("municipios_candidatos", None)
+        print(json.dumps(resumo, ensure_ascii=False, indent=2))
     except Exception as exc:
         # Logar somente classe do erro, evitando valores potencialmente identificáveis.
         print(json.dumps({"estado": "FALHA_RESUMO_MAPA", "classe_erro": type(exc).__name__}))
