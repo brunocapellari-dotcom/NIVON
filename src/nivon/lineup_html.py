@@ -70,11 +70,14 @@ class ContratoTabela:
     cabecalhos: Mapping[str, str]
     fonte: str
     coletado_em: str
+    tipo_publicacao: str = "PROGRAMACAO"
 
     def __post_init__(self):
+        if self.tipo_publicacao != "PROGRAMACAO":
+            raise ErroLineup("este parser só aceita programação; eventos físicos exigem outro contrato")
         if "navio" not in self.cabecalhos or not self.fonte.strip() or not self.coletado_em.strip():
             raise ErroLineup("contrato sem navio, fonte ou data")
-        if not set(self.cabecalhos) <= {"navio", "duv", "imo", "produto", "toneladas"}:
+        if not set(self.cabecalhos) <= {"navio", "duv", "imo", "produto", "toneladas", "situacao"}:
             raise ErroLineup("campo canônico desconhecido")
         if len(set(self.cabecalhos.values())) != len(self.cabecalhos):
             raise ErroLineup("mapeamento para colunas duplicadas")
@@ -111,6 +114,8 @@ def analisar_html_lineup(html: str, contrato: ContratoTabela) -> dict:
         dados = {campo: linha[indice].strip() for campo, indice in indices.items()}
         if not dados.get("navio"):
             raise ErroLineup(f"linha {i}: navio ausente")
+        if "situacao" in dados and dados["situacao"].upper() not in ("PROGRAMADO", "PREVISTO", "ESPERADO"):
+            raise ErroLineup(f"linha {i}: situacao física incompatível com programação")
         toneladas = dados.get("toneladas")
         if toneladas:
             from .importadores import decimal_ptbr, ErroMapeamento
