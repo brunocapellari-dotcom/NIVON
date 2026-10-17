@@ -10,6 +10,7 @@ import json
 import sys
 from pathlib import Path
 
+from .cadastro_derivado import carregar_municipios_racao
 from .destinos import Terminal, analisar_destinos
 from .importadores import mapear_fabricas, mapear_fluxos
 from .ingestao import ContratoCSV, ler_csv_local
@@ -47,20 +48,30 @@ def _csv(definicao: dict) -> list[dict]:
 
 
 def executar(config: dict) -> dict:
-    for nome in ("antt", "mapa", "terminais", "mes_corte"):
+    for nome in ("antt", "terminais", "mes_corte"):
         if nome not in config:
             raise ValueError(f"configuração sem {nome}")
-    fabrica_cfg = config["mapa"]
+    if ("mapa" in config) == ("mapa_agregado" in config):
+        raise ValueError("informar exatamente uma entrada MAPA: CSV bruto autorizado OU agregado municipal")
     fluxo_cfg = config["antt"]
-    fabricas = mapear_fabricas(
-        _csv(fabrica_cfg), fabrica_cfg["colunas"], fonte_id=fabrica_cfg["fonte_id"],
-        situacoes_ativas=frozenset(fabrica_cfg["dominios"]["situacoes_ativas"]),
-        situacoes_inativas=frozenset(fabrica_cfg["dominios"]["situacoes_inativas"]),
-        atividades_fabricante=frozenset(fabrica_cfg["dominios"]["atividades_fabricante"]),
-        atividades_nao_fabricante=frozenset(fabrica_cfg["dominios"]["atividades_nao_fabricante"]),
-        areas_alimentacao_animal=frozenset(fabrica_cfg["dominios"]["areas_alimentacao_animal"]),
-        areas_nao_alimentacao_animal=frozenset(fabrica_cfg["dominios"]["areas_nao_alimentacao_animal"]),
-    )
+    if "mapa_agregado" in config:
+        indice = carregar_municipios_racao(config["mapa_agregado"])
+        fabricas = indice["fabrica_candidata_por_municipio"]
+        contagem_plantas_cadastro = None
+        modo_cadastro = "AGREGADO_MUNICIPAL_SEM_IDENTIFICADORES"
+    else:
+        fabrica_cfg = config["mapa"]
+        fabricas = mapear_fabricas(
+            _csv(fabrica_cfg), fabrica_cfg["colunas"], fonte_id=fabrica_cfg["fonte_id"],
+            situacoes_ativas=frozenset(fabrica_cfg["dominios"]["situacoes_ativas"]),
+            situacoes_inativas=frozenset(fabrica_cfg["dominios"]["situacoes_inativas"]),
+            atividades_fabricante=frozenset(fabrica_cfg["dominios"]["atividades_fabricante"]),
+            atividades_nao_fabricante=frozenset(fabrica_cfg["dominios"]["atividades_nao_fabricante"]),
+            areas_alimentacao_animal=frozenset(fabrica_cfg["dominios"]["areas_alimentacao_animal"]),
+            areas_nao_alimentacao_animal=frozenset(fabrica_cfg["dominios"]["areas_nao_alimentacao_animal"]),
+        )
+        contagem_plantas_cadastro = len(fabricas)
+        modo_cadastro = "LINHAS_CSV_NAO_ESTABELECIMENTOS_UNICOS"
     dados = mapear_fluxos(_csv(fluxo_cfg), fluxo_cfg["colunas"], fonte_id=fluxo_cfg["fonte_id"])
     terminais = [
         Terminal(t["uf"], t["municipio"], t["tipo"], frozenset(t["produtos"]), t["fonte_id"])
@@ -73,8 +84,10 @@ def executar(config: dict) -> dict:
         min_meses_recorrentes=int(config.get("min_meses_recorrentes", 3)),
     )
     resultado["auditoria_importacao"] = {
-        "total_fabricas_cadastradas_no_arquivo": len(fabricas),
-        "fabricas_elegiveis": sum(f.elegivel for f in fabricas),
+        "total_linhas_cadastrais_ou_nulo": contagem_plantas_cadastro,
+        "modo_cadastro": modo_cadastro,
+        "municipios_racao_candidatos": len({(f.uf, f.municipio) for f in fabricas if f.racao_registrada}),
+        "registros_fabricante_ativo_alimentacao_animal": sum(f.elegivel for f in fabricas),
         "terminais_referenciados": len(terminais),
         "linhas_sem_ncm": dados["linhas_ncm_ausente"],
         "toneladas_sem_ncm": dados["toneladas_sem_ncm_t"],
