@@ -1,71 +1,73 @@
 # NIVON — Inteligência de Mercado, Indústria e Logística
 
-Plataforma independente de análise agroindustrial, de granéis e de logística do Brasil, com foco inicial em Mato Grosso.
+Plataforma independente de inteligência agrícola, agroindustrial e logística, com foco inicial em Mato Grosso e no Brasil e expansão para mercados globais.
 
-## Estado
+**Estado: desenvolvimento iniciado; NÃO HOMOLOGADO para uso operacional.** Auditorias de 16/10/2026: **GO COM CONDIÇÕES para implementação**, não para go-live.
 
-**Implementação inicial em andamento; NÃO HOMOLOGADO para uso operacional.**
+## Decisões permanentes
 
-Auditorias de 16/10/2026: **GO COM CONDIÇÕES para implementação**, não para go-live. Nenhuma saída sintética pode ser apresentada como observação real.
+- GitHub público, sem credenciais, informações privadas ou séries restritas. Os CSVs versionados em `tests/fixtures` são **inteiramente sintéticos**.
+- Custo adicional ideal **R$ 0**. Nenhum deploy ou gasto foi autorizado/realizado nesta entrega.
+- Fontes têm autorização separada por operação: leitura, coleta, armazenamento, transformação e redistribuição. `PENDENTE` = **bloqueada**.
+- Não trocar dado OBSERVADO por ESTIMADO, PROJETADO ou INFORMADO. Dados nulos não viram zero.
+- Preservar competência, referência, publicação, coleta e histórico de revisões. Não misturar ano civil e safra sem regra explícita.
+- CEPEA (440 L de etanol, 331 kg DDG, 20,4 L de óleo/t milho) = **parâmetro de margem**, não trio automaticamente válido para balanço físico.
+- Volumes ANTT identificados por NCM são **amostrais**, não consumo final nem volume nacional/estadual total. Municípios com fábrica e terminal são `AMBIGUO`.
+- Programação portuária não equivale a operação concluída. AIS contínuo não está ativo.
+- Reaproveitamento do AgroLog e de outros projetos deve preservar direitos, testes e proveniência; sem introduzir dependência forçada de GCP ou Holding.
 
-## Diretrizes vinculantes
+## Implementação do PR #1
 
-- Somente código, documentação e dados sintéticos publicáveis neste repositório público. **Nunca** credenciais, arquivos privados ou séries de terceiros sem direito de redistribuição.
-- Custos de implantação e operação: objetivo **R$ 0**; nenhuma contratação ou deploy sem autorização.
-- Fontes de dados: permissões separadas por operação; direitos restritos ou desconhecidos implicam **bloqueio por padrão**.
-- Dados OBSERVADOS, INFORMADOS, ESTIMADOS, INFERIDOS e PROJETADOS jamais são intercambiáveis.
-- Dados ausentes são ausentes, não zeros imputados.
-- Não misturar ano civil e safra sem mapeamento explícito; preservar competência, referência, publicação e coleta.
-- CEPEA: 440 L etanol, 331 kg DDG, 20,4 L óleo por t de milho são **parâmetros de análise de margem**, não um trio automaticamente válido para balanço físico.
-- ANTT/MDF-e: recortes por NCM são amostrais, e municípios com terminal e fábrica são AMBÍGUOS; jamais publicar volume amostral como total observado.
-- Line-up PROGRAMADO não é realizado; aquisição de página não é operação portuária concluída.
-- Reuso de projetos antigos exige proveniência/licença/testes e não pode forçar dependências em BigQuery, Cloud Run, Hermes ou Holding.
+**Motores e infraestrutura local, sem dependências externas em execução:**
 
-## Desenvolvimento
+- `src/nivon/motores.py` — cenário de consumo por CAGR histórico (3–5 anos), sensibilidade anual, parâmetros de margem CEPEA, verificação de massa, recorte NCM e direitos por fonte.
+- `src/nivon/balancos.py` — balanços por Brasil/UF, conservação física, consumo decomposto sem dupla contagem e calendário coerente.
+- `src/nivon/historico.py` — seleção de edições conhecidas até a data de corte (visão *as-of*).
+- `src/nivon/ingestao.py` — CSV local com limites, cabeçalho, hash SHA-256, datas, delimitação e codificação explícitas.
+- `src/nivon/importadores.py` — mapeamento exato do layout de cada publicação, sem supor cabeçalhos reais da ANTT/MAPA. Exige domínios conhecidos de fábrica e carga própria.
+- `src/nivon/destinos.py` — regiões com fábricas MAPA × terminais × destinos ANTT, NCM amostral, recorrência mensal e rejeição de recortes mensais duplicados.
+- `src/nivon/analise_local.py` — execução offline completa a partir de CSVs e configuração autorizados.
+- `src/nivon/portos.py` — cadastro canônico inicial de dez portos e contagem prudente de escalas; IMO sozinho não representa uma escala.
+- `src/nivon/lineup_html.py` — leitura offline de HTML tabular previamente salvo, com mapeamento de cabeçalhos e estado exclusivamente PROGRAMADO.
+- `src/nivon/coleta_web.py` — aquisição HTTPS bloqueada por padrão, com allowlist de host, sem redirects, MIME, tamanho e hash. **Não habilitada nem testada com fontes reais.**
 
-O trabalho de implementação inicial ficará em uma branch e em PR para revisão. Os testes locais usam somente fixtures sintéticas. A aprovação dos auditores não equivale à homologação operacional.
+`config/portos_brasil.v1.json` é catálogo, não declaração de que os dez portos estejam operacionais. Nenhum conector portuário está homologado.
 
-## Licenciamento do código
+## Reproduzir com dados sintéticos
 
-**Ainda não foi concedida uma licença aberta para este código.** A visibilidade pública do repositório não deve ser interpretada como permissão genérica de cópia ou sublicenciamento. Componentes de terceiros só serão incorporados após exame das respectivas licenças.
-
-## Núcleo v0.1 (branch de desenvolvimento)
-
-Primeira implementação **executável offline**. Componentes:
-
-- `src/nivon/motores.py`: crescimento geométrico de consumo (3–5 anos) e cenário com última taxa; referência CEPEA exclusiva para margens com alerta de balanço físico; cálculo inverso somente quando a matéria-prima e tipo de etanol são conhecidos; classificação amostral de fluxos ANTT por NCM e zona ambígua; fonte bloqueada por padrão.
-- `src/nivon/portos.py`: contrato programado de dez portos e contagem prudente de escalas. IMO sozinho não é identificador de escala.
-- `config/portos_brasil.v1.json`: **catálogo**, sem conectores ativados nem fontes homologadas.
-- `src/nivon/ingestao.py`: leitura local de CSV separado por ponto e vírgula com permissão por operação, limites, rejeição de nulos e schema, quatro datas e SHA-256; sem rede.
-- `src/nivon/balancos.py`: conservação física Brasil/UF, decomposição do consumo sem duplicar ração ou etanol e bloqueio de calendários incompatíveis.
-- `tests/test_balancos.py`: 11 casos de conservação, inconsistência de fechamento, nulos e dupla contagem, ainda sem execução confirmada no commit do PR.
-- `docs/PLANO_IMPLEMENTACAO.md`: prioridades, critérios de aceite e bloqueadores de go-live.\n- `tests/test_motores.py` e `tests/test_ingestao.py`: **25 testes offline com dados sintéticos**.
-
-### Executar sem instalação ou credenciais
-
-Python **3.11+**, em Linux/macOS:
+Executar na raiz com Python 3.11+:
 
 ```sh
 PYTHONPATH=src python -m unittest discover -s tests -v
 PYTHONPATH=src python -m nivon
+PYTHONPATH=src python -m nivon.analise_local --config config/contrato_exemplo_sintetico.json
 ```
 
-Windows PowerShell:
+No PowerShell:
 
 ```powershell
 $env:PYTHONPATH="src"
 python -m unittest discover -s tests -v
 python -m nivon
+python -m nivon.analise_local --config config/contrato_exemplo_sintetico.json
 ```
 
-O script de demonstração usa apenas **valores sintéticos**, sem acessar a internet.
+O exemplo de fluxos contém apenas **dados inventados**, para demonstrar 600 toneladas identificadas em destino AMBÍGUO e 50 toneladas sem NCM. Não é medição do mercado.
 
-### Próximos gates
+**92 casos de testes definidos em nove arquivos**. A execução integral no commit mais recente ainda **não tem evidência confirmada de CI ou execução local**; a contagem não equivale a testes aprovados.
 
-1. Conferir direitos por operação antes de qualquer conector real.
-2. Preparar contratos canônicos e importadores offline para CONAB/Sindirações/ANTT/MAPA com schemas baseados em arquivos reais, **sem publicar os arquivos**.
-3. Adaptar e validar individualmente parsers marítimos de fontes oficiais, com aquisição repetida e cobertura.
-4. Reconciliar balanços (safra vs. ano civil, transporte vs. consumo, soja esmagada vs. farelo).
-5. Testar persistência, segredos, segurança e operação sem dependência de outros projetos.
+## Próximos gates
 
-**Não há deploy, API exposta, banco em nuvem ou coleta operacional nesta versão.**
+1. Validar o código e executar a suíte integral do PR em ambiente limpo, depois registrar resultado e eventuais correções.
+2. Conferir layouts e direitos dos CSVs reais do MAPA, ANTT, CONAB e demais fontes. Nenhum dado real precisa ser publicado no GitHub.
+3. Integrar vintage, balanços, consumo industrial e transportes com exemplos reais autorizados e reconciliação documentada.
+4. Homologar por porto o parser HTML/PDF, o acesso autorizado, os dados observados e a frequência; Tubarão exige rota de acesso específica.
+5. Implementar persistência, segurança, backup e interface somente após demonstração de dados íntegros.
+
+Documentos: [guia de execução](docs/GUIA_DADOS_E_EXECUCAO.md), [plano de implementação](docs/PLANO_IMPLEMENTACAO.md), [decisões e gates](docs/DECISOES_E_GATES.md).
+
+**Não houve deploy, contratação, coleta operacional real nem integração a serviços pagos.**
+
+## Direitos do código
+
+A visibilidade pública não constitui concessão automática de licença open-source. O projeto ainda não disponibiliza licença geral de reutilização. Código de terceiros só será incorporado após validação jurídica e técnica específica.
