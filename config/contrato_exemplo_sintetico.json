@@ -1,0 +1,78 @@
+{
+  "aviso": "ESTES ARQUIVOS SAO 100% SINTETICOS E NAO REPRESENTAM DADOS REAIS DO MAPA OU ANTT",
+  "mes_corte": "2026-04",
+  "mapa": {
+    "caminho": "tests/fixtures/mapa_sintetico.csv",
+    "fonte_id": "FIXTURE_MAPA_SINTETICO",
+    "status": "APROVADA",
+    "operacoes": [
+      "LEITURA_LOCAL"
+    ],
+    "competencia": "2026",
+    "referencia": "2026-04-01",
+    "publicacao": "2026-04-02",
+    "delimitador": ";",
+    "codificacao": "utf-8-sig",
+    "colunas": {
+      "uf": "uf",
+      "municipio": "cidade",
+      "situacao": "situacao",
+      "atividade": "atividade",
+      "area": "area"
+    },
+    "dominios": {
+      "situacoes_ativas": [
+        "ATIVO"
+      ],
+      "situacoes_inativas": [
+        "INATIVO"
+      ],
+      "atividades_fabricante": [
+        "FABRICANTE"
+      ],
+      "atividades_nao_fabricante": [
+        "IMPORTADOR"
+      ],
+      "areas_alimentacao_animal": [
+        "ALIMENTACAO ANIMAL"
+      ],
+      "areas_nao_alimentacao_animal": [
+        "OUTROS"
+      ]
+    }
+  },
+  "antt": {
+    "caminho": "tests/fixtures/antt_sintetico.csv",
+    "fonte_id": "FIXTURE_ANTT_SINTETICO",
+    "status": "APROVADA",
+    "operacoes": [
+      "LEITURA_LOCAL"
+    ],
+    "competencia": "2026-04",
+    "referencia": "2026-04-30",
+    "publicacao": "2026-05-02",
+    "delimitador": ";",
+    "codificacao": "utf-8-sig",
+    "colunas": {
+      "periodo": "mes",
+      "origem_uf": "uf_inicio",
+      "origem_municipio": "origem",
+      "destino_uf": "uf_fim",
+      "destino_municipio": "destino",
+      "ncm": "ncm",
+      "toneladas": "toneladas",
+      "carga_propria": "propria"
+    }
+  },
+  "terminais": [
+    {
+      "uf": "GO",
+      "municipio": "Rio Verde",
+      "tipo": "FERROVIARIO",
+      "produtos": [
+        "MILHO"
+      ],
+      "fonte_id": "FIXTURE_TERMINAL_SINTETICO"
+    }
+  ]
+}
