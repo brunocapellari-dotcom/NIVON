@@ -8,7 +8,7 @@ from nivon.destinos import (
 
 class TestDestinosANTTMAPA(unittest.TestCase):
     def fabrica(self, cidade="Rio Verde", uf="GO", *, ativa=True, fabricante=True):
-        return FabricaMAPA(uf, cidade, fabricante, ativa, True, "SIPEAGRO_TESTE")
+        return FabricaMAPA(uf, cidade, fabricante, ativa, True, "SIPEAGRO_TESTE", "RAÇÃO")
 
     def terminal(self, cidade="Rio Verde", uf="GO", produtos=frozenset({"MILHO"})):
         return Terminal(uf, cidade, "FERROVIARIO", produtos, "TERMINAL_TESTE")
@@ -47,6 +47,11 @@ class TestDestinosANTTMAPA(unittest.TestCase):
 
     def test_terminal_de_outro_produto_nao_classifica(self):
         r = self.analisar([self.fluxo()], [], [self.terminal(produtos=frozenset({"SOJA"}))])
+        self.assertEqual(r["destinos"][0]["classe"], "SEM_EVIDENCIA")
+
+    def test_fabricante_ingrediente_nao_equivale_fabrica_racao(self):
+        fabricante = FabricaMAPA("GO", "Rio Verde", True, True, True, "TESTE", "INGREDIENTE")
+        r = self.analisar([self.fluxo()], [fabricante])
         self.assertEqual(r["destinos"][0]["classe"], "SEM_EVIDENCIA")
 
     def test_terminal_sem_fabrica_transbordo_provavel(self):
