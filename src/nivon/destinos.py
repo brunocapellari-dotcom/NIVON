@@ -157,6 +157,7 @@ def analisar_destinos(
     agrupado: dict[tuple[str, str, str, str, str], dict] = {}
     ignorados = 0
     entradas = 0
+    chaves_mensais: set[tuple[str, ...]] = set()
     for f in fluxos:
         entradas += 1
         if f.periodo not in janela or f.origem_uf.upper() != "MT" or f.destino_uf.upper() == "MT":
@@ -168,6 +169,10 @@ def analisar_destinos(
         origem = normalizar_municipio(f.origem_municipio)
         destino = normalizar_municipio(f.destino_municipio)
         uf = f.destino_uf.upper()
+        chave_mensal = (f.periodo, origem, uf, destino, f.ncm, str(f.carga_propria))
+        if chave_mensal in chaves_mensais:
+            raise ErroFluxo("linha mensal agregada duplicada; escolher um snapshot/vintage antes de somar")
+        chaves_mensais.add(chave_mensal)
         tem_fabrica = (uf, destino) in mapa_fabricas
         tem_terminal = (uf, destino, produto) in mapa_terminais
         classe = ("AMBIGUO" if tem_fabrica and tem_terminal else
