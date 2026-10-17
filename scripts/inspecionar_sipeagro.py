@@ -7,6 +7,7 @@ A rotina nunca imprime linhas pessoais/empresariais, apenas nomes das colunas.
 from __future__ import annotations
 
 import csv
+from collections import Counter
 import io
 import json
 from urllib.parse import urlsplit
@@ -24,13 +25,13 @@ def inspecionar() -> dict:
     req = Request(URL, headers={
         "User-Agent": "NIVON/0.1 (+auditoria somente cabecalho)",
         "Accept": "text/csv,application/octet-stream,text/plain",
-        "Range": "bytes=0-131071",
+        "Range": "bytes=0-524287",
     })
     with urlopen(req, timeout=25) as resposta:
         destino = urlsplit(resposta.geturl())
         if destino.scheme != "https" or destino.hostname != "dados.agricultura.gov.br":
             raise ValueError("redirecionamento fora do domínio oficial")
-        dados = resposta.read(131072)
+        dados = resposta.read(524288)
         mime = resposta.headers.get("Content-Type", "").split(";", 1)[0]
         if not dados:
             raise ValueError("resposta vazia")
@@ -52,7 +53,25 @@ def inspecionar() -> dict:
         colunas = next(csv.reader(io.StringIO(primeira), delimiter=delimitador))
         if not colunas or len(colunas) == 1 or len(set(colunas)) != len(colunas):
             raise ValueError("cabeçalho ausente ou inválido")
+        # Amostra somente de enumerações, nunca campos de identificação.
+        # Não inferir universo/capacidade a partir de uma amostra parcial.
+        campos_categoricos = ("STATUS_DO_REGISTRO", "AREA_ATUACAO", "ATIVIDADE", "CLASSIFICACAO")
+        contagens = {campo: Counter() for campo in campos_categoricos}
+        linhas_completas = texto.splitlines()
+        if not texto.endswith(("\\n", "\\r")):
+            linhas_completas = linhas_completas[:-1]
+        for linha in list(csv.DictReader(io.StringIO("\\n".join(linhas_completas)),
+                                         delimiter=delimitador))[:1500]:
+            for campo in campos_categoricos:
+                valor = (linha.get(campo) or "").strip()
+                # Controle anti-vazamento: apenas rótulos curtos sem números/identificadores.
+                if valor and len(valor) <= 65 and not any(c.isdigit() for c in valor) and "@" not in valor:
+                    contagens[campo][valor] += 1
         return {
+            "valores_categoricos_amostrais": {
+                campo: dict(contagens[campo].most_common(12)) for campo in campos_categoricos
+            },
+            "nao_reprensenta_universo": True,
             "fonte": "MAPA_SIPEAGRO_ALIMENTACAO_ANIMAL",
             "url_oficial": URL,
             "licenca_catalogo": "Creative Commons Attribution (confirmar atribuição)",
