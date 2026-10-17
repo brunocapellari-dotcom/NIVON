@@ -1,0 +1,46 @@
+name: Testes locais NIVON
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'config/**'
+      - 'pyproject.toml'
+      - '.github/workflows/testes.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-testes-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validar-nucleo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Obter codigo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Compilar sem dependencias
+        run: python -m compileall -q src tests
+      - name: Testar com fixtures 100 por cento sinteticas
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -v
+      - name: Demonstracao deterministica
+        env:
+          PYTHONPATH: src
+        run: python -m nivon
+      - name: Fluxos sintéticos ANTT e MAPA
+        env:
+          PYTHONPATH: src
+        run: python -m nivon.analise_local --config config/contrato_exemplo_sintetico.json
