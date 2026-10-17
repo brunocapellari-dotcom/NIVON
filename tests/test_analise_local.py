@@ -1,4 +1,5 @@
 import copy
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -78,13 +79,41 @@ class TestAnaliseLocal(unittest.TestCase):
         with self.assertRaises(ValueError):
             executar(cfg)
 
+    def test_utiliza_apenas_agregado_municipal_sem_identificadores(self):
+        cfg = copy.deepcopy(self.cfg)
+        del cfg["mapa"]
+        path = Path(self.tmp.name) / "agregado.json"
+        path.write_text(json.dumps({
+            "fonte": "MAPA SIPEAGRO ALIMENTAÇÃO ANIMAL",
+            "licenca_catalogo": "Creative Commons Attribution",
+            "sha256_arquivo": "a" * 64,
+            "data_coleta_utc": "2026-10-17T03:00:00Z",
+            "municipios_distintos_com_fabricante_ativo_racao": 1,
+            "municipios_candidatos": [
+                {"uf": "GO", "municipio": "RIO VERDE", "registros_distintos": 2}
+            ],
+        }), encoding="utf-8")
+        cfg["mapa_agregado"] = str(path)
+        r = executar(cfg)
+        self.assertEqual(r["destinos"][0]["classe"], "AMBIGUO")
+        self.assertEqual(r["auditoria_importacao"]["modo_cadastro"],
+                         "AGREGADO_MUNICIPAL_SEM_IDENTIFICADORES")
+        self.assertEqual(r["auditoria_importacao"]["municipios_racao_candidatos"], 1)
+        self.assertIsNone(r["auditoria_importacao"]["total_linhas_cadastrais_ou_nulo"])
+
+    def test_duas_entradas_mapa_simultaneas_rejeitadas(self):
+        cfg = copy.deepcopy(self.cfg)
+        cfg["mapa_agregado"] = "falso.json"
+        with self.assertRaises(ValueError):
+            executar(cfg)
+
     def test_alteracao_layout_delimitador_explicito(self):
         cfg = copy.deepcopy(self.cfg)
         path = Path(cfg["mapa"]["caminho"])
         path.write_text(path.read_text(encoding="utf-8").replace(";", ","), encoding="utf-8")
         cfg["mapa"]["delimitador"] = ","
         r = executar(cfg)
-        self.assertEqual(r["auditoria_importacao"]["fabricas_elegiveis"], 1)
+        self.assertEqual(r["auditoria_importacao"]["registros_fabricante_ativo_alimentacao_animal"], 1)
 
 
 if __name__ == "__main__":
