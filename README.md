@@ -23,15 +23,26 @@ Plataforma independente de inteligência agrícola, agroindustrial e logística,
 - `src/nivon/motores.py` — cenário de consumo por CAGR histórico (3–5 anos), sensibilidade anual, parâmetros de margem CEPEA, verificação de massa, recorte NCM e direitos por fonte.
 - `src/nivon/balancos.py` — balanços por Brasil/UF, conservação física, consumo decomposto sem dupla contagem e calendário coerente.
 - `src/nivon/historico.py` — seleção de edições conhecidas até a data de corte (visão *as-of*).
+- `src/nivon/previsoes.py` — backtest temporal de CAGR contra referência ingênua, sem promover modelos sem evidência.
 - `src/nivon/ingestao.py` — CSV local com limites, cabeçalho, hash SHA-256, datas, delimitação e codificação explícitas.
 - `src/nivon/importadores.py` — mapeamento exato do layout de cada publicação, sem supor cabeçalhos reais da ANTT/MAPA. Exige domínios conhecidos de fábrica e carga própria.
-- `src/nivon/destinos.py` — regiões com fábricas MAPA × terminais × destinos ANTT, NCM amostral, recorrência mensal e rejeição de recortes mensais duplicados.
-- `src/nivon/analise_local.py` — execução offline completa a partir de CSVs e configuração autorizados.
+- `src/nivon/destinos.py` — regiões com fábricas MAPA de classificação RAÇÃO × terminais × destinos ANTT, NCM amostral, recorrência mensal e rejeição de recortes mensais duplicados.
+- `src/nivon/cadastro_derivado.py` — carrega lista agregada de municípios com fábrica de ração candidata, sem CPF/CNPJ/razão social.
+- `src/nivon/analise_local.py` — execução offline completa com ANTT e **MAPA em CSV bruto autorizado ou em JSON agregado sem identificadores**.
 - `src/nivon/portos.py` — cadastro canônico inicial de dez portos e contagem prudente de escalas; IMO sozinho não representa uma escala.
 - `src/nivon/lineup_html.py` — leitura offline de HTML tabular previamente salvo, com mapeamento de cabeçalhos e estado exclusivamente PROGRAMADO.
 - `src/nivon/coleta_web.py` — aquisição HTTPS bloqueada por padrão, com allowlist de host, sem redirects, MIME, tamanho e hash. **Não habilitada nem testada com fontes reais.**
 
 `config/portos_brasil.v1.json` é catálogo, não declaração de que os dez portos estejam operacionais. Nenhum conector portuário está homologado.
+
+## Primeiro conjunto real examinado (MAPA/SIPEAGRO)
+
+A execução [GitHub Actions 39000174173](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39000174173) examinou o CSV público MAPA e gerou **somente uma lista derivada de municípios**. O arquivo de origem tinha 18.003 linhas; o filtro Ativo + Fabricante + Alimentação Animal + Ração selecionou 2.029 registros de cadastro em 1.168 municípios. Esses números **não representam plantas exclusivas por município, toneladas processadas ou consumo**. Não há segmentação comprovada de aves e suínos.
+
+- Mapeamento das nove colunas oficiais: `config/sipeagro_esquema_verificado.v1.json`.
+- Fonte e licença indicada no catálogo: https://dados.agricultura.gov.br/dataset/sipeagro/resource/378b184b-67bd-48fa-9901-17bb7a0700fb — Creative Commons Attribution.
+- O agregado municipal derivado é publicado **como artefato temporário do CI por três dias**, após checagem contra identificadores individuais; nunca se publica o CSV bruto no GitHub.
+- Dados são snapshot pontual de cadastro público, sem atualização recorrente ativada e sem homologação do consumo industrial.
 
 ## Reproduzir com dados sintéticos
 
@@ -54,7 +65,7 @@ python -m nivon.analise_local --config config/contrato_exemplo_sintetico.json
 
 O exemplo de fluxos contém apenas **dados inventados**, para demonstrar 600 toneladas identificadas em destino AMBÍGUO e 50 toneladas sem NCM. Não é medição do mercado.
 
-**92 casos de testes definidos em nove arquivos**. A execução integral no commit mais recente ainda **não tem evidência confirmada de CI ou execução local**; a contagem não equivale a testes aprovados.
+**119 testes definidos e aprovados no GitHub Actions**, nos checks do PR #1 (executados com fixtures sintéticas). Os testes não comprovam ingestão ANTT real nem operação portuária. Ver [workflow do PR](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39000174173).
 
 ## Próximos gates
 
