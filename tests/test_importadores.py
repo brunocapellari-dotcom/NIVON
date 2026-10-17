@@ -4,7 +4,7 @@ from nivon.importadores import ErroMapeamento, decimal_ptbr, mapear_fabricas, ma
 
 
 MAPA = {"uf": "estado", "municipio": "cidade", "situacao": "status",
-        "atividade": "atividade", "area": "categoria"}
+        "atividade": "atividade", "area": "categoria", "classificacao": "classe"}
 ANTT = {"periodo": "mes", "origem_uf": "uf_inicio", "origem_municipio": "origem",
         "destino_uf": "uf_fim", "destino_municipio": "destino", "ncm": "codigo",
         "toneladas": "carga_t", "carga_propria": "propria"}
@@ -13,7 +13,7 @@ ANTT = {"periodo": "mes", "origem_uf": "uf_inicio", "origem_municipio": "origem"
 class TestImportadores(unittest.TestCase):
     def fabrica(self, **alteracoes):
         dados = {"estado": "GO", "cidade": "Rio Verde", "status": "Ativo",
-                 "atividade": "Fabricante", "categoria": "Alimentação Animal"}
+                 "atividade": "Fabricante", "categoria": "Alimentação Animal", "classe": "Ração"}
         dados.update(alteracoes)
         return dados
 
@@ -34,7 +34,7 @@ class TestImportadores(unittest.TestCase):
         return dados
 
     def test_fabrica_ativa_fabricante(self):
-        self.assertTrue(self.fab([self.fabrica()])[0].elegivel)
+        self.assertTrue(self.fab([self.fabrica()])[0].racao_registrada)
 
     def test_cadastro_inativo_nao_e_fabrica_ativa(self):
         self.assertFalse(self.fab([self.fabrica(status="Inativo")])[0].elegivel)
