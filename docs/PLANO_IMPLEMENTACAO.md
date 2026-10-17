@@ -8,8 +8,8 @@ Estado: **IMPLEMENTANDO**, não homologado. Auditorias de 16/10/2026: GO COM CON
 - [x] Núcleo matemático independente: consumo, checagem de margem CEPEA, ANTT NCM amostral e contratos portuários.
 - [x] Ingestão de CSV **local** com contrato obrigatório e proveniência SHA-256.
 - [x] Balanço físico de safra/ano civil com conservação e decomposição de demanda, sem duplicar componentes.
-- [ ] Executar a suíte **completa no commit do PR**; até então, testes novos = NÃO VERIFICADOS.
-- [ ] Inspecionar o diff, dependências e segurança antes de merge. Sem runners disponíveis não equivale a CI aprovado.
+- [x] Suíte de **119 testes sintéticos aprovada no GitHub Actions**, commit 76cb2a5e e posteriores, conforme logs do PR #1. Revalidar após toda alteração.
+- [ ] Inspecionar o diff, direitos por fonte e segurança antes de merge. Runner padrão público gratuito já confirmou CI; ainda falta revisão independente de release.
 
 **Aceite:** `python -m unittest discover -s tests -v` retorna sucesso com Python >=3.11, em ambiente limpo, sem segredos e rede; import `nivon` sem qualquer GCP/Hermes/Holding.
 
@@ -19,9 +19,9 @@ Estado: **IMPLEMENTANDO**, não homologado. Auditorias de 16/10/2026: GO COM CON
 
 **Sindirações/ABIOVE:** registrar termos por finalidade e permitir somente operações habilitadas; recortes de ração e macroingredientes compõem consumo interno já existente, não soma adicional. Séries devem ter edição/vintage. Se restritos, manter conector PENDENTE e usar alternativa licenciada.
 
-**MAPA SIPEAGRO:** baixar CSV apenas após verificar licença e campos reais. Resolver município IBGE, categoria fabricante, situação cadastral, vigência e mudança de nome; localização NÃO é capacidade ou consumo.
+**MAPA SIPEAGRO — PROGRESSO REAL:** CSV aberto licenciado CC Attribution foi lido integralmente em execução efêmera do GitHub; 18.003 linhas, 2.029 registros filtrados (Ativo + Fabricante + Alimentação Animal + Ração), 1.168 municípios. Cabeçalho de nove colunas e categorias amostrais inspecionados. Nenhum CPF/CNPJ/nome foi persistido ou divulgado; somente agregado com validação anti-identificadores foi publicado como artefato temporário de 3 dias. Falta validar alias/código IBGE, vigência, recaptura histórica e distinção por espécie de criação. **Não é capacidade ou consumo**.
 
-**ANTT:** primeiro testar arquivos oficiais e documentação. NCM/MDF-e é amostral; registrar volume com NCM e cobertura quando disponível. Não utilizar endpoint interno Power BI como API oficial sem verificação. Considerar carga própria. Classificar TRANSBORDO_PROVAVEL/CONSUMO_POTENCIAL/AMBIGUO/SEM_EVIDENCIA; preservar todas as linhas.
+**ANTT — PENDENTE DADO REAL:** obter/exportar base oficial detalhada e verificável, com cobertura NCM e terminal por município. A entrada CSV e a junção com agregado MAPA estão implementadas e testadas apenas sinteticamente; não confundir isso com volumes medidos de MT. Primeiro testar arquivos oficiais e documentação. NCM/MDF-e é amostral; registrar volume com NCM e cobertura quando disponível. Não utilizar endpoint interno Power BI como API oficial sem verificação. Considerar carga própria. Classificar TRANSBORDO_PROVAVEL/CONSUMO_POTENCIAL/AMBIGUO/SEM_EVIDENCIA; preservar todas as linhas.
 
 **Aceite:** para cada fonte, registrar URL, direitos por operação, arquivo analisado fora do GitHub, campos, validações, quatro datas, hash, rejeições e reconciliação com publicação oficial.
 
@@ -40,7 +40,7 @@ Estado: **IMPLEMENTANDO**, não homologado. Auditorias de 16/10/2026: GO COM CON
 - Indústria: parâmetros CEPEA de margens; oferecer balanço físico somente com coeficientes de rota e umidade física compatíveis.
 - Soja/milho: balances Brasil e MT; para MT conservar movimentos interestaduais e evitar declarar destino final só pelo município.
 - Diesel, algodão, bovinos, açúcar, trigo, sorgo e fertilizantes: contratos e motores por domínio, evoluindo sem duplicar o núcleo.
-- Modelos estatísticos só recebem status VALIDADO após backtesting temporal as-of e comparação fora da amostra com baseline.
+- Backtest walk-forward anual CAGR versus baseline último valor já implementado/testado com séries sintéticas. Modelos só recebem status VALIDADO após vintages as-of por fold, fonte real e comparação robusta fora da amostra.
 
 ## Prioridade 4 — operação e interface
 
@@ -54,3 +54,12 @@ Estado: **IMPLEMENTANDO**, não homologado. Auditorias de 16/10/2026: GO COM CON
 Não declarar final se falta fonte para dado exibido, CI/testes suficientes, ingestão real homologada, direitos, integridade dos balanços, backup/restore, política de segurança ou controle de custos.
 
 A aprovação metodológica externa não valida o software automaticamente.
+
+## Evidências recentes de CI e dados
+
+- CI de unidade e integração sintética: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39000174173
+- Primeiro snapshot integral do MAPA com dados agregados: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/38999841523
+- Agregado municipal sem identificadores publicado como artefato temporário: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39000042055
+- Cadastro municipal derivado passa a ser entrada alternativa do `analise_local`, testada com JSON sintético.
+
+**Nenhum desses resultados homologa fluxos reais da ANTT, produção de ração ou movimentos portuários.**
