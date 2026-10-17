@@ -27,3 +27,7 @@ __pycache__/
 venv/
 dist/
 build/
+
+# Única exceção: fixtures explicitamente sintéticas da suíte de testes
+!tests/fixtures/
+!tests/fixtures/*_sintetico.csv
