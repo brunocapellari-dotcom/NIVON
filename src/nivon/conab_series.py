@@ -22,7 +22,7 @@ ABAS = {
     "Produtividade": ("PRODUTIVIDADE", "kg/ha", "KG_HA", 1.0),
     "Produção": ("PRODUCAO", "mil toneladas", "T", 1000.0),
 }
-PADRAO_SAFRA = re.compile(r"^((?:19|20)\d\d)/((?:\d\d))$")
+PADRAO_SAFRA = re.compile(r"^((?:19|20)\d\d)/(\d\d)(?:\s+(?:Previsão|Estimativa|Projeção)(?:\s*\([^)]*\))?)?$", re.IGNORECASE)
 
 class ErroConab(ValueError): pass
 
@@ -69,7 +69,7 @@ def normalizar_livro(livro, nome_arquivo: str, *, sha256: str, capturado_em: str
             safras.append((col,safra_normalizada(str(raw)),str(raw)))
         if len(safras)<20 or len({s for _,s,_ in safras})!=len(safras):
             raise ErroConab("safras históricas insuficientes ou repetidas")
-        if safras_esperadas is not None and [s for _,s in safras]!=safras_esperadas:
+        if safras_esperadas is not None and [s for _,s,_ in safras]!=safras_esperadas:
             raise ErroConab("diferença de safras entre as três abas")
         safras_esperadas=[s for _,s,_ in safras]
         regioes=set()
@@ -90,7 +90,8 @@ def normalizar_livro(livro, nome_arquivo: str, *, sha256: str, capturado_em: str
                     "valor":round(float(raw)*multiplicador,6),"unidade":unidade,
                     "fonte":"CONAB","arquivo":nome_arquivo,
                     "origem_sha256":sha256,"coletado_em":capturado_em,
-                    "classificacao":("PROJETADO_CONAB" if any(p in rotulo_original.casefold() for p in ("previsão","estimativa","projeção")) else "INFORMADO_CONAB_NAO_CERTIFICA_REALIZADO"),\n                    "rotulo_coluna_original":rotulo_original,
+                    "classificacao":("PROJETADO_CONAB" if any(p in rotulo_original.casefold() for p in ("previsão","estimativa","projeção")) else "INFORMADO_CONAB_NAO_CERTIFICA_REALIZADO"),
+                    "rotulo_coluna_original":rotulo_original,
                     "celula":{"linha":row+1,"coluna":col+1,"aba":nome},
                 })
         if "MT" not in regioes or "BR" not in regioes:
