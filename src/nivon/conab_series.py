@@ -66,7 +66,11 @@ def normalizar_livro(livro, nome_arquivo: str, *, sha256: str, capturado_em: str
         for col in range(1,aba.ncols):
             raw=aba.cell_value(header,col)
             if raw=="" or raw is None: continue
-            safras.append((col,safra_normalizada(str(raw)),str(raw)))
+            try:
+                ano_coluna=safra_normalizada(str(raw))
+            except ErroConab as exc:
+                raise ErroConab(f"{nome} coluna {col+1}, rotulo={str(raw)[:40]!r}: {exc}") from exc
+            safras.append((col,ano_coluna,str(raw)))
         if len(safras)<20 or len({s for _,s,_ in safras})!=len(safras):
             raise ErroConab("safras históricas insuficientes ou repetidas")
         if safras_esperadas is not None and [s for _,s,_ in safras]!=safras_esperadas:
@@ -81,9 +85,9 @@ def normalizar_livro(livro, nome_arquivo: str, *, sha256: str, capturado_em: str
             regioes.add(regiao)
             for col,safra,rotulo_original in safras:
                 raw=aba.cell_value(row,col)
-                if raw in ("",None): continue
+                if raw in ("",None,"-","–","—"): continue
                 if type(raw) not in (int,float) or not isfinite(float(raw)) or raw<0:
-                    raise ErroConab("célula de safra não numérica, negativa ou não finita")
+                    raise ErroConab(f"{nome}: {regiao}, linha {row+1}, coluna {col+1}, safra {safra}, valor={str(raw)[:35]!r} inválido")
                 linhas.append({
                     "produto":produto,"subdivisao_safra":safra_tipo,
                     "regiao_uf":regiao,"safra":safra,"indicador":indicador,
