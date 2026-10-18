@@ -66,12 +66,12 @@ def normalizar_livro(livro, nome_arquivo: str, *, sha256: str, capturado_em: str
         for col in range(1,aba.ncols):
             raw=aba.cell_value(header,col)
             if raw=="" or raw is None: continue
-            safras.append((col,safra_normalizada(str(raw))))
-        if len(safras)<20 or len({s for _,s in safras})!=len(safras):
+            safras.append((col,safra_normalizada(str(raw)),str(raw)))
+        if len(safras)<20 or len({s for _,s,_ in safras})!=len(safras):
             raise ErroConab("safras históricas insuficientes ou repetidas")
         if safras_esperadas is not None and [s for _,s in safras]!=safras_esperadas:
             raise ErroConab("diferença de safras entre as três abas")
-        safras_esperadas=[s for _,s in safras]
+        safras_esperadas=[s for _,s,_ in safras]
         regioes=set()
         for row in range(header+1,aba.nrows):
             regiao=str(aba.cell_value(row,0)).strip().upper()
@@ -79,7 +79,7 @@ def normalizar_livro(livro, nome_arquivo: str, *, sha256: str, capturado_em: str
             if regiao not in UF and regiao!="BR": continue
             if regiao in regioes: raise ErroConab("região duplicada dentro da aba")
             regioes.add(regiao)
-            for col,safra in safras:
+            for col,safra,rotulo_original in safras:
                 raw=aba.cell_value(row,col)
                 if raw in ("",None): continue
                 if type(raw) not in (int,float) or not isfinite(float(raw)) or raw<0:
@@ -90,7 +90,7 @@ def normalizar_livro(livro, nome_arquivo: str, *, sha256: str, capturado_em: str
                     "valor":round(float(raw)*multiplicador,6),"unidade":unidade,
                     "fonte":"CONAB","arquivo":nome_arquivo,
                     "origem_sha256":sha256,"coletado_em":capturado_em,
-                    "classificacao":"INFORMADO_CONAB_NAO_CERTIFICA_REALIZADO",
+                    "classificacao":("PROJETADO_CONAB" if any(p in rotulo_original.casefold() for p in ("previsão","estimativa","projeção")) else "INFORMADO_CONAB_NAO_CERTIFICA_REALIZADO"),\n                    "rotulo_coluna_original":rotulo_original,
                     "celula":{"linha":row+1,"coluna":col+1,"aba":nome},
                 })
         if "MT" not in regioes or "BR" not in regioes:
