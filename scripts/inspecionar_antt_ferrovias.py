@@ -7,6 +7,7 @@ import io
 import json
 import zipfile
 import xml.etree.ElementTree as ET
+from nivon.antt_ferrovia import extrair_registros, sumarizar_mercadorias
 from urllib.request import urlopen, Request
 from urllib.parse import urlsplit
 from hashlib import sha256
@@ -76,6 +77,8 @@ def executar():
         if not conteudo or len(conteudo)>18_000_000:raise ValueError("XLSX vazio ou excessivo")
     if not conteudo.startswith(b"PK"):raise ValueError("assinatura XLSX ausente")
     x=resumo_zip(conteudo)
+    x["resumo_fluxos_ferroviarios"]=sumarizar_mercadorias(extrair_registros(conteudo,sha256=sha256(conteudo).hexdigest()))
+    x["abas"]=[{"aba":z["aba"],"dimensao_declarada":z["dimensao_declarada"]} for z in x["abas"]]
     x.update({"fonte":"ANTT_FERROVIAS_OD","url":end,
               "tamanho_bytes":len(conteudo),"sha256":sha256(conteudo).hexdigest(),
               "classificacao":"ESQUEMA_FERROVIARIO_NAO_MDFe","dados_persistidos":False})
