@@ -91,10 +91,12 @@ def executar():
                                   "sha256":sha,"mime":mime})
                     break
                 except Exception as exc:
-                    erros.append({"tipo":type(exc).__name__,"url":candidato})
+                    erros.append({"tipo":type(exc).__name__,"motivo":str(exc)[:240],"url":candidato})
             if resumo is None:
                 resumo={"produto":produto,"arquivo":p["arquivo"],"estado":"NAO_ACESSIVEL","tentativas":erros}
             resultados.append(resumo)
+    if len(resultados)!=5 or any(x.get("estado")=="NAO_ACESSIVEL" for x in resultados) or not todas:
+        raise RuntimeError("AQUISICAO_CONAB_NAO_HOMOLOGADA: "+json.dumps(resultados,ensure_ascii=False)[:3800])
     conciliacao=conferir_total_milho(todas)
     erros=[x for x in conciliacao if x["status"]=="DIVERGENTE"]
     return {"fonte":"CONAB","finalidade":"VALIDACAO_EXTRAÇÃO_SEM_REDISTRIBUIÇÃO",
