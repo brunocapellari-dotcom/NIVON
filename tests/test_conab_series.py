@@ -78,6 +78,14 @@ class TestSeriesConab(unittest.TestCase):
         dados[-1]["valor"]=4
         self.assertEqual(conferir_total_milho(dados)[0]["status"],"DIVERGENTE")
 
+    def test_produtividade_2009_corrompida_exige_aba_area(self):
+        livro=LivroFalso()
+        # Cabeçalho sintético da coluna 35 corresponde 2013/14 no mock.
+        # Valor "200.9" só é reparável quando a safra de referência é 2009/10.
+        livro.abas["Produtividade"].celulas[5][1]="200.9"
+        with self.assertRaises(ErroConab):
+            self.ler(livro=livro)
+
     def test_serie_informada_nao_e_realizacao(self):
         self.assertTrue(all(r["classificacao"].startswith("INFORMADO")
                             for r in self.ler()))
