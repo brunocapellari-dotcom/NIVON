@@ -78,11 +78,18 @@ class TestSeriesConab(unittest.TestCase):
         dados[-1]["valor"]=4
         self.assertEqual(conferir_total_milho(dados)[0]["status"],"DIVERGENTE")
 
-    def test_produtividade_2009_corrompida_exige_aba_area(self):
+    def test_cabecalho_corrompido_recuperado_com_inferencia_documentada(self):
         livro=LivroFalso()
-        # Cabeçalho sintético da coluna 35 corresponde 2013/14 no mock.
-        # Valor "200.9" só é reparável quando a safra de referência é 2009/10.
         livro.abas["Produtividade"].celulas[5][1]="200.9"
+        regs=self.ler(livro=livro)
+        x=[z for z in regs if z["indicador"]=="PRODUTIVIDADE" and
+           z["regiao_uf"]=="MT" and z["safra"]=="1980/1981"]
+        self.assertEqual(x[0]["rotulo_coluna_original"],"200.9")
+        self.assertTrue(x[0]["rotulo_coluna_inferido"])
+
+    def test_aba_area_corrompida_continua_bloqueada(self):
+        livro=LivroFalso()
+        livro.abas["Área"].celulas[5][1]="200.9"
         with self.assertRaises(ErroConab):
             self.ler(livro=livro)
 
