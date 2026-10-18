@@ -8,9 +8,11 @@ import hashlib
 import io
 import json
 import re
+from datetime import datetime, timezone
 from urllib.parse import urlparse
 from urllib.request import urlopen, Request
 from nivon.conab_catalogo import descobrir_planilhas, PAGINAS
+from nivon.conab_series import normalizar_livro, conferir_total_milho
 
 MAX_HTML=4_000_000
 MAX_XLS=5_000_000
@@ -49,6 +51,7 @@ def inspectar_xls(data: bytes)->dict:
 
 def executar():
     resultados=[]
+    todas=[]
     for produto in ("SOJA","MILHO"):
         html,url,_=baixar(PAGINAS[produto],MAX_HTML)
         planilhas=descobrir_planilhas(html.decode("utf-8",errors="replace"),produto)
@@ -63,18 +66,43 @@ def executar():
             for candidato in candidatos:
                 try:
                     conteudo,url_final,mime=baixar(candidato,MAX_XLS)
-                    resumo=inspectar_xls(conteudo)
+                    sha=hashlib.sha256(conteudo).hexdigest()
+                    import xlrd
+                    livro=xlrd.open_workbook(file_contents=conteudo,on_demand=True)
+                    normalizados=normalizar_livro(
+                        livro,p["arquivo"],sha256=sha,
+                        capturado_em=datetime.now(timezone.utc).isoformat()
+                    )
+                    todas.extend(normalizados)
+                    safra_final=max(z["safra"] for z in normalizados)
+                    finais=[
+                        {"uf":x["regiao_uf"],"indicador":x["indicador"],
+                         "valor":x["valor"],"unidade":x["unidade"]}
+                        for x in normalizados
+                        if x["safra"]==safra_final and x["regiao_uf"] in ("BR","MT")
+                    ]
+                    resumo={"abas":[{"nome":aba.name,"linhas":aba.nrows,
+                                     "colunas":aba.ncols}
+                                     for aba in livro.sheets()],
+                            "total_observacoes_extraidas":len(normalizados),
+                            "ultimo_ano_safra":safra_final,"indicadores_finais":finais}
                     resumo.update({"produto":produto,"arquivo":p["arquivo"],
                                   "url":url_final,"bytes":len(conteudo),
-                                  "sha256":hashlib.sha256(conteudo).hexdigest(),
-                                  "mime":mime})
+                                  "sha256":sha,"mime":mime})
                     break
                 except Exception as exc:
                     erros.append({"tipo":type(exc).__name__,"url":candidato})
             if resumo is None:
                 resumo={"produto":produto,"arquivo":p["arquivo"],"estado":"NAO_ACESSIVEL","tentativas":erros}
             resultados.append(resumo)
-    return {"fonte":"CONAB","finalidade":"INSPECAO_LAYOUT_NAO_SERIE_HOMOLOGADA","planilhas":resultados}
+    conciliacao=conferir_total_milho(todas)
+    erros=[x for x in conciliacao if x["status"]=="DIVERGENTE"]
+    return {"fonte":"CONAB","finalidade":"VALIDACAO_EXTRAÇÃO_SEM_REDISTRIBUIÇÃO",
+            "planilhas":resultados,"linhas_normalizadas":len(todas),
+            "conciliacao_milho":{"checagens":len(conciliacao),
+                                 "divergencias":len(erros),
+                                 "amostra_divergencias":erros[:5],
+                                 "sem_parcela":sum(x["status"]=="NAO_COMPARAVEL_PARCELA_AUSENTE" for x in conciliacao)}}
 
 if __name__=="__main__":
     print(json.dumps(executar(),ensure_ascii=False,indent=2))
