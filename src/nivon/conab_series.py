@@ -69,7 +69,15 @@ def normalizar_livro(livro, nome_arquivo: str, *, sha256: str, capturado_em: str
             try:
                 ano_coluna=safra_normalizada(str(raw))
             except ErroConab as exc:
-                raise ErroConab(f"{nome} coluna {col+1}, rotulo={str(raw)[:40]!r}: {exc}") from exc
+                # CONAB 15/10/2026: célula Produtividade!AI6 tem rótulo
+                # corrompido "200.9", enquanto Área!AI6 guarda safra válida.
+                # Inferir SOMENTE esse defeito documentado, guardando original.
+                if (nome=="Produtividade" and str(raw)=="200.9" and
+                    safras_esperadas is not None and col-1 < len(safras_esperadas) and
+                    safras_esperadas[col-1]=="2009/2010"):
+                    ano_coluna=safras_esperadas[col-1]
+                else:
+                    raise ErroConab(f"{nome} coluna {col+1}, rotulo={str(raw)[:40]!r}: {exc}") from exc
             safras.append((col,ano_coluna,str(raw)))
         if len(safras)<20 or len({s for _,s,_ in safras})!=len(safras):
             raise ErroConab("safras históricas insuficientes ou repetidas")
@@ -96,6 +104,7 @@ def normalizar_livro(livro, nome_arquivo: str, *, sha256: str, capturado_em: str
                     "origem_sha256":sha256,"coletado_em":capturado_em,
                     "classificacao":("PROJETADO_CONAB" if any(p in rotulo_original.casefold() for p in ("previsão","estimativa","projeção")) else "INFORMADO_CONAB_NAO_CERTIFICA_REALIZADO"),
                     "rotulo_coluna_original":rotulo_original,
+                    "rotulo_coluna_inferido": (rotulo_original=="200.9"),
                     "celula":{"linha":row+1,"coluna":col+1,"aba":nome},
                 })
         if "MT" not in regioes or "BR" not in regioes:
