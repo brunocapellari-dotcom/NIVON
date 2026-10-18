@@ -13,6 +13,7 @@ from urllib.parse import urlparse
 from urllib.request import urlopen, Request
 from nivon.conab_catalogo import descobrir_planilhas, PAGINAS
 from nivon.conab_series import normalizar_livro, conferir_total_milho
+from nivon.conab_store import abrir_series, salvar_edicao, consulta_na_data
 
 MAX_HTML=4_000_000
 MAX_XLS=5_000_000
@@ -52,6 +53,8 @@ def inspectar_xls(data: bytes)->dict:
 def executar():
     resultados=[]
     todas=[]
+    edicoes=[]
+    db=abrir_series(":memory:")
     for produto in ("SOJA","MILHO"):
         html,url,_=baixar(PAGINAS[produto],MAX_HTML)
         planilhas=descobrir_planilhas(html.decode("utf-8",errors="replace"),produto)
@@ -74,6 +77,7 @@ def executar():
                         capturado_em=datetime.now(timezone.utc).isoformat()
                     )
                     todas.extend(normalizados)
+                    edicoes.append(salvar_edicao(db,normalizados))
                     safra_final=max(z["safra"] for z in normalizados)
                     finais=[
                         {"uf":x["regiao_uf"],"indicador":x["indicador"],
@@ -99,7 +103,11 @@ def executar():
         raise RuntimeError("AQUISICAO_CONAB_NAO_HOMOLOGADA: "+json.dumps(resultados,ensure_ascii=False)[:3800])
     conciliacao=conferir_total_milho(todas)
     erros=[x for x in conciliacao if x["status"]=="DIVERGENTE"]
+    armazenados=db.execute("SELECT count(*) FROM conab_observacoes").fetchone()[0]
+    if armazenados!=len(todas) or len(edicoes)!=5:
+        raise RuntimeError("CONAB_SQLITE_INCONSISTENTE")
     return {"fonte":"CONAB","finalidade":"VALIDACAO_EXTRAÇÃO_SEM_REDISTRIBUIÇÃO",
+            "sqlite_temporario_validado":{"edicoes":len(edicoes),"observacoes":armazenados},
             "planilhas":resultados,"linhas_normalizadas":len(todas),
             "conciliacao_milho":{"checagens":len(conciliacao),
                                  "divergencias":len(erros),
