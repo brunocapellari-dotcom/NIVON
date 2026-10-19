@@ -57,6 +57,15 @@ class LayoutArmazens:
             raise ErroArmazens("colunas de significados diferentes repetidas")
 
 
+# Cabeçalho público observado em amostra 19/10/2026; não atesta grão total.
+CABECALHO_SICARM_V1 = (
+    "identificacao_armazem", "dsc_especie_armazem", "dsc_tipo_armazem",
+    "dsc_tipo_entidade", "dsc_tipo_pessoa", "nom_municipio", "cod_ibge", "uf",
+    "qtd_capacidade_estatica(t)", "qtd_capacidade_expedicao(t)",
+    "qtd_capacidade_recepcao(t)", "latitude", "longitude",
+    "nome_armazenador", "endereco", "email",
+)
+
 # Layout confirmado apenas por INSPEÇÃO DO CABEÇALHO (não homologação do dataset).
 LAYOUT_CONAB_SICARM_HEADER_V1 = LayoutArmazens(
     separador=";", codificacao="cp1252",
@@ -183,6 +192,8 @@ def agregar_capacidade_local(path: str | Path, layout: LayoutArmazens, *,
         with p.open("r", encoding=layout.codificacao, errors="strict", newline="") as stream:
             reader = csv.DictReader(stream, delimiter=layout.separador)
             header = reader.fieldnames or []
+            if layout == LAYOUT_CONAB_SICARM_HEADER_V1 and tuple(header) != CABECALHO_SICARM_V1:
+                raise ErroArmazens("SICARM: 16 colunas oficiais divergentes, interromper")
             requer = [layout.coluna_id_armazem,layout.coluna_uf,layout.coluna_municipio,
                       layout.coluna_capacidade]
             if layout.coluna_codigo_ibge:
@@ -207,8 +218,8 @@ def agregar_capacidade_local(path: str | Path, layout: LayoutArmazens, *,
                 codigo = municipios.get(chave)
                 informado = (linha[layout.coluna_codigo_ibge].strip()
                              if layout.coluna_codigo_ibge else None)
-                if informado and not re.fullmatch(r"\d{7}", informado):
-                    raise ErroArmazens("código IBGE inválido")
+                if layout.coluna_codigo_ibge and not re.fullmatch(r"\d{7}", informado or ""):
+                    raise ErroArmazens("código IBGE nulo ou inválido na fonte declarada")
                 if municipios_ibge is not None and (codigo is None or (informado and informado != codigo)):
                     raise ErroArmazens("código/município divergente da base IBGE")
                 if municipios_ibge is None:

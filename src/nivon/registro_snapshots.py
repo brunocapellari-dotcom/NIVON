@@ -18,6 +18,10 @@ _SHA = re.compile(r"[0-9a-f]{64}\Z")
 _IDENT = re.compile(r"[A-Z][A-Z0-9_]{2,90}\Z")
 _COMPETENCIA = re.compile(r"[A-Za-z0-9][A-Za-z0-9/_-]{0,32}\Z")
 _TIPOS = {"SINTETICO", "REAL_AUTORIZADO"}
+# A ampliação de tamanho aplica-se APENAS ao snapshot TXT CONAB SICARM.
+# Metadados persistidos, nunca os bytes ou registros individuais.
+_LIMITE_PADRAO = 20_000_000
+_LIMITE_POR_DATASET = {"CONAB_ARMAZENS_CAPACIDADE": 120_000_000}
 
 
 def _instante(txt: str) -> str:
@@ -92,7 +96,7 @@ def registrar_snapshot(db: sqlite3.Connection, catalogo: dict, *,
         raise ErroSnapshot("dataset fora do catálogo ou repetido")
     fonte_id = match[0]["source_id"]
     if (not isinstance(sha256, str) or not _SHA.fullmatch(sha256)
-            or type(tamanho) is not int or not 0 < tamanho <= 20_000_000):
+            or type(tamanho) is not int or not 0 < tamanho <= _LIMITE_POR_DATASET.get(dataset_id, _LIMITE_PADRAO)):
         raise ErroSnapshot("hash/tamanho inválido")
     if mime not in {"text/csv", "text/plain", "application/json", "application/pdf",
                     "application/vnd.ms-excel"}:
