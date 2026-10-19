@@ -75,3 +75,18 @@ A aprovação metodológica externa não valida o software automaticamente.
 
 - Testes do histórico SQLite: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39039872966
 - Testes de identificação das séries CONAB: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39039983616
+
+
+## Catálogo Mestre v1 — 19/10/2026 (atualização transversal)
+
+O backlog de coleta passou a ser governado por `config/fontes_nivon_master.v1.json` e `config/matriz_produtos_indicadores.v1.json`. Consulte `docs/ARQUITETURA_COLETORES_API.md` para o contrato de fonte, temporalidade e gates de acesso.
+
+- 57 fontes, 78 datasets, 16 frentes, 120 indicadores, 104 ligações; 10 portos nacionais no catálogo.
+- Prioridade P0: 22 datasets; P1: 37; P2: 19.
+- Maturidade: 2 com snapshot real comprovado (MAPA ração e CONAB soja/milho), 3 com código de leitura (ANTT ferroviária, ANP diesel e MDIC exportação NCM), 30 apenas descobertos, 31 candidatos e 12 bloqueados por direitos.
+- As referências a algodão, trigo e sorgo da CONAB ficam em `CONAB_GRAOS_OUTRAS_CULTURAS`, sem herdar o estágio testado do parser de soja/milho.
+- Novo adaptador `src/nivon/mdic_exportacao.py` lê exportação do Comex Stat por NCM/UF/país/via/URF; ainda falta rodar com arquivo oficial autorizado. Município/SH4 continua outro dataset.
+- Todos os datasets do registro têm `enabled=false`, `collection_authorized=false`, `commercial_redistribution_authorized=false`.
+- Validação estática de integridade do inventário concluída sem falhas em 19/10/2026; **CI dos novos módulos ainda pendente enquanto GitHub Actions permanecer em fila**.
+
+**Próximos incrementos do P0:** homologar dados reais MDIC/BCB e cópia histórica; source adapter ANTT MDF-e por exportação oficial autorizada; ANTAQ movimento realizado e parsers portuários em separado; fechar ABIOVE/Sindirações com direitos por operação; integrar fatos ao balanço e ao briefing NIVON. Não tratar uma conta conectada, um PDF publicado ou um painel público como API autorizada.
