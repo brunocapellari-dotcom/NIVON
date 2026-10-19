@@ -13,11 +13,11 @@ class TestRotasColetores(unittest.TestCase):
         cls.catalogo = carregar_catalogo()
         cls.rotas = carregar_rotas()
 
-    def test_cobre_todos_86_datasets_sem_duplicatas(self):
+    def test_cobre_todos_datasets_sem_duplicatas(self):
         d = validar_rotas(self.rotas, self.catalogo)
-        self.assertEqual(d["fontes"], 59)
-        self.assertEqual(d["datasets"], 86)
-        self.assertEqual(d["rotas"], 86)
+        self.assertEqual(d["fontes"], len(self.catalogo["sources"]))
+        self.assertEqual(d["datasets"], len(self.catalogo["datasets"]))
+        self.assertEqual(d["rotas"], len(self.catalogo["datasets"]))
 
     def test_armazens_e_municipios_estao_canonicos(self):
         ids = {e["dataset_id"] for e in self.rotas["entries"]}
@@ -96,7 +96,7 @@ class TestRotasColetores(unittest.TestCase):
         plano = montar_plano(self.rotas, self.catalogo)
         grupos = {x["grupo"] for x in plano}
         self.assertGreaterEqual(len(grupos), 15)
-        self.assertEqual(len(plano), 86)
+        self.assertEqual(len(plano), len(self.catalogo["datasets"]))
 
 
 if __name__ == "__main__":

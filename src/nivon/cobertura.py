@@ -36,7 +36,7 @@ def validar_matriz(matriz: dict, catalogo: dict) -> dict:
     required={"SOJA","MILHO","ALGODAO","BOI","BEZERRO","ACUCAR",
               "TRIGO","SORGO","FERTILIZANTES","DIESEL","ETANOL_DDG",
               "LOGISTICA_INTERMODAL","MARITIMO","CLIMA_HIDRO",
-              "MERCADO_MACRO","BRIEFING_DIARIO"}
+              "MERCADO_MACRO","BRIEFING_DIARIO","CANA","GERGELIM","FRANGO","SUINO"}
     if ids!=required:
         raise ErroCatalogo("frentes do NIVON faltando ou desconhecidas")
     return {"frentes":len(setores),"indicadores":total,

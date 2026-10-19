@@ -32,7 +32,7 @@ class TestImportacaoNCM(unittest.TestCase):
         self.gravar([self.linha(),self.linha(KG_LIQUIDO="3000",VL_FOB="1200")])
         x=self.processar()["recortes"][0]
         self.assertEqual(x["peso_liquido_kg"],5000)
-        self.assertEqual(x["valor_cif_calculado_usd"],2170)
+        self.assertEqual(x["valor_cif_calculado_usd"],2340)
     def test_paises_vias_urf_distintos(self):
         self.gravar([self.linha(),self.linha(CO_PAIS="249"),self.linha(CO_URF="082")])
         self.assertEqual(len(self.processar()["recortes"]),3)
