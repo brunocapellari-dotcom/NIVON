@@ -4,6 +4,14 @@ Plataforma independente de inteligência agrícola, agroindustrial e logística,
 
 **Estado: desenvolvimento iniciado; NÃO HOMOLOGADO para uso operacional.** Auditorias de 16/10/2026: **GO COM CONDIÇÕES para implementação**, não para go-live.
 
+## Estado consolidado dos motores e coletores — 19/10/2026
+
+No PR #1 existem 28 frentes, 267 indicadores planejados, 131 datasets de 96 fontes e 45 cadastros marítimos. Os registros de motores, novas normalizações e previsões usam funções offline sob auditoria; **nenhum dos 131 datasets está autorizado para coleta operacional agendada e nenhum modelo preditivo está homologado para publicação**. Todos os 45 line-ups são cadastros potenciais, não fontes reais de programação ativadas.
+
+Foram reconciliados módulos anteriormente mantidos nas branches `feat/integracoes-lineup-nacional-20261019` e `feat/agrobr-portos-motores-agentes-20261019` sem realizar merge. O modelo de dados canônico agora inclui o progresso semanal de plantio e colheita da CONAB, petróleo/diesel PPI da ANP, fertilizantes, previsão sazonal, análise editorial, motor de briefing composto, agentes read-only, adapters de portos e envio WhatsApp com opt-in/credenciais (sem acionamento automático). Bibliotecas agrobr/StatsForecast/PDF/openpyxl permanecem opcionais.
+
+Execute `PYTHONPATH=src python -m nivon.auditoria_prontidao --resumo` para conferir os gates do catálogo. O CI valida o diagnóstico e reprova inconsistências no mapa nacional, nas 28 frentes, nas rotas ou na segurança de execução. Passar no CI **não** substitui homologação de direitos, dados reais, previsão estatística, armazenamento em nuvem e go-live.
+
 ## Decisões permanentes
 
 - GitHub público, sem credenciais, informações privadas ou séries restritas. Os CSVs versionados em `tests/fixtures` são **inteiramente sintéticos**.

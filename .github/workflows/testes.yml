@@ -38,6 +38,8 @@ jobs:
           python -m nivon.rotas_coleta --resumo
           python -m nivon.rotas_coleta --prioridade P0
           python -m nivon.cobertura
+          python -m nivon.registro_motores
+          python -m nivon.auditoria_prontidao --resumo
           python -m nivon.orquestrador_fontes --prioridade P0 --resumo
       - name: Demonstracao deterministica
         env:
