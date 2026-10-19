@@ -106,9 +106,10 @@ def validar_rotas(rotas: dict, catalogo: dict) -> dict:
             homologados = {
                 "MAPA": {"dados.agricultura.gov.br"},
                 "BCB": {"olinda.bcb.gov.br", "dadosabertos.bcb.gov.br"},
-                "CONAB": {"www.gov.br", "gov.br", "conab.gov.br", "www.conab.gov.br"},
+                "CONAB": {"www.gov.br", "gov.br", "conab.gov.br", "www.conab.gov.br", "portaldeinformacoes.conab.gov.br"},
                 "ANP": {"www.gov.br", "gov.br"},
                 "MDIC": {"www.gov.br", "gov.br"},
+                "IBGE": {"servicodados.ibge.gov.br"},
             }
             if parsed.hostname != fonte_host and parsed.hostname not in homologados.get(d["source_id"], set()):
                 raise ErroRota(f"{id_}: host não demonstrado como domínio oficial da fonte")
