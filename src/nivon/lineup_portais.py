@@ -29,6 +29,7 @@ SECOES = (
     ("PROGRAMACAO DE NAVIOS - ESPERADOS", "ESPERADO"),
     ("PROGRAMACAO DE NAVIOS - DESPACHADOS", "DESPACHADO"),
     ("PROGRAMACAO DE NAVIOS - FUNDEADOS", "AO_LARGO"),
+    ("PROGRAMACAO DE NAVIOS", "PROGRAMADO"),
 )
 MAPA = {
     "NAVIO":"navio", "IMO":"imo", "DUV":"duv",
@@ -82,6 +83,14 @@ class _TabelasPorSecao(HTMLParser):
             self.celula.append(data)
         elif self.em_heading:
             self.texto_heading.append(data)
+        elif self.tabela is None:
+            # Páginas legadas CODEBA às vezes usam <strong> / <p> em vez de <h3>.
+            heading = _norm(data)
+            if 8 < len(heading) < 110:
+                for nome, status in SECOES:
+                    if heading.startswith(_norm(nome)):
+                        self.secao = status
+                        break
 
     def handle_endtag(self, tag):
         if tag in ("th", "td") and self.celula is not None:
