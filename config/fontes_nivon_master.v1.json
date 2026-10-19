@@ -1,0 +1,1943 @@
+{
+  "schema_version": "1.0.0",
+  "project": "NIVON",
+  "updated_on": "2026-10-19",
+  "default_policy": "DENY_ALL_SCHEDULED_FETCHES_UNTIL_RIGHTS_AND_PARSER_HOMOLOGATED",
+  "go_live_status": "NOT_READY",
+  "dates_required": [
+    "competencia",
+    "referencia",
+    "publicacao",
+    "coleta"
+  ],
+  "observation_kinds": [
+    "OBSERVADO",
+    "INFORMADO",
+    "ESTIMADO",
+    "PROJETADO",
+    "INFERIDO",
+    "SOURCE_LAG"
+  ],
+  "source_statuses": [
+    "REAL_SNAPSHOT_TESTED",
+    "CODE_PRESENT",
+    "DISCOVERY_ONLY",
+    "CANDIDATE",
+    "BLOCKED_RIGHTS"
+  ],
+  "source_access_note": "Official portals are discovery references, not a statement that an API or recurring collection is authorized. Market data and proprietary commentary are blocked by default.",
+  "sources": [
+    {
+      "id": "CONAB",
+      "provider": "CONAB",
+      "official_url": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras",
+      "access": "PUBLIC_FILES",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "IBGE",
+      "provider": "IBGE/SIDRA",
+      "official_url": "https://sidra.ibge.gov.br/",
+      "access": "PUBLIC_API",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "IMEA",
+      "provider": "IMEA",
+      "official_url": "https://www.imea.com.br/",
+      "access": "PUBLISHED_AND_COMMERCIAL",
+      "rights": "RESTRICTED",
+      "notes": "Verificar direitos de coleta e de redistribuição por indicador"
+    },
+    {
+      "id": "USDA",
+      "provider": "USDA/FAS/NASS/ERS",
+      "official_url": "https://apps.fas.usda.gov/psdonline/",
+      "access": "PUBLIC_PORTAL_API_MIXED",
+      "rights": "REVIEW",
+      "notes": "Parte das APIs requer chave gratuita e condições específicas"
+    },
+    {
+      "id": "MAPA",
+      "provider": "MAPA",
+      "official_url": "https://dados.agricultura.gov.br/dataset/sipeagro",
+      "access": "PUBLIC_CSV",
+      "rights": "ATTRIBUTION_REVIEW",
+      "notes": "Recurso aberto SIPEAGRO; separar dados pessoais e direito a redistribuição"
+    },
+    {
+      "id": "ABIOVE",
+      "provider": "ABIOVE",
+      "official_url": "https://abiove.org.br/",
+      "access": "PUBLISHED",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "SINDIRACOES",
+      "provider": "Sindirações",
+      "official_url": "https://sindiracoes.org.br/",
+      "access": "PUBLIC_REPORT",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "CEPEA",
+      "provider": "CEPEA/ESALQ",
+      "official_url": "https://www.cepea.esalq.usp.br/br",
+      "access": "COMMERCIAL_AND_PUBLISHED",
+      "rights": "RESTRICTED",
+      "notes": ""
+    },
+    {
+      "id": "B3",
+      "provider": "B3",
+      "official_url": "https://www.b3.com.br/",
+      "access": "MARKET_DATA_LICENSED",
+      "rights": "RESTRICTED",
+      "notes": ""
+    },
+    {
+      "id": "CME",
+      "provider": "CME Group",
+      "official_url": "https://www.cmegroup.com/",
+      "access": "MARKET_DATA_LICENSED",
+      "rights": "RESTRICTED",
+      "notes": ""
+    },
+    {
+      "id": "ICE",
+      "provider": "ICE",
+      "official_url": "https://www.ice.com/",
+      "access": "MARKET_DATA_LICENSED",
+      "rights": "RESTRICTED",
+      "notes": ""
+    },
+    {
+      "id": "SCOT",
+      "provider": "Scot Consultoria",
+      "official_url": "https://www.scotconsultoria.com.br/",
+      "access": "COMMERCIAL",
+      "rights": "RESTRICTED",
+      "notes": ""
+    },
+    {
+      "id": "MDIC",
+      "provider": "MDIC/Comex Stat",
+      "official_url": "https://comexstat.mdic.gov.br/",
+      "access": "PUBLIC_BULK",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "UNCOMTRADE",
+      "provider": "UN Comtrade",
+      "official_url": "https://comtradeapi.un.org/",
+      "access": "PUBLIC_API_LIMITED",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "ANTT",
+      "provider": "ANTT",
+      "official_url": "https://www.gov.br/antt/pt-br/assuntos/cargas/dadostrc/movimentacao-de-cargas",
+      "access": "PUBLIC_DASHBOARD",
+      "rights": "REVIEW",
+      "notes": "Power BI de consulta não equivale a API autorizada"
+    },
+    {
+      "id": "ANTT_SIADE",
+      "provider": "ANTT - Ferroviário",
+      "official_url": "https://dados.antt.gov.br/",
+      "access": "PUBLIC_DOWNLOADS",
+      "rights": "REVIEW",
+      "notes": "Diferenciar fluxo ferroviário de MDF-e rodoviário"
+    },
+    {
+      "id": "ANTAQ",
+      "provider": "ANTAQ",
+      "official_url": "https://www.gov.br/antaq/pt-br/central-de-conteudos/publicacoes-da-antaq/estatisticos-aquaviarios",
+      "access": "PUBLIC_DATA",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "ONTL",
+      "provider": "Infra SA/ONTL",
+      "official_url": "https://ontl.infrasa.gov.br/",
+      "access": "PUBLIC_DATA",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "DNIT",
+      "provider": "DNIT",
+      "official_url": "https://www.gov.br/dnit/pt-br",
+      "access": "PUBLIC_DATA",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "ANP",
+      "provider": "ANP",
+      "official_url": "https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/dados-abertos",
+      "access": "PUBLIC_CSV",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "BCB",
+      "provider": "Banco Central do Brasil",
+      "official_url": "https://dadosabertos.bcb.gov.br/",
+      "access": "PUBLIC_API",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "EIA",
+      "provider": "US EIA",
+      "official_url": "https://www.eia.gov/opendata/",
+      "access": "API_WITH_KEY",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "WB",
+      "provider": "World Bank Pink Sheet",
+      "official_url": "https://www.worldbank.org/en/research/commodity-markets",
+      "access": "PUBLIC_FILES",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "ANA",
+      "provider": "ANA/SNIRH",
+      "official_url": "https://www.gov.br/ana/pt-br/assuntos/gestao-das-aguas/politica-nacional-de-recursos-hidricos/sistema-de-informacoes-sobre-recursos-hidricos",
+      "access": "PUBLIC_API_PORTAL",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "INMET",
+      "provider": "INMET",
+      "official_url": "https://portal.inmet.gov.br/",
+      "access": "PUBLIC_FILES_API",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "CPTEC",
+      "provider": "INPE/CPTEC",
+      "official_url": "https://www.cptec.inpe.br/",
+      "access": "PUBLIC_PRODUCTS",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "NOAA",
+      "provider": "NOAA/NCEP",
+      "official_url": "https://www.noaa.gov/",
+      "access": "PUBLIC_API_PRODUCTS",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "ECMWF",
+      "provider": "ECMWF",
+      "official_url": "https://www.ecmwf.int/",
+      "access": "MIXED_LICENSE",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "MAPBIOMAS",
+      "provider": "MapBiomas",
+      "official_url": "https://brasil.mapbiomas.org/",
+      "access": "PUBLIC_DATA",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "ZARC",
+      "provider": "MAPA/ZARC",
+      "official_url": "https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico",
+      "access": "PUBLIC_DATA",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "ANDA",
+      "provider": "ANDA",
+      "official_url": "https://anda.org.br/",
+      "access": "PUBLISHED_REPORT",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "UNICA",
+      "provider": "UNICA",
+      "official_url": "https://unica.com.br/",
+      "access": "PUBLISHED_REPORT",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "ONS",
+      "provider": "ONS",
+      "official_url": "https://dados.ons.org.br/",
+      "access": "PUBLIC_FILES",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "ANEEL",
+      "provider": "ANEEL/SIGA",
+      "official_url": "https://dadosabertos.aneel.gov.br/",
+      "access": "PUBLIC_DATA",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "FAO",
+      "provider": "FAOSTAT/AMIS",
+      "official_url": "https://www.fao.org/faostat/en/",
+      "access": "PUBLIC_DOWNLOAD",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "PORTO_SANTOS",
+      "provider": "Autoridade Portuária de Santos",
+      "official_url": "https://www.portodesantos.com.br/informacoes-operacionais/operacoes-portuarias/navegacao-e-movimento-de-navios/atracacoes-programadas/",
+      "access": "PUBLIC_HTML",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "PORTO_PARANAGUA",
+      "provider": "Portos do Paraná",
+      "official_url": "https://www.portosdoparana.pr.gov.br/Operacional/Pagina/Atas-do-Corredor-de-Exportacao",
+      "access": "PUBLIC_PDF_HTML",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "PORTO_SFS",
+      "provider": "Porto de São Francisco do Sul",
+      "official_url": "https://www.portosaofrancisco.com.br/public/uploads/pdfs/lineup.pdf",
+      "access": "PUBLIC_PDF",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "PORTO_RIOGRANDE",
+      "provider": "Portos RS/Rio Grande",
+      "official_url": "https://www.portosrs.com.br/site/transparencia/atas_programacao_navio",
+      "access": "PUBLIC_HTML_PDF",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "PORTO_TUBARAO",
+      "provider": "Vale/Terminal de Tubarão",
+      "official_url": "https://www.vale.com/",
+      "access": "RESTRICTED_TERMINAL",
+      "rights": "RESTRICTED",
+      "notes": "Line-up de carga de Tubarão pode exigir acesso GPV autorizado"
+    },
+    {
+      "id": "PORTO_ILHEUS",
+      "provider": "CODEBA/Ilhéus",
+      "official_url": "https://www.codeba.gov.br/",
+      "access": "PUBLIC_PORTAL",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "PORTO_SALVADOR",
+      "provider": "CODEBA/Salvador",
+      "official_url": "https://www.codeba.gov.br/",
+      "access": "PUBLIC_PORTAL",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "PORTO_ITAQUI",
+      "provider": "EMAP/Itaqui",
+      "official_url": "https://www.portodoitaqui.com.br/porto-agora/navios/esperados",
+      "access": "PUBLIC_HTML",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "PORTO_VILA_CONDE",
+      "provider": "CDP/Vila do Conde",
+      "official_url": "https://www.cdp.com.br/programacao-de-navio-do-porto-de-vila-do-conde/",
+      "access": "PUBLIC_HTML",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "PORTO_SANTAREM",
+      "provider": "CDP/Santarém",
+      "official_url": "https://www.cdp.com.br/programacao-de-navios-do-porto-de-santarem/",
+      "access": "PUBLIC_HTML",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "ROTTERDAM",
+      "provider": "Port of Rotterdam",
+      "official_url": "https://www.portofrotterdam.com/",
+      "access": "PUBLIC_AND_ACCOUNT_API",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "SINGAPORE",
+      "provider": "MPA Singapore",
+      "official_url": "https://www.mpa.gov.sg/",
+      "access": "PUBLIC_STATISTICS",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "AIS",
+      "provider": "AISStream/fornecedor AIS autorizado",
+      "official_url": "https://aisstream.io/",
+      "access": "API_KEY_STREAM",
+      "rights": "REVIEW",
+      "notes": "AIS: sem prova de carga, produto, contratante ou volume embarcado"
+    },
+    {
+      "id": "PORTO_USA",
+      "provider": "USACE Navigation Data Center",
+      "official_url": "https://www.iwr.usace.army.mil/",
+      "access": "PUBLIC_STATISTICS",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "REUTERS",
+      "provider": "Reuters",
+      "official_url": "https://www.reuters.com/markets/commodities/",
+      "access": "NEWS_LICENSED",
+      "rights": "RESTRICTED",
+      "notes": ""
+    },
+    {
+      "id": "NOTAGRO",
+      "provider": "Notícias Agrícolas",
+      "official_url": "https://www.noticiasagricolas.com.br/",
+      "access": "PUBLIC_NEWS",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "CLIMATEMPO",
+      "provider": "Agroclima/Climatempo",
+      "official_url": "https://agroclima.climatempo.com.br/",
+      "access": "NEWS_MODELS_MIXED",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "GOV",
+      "provider": "Portais e atos oficiais diversos",
+      "official_url": "https://www.gov.br/",
+      "access": "PUBLIC_NEWS",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "IMF",
+      "provider": "IMF",
+      "official_url": "https://www.imf.org/",
+      "access": "PUBLIC_MACRO",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "CVM",
+      "provider": "CVM",
+      "official_url": "https://dados.cvm.gov.br/",
+      "access": "PUBLIC_DATA",
+      "rights": "REVIEW",
+      "notes": ""
+    },
+    {
+      "id": "SENATRAN",
+      "provider": "SENATRAN",
+      "official_url": "https://www.gov.br/transportes/pt-br/assuntos/transito",
+      "access": "PUBLIC_DATA",
+      "rights": "REVIEW",
+      "notes": ""
+    }
+  ],
+  "datasets": [
+    {
+      "id": "CONAB_GRAOS_SERIES",
+      "source_id": "CONAB",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "SORGO"
+      ],
+      "topic": "area_producao_produtividade_por_uf_safra",
+      "mode": "XLS",
+      "cadence": "MONTHLY",
+      "stage": "REAL_SNAPSHOT_TESTED",
+      "priority": "P0",
+      "existing_module": "conab_series.py",
+      "notes": "Soja/milho 5 planilhas testadas; demais culturas aguardam parser/layout",
+      "enabled": false
+    },
+    {
+      "id": "CONAB_GRAOS_LEVANTAMENTOS",
+      "source_id": "CONAB",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "SORGO"
+      ],
+      "topic": "estimativas_plantio_colheita_estoque_comercializacao",
+      "mode": "PDF_XLS",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "CONAB_BALANCOS",
+      "source_id": "CONAB",
+      "group": "BALANCO",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO",
+        "SORGO",
+        "ALGODAO"
+      ],
+      "topic": "oferta_demanda_estoques",
+      "mode": "XLS_PDF",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "CONAB_CANA",
+      "source_id": "CONAB",
+      "group": "SAFRA",
+      "products": [
+        "ACUCAR",
+        "ETANOL"
+      ],
+      "topic": "safra_cana_acucar_etanol",
+      "mode": "PDF_XLS",
+      "cadence": "QUADRIMESTRAL",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "CONAB_PRECOS",
+      "source_id": "CONAB",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "SORGO",
+        "BOI"
+      ],
+      "topic": "precos_produtor_serie",
+      "mode": "PUBLIC_FILE",
+      "cadence": "WEEKLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "IBGE_PAM",
+      "source_id": "IBGE",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "SORGO",
+        "ACUCAR"
+      ],
+      "topic": "area_producao_produtividade_municipal",
+      "mode": "API_SIDRA",
+      "cadence": "ANNUAL",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "IBGE_LSPA",
+      "source_id": "IBGE",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "SORGO"
+      ],
+      "topic": "estimativas_mensais_producao",
+      "mode": "API_SIDRA",
+      "cadence": "MONTHLY",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "IMEA_MT_SAFRA",
+      "source_id": "IMEA",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "BOI"
+      ],
+      "topic": "area_producao_progresso_mt",
+      "mode": "PUBLISHED",
+      "cadence": "WEEKLY",
+      "stage": "BLOCKED_RIGHTS",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "USDA_PSD",
+      "source_id": "USDA",
+      "group": "BALANCO",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "SORGO",
+        "ACUCAR"
+      ],
+      "topic": "oferta_demanda_global_por_pais",
+      "mode": "API_PSD",
+      "cadence": "MONTHLY",
+      "stage": "CANDIDATE",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "USDA_NASS",
+      "source_id": "USDA",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO"
+      ],
+      "topic": "crop_progress_planted_harvested",
+      "mode": "API_DOWNLOAD",
+      "cadence": "WEEKLY",
+      "stage": "CANDIDATE",
+      "priority": "P2",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "FAO_AMIS",
+      "source_id": "FAO",
+      "group": "BALANCO",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "balanco_e_analise_internacional",
+      "mode": "DOWNLOAD",
+      "cadence": "MONTHLY",
+      "stage": "CANDIDATE",
+      "priority": "P2",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "MAPBIOMAS_USO_SOLO",
+      "source_id": "MAPBIOMAS",
+      "group": "GEO",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "PECUARIA"
+      ],
+      "topic": "uso_solo_historico_area_agricola",
+      "mode": "GEODATA",
+      "cadence": "ANNUAL",
+      "stage": "CANDIDATE",
+      "priority": "P2",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "ZARC_JANELAS",
+      "source_id": "ZARC",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "SORGO"
+      ],
+      "topic": "risco_e_janelas_semeadura",
+      "mode": "DOWNLOAD",
+      "cadence": "SEASONAL",
+      "stage": "CANDIDATE",
+      "priority": "P2",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "MAPA_SIPEAGRO_RACAO",
+      "source_id": "MAPA",
+      "group": "INDUSTRIA",
+      "products": [
+        "MILHO",
+        "SOJA",
+        "PECUARIA"
+      ],
+      "topic": "fabricantes_ativos_por_municipio_nao_consumo",
+      "mode": "CSV",
+      "cadence": "WEEKLY",
+      "stage": "REAL_SNAPSHOT_TESTED",
+      "priority": "P0",
+      "existing_module": "resumir_sipeagro.py",
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "MAPA_SIPEAGRO_FERTILIZANTES",
+      "source_id": "MAPA",
+      "group": "FERTILIZANTES",
+      "products": [
+        "FERTILIZANTES"
+      ],
+      "topic": "estabelecimentos_e_produtos_cadastrados",
+      "mode": "CSV",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "ABIOVE_SOJA_ESMAGAMENTO",
+      "source_id": "ABIOVE",
+      "group": "INDUSTRIA",
+      "products": [
+        "SOJA",
+        "FARELO_SOJA",
+        "OLEO_SOJA"
+      ],
+      "topic": "esmagamento_mensal_produtos_soja",
+      "mode": "PDF_XLS",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "SINDIRACOES_RACOES",
+      "source_id": "SINDIRACOES",
+      "group": "INDUSTRIA",
+      "products": [
+        "MILHO",
+        "SOJA",
+        "PECUARIA"
+      ],
+      "topic": "producao_racoes_macroingredientes_aves_suinos",
+      "mode": "REPORT",
+      "cadence": "QUARTERLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "ETANOL_MILHO_ANP",
+      "source_id": "ANP",
+      "group": "INDUSTRIA",
+      "products": [
+        "MILHO",
+        "ETANOL",
+        "DDG"
+      ],
+      "topic": "etanol_por_materia_prima_uf_mes",
+      "mode": "CSV",
+      "cadence": "MONTHLY",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "UNICA_ACUCAR_ETANOL",
+      "source_id": "UNICA",
+      "group": "INDUSTRIA",
+      "products": [
+        "ACUCAR",
+        "ETANOL"
+      ],
+      "topic": "moagem_producao_mensal_mix_industrial",
+      "mode": "REPORT",
+      "cadence": "BIWEEKLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "CEPEA_COEFICIENTES_MILHO",
+      "source_id": "CEPEA",
+      "group": "INDUSTRIA",
+      "products": [
+        "MILHO",
+        "ETANOL",
+        "DDG"
+      ],
+      "topic": "parametros_margem_440l_331kg_20p4l",
+      "mode": "RESEARCH",
+      "cadence": "IRREGULAR",
+      "stage": "BLOCKED_RIGHTS",
+      "priority": "P1",
+      "existing_module": "motores.py",
+      "notes": "Referência de margem, não coeficiente físico universal",
+      "enabled": false
+    },
+    {
+      "id": "IBGE_PPM",
+      "source_id": "IBGE",
+      "group": "PECUARIA",
+      "products": [
+        "BOI",
+        "BEZERRO",
+        "PECUARIA"
+      ],
+      "topic": "rebanho_abate_bovinocultura",
+      "mode": "API_SIDRA",
+      "cadence": "ANNUAL",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "IBGE_ABATE",
+      "source_id": "IBGE",
+      "group": "PECUARIA",
+      "products": [
+        "BOI",
+        "BEZERRO",
+        "PECUARIA"
+      ],
+      "topic": "abate_bovino_suino_aves_trimestral",
+      "mode": "API_SIDRA",
+      "cadence": "QUARTERLY",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "CEPEA_BOI",
+      "source_id": "CEPEA",
+      "group": "PRECOS",
+      "products": [
+        "BOI",
+        "BEZERRO"
+      ],
+      "topic": "indicador_boi_gordo_bezerro",
+      "mode": "LICENSED_WEB",
+      "cadence": "DAILY",
+      "stage": "BLOCKED_RIGHTS",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "SCOT_PECUARIA",
+      "source_id": "SCOT",
+      "group": "PRECOS",
+      "products": [
+        "BOI",
+        "BEZERRO"
+      ],
+      "topic": "cotacoes_regiao_premios_mercado",
+      "mode": "LICENSED_WEB",
+      "cadence": "DAILY",
+      "stage": "BLOCKED_RIGHTS",
+      "priority": "P2",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "MDIC_COMEX_NCM",
+      "source_id": "MDIC",
+      "group": "COMEX",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "SORGO",
+        "BOI",
+        "ACUCAR",
+        "FERTILIZANTES",
+        "DIESEL",
+        "ETANOL"
+      ],
+      "topic": "importacao_exportacao_ncm_uf_municipio_pais_ton_preco",
+      "mode": "BULK_CSV",
+      "cadence": "MONTHLY",
+      "stage": "CANDIDATE",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "MDIC_COMEX_FERT",
+      "source_id": "MDIC",
+      "group": "FERTILIZANTES",
+      "products": [
+        "FERTILIZANTES"
+      ],
+      "topic": "importacoes_ureia_map_dap_kcl_ncm_pais_porto",
+      "mode": "BULK_CSV",
+      "cadence": "MONTHLY",
+      "stage": "CANDIDATE",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "UNCOMTRADE_GLOBAL",
+      "source_id": "UNCOMTRADE",
+      "group": "COMEX",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "ACUCAR",
+        "FERTILIZANTES",
+        "DIESEL"
+      ],
+      "topic": "fluxos_globais_mirror_trade",
+      "mode": "API",
+      "cadence": "MONTHLY",
+      "stage": "CANDIDATE",
+      "priority": "P2",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "USDA_EXPORT_SALES",
+      "source_id": "USDA",
+      "group": "COMEX",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO"
+      ],
+      "topic": "export_sales_inspections",
+      "mode": "API_DOWNLOAD",
+      "cadence": "WEEKLY",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "ANTT_MDFE_RODOVIARIO",
+      "source_id": "ANTT",
+      "group": "LOGISTICA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "FERTILIZANTES",
+        "DIESEL"
+      ],
+      "topic": "movimentacao_rodoviaria_origem_destino_ncm_amostral",
+      "mode": "DASHBOARD_EXPORT",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": "destinos.py",
+      "notes": "Export detalhado autorizado ainda não homologado",
+      "enabled": false
+    },
+    {
+      "id": "ANTT_SIADE_FERROVIA",
+      "source_id": "ANTT_SIADE",
+      "group": "LOGISTICA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "FERTILIZANTES",
+        "DIESEL",
+        "ACUCAR"
+      ],
+      "topic": "fluxos_estacoes_tu_tku_mensal",
+      "mode": "XLSX_CSV",
+      "cadence": "MONTHLY",
+      "stage": "CODE_PRESENT",
+      "priority": "P0",
+      "existing_module": "antt_ferrovia.py",
+      "notes": "Nunca inferir destino final a partir de estação",
+      "enabled": false
+    },
+    {
+      "id": "ANTT_RNTRC",
+      "source_id": "ANTT",
+      "group": "LOGISTICA",
+      "products": [
+        "LOGISTICA"
+      ],
+      "topic": "frota_transportadoras",
+      "mode": "PUBLIC_DOWNLOAD",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P2",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "ANTT_CIOT",
+      "source_id": "ANTT",
+      "group": "LOGISTICA",
+      "products": [
+        "LOGISTICA"
+      ],
+      "topic": "operacoes_rota_sem_prova_tonelada",
+      "mode": "CSV",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P2",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "ANTAQ_MOVIMENTACAO",
+      "source_id": "ANTAQ",
+      "group": "PORTOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "ACUCAR",
+        "FERTILIZANTES",
+        "DIESEL"
+      ],
+      "topic": "movimentacao_realizada_por_porto_carga_mes",
+      "mode": "CSV_PORTAL",
+      "cadence": "MONTHLY",
+      "stage": "CANDIDATE",
+      "priority": "P0",
+      "existing_module": "portos.py",
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "ONTL_REDE_CUSTOS",
+      "source_id": "ONTL",
+      "group": "LOGISTICA",
+      "products": [
+        "LOGISTICA",
+        "SOJA",
+        "MILHO",
+        "FERTILIZANTES"
+      ],
+      "topic": "rede_intermodal_distancias_custos_simulados",
+      "mode": "GEO_REPORT",
+      "cadence": "IRREGULAR",
+      "stage": "CANDIDATE",
+      "priority": "P2",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "DNIT_SNVP",
+      "source_id": "DNIT",
+      "group": "LOGISTICA",
+      "products": [
+        "LOGISTICA"
+      ],
+      "topic": "rede_vias_estado_obras_e_trafego",
+      "mode": "DOWNLOAD",
+      "cadence": "MONTHLY",
+      "stage": "CANDIDATE",
+      "priority": "P2",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "FRETES_WHATSAPP_AUTORIZADO",
+      "source_id": "GOV",
+      "group": "LOGISTICA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "FERTILIZANTES"
+      ],
+      "topic": "ofertas_frete_transporte_separado_do_nivon",
+      "mode": "AUTHORIZED_INTERNAL_INTERFACE",
+      "cadence": "INTRADAY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Integração futura WhatsApp AI autorizada; fonte GOV é somente placeholder documental",
+      "enabled": false
+    },
+    {
+      "id": "AIS_POSICOES",
+      "source_id": "AIS",
+      "group": "PORTOS",
+      "products": [
+        "LOGISTICA"
+      ],
+      "topic": "movimento_navios_posicao_velocidade_berco",
+      "mode": "STREAM",
+      "cadence": "INTRADAY",
+      "stage": "BLOCKED_RIGHTS",
+      "priority": "P2",
+      "existing_module": null,
+      "notes": "Acesso e custo da cobertura AIS não verificados",
+      "enabled": false
+    },
+    {
+      "id": "ANP_PRECO_REVENDA_DIESEL",
+      "source_id": "ANP",
+      "group": "ENERGIA",
+      "products": [
+        "DIESEL"
+      ],
+      "topic": "preco_diesel_s10_municipio_semana",
+      "mode": "CSV",
+      "cadence": "WEEKLY",
+      "stage": "CODE_PRESENT",
+      "priority": "P0",
+      "existing_module": "anp_diesel.py",
+      "notes": "Diesel B revenda; não paridade de Diesel A",
+      "enabled": false
+    },
+    {
+      "id": "ANP_PRECO_PRODUTOR_DIESEL",
+      "source_id": "ANP",
+      "group": "ENERGIA",
+      "products": [
+        "DIESEL"
+      ],
+      "topic": "preco_produtor_importador_diesel_A",
+      "mode": "CSV_XLS",
+      "cadence": "WEEKLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "ANP_IMPORTACAO_DIESEL",
+      "source_id": "ANP",
+      "group": "ENERGIA",
+      "products": [
+        "DIESEL"
+      ],
+      "topic": "importacao_refino_abastecimento_e_disponibilidade",
+      "mode": "CSV",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "ANP_BIODIESEL",
+      "source_id": "ANP",
+      "group": "ENERGIA",
+      "products": [
+        "DIESEL",
+        "ETANOL",
+        "SOJA"
+      ],
+      "topic": "producao_biodiesel_mistura_B_carga_tributaria",
+      "mode": "CSV_REPORT",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "ANP_ETANOL",
+      "source_id": "ANP",
+      "group": "ENERGIA",
+      "products": [
+        "ETANOL",
+        "ACUCAR",
+        "MILHO"
+      ],
+      "topic": "producao_anidro_hidratado_mat_prima",
+      "mode": "CSV",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "EIA_OIL",
+      "source_id": "EIA",
+      "group": "ENERGIA",
+      "products": [
+        "DIESEL"
+      ],
+      "topic": "brent_wti_refino_destilados_estoques_eua",
+      "mode": "API_KEY",
+      "cadence": "DAILY",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "BCB_PTAX",
+      "source_id": "BCB",
+      "group": "MACRO",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "BOI",
+        "ACUCAR",
+        "FERTILIZANTES",
+        "DIESEL"
+      ],
+      "topic": "ptax_usd_brl_e_cambio",
+      "mode": "API",
+      "cadence": "DAILY",
+      "stage": "CANDIDATE",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "BCB_SGS_FOCUS",
+      "source_id": "BCB",
+      "group": "MACRO",
+      "products": [
+        "MACRO"
+      ],
+      "topic": "selic_inflacao_juros_foco",
+      "mode": "API",
+      "cadence": "WEEKLY",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "WORLD_BANK_COMMODITIES",
+      "source_id": "WB",
+      "group": "PRECOS",
+      "products": [
+        "DIESEL",
+        "FERTILIZANTES",
+        "SOJA",
+        "MILHO",
+        "TRIGO",
+        "ACUCAR"
+      ],
+      "topic": "petroleo_ureia_potassio_commodities",
+      "mode": "XLS_CSV",
+      "cadence": "MONTHLY",
+      "stage": "CANDIDATE",
+      "priority": "P2",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "ONS_CARGA",
+      "source_id": "ONS",
+      "group": "ENERGIA",
+      "products": [
+        "ENERGIA"
+      ],
+      "topic": "energia_eletrica_carga_geracao_hidrologia",
+      "mode": "CSV",
+      "cadence": "DAILY",
+      "stage": "CANDIDATE",
+      "priority": "P2",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "ANEEL_SIGA",
+      "source_id": "ANEEL",
+      "group": "ENERGIA",
+      "products": [
+        "ENERGIA",
+        "MILHO",
+        "BIOMASSA"
+      ],
+      "topic": "cadastro_geracao_plantas_energia",
+      "mode": "API_CSV",
+      "cadence": "MONTHLY",
+      "stage": "CANDIDATE",
+      "priority": "P2",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "ANDA_ENTREGAS",
+      "source_id": "ANDA",
+      "group": "FERTILIZANTES",
+      "products": [
+        "FERTILIZANTES"
+      ],
+      "topic": "entregas_producao_importacao_estados",
+      "mode": "REPORT",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "CEPEA_FISICO",
+      "source_id": "CEPEA",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "ACUCAR",
+        "BOI"
+      ],
+      "topic": "indicadores_spot_em_rs_saca_t",
+      "mode": "LICENSED_WEB",
+      "cadence": "DAILY",
+      "stage": "BLOCKED_RIGHTS",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "IMEA_FISICO",
+      "source_id": "IMEA",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "BOI"
+      ],
+      "topic": "cotacoes_fisicas_mt_municipio_premios",
+      "mode": "LICENSED_WEB",
+      "cadence": "DAILY",
+      "stage": "BLOCKED_RIGHTS",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "B3_FUTUROS",
+      "source_id": "B3",
+      "group": "PRECOS",
+      "products": [
+        "BOI",
+        "MILHO",
+        "DIESEL",
+        "MACRO"
+      ],
+      "topic": "derivativos_futuros_margem_ajustes",
+      "mode": "LICENSED_MARKET_DATA",
+      "cadence": "DAILY",
+      "stage": "BLOCKED_RIGHTS",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "CME_FUTUROS",
+      "source_id": "CME",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO",
+        "BOI"
+      ],
+      "topic": "futuros_soja_milho_trigo_husks",
+      "mode": "LICENSED_MARKET_DATA",
+      "cadence": "DAILY",
+      "stage": "BLOCKED_RIGHTS",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "ICE_FUTUROS",
+      "source_id": "ICE",
+      "group": "PRECOS",
+      "products": [
+        "ALGODAO",
+        "ACUCAR",
+        "DIESEL"
+      ],
+      "topic": "futuros_algodao_acucar_brent",
+      "mode": "LICENSED_MARKET_DATA",
+      "cadence": "DAILY",
+      "stage": "BLOCKED_RIGHTS",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "INMET_ESTACOES",
+      "source_id": "INMET",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "SORGO",
+        "LOGISTICA"
+      ],
+      "topic": "chuva_temp_vento_umidade_estacoes",
+      "mode": "API_BULK",
+      "cadence": "HOURLY",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "CPTEC_MERGE",
+      "source_id": "CPTEC",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "LOGISTICA"
+      ],
+      "topic": "precipitacao_grade_satelite",
+      "mode": "DOWNLOAD",
+      "cadence": "DAILY",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "NOAA_GFS",
+      "source_id": "NOAA",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "LOGISTICA"
+      ],
+      "topic": "previsao_gridded_precipitacao_7d",
+      "mode": "API_DOWNLOAD",
+      "cadence": "SIX_HOURLY",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "ECMWF_MODELOS",
+      "source_id": "ECMWF",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "LOGISTICA"
+      ],
+      "topic": "ensemble_previsao_extremos",
+      "mode": "API_WITH_TERMS",
+      "cadence": "TWICE_DAILY",
+      "stage": "CANDIDATE",
+      "priority": "P2",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "ANA_HIDRO",
+      "source_id": "ANA",
+      "group": "HIDRO",
+      "products": [
+        "LOGISTICA",
+        "SOJA",
+        "MILHO",
+        "FERTILIZANTES"
+      ],
+      "topic": "cota_vazao_navegabilidade",
+      "mode": "API",
+      "cadence": "DAILY",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "LINEUP_RIO_GRANDE",
+      "source_id": "PORTO_RIOGRANDE",
+      "group": "PORTOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "FARELO_SOJA",
+        "FERTILIZANTES",
+        "DIESEL",
+        "ALGODAO",
+        "ACUCAR"
+      ],
+      "topic": "programado_atracado_realizado_prova_separada_RIO_GRANDE",
+      "mode": "HTML_PDF",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": "lineup_html.py",
+      "notes": "Contrato específico exigido; município portuário não implica destino industrial",
+      "enabled": false
+    },
+    {
+      "id": "LINEUP_SAO_FRANCISCO_DO_SUL",
+      "source_id": "PORTO_SFS",
+      "group": "PORTOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "FARELO_SOJA",
+        "FERTILIZANTES",
+        "DIESEL",
+        "ALGODAO",
+        "ACUCAR"
+      ],
+      "topic": "programado_atracado_realizado_prova_separada_SAO_FRANCISCO_DO_SUL",
+      "mode": "PDF",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": "lineup_html.py",
+      "notes": "Contrato específico exigido; município portuário não implica destino industrial",
+      "enabled": false
+    },
+    {
+      "id": "LINEUP_PARANAGUA",
+      "source_id": "PORTO_PARANAGUA",
+      "group": "PORTOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "FARELO_SOJA",
+        "FERTILIZANTES",
+        "DIESEL",
+        "ALGODAO",
+        "ACUCAR"
+      ],
+      "topic": "programado_atracado_realizado_prova_separada_PARANAGUA",
+      "mode": "HTML_PDF",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": "lineup_html.py",
+      "notes": "Contrato específico exigido; município portuário não implica destino industrial",
+      "enabled": false
+    },
+    {
+      "id": "LINEUP_SANTOS",
+      "source_id": "PORTO_SANTOS",
+      "group": "PORTOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "FARELO_SOJA",
+        "FERTILIZANTES",
+        "DIESEL",
+        "ALGODAO",
+        "ACUCAR"
+      ],
+      "topic": "programado_atracado_realizado_prova_separada_SANTOS",
+      "mode": "HTML",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": "lineup_html.py",
+      "notes": "Contrato específico exigido; município portuário não implica destino industrial",
+      "enabled": false
+    },
+    {
+      "id": "LINEUP_TUBARAO",
+      "source_id": "PORTO_TUBARAO",
+      "group": "PORTOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "FARELO_SOJA",
+        "FERTILIZANTES",
+        "DIESEL",
+        "ALGODAO",
+        "ACUCAR"
+      ],
+      "topic": "programado_atracado_realizado_prova_separada_TUBARAO",
+      "mode": "ACCESS_REQUIRED",
+      "cadence": "DAILY",
+      "stage": "BLOCKED_RIGHTS",
+      "priority": "P1",
+      "existing_module": "lineup_html.py",
+      "notes": "Contrato específico exigido; município portuário não implica destino industrial",
+      "enabled": false
+    },
+    {
+      "id": "LINEUP_ILHEUS",
+      "source_id": "PORTO_ILHEUS",
+      "group": "PORTOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "FARELO_SOJA",
+        "FERTILIZANTES",
+        "DIESEL",
+        "ALGODAO",
+        "ACUCAR"
+      ],
+      "topic": "programado_atracado_realizado_prova_separada_ILHEUS",
+      "mode": "HTML_PDF",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": "lineup_html.py",
+      "notes": "Contrato específico exigido; município portuário não implica destino industrial",
+      "enabled": false
+    },
+    {
+      "id": "LINEUP_SALVADOR",
+      "source_id": "PORTO_SALVADOR",
+      "group": "PORTOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "FARELO_SOJA",
+        "FERTILIZANTES",
+        "DIESEL",
+        "ALGODAO",
+        "ACUCAR"
+      ],
+      "topic": "programado_atracado_realizado_prova_separada_SALVADOR",
+      "mode": "HTML_PDF",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": "lineup_html.py",
+      "notes": "Contrato específico exigido; município portuário não implica destino industrial",
+      "enabled": false
+    },
+    {
+      "id": "LINEUP_ITAQUI",
+      "source_id": "PORTO_ITAQUI",
+      "group": "PORTOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "FARELO_SOJA",
+        "FERTILIZANTES",
+        "DIESEL",
+        "ALGODAO",
+        "ACUCAR"
+      ],
+      "topic": "programado_atracado_realizado_prova_separada_ITAQUI",
+      "mode": "HTML",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": "lineup_html.py",
+      "notes": "Contrato específico exigido; município portuário não implica destino industrial",
+      "enabled": false
+    },
+    {
+      "id": "LINEUP_BARCARENA_VILA_DO_CONDE",
+      "source_id": "PORTO_VILA_CONDE",
+      "group": "PORTOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "FARELO_SOJA",
+        "FERTILIZANTES",
+        "DIESEL",
+        "ALGODAO",
+        "ACUCAR"
+      ],
+      "topic": "programado_atracado_realizado_prova_separada_BARCARENA_VILA_DO_CONDE",
+      "mode": "HTML",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": "lineup_html.py",
+      "notes": "Contrato específico exigido; município portuário não implica destino industrial",
+      "enabled": false
+    },
+    {
+      "id": "LINEUP_SANTAREM",
+      "source_id": "PORTO_SANTAREM",
+      "group": "PORTOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "FARELO_SOJA",
+        "FERTILIZANTES",
+        "DIESEL",
+        "ALGODAO",
+        "ACUCAR"
+      ],
+      "topic": "programado_atracado_realizado_prova_separada_SANTAREM",
+      "mode": "HTML",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": "lineup_html.py",
+      "notes": "Contrato específico exigido; município portuário não implica destino industrial",
+      "enabled": false
+    },
+    {
+      "id": "ROTTERDAM_ESCALAS",
+      "source_id": "ROTTERDAM",
+      "group": "PORTOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "FERTILIZANTES",
+        "LOGISTICA"
+      ],
+      "topic": "port_calls_historico",
+      "mode": "API_ACCOUNT",
+      "cadence": "DAILY",
+      "stage": "CANDIDATE",
+      "priority": "P2",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "SINGAPORE_ESCALAS",
+      "source_id": "SINGAPORE",
+      "group": "PORTOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "DIESEL",
+        "LOGISTICA"
+      ],
+      "topic": "port_calls_historico",
+      "mode": "PUBLIC_STATISTICS",
+      "cadence": "MONTHLY",
+      "stage": "CANDIDATE",
+      "priority": "P2",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "USACE_ESCALAS",
+      "source_id": "PORTO_USA",
+      "group": "PORTOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "FERTILIZANTES",
+        "LOGISTICA"
+      ],
+      "topic": "toneladas_rotas_e_ports_calls",
+      "mode": "PUBLIC_DOWNLOAD",
+      "cadence": "MONTHLY",
+      "stage": "CANDIDATE",
+      "priority": "P2",
+      "existing_module": null,
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "RADAR_REUTERS",
+      "source_id": "REUTERS",
+      "group": "RADAR",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "BOI",
+        "ACUCAR",
+        "TRIGO",
+        "DIESEL",
+        "FERTILIZANTES"
+      ],
+      "topic": "noticias_macros_geopolitica_energia",
+      "mode": "LICENSED_NEWS",
+      "cadence": "HOURLY",
+      "stage": "BLOCKED_RIGHTS",
+      "priority": "P1",
+      "existing_module": "briefing_diario.py",
+      "notes": "Redirecionar apenas links autorizados; publicação não basta para republicar texto",
+      "enabled": false
+    },
+    {
+      "id": "RADAR_AGRO",
+      "source_id": "NOTAGRO",
+      "group": "RADAR",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "BOI",
+        "ACUCAR",
+        "TRIGO",
+        "DIESEL",
+        "FERTILIZANTES"
+      ],
+      "topic": "noticias_commodities_agroclima_logistica",
+      "mode": "RSS_HTML",
+      "cadence": "HOURLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": "briefing_diario.py",
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "RADAR_CLIMA",
+      "source_id": "CLIMATEMPO",
+      "group": "RADAR",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "CLIMA"
+      ],
+      "topic": "noticias_previsoes_e_riscos",
+      "mode": "PUBLIC_NEWS",
+      "cadence": "HOURLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P2",
+      "existing_module": "briefing_diario.py",
+      "notes": "",
+      "enabled": false
+    },
+    {
+      "id": "RADAR_GOV",
+      "source_id": "GOV",
+      "group": "RADAR",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "BOI",
+        "ACUCAR",
+        "TRIGO",
+        "DIESEL",
+        "FERTILIZANTES"
+      ],
+      "topic": "atos_normativos_mercado_safra_energia_comex",
+      "mode": "RSS_HTML",
+      "cadence": "HOURLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": "briefing_diario.py",
+      "notes": "",
+      "enabled": false
+    }
+  ]
+}
