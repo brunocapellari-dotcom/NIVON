@@ -262,7 +262,7 @@
     {
       "id": "MDIC",
       "provider": "MDIC/Comex Stat",
-      "official_url": "https://comexstat.mdic.gov.br/",
+      "official_url": "https://www.gov.br/mdic/pt-br/assuntos/comercio-exterior/estatisticas/base-de-dados-bruta",
       "access": "PUBLIC_BULK",
       "rights": "REVIEW",
       "notes": ""
@@ -2105,10 +2105,10 @@
       "topic": "fluxos_ncm_uf_pais_via_urf_kg_fob_sem_municipio",
       "mode": "BULK_CSV",
       "cadence": "MONTHLY",
-      "stage": "CANDIDATE",
+      "stage": "CODE_PRESENT",
       "priority": "P0",
-      "existing_module": null,
-      "notes": "Dados gerais NCM e UF não podem ser unidos diretamente ao município SH4 como se fossem mesma granularidade; não inferir embarcador",
+      "existing_module": "mdic_exportacao.py",
+      "notes": "Parser offline exportação NCM/UF/país/via/URF com testes sintéticos; importação e bulk reais pendentes; sem município SH4",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
