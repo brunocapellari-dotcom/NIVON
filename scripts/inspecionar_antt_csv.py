@@ -9,6 +9,7 @@ import hashlib
 import io
 import json
 from collections import Counter
+from nivon.antt_ferrovia_csv import extrair_csv, resumo_safra_ferroviaria
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
@@ -70,7 +71,32 @@ def executar():
         if resp.status!=200 or host.scheme!="https" or host.hostname!="dados.antt.gov.br":
             raise ValueError("redirecionamento/fonte não autorizado")
         raw=resp.read(3_000_001)
-    return analisar_bytes(raw)
+    resumo = analisar_bytes(raw)
+    registros = extrair_csv(raw, fonte_id="ANTT_SIADE_CSV_2026")
+    validado = resumo_safra_ferroviaria(registros)
+    if len(registros) != resumo["linhas"]:
+        raise ValueError("divergência no número de linhas de inspeção versus parser")
+    if len(validado["por_mes"]) != len(resumo["meses"]):
+        raise ValueError("divergência mensal no resumo dos dados")
+    mt = validado["fluxos_mt_por_estacao"]
+    por_produto = {}
+    for linha in mt:
+        produto = linha["mercadoria_fonte"]
+        atual = por_produto.setdefault(produto, {"rotas_mensais": 0, "tu_t": 0.0})
+        atual["rotas_mensais"] += 1
+        atual["tu_t"] += linha["tu_t"]
+    resumo["parser_numerico"] = {
+        "estado": "EXTRACAO_FERROVIARIA_REAL_VALIDADA_POR_CONTRATO",
+        "linhas_normalizadas": len(registros),
+        "meses": [v["mes"] for v in validado["por_mes"]],
+        "rotas_mensais_mt": len(mt),
+        "origem_mt_por_mercadoria": {
+            k: {"rotas_mensais": v["rotas_mensais"], "tu_t": round(v["tu_t"], 3)}
+            for k, v in sorted(por_produto.items())
+        },
+        "limitacao": "SEM MAPA ESTACAO-PARA-MUNICIPIO; NAO E MDF-E RODOVIARIO",
+    }
+    return resumo
 
 
 if __name__=="__main__":
