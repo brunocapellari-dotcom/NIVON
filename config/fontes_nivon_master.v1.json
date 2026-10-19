@@ -188,6 +188,14 @@
       "notes": ""
     },
     {
+      "id": "EPE",
+      "provider": "Empresa de Pesquisa Energética",
+      "official_url": "https://www.epe.gov.br/pt/publicacoes-dados-abertos/publicacoes/BEN-Series-Historicas-Completas",
+      "access": "PUBLIC_XLS_REPORT",
+      "rights": "REVIEW",
+      "notes": "BEN anual e séries desde 1970; balanços agregados, não estoques locais de diesel"
+    },
+    {
       "id": "FAO",
       "provider": "FAOSTAT/AMIS",
       "official_url": "https://www.fao.org/faostat/en/",
@@ -444,6 +452,14 @@
       "notes": ""
     },
     {
+      "id": "UNEM",
+      "provider": "União Nacional do Etanol de Milho",
+      "official_url": "https://etanoldemilho.com.br/",
+      "access": "PUBLISHED_INDUSTRY_NEWS_REPORTS",
+      "rights": "REVIEW",
+      "notes": "Capacidades, plantas e projetos não representam processamento realizado; consultar direitos"
+    },
+    {
       "id": "UNICA",
       "provider": "UNICA",
       "official_url": "https://unica.com.br/",
@@ -697,6 +713,31 @@
       "downstream_contract": "OBSERVACAO_CANONICA_V1"
     },
     {
+      "id": "ANP_MOVIMENTACAO_DIESEL",
+      "source_id": "ANP",
+      "group": "ENERGIA",
+      "products": [
+        "DIESEL"
+      ],
+      "topic": "distribuicao_municipio_importacao_disponibilidade_meses",
+      "mode": "CSV_REPORT",
+      "cadence": "MONTHLY",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Volume vendido/transportado não significa estoque nem oferta disponível por cidade.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
       "id": "ANP_PRECO_PRODUTOR_DIESEL",
       "source_id": "ANP",
       "group": "ENERGIA",
@@ -874,6 +915,33 @@
       "priority": "P0",
       "existing_module": "antt_ferrovia.py",
       "notes": "Nunca inferir destino final a partir de estação",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ANTT_TERMINAIS_FERROVIARIOS",
+      "source_id": "ANTT_SIADE",
+      "group": "LOGISTICA",
+      "products": [
+        "LOGISTICA",
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "terminais_ferroviarios_geografia_transbordo",
+      "mode": "PUBLIC_DOWNLOAD",
+      "cadence": "IRREGULAR",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Município com terminal pode ter fábrica: classificar AMBIGUO até prova da descarga.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
@@ -1070,6 +1138,33 @@
       "priority": "P1",
       "existing_module": null,
       "notes": "",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "CONAB_ARMAZENS_CAPACIDADE",
+      "source_id": "CONAB",
+      "group": "LOGISTICA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "LOGISTICA"
+      ],
+      "topic": "armazenagem_capacidade_estatica_estabelecimento_municipio",
+      "mode": "TXT_DOWNLOAD",
+      "cadence": "IRREGULAR",
+      "stage": "CANDIDATE",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Capacidade estática cadastrada não corresponde a estoque físico nem disponibilidade em tempo real.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
@@ -1355,6 +1450,33 @@
       "downstream_contract": "OBSERVACAO_CANONICA_V1"
     },
     {
+      "id": "EPE_BEN_SERIES_HISTORICAS",
+      "source_id": "EPE",
+      "group": "ENERGIA",
+      "products": [
+        "DIESEL",
+        "ETANOL_DDG",
+        "MACRO"
+      ],
+      "topic": "matriz_energetica_consumo_anual_derivados_bioenergia",
+      "mode": "XLS_DOWNLOAD",
+      "cadence": "ANNUAL",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Balanço anual agregado, desde 1970 conforme disponibilidade por série; não é disponibilidade semanal.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
       "id": "ETANOL_MILHO_ANP",
       "source_id": "ANP",
       "group": "INDUSTRIA",
@@ -1452,6 +1574,33 @@
       "priority": "P1",
       "existing_module": null,
       "notes": "",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "IBGE_CODIGOS_MUNICIPIOS",
+      "source_id": "IBGE",
+      "group": "GEO",
+      "products": [
+        "LOGISTICA",
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "codigos_canonicos_7_digitos_IBGE_uf_municipio",
+      "mode": "API",
+      "cadence": "IRREGULAR",
+      "stage": "CANDIDATE",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Identificador canônico; não usar apenas nome/UF sem alias e revisão territorial.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
@@ -1565,6 +1714,33 @@
       "priority": "P1",
       "existing_module": null,
       "notes": "",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "IMEA_COMERCIALIZACAO_MT",
+      "source_id": "IMEA",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO"
+      ],
+      "topic": "comercializacao_produtor_percentual_por_safra_MT",
+      "mode": "LICENSED_REPORT",
+      "cadence": "WEEKLY",
+      "stage": "BLOCKED_RIGHTS",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Verificar direito da edição; venda antecipada não é exportação/retirada física.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
@@ -1961,6 +2137,32 @@
       "priority": "P1",
       "existing_module": "lineup_html.py",
       "notes": "Contrato específico exigido; município portuário não implica destino industrial",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "MAPA_SAPCANA_BIOENERGIA",
+      "source_id": "MAPA",
+      "group": "INDUSTRIA",
+      "products": [
+        "ACUCAR",
+        "ETANOL_DDG"
+      ],
+      "topic": "producao_cana_acucar_etanol_cadastro_setorial",
+      "mode": "XLS_REPORT",
+      "cadence": "MONTHLY",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Separar etanol por matéria-prima e tipo; não atribuir cana a milho.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
@@ -2478,6 +2680,32 @@
       "priority": "P2",
       "existing_module": null,
       "notes": "",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "UNEM_BIORREFINARIAS",
+      "source_id": "UNEM",
+      "group": "INDUSTRIA",
+      "products": [
+        "MILHO",
+        "ETANOL_DDG"
+      ],
+      "topic": "biorrefinarias_operacao_projetos_ddg_milho",
+      "mode": "PUBLISHED_REPORT",
+      "cadence": "QUARTERLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Biorrefinaria anunciada ≠ autorizada ≠ operando; avaliar direitos e fonte primária ANP.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
