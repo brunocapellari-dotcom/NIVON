@@ -1,0 +1,415 @@
+{
+  "schema_version": "1.0",
+  "project": "NIVON",
+  "updated_on": "2026-10-19",
+  "rule": "Estes são requisitos de indicadores, não evidência de dado coletado ou licença de uso",
+  "systems": [
+    {
+      "id": "SOJA",
+      "data": [
+        "CONAB_GRAOS_SERIES",
+        "CONAB_BALANCOS",
+        "ABIOVE_SOJA_ESMAGAMENTO",
+        "MDIC_COMEX_NCM",
+        "CEPEA_FISICO",
+        "IMEA_FISICO",
+        "USDA_PSD",
+        "LINEUP_SANTOS",
+        "BCB_PTAX"
+      ],
+      "indicators": [
+        "area_ha",
+        "producao_t",
+        "produtividade_kg_ha",
+        "colheita_percentual",
+        "esmagamento_t",
+        "farelo_t",
+        "oleo_t",
+        "exportacao_t",
+        "estoque_final_t",
+        "balanco_oferta_demanda",
+        "paridade_exportacao",
+        "preco_rs_saca",
+        "basis",
+        "lineup_programado_vs_atracado"
+      ],
+      "risks": [
+        "ABIOVE mensal não vira observado diário",
+        "não somar farelo à soja esmagada",
+        "line-up programado não é exportação realizada"
+      ]
+    },
+    {
+      "id": "MILHO",
+      "data": [
+        "CONAB_GRAOS_SERIES",
+        "CONAB_BALANCOS",
+        "SINDIRACOES_RACOES",
+        "MAPA_SIPEAGRO_RACAO",
+        "ETANOL_MILHO_ANP",
+        "ANTT_MDFE_RODOVIARIO",
+        "ANTT_SIADE_FERROVIA",
+        "MDIC_COMEX_NCM",
+        "USDA_PSD",
+        "CEPEA_COEFICIENTES_MILHO",
+        "LINEUP_PARANAGUA"
+      ],
+      "indicators": [
+        "safra1_t",
+        "safra2_t",
+        "safra3_t",
+        "total_sem_dupla_contagem_t",
+        "consumo_racao_t",
+        "milho_industrial_t",
+        "etanol_milho_l",
+        "ddg_est_t",
+        "exportacoes_t",
+        "estoque_t",
+        "destino_potencial_de_carga",
+        "preco_rs_saca"
+      ],
+      "risks": [
+        "milho total não pode ser somado às três safras",
+        "CEPEA 440L/331kg/20,4L apenas cenário de margem",
+        "MAPA localiza fábricas, não mensura toneladas"
+      ]
+    },
+    {
+      "id": "ALGODAO",
+      "data": [
+        "CONAB_GRAOS_SERIES",
+        "IMEA_MT_SAFRA",
+        "MDIC_COMEX_NCM",
+        "ICE_FUTUROS",
+        "CEPEA_FISICO",
+        "LINEUP_SANTOS"
+      ],
+      "indicators": [
+        "area_ha",
+        "algodao_caroco_t",
+        "algodao_pluma_t",
+        "beneficiamento",
+        "exportacao_t",
+        "preco_fisico",
+        "ny_ice_preco",
+        "frete_t"
+      ],
+      "risks": [
+        "não misturar algodão em caroço com pluma",
+        "ICE exige direitos de market data"
+      ]
+    },
+    {
+      "id": "BOI",
+      "data": [
+        "IBGE_PPM",
+        "IBGE_ABATE",
+        "IMEA_FISICO",
+        "CEPEA_BOI",
+        "SCOT_PECUARIA",
+        "MDIC_COMEX_NCM",
+        "B3_FUTUROS"
+      ],
+      "indicators": [
+        "rebanho_cabecas",
+        "abate_cabecas",
+        "peso_carcaca_kg",
+        "arrobas_preco",
+        "exportacao_carne_t",
+        "oferta_interna",
+        "escala_frigorifica"
+      ],
+      "risks": [
+        "rebanho não equivale boi pronto para abate",
+        "cotação não equivale negócio efetivo"
+      ]
+    },
+    {
+      "id": "BEZERRO",
+      "data": [
+        "IBGE_PPM",
+        "CEPEA_BOI",
+        "SCOT_PECUARIA"
+      ],
+      "indicators": [
+        "preco_bezerro",
+        "relacao_troca_boi_bezerro",
+        "reposicao_pecuaria"
+      ],
+      "risks": [
+        "separar categoria idade e peso",
+        "scot/cepea direitos pendentes"
+      ]
+    },
+    {
+      "id": "ACUCAR",
+      "data": [
+        "CONAB_CANA",
+        "UNICA_ACUCAR_ETANOL",
+        "MDIC_COMEX_NCM",
+        "ICE_FUTUROS",
+        "BCB_PTAX",
+        "LINEUP_SANTOS"
+      ],
+      "indicators": [
+        "area_cana_ha",
+        "moagem_t",
+        "mix_acucar_etanol",
+        "producao_acucar_t",
+        "exportacao_acucar_t",
+        "preco_ice_11",
+        "paridade_exportacao"
+      ],
+      "risks": [
+        "mix industrial por produto tem janela temporal distinta da safra agrícola"
+      ]
+    },
+    {
+      "id": "TRIGO",
+      "data": [
+        "CONAB_GRAOS_SERIES",
+        "CONAB_BALANCOS",
+        "IBGE_LSPA",
+        "MDIC_COMEX_NCM",
+        "USDA_PSD",
+        "CME_FUTUROS"
+      ],
+      "indicators": [
+        "area_ha",
+        "producao_t",
+        "importacao_t",
+        "moagem_t",
+        "estoque_t",
+        "preco_interno",
+        "preco_internacional"
+      ],
+      "risks": [
+        "importação por NCM deve separar grão de farinha",
+        "moagem ainda sem fonte quantitativa canônica"
+      ]
+    },
+    {
+      "id": "SORGO",
+      "data": [
+        "CONAB_GRAOS_SERIES",
+        "CONAB_BALANCOS",
+        "IBGE_PAM",
+        "MAPA_SIPEAGRO_RACAO"
+      ],
+      "indicators": [
+        "area_ha",
+        "producao_t",
+        "consumo_racao_estimado_t",
+        "preco_local",
+        "estoque_estimado"
+      ],
+      "risks": [
+        "composição de ração não pode ser inferida de presença de fabricante",
+        "não inventar preços quando não há série canônica"
+      ]
+    },
+    {
+      "id": "FERTILIZANTES",
+      "data": [
+        "MDIC_COMEX_FERT",
+        "MAPA_SIPEAGRO_FERTILIZANTES",
+        "ANDA_ENTREGAS",
+        "WORLD_BANK_COMMODITIES",
+        "ANTAQ_MOVIMENTACAO",
+        "ANP_IMPORTACAO_DIESEL"
+      ],
+      "indicators": [
+        "importacao_ureia_t",
+        "importacao_map_dap_t",
+        "importacao_kcl_t",
+        "entregas_uf_t",
+        "producao_nacional_t",
+        "preco_internacional",
+        "paridade_importacao",
+        "descarga_portuaria_t",
+        "oferta_logistica"
+      ],
+      "risks": [
+        "entregas não são consumo por cultura",
+        "movimento portuário não é disponibilidade final"
+      ]
+    },
+    {
+      "id": "DIESEL",
+      "data": [
+        "ANP_PRECO_REVENDA_DIESEL",
+        "ANP_PRECO_PRODUTOR_DIESEL",
+        "ANP_IMPORTACAO_DIESEL",
+        "ANP_BIODIESEL",
+        "EIA_OIL",
+        "BCB_PTAX",
+        "MDIC_COMEX_NCM",
+        "ANTAQ_MOVIMENTACAO"
+      ],
+      "indicators": [
+        "preco_semana_municipio_diesel_b",
+        "preco_refinaria_diesel_a",
+        "importacoes_t",
+        "refino_t",
+        "suprimento_disponibilidade",
+        "paridade_internacional_rs_l",
+        "biodiesel_blend_pct",
+        "custo_frete_implicito"
+      ],
+      "risks": [
+        "diesel B revenda não equivale Diesel A refinaria",
+        "aplicar b(t), frete, tributos, câmbio e basis na paridade",
+        "estoques não são automaticamente públicos"
+      ]
+    },
+    {
+      "id": "ETANOL_DDG",
+      "data": [
+        "ETANOL_MILHO_ANP",
+        "ANP_ETANOL",
+        "UNICA_ACUCAR_ETANOL",
+        "CEPEA_COEFICIENTES_MILHO"
+      ],
+      "indicators": [
+        "producao_etanol_milho_l",
+        "etanol_anidro_vs_hidratado",
+        "milho_processado_estimado_t",
+        "ddg_produzido_estimado_kg",
+        "oleo_de_milho_l"
+      ],
+      "risks": [
+        "separar etanol de cana e milho, anidro e hidratado",
+        "coeficientes CEPEA são de margem, não balanço físico homologado"
+      ]
+    },
+    {
+      "id": "LOGISTICA_INTERMODAL",
+      "data": [
+        "ANTT_MDFE_RODOVIARIO",
+        "ANTT_SIADE_FERROVIA",
+        "ANTAQ_MOVIMENTACAO",
+        "ONTL_REDE_CUSTOS",
+        "DNIT_SNVP",
+        "FRETES_WHATSAPP_AUTORIZADO"
+      ],
+      "indicators": [
+        "fluxos_mt_ncm_t",
+        "recorrencia_municipio",
+        "terminais_de_transbordo",
+        "tu_tku_ferrovia",
+        "fretes_ofertados_rs_t",
+        "fretes_reais_se_disponiveis",
+        "gargalos"
+      ],
+      "risks": [
+        "MDF-e possui NCM incompleto",
+        "estação ferroviária não é destino de carga",
+        "WhatsApp AI é fonte separada sob interface autorizada"
+      ]
+    },
+    {
+      "id": "MARITIMO",
+      "data": [
+        "LINEUP_SANTOS",
+        "LINEUP_PARANAGUA",
+        "LINEUP_SAO_FRANCISCO_DO_SUL",
+        "LINEUP_RIO_GRANDE",
+        "LINEUP_ITAQUI",
+        "LINEUP_BARCARENA_VILA_DO_CONDE",
+        "LINEUP_SANTAREM",
+        "LINEUP_TUBARAO",
+        "ANTAQ_MOVIMENTACAO",
+        "AIS_POSICOES"
+      ],
+      "indicators": [
+        "navios_programados",
+        "navios_atracados",
+        "navios_concluidos",
+        "fila_fundeio",
+        "port_pressure_score",
+        "tempo_espera",
+        "eta",
+        "movimentacao_realizada_t"
+      ],
+      "risks": [
+        "programação não é realizado",
+        "AIS não prova carga ou comprador",
+        "Tubarão pode exigir acesso comercial"
+      ]
+    },
+    {
+      "id": "CLIMA_HIDRO",
+      "data": [
+        "INMET_ESTACOES",
+        "CPTEC_MERGE",
+        "NOAA_GFS",
+        "ECMWF_MODELOS",
+        "ANA_HIDRO",
+        "ZARC_JANELAS"
+      ],
+      "indicators": [
+        "chuva_24h",
+        "chuva_72h_prevista",
+        "semanas_1_4",
+        "anomalia_precipitacao",
+        "fenologia_risco",
+        "nivel_rio",
+        "navegabilidade"
+      ],
+      "risks": [
+        "previsão não é observado",
+        "modelos possuem direitos/cobertura distintos",
+        "hidrologia precisa de estação e data de referência"
+      ]
+    },
+    {
+      "id": "MERCADO_MACRO",
+      "data": [
+        "BCB_PTAX",
+        "BCB_SGS_FOCUS",
+        "EIA_OIL",
+        "WORLD_BANK_COMMODITIES",
+        "MDIC_COMEX_NCM",
+        "USDA_PSD"
+      ],
+      "indicators": [
+        "usd_brl",
+        "selic",
+        "inflacao",
+        "petroleo_usd_bbl",
+        "trade_balance_usd",
+        "variacao_semanal",
+        "cenarios_macroeconomicos"
+      ],
+      "risks": [
+        "câmbio observado e cenário devem ser rotulados",
+        "não interpolar dado trimestral para diário"
+      ]
+    },
+    {
+      "id": "BRIEFING_DIARIO",
+      "data": [
+        "RADAR_GOV",
+        "RADAR_AGRO",
+        "RADAR_REUTERS",
+        "RADAR_CLIMA",
+        "BCB_PTAX",
+        "ANP_PRECO_REVENDA_DIESEL",
+        "ANTAQ_MOVIMENTACAO"
+      ],
+      "indicators": [
+        "noticias_ultimas_24h",
+        "cotacoes_ultimo_fechamento_com_data",
+        "lineup_por_porto_produto",
+        "fertilizantes",
+        "eventos_geopoliticos_relevantes",
+        "resumo_curto_whatsapp"
+      ],
+      "risks": [
+        "notícias devem ter timestamp verdadeiro <=24h",
+        "não repetir a mesma notícia",
+        "WhatsApp AI não edita nem produz briefing NIVON; somente interface de envio"
+      ]
+    }
+  ]
+}
