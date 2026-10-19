@@ -13,6 +13,7 @@ A implementação em branch de revisão **não** é deploy, homologação nem au
 - `src/nivon/anp_ppi.py`: parser XLSX com layout estrito e comparação PPI/produtor apenas com datas, unidade e tributos comparáveis.
 - `src/nivon/fertilizantes.py`: agrega dados de importações por NCM, tonelagem e valor FOB sem representar média FOB como cotação CFR.
 - `src/nivon/eventos_editoriais.py`: deduplicação conservadora de títulos relacionados, ligada ao briefing existente de notícias publicadas nas últimas 24h.
+- `src/nivon/cotacoes_externas.py`: contrato de cotações CME/ICE/B3/CEPEA/IMEA com direitos escritos e unidade/vencimento obrigatórios; nenhum preço ou licença presumidos.
 - `src/nivon/entrega_whatsapp.py`: contrato de template aprovado e opt-in para canal separado de envio WhatsApp; bloqueado para envios sem autorização comercial.
 
 **As rotas estão desativadas**, inclusive as dos portos com URLs específicas já listadas na versão anterior.
