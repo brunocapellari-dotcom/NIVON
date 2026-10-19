@@ -42,10 +42,40 @@ def obter():
     cols=next(csv.reader([line],delimiter=";"))
     # Apenas ROTULOS do cabecalho; os registros permanecem descartados.
     rotulos=[" ".join(x.split())[:90] for x in cols]
+    # Somente estatísticas sintáticas de ate 20 linhas completas. Nunca mostrar valores.
+    import re
+    blocos=raw.decode(enc).splitlines()
+    linhas=list(csv.DictReader(blocos[:-1],delimiter=";"))[:20]
+    padroes={"inteiro":0,"ptbr_agrupado":0,"ptbr_decimal":0,"ponto_decimal":0,"outro":0}
+    identificadores=set()
+    codigo_ibge_ok=0
+    linhas_validas=0
+    for linha in linhas:
+        if None in linha or linha.get("identificacao_armazem") is None:
+            continue
+        linhas_validas+=1
+        identificadores.add(linha.get("identificacao_armazem",""))
+        cap=str(linha.get("qtd_capacidade_estatica(t)","")).strip()
+        if re.fullmatch(r"[0-9]+",cap):
+            padroes["inteiro"]+=1
+        elif re.fullmatch(r"[0-9]{1,3}(?:\\.[0-9]{3})+,[0-9]{1,3}",cap):
+            padroes["ptbr_agrupado"]+=1
+        elif re.fullmatch(r"[0-9]+,[0-9]{1,3}",cap):
+            padroes["ptbr_decimal"]+=1
+        elif re.fullmatch(r"[0-9]+\\.[0-9]{1,3}",cap):
+            padroes["ponto_decimal"]+=1
+        else:
+            padroes["outro"]+=1
+        if re.fullmatch(r"[0-9]{7}",str(linha.get("cod_ibge","")).strip()):
+            codigo_ibge_ok+=1
     return {"status":"CABECALHO_RECEBIDO_NAO_HOMOLOGADO",
             "codificacao":enc,"colunas_estimadas":options,
             "rotulos_cabecalho":rotulos,
-            "amostra_bytes":len(raw),"registros_individuais_expostos":0}
+            "amostra_bytes":len(raw),"registros_individuais_expostos":0,
+            "linhas_analisadas_sem_publicar_valores":linhas_validas,
+            "id_unico_na_amostra":len(identificadores)==linhas_validas,
+            "codigos_ibge_7_digitos":codigo_ibge_ok,
+            "padroes_numericos":padroes}
 
 if __name__=="__main__":
     p=argparse.ArgumentParser()
