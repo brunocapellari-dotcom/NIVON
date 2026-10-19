@@ -1,13 +1,12 @@
-"""Contrato inicial dos dez portos, sem declarar que a coleta já foi homologada."""
+"""Contrato nacional dos portos/terminais inventariados, SEM declarar homologação."""
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Iterable
 
-PORTOS_BR = (
-    "RIO_GRANDE", "SAO_FRANCISCO_DO_SUL", "PARANAGUA", "SANTOS",
-    "TUBARAO", "ILHEUS", "SALVADOR", "ITAQUI", "BARCARENA_VILA_DO_CONDE", "SANTAREM",
-)
+from .lineup_nacional import carregar_escopo
+
+PORTOS_BR = tuple(item["id"] for item in carregar_escopo()["ports"])
 
 
 @dataclass(frozen=True)
