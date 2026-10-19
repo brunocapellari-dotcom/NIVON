@@ -126,8 +126,10 @@ def validar_catalogo(doc: dict) -> dict:
     if not GRUPOS <= grupos:
         raise ErroCatalogo("domínios não cobertos: " + ",".join(sorted(GRUPOS-grupos)))
     ports = {d["id"] for d in conjuntos if d["id"].startswith("LINEUP_")}
-    if len(ports) != 10:
-        raise ErroCatalogo("cadastro marítimo precisa de 10 portos brasileiros distintos")
+    from .lineup_nacional import carregar_escopo
+    esperados = {"LINEUP_" + p["id"] for p in carregar_escopo()["ports"]}
+    if ports != esperados:
+        raise ErroCatalogo("line-up nacional incompleto: 35 portos organizados + 10 candidatos privados")
     return {"fontes": len(fontes), "datasets": len(conjuntos), "grupos": len(grupos),
             "commodities_estrategicas": len(PRODUTOS_ESTRATEGICOS),
             "portos_br": len(ports), "coletas_ativadas": 0}
