@@ -2678,6 +2678,1065 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
       "preliminary_evidence": "CATALOG_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_ANGRA_DOS_REIS",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_ANTONINA",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_ARATU",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_AREIA_BRANCA",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_BARRA_DO_RIACHO",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_BELEM",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_CABEDELO",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_FORNO",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_FORTALEZA",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_IMBITUBA",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_ITAGUAI",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_ITAJAI",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_LAGUNA",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_MACEIO",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_MANAUS",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_NATAL",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_NITEROI",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_PELOTAS",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_PORTO_ALEGRE",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_PORTO_VELHO",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_RECIFE",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_RIO_DE_JANEIRO",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_SANTANA",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_SAO_SEBASTIAO",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_SUAPE",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_VITORIA",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_PONTA_DA_MADEIRA",
+      "collector_class": "ACCESS_GATED",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "RIGHTS_COLLECTION",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN",
+        "RIGHTS_COLLECTION"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_PORTO_DO_ACU",
+      "collector_class": "ACCESS_GATED",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "RIGHTS_COLLECTION",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN",
+        "RIGHTS_COLLECTION"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_ITAPOA",
+      "collector_class": "ACCESS_GATED",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "RIGHTS_COLLECTION",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN",
+        "RIGHTS_COLLECTION"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_NAVEGANTES",
+      "collector_class": "ACCESS_GATED",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "RIGHTS_COLLECTION",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN",
+        "RIGHTS_COLLECTION"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_MIRITITUBA",
+      "collector_class": "ACCESS_GATED",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "RIGHTS_COLLECTION",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN",
+        "RIGHTS_COLLECTION"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_ITACOATIARA",
+      "collector_class": "ACCESS_GATED",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "RIGHTS_COLLECTION",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN",
+        "RIGHTS_COLLECTION"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_COTEGIPE",
+      "collector_class": "ACCESS_GATED",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "RIGHTS_COLLECTION",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN",
+        "RIGHTS_COLLECTION"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_TEGRAM",
+      "collector_class": "ACCESS_GATED",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "RIGHTS_COLLECTION",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN",
+        "RIGHTS_COLLECTION"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "LINEUP_TERMINAIS_BARCARENA",
+      "collector_class": "ACCESS_GATED",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+      },
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "RIGHTS_COLLECTION",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN",
+        "RIGHTS_COLLECTION"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
     }
   ]
 }
