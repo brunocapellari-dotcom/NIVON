@@ -11,6 +11,8 @@ from nivon.antt_ferrovia import extrair_registros, sumarizar_mercadorias
 from urllib.request import urlopen, Request
 from urllib.parse import urlsplit
 from hashlib import sha256
+from datetime import datetime, timezone
+from nivon.ferrovia_store import abrir_banco, guardar_serie, consultar_ferrovia_em
 
 URL=("https://www.gov.br/antt/pt-br/assuntos/ferrovias/"
      "dados-de-producao-do-transporte-de-carga-origem-destino/"
@@ -77,7 +79,23 @@ def executar():
         if not conteudo or len(conteudo)>18_000_000:raise ValueError("XLSX vazio ou excessivo")
     if not conteudo.startswith(b"PK"):raise ValueError("assinatura XLSX ausente")
     x=resumo_zip(conteudo)
-    x["resumo_fluxos_ferroviarios"]=sumarizar_mercadorias(extrair_registros(conteudo,sha256=sha256(conteudo).hexdigest()))
+    registros=list(extrair_registros(conteudo,sha256=sha256(conteudo).hexdigest()))
+    x["resumo_fluxos_ferroviarios"]=sumarizar_mercadorias(registros)
+    banco=abrir_banco(":memory:")
+    try:
+        capturado=datetime.now(timezone.utc).isoformat()
+        x["historico_sqlite_efemero"]=guardar_serie(banco,registros,coletado_em=capturado)
+        periodos=sorted({r["periodo"] for r in registros})
+        ultimo=periodos[-1]
+        consulta=consultar_ferrovia_em(banco,corte_utc=capturado,mes=ultimo,origem_uf="MT")
+        x["historico_sqlite_efemero"]["ultimo_mes"]=ultimo
+        x["historico_sqlite_efemero"]["rotas_mt_ultimo_mes"]=len(consulta["rotas"])
+        x["historico_sqlite_efemero"]["tu_t_mt_ultimo_mes"]=round(
+            sum(r["tu_t"] for r in consulta["rotas"]),3
+        )
+        x["historico_sqlite_efemero"]["dados_persistidos_em_nuvem"]=False
+    finally:
+        banco.close()
     x["abas"]=[{"aba":z["aba"],"dimensao_declarada":z["dimensao_declarada"]} for z in x["abas"]]
     x.update({"fonte":"ANTT_FERROVIAS_OD","url":end,
               "tamanho_bytes":len(conteudo),"sha256":sha256(conteudo).hexdigest(),
