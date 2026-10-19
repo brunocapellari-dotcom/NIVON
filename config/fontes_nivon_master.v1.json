@@ -1746,6 +1746,36 @@
       "downstream_contract": "OBSERVACAO_CANONICA_V1"
     },
     {
+      "id": "CONAB_PROGRESSO_SEMANAL",
+      "source_id": "CONAB",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "ARROZ",
+        "FEIJAO",
+        "TRIGO"
+      ],
+      "topic": "progresso_semanal_plantio_colheita_uf_e_media_estados",
+      "mode": "XLSX_HTML",
+      "cadence": "WEEKLY",
+      "stage": "CODE_PRESENT",
+      "priority": "P0",
+      "existing_module": "conab_agrobr.py",
+      "notes": "agrobr 2.0 facultativo; MEDIA_ESTADOS diferente de Brasil; coleta OFF",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
       "id": "CPTEC_MERGE",
       "source_id": "CPTEC",
       "group": "CLIMA",

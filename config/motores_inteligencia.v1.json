@@ -30,9 +30,10 @@
         "LINEUP_SANTOS",
         "BCB_PTAX",
         "CONAB_ARMAZENS_CAPACIDADE",
-        "IMEA_COMERCIALIZACAO_MT"
+        "IMEA_COMERCIALIZACAO_MT",
+        "CONAB_PROGRESSO_SEMANAL"
       ],
-      "indicators_planned": 16,
+      "indicators_planned": 18,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
       "inputs_reais_homologados": false,
       "previsao_homologada": false,
@@ -65,9 +66,10 @@
         "CEPEA_COEFICIENTES_MILHO",
         "LINEUP_PARANAGUA",
         "CONAB_ARMAZENS_CAPACIDADE",
-        "IMEA_COMERCIALIZACAO_MT"
+        "IMEA_COMERCIALIZACAO_MT",
+        "CONAB_PROGRESSO_SEMANAL"
       ],
-      "indicators_planned": 14,
+      "indicators_planned": 16,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
       "inputs_reais_homologados": false,
       "previsao_homologada": false,
@@ -90,9 +92,10 @@
         "ICE_FUTUROS",
         "CEPEA_FISICO",
         "LINEUP_SANTOS",
-        "IMEA_COMERCIALIZACAO_MT"
+        "IMEA_COMERCIALIZACAO_MT",
+        "CONAB_PROGRESSO_SEMANAL"
       ],
-      "indicators_planned": 9,
+      "indicators_planned": 11,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
       "inputs_reais_homologados": false,
       "previsao_homologada": false,
@@ -164,7 +167,8 @@
       "entrypoints": [
         "nivon.motores_agro_estrategicos:paridade_importacao_trigo",
         "nivon.motores_agro_estrategicos:safra_comercializacao",
-        "nivon.inteligencia_temporal:decompor_mudanca_safra"
+        "nivon.inteligencia_temporal:decompor_mudanca_safra",
+        "nivon.conab_agrobr:normalizar_progresso"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
@@ -172,9 +176,10 @@
         "IBGE_LSPA",
         "MDIC_COMEX_NCM",
         "USDA_PSD",
-        "CME_FUTUROS"
+        "CME_FUTUROS",
+        "CONAB_PROGRESSO_SEMANAL"
       ],
-      "indicators_planned": 7,
+      "indicators_planned": 9,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
       "inputs_reais_homologados": false,
       "previsao_homologada": false,
@@ -378,7 +383,8 @@
         "NOAA_GFS",
         "ECMWF_MODELOS",
         "ANA_HIDRO",
-        "ZARC_JANELAS"
+        "ZARC_JANELAS",
+        "CONAB_PROGRESSO_SEMANAL"
       ],
       "indicators_planned": 7,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -555,7 +561,8 @@
         "CPTEC_MERGE",
         "NOAA_GFS",
         "ECMWF_MODELOS",
-        "ZARC_JANELAS"
+        "ZARC_JANELAS",
+        "CONAB_PROGRESSO_SEMANAL"
       ],
       "indicators_planned": 10,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
