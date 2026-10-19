@@ -35,6 +35,8 @@ jobs:
           PYTHONPATH: src
         run: |
           python -m nivon.catalogo_fontes --resumo
+          python -m nivon.rotas_coleta --resumo
+          python -m nivon.rotas_coleta --prioridade P0
           python -m nivon.cobertura
           python -m nivon.orquestrador_fontes --prioridade P0 --resumo
       - name: Demonstracao deterministica
