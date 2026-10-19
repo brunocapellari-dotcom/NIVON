@@ -1206,7 +1206,7 @@
         "url": "https://servicodados.ibge.gov.br/api/docs/localidades",
         "source_proof": null
       },
-      "implementation_scope": "NO_PARSER (código citado não implica coletor ativo)",
+      "implementation_scope": "ibge_municipios.py (parser JSON offline com testes sintéticos; sem fetch)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -1224,7 +1224,7 @@
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Códigos municipais IBGE e aliases devem ter vigência temporal e resolução canônica.",
-      "preliminary_evidence": "API_DOCUMENTED_NOT_TESTED"
+      "preliminary_evidence": "OFFICIAL_API_DOC_PARSER_SYNTHETIC_ONLY"
     },
     {
       "dataset_id": "IBGE_LSPA",

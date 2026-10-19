@@ -92,5 +92,19 @@ class TestColetaWeb(unittest.TestCase):
                                                                mime="application/pdf")))
 
 
+    def test_json_api_somente_fonte_autorizada(self):
+        f = replace(self.fonte(), formato="JSON")
+        resposta = RespostaFalsa(f.url, conteudo=b'[{"id": 1}]', mime="application/json")
+        r = adquirir_fonte(f, abridor=AbridorFalso(resposta))
+        self.assertEqual(r["mime"], "application/json")
+        self.assertEqual(r["conteudo"], b'[{"id": 1}]')
+
+    def test_json_nao_aceita_html_de_bloqueio_waf(self):
+        f = replace(self.fonte(), formato="JSON")
+        resposta = RespostaFalsa(f.url, conteudo=b"<html>rejected</html>", mime="text/html")
+        with self.assertRaises(ErroAquisicao):
+            adquirir_fonte(f, abridor=AbridorFalso(resposta))
+
+
 if __name__ == "__main__":
     unittest.main()

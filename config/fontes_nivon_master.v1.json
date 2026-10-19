@@ -1599,7 +1599,7 @@
       "cadence": "IRREGULAR",
       "stage": "CANDIDATE",
       "priority": "P0",
-      "existing_module": null,
+      "existing_module": "ibge_municipios.py (normalizador offline; sem amostra real)",
       "notes": "Identificador canônico; não usar apenas nome/UF sem alias e revisão territorial.",
       "enabled": false,
       "collection_authorized": false,
