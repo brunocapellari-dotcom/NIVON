@@ -247,6 +247,36 @@
       "preliminary_evidence": "CATALOG_ONLY"
     },
     {
+      "dataset_id": "ANP_MOVIMENTACAO_DIESEL",
+      "collector_class": "STRUCTURED_FILE",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": null
+      },
+      "implementation_scope": "NO_PARSER (código citado não implica coletor ativo)",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "EXACT_ENDPOINT_UNKNOWN",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Venda/distribuição não equivale a oferta disponível em estoque local.",
+      "preliminary_evidence": "DATASET_DISCOVERY"
+    },
+    {
       "dataset_id": "ANP_PRECO_PRODUTOR_DIESEL",
       "collector_class": "STRUCTURED_FILE",
       "locator": {
@@ -450,6 +480,36 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Dados ferroviários TU/TKU e estações; não misturar com viagens MDF-e rodoviárias.",
       "preliminary_evidence": "PARSER_REAL_CANDIDATE"
+    },
+    {
+      "dataset_id": "ANTT_TERMINAIS_FERROVIARIOS",
+      "collector_class": "STRUCTURED_FILE",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": null
+      },
+      "implementation_scope": "NO_PARSER (código citado não implica coletor ativo)",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "EXACT_ENDPOINT_UNKNOWN",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Geografia de terminal e operação não comprovam consumidor final.",
+      "preliminary_evidence": "DATASET_DISCOVERY"
     },
     {
       "dataset_id": "B3_FUTUROS",
@@ -662,6 +722,34 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
       "preliminary_evidence": "CATALOG_ONLY"
+    },
+    {
+      "dataset_id": "CONAB_ARMAZENS_CAPACIDADE",
+      "collector_class": "STRUCTURED_FILE",
+      "locator": {
+        "kind": "DIRECT_PUBLIC_FILE",
+        "url": "https://portaldeinformacoes.conab.gov.br/downloads/arquivos/ArmazensCadastrados.txt",
+        "source_proof": null
+      },
+      "implementation_scope": "NO_PARSER (código citado não implica coletor ativo)",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Capacidade estática cadastrada; não confundir com estoque real/ocupação.",
+      "preliminary_evidence": "OFFICIAL_RESOURCE_TO_VALIDATE"
     },
     {
       "dataset_id": "CONAB_BALANCOS",
@@ -962,6 +1050,35 @@
       "preliminary_evidence": "CATALOG_ONLY"
     },
     {
+      "dataset_id": "EPE_BEN_SERIES_HISTORICAS",
+      "collector_class": "STRUCTURED_FILE",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://www.epe.gov.br/pt/publicacoes-dados-abertos/publicacoes/BEN-Series-Historicas-Completas",
+        "source_proof": null
+      },
+      "implementation_scope": "NO_PARSER (código citado não implica coletor ativo)",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "BEN anual, anos de competência e atualizações/revisões das planilhas.",
+      "preliminary_evidence": "OFFICIAL_SERIES_DISCOVERED"
+    },
+    {
       "dataset_id": "ETANOL_MILHO_ANP",
       "collector_class": "STRUCTURED_FILE",
       "locator": {
@@ -1080,6 +1197,34 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
       "preliminary_evidence": "CATALOG_ONLY"
+    },
+    {
+      "dataset_id": "IBGE_CODIGOS_MUNICIPIOS",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PUBLISHED_API_DOC",
+        "url": "https://servicodados.ibge.gov.br/api/docs/localidades",
+        "source_proof": null
+      },
+      "implementation_scope": "NO_PARSER (código citado não implica coletor ativo)",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Códigos municipais IBGE e aliases devem ter vigência temporal e resolução canônica.",
+      "preliminary_evidence": "API_DOCUMENTED_NOT_TESTED"
     },
     {
       "dataset_id": "IBGE_LSPA",
@@ -1201,6 +1346,36 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
       "preliminary_evidence": "CATALOG_ONLY"
+    },
+    {
+      "dataset_id": "IMEA_COMERCIALIZACAO_MT",
+      "collector_class": "ACCESS_GATED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.imea.com.br/",
+        "source_proof": null
+      },
+      "implementation_scope": "NO_PARSER (código citado não implica coletor ativo)",
+      "authentication": "RIGHTS_APPROVAL_REQUIRED",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "EXTERNAL_RIGHTS",
+      "gates_missing": [
+        "RIGHTS_COLLECTION",
+        "RIGHTS_STORAGE",
+        "APPROVED_ACCESS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Vendas por safra exigem direito específico; não inferir exportação física.",
+      "preliminary_evidence": "PUBLISHED_RIGHTS_RESTRICTED"
     },
     {
       "dataset_id": "IMEA_FISICO",
@@ -1583,6 +1758,36 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
       "preliminary_evidence": "CATALOG_ONLY"
+    },
+    {
+      "dataset_id": "MAPA_SAPCANA_BIOENERGIA",
+      "collector_class": "STRUCTURED_FILE",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": null
+      },
+      "implementation_scope": "NO_PARSER (código citado não implica coletor ativo)",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "EXACT_ENDPOINT_UNKNOWN",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Cana, açúcar, etanol: origem industrial e álcool anidro/hidratado separados.",
+      "preliminary_evidence": "DATASET_DISCOVERY"
     },
     {
       "dataset_id": "MAPA_SIPEAGRO_FERTILIZANTES",
@@ -2118,6 +2323,35 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
       "preliminary_evidence": "CATALOG_ONLY"
+    },
+    {
+      "dataset_id": "UNEM_BIORREFINARIAS",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://etanoldemilho.com.br/",
+        "source_proof": null
+      },
+      "implementation_scope": "NO_PARSER (código citado não implica coletor ativo)",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Separar capacidade, operação, autorização e projetos de plantas.",
+      "preliminary_evidence": "REPORT_DISCOVERY"
     },
     {
       "dataset_id": "UNICA_ACUCAR_ETANOL",
