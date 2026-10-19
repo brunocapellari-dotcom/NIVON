@@ -215,8 +215,7 @@
         "MAPA_SIPEAGRO_FERTILIZANTES",
         "ANDA_ENTREGAS",
         "WORLD_BANK_COMMODITIES",
-        "ANTAQ_MOVIMENTACAO",
-        "ANP_IMPORTACAO_DIESEL"
+        "ANTAQ_MOVIMENTACAO"
       ],
       "indicators": [
         "importacao_ureia_t",
