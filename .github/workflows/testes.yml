@@ -104,6 +104,9 @@ jobs:
         run: python scripts/inspecionar_antt_ferrovias.py
 
   inspecao-antt-csv-2026:
+    # Fonte oficial retornou página WAF Request Rejected (HTTP 200) em 19/10/2026.
+    # Não insistir em PR nem contornar proteção; diagnóstico somente manual.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 4
     permissions:
