@@ -1166,12 +1166,10 @@
       "downstream_contract": "OBSERVACAO_CANONICA_V1"
     },
     {
-      "id": "CONAB_GRAOS_SERIES",
+      "id": "CONAB_GRAOS_OUTRAS_CULTURAS",
       "source_id": "CONAB",
       "group": "SAFRA",
       "products": [
-        "SOJA",
-        "MILHO",
         "ALGODAO",
         "TRIGO",
         "SORGO"
@@ -1179,10 +1177,36 @@
       "topic": "area_producao_produtividade_por_uf_safra",
       "mode": "XLS",
       "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Algodão/trigo/sorgo ainda requerem confirmar arquivo, layout, metodologia e período; não equivalem ao parser soja/milho",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "CONAB_GRAOS_SERIES",
+      "source_id": "CONAB",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "area_producao_produtividade_por_uf_safra",
+      "mode": "XLS",
+      "cadence": "MONTHLY",
       "stage": "REAL_SNAPSHOT_TESTED",
       "priority": "P0",
       "existing_module": "conab_series.py",
-      "notes": "Soja/milho 5 planilhas testadas; demais culturas aguardam parser/layout",
+      "notes": "Somente soja e milho: cinco planilhas XLS com extração numérica real; não herdar homologação de outras culturas",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
