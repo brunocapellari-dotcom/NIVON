@@ -126,8 +126,8 @@ def validar_catalogo(doc: dict) -> dict:
     if not GRUPOS <= grupos:
         raise ErroCatalogo("domínios não cobertos: " + ",".join(sorted(GRUPOS-grupos)))
     ports = {d["id"] for d in conjuntos if d["id"].startswith("LINEUP_")}
-    if len(ports) != 10:
-        raise ErroCatalogo("cadastro marítimo precisa de 10 portos brasileiros distintos")
+    if len(ports) != 45:
+        raise ErroCatalogo("catálogo nacional precisa de 45 registros de line-up distintos")
     return {"fontes": len(fontes), "datasets": len(conjuntos), "grupos": len(grupos),
             "commodities_estrategicas": len(PRODUTOS_ESTRATEGICOS),
             "portos_br": len(ports), "coletas_ativadas": 0}
