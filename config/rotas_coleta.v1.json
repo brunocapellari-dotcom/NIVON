@@ -36,6 +36,66 @@
       "preliminary_evidence": "REPORT_DISCOVERY"
     },
     {
+      "dataset_id": "ABPA_FRANGO_SETOR",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": null
+      },
+      "implementation_scope": "NO_PARSER; fonte descoberta, acesso e direitos pendentes",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "EXACT_ENDPOINT_UNKNOWN",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Consolidados setoriais, não extrapolar volume anual para observação diária.",
+      "preliminary_evidence": "OFFICIAL_PROVIDER_DISCOVERED"
+    },
+    {
+      "dataset_id": "ABPA_SUINO_SETOR",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": null
+      },
+      "implementation_scope": "NO_PARSER; fonte descoberta, acesso e direitos pendentes",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "EXACT_ENDPOINT_UNKNOWN",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Consolidados setoriais, não misturar carcaça, cortes e comércio exterior.",
+      "preliminary_evidence": "OFFICIAL_PROVIDER_DISCOVERED"
+    },
+    {
       "dataset_id": "AIS_POSICOES",
       "collector_class": "ACCESS_GATED",
       "locator": {
@@ -1877,6 +1937,36 @@
       "preliminary_evidence": "OFFICIAL_PORTAL"
     },
     {
+      "dataset_id": "MAPA_SANIDADE_PROTEINAS",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": null
+      },
+      "implementation_scope": "NO_PARSER; fonte descoberta, acesso e direitos pendentes",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "EXACT_ENDPOINT_UNKNOWN",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte oficial MAPA exige distinguir suspeita, caso confirmado, situação encerrada e restrição comercial real.",
+      "preliminary_evidence": "OFFICIAL_PROVIDER_DISCOVERED"
+    },
+    {
       "dataset_id": "MAPA_SAPCANA_BIOENERGIA",
       "collector_class": "STRUCTURED_FILE",
       "locator": {
@@ -2618,6 +2708,36 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "PSD/WASDE versões/vintages e autorização de API antes do histórico.",
       "preliminary_evidence": "API_ACCESS_PENDING"
+    },
+    {
+      "dataset_id": "WOAH_ALERTAS_PROTEINAS",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": null
+      },
+      "implementation_scope": "NO_PARSER; fonte descoberta, acesso e direitos pendentes",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "EXACT_ENDPOINT_UNKNOWN",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados internacionais são sinais de risco, não prova de impacto logístico nem embargo.",
+      "preliminary_evidence": "OFFICIAL_PROVIDER_DISCOVERED"
     },
     {
       "dataset_id": "WORLD_BANK_COMMODITIES",

@@ -517,7 +517,10 @@
         "SINDIRACOES_RACOES",
         "MAPA_SIPEAGRO_RACAO",
         "ANTT_MDFE_RODOVIARIO",
-        "IBGE_CODIGOS_MUNICIPIOS"
+        "IBGE_CODIGOS_MUNICIPIOS",
+        "ABPA_FRANGO_SETOR",
+        "MAPA_SANIDADE_PROTEINAS",
+        "WOAH_ALERTAS_PROTEINAS"
       ],
       "indicators": [
         "abate_cabecas",
@@ -530,7 +533,9 @@
         "demanda_racao_estimativa_condicionada",
         "preco_fisico_licenciado",
         "mapa_abate_por_uf",
-        "fluxos_logisticos_amostrais"
+        "fluxos_logisticos_amostrais",
+        "riscos_sanitarios_com_evidencia",
+        "balanco_setorial_abpa_anual"
       ],
       "risks": [
         "SIDRA 1094 mede abate inspecionado, não produção viva.",
@@ -550,7 +555,10 @@
         "SINDIRACOES_RACOES",
         "MAPA_SIPEAGRO_RACAO",
         "ANTT_MDFE_RODOVIARIO",
-        "IBGE_CODIGOS_MUNICIPIOS"
+        "IBGE_CODIGOS_MUNICIPIOS",
+        "ABPA_SUINO_SETOR",
+        "MAPA_SANIDADE_PROTEINAS",
+        "WOAH_ALERTAS_PROTEINAS"
       ],
       "indicators": [
         "abate_cabecas",
@@ -563,7 +571,9 @@
         "demanda_racao_estimativa_condicionada",
         "preco_fisico_licenciado",
         "mapa_abate_por_uf",
-        "fluxos_logisticos_amostrais"
+        "fluxos_logisticos_amostrais",
+        "riscos_sanitarios_com_evidencia",
+        "balanco_setorial_abpa_anual"
       ],
       "risks": [
         "SIDRA 1093 mede abate inspecionado, não disponibilidade imediata.",

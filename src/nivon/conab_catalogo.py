@@ -14,11 +14,13 @@ class ErroCatalogoConab(ValueError):
 PAGINAS = {
     "SOJA": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/series-historicas/graos/soja/",
     "MILHO": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/series-historicas/graos/milho",
+    "GERGELIM": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/series-historicas/graos/gergelim",
 }
 ESPERADOS = {
     "SOJA": {"SojaSerieHist.xls"},
     "MILHO": {"Milho1aSerieHist.xls", "Milho2aSerieHist.xls",
               "Milho3aSerieHist.xls", "MilhoTotalSerieHist.xls"},
+    "GERGELIM": {"GergelimSerieHist.xls"},
 }
 DOMINIOS_PERMITIDOS = frozenset({"www.gov.br", "conab.gov.br", "www.conab.gov.br"})
 

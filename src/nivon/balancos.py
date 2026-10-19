@@ -8,7 +8,8 @@ from typing import Mapping
 
 from .motores import DadoInvalido, numero_positivo
 
-PRODUTOS = frozenset({"SOJA", "MILHO", "FARELO_SOJA", "OLEO_SOJA", "ETANOL", "DDG_DDGS"})
+PRODUTOS = frozenset({"SOJA", "MILHO", "FARELO_SOJA", "OLEO_SOJA", "ETANOL", "DDG_DDGS",
+                       "CANA", "GERGELIM", "CARNE_FRANGO", "CARNE_SUINA"})
 CALENDARIOS = frozenset({"ANO_CIVIL", "SAFRA"})
 ESCOPOS = frozenset({"BRASIL", "UF"})
 CLASSIFICACOES = frozenset({"OBSERVADO", "INFORMADO", "ESTIMADO", "INFERIDO", "PROJETADO"})
@@ -85,10 +86,16 @@ class Balanco:
     perdas_t: float
     estoque_final_t: float
     proveniencia: Proveniencia
+    base_fisica: str | None = None
 
     def __post_init__(self):
         if self.produto not in PRODUTOS:
             raise DadoInvalido("produto não reconhecido")
+        if self.produto in ("CARNE_FRANGO", "CARNE_SUINA"):
+            if self.base_fisica != "EQUIVALENTE_CARCACA":
+                raise DadoInvalido("carnes exigem fluxos documentados em equivalente-carcaça")
+        elif self.base_fisica not in (None, "PESO_PRODUTO"):
+            raise DadoInvalido("base física incompatível")
         if self.escopo not in ESCOPOS or self.calendario not in CALENDARIOS:
             raise DadoInvalido("escopo ou calendario inválido")
         if not self.competencia.strip():
@@ -120,6 +127,7 @@ def reconciliar_balanco(balanco: Balanco, *, tolerancia_t: float = 0.001) -> dic
             "calendario": balanco.calendario, "competencia": balanco.competencia,
             "oferta_t": oferta, "destinacao_t": demanda, "diferenca_t": diferenca,
             "conciliado": conciliado, "status": "FECHADO" if conciliado else "DIVERGENTE",
+            "base_fisica": balanco.base_fisica or "PESO_PRODUTO",
             "classificacao": "CALCULO_COM_ENTRADAS_DECLARADAS",
             "fonte_id": balanco.proveniencia.fonte_id}
 

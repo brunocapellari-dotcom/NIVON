@@ -36,6 +36,14 @@
       "notes": ""
     },
     {
+      "id": "ABPA",
+      "provider": "Associação Brasileira de Proteína Animal",
+      "official_url": "https://abpa-br.org/",
+      "access": "PUBLISHED_REPORT",
+      "rights": "REVIEW",
+      "notes": "Relatórios consolidados, condições de uso comercial e redistribuição pendentes."
+    },
+    {
       "id": "AIS",
       "provider": "AISStream/fornecedor AIS autorizado",
       "official_url": "https://aisstream.io/",
@@ -492,6 +500,14 @@
       "notes": "Projeto independente; API/contrato de integração ainda não homologado; NIVON não coleta grupos"
     },
     {
+      "id": "WOAH",
+      "provider": "Organização Mundial de Saúde Animal/W.A.H.I.S.",
+      "official_url": "https://wahis.woah.org/",
+      "access": "PUBLIC_PORTAL_REVIEW",
+      "rights": "REVIEW",
+      "notes": "Notificação de doença e status epidemiológico não equivalem a embargos efetivos."
+    },
+    {
       "id": "ZARC",
       "provider": "MAPA/ZARC",
       "official_url": "https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico",
@@ -517,6 +533,56 @@
       "priority": "P0",
       "existing_module": null,
       "notes": "",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ABPA_FRANGO_SETOR",
+      "source_id": "ABPA",
+      "group": "PECUARIA",
+      "products": [
+        "FRANGO"
+      ],
+      "topic": "producao_consumo_exportacao_frango_anuais",
+      "mode": "REPORT",
+      "cadence": "ANNUAL",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Consolidados setoriais, não extrapolar volume anual para observação diária.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ABPA_SUINO_SETOR",
+      "source_id": "ABPA",
+      "group": "PECUARIA",
+      "products": [
+        "SUINO"
+      ],
+      "topic": "producao_consumo_exportacao_suino_anuais",
+      "mode": "REPORT",
+      "cadence": "ANNUAL",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Consolidados setoriais, não misturar carcaça, cortes e comércio exterior.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
@@ -2262,6 +2328,32 @@
       "downstream_contract": "OBSERVACAO_CANONICA_V1"
     },
     {
+      "id": "MAPA_SANIDADE_PROTEINAS",
+      "source_id": "MAPA",
+      "group": "RADAR",
+      "products": [
+        "FRANGO",
+        "SUINO"
+      ],
+      "topic": "eventos_oficiais_sanidade_aves_suinos",
+      "mode": "HTML_PDF",
+      "cadence": "IRREGULAR",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte oficial MAPA exige distinguir suspeita, caso confirmado, situação encerrada e restrição comercial real.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
       "id": "MAPA_SAPCANA_BIOENERGIA",
       "source_id": "MAPA",
       "group": "INDUSTRIA",
@@ -2968,6 +3060,32 @@
       "priority": "P0",
       "existing_module": null,
       "notes": "",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "WOAH_ALERTAS_PROTEINAS",
+      "source_id": "WOAH",
+      "group": "RADAR",
+      "products": [
+        "FRANGO",
+        "SUINO"
+      ],
+      "topic": "alertas_internacionais_doencas_aves_suinos",
+      "mode": "PORTAL",
+      "cadence": "IRREGULAR",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Dados internacionais são sinais de risco, não prova de impacto logístico nem embargo.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
