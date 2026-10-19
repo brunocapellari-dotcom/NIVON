@@ -186,6 +186,7 @@ def consultar_progresso_asof(db: sqlite3.Connection, *, cultura: str, safra: str
 
 async def atualizar_progresso(*, db: sqlite3.Connection, evidence_id: str,
                               max_pages: int = 4, max_semanas: int = 12,
+                              depois_de_url: str | None = None,
                               direitos_confirmados: bool = False,
                               api=None) -> dict:
     """Retrospectiva paginada + incremental; somente execução explicitamente autorizada."""
@@ -197,20 +198,29 @@ async def atualizar_progresso(*, db: sqlite3.Connection, evidence_id: str,
     semanas=await descobrir_semanas(
         direitos_confirmados=True,max_pages=max_pages,agrobr_api=api)
     # Listagens podem repetir a mesma semana na paginação.
-    urls=set()
-    resultados=[]
+    # Lista paginada mais recente -> mais antiga; cursor de URL preserva
+    # posição entre execuções limitadas e permite retomar o backfill.
+    urls=[]
+    seen=set()
     for item in semanas:
         url=item["url"]
-        if url in urls:
-            continue
-        urls.add(url)
+        if url not in seen:
+            seen.add(url)
+            urls.append(url)
+    if depois_de_url is not None:
+        if depois_de_url not in seen:
+            raise ErroHistoricoProgresso("cursor ausente; amplie max_pages, não reinicie silenciosamente")
+        urls=urls[urls.index(depois_de_url)+1:]
+    selecionadas=urls[:max_semanas]
+    resultados=[]
+    for url in selecionadas:
         linhas=await coletar_progresso(
             semana_url=url,direitos_confirmados=True,agrobr_api=api)
         resultados.append(gravar_progresso(
             db,linhas,evidence_id=evidence_id,direitos_confirmados=True))
-        if len(resultados)>=max_semanas:
-            break
     return {"semanas_processadas":len(resultados),
             "edicoes_novas":sum(r["nova_edicao"] for r in resultados),
             "coletas_novas":sum(r["nova_coleta"] for r in resultados),
+            "proximo_cursor":selecionadas[-1] if selecionadas else depois_de_url,
+            "restam_na_listagem":len(urls)-len(selecionadas),
             "estado":"HISTORICO_LOCAL_SEM_HOMOLOGACAO"}

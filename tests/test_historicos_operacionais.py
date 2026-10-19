@@ -109,6 +109,41 @@ class TestProgressoTemporal(unittest.TestCase):
         self.assertEqual(a["edicoes_novas"],1)
 
 
+
+class TestBackfillPaginado(unittest.TestCase):
+    def test_cursor_retroativo_persistente(self):
+        db=abrir_progresso()
+        url1=WEEK
+        url2=WEEK+"-anterior"
+        class MockAgrobr:
+            async def semanas_disponiveis(self,**kwargs):
+                return [{"url":url1,"descricao":"nova"},{"url":url2,"descricao":"antiga"}]
+            async def progresso_safra(self,**kwargs):
+                url=kwargs["semana_url"]
+                registro={**BASE,"semana_atual":"2026-10-09" if url==url2 else "2026-10-16"}
+                return [registro],SimpleNamespace(source_url=url)
+        params=dict(db=db,api=MockAgrobr(),max_semanas=1,
+                    direitos_confirmados=True,evidence_id="BACKFILL_TESTE")
+        a=asyncio.run(atualizar_progresso(**params))
+        b=asyncio.run(atualizar_progresso(**params,depois_de_url=a["proximo_cursor"]))
+        self.assertEqual(a["restam_na_listagem"],1)
+        self.assertEqual(b["restam_na_listagem"],0)
+        self.assertEqual(b["edicoes_novas"],1)
+        self.assertEqual(db.execute("select count(*) from progresso_edicoes").fetchone()[0],2)
+        db.close()
+
+    def test_cursor_nao_encontrado_bloqueia(self):
+        db=abrir_progresso()
+        class MockAgrobr:
+            async def semanas_disponiveis(self,**kwargs):
+                return [{"url":WEEK,"descricao":"nova"}]
+        with self.assertRaises(ErroHistoricoProgresso):
+            asyncio.run(atualizar_progresso(
+                db=db,api=MockAgrobr(),depois_de_url=WEEK+"-desconhecida",
+                direitos_confirmados=True,evidence_id="TESTE"))
+        db.close()
+
+
 class TestPortosTemporal(unittest.TestCase):
     def setUp(self):
         self.db=abrir_historico_portos()
