@@ -2299,7 +2299,7 @@
       "cadence": "MONTHLY",
       "stage": "CANDIDATE",
       "priority": "P0",
-      "existing_module": null,
+      "existing_module": "mdic_municipios.py (normalizador municipal SH4 offline; sem homologação real)",
       "notes": "Município é domicílio fiscal do exportador/importador, não cidade de origem física da carga nem NCM de 8 dígitos",
       "enabled": false,
       "collection_authorized": false,
