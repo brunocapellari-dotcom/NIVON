@@ -4,6 +4,8 @@
 
 A fonte única de verdade é `config/fontes_nivon_master.v1.json`, validada por `src/nivon/catalogo_fontes.py`; a cobertura de produtos é mantida em `config/matriz_produtos_indicadores.v1.json`. Estes arquivos ORGANIZAM fontes e dependências; não concedem licença de dados, não executam scraping e não garantem que exista API gratuita.
 
+> **Nota de versionamento (19/10/2026):** as contagens em "Inventário inicial por estágio" abaixo registram o snapshot da primeira auditoria, não o estado atual da branch. O inventário agora soma 96 fontes e 131 datasets. Consulte `python -m nivon.auditoria_coletores --resumo` com `PYTHONPATH=src` para o diagnóstico reproduzível; nenhuma rota está habilitada para produção.
+
 ## 1. Inventário inicial por estágio
 
 - **59 fontes identificadas**, cada uma com identificador, provedor, URL de referência, acesso e situação jurídica.

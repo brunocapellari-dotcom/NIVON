@@ -2,12 +2,21 @@
 
 **Data-base:** 19/10/2026 · **Etapa:** desenvolvimento, sem go-live.
 
+
+## Estado verificável sem contagens congeladas
+
+**Auditoria do catálogo em 19/10/2026:** 96 fontes e 131 datasets (41 P0, 71 P1 e 19 P2); **zero** coletas autorizadas em produção. O relatório reproduzível e canônico é gerado por:
+`PYTHONPATH=src python -m nivon.auditoria_coletores --resumo`.
+Ele diferencia fonte restrita, endpoint não comprovado, parser offline e snapshot real testado; não presume autorização a partir da existência de uma página de documentação.
+
+Os arquivos `CONTRATO_CONAB_ARMAZENS.md`, `QUALIDADE_CONAB_ARMAZENS.md`, `CONTRATO_PTAX_PLANO.md` e `CONTRATO_IBGE_PAM_SIDRA.md` descrevem incremento técnico posterior ao inventário inicial, mas nenhum concede homologação comercial.
+
 ## Registro canônico — não criar planilhas paralelas
 
 1. `config/fontes_nivon_master.v1.json` é o cadastro único de fornecedores, datasets, produtos, prioridades, periodicidades, maturidade e direitos.
-2. `config/rotas_coleta.v1.json` é a extensão **1:1 dos 86 datasets** que identifica API/arquivo/página, URL específica apenas se comprovada, bloqueios e etapa necessária. Não duplica fonte/periodicidade/produto.
+2. `config/rotas_coleta.v1.json` é a extensão **1:1 dos datasets atualmente registrados no catálogo** que identifica API/arquivo/página, URL específica apenas se comprovada, bloqueios e etapa necessária. Não duplica fonte/periodicidade/produto.
 3. `config/matriz_produtos_indicadores.v1.json` é a matriz que liga cada commodity ou frente aos indicadores e seus datasets.
-4. `src/nivon/rotas_coleta.py` valida identidade, bijeção 78/78, URL, permissões, backfill e não ativação de bases restritas. `src/nivon/catalogo_fontes.py` valida a fonte. `src/nivon/orquestrador_fontes.py` é dry-run, não coletor agendado.
+4. `src/nivon/rotas_coleta.py` valida identidade, bijeção dinâmica N/N, URL, permissões, backfill e não ativação de bases restritas. `src/nivon/catalogo_fontes.py` valida a fonte. `src/nivon/orquestrador_fontes.py` é dry-run, não coletor agendado.
 
 **Limite de evidência:** um registro no catálogo não confirma API, scraping permitido, dados no banco ou periodicidade de atualização cumprida. O endpoint do produtor de dados e a licença sobre o próprio conteúdo são verificados individualmente.
 
@@ -51,7 +60,7 @@ Os 15 grupos são **cobertura do inventário existente**, não prova de que toda
 
 ## Áreas para completar o escopo antes da homologação comercial
 
-Comparar a matriz com os requisitos do NIVON em cada release. Foram identificados como candidatos a **datasets canônicos adicionais** (parcialmente cadastrados nos 86: armazenagem CONAB, comercialização IMEA, indústrias UNEM, energia EPE e códigos IBGE; validar o restante):
+Comparar a matriz com os requisitos do NIVON em cada release. Foram identificados como candidatos a **datasets canônicos adicionais** (parcialmente cadastrados no catálogo: armazenagem CONAB, comercialização IMEA, indústrias UNEM, energia EPE e códigos IBGE; validar o restante):
 - **Armazenagem física:** CONAB Armazéns Cadastrados (capacidade estática por município; não igual a estoque disponível). Referência a examinar: `https://portaldeinformacoes.conab.gov.br/downloads/arquivos/ArmazensCadastrados.txt`.
 - **Comercialização da safra:** percentuais comercializados em MT e Brasil por produto/safra e versões; verificar fontes setoriais e direitos, não inventar posição remanescente.
 - **Mapa de indústria e capacidade:** biorrefinarias de milho, usinas de esmagamento, beneficiadoras, fertilizantes e processamento industrial; distinguir capacidade autorizada, instalada e volume operado.
@@ -59,7 +68,7 @@ Comparar a matriz com os requisitos do NIVON em cada release. Foram identificado
 - **Frete e infraestrutura:** malha e capacidade de terminais, rodovias, pedágios e fretes ANUNCIADOS por transportadoras sob interface independente WhatsApp AI; não apresentar divulgações como operações realizadas.
 - **Mundo:** oferta/demanda de grandes origens/destinos e fluxo marítimo internacional por cobertura disponível; dados estatísticos não são line-up em tempo real.
 
-Esses itens exigem resolução de identificador, fonte e dataset específico antes de serem incorporados formalmente ao catálogo. Não considerar o total de 78 como inventário final imutável.
+Esses itens exigem resolução de identificador, fonte e dataset específico antes de serem incorporados formalmente ao catálogo. Não tratar qualquer contagem histórica como inventário final: validar o N atual pelo relatório automático.
 
 ## Ordem técnica de execução, com critérios de aceite
 
