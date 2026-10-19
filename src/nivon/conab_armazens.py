@@ -57,6 +57,17 @@ class LayoutArmazens:
             raise ErroArmazens("colunas de significados diferentes repetidas")
 
 
+# Layout confirmado apenas por INSPEÇÃO DO CABEÇALHO (não homologação do dataset).
+LAYOUT_CONAB_SICARM_HEADER_V1 = LayoutArmazens(
+    separador=";", codificacao="cp1252",
+    coluna_id_armazem="identificacao_armazem",
+    coluna_uf="uf", coluna_municipio="nom_municipio",
+    coluna_capacidade="qtd_capacidade_estatica(t)",
+    unidade_capacidade="t", decimal=",", milhar=".",
+    coluna_codigo_ibge="cod_ibge",
+)
+
+
 def _chave_nome(nome: str) -> str:
     base = unicodedata.normalize("NFKD", nome)
     base = "".join(c for c in base if not unicodedata.combining(c))

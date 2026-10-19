@@ -13,12 +13,12 @@ class TestCoberturaNivon(unittest.TestCase):
 
     def test_dez_mercados_e_frentes_transversais(self):
         r = validar_matriz(self.m, self.c)
-        self.assertEqual(r["frentes"],20)
+        self.assertEqual(r["frentes"],28)
         self.assertGreaterEqual(r["indicadores"],115)
 
     def test_nenhuma_frente_finge_prontidao_operacional(self):
         estado=diagnostico_matriz(self.m,self.c)
-        self.assertEqual(len(estado),20)
+        self.assertEqual(len(estado),28)
         self.assertTrue(all(not x["apto_producao"] for x in estado))
 
     def test_soja_milho_tem_conab_e_comex(self):
