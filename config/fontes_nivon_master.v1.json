@@ -1375,7 +1375,7 @@
       "cadence": "DAILY",
       "stage": "CODE_PRESENT",
       "priority": "P0",
-      "existing_module": "bcb_ptax.py",
+      "existing_module": "bcb_ptax.py; ptax_plano.py (normalizacao e consulta OData planejada offline)",
       "notes": "Parser offline OData para cotação compra/venda e boletins, com testes sintéticos; API pública documentada mas sem coleta operacional habilitada.",
       "enabled": false,
       "collection_authorized": false,
