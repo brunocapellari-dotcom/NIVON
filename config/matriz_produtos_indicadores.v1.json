@@ -15,7 +15,9 @@
         "IMEA_FISICO",
         "USDA_PSD",
         "LINEUP_SANTOS",
-        "BCB_PTAX"
+        "BCB_PTAX",
+        "CONAB_ARMAZENS_CAPACIDADE",
+        "IMEA_COMERCIALIZACAO_MT"
       ],
       "indicators": [
         "area_ha",
@@ -31,12 +33,15 @@
         "paridade_exportacao",
         "preco_rs_saca",
         "basis",
-        "lineup_programado_vs_atracado"
+        "lineup_programado_vs_atracado",
+        "capacidade_estatica_armazens_mt",
+        "comercializacao_percentual_safra"
       ],
       "risks": [
         "ABIOVE mensal não vira observado diário",
         "não somar farelo à soja esmagada",
-        "line-up programado não é exportação realizada"
+        "line-up programado não é exportação realizada",
+        "Capacidade estática não equivale a estoque ou disponibilidade física."
       ]
     },
     {
@@ -52,7 +57,9 @@
         "MDIC_COMEX_NCM",
         "USDA_PSD",
         "CEPEA_COEFICIENTES_MILHO",
-        "LINEUP_PARANAGUA"
+        "LINEUP_PARANAGUA",
+        "CONAB_ARMAZENS_CAPACIDADE",
+        "IMEA_COMERCIALIZACAO_MT"
       ],
       "indicators": [
         "safra1_t",
@@ -66,12 +73,15 @@
         "exportacoes_t",
         "estoque_t",
         "destino_potencial_de_carga",
-        "preco_rs_saca"
+        "preco_rs_saca",
+        "capacidade_estatica_armazens_mt",
+        "comercializacao_percentual_safra"
       ],
       "risks": [
         "milho total não pode ser somado às três safras",
         "CEPEA 440L/331kg/20,4L apenas cenário de margem",
-        "MAPA localiza fábricas, não mensura toneladas"
+        "MAPA localiza fábricas, não mensura toneladas",
+        "Vendas de milho não equivalem a saída física da fazenda ou embarque."
       ]
     },
     {
@@ -82,7 +92,8 @@
         "MDIC_COMEX_NCM",
         "ICE_FUTUROS",
         "CEPEA_FISICO",
-        "LINEUP_SANTOS"
+        "LINEUP_SANTOS",
+        "IMEA_COMERCIALIZACAO_MT"
       ],
       "indicators": [
         "area_ha",
@@ -92,11 +103,13 @@
         "exportacao_t",
         "preco_fisico",
         "ny_ice_preco",
-        "frete_t"
+        "frete_t",
+        "comercializacao_percentual_safra"
       ],
       "risks": [
         "não misturar algodão em caroço com pluma",
-        "ICE exige direitos de market data"
+        "ICE exige direitos de market data",
+        "Classificação de algodão em pluma/caroço e safra deve ser consistente."
       ]
     },
     {
@@ -149,7 +162,8 @@
         "MDIC_COMEX_NCM",
         "ICE_FUTUROS",
         "BCB_PTAX",
-        "LINEUP_SANTOS"
+        "LINEUP_SANTOS",
+        "MAPA_SAPCANA_BIOENERGIA"
       ],
       "indicators": [
         "area_cana_ha",
@@ -158,10 +172,12 @@
         "producao_acucar_t",
         "exportacao_acucar_t",
         "preco_ice_11",
-        "paridade_exportacao"
+        "paridade_exportacao",
+        "producao_sapcana_cana_acucar"
       ],
       "risks": [
-        "mix industrial por produto tem janela temporal distinta da safra agrícola"
+        "mix industrial por produto tem janela temporal distinta da safra agrícola",
+        "Mistura cana com etanol de milho só após separar matéria-prima."
       ]
     },
     {
@@ -243,7 +259,9 @@
         "EIA_OIL",
         "BCB_PTAX",
         "MDIC_COMEX_NCM",
-        "ANTAQ_MOVIMENTACAO"
+        "ANTAQ_MOVIMENTACAO",
+        "ANP_MOVIMENTACAO_DIESEL",
+        "EPE_BEN_SERIES_HISTORICAS"
       ],
       "indicators": [
         "preco_semana_municipio_diesel_b",
@@ -253,12 +271,15 @@
         "suprimento_disponibilidade",
         "paridade_internacional_rs_l",
         "biodiesel_blend_pct",
-        "custo_frete_implicito"
+        "custo_frete_implicito",
+        "movimentacao_diesel_observada_t",
+        "consumo_diesel_anual_ben"
       ],
       "risks": [
         "diesel B revenda não equivale Diesel A refinaria",
         "aplicar b(t), frete, tributos, câmbio e basis na paridade",
-        "estoques não são automaticamente públicos"
+        "estoques não são automaticamente públicos",
+        "Venda ou transporte de diesel não mede estoque disponível por localidade."
       ]
     },
     {
@@ -267,18 +288,22 @@
         "ETANOL_MILHO_ANP",
         "ANP_ETANOL",
         "UNICA_ACUCAR_ETANOL",
-        "CEPEA_COEFICIENTES_MILHO"
+        "CEPEA_COEFICIENTES_MILHO",
+        "UNEM_BIORREFINARIAS",
+        "MAPA_SAPCANA_BIOENERGIA"
       ],
       "indicators": [
         "producao_etanol_milho_l",
         "etanol_anidro_vs_hidratado",
         "milho_processado_estimado_t",
         "ddg_produzido_estimado_kg",
-        "oleo_de_milho_l"
+        "oleo_de_milho_l",
+        "biorrefinarias_milho_operando_estimado"
       ],
       "risks": [
         "separar etanol de cana e milho, anidro e hidratado",
-        "coeficientes CEPEA são de margem, não balanço físico homologado"
+        "coeficientes CEPEA são de margem, não balanço físico homologado",
+        "Capacidade ou anúncio de fábrica não equivale a moagem realizada."
       ]
     },
     {
@@ -289,7 +314,10 @@
         "ANTAQ_MOVIMENTACAO",
         "ONTL_REDE_CUSTOS",
         "DNIT_SNVP",
-        "FRETES_WHATSAPP_AUTORIZADO"
+        "FRETES_WHATSAPP_AUTORIZADO",
+        "ANTT_TERMINAIS_FERROVIARIOS",
+        "CONAB_ARMAZENS_CAPACIDADE",
+        "IBGE_CODIGOS_MUNICIPIOS"
       ],
       "indicators": [
         "fluxos_mt_ncm_t",
@@ -298,12 +326,15 @@
         "tu_tku_ferrovia",
         "fretes_ofertados_rs_t",
         "fretes_reais_se_disponiveis",
-        "gargalos"
+        "gargalos",
+        "terminais_ferroviarios_por_municipio",
+        "codigos_ibge_destinos"
       ],
       "risks": [
         "MDF-e possui NCM incompleto",
         "estação ferroviária não é destino de carga",
-        "WhatsApp AI é fonte separada sob interface autorizada"
+        "WhatsApp AI é fonte separada sob interface autorizada",
+        "Município com terminal e fábrica é zona ambígua, não consumo comprovado."
       ]
     },
     {
@@ -369,7 +400,8 @@
         "EIA_OIL",
         "WORLD_BANK_COMMODITIES",
         "MDIC_COMEX_NCM",
-        "USDA_PSD"
+        "USDA_PSD",
+        "EPE_BEN_SERIES_HISTORICAS"
       ],
       "indicators": [
         "usd_brl",
@@ -378,11 +410,13 @@
         "petroleo_usd_bbl",
         "trade_balance_usd",
         "variacao_semanal",
-        "cenarios_macroeconomicos"
+        "cenarios_macroeconomicos",
+        "ben_energia_anual"
       ],
       "risks": [
         "câmbio observado e cenário devem ser rotulados",
-        "não interpolar dado trimestral para diário"
+        "não interpolar dado trimestral para diário",
+        "Balanço energético anual não é indicador em tempo real."
       ]
     },
     {
