@@ -105,9 +105,9 @@ class TestFluxos(unittest.TestCase):
 
 
 class TestPortos(unittest.TestCase):
-    def test_dez_portos(self):
-        self.assertEqual(len(PORTOS_BR), 10)
-        self.assertEqual(len(set(PORTOS_BR)), 10)
+    def test_escopo_portuario_nacional(self):
+        self.assertEqual(len(PORTOS_BR), 45)
+        self.assertEqual(len(set(PORTOS_BR)), 45)
 
     def test_programado_nao_e_realizado(self):
         with self.assertRaises(ValueError):
