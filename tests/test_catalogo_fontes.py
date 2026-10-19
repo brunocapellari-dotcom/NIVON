@@ -24,9 +24,9 @@ class TestCatalogoMestre(unittest.TestCase):
         self.assertTrue(GRUPOS <= grupos)
         self.assertTrue(PRODUTOS_ESTRATEGICOS <= produtos)
 
-    def test_dez_portos_brasileiros_distintos(self):
+    def test_cobertura_nacional_35_organizados_e_10_privados(self):
         ports = [d for d in self.catalogo["datasets"] if d["id"].startswith("LINEUP_")]
-        self.assertEqual(len(ports), 10)
+        self.assertEqual(len(ports), 45)
         self.assertTrue(all(d["group"] == "PORTOS" for d in ports))
         self.assertFalse(any(d["enabled"] for d in ports))
 
