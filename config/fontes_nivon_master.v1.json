@@ -2144,7 +2144,7 @@
       "cadence": "ANNUAL",
       "stage": "CANDIDATE",
       "priority": "P1",
-      "existing_module": null,
+      "existing_module": "sidra_pam.py (planejador SIDRA 1612 e parser offline com marcadores de ausência)",
       "notes": "",
       "enabled": false,
       "collection_authorized": false,

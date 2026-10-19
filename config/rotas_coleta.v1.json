@@ -1467,7 +1467,7 @@
         "url": null,
         "source_proof": null
       },
-      "implementation_scope": "NO_PARSER (código citado não implica coletor ativo)",
+      "implementation_scope": "sidra_pam.py (PAM tabela 1612, contrato por município e categoria, sem HTTP)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -1487,7 +1487,7 @@
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
-      "preliminary_evidence": "CATALOG_ONLY"
+      "preliminary_evidence": "TABLE_1612_PAM_DOCUMENTADA_FORMATO_RESPOSTA_SINTETICO_A_HOMOLOGAR"
     },
     {
       "dataset_id": "IBGE_PPM",
