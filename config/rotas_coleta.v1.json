@@ -550,7 +550,7 @@
         "url": "https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/documentacao",
         "source_proof": "https://dadosabertos.bcb.gov.br/dataset/taxas-de-cambio-todos-os-boletins-diarios"
       },
-      "implementation_scope": "NO_PARSER (código citado não implica coletor ativo)",
+      "implementation_scope": "bcb_ptax.py (normalizador OData sintético, não coletor automático)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
