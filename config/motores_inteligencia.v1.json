@@ -11,7 +11,11 @@
         "nivon.motores_agro_estrategicos:safra_comercializacao",
         "nivon.motores_agro_estrategicos:referencia_futuros_graos",
         "nivon.motores_agro_estrategicos:esmagamento_soja",
-        "nivon.balancos:reconciliar_balanco"
+        "nivon.balancos:reconciliar_balanco",
+        "nivon.inteligencia_temporal:decompor_mudanca_safra",
+        "nivon.inteligencia_temporal:decompor_variacao_preco",
+        "nivon.inteligencia_temporal:comparar_progresso_safra",
+        "nivon.inteligencia_temporal:benchmark_sazonal_mensal"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -39,7 +43,10 @@
         "nivon.motores_agro_estrategicos:milho_safras_demanda",
         "nivon.motores_agro_estrategicos:referencia_futuros_graos",
         "nivon.motores_agro_estrategicos:simulacao_etanol_ddg",
-        "nivon.balancos:reconciliar_balanco"
+        "nivon.balancos:reconciliar_balanco",
+        "nivon.inteligencia_temporal:decompor_mudanca_safra",
+        "nivon.inteligencia_temporal:comparar_progresso_safra",
+        "nivon.inteligencia_temporal:benchmark_sazonal_mensal"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -67,7 +74,9 @@
       "front_id": "ALGODAO",
       "entrypoints": [
         "nivon.motores_agro_estrategicos:algodao_beneficiamento",
-        "nivon.motores_agro_estrategicos:safra_comercializacao"
+        "nivon.motores_agro_estrategicos:safra_comercializacao",
+        "nivon.inteligencia_temporal:decompor_mudanca_safra",
+        "nivon.inteligencia_temporal:comparar_progresso_safra"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
@@ -149,7 +158,8 @@
       "front_id": "TRIGO",
       "entrypoints": [
         "nivon.motores_agro_estrategicos:paridade_importacao_trigo",
-        "nivon.motores_agro_estrategicos:safra_comercializacao"
+        "nivon.motores_agro_estrategicos:safra_comercializacao",
+        "nivon.inteligencia_temporal:decompor_mudanca_safra"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
@@ -170,7 +180,8 @@
       "front_id": "SORGO",
       "entrypoints": [
         "nivon.motores_agro_estrategicos:sorgo_substituicao_racao",
-        "nivon.motores_agro_estrategicos:safra_comercializacao"
+        "nivon.motores_agro_estrategicos:safra_comercializacao",
+        "nivon.inteligencia_temporal:decompor_mudanca_safra"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
@@ -209,7 +220,9 @@
       "front_id": "DIESEL",
       "entrypoints": [
         "nivon.motores_agro_estrategicos:paridade_diesel",
-        "nivon.anp_diesel:resumo_diesel_municipal"
+        "nivon.anp_diesel:resumo_diesel_municipal",
+        "nivon.inteligencia_temporal:decompor_variacao_preco",
+        "nivon.inteligencia_temporal:custo_diesel_por_rota"
       ],
       "data_dependencies": [
         "ANP_PRECO_REVENDA_DIESEL",
@@ -280,7 +293,8 @@
       "front_id": "MARITIMO",
       "entrypoints": [
         "nivon.motores_integracao_estrategica:pressao_portuaria",
-        "nivon.portos:contar_escalas"
+        "nivon.portos:contar_escalas",
+        "nivon.inteligencia_temporal:benchmark_sazonal_mensal"
       ],
       "data_dependencies": [
         "LINEUP_SANTOS",
@@ -326,7 +340,8 @@
       "front_id": "MERCADO_MACRO",
       "entrypoints": [
         "nivon.motores_integracao_estrategica:sensibilidade_macro",
-        "nivon.bcb_ptax:normalizar_ptax_odata"
+        "nivon.bcb_ptax:normalizar_ptax_odata",
+        "nivon.inteligencia_temporal:decompor_variacao_preco"
       ],
       "data_dependencies": [
         "BCB_PTAX",
@@ -370,7 +385,9 @@
       "front_id": "CANA",
       "entrypoints": [
         "nivon.motores_cadeias:simular_atr_cana",
-        "nivon.motores_agro_estrategicos:referencia_acucar_ice"
+        "nivon.motores_agro_estrategicos:referencia_acucar_ice",
+        "nivon.inteligencia_temporal:decompor_mudanca_safra",
+        "nivon.inteligencia_temporal:comparar_progresso_safra"
       ],
       "data_dependencies": [
         "CONAB_CANA",
@@ -393,7 +410,9 @@
       "front_id": "GERGELIM",
       "entrypoints": [
         "nivon.motores_cadeias:paridade_gergelim",
-        "nivon.cadeias_adicionais:analisar_cadeia"
+        "nivon.cadeias_adicionais:analisar_cadeia",
+        "nivon.inteligencia_temporal:decompor_mudanca_safra",
+        "nivon.inteligencia_temporal:concentracao_fluxos"
       ],
       "data_dependencies": [
         "CONAB_GERGELIM_SERIES",
@@ -513,7 +532,8 @@
     {
       "front_id": "ARMAZENAGEM",
       "entrypoints": [
-        "nivon.motores_integracao_estrategica:pressao_armazenagem"
+        "nivon.motores_integracao_estrategica:pressao_armazenagem",
+        "nivon.inteligencia_temporal:benchmark_sazonal_mensal"
       ],
       "data_dependencies": [
         "CONAB_ARMAZENS_CAPACIDADE",
@@ -535,7 +555,9 @@
       "entrypoints": [
         "nivon.motores_integracao_estrategica:comercio_exterior_recorte",
         "nivon.mdic_exportacao:resumir_exportacao_csv",
-        "nivon.mdic_importacao:resumir_importacao_csv"
+        "nivon.mdic_importacao:resumir_importacao_csv",
+        "nivon.inteligencia_temporal:concentracao_fluxos",
+        "nivon.inteligencia_temporal:benchmark_sazonal_mensal"
       ],
       "data_dependencies": [
         "MDIC_COMEX_NCM",
@@ -557,7 +579,8 @@
       "front_id": "PETROLEO_ENERGIA",
       "entrypoints": [
         "nivon.motores_agro_estrategicos:paridade_diesel",
-        "nivon.motores_integracao_estrategica:sensibilidade_macro"
+        "nivon.motores_integracao_estrategica:sensibilidade_macro",
+        "nivon.inteligencia_temporal:decompor_variacao_preco"
       ],
       "data_dependencies": [
         "EIA_OIL",
@@ -581,7 +604,8 @@
       "front_id": "FRETE_RODOVIARIO",
       "entrypoints": [
         "nivon.motores_integracao_estrategica:custo_frete_rodoviario",
-        "nivon.motores_integracao_estrategica:comparacao_intermodal"
+        "nivon.motores_integracao_estrategica:comparacao_intermodal",
+        "nivon.inteligencia_temporal:custo_diesel_por_rota"
       ],
       "data_dependencies": [
         "FRETES_WHATSAPP_AUTORIZADO",
@@ -604,7 +628,8 @@
       "front_id": "RISCO_GEOPOLITICO",
       "entrypoints": [
         "nivon.motores_integracao_estrategica:evento_geopolitico",
-        "nivon.motores_integracao_estrategica:sensibilidade_macro"
+        "nivon.motores_integracao_estrategica:sensibilidade_macro",
+        "nivon.inteligencia_temporal:concentracao_fluxos"
       ],
       "data_dependencies": [
         "RADAR_GOV",
@@ -627,7 +652,8 @@
       "front_id": "INDUSTRIA_PROCESSAMENTO",
       "entrypoints": [
         "nivon.motores_integracao_estrategica:margem_processamento",
-        "nivon.motores_agro_estrategicos:esmagamento_soja"
+        "nivon.motores_agro_estrategicos:esmagamento_soja",
+        "nivon.inteligencia_temporal:benchmark_sazonal_mensal"
       ],
       "data_dependencies": [
         "ABIOVE_SOJA_ESMAGAMENTO",
