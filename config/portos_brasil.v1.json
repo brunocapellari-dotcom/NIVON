@@ -1,6 +1,6 @@
 {
   "versao": "1.0",
-  "objetivo": "catalogo_de_cobertura_sem_homologacao",
+  "objetivo": "LEGADO_DEPRECADO_VEJA_ESCOPO_NACIONAL",
   "politica": "PENDENTE_NAO_COLETAR",
   "portos": [
     {
@@ -73,5 +73,7 @@
       "estado": "PARSER_LEGADO_NAO_HOMOLOGADO",
       "homologado": false
     }
-  ]
+  ],
+  "superseded_by": "config/lineup_escopo_nacional.v1.json",
+  "observacao": "Este cadastro de 10 portos não é mais a referência canônica; inventário nacional contém 35 portos organizados ANTAQ e 10 terminais/complexos candidatos."
 }
