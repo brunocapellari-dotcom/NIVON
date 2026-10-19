@@ -65,7 +65,7 @@ python -m nivon.analise_local --config config/contrato_exemplo_sintetico.json
 
 O exemplo de fluxos contém apenas **dados inventados**, para demonstrar 600 toneladas identificadas em destino AMBÍGUO e 50 toneladas sem NCM. Não é medição do mercado.
 
-**119 testes definidos e aprovados no GitHub Actions**, nos checks do PR #1 (executados com fixtures sintéticas). Os testes não comprovam ingestão ANTT real nem operação portuária. Ver [workflow do PR](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39000174173).
+A suíte do projeto é executada nos checks do PR, usando fixtures sintéticas. **A execução do commit atual precisa ser confirmada no GitHub Actions; teste unitário não comprova homologação de todas as fontes.** Ver [workflow](https://github.com/brunocapellari-dotcom/NIVON/actions).
 
 ## Próximos gates
 
@@ -82,3 +82,24 @@ Documentos: [guia de execução](docs/GUIA_DADOS_E_EXECUCAO.md), [plano de imple
 ## Direitos do código
 
 A visibilidade pública não constitui concessão automática de licença open-source. O projeto ainda não disponibiliza licença geral de reutilização. Código de terceiros só será incorporado após validação jurídica e técnica específica.
+
+## Catálogo Mestre — Coletores e APIs do NIVON (19/10/2026)
+
+Uma governança única conecta **57 fontes, 77 datasets, 15 grupos de dados, 16 frentes de inteligência e 120 indicadores previstos**. Esta contagem indica **escopo mapeado**, não coletores instalados ou homologados.
+
+- Catálogo principal com fontes, modalidades, direitos, estágio e periodicidade proposta: [`config/fontes_nivon_master.v1.json`](config/fontes_nivon_master.v1.json).
+- Matriz de produtos, indicadores, insumos e riscos de interpretação: [`config/matriz_produtos_indicadores.v1.json`](config/matriz_produtos_indicadores.v1.json).
+- Guia operacional e gates de homologação: [`docs/ARQUITETURA_COLETORES_API.md`](docs/ARQUITETURA_COLETORES_API.md).
+- Validadores offline: `src/nivon/catalogo_fontes.py`, `src/nivon/cobertura.py`, `src/nivon/orquestrador_fontes.py`.
+- Adaptador inicial MDIC para CSV **exportação NCM/UF**: `src/nivon/mdic_exportacao.py`; arquivo oficial ainda não homologado. Dados municipais por SH4 estão em outro dataset.
+
+Exemplos de inspeção sem rede, sem segredos ou custos:
+
+```bash
+PYTHONPATH=src python -m nivon.catalogo_fontes --resumo
+PYTHONPATH=src python -m nivon.catalogo_fontes --produto DIESEL
+PYTHONPATH=src python -m nivon.cobertura
+PYTHONPATH=src python -m nivon.orquestrador_fontes --prioridade P0 --resumo
+```
+
+**Todos os novos datasets têm coleta, agendamento e redistribuição desabilitados.** A fonte oficial e o estágio de `REAL_SNAPSHOT_TESTED` não constituem acesso contínuo, contrato comercial, backup ou go-live.
