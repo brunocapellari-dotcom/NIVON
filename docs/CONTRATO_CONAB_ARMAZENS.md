@@ -19,3 +19,11 @@ Após obter amostra oficial de maneira lícita e confirmar os direitos por opera
 O agregador retorna somente total de capacidade estática e quantidade de armazéns distintos por município/UF, sem armazenar CNPJ, razão social, nomes, endereço ou dados individualizados. Nome/UF sem tabela IBGE comprovada não é marcado como código IBGE canônico. Capacidade cadastrada não mede espaço livre, estoque ou ocupação.
 
 Código e testes sintéticos não são homologação real. Runtime/agendamento seguem OFF, sem deploy nem custos.
+
+## Inspeção de cabeçalho concluída em 19/10/2026
+
+O teste descartável de leitura limitada (16.384 bytes; sem persistência) confirmou, no arquivo oficial, **16 colunas separadas por `;` e codificação CP1252**. Na amostra de 20 registros completos: IDs não repetidos, códigos IBGE com sete dígitos e capacidade estática em toneladas com formato decimal brasileiro (`n,dd`). Não houve inspeção do arquivo completo nem prova de que cada linha representa uma unidade inequívoca em toda a base.
+
+O constante `LAYOUT_CONAB_SICARM_HEADER_V1` mapeia: `identificacao_armazem`, `nom_municipio`, `cod_ibge`, `uf`, `qtd_capacidade_estatica(t)`. Também existem colunas de capacidade de expedição e recepção, que **não podem ser somadas à capacidade estática**. O arquivo inclui campos pessoais/comerciais, que devem ser excluídos dos agregados.
+
+A inspeção transitória do CI foi removida após comprovar o cabeçalho. O script continua manual, exigindo `--explicit-yes` e sem agendamento. Permanecem bloqueados a importação de dados reais como histórico homologado, a publicação comercial e o agendamento até revisão de direitos, reconciliação nacional e teste de recuperação.

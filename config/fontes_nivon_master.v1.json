@@ -1230,7 +1230,7 @@
       "cadence": "IRREGULAR",
       "stage": "CANDIDATE",
       "priority": "P0",
-      "existing_module": "conab_armazens.py (layout parametrizado offline; apenas testes sintéticos)",
+      "existing_module": "conab_armazens.py (header real confirmado: 16 campos, cp1252, ;, t; parser de arquivo completo ainda não homologado)",
       "notes": "Capacidade estática cadastrada não corresponde a estoque físico nem disponibilidade em tempo real.",
       "enabled": false,
       "collection_authorized": false,

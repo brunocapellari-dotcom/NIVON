@@ -791,7 +791,7 @@
         "url": "https://portaldeinformacoes.conab.gov.br/downloads/arquivos/ArmazensCadastrados.txt",
         "source_proof": null
       },
-      "implementation_scope": "conab_armazens.py (parser local de layout explícito; sem amostra real e sem coleta)",
+      "implementation_scope": "conab_armazens.py (mapeamento do cabeçalho real confirmado; unidades e grão por amostra de 20 linhas; sem coleta recorrente)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -809,7 +809,7 @@
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Capacidade estática cadastrada; não confundir com estoque real/ocupação.",
-      "preliminary_evidence": "OFFLINE_PARSER_SYNTHETIC_ONLY_LAYOUT_UNVERIFIED"
+      "preliminary_evidence": "HEADER_REAL_16_COLUMNS_CP1252_SEMICOLON_PTBR_20_ROWS_NO_OPERATION_RIGHTS"
     },
     {
       "dataset_id": "CONAB_BALANCOS",
