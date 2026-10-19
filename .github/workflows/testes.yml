@@ -2,6 +2,9 @@ name: Testes locais NIVON
 
 on:
   pull_request:
+  push:
+    branches:
+      - feat/agrobr-portos-motores-agentes-20261019
   workflow_dispatch:
 
 permissions:
@@ -148,7 +151,7 @@ jobs:
         run: python scripts/inspecionar_anp_diesel.py
 
   integracao-bibliotecas-opcionais:
-    if: github.event_name == 'pull_request' && github.head_ref == 'feat/agrobr-portos-motores-agentes-20261019'
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.head_ref == 'feat/agrobr-portos-motores-agentes-20261019')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

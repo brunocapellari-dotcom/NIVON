@@ -103,3 +103,40 @@ Nenhuma instalação/acesso agendado é disparado automaticamente por este PR.
 **Orientação de homologação:** conteúdo e cálculo determinísticos não devem
 ser confundidos com dados reais, e nenhuma execução automatizada com rede
 pode ignorar os direitos ou o custo zero estipulado pelo usuário.
+
+
+## Incremento operacional — memória de safra, escala e briefing (19/10/2026)
+
+- progresso_store.py: SQLite com chaves (cultura/safra/operação/UF/semana),
+  checksum da edição, coleta reexecutável e consulta as-of. Revisões da
+  mesma semana geram nova edição; publicação desconhecida não entra no backtest.
+  atualizar_progresso() descobre semanas e permite retrocarga limitada; a
+  execução real exige permissão explícita de coleta/armazenamento e evidence_id.
+  O arquivo XLSX original ainda não é arquivado por este módulo.
+- portos_store.py: SQLite para programação marítima normalizada; conserva
+  navio, ETA previsto, terminal, DUV e hashes de documento, permitindo múltiplas
+  capturas do mesmo documento sem duplicar versões.
+  O snapshot não prova embarque, atracação ou descarga efetiva.
+- portos_paranagua.py: localiza edição mais recente por série (Oeste, Leste,
+  importação de sólidos) no índice oficial, exclui atas de atracação da procura
+  por line-up e seleciona apenas PDF único autorizado na página da edição.
+  Ainda faltam casos reais que comprovem layout, MIME e extração.
+- outbox_briefing.py: registro idempotente por data local e destinatário
+  pseudonimizado HMAC-SHA256, com estados PENDING -> RESERVED ->
+  ACCEPTED -> DELIVERED somente mediante ACK autenticado. Não armazena
+  número telefônico ou corpo do texto. Retry de estado ambíguo não é automático;
+  reconciliação segura, store de texto cifrado e provedor real são pendências.
+
+### Critérios de implantação
+
+1. Bancos SQLite devem estar em volume persistente na nuvem com snapshot e
+   ensaio de restauração; banco em runner efêmero não constitui memória durável.
+2. Captura automatizada só se autorizações e direitos da operação
+   (coleta/armazenamento/publicação) estiverem comprovados e auditáveis.
+3. Histórico/indicadores continuam insuficientes para certificação comercial até
+   provas com dados reais, vintages e auditoria.
+4. No briefing, a fila não envia mensagens; o operador de entrega só deve
+   reservar após template/consentimento/custo aprovados, sistema de antifraude,
+   credenciais gerenciadas e webhook verificado.
+5. A infraestrutura de CI não deve publicar snapshots brutos, segredos nem
+   dados individuais ao GitHub.
