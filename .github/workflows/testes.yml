@@ -41,6 +41,7 @@ jobs:
           python -m nivon.registro_motores
           python -m nivon.auditoria_prontidao --resumo
           python -m nivon.orquestrador_fontes --prioridade P0 --resumo
+          python -m nivon.auditoria_coletores --resumo
       - name: Demonstracao deterministica
         env:
           PYTHONPATH: src
