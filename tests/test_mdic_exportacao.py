@@ -15,7 +15,8 @@ class TestMDICExportacao(unittest.TestCase):
             ";".join(str(v) for v in l) for l in linhas)+"\n",encoding="utf-8")
 
     def linha(self,*,ncm="12019000",kg="1000",usd="500",uf="MT",mes="09",pais="160"):
-        # Ordem oficial: QT_ESTAT, KG_LIQUIDO, VL_FOB.\n        return ["2026",mes,ncm,"10",pais,uf,"01","081","1",kg,usd]
+        # Ordem oficial: QT_ESTAT, KG_LIQUIDO, VL_FOB.
+        return ["2026",mes,ncm,"10",pais,uf,"01","081","1",kg,usd]
 
     def analisar(self):
         return resumir_exportacao_csv(self.arq,ncms=frozenset({"12019000"}))
