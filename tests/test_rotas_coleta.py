@@ -13,11 +13,18 @@ class TestRotasColetores(unittest.TestCase):
         cls.catalogo = carregar_catalogo()
         cls.rotas = carregar_rotas()
 
-    def test_cobre_todos_78_datasets_sem_duplicatas(self):
+    def test_cobre_todos_86_datasets_sem_duplicatas(self):
         d = validar_rotas(self.rotas, self.catalogo)
-        self.assertEqual(d["fontes"], 57)
-        self.assertEqual(d["datasets"], 78)
-        self.assertEqual(d["rotas"], 78)
+        self.assertEqual(d["fontes"], 59)
+        self.assertEqual(d["datasets"], 86)
+        self.assertEqual(d["rotas"], 86)
+
+    def test_armazens_e_municipios_estao_canonicos(self):
+        ids = {e["dataset_id"] for e in self.rotas["entries"]}
+        self.assertIn("CONAB_ARMAZENS_CAPACIDADE", ids)
+        self.assertIn("IBGE_CODIGOS_MUNICIPIOS", ids)
+        self.assertIn("UNEM_BIORREFINARIAS", ids)
+        self.assertIn("EPE_BEN_SERIES_HISTORICAS", ids)
 
     def test_risco_nao_foi_transformado_em_coleta(self):
         d = validar_rotas(self.rotas, self.catalogo)
@@ -89,7 +96,7 @@ class TestRotasColetores(unittest.TestCase):
         plano = montar_plano(self.rotas, self.catalogo)
         grupos = {x["grupo"] for x in plano}
         self.assertGreaterEqual(len(grupos), 15)
-        self.assertEqual(len(plano), 78)
+        self.assertEqual(len(plano), 86)
 
 
 if __name__ == "__main__":
