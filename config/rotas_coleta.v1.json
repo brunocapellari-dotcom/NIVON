@@ -812,6 +812,35 @@
       "preliminary_evidence": "CATALOG_ONLY"
     },
     {
+      "dataset_id": "CONAB_GERGELIM_SERIES",
+      "collector_class": "STRUCTURED_FILE",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/series-historicas/graos/gergelim",
+        "source_proof": null
+      },
+      "implementation_scope": "conab_catalogo.py (índice somente)",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "XLS oficial descoberto; layout de dados não homologado.",
+      "preliminary_evidence": "OFFICIAL_INDEX"
+    },
+    {
       "dataset_id": "CONAB_GRAOS_LEVANTAMENTOS",
       "collector_class": "STRUCTURED_FILE",
       "locator": {
@@ -1197,6 +1226,64 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
       "preliminary_evidence": "CATALOG_ONLY"
+    },
+    {
+      "dataset_id": "IBGE_ABATE_FRANGO_1094",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://sidra.ibge.gov.br/pesquisa/abate/tabelas/",
+        "source_proof": null
+      },
+      "implementation_scope": "cadeias_adicionais.py (adaptador offline)",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Tabela 1094: requer validar variáveis e unidades da API SIDRA.",
+      "preliminary_evidence": "OFFICIAL_TABLE"
+    },
+    {
+      "dataset_id": "IBGE_ABATE_SUINO_1093",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://sidra.ibge.gov.br/pesquisa/abate/tabelas/",
+        "source_proof": null
+      },
+      "implementation_scope": "cadeias_adicionais.py (adaptador offline)",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Tabela 1093: requer validar variáveis e unidades da API SIDRA.",
+      "preliminary_evidence": "OFFICIAL_TABLE"
     },
     {
       "dataset_id": "IBGE_CODIGOS_MUNICIPIOS",
@@ -1758,6 +1845,36 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
       "preliminary_evidence": "CATALOG_ONLY"
+    },
+    {
+      "dataset_id": "MAPA_AGROSTAT_CADEIAS",
+      "collector_class": "DASHBOARD_MANUAL_EXPORT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": null
+      },
+      "implementation_scope": "NO_PARSER",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_ENDPOINT_UNKNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "AgroStat: consulta institucional não implica API autorizada.",
+      "preliminary_evidence": "OFFICIAL_PORTAL"
     },
     {
       "dataset_id": "MAPA_SAPCANA_BIOENERGIA",

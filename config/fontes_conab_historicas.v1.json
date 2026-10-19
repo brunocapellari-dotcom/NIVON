@@ -24,6 +24,13 @@
         "Milho3aSerieHist.xls",
         "MilhoTotalSerieHist.xls"
       ]
+    },
+    {
+      "produto": "GERGELIM",
+      "pagina": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/series-historicas/graos/gergelim",
+      "arquivos": [
+        "GergelimSerieHist.xls"
+      ]
     }
   ],
   "riscos": [
@@ -31,7 +38,8 @@
     "safra milho TOTAL nao deve ser somada a safras individuais",
     "milho por safra exige calendario safra explicito",
     "publicacao e coleta devem ser distintas",
-    "tabelas revisadas substituem vintages apenas em visao de estado atual"
+    "tabelas revisadas substituem vintages apenas em visao de estado atual",
+    "Gergelim: não presumir layout XLS ou extensão da série da soja/milho."
   ],
   "estado": "CATALOGO_VERIFICADO_LINKS; PARSER_XLS_NAO_IMPLEMENTADO; DADOS_NAO_COLETADOS"
 }

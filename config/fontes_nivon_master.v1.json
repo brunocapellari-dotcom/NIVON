@@ -667,7 +667,8 @@
       "products": [
         "ETANOL",
         "ACUCAR",
-        "MILHO"
+        "MILHO",
+        "CANA"
       ],
       "topic": "producao_anidro_hidratado_mat_prima",
       "mode": "CSV",
@@ -1211,7 +1212,8 @@
       "group": "SAFRA",
       "products": [
         "ACUCAR",
-        "ETANOL"
+        "ETANOL",
+        "CANA"
       ],
       "topic": "safra_cana_acucar_etanol",
       "mode": "PDF_XLS",
@@ -1220,6 +1222,31 @@
       "priority": "P1",
       "existing_module": null,
       "notes": "",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "CONAB_GERGELIM_SERIES",
+      "source_id": "CONAB",
+      "group": "SAFRA",
+      "products": [
+        "GERGELIM"
+      ],
+      "topic": "serie_historica_gergelim_area_producao_produtividade",
+      "mode": "XLS",
+      "cadence": "MONTHLY",
+      "stage": "CODE_PRESENT",
+      "priority": "P0",
+      "existing_module": "conab_catalogo.py",
+      "notes": "Indexador do link oficial implementado offline; layout XLS e importação numérica não homologados.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
@@ -1267,7 +1294,8 @@
       "products": [
         "ALGODAO",
         "TRIGO",
-        "SORGO"
+        "SORGO",
+        "GERGELIM"
       ],
       "topic": "area_producao_produtividade_por_uf_safra",
       "mode": "XLS",
@@ -1565,7 +1593,9 @@
       "products": [
         "BOI",
         "BEZERRO",
-        "PECUARIA"
+        "PECUARIA",
+        "FRANGO",
+        "SUINO"
       ],
       "topic": "abate_bovino_suino_aves_trimestral",
       "mode": "API_SIDRA",
@@ -1574,6 +1604,56 @@
       "priority": "P1",
       "existing_module": null,
       "notes": "",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "IBGE_ABATE_FRANGO_1094",
+      "source_id": "IBGE",
+      "group": "PECUARIA",
+      "products": [
+        "FRANGO"
+      ],
+      "topic": "sidra_1094_abate_frangos_cabecas_carcacas",
+      "mode": "API_SIDRA",
+      "cadence": "QUARTERLY",
+      "stage": "CODE_PRESENT",
+      "priority": "P0",
+      "existing_module": "cadeias_adicionais.py",
+      "notes": "Normalizador offline de mapeamento explícito; não converter carcaças em produto de exportação sem fator validado.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "IBGE_ABATE_SUINO_1093",
+      "source_id": "IBGE",
+      "group": "PECUARIA",
+      "products": [
+        "SUINO"
+      ],
+      "topic": "sidra_1093_abate_suinos_cabecas_carcacas",
+      "mode": "API_SIDRA",
+      "cadence": "QUARTERLY",
+      "stage": "CODE_PRESENT",
+      "priority": "P0",
+      "existing_module": "cadeias_adicionais.py",
+      "notes": "Normalizador offline de mapeamento explícito; rebanho não é abate e carcaça não é peso vivo.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
@@ -1651,7 +1731,9 @@
         "ALGODAO",
         "TRIGO",
         "SORGO",
-        "ACUCAR"
+        "ACUCAR",
+        "CANA",
+        "GERGELIM"
       ],
       "topic": "area_producao_produtividade_municipal",
       "mode": "API_SIDRA",
@@ -1678,7 +1760,9 @@
       "products": [
         "BOI",
         "BEZERRO",
-        "PECUARIA"
+        "PECUARIA",
+        "FRANGO",
+        "SUINO"
       ],
       "topic": "rebanho_abate_bovinocultura",
       "mode": "API_SIDRA",
@@ -2149,12 +2233,42 @@
       "downstream_contract": "OBSERVACAO_CANONICA_V1"
     },
     {
+      "id": "MAPA_AGROSTAT_CADEIAS",
+      "source_id": "MAPA",
+      "group": "COMEX",
+      "products": [
+        "CANA",
+        "GERGELIM",
+        "FRANGO",
+        "SUINO",
+        "ACUCAR"
+      ],
+      "topic": "agrostat_agro_ncm_uf_pais_exportacao",
+      "mode": "DASHBOARD",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Fonte institucional auxiliar, sem extração homologada; não duplicar MDIC.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
       "id": "MAPA_SAPCANA_BIOENERGIA",
       "source_id": "MAPA",
       "group": "INDUSTRIA",
       "products": [
         "ACUCAR",
-        "ETANOL_DDG"
+        "ETANOL_DDG",
+        "CANA"
       ],
       "topic": "producao_cana_acucar_etanol_cadastro_setorial",
       "mode": "XLS_REPORT",
@@ -2206,7 +2320,9 @@
       "products": [
         "MILHO",
         "SOJA",
-        "PECUARIA"
+        "PECUARIA",
+        "FRANGO",
+        "SUINO"
       ],
       "topic": "fabricantes_ativos_por_municipio_nao_consumo",
       "mode": "CSV",
@@ -2326,7 +2442,10 @@
         "ACUCAR",
         "FERTILIZANTES",
         "DIESEL",
-        "ETANOL"
+        "ETANOL",
+        "GERGELIM",
+        "FRANGO",
+        "SUINO"
       ],
       "topic": "fluxos_ncm_uf_pais_via_urf_kg_fob_sem_municipio",
       "mode": "BULK_CSV",
@@ -2612,7 +2731,9 @@
       "products": [
         "MILHO",
         "SOJA",
-        "PECUARIA"
+        "PECUARIA",
+        "FRANGO",
+        "SUINO"
       ],
       "topic": "producao_racoes_macroingredientes_aves_suinos",
       "mode": "REPORT",
@@ -2723,7 +2844,8 @@
       "group": "INDUSTRIA",
       "products": [
         "ACUCAR",
-        "ETANOL"
+        "ETANOL",
+        "CANA"
       ],
       "topic": "moagem_producao_mensal_mix_industrial",
       "mode": "REPORT",

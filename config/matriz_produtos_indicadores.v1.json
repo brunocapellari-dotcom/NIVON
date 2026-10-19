@@ -443,6 +443,134 @@
         "não repetir a mesma notícia",
         "WhatsApp AI não edita nem produz briefing NIVON; somente interface de envio"
       ]
+    },
+    {
+      "id": "CANA",
+      "data": [
+        "CONAB_CANA",
+        "IBGE_PAM",
+        "UNICA_ACUCAR_ETANOL",
+        "MAPA_SAPCANA_BIOENERGIA",
+        "ANP_ETANOL",
+        "MDIC_COMEX_NCM",
+        "MAPA_AGROSTAT_CADEIAS",
+        "BCB_PTAX"
+      ],
+      "indicators": [
+        "area_ha",
+        "producao_cana_t",
+        "produtividade_kg_ha",
+        "moagem_cana_t",
+        "moagem_vs_producao_indicativa",
+        "acucar_t",
+        "etanol_cana_anidro_l",
+        "etanol_cana_hidratado_l",
+        "mix_industrial_oficial",
+        "exportacao_acucar_t",
+        "preco_acucar",
+        "paridade_exportacao"
+      ],
+      "risks": [
+        "Açúcar em toneladas e etanol em litros não são aditivos.",
+        "Cana moída e cana produzida exigem mesmo recorte geográfico e temporal.",
+        "Separar etanol de cana e de milho, sem inferir com base no total ANP."
+      ]
+    },
+    {
+      "id": "GERGELIM",
+      "data": [
+        "CONAB_GERGELIM_SERIES",
+        "CONAB_GRAOS_OUTRAS_CULTURAS",
+        "IBGE_PAM",
+        "MDIC_COMEX_NCM",
+        "MAPA_AGROSTAT_CADEIAS",
+        "BCB_PTAX",
+        "ANTAQ_MOVIMENTACAO"
+      ],
+      "indicators": [
+        "area_ha",
+        "producao_t",
+        "produtividade_kg_ha",
+        "exportacao_t",
+        "importacao_t",
+        "destinos_exportacao",
+        "valor_fob_usd",
+        "preco_medio_usd_t",
+        "calendario_safra",
+        "oferta_aparente",
+        "paridade_exportacao"
+      ],
+      "risks": [
+        "O XLS de gergelim ainda precisa de parser homologado; não presumir 20 safras.",
+        "NCM deve separar gergelim em grão e derivados por vigência.",
+        "Exportações não comprovam consumo residual nem estoque."
+      ]
+    },
+    {
+      "id": "FRANGO",
+      "data": [
+        "IBGE_ABATE_FRANGO_1094",
+        "IBGE_ABATE",
+        "IBGE_PPM",
+        "MDIC_COMEX_NCM",
+        "MAPA_AGROSTAT_CADEIAS",
+        "SINDIRACOES_RACOES",
+        "MAPA_SIPEAGRO_RACAO",
+        "ANTT_MDFE_RODOVIARIO",
+        "IBGE_CODIGOS_MUNICIPIOS"
+      ],
+      "indicators": [
+        "abate_cabecas",
+        "peso_carcacas_kg",
+        "peso_medio_carcaca_kg_cabeca",
+        "plantel_galinaceos_indireto",
+        "exportacao_produto_t",
+        "exportacao_fob_usd",
+        "destinos_exportacao",
+        "demanda_racao_estimativa_condicionada",
+        "preco_fisico_licenciado",
+        "mapa_abate_por_uf",
+        "fluxos_logisticos_amostrais"
+      ],
+      "risks": [
+        "SIDRA 1094 mede abate inspecionado, não produção viva.",
+        "Carcaças e cortes exportados exigem conversão documentada.",
+        "Galináceos não representam exclusivamente frangos de corte.",
+        "Cadastro de ração não informa toneladas consumidas."
+      ]
+    },
+    {
+      "id": "SUINO",
+      "data": [
+        "IBGE_ABATE_SUINO_1093",
+        "IBGE_ABATE",
+        "IBGE_PPM",
+        "MDIC_COMEX_NCM",
+        "MAPA_AGROSTAT_CADEIAS",
+        "SINDIRACOES_RACOES",
+        "MAPA_SIPEAGRO_RACAO",
+        "ANTT_MDFE_RODOVIARIO",
+        "IBGE_CODIGOS_MUNICIPIOS"
+      ],
+      "indicators": [
+        "abate_cabecas",
+        "peso_carcacas_kg",
+        "peso_medio_carcaca_kg_cabeca",
+        "rebanho_cabecas",
+        "exportacao_produto_t",
+        "exportacao_fob_usd",
+        "destinos_exportacao",
+        "demanda_racao_estimativa_condicionada",
+        "preco_fisico_licenciado",
+        "mapa_abate_por_uf",
+        "fluxos_logisticos_amostrais"
+      ],
+      "risks": [
+        "SIDRA 1093 mede abate inspecionado, não disponibilidade imediata.",
+        "Rebanho, abate e peso vivo são dimensões distintas.",
+        "Carcaça e cortes exportados exigem conversão documentada.",
+        "Cadastro de ração não informa toneladas consumidas."
+      ]
     }
   ]
 }
