@@ -20,7 +20,9 @@ MODULOS=frozenset({
     "inteligencia_temporal",
     "balancos","motores","anp_diesel","destinos","portos",
     "bcb_ptax","briefing_diario","mdic_exportacao","mdic_importacao",
-    "previsoes_bibliotecas","portos_automaticos",
+    "conab_agrobr","previsoes_bibliotecas","lineup_nacional","portos_automaticos",
+    "fertilizantes","anp_ppi","eventos_editoriais","briefing_composto",
+    "agentes_nivon","entrega_whatsapp","cotacoes_externas",
 })
 
 

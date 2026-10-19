@@ -88,3 +88,20 @@ class TestRegistroSnapshots(unittest.TestCase):
     def test_schema_inadequado(self):
         with self.assertRaises(ErroSnapshot):self.registrar(mime="text/html")
         with self.assertRaises(ErroSnapshot):self.registrar(schema_versao="../x")
+
+    def test_limite_maior_restrito_a_conab_sicarm(self):
+        cat={"datasets":[{"id":"CONAB_ARMAZENS_CAPACIDADE","source_id":"CONAB"}]}
+        x=registrar_snapshot(
+            self.db,cat,dataset_id="CONAB_ARMAZENS_CAPACIDADE",
+            sha256=hashlib.sha256(b"SICARM").hexdigest(),
+            tamanho=60_000_000,mime="text/plain",schema_versao="SICARM_header_v1",
+            coletado_em="2026-10-19T12:00:00Z")
+        self.assertTrue(x["nova_versao"])
+        with self.assertRaises(ErroSnapshot):
+            self.registrar(tamanho=60_000_000)
+        with self.assertRaises(ErroSnapshot):
+            registrar_snapshot(
+                self.db,cat,dataset_id="CONAB_ARMAZENS_CAPACIDADE",
+                sha256=hashlib.sha256(b"SICARM-2").hexdigest(),
+                tamanho=120_000_001,mime="text/plain",schema_versao="SICARM_header_v1",
+                coletado_em="2026-10-19T12:00:00Z")

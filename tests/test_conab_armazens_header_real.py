@@ -53,3 +53,27 @@ class TestLayoutConabSicarmCabecalhoReal(unittest.TestCase):
         with self.assertRaises(ErroArmazens):
             agregar_capacidade_local(self.f,LAYOUT_CONAB_SICARM_HEADER_V1,
                                     coletado_em="2026-10-19T16:00:00Z")
+
+    def test_cabecalho_oficial_rejeita_coluna_extra(self):
+        self.salvar([self.linha("ID-A","Sorriso","MT","5107925","10,00")])
+        texto=self.f.read_text(encoding="cp1252")
+        texto=texto.replace("email\n", "email;campo_extra\n", 1)
+        self.f.write_text(texto,encoding="cp1252")
+        with self.assertRaises(ErroArmazens):
+            agregar_capacidade_local(self.f,LAYOUT_CONAB_SICARM_HEADER_V1,
+                                     coletado_em="2026-10-19T16:00:00Z")
+
+    def test_cabecalho_oficial_rejeita_ordem_alterada(self):
+        self.salvar([self.linha("ID-A","Sorriso","MT","5107925","10,00")])
+        conteudo=self.f.read_text(encoding="cp1252").replace(
+            "nom_municipio;cod_ibge;uf", "cod_ibge;nom_municipio;uf",1)
+        self.f.write_text(conteudo,encoding="cp1252")
+        with self.assertRaises(ErroArmazens):
+            agregar_capacidade_local(self.f,LAYOUT_CONAB_SICARM_HEADER_V1,
+                                     coletado_em="2026-10-19T16:00:00Z")
+
+    def test_ibge_nulo_na_fonte_nao_e_homologado(self):
+        self.salvar([self.linha("ID-A","Sorriso","MT","","10,00")])
+        with self.assertRaises(ErroArmazens):
+            agregar_capacidade_local(self.f,LAYOUT_CONAB_SICARM_HEADER_V1,
+                                     coletado_em="2026-10-19T16:00:00Z")

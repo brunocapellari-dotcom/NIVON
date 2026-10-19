@@ -44,8 +44,7 @@
         "ABIOVE mensal não vira observado diário",
         "não somar farelo à soja esmagada",
         "line-up programado não é exportação realizada",
-        "Capacidade estática não equivale a estoque ou disponibilidade física.",
-        "Progresso MEDIA_ESTADOS da CONAB não é Brasil; exige cobertura e vintage verificadas."
+        "Capacidade estática não equivale a estoque ou disponibilidade física."
       ]
     },
     {
@@ -88,8 +87,7 @@
         "milho total não pode ser somado às três safras",
         "CEPEA 440L/331kg/20,4L apenas cenário de margem",
         "MAPA localiza fábricas, não mensura toneladas",
-        "Vendas de milho não equivalem a saída física da fazenda ou embarque.",
-        "Progresso MEDIA_ESTADOS da CONAB não é Brasil; exige cobertura e vintage verificadas."
+        "Vendas de milho não equivalem a saída física da fazenda ou embarque."
       ]
     },
     {
@@ -120,8 +118,7 @@
       "risks": [
         "não misturar algodão em caroço com pluma",
         "ICE exige direitos de market data",
-        "Classificação de algodão em pluma/caroço e safra deve ser consistente.",
-        "Progresso MEDIA_ESTADOS da CONAB não é Brasil; exige cobertura e vintage verificadas."
+        "Classificação de algodão em pluma/caroço e safra deve ser consistente."
       ]
     },
     {
@@ -216,8 +213,7 @@
       ],
       "risks": [
         "importação por NCM deve separar grão de farinha",
-        "moagem ainda sem fonte quantitativa canônica",
-        "Progresso MEDIA_ESTADOS da CONAB não é Brasil; exige cobertura e vintage verificadas."
+        "moagem ainda sem fonte quantitativa canônica"
       ]
     },
     {
@@ -277,7 +273,8 @@
         "MDIC_COMEX_NCM",
         "ANTAQ_MOVIMENTACAO",
         "ANP_MOVIMENTACAO_DIESEL",
-        "EPE_BEN_SERIES_HISTORICAS"
+        "EPE_BEN_SERIES_HISTORICAS",
+        "ANP_PPI_COMBUSTIVEIS"
       ],
       "indicators": [
         "preco_semana_municipio_diesel_b",
@@ -365,7 +362,44 @@
         "LINEUP_SANTAREM",
         "LINEUP_TUBARAO",
         "ANTAQ_MOVIMENTACAO",
-        "AIS_POSICOES"
+        "AIS_POSICOES",
+        "LINEUP_ANGRA_DOS_REIS",
+        "LINEUP_ANTONINA",
+        "LINEUP_ARATU",
+        "LINEUP_AREIA_BRANCA",
+        "LINEUP_BARRA_DO_RIACHO",
+        "LINEUP_BELEM",
+        "LINEUP_CABEDELO",
+        "LINEUP_FORNO",
+        "LINEUP_FORTALEZA",
+        "LINEUP_ILHEUS",
+        "LINEUP_IMBITUBA",
+        "LINEUP_ITAGUAI",
+        "LINEUP_ITAJAI",
+        "LINEUP_LAGUNA",
+        "LINEUP_MACEIO",
+        "LINEUP_MANAUS",
+        "LINEUP_NATAL",
+        "LINEUP_NITEROI",
+        "LINEUP_PELOTAS",
+        "LINEUP_PORTO_ALEGRE",
+        "LINEUP_PORTO_VELHO",
+        "LINEUP_RECIFE",
+        "LINEUP_RIO_DE_JANEIRO",
+        "LINEUP_SALVADOR",
+        "LINEUP_SANTANA",
+        "LINEUP_SAO_SEBASTIAO",
+        "LINEUP_SUAPE",
+        "LINEUP_VITORIA",
+        "LINEUP_PONTA_DA_MADEIRA",
+        "LINEUP_PORTO_DO_ACU",
+        "LINEUP_ITAPOA",
+        "LINEUP_NAVEGANTES",
+        "LINEUP_MIRITITUBA",
+        "LINEUP_ITACOATIARA",
+        "LINEUP_COTEGIPE",
+        "LINEUP_TEGRAM",
+        "LINEUP_TERMINAIS_BARCARENA"
       ],
       "indicators": [
         "navios_programados",
@@ -391,7 +425,8 @@
         "NOAA_GFS",
         "ECMWF_MODELOS",
         "ANA_HIDRO",
-        "ZARC_JANELAS"
+        "ZARC_JANELAS",
+        "CONAB_PROGRESSO_SEMANAL"
       ],
       "indicators": [
         "chuva_24h",
@@ -444,7 +479,8 @@
         "RADAR_CLIMA",
         "BCB_PTAX",
         "ANP_PRECO_REVENDA_DIESEL",
-        "ANTAQ_MOVIMENTACAO"
+        "ANTAQ_MOVIMENTACAO",
+        "ANP_PPI_COMBUSTIVEIS"
       ],
       "indicators": [
         "noticias_ultimas_24h",
@@ -605,7 +641,8 @@
         "CPTEC_MERGE",
         "NOAA_GFS",
         "ECMWF_MODELOS",
-        "ZARC_JANELAS"
+        "ZARC_JANELAS",
+        "CONAB_PROGRESSO_SEMANAL"
       ],
       "indicators": [
         "chuva_observada_mm",
@@ -719,7 +756,8 @@
         "EPE_BEN_SERIES_HISTORICAS",
         "BCB_PTAX",
         "ONS_CARGA",
-        "WORLD_BANK_COMMODITIES"
+        "WORLD_BANK_COMMODITIES",
+        "ANP_PPI_COMBUSTIVEIS"
       ],
       "indicators": [
         "petroleo_usd_bbl_referencia",

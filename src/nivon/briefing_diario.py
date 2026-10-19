@@ -148,6 +148,9 @@ def selecionar_noticias(
             rejeitados.append({"titulo": item["titulo"], "motivo": "publicada há mais de 24h"})
         else:
             escolhidos.append(item)
+    from .eventos_editoriais import deduplicar_eventos
+    escolhidos, repeticoes = deduplicar_eventos(escolhidos)
+    rejeitados.extend(repeticoes)
     escolhidos.sort(key=lambda n: (CATEGORIAS.index(n["categoria"]), -n["publicado_em"].timestamp()))
     return escolhidos, rejeitados
 
