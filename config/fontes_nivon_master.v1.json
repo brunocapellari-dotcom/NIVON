@@ -518,10 +518,10 @@
     {
       "id": "PORTO_ARATU",
       "provider": "CODEBA / Aratu",
-      "official_url": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias",
-      "access": "OFFICIAL_CATALOG_ENTRY",
+      "official_url": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/porto_aratu.php?secao=tportos_aratu",
+      "access": "PUBLIC_HTML_RIGHTS_PENDING",
       "rights": "REVIEW",
-      "notes": "Fonte para identificacao; NAO comprova feed line-up neste terminal; recurso exato ainda nao homologado."
+      "notes": "Página CODEBA Aratu encontrada; conteúdo bruto e autorização de redistribuição pendentes. Sem coleta automática."
     },
     {
       "id": "PORTO_AREIA_BRANCA",
