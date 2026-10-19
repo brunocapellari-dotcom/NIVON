@@ -85,7 +85,7 @@ A visibilidade pública não constitui concessão automática de licença open-s
 
 ## Catálogo Mestre — Coletores e APIs do NIVON (19/10/2026)
 
-Uma governança única conecta **57 fontes, 77 datasets, 15 grupos de dados, 16 frentes de inteligência e 120 indicadores previstos**. Esta contagem indica **escopo mapeado**, não coletores instalados ou homologados.
+Uma governança única conecta **57 fontes, 78 datasets, 15 grupos de dados, 16 frentes de inteligência e 120 indicadores previstos**. Esta contagem indica **escopo mapeado**, não coletores instalados ou homologados.
 
 - Catálogo principal com fontes, modalidades, direitos, estágio e periodicidade proposta: [`config/fontes_nivon_master.v1.json`](config/fontes_nivon_master.v1.json).
 - Matriz de produtos, indicadores, insumos e riscos de interpretação: [`config/matriz_produtos_indicadores.v1.json`](config/matriz_produtos_indicadores.v1.json).
@@ -102,4 +102,4 @@ PYTHONPATH=src python -m nivon.cobertura
 PYTHONPATH=src python -m nivon.orquestrador_fontes --prioridade P0 --resumo
 ```
 
-**Todos os novos datasets têm coleta, agendamento e redistribuição desabilitados.** A fonte oficial e o estágio de `REAL_SNAPSHOT_TESTED` não constituem acesso contínuo, contrato comercial, backup ou go-live.
+**Todos os novos datasets têm coleta, agendamento e redistribuição desabilitados.** O estado de `REAL_SNAPSHOT_TESTED` cobre somente as culturas com fixture real comprovada: soja e milho no parser CONAB, não algodão/trigo/sorgo. A fonte oficial e o estágio não constituem acesso contínuo, contrato comercial, backup ou go-live.
