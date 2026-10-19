@@ -4577,6 +4577,34 @@
         "coleta"
       ],
       "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ANP_PPI_COMBUSTIVEIS",
+      "source_id": "ANP",
+      "group": "ENERGIA",
+      "products": [
+        "DIESEL",
+        "GASOLINA",
+        "QAV",
+        "GLP"
+      ],
+      "topic": "precos_paridade_importacao_ANP_por_terminal_semanal_sem_impostos",
+      "mode": "XLSX",
+      "cadence": "WEEKLY",
+      "stage": "CODE_PRESENT",
+      "priority": "P0",
+      "existing_module": "anp_ppi.py",
+      "notes": "PPI ANP e estimativa S&P; termos de redistribuicao e alinhamento tributario/data devem ser validados; nao confundir com revenda",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
     }
   ]
 }
