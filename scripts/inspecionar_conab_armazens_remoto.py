@@ -39,8 +39,12 @@ def obter():
     options={}
     for name,sep in (("semicolon",";"),("pipe","|"),("tab","\t"),("comma",",")):
         options[name]=len(next(csv.reader([line],delimiter=sep)))
+    cols=next(csv.reader([line],delimiter=";"))
+    # Apenas ROTULOS do cabecalho; os registros permanecem descartados.
+    rotulos=[" ".join(x.split())[:90] for x in cols]
     return {"status":"CABECALHO_RECEBIDO_NAO_HOMOLOGADO",
             "codificacao":enc,"colunas_estimadas":options,
+            "rotulos_cabecalho":rotulos,
             "amostra_bytes":len(raw),"registros_individuais_expostos":0}
 
 if __name__=="__main__":
