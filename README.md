@@ -85,7 +85,7 @@ A visibilidade pública não constitui concessão automática de licença open-s
 
 ## Catálogo Mestre — Coletores e APIs do NIVON (19/10/2026)
 
-Uma governança única conecta **57 fontes, 78 datasets, 15 grupos de dados, 16 frentes de inteligência e 120 indicadores previstos**. Esta contagem indica **escopo mapeado**, não coletores instalados ou homologados.
+Uma governança única conecta **59 fontes, 86 datasets, 15 grupos de dados, 16 frentes de inteligência e 132 indicadores previstos**. Esta contagem indica **escopo mapeado**, não coletores instalados ou homologados.
 
 - Catálogo principal com fontes, modalidades, direitos, estágio e periodicidade proposta: [`config/fontes_nivon_master.v1.json`](config/fontes_nivon_master.v1.json).
 - Matriz de produtos, indicadores, insumos e riscos de interpretação: [`config/matriz_produtos_indicadores.v1.json`](config/matriz_produtos_indicadores.v1.json).
@@ -104,11 +104,11 @@ PYTHONPATH=src python -m nivon.orquestrador_fontes --prioridade P0 --resumo
 
 **Todos os novos datasets têm coleta, agendamento e redistribuição desabilitados.** O estado de `REAL_SNAPSHOT_TESTED` cobre somente as culturas com fixture real comprovada: soja e milho no parser CONAB, não algodão/trigo/sorgo. A fonte oficial e o estágio não constituem acesso contínuo, contrato comercial, backup ou go-live.
 
-## Planejamento operacional dos 78 coletores e APIs — 19/10/2026
+## Planejamento operacional dos 86 coletores e APIs — 19/10/2026
 
 A organização técnica acrescentou um contrato de rota para **cada dataset catalogado**:
 
-- `config/rotas_coleta.v1.json` — 78 rotas técnicas e bloqueios de acesso/execução. URLs são por **dataset** apenas quando fundamentadas; página institucional não é confundida com API pronta.
+- `config/rotas_coleta.v1.json` — 86 rotas técnicas e bloqueios de acesso/execução. URLs são por **dataset** apenas quando fundamentadas; página institucional não é confundida com API pronta.
 - `src/nivon/rotas_coleta.py` — validação cruzada 1:1 com o catálogo mestre, host oficial, direitos, histórico, restauração e ativação default-deny.
 - `docs/PLANO_OPERACIONAL_COLETORES_API.md` — matriz dos 15 grupos, estratégia API/CSV/HTML/PDF/manual, prioridades P0–P2 e lacunas de escopo.
 - `src/nivon/bcb_ptax.py` — parser OData PTAX com horas dos boletins, câmbio de compra/venda e data de publicação nula quando ausente. Ainda sem coleta real ou serviço agendado.
@@ -118,4 +118,4 @@ PYTHONPATH=src python -m nivon.rotas_coleta --resumo
 PYTHONPATH=src python -m nivon.rotas_coleta --prioridade P0
 ```
 
-Esses contratos **não ativam** nenhum dos 78 coletores; toda operação real depende dos gates de acesso, esquema, qualidade, histórico e persistência. O catálogo atual não dispensa a revisão de dados ainda faltantes, como armazenagem e comercialização de safras.
+Esses contratos **não ativam** nenhum dos 86 coletores; toda operação real depende dos gates de acesso, esquema, qualidade, histórico e persistência. O catálogo atual não dispensa a revisão de dados ainda faltantes, como armazenagem e comercialização de safras.
