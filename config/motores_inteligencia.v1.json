@@ -1,0 +1,650 @@
+{
+  "project": "NIVON",
+  "schema_version": "1.0",
+  "updated_on": "2026-10-19",
+  "default_policy": "ENGINES_OFFLINE_NO_SCHEDULE_OR_DEPLOY",
+  "description": "Motor presente não implica fonte autorizada, histórico real, previsão validada ou produção. CLIMA_HIDRO é fachada legada, não série duplicada.",
+  "engines": [
+    {
+      "front_id": "SOJA",
+      "entrypoints": [
+        "nivon.motores_agro_estrategicos:safra_comercializacao",
+        "nivon.motores_agro_estrategicos:referencia_futuros_graos",
+        "nivon.motores_agro_estrategicos:esmagamento_soja",
+        "nivon.balancos:reconciliar_balanco"
+      ],
+      "data_dependencies": [
+        "CONAB_GRAOS_SERIES",
+        "CONAB_BALANCOS",
+        "ABIOVE_SOJA_ESMAGAMENTO",
+        "MDIC_COMEX_NCM",
+        "CEPEA_FISICO",
+        "IMEA_FISICO",
+        "USDA_PSD",
+        "LINEUP_SANTOS",
+        "BCB_PTAX",
+        "CONAB_ARMAZENS_CAPACIDADE",
+        "IMEA_COMERCIALIZACAO_MT"
+      ],
+      "indicators_planned": 16,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "MILHO",
+      "entrypoints": [
+        "nivon.motores_agro_estrategicos:milho_safras_demanda",
+        "nivon.motores_agro_estrategicos:referencia_futuros_graos",
+        "nivon.motores_agro_estrategicos:simulacao_etanol_ddg",
+        "nivon.balancos:reconciliar_balanco"
+      ],
+      "data_dependencies": [
+        "CONAB_GRAOS_SERIES",
+        "CONAB_BALANCOS",
+        "SINDIRACOES_RACOES",
+        "MAPA_SIPEAGRO_RACAO",
+        "ETANOL_MILHO_ANP",
+        "ANTT_MDFE_RODOVIARIO",
+        "ANTT_SIADE_FERROVIA",
+        "MDIC_COMEX_NCM",
+        "USDA_PSD",
+        "CEPEA_COEFICIENTES_MILHO",
+        "LINEUP_PARANAGUA",
+        "CONAB_ARMAZENS_CAPACIDADE",
+        "IMEA_COMERCIALIZACAO_MT"
+      ],
+      "indicators_planned": 14,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "ALGODAO",
+      "entrypoints": [
+        "nivon.motores_agro_estrategicos:algodao_beneficiamento",
+        "nivon.motores_agro_estrategicos:safra_comercializacao"
+      ],
+      "data_dependencies": [
+        "CONAB_GRAOS_OUTRAS_CULTURAS",
+        "IMEA_MT_SAFRA",
+        "MDIC_COMEX_NCM",
+        "ICE_FUTUROS",
+        "CEPEA_FISICO",
+        "LINEUP_SANTOS",
+        "IMEA_COMERCIALIZACAO_MT"
+      ],
+      "indicators_planned": 9,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "BOI",
+      "entrypoints": [
+        "nivon.motores_agro_estrategicos:boi_rendimento_carcaca"
+      ],
+      "data_dependencies": [
+        "IBGE_PPM",
+        "IBGE_ABATE",
+        "IMEA_FISICO",
+        "CEPEA_BOI",
+        "SCOT_PECUARIA",
+        "MDIC_COMEX_NCM",
+        "B3_FUTUROS"
+      ],
+      "indicators_planned": 7,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "BEZERRO",
+      "entrypoints": [
+        "nivon.motores_agro_estrategicos:relacao_troca_bezerro"
+      ],
+      "data_dependencies": [
+        "IBGE_PPM",
+        "CEPEA_BOI",
+        "SCOT_PECUARIA"
+      ],
+      "indicators_planned": 3,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "ACUCAR",
+      "entrypoints": [
+        "nivon.motores_agro_estrategicos:referencia_acucar_ice",
+        "nivon.motores_cadeias:simular_atr_cana"
+      ],
+      "data_dependencies": [
+        "CONAB_CANA",
+        "UNICA_ACUCAR_ETANOL",
+        "MDIC_COMEX_NCM",
+        "ICE_FUTUROS",
+        "BCB_PTAX",
+        "LINEUP_SANTOS",
+        "MAPA_SAPCANA_BIOENERGIA"
+      ],
+      "indicators_planned": 8,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "TRIGO",
+      "entrypoints": [
+        "nivon.motores_agro_estrategicos:paridade_importacao_trigo",
+        "nivon.motores_agro_estrategicos:safra_comercializacao"
+      ],
+      "data_dependencies": [
+        "CONAB_GRAOS_OUTRAS_CULTURAS",
+        "CONAB_BALANCOS",
+        "IBGE_LSPA",
+        "MDIC_COMEX_NCM",
+        "USDA_PSD",
+        "CME_FUTUROS"
+      ],
+      "indicators_planned": 7,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "SORGO",
+      "entrypoints": [
+        "nivon.motores_agro_estrategicos:sorgo_substituicao_racao",
+        "nivon.motores_agro_estrategicos:safra_comercializacao"
+      ],
+      "data_dependencies": [
+        "CONAB_GRAOS_OUTRAS_CULTURAS",
+        "CONAB_BALANCOS",
+        "IBGE_PAM",
+        "MAPA_SIPEAGRO_RACAO"
+      ],
+      "indicators_planned": 5,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "FERTILIZANTES",
+      "entrypoints": [
+        "nivon.motores_agro_estrategicos:paridade_fertilizante",
+        "nivon.motores_integracao_estrategica:demanda_fertilizante_cenario"
+      ],
+      "data_dependencies": [
+        "MDIC_COMEX_FERT",
+        "MAPA_SIPEAGRO_FERTILIZANTES",
+        "ANDA_ENTREGAS",
+        "WORLD_BANK_COMMODITIES",
+        "ANTAQ_MOVIMENTACAO"
+      ],
+      "indicators_planned": 9,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "DIESEL",
+      "entrypoints": [
+        "nivon.motores_agro_estrategicos:paridade_diesel",
+        "nivon.anp_diesel:resumo_diesel_municipal"
+      ],
+      "data_dependencies": [
+        "ANP_PRECO_REVENDA_DIESEL",
+        "ANP_PRECO_PRODUTOR_DIESEL",
+        "ANP_IMPORTACAO_DIESEL",
+        "ANP_BIODIESEL",
+        "EIA_OIL",
+        "BCB_PTAX",
+        "MDIC_COMEX_NCM",
+        "ANTAQ_MOVIMENTACAO",
+        "ANP_MOVIMENTACAO_DIESEL",
+        "EPE_BEN_SERIES_HISTORICAS"
+      ],
+      "indicators_planned": 10,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "ETANOL_DDG",
+      "entrypoints": [
+        "nivon.motores_agro_estrategicos:simulacao_etanol_ddg",
+        "nivon.motores:verificar_teto_materia_seca",
+        "nivon.motores:estimar_milho_por_etanol"
+      ],
+      "data_dependencies": [
+        "ETANOL_MILHO_ANP",
+        "ANP_ETANOL",
+        "UNICA_ACUCAR_ETANOL",
+        "CEPEA_COEFICIENTES_MILHO",
+        "UNEM_BIORREFINARIAS",
+        "MAPA_SAPCANA_BIOENERGIA"
+      ],
+      "indicators_planned": 6,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "LOGISTICA_INTERMODAL",
+      "entrypoints": [
+        "nivon.motores_integracao_estrategica:comparacao_intermodal",
+        "nivon.destinos:analisar_destinos"
+      ],
+      "data_dependencies": [
+        "ANTT_MDFE_RODOVIARIO",
+        "ANTT_SIADE_FERROVIA",
+        "ANTAQ_MOVIMENTACAO",
+        "ONTL_REDE_CUSTOS",
+        "DNIT_SNVP",
+        "FRETES_WHATSAPP_AUTORIZADO",
+        "ANTT_TERMINAIS_FERROVIARIOS",
+        "CONAB_ARMAZENS_CAPACIDADE",
+        "IBGE_CODIGOS_MUNICIPIOS"
+      ],
+      "indicators_planned": 9,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "MARITIMO",
+      "entrypoints": [
+        "nivon.motores_integracao_estrategica:pressao_portuaria",
+        "nivon.portos:contar_escalas"
+      ],
+      "data_dependencies": [
+        "LINEUP_SANTOS",
+        "LINEUP_PARANAGUA",
+        "LINEUP_SAO_FRANCISCO_DO_SUL",
+        "LINEUP_RIO_GRANDE",
+        "LINEUP_ITAQUI",
+        "LINEUP_BARCARENA_VILA_DO_CONDE",
+        "LINEUP_SANTAREM",
+        "LINEUP_TUBARAO",
+        "ANTAQ_MOVIMENTACAO",
+        "AIS_POSICOES"
+      ],
+      "indicators_planned": 8,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "CLIMA_HIDRO",
+      "entrypoints": [
+        "nivon.motores_meteo_hidro:balanco_hidrico_solo",
+        "nivon.motores_meteo_hidro:anomalia_nivel_rio"
+      ],
+      "data_dependencies": [
+        "INMET_ESTACOES",
+        "CPTEC_MERGE",
+        "NOAA_GFS",
+        "ECMWF_MODELOS",
+        "ANA_HIDRO",
+        "ZARC_JANELAS"
+      ],
+      "indicators_planned": 7,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "MERCADO_MACRO",
+      "entrypoints": [
+        "nivon.motores_integracao_estrategica:sensibilidade_macro",
+        "nivon.bcb_ptax:normalizar_ptax_odata"
+      ],
+      "data_dependencies": [
+        "BCB_PTAX",
+        "BCB_SGS_FOCUS",
+        "EIA_OIL",
+        "WORLD_BANK_COMMODITIES",
+        "MDIC_COMEX_NCM",
+        "USDA_PSD",
+        "EPE_BEN_SERIES_HISTORICAS"
+      ],
+      "indicators_planned": 8,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "BRIEFING_DIARIO",
+      "entrypoints": [
+        "nivon.briefing_diario:selecionar_noticias",
+        "nivon.briefing_diario:gerar_texto"
+      ],
+      "data_dependencies": [
+        "RADAR_GOV",
+        "RADAR_AGRO",
+        "RADAR_REUTERS",
+        "RADAR_CLIMA",
+        "BCB_PTAX",
+        "ANP_PRECO_REVENDA_DIESEL",
+        "ANTAQ_MOVIMENTACAO"
+      ],
+      "indicators_planned": 6,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "CANA",
+      "entrypoints": [
+        "nivon.motores_cadeias:simular_atr_cana",
+        "nivon.motores_agro_estrategicos:referencia_acucar_ice"
+      ],
+      "data_dependencies": [
+        "CONAB_CANA",
+        "IBGE_PAM",
+        "UNICA_ACUCAR_ETANOL",
+        "MAPA_SAPCANA_BIOENERGIA",
+        "ANP_ETANOL",
+        "MDIC_COMEX_NCM",
+        "MAPA_AGROSTAT_CADEIAS",
+        "BCB_PTAX"
+      ],
+      "indicators_planned": 12,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "GERGELIM",
+      "entrypoints": [
+        "nivon.motores_cadeias:paridade_gergelim",
+        "nivon.cadeias_adicionais:analisar_cadeia"
+      ],
+      "data_dependencies": [
+        "CONAB_GERGELIM_SERIES",
+        "CONAB_GRAOS_OUTRAS_CULTURAS",
+        "IBGE_PAM",
+        "MDIC_COMEX_NCM",
+        "MAPA_AGROSTAT_CADEIAS",
+        "BCB_PTAX",
+        "ANTAQ_MOVIMENTACAO"
+      ],
+      "indicators_planned": 11,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "FRANGO",
+      "entrypoints": [
+        "nivon.motores_cadeias:margem_proteina",
+        "nivon.motores_cadeias:peso_medio_carcaca",
+        "nivon.motores_cadeias:classificar_risco"
+      ],
+      "data_dependencies": [
+        "IBGE_ABATE_FRANGO_1094",
+        "IBGE_ABATE",
+        "IBGE_PPM",
+        "MDIC_COMEX_NCM",
+        "MAPA_AGROSTAT_CADEIAS",
+        "SINDIRACOES_RACOES",
+        "MAPA_SIPEAGRO_RACAO",
+        "ANTT_MDFE_RODOVIARIO",
+        "IBGE_CODIGOS_MUNICIPIOS",
+        "ABPA_FRANGO_SETOR",
+        "MAPA_SANIDADE_PROTEINAS",
+        "WOAH_ALERTAS_PROTEINAS"
+      ],
+      "indicators_planned": 13,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "SUINO",
+      "entrypoints": [
+        "nivon.motores_cadeias:margem_proteina",
+        "nivon.motores_cadeias:peso_medio_carcaca",
+        "nivon.motores_cadeias:classificar_risco"
+      ],
+      "data_dependencies": [
+        "IBGE_ABATE_SUINO_1093",
+        "IBGE_ABATE",
+        "IBGE_PPM",
+        "MDIC_COMEX_NCM",
+        "MAPA_AGROSTAT_CADEIAS",
+        "SINDIRACOES_RACOES",
+        "MAPA_SIPEAGRO_RACAO",
+        "ANTT_MDFE_RODOVIARIO",
+        "IBGE_CODIGOS_MUNICIPIOS",
+        "ABPA_SUINO_SETOR",
+        "MAPA_SANIDADE_PROTEINAS",
+        "WOAH_ALERTAS_PROTEINAS"
+      ],
+      "indicators_planned": 13,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "METEOROLOGIA",
+      "entrypoints": [
+        "nivon.motores_meteo_hidro:chuva_anomalia",
+        "nivon.motores_meteo_hidro:graus_dia",
+        "nivon.motores_meteo_hidro:janela_chuva_operacao"
+      ],
+      "data_dependencies": [
+        "INMET_ESTACOES",
+        "CPTEC_MERGE",
+        "NOAA_GFS",
+        "ECMWF_MODELOS",
+        "ZARC_JANELAS"
+      ],
+      "indicators_planned": 10,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "HIDROLOGIA",
+      "entrypoints": [
+        "nivon.motores_meteo_hidro:anomalia_nivel_rio",
+        "nivon.motores_meteo_hidro:anomalia_vazao",
+        "nivon.motores_meteo_hidro:folga_calado_hipotetica"
+      ],
+      "data_dependencies": [
+        "ANA_HIDRO",
+        "INMET_ESTACOES",
+        "CPTEC_MERGE",
+        "NOAA_GFS",
+        "ANTAQ_MOVIMENTACAO",
+        "ONTL_REDE_CUSTOS"
+      ],
+      "indicators_planned": 9,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "ARMAZENAGEM",
+      "entrypoints": [
+        "nivon.motores_integracao_estrategica:pressao_armazenagem"
+      ],
+      "data_dependencies": [
+        "CONAB_ARMAZENS_CAPACIDADE",
+        "CONAB_GRAOS_SERIES",
+        "IBGE_PAM",
+        "IBGE_CODIGOS_MUNICIPIOS",
+        "IMEA_MT_SAFRA",
+        "ANTT_MDFE_RODOVIARIO"
+      ],
+      "indicators_planned": 9,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "COMERCIO_EXTERIOR",
+      "entrypoints": [
+        "nivon.motores_integracao_estrategica:comercio_exterior_recorte",
+        "nivon.mdic_exportacao:resumir_exportacao_csv",
+        "nivon.mdic_importacao:resumir_importacao_csv"
+      ],
+      "data_dependencies": [
+        "MDIC_COMEX_NCM",
+        "MDIC_COMEX_FERT",
+        "MDIC_COMEX_MUNICIPIO_SH4",
+        "MAPA_AGROSTAT_CADEIAS",
+        "UNCOMTRADE_GLOBAL",
+        "USDA_EXPORT_SALES",
+        "BCB_PTAX"
+      ],
+      "indicators_planned": 10,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "PETROLEO_ENERGIA",
+      "entrypoints": [
+        "nivon.motores_agro_estrategicos:paridade_diesel",
+        "nivon.motores_integracao_estrategica:sensibilidade_macro"
+      ],
+      "data_dependencies": [
+        "EIA_OIL",
+        "ANP_IMPORTACAO_DIESEL",
+        "ANP_PRECO_PRODUTOR_DIESEL",
+        "ANP_MOVIMENTACAO_DIESEL",
+        "ANP_BIODIESEL",
+        "EPE_BEN_SERIES_HISTORICAS",
+        "BCB_PTAX",
+        "ONS_CARGA",
+        "WORLD_BANK_COMMODITIES"
+      ],
+      "indicators_planned": 10,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "FRETE_RODOVIARIO",
+      "entrypoints": [
+        "nivon.motores_integracao_estrategica:custo_frete_rodoviario",
+        "nivon.motores_integracao_estrategica:comparacao_intermodal"
+      ],
+      "data_dependencies": [
+        "FRETES_WHATSAPP_AUTORIZADO",
+        "ANTT_MDFE_RODOVIARIO",
+        "ANTT_RNTRC",
+        "ANTT_CIOT",
+        "ANP_PRECO_REVENDA_DIESEL",
+        "DNIT_SNVP",
+        "ONTL_REDE_CUSTOS",
+        "IBGE_CODIGOS_MUNICIPIOS"
+      ],
+      "indicators_planned": 11,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "RISCO_GEOPOLITICO",
+      "entrypoints": [
+        "nivon.motores_integracao_estrategica:evento_geopolitico",
+        "nivon.motores_integracao_estrategica:sensibilidade_macro"
+      ],
+      "data_dependencies": [
+        "RADAR_GOV",
+        "RADAR_AGRO",
+        "RADAR_REUTERS",
+        "EIA_OIL",
+        "BCB_PTAX",
+        "WORLD_BANK_COMMODITIES",
+        "MDIC_COMEX_NCM",
+        "WOAH_ALERTAS_PROTEINAS"
+      ],
+      "indicators_planned": 10,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    },
+    {
+      "front_id": "INDUSTRIA_PROCESSAMENTO",
+      "entrypoints": [
+        "nivon.motores_integracao_estrategica:margem_processamento",
+        "nivon.motores_agro_estrategicos:esmagamento_soja"
+      ],
+      "data_dependencies": [
+        "ABIOVE_SOJA_ESMAGAMENTO",
+        "MAPA_SAPCANA_BIOENERGIA",
+        "UNICA_ACUCAR_ETANOL",
+        "ETANOL_MILHO_ANP",
+        "UNEM_BIORREFINARIAS",
+        "SINDIRACOES_RACOES",
+        "MAPA_SIPEAGRO_RACAO",
+        "CONAB_BALANCOS"
+      ],
+      "indicators_planned": 9,
+      "status": "CODE_TESTED_SYNTHETIC_ONLY",
+      "inputs_reais_homologados": false,
+      "previsao_homologada": false,
+      "scheduled_enabled": false,
+      "operational_enabled": false
+    }
+  ]
+}

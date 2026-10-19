@@ -581,6 +581,237 @@
         "Carcaça e cortes exportados exigem conversão documentada.",
         "Cadastro de ração não informa toneladas consumidas."
       ]
+    },
+    {
+      "id": "METEOROLOGIA",
+      "data": [
+        "INMET_ESTACOES",
+        "CPTEC_MERGE",
+        "NOAA_GFS",
+        "ECMWF_MODELOS",
+        "ZARC_JANELAS"
+      ],
+      "indicators": [
+        "chuva_observada_mm",
+        "chuva_prevista_mm",
+        "chuva_anomalia_pct_nao_spi",
+        "temperatura_minima_maxima",
+        "graus_dia_termicos",
+        "acumulado_chuva_janelas",
+        "risco_chuva_trabalho_campo",
+        "deficit_et_cultura",
+        "excesso_hidrico_mm",
+        "distincao_observado_previsto"
+      ],
+      "risks": [
+        "Normais e dados devem ter mesmo período e estação; anomalia simples não é SPI.",
+        "Chuva prevista não comprova interdição rodoviária ou perda de safra.",
+        "ET0 e Kc devem ter fontes verificadas; não inferir produtividade sem modelo calibrado."
+      ]
+    },
+    {
+      "id": "HIDROLOGIA",
+      "data": [
+        "ANA_HIDRO",
+        "INMET_ESTACOES",
+        "CPTEC_MERGE",
+        "NOAA_GFS",
+        "ANTAQ_MOVIMENTACAO",
+        "ONTL_REDE_CUSTOS"
+      ],
+      "indicators": [
+        "cota_rio_observada_cm",
+        "anomalia_cota_cm",
+        "vazao_m3_s",
+        "anomalia_vazao_pct",
+        "nivel_baixo_condicional",
+        "tendencia_cheias_estiagens",
+        "janela_hidrovia_potencial",
+        "folga_calado_hipotetica",
+        "impacto_logistico_condicional"
+      ],
+      "risks": [
+        "Cota de régua não é profundidade ou calado navegável.",
+        "Vazão não determina calado sem relação hidráulica calibrada.",
+        "Navegação exige batimetria, datum, regras e confirmação oficial."
+      ]
+    },
+    {
+      "id": "ARMAZENAGEM",
+      "data": [
+        "CONAB_ARMAZENS_CAPACIDADE",
+        "CONAB_GRAOS_SERIES",
+        "IBGE_PAM",
+        "IBGE_CODIGOS_MUNICIPIOS",
+        "IMEA_MT_SAFRA",
+        "ANTT_MDFE_RODOVIARIO"
+      ],
+      "indicators": [
+        "capacidade_estatica_t",
+        "densidade_capacidade_municipal",
+        "producao_pico_vs_capacidade",
+        "estoque_efetivo_t_quando_disponivel",
+        "ocupacao_observada_condicional",
+        "pressao_sazonal_potencial",
+        "gargalo_armazenagem_hipotetico",
+        "capacidade_por_cultura_restrita",
+        "distancia_terminal_hipotetica"
+      ],
+      "risks": [
+        "Produção anual/capacidade estática não indica déficit efetivo por haver giro e acesso desigual.",
+        "Capacidade cadastral não é capacidade contratável nem estoque real.",
+        "Localizar silos não identifica disponibilidade futura de frete."
+      ]
+    },
+    {
+      "id": "COMERCIO_EXTERIOR",
+      "data": [
+        "MDIC_COMEX_NCM",
+        "MDIC_COMEX_FERT",
+        "MDIC_COMEX_MUNICIPIO_SH4",
+        "MAPA_AGROSTAT_CADEIAS",
+        "UNCOMTRADE_GLOBAL",
+        "USDA_EXPORT_SALES",
+        "BCB_PTAX"
+      ],
+      "indicators": [
+        "exportacoes_por_ncm_t",
+        "importacoes_por_ncm_t",
+        "fob_exportacoes_usd",
+        "cif_importacoes_usd",
+        "preco_medio_fob_usd_t",
+        "preco_medio_cif_usd_t",
+        "balanca_fisica_recorte_t",
+        "parceiros_comerciais",
+        "concentracao_destinos",
+        "sazonalidade_fluxos"
+      ],
+      "risks": [
+        "MDIC NCM/UF não comprova município produtor ou destinatário.",
+        "SH4 municipal e NCM não são uníveis automaticamente.",
+        "FOB exportação e CIF importação possuem bases diferentes e não podem ser subtraídos como margem."
+      ]
+    },
+    {
+      "id": "PETROLEO_ENERGIA",
+      "data": [
+        "EIA_OIL",
+        "ANP_IMPORTACAO_DIESEL",
+        "ANP_PRECO_PRODUTOR_DIESEL",
+        "ANP_MOVIMENTACAO_DIESEL",
+        "ANP_BIODIESEL",
+        "EPE_BEN_SERIES_HISTORICAS",
+        "BCB_PTAX",
+        "ONS_CARGA",
+        "WORLD_BANK_COMMODITIES"
+      ],
+      "indicators": [
+        "petroleo_usd_bbl_referencia",
+        "diesel_a_usd_t_referencia",
+        "paridade_diesel_a_rs_l",
+        "paridade_diesel_b_rs_l",
+        "mistura_biodiesel_vigente",
+        "preco_observado_revenda_rs_l",
+        "diferenca_preco_vs_referencia",
+        "importacoes_derivados",
+        "fluxo_energia_ben",
+        "choque_cambio_energia"
+      ],
+      "risks": [
+        "Brent não é cotação internacional de Diesel A; modelo de preço exige diesel de especificação comparável.",
+        "Diesel A versus B requer densidade, biodiesel, tributos e margem de distribuição/varejo.",
+        "Movimentação e importações não comprovam disponibilidade de estoque municipal."
+      ]
+    },
+    {
+      "id": "FRETE_RODOVIARIO",
+      "data": [
+        "FRETES_WHATSAPP_AUTORIZADO",
+        "ANTT_MDFE_RODOVIARIO",
+        "ANTT_RNTRC",
+        "ANTT_CIOT",
+        "ANP_PRECO_REVENDA_DIESEL",
+        "DNIT_SNVP",
+        "ONTL_REDE_CUSTOS",
+        "IBGE_CODIGOS_MUNICIPIOS"
+      ],
+      "indicators": [
+        "frete_divulgado_rs_t",
+        "custo_estimado_viagem_rs",
+        "custo_estimado_rs_t",
+        "margem_teorica_frete_anunciado",
+        "frequencia_divulgacoes_transportadoras",
+        "lotes_unicos_estimados",
+        "fluxo_ncm_amostral_t",
+        "custo_diesel_na_viagem",
+        "corredor_origem_destino",
+        "alternativa_modal_condicional",
+        "pressao_frete_nao_homologada"
+      ],
+      "risks": [
+        "Divulgação de transportadora não é cotação negociada, contratação ou viagem realizada.",
+        "Lotes duplicados precisam de resolução de entidade; mensagens não indicam caminhão disponível.",
+        "Custos e distância devem ser fornecidos ou derivados de rotas oficialmente verificadas."
+      ]
+    },
+    {
+      "id": "RISCO_GEOPOLITICO",
+      "data": [
+        "RADAR_GOV",
+        "RADAR_AGRO",
+        "RADAR_REUTERS",
+        "EIA_OIL",
+        "BCB_PTAX",
+        "WORLD_BANK_COMMODITIES",
+        "MDIC_COMEX_NCM",
+        "WOAH_ALERTAS_PROTEINAS"
+      ],
+      "indicators": [
+        "evento_geopolitico_id",
+        "publicacao_e_competencia",
+        "classe_evidencia",
+        "cadeias_afetadas",
+        "mecanismos_economicos_hipoteticos",
+        "sancoes_tarifas_conflitos",
+        "risco_energia_e_fertilizantes",
+        "choque_cenario_macroeconomico",
+        "probabilidade_nao_inferida",
+        "reavaliacao_evento"
+      ],
+      "risks": [
+        "Notícia não prova impacto econômico ou causalidade.",
+        "Fontes com direitos restritos permanecem sem coleta/publicação.",
+        "Sem calibração não usar probabilidade de impacto gerada pela IA como número validado."
+      ]
+    },
+    {
+      "id": "INDUSTRIA_PROCESSAMENTO",
+      "data": [
+        "ABIOVE_SOJA_ESMAGAMENTO",
+        "MAPA_SAPCANA_BIOENERGIA",
+        "UNICA_ACUCAR_ETANOL",
+        "ETANOL_MILHO_ANP",
+        "UNEM_BIORREFINARIAS",
+        "SINDIRACOES_RACOES",
+        "MAPA_SIPEAGRO_RACAO",
+        "CONAB_BALANCOS"
+      ],
+      "indicators": [
+        "capacidade_instalada_industrial",
+        "processamento_realizado_t",
+        "coeficientes_rendimento_explicitos",
+        "balanco_massa_coproductos",
+        "margem_contribuicao_sintetica",
+        "suprimento_materia_prima",
+        "custo_energia_industrial",
+        "mix_producao_por_unidade",
+        "indicadores_demanda_interna"
+      ],
+      "risks": [
+        "Capacidade e cadastro não comprovam processamento efetivo.",
+        "Etanol em litros não entra diretamente em balanço de massa sem transformação e água.",
+        "Coprodutos não somam nova oferta de grão nem nova demanda de matéria-prima."
+      ]
     }
   ]
 }
