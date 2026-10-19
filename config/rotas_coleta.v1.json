@@ -3737,6 +3737,34 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
       "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+    },
+    {
+      "dataset_id": "ANP_PPI_COMBUSTIVEIS",
+      "collector_class": "STRUCTURED_FILE",
+      "locator": {
+        "kind": "DIRECT_PUBLIC_FILE",
+        "url": "https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/arq-ppi/ppi.xlsx",
+        "source_proof": "https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/arq-ppi"
+      },
+      "implementation_scope": "anp_ppi.py; parser de layout/versiones e reconciliacao de unidade pendentes de amostras reais",
+      "authentication": "PUBLIC_ANP_RIGHTS_REVIEW",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "SOURCE_RIGHTS_AND_LAYOUT_VALIDATION",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "PPI_PRODUCER_TAX_BASIS_RECONCILIATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "PPI semanal por porto/ponto de entrega, calculado por S&P; datas tributarias e uso comercial exigem validação",
+      "preliminary_evidence": "OFFICIAL_ANP_EXCEL_URL_VERIFIED_NOT_COLLECTED"
     }
   ]
 }
