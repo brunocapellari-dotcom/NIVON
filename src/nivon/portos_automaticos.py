@@ -120,6 +120,10 @@ def processar_documento_porto(contrato: ContratoPorto, documento: dict) -> dict:
             imo=r.get("imo") or None, produto=r.get("carga") or None,
             toneladas_programadas=tonelada, fonte=contrato.fonte.url,
             coletado_em=documento["capturado_em"], status="PROGRAMADO",
+            eta_programado=r.get("eta") or None,
+            terminal=r.get("terminal") or None,
+            call_id=r.get("call_id") or None,
+            serie=r.get("source_series") or None,
         ))
     return {
         "porto": contrato.porto, "registros": saida,
