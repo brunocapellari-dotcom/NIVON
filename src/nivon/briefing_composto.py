@@ -86,8 +86,9 @@ def montar_briefing(*, noticias: list[dict], fontes: dict,
             if fonte.get("status_direitos") != "APROVADA" or "PUBLICACAO_DERIVADA" not in fonte.get("operacoes", []):
                 raise PermissionError("frete sem direito de publicação")
             referencia = datetime.fromisoformat(f["referencia"].replace("Z", "+00:00"))
-            if referencia.tzinfo is None:
-                raise ValueError("frete sem timestamp")
+            gerado = datetime.fromisoformat(data.replace("Z", "+00:00"))
+            if referencia.tzinfo is None or gerado.tzinfo is None or referencia > gerado:
+                raise ValueError("frete sem timestamp ou referência futura")
             fretes_aceitos.append((rota, valor, referencia.isoformat()))
         except (KeyError, TypeError, ValueError, PermissionError) as exc:
             bloqueios.append({"tipo": "FRETE", "motivo": str(exc)})
@@ -103,6 +104,8 @@ def montar_briefing(*, noticias: list[dict], fontes: dict,
     return {
         "texto": texto_final, "sha256": sha256(texto_final.encode("utf-8")).hexdigest(),
         "indicadores_incluidos": len(itens),
+        "secoes_presentes": sorted({x["secao"] for x in itens} |
+                                      ({"FRETES"} if fretes_aceitos else set())),
         "fretes_incluidos": len(fretes_aceitos),
         "rejeicoes": bloqueios + noticias_rejeitadas,
         "status": "PREPARADO_SEM_ENVIO",
