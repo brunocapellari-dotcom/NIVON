@@ -2452,7 +2452,7 @@
       "cadence": "MONTHLY",
       "stage": "CODE_PRESENT",
       "priority": "P0",
-      "existing_module": "mdic_exportacao.py",
+      "existing_module": "mdic_exportacao.py; mdic_importacao.py (CSV offline, sem coleta)",
       "notes": "Parser offline exportação NCM/UF/país/via/URF com testes sintéticos; importação e bulk reais pendentes; sem município SH4",
       "enabled": false,
       "collection_authorized": false,
