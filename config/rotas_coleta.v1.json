@@ -1019,6 +1019,34 @@
       "preliminary_evidence": "CATALOG_ONLY"
     },
     {
+      "dataset_id": "CONAB_PROGRESSO_SEMANAL",
+      "collector_class": "STRUCTURED_FILE",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/progresso-de-safra",
+        "source_proof": "https://github.com/bruno-portfolio/agrobr/blob/main/docs/api/conab_progresso.md"
+      },
+      "implementation_scope": "conab_agrobr.py + agrobr==2.0.0 (opcional, sem execução por padrão)",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Plantio e colheita semanais por UF; média estados CONAB não representa BR.",
+      "preliminary_evidence": "OPEN_SOURCE_ADAPTER_REVIEWED_NOT_LIVE_HOMOLOGATED"
+    },
+    {
       "dataset_id": "CPTEC_MERGE",
       "collector_class": "STRUCTURED_FILE",
       "locator": {

@@ -17,7 +17,8 @@
         "LINEUP_SANTOS",
         "BCB_PTAX",
         "CONAB_ARMAZENS_CAPACIDADE",
-        "IMEA_COMERCIALIZACAO_MT"
+        "IMEA_COMERCIALIZACAO_MT",
+        "CONAB_PROGRESSO_SEMANAL"
       ],
       "indicators": [
         "area_ha",
@@ -35,13 +36,16 @@
         "basis",
         "lineup_programado_vs_atracado",
         "capacidade_estatica_armazens_mt",
-        "comercializacao_percentual_safra"
+        "comercializacao_percentual_safra",
+        "semeadura_semanal_percentual",
+        "colheita_semanal_percentual"
       ],
       "risks": [
         "ABIOVE mensal não vira observado diário",
         "não somar farelo à soja esmagada",
         "line-up programado não é exportação realizada",
-        "Capacidade estática não equivale a estoque ou disponibilidade física."
+        "Capacidade estática não equivale a estoque ou disponibilidade física.",
+        "MEDIA_ESTADOS CONAB não equivale percentual Brasil; vintage e cobertura devem ser preservados."
       ]
     },
     {
@@ -59,7 +63,8 @@
         "CEPEA_COEFICIENTES_MILHO",
         "LINEUP_PARANAGUA",
         "CONAB_ARMAZENS_CAPACIDADE",
-        "IMEA_COMERCIALIZACAO_MT"
+        "IMEA_COMERCIALIZACAO_MT",
+        "CONAB_PROGRESSO_SEMANAL"
       ],
       "indicators": [
         "safra1_t",
@@ -75,13 +80,16 @@
         "destino_potencial_de_carga",
         "preco_rs_saca",
         "capacidade_estatica_armazens_mt",
-        "comercializacao_percentual_safra"
+        "comercializacao_percentual_safra",
+        "semeadura_semanal_percentual",
+        "colheita_semanal_percentual"
       ],
       "risks": [
         "milho total não pode ser somado às três safras",
         "CEPEA 440L/331kg/20,4L apenas cenário de margem",
         "MAPA localiza fábricas, não mensura toneladas",
-        "Vendas de milho não equivalem a saída física da fazenda ou embarque."
+        "Vendas de milho não equivalem a saída física da fazenda ou embarque.",
+        "MEDIA_ESTADOS CONAB não equivale percentual Brasil; vintage e cobertura devem ser preservados."
       ]
     },
     {
@@ -93,7 +101,8 @@
         "ICE_FUTUROS",
         "CEPEA_FISICO",
         "LINEUP_SANTOS",
-        "IMEA_COMERCIALIZACAO_MT"
+        "IMEA_COMERCIALIZACAO_MT",
+        "CONAB_PROGRESSO_SEMANAL"
       ],
       "indicators": [
         "area_ha",
@@ -104,12 +113,15 @@
         "preco_fisico",
         "ny_ice_preco",
         "frete_t",
-        "comercializacao_percentual_safra"
+        "comercializacao_percentual_safra",
+        "semeadura_semanal_percentual",
+        "colheita_semanal_percentual"
       ],
       "risks": [
         "não misturar algodão em caroço com pluma",
         "ICE exige direitos de market data",
-        "Classificação de algodão em pluma/caroço e safra deve ser consistente."
+        "Classificação de algodão em pluma/caroço e safra deve ser consistente.",
+        "MEDIA_ESTADOS CONAB não equivale percentual Brasil; vintage e cobertura devem ser preservados."
       ]
     },
     {
@@ -188,7 +200,8 @@
         "IBGE_LSPA",
         "MDIC_COMEX_NCM",
         "USDA_PSD",
-        "CME_FUTUROS"
+        "CME_FUTUROS",
+        "CONAB_PROGRESSO_SEMANAL"
       ],
       "indicators": [
         "area_ha",
@@ -197,11 +210,14 @@
         "moagem_t",
         "estoque_t",
         "preco_interno",
-        "preco_internacional"
+        "preco_internacional",
+        "semeadura_semanal_percentual",
+        "colheita_semanal_percentual"
       ],
       "risks": [
         "importação por NCM deve separar grão de farinha",
-        "moagem ainda sem fonte quantitativa canônica"
+        "moagem ainda sem fonte quantitativa canônica",
+        "MEDIA_ESTADOS CONAB não equivale percentual Brasil; vintage e cobertura devem ser preservados."
       ]
     },
     {
