@@ -10,8 +10,8 @@ A fonte única de verdade é `config/fontes_nivon_master.v1.json`, validada por 
 - **77 datasets**: 22 P0 (nucleares), 36 P1 (complementares) e 19 P2 (aprofundamento).
 - **15 grupos de informações, 16 frentes de inteligência e 120 indicadores previstos**, com 104 vínculos a datasets.
 - **2 snapshots reais testados**: MAPA/SIPEAGRO fabricantes e CONAB grãos soja/milho; este estágio não implica operação recorrente homologada.
-- **2 componentes com código existente**, mas sem comprovação suficiente de homologação real neste catálogo: ANP diesel de revenda e ANTT ferrovia.
-- **29 fontes/datasets no estágio apenas descoberta**, 32 candidatos para adaptação e 12 bloqueados por direitos.
+- **3 componentes com código existente**, mas sem comprovação suficiente de homologação real neste catálogo: ANP diesel de revenda, ANTT ferrovia e adaptador MDIC NCM (exportação, offline).
+- **29 datasets no estágio apenas descoberta**, 31 candidatos para adaptação e 12 bloqueados por direitos.
 - **Nenhuma das 77 coletas está habilitada para agendamento automático** nesta versão.
 
 Os estados descrevem a **maturidade de coleta do dataset**, não a qualidade de toda a organização que o publica. A URL cadastrada é uma página/recurso de referência; somente depois de descobrir e testar o endpoint e a modalidade específica ele poderá ser usado em produção.
@@ -49,7 +49,7 @@ Campos mínimos obrigatórios: `source_id`, `dataset_id`, `source_url`, `source_
 | Etanol, açúcar e milho industrial | ANP, UNICA, CONAB, CEPEA | Coeficientes CEPEA de margem, etanol separado por matéria-prima/tipo |
 | Diesel e petróleo | ANP revenda/produtor, MDIC, EIA, BCB | Código de diesel revenda presente; paridade Diesel A/B, biodiesel b(t), imposto e frete ainda por integrar |
 | Fertilizantes | MDIC, ANDA, MAPA, ANTAQ, World Bank | Dados separados em importado, produzido, entregue, estoque e descargas |
-| Comércio exterior | MDIC Comex Stat, USDA, UN Comtrade | NCM/UF/via/URF não equivale a município SH4; ambos cadastrados separadamente |
+| Comércio exterior | MDIC Comex Stat, USDA, UN Comtrade | Adaptador offline de exportações NCM/UF implementado com testes sintéticos; importação e CSV real pendentes. NCM/UF/via/URF não equivale a município SH4 |
 | Transporte rodoviário | ANTT MDF-e/RNTRC | NCM parcial, destino potencial e terminal; export automático do painel ainda não homologado |
 | Ferrovia e terminais | ANTT SIADE, ONTL | TU/TKU por estação; estação não equivale ao destino do produto |
 | Movimento realizado de portos | ANTAQ | Dados agregados de movimentação não equivalem a line-up por navio |
