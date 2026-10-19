@@ -7,12 +7,12 @@ A fonte única de verdade é `config/fontes_nivon_master.v1.json`, validada por 
 ## 1. Inventário inicial por estágio
 
 - **57 fontes identificadas**, cada uma com identificador, provedor, URL de referência, acesso e situação jurídica.
-- **77 datasets**: 22 P0 (nucleares), 36 P1 (complementares) e 19 P2 (aprofundamento).
+- **78 datasets**: 22 P0 (nucleares), 37 P1 (complementares) e 19 P2 (aprofundamento).
 - **15 grupos de informações, 16 frentes de inteligência e 120 indicadores previstos**, com 104 vínculos a datasets.
 - **2 snapshots reais testados**: MAPA/SIPEAGRO fabricantes e CONAB grãos soja/milho; este estágio não implica operação recorrente homologada.
 - **3 componentes com código existente**, mas sem comprovação suficiente de homologação real neste catálogo: ANP diesel de revenda, ANTT ferrovia e adaptador MDIC NCM (exportação, offline).
-- **29 datasets no estágio apenas descoberta**, 31 candidatos para adaptação e 12 bloqueados por direitos.
-- **Nenhuma das 77 coletas está habilitada para agendamento automático** nesta versão.
+- **30 datasets no estágio apenas descoberta**, 31 candidatos para adaptação e 12 bloqueados por direitos.
+- **Nenhuma das 78 coletas está habilitada para agendamento automático** nesta versão.
 
 Os estados descrevem a **maturidade de coleta do dataset**, não a qualidade de toda a organização que o publica. A URL cadastrada é uma página/recurso de referência; somente depois de descobrir e testar o endpoint e a modalidade específica ele poderá ser usado em produção.
 
