@@ -1,4 +1,4 @@
-"""Plano operacional das rotas de coleta NIVON: 78 datasets, fail-closed.
+"""Plano operacional das rotas de coleta NIVON: 86 datasets, fail-closed.
 
 Combina catálogo mestre (um só cadastro de produto, estágio, prioridade, cadência,
 fonte) e rotas técnicas. Nenhum acesso HTTP ou execução de collector aqui.
@@ -158,7 +158,7 @@ def montar_plano(rotas: dict, catalogo: dict, *, prioridade: str | None = None,
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="NIVON: rotas API/download/portal dos 78 datasets; SEM COLETA")
+    ap = argparse.ArgumentParser(description="NIVON: rotas API/download/portal dos 86 datasets; SEM COLETA")
     ap.add_argument("--prioridade", choices=["P0", "P1", "P2"])
     ap.add_argument("--grupo")
     ap.add_argument("--resumo", action="store_true")
