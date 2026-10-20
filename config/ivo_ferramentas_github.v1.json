@@ -2,7 +2,7 @@
   "project": "NIVON",
   "module": "IVO",
   "schema_version": "1.0",
-  "updated_on": "2026-10-19",
+  "updated_on": "2026-10-20",
   "default_policy": "RESEARCH_ONLY_NO_AUTO_INSTALL_NO_NETWORK_NO_COST",
   "notes": "Repositórios de ferramentas, não novas fontes de dados ou coletores operacionais. Direitos por versão, dependências transitivas, limites de custo e segurança devem ser auditados antes da instalação. O código desenvolvido aqui é independente de bibliotecas terceiras.",
   "components": [
@@ -125,6 +125,146 @@
       "priority": "P2",
       "integration": "IVO_VOICE_CLIENT",
       "gate": "MODELOS_PRETREINADOS_NAO_APROVADOS_PARA_USO_COMERCIAL"
+    },
+    {
+      "id": "SKFORECAST",
+      "repository": "https://github.com/skforecast/skforecast",
+      "purpose": "modelos supervisionados de series temporais com regressores/defasagens",
+      "license_declared": "BSD-3-Clause",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "FORECAST_CHALLENGER",
+      "gate": "AUDITORIA_FOLDS_EXOGENAS_E_CUSTO_ESCOLHER_SOMENTE_SE_MELHORAR_MLFORECAST"
+    },
+    {
+      "id": "DARTS",
+      "repository": "https://github.com/unit8co/darts",
+      "purpose": "benchmark unificado de modelos probabilisticos e classicos",
+      "license_declared": "Apache-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P2",
+      "integration": "FORECAST_BENCHMARK",
+      "gate": "AVALIAR_DEPS_PESADAS_CUSTO_CPU_PARA_NAO_DUPLICAR_STATSFORECAST"
+    },
+    {
+      "id": "EVIDENTLY",
+      "repository": "https://github.com/evidentlyai/evidently",
+      "purpose": "monitoramento de performance e data drift",
+      "license_declared": "Apache-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "MODEL_QUALITY",
+      "gate": "COMPARAR_COM_MONITOR_OFFLINE_LEVE_SEM_SERVIDOR_EXTRA"
+    },
+    {
+      "id": "MAPIE",
+      "repository": "https://github.com/scikit-learn-contrib/MAPIE",
+      "purpose": "intervalos de previsao e conformal calibration",
+      "license_declared": "BSD-3-Clause",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "FORECAST_INTERVALS",
+      "gate": "VALIDAR_COBERTURA_OUT_OF_SAMPLE_E_ASSUNCOES_TEMPORAIS"
+    },
+    {
+      "id": "PYSTAC_CLIENT",
+      "repository": "https://github.com/stac-utils/pystac-client",
+      "purpose": "consulta autorizada de catalogos espaciais STAC",
+      "license_declared": "Apache-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "EO_CATALOG_DISCOVERY",
+      "gate": "LICENCA_DADOS_CREDENCIAIS_COTA_RESTRICOES_REVISAR"
+    },
+    {
+      "id": "XARRAY",
+      "repository": "https://github.com/pydata/xarray",
+      "purpose": "dados espaciais e series meteorologicas N dimensionais",
+      "license_declared": "Apache-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "CLIMA_HIDRO_GRID",
+      "gate": "CONTROLE_DIMENSAO_ESTATISTICA_CRS_UNIDADES_BACKFILL"
+    },
+    {
+      "id": "GEOPANDAS",
+      "repository": "https://github.com/geopandas/geopandas",
+      "purpose": "sobreposicao espacial municipios bacias e corredores",
+      "license_declared": "BSD-3-Clause",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "GIS_ANALYTICS",
+      "gate": "VALIDAR_CRS_VERSAO_MUNICIPIOS_E_COBERTURA_GEOGRAFICA"
+    },
+    {
+      "id": "SHAP",
+      "repository": "https://github.com/shap/shap",
+      "purpose": "explicabilidade local de modelos estatisticos/ML",
+      "license_declared": "MIT",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P2",
+      "integration": "MODEL_EXPLANATION",
+      "gate": "NAO_CONFUNDIR_SHAP_COM_EVIDENCIA_CAUSAL"
+    },
+    {
+      "id": "NEURALFORECAST",
+      "repository": "https://github.com/Nixtla/neuralforecast",
+      "purpose": "rede neural de series temporais somente se superar baselines",
+      "license_declared": "Apache-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P2",
+      "integration": "RESEARCH_EXPERIMENTS",
+      "gate": "PROIBIR_GPU_PAGO_VERIFICAR_CUSTO_MEMORIA_CPU"
+    },
+    {
+      "id": "ODC_STAC",
+      "repository": "https://github.com/opendatacube/odc-stac",
+      "purpose": "transformacao STAC em xarray e cargas espaciais",
+      "license_declared": "Apache-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "EO_GRID_CONNECTOR",
+      "gate": "USAR_QUANDO_IMAGENS_AUTORIZADAS_E_COTA_RESOLVIDA"
+    },
+    {
+      "id": "RASTERIO",
+      "repository": "https://github.com/rasterio/rasterio",
+      "purpose": "acesso a rasters e metadados espaciais",
+      "license_declared": "BSD-3-Clause",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P2",
+      "integration": "GIS_RASTER",
+      "gate": "DEPENDENCIAS_GDAL_CRS_METADADOS_LICENCAS_DADOS"
+    },
+    {
+      "id": "PYDANTIC_AI",
+      "repository": "https://github.com/pydantic/pydantic-ai",
+      "purpose": "agentes estruturados tipados com injecao de dependencias",
+      "license_declared": "MIT",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "IVO_AGENT_ADAPTER",
+      "gate": "NAO_DUPLICAR_HERMES_NEM_DAR_FERRAMENTAS_EXECUTIVAS_A_LLM"
+    },
+    {
+      "id": "ECONML",
+      "repository": "https://github.com/py-why/EconML",
+      "purpose": "estimacao de efeitos heterogeneos sob suposicoes causais",
+      "license_declared": "MIT",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P2",
+      "integration": "CAUSAL_RESEARCH",
+      "gate": "IDENTIFICABILIDADE_GRUPOS_COMPARAVEIS_E_TESTES_FALSIFICACAO"
+    },
+    {
+      "id": "OPENEO_CLIENT",
+      "repository": "https://github.com/Open-EO/openeo-python-client",
+      "purpose": "cliente para computacao geoespacial em provedores openEO",
+      "license_declared": "Apache-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P2",
+      "integration": "EO_PLATFORM_BACKEND",
+      "gate": "CUSTO_DO_BACKEND_E_DIREITOS_DOS_DADOS_SEPARADOS_DA_LICENCA_CLIENTE"
     }
   ]
 }
