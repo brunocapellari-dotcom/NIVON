@@ -38,3 +38,17 @@ Sorriso–Rondonópolis; Sorriso–Dom Aquino; Sinop–Miritituba/Itaituba; Sant
 ## Status de execução
 
 Código/testes sintéticos são somente provas de regras. Não houve coleta/armazenamento de dados reais, contato com WhatsApp, ativação de scheduler, serviço externo, recurso OCI, cobrança, deploy, merge ou autorização de previsão. Exigir CI no SHA final e revisão crítica antes de incorporação na PR de integração #13.
+
+## Evidência externa de fontes oficiais verificada em 20/10/2026
+
+- ANP, últimas semanas: https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/levantamento-de-precos-de-combustiveis-ultimas-semanas-pesquisadas — semana 11–17/10/2026 publicada na página; manter hora de publicação da **edição baixada**, não a data de alteração genérica da página.
+- ANP, séries semanais consolidadas desde 2013: https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/precos-revenda-e-de-distribuicao-combustiveis/shlp/semanal/ — separar séries de Brasil, UF e município, sem confundir médias **ANP de DIESEL** com média de **FRETES de anúncios**; o veto de média municipal vale a preços de FRETES anunciados, não ao indicador público de diesel por município.
+- ANTT, produção origem/destino ferroviário 2026 (licença CC BY): https://dados.antt.gov.br/pt_BR/dataset/sistema-de-acompanhamento-do-desempenho-operacional-das-concessionarias-siade/resource/c2854ec9-1cc5-4554-a1ae-96c5f37b5df6 — colunas Mes_Ano, Ferrovia, Mercadoria_ANTT, Estacao_Origem, Estacao_Destino, TU, TKU. Metadados atualizados em 02/10/2026; **estação não equivale a município**.
+- ANTT, praças de pedágio: https://dados.antt.gov.br/pt_BR/dataset/praca-de-pedagio/resource/9aa29243-c54c-4084-bc3d-c44a75c9bd7e — cadastro não é tarifa por categoria de veículo nem comprova trajeto percorrido; exigir tabela tarifária datada e percurso verificado.
+- DNIT, PNV/SNV https://www.gov.br/dnit/pt-br/assuntos/atlas-e-mapas/pnv-e-snv — base de malha viária, **não** distância comercial porta-a-porta sem roteador/topologia validada.
+
+## Sensibilidade do diesel implementada (offline)
+
+`diesel_pressao.py` gera cenário matemático **hipotético**: litros = distância operacional validada × consumo específico informado; custo combustível por t = litros × preço diesel por litro / carga informada. Diferença de custo por t NÃO implica repasse ao frete anunciado/contratado. Proíbe mistura DIESEL/DIESEL S10, ausência de evidência, número não finito e premissa fora de faixa. O preço ANP de revenda é amostral, não custo observado do transportador. Testes em `tests/test_diesel_pressao.py`.
+
+**Gates preservados:** não há coleta automática de combustível, integração operacional da ANP semanal, custo real de frota, pagamento de pedágio ou volume observado a partir destes módulos.
