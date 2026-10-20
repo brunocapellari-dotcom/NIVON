@@ -23,7 +23,7 @@ não comprova a disponibilidade atual dos ZIPs públicos.
 Fonte: https://www.gov.br/antaq/pt-br/noticias/2026/sistema-de-desempenho-portuario-esta-de-volta-em-nova-plataforma
 
 `src/nivon/antaq_historico_offline.py` processa **arquivos já obtidos legalmente**,
-sem HTTP. Faz validação de ZIPs, streaming de linhas em SQLite, conferência de chaves,
+sem HTTP. `src/nivon/antaq_zip_autorizado.py` oferece um coletor HTTPS de URL fixa que só pode ser usado com direitos documentados de leitura/coleta/armazenamento, barra redirecionamento, HTML/WAF, MIME e tamanhos excessivos. A fonte continua PENDENTE por padrão, e o endpoint histórico identificado não foi homologado com dados reais. Faz validação de ZIPs, streaming de linhas em SQLite, conferência de chaves,
 tipos e datas, hash por edição, rollback em fonte inconsistente e idempotência.
 Séries históricas são movimentação observada; nunca devem virar line-up de hoje.
 
