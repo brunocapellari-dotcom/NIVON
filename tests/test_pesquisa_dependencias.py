@@ -35,8 +35,8 @@ class DependenciasAuditTests(unittest.TestCase):
 
     def test_normalization_and_dedup_groups(self):
         r = inventariar(toml(
-            extras="alpha = ['My_Lib>=1.0,<2']\nbeta = ['my-lib>=1,<2', 'duckdb==1.2.1']"))
-        # Contract treats >=1.0 and >=1 as equivalent only by numeric comparison?
+            extras="alpha = ['My_Lib>=1.0,<2']\nbeta = ['my-lib>=1.0,<2', 'duckdb==1.2.1']"))
+        # Mesmo nome normalizado, mesma faixa declarada.
         self.assertEqual(r["direct_distribution_count"], 2)
 
     def test_strict_constraint_conflict_rejected(self):
@@ -79,6 +79,13 @@ class DependenciasAuditTests(unittest.TestCase):
     def test_invalid_python_contract(self):
         with self.assertRaises(ErroDependencia):
             inventariar(toml(python=">=3.7"))
+
+    def test_build_direct_url_and_marker_rejected(self):
+        for item in ("setuptools @ https://evil.test/tool.whl",
+                     "setuptools>=68; python_version>='3.11'",
+                     "setuptools[secure]>=68"):
+            with self.subTest(item=item), self.assertRaises(ErroDependencia):
+                inventariar(toml(build="[" + json.dumps(item) + "]"))
 
     def test_no_direct_dependencies_has_empty_inventory(self):
         r = inventariar(toml(extras=""))
