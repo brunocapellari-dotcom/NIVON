@@ -58,3 +58,25 @@
 ## Limites deste incremento
 
 Novo algoritmo puro, offline e sem dependências; não coleta dados reais, não ajusta parâmetros por cultura nem infere fenologia/solo. A amostra histórica declarada ainda deve ser auditada externamente; hash declarado comprova formato de integridade, não autenticidade de origem. Ausência de 5 safras anteriores utilizáveis bloqueia todo resultado numérico. Todas as saídas são NÃO PUBLICÁVEIS e não equivalem a capacidade preditiva instalada. Sem merge, deploy, cron, serviços pagos ou alteração de credenciais.
+
+## Continuidade 20/10/2026 — conciliação CONAB × PAM (AG-02 / AG-03)
+
+**Diagnóstico:** a branch científica PR #9 avançou desde a criação da PR #23 e corrigiu identidade C81 (soja 2713, feijão 2702) e leitura ambígua de valores decimais SIDRA. A frente de Dados PR #16 já possui descoberta de índices históricos de progresso semanal CONAB; nenhuma das duas atividades deve ser duplicada na agrícola.
+
+**Incremento nesta PR:**
+- `src/nivon/auditoria_conab_pam.py`: etapa de **staging e conciliação descritiva** da tripla CONAB `AREA`, `PRODUTIVIDADE` e `PRODUCAO` normalizada por `conab_series.py`, com validação de unidade HA/KG_HA/T, identidade do arquivo, UF, cultura, primeira/segunda/terceira safra, edição e SHA.
+- `AREA` CONAB é **area_informada_conab_ha**, não `area_colhida_ha` PAM. Produtividade e produção são **informadas/projetadas**, nunca chamadas de realização.
+- O confronto PAM exige correspondência explícita entre safra comercial e ano civil via prova documental (sem mapear automaticamente safra 2024/25 para 2025); restringe milho PAM 1612 ao TOTAL, valida produto em grão e UF. Deliberadamente não oferece algodão (caroço/pluma), cana ou gergelim sem contrato metodológico específico.
+- Com ausência de histórico as-of declarado, edição/documento de disponibilidade, cobertura integral da PAM ou arredondamentos consistentes, devolve status com **diferença de produção nula**. Mesmo quando todas as provas são declaradas, a comparação segue **descritiva**, não treino de modelo nem avaliação de acurácia.
+- Abrangência geográfica inicial da ponte: MT, GO, MS, PR, RS, SC, SP, MG, BA e PA. Ampliar a 27 UFs somente após harmonizar dicionário e testes.
+- `tests/test_auditoria_conab_pam.py`: testes sintéticos de conservação, safras de milho, rastreabilidade, cortes, sigilo sem extrapolação, provas, geografia, unidades, integridade e ausência de publicação.
+
+**Crítico:** os hashes e flags `disponibilidade_verificada` introduzidos por fixtures são declarações, e não autenticação automática dos bytes oficiais. Não existe regra que permita alimentar automaticamente `inteligencia_agricola_safras.estimar_oferta_remanescente`: `area_informada_conab_ha` e `area_colhida_ha` não são intercambiáveis. Depende de inspecionar o significado da área no arquivo e encontrar observação **real** da área colhida, incluindo data de corte da colheita.
+
+**Próximas ações objetivas:**
+1. Data Engineering (PR #16): materializar RAW autorizado, edições/revisões e evidências de publicação **reais**, com hashes computados dos bytes e sem assumir publicação histórica a partir da edição presente.
+2. Research/Science (PR #9): conservar a correção do C81 e auditar junto ao SIDRA convenção de valor `V`/unidades; reconciliar/merge de forma não destrutiva pela integração central.
+3. Agricultura (PR #23): provar o dicionário de safra para soja MT e milho 1ª/2ª/3ª; expandir de 10 UFs somente com testes e verificar área colhida vs área declarada. Em seguida, confrontar PAM estadual com CONAB no **mesmo recorte documentado**.
+4. Somente após dados e vintages autenticadas: avaliar modelos de área e produtividade por cultura, walk-forward e validação espacial. Não converter confronto entre fontes em ganho preditivo.
+
+**Nenhuma liberação operacional:** `habilita_treino=false`, `habilita_publicacao=false`, sem download, agendamento, serviço, credencial, deploy ou merge.
