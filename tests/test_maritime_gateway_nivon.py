@@ -104,6 +104,45 @@ class TestMaritimeGateway(unittest.TestCase):
         (status, _), data = wsgi_call(app, "/v1/maritime/status", method="POST")
         self.assertEqual(status, "405 Method Not Allowed")
 
+    def test_static_frontend_same_origin_only_and_no_traversal(self):
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "assets").mkdir()
+            (root / "index.html").write_text("<!doctype html><title>NIVON</title>", encoding="utf-8")
+            (root / "assets" / "app.js").write_text("console.log('offline')", encoding="utf-8")
+            app = MaritimeLocalWSGI(static_root=root)
+            rec = []
+            def start(status, headers):
+                rec.append((status, dict(headers)))
+            body = b"".join(app({
+                "REQUEST_METHOD": "GET", "PATH_INFO": "/maritime/",
+                "QUERY_STRING": "", "HTTP_HOST": "localhost:8765",
+            }, start))
+            self.assertEqual(rec[0][0], "200 OK")
+            self.assertIn(b"NIVON", body)
+            self.assertIn("script-src 'self'", rec[0][1]["Content-Security-Policy"])
+            rec.clear()
+            asset = b"".join(app({
+                "REQUEST_METHOD": "GET", "PATH_INFO": "/assets/app.js",
+                "QUERY_STRING": "", "HTTP_HOST": "127.0.0.1:8765",
+            }, start))
+            self.assertEqual(rec[0][0], "200 OK")
+            self.assertIn(b"offline", asset)
+            (root.parent / "outside-private.txt").write_text("SECRET", encoding="utf-8")
+            try:
+                rec.clear()
+                result = b"".join(app({
+                    "REQUEST_METHOD": "GET",
+                    "PATH_INFO": "/assets/../../outside-private.txt",
+                    "QUERY_STRING": "", "HTTP_HOST": "localhost",
+                }, start))
+                self.assertEqual(rec[0][0], "404 Not Found")
+                self.assertNotIn(b"SECRET", result)
+            finally:
+                (root.parent / "outside-private.txt").unlink(missing_ok=True)
+
     def test_missing_route_and_oversize_query(self):
         api = MaritimeReadAPI()
         self.assertEqual(api.resolve("/v1/maritime/unknown")[0], 404)
