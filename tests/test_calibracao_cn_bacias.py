@@ -33,7 +33,7 @@ class TestCalibracaoCNSemVazamento(unittest.TestCase):
         r=run(fixture())
         self.assertEqual(r["cn_selecionado"],75)
         self.assertEqual(r["eventos_treino"],30)
-        self.assertEqual(r["eventos_holdout"],12)
+        self.assertEqual(r["eventos_holdout"],11)  # Jan 31 no corte, mas publicado depois
         self.assertAlmostEqual(r["rmse_holdout_mm"],0,places=10)
         self.assertAlmostEqual(r["skill_mse_baseline"],1,places=10)
         self.assertFalse(r["promocao_automatica"])
