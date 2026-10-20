@@ -134,7 +134,8 @@
         "nivon.pecuaria_ciclos:simular_ciclo_bovino",
         "nivon.pecuaria_mercados:tendencia_observada_pecuaria",
         "nivon.pecuaria_mercados:backtest_sazonal_pecuaria",
-        "nivon.cadeias_adicionais:normalizar_abate_sidra_offline"
+        "nivon.cadeias_adicionais:normalizar_abate_sidra_offline",
+        "nivon.pecuaria_sidra_abate:normalizar_snapshot_sidra_abate"
       ],
       "data_dependencies": [
         "IBGE_PPM",
@@ -583,7 +584,8 @@
         "nivon.modelos_fisicos:reconciliar_rebanho",
         "nivon.pecuaria_ciclos:simular_lote_frango",
         "nivon.pecuaria_mercados:tendencia_observada_pecuaria",
-        "nivon.pecuaria_mercados:backtest_sazonal_pecuaria"
+        "nivon.pecuaria_mercados:backtest_sazonal_pecuaria",
+        "nivon.pecuaria_sidra_abate:normalizar_snapshot_sidra_abate"
       ],
       "data_dependencies": [
         "IBGE_ABATE_FRANGO_1094",
@@ -616,7 +618,8 @@
         "nivon.modelos_fisicos:reconciliar_rebanho",
         "nivon.pecuaria_ciclos:simular_lote_suino",
         "nivon.pecuaria_mercados:tendencia_observada_pecuaria",
-        "nivon.pecuaria_mercados:backtest_sazonal_pecuaria"
+        "nivon.pecuaria_mercados:backtest_sazonal_pecuaria",
+        "nivon.pecuaria_sidra_abate:normalizar_snapshot_sidra_abate"
       ],
       "data_dependencies": [
         "IBGE_ABATE_SUINO_1093",
