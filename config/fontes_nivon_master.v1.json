@@ -334,10 +334,10 @@
     {
       "id": "PORTO_ARATU",
       "provider": "CODEBA / Aratu",
-      "official_url": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias",
-      "access": "OFFICIAL_CATALOG_ENTRY",
+      "official_url": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/porto_aratu.php?secao=tportos_aratu",
+      "access": "PUBLIC_HTML_CANDIDATE_RIGHTS_PENDING",
       "rights": "REVIEW",
-      "notes": "Fonte para identificacao; NAO comprova feed line-up neste terminal; recurso exato ainda nao homologado."
+      "notes": "Endereço candidato de página institucional; HTML real/charset/termos de redistribuição e periodicidade não homologados."
     },
     {
       "id": "PORTO_AREIA_BRANCA",
@@ -398,10 +398,10 @@
     {
       "id": "PORTO_ILHEUS",
       "provider": "CODEBA/Ilhéus",
-      "official_url": "https://www.codeba.gov.br/",
-      "access": "PUBLIC_PORTAL",
+      "official_url": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/site.php?secao=tportos_ilheus",
+      "access": "PUBLIC_HTML_CANDIDATE_RIGHTS_PENDING",
       "rights": "REVIEW",
-      "notes": ""
+      "notes": "Endereço candidato de página institucional; HTML real/charset/termos de redistribuição e periodicidade não homologados."
     },
     {
       "id": "PORTO_IMBITUBA",
@@ -446,10 +446,10 @@
     {
       "id": "PORTO_ITAQUI",
       "provider": "EMAP/Itaqui",
-      "official_url": "https://www.portodoitaqui.com.br/porto-agora/navios/esperados",
-      "access": "PUBLIC_HTML",
+      "official_url": "https://www.portodoitaqui.com.br/porto-agora/navios",
+      "access": "PUBLIC_HTML_CANDIDATE_RIGHTS_PENDING",
       "rights": "REVIEW",
-      "notes": ""
+      "notes": "Endereço candidato de página institucional; HTML real/charset/termos de redistribuição e periodicidade não homologados."
     },
     {
       "id": "PORTO_LAGUNA",
@@ -582,10 +582,10 @@
     {
       "id": "PORTO_SALVADOR",
       "provider": "CODEBA/Salvador",
-      "official_url": "https://www.codeba.gov.br/",
-      "access": "PUBLIC_PORTAL",
+      "official_url": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/site.php?secao=tportos_salvador",
+      "access": "PUBLIC_HTML_CANDIDATE_RIGHTS_PENDING",
       "rights": "REVIEW",
-      "notes": ""
+      "notes": "Endereço candidato de página institucional; HTML real/charset/termos de redistribuição e periodicidade não homologados."
     },
     {
       "id": "PORTO_SANTANA",
@@ -599,9 +599,9 @@
       "id": "PORTO_SANTAREM",
       "provider": "CDP/Santarém",
       "official_url": "https://www.cdp.com.br/programacao-de-navios-do-porto-de-santarem/",
-      "access": "PUBLIC_HTML",
+      "access": "PUBLIC_HTML_CANDIDATE_RIGHTS_PENDING",
       "rights": "REVIEW",
-      "notes": ""
+      "notes": "Endereço candidato de página institucional; HTML real/charset/termos de redistribuição e periodicidade não homologados."
     },
     {
       "id": "PORTO_SANTOS",
@@ -2421,7 +2421,7 @@
       "cadence": "DAILY",
       "stage": "DISCOVERY_ONLY",
       "priority": "P0",
-      "existing_module": "lineup_nacional.py",
+      "existing_module": "lineup_portais.py",
       "notes": "Cadastro nacional ANTAQ; nenhum endpoint de line-up verificado. Nao misturar cargas, navios ou portos e terminais pai.",
       "enabled": false,
       "collection_authorized": false,
@@ -2735,7 +2735,7 @@
       "cadence": "DAILY",
       "stage": "DISCOVERY_ONLY",
       "priority": "P1",
-      "existing_module": "lineup_html.py",
+      "existing_module": "lineup_portais.py",
       "notes": "Contrato específico exigido; município portuário não implica destino industrial",
       "enabled": false,
       "collection_authorized": false,
@@ -2946,7 +2946,7 @@
       "cadence": "DAILY",
       "stage": "DISCOVERY_ONLY",
       "priority": "P1",
-      "existing_module": "lineup_html.py",
+      "existing_module": "lineup_portais.py",
       "notes": "Contrato específico exigido; município portuário não implica destino industrial",
       "enabled": false,
       "collection_authorized": false,
@@ -3543,7 +3543,7 @@
       "cadence": "DAILY",
       "stage": "DISCOVERY_ONLY",
       "priority": "P1",
-      "existing_module": "lineup_html.py",
+      "existing_module": "lineup_portais.py",
       "notes": "Contrato específico exigido; município portuário não implica destino industrial",
       "enabled": false,
       "collection_authorized": false,
@@ -3610,7 +3610,7 @@
       "cadence": "DAILY",
       "stage": "DISCOVERY_ONLY",
       "priority": "P1",
-      "existing_module": "lineup_html.py",
+      "existing_module": "lineup_cdp_santarem.py",
       "notes": "Contrato específico exigido; município portuário não implica destino industrial",
       "enabled": false,
       "collection_authorized": false,
