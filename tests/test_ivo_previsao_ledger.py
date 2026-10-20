@@ -170,6 +170,32 @@ class TestIVOLedger(unittest.TestCase):
         self.assertIsNone(x["ganho_relativo_baseline"])
         self.assertIsNone(x["cobertura_intervalo"])
 
+    def test_live_retroativo_nao_pode_se_disfarcar_de_previsao_real(self):
+        # Foi registrado só de forma declarada, após início do alvo.
+        with self.assertRaises(ErroLedger):
+            self.db.registrar_previsao(previsao(modo="LIVE"))
+
+    def test_nao_agrupa_unidades_diferentes(self):
+        self.db.registrar_previsao(previsao())
+        self.db.registrar_previsao(previsao(id="p2", unidade="kg"))
+        self.db.registrar_observacao(obs())
+        self.db.registrar_observacao(obs(id="o2", unidade="kg"))
+        a = self.db.avaliar(corte=instante(2026, 2, 10))
+        self.assertEqual(a["avaliadas"], 2)
+        self.assertFalse(a["agregacao_comparavel"])
+        self.assertIsNone(a["mae"])
+        self.assertEqual(a["status"], "BLOQUEADO_AGREGACAO_ESCOPOS_DIFERENTES")
+
+    def test_nao_agrupa_horizontes_diferentes(self):
+        self.db.registrar_previsao(previsao())
+        self.db.registrar_previsao(previsao(
+            id="p2", emitida_em=instante(2025, 11, 15),
+            disponivel_ate=instante(2025, 11, 14),
+            registrada_em=instante(2025, 11, 16)))
+        self.db.registrar_observacao(obs())
+        a = self.db.avaliar(corte=instante(2026, 2, 10))
+        self.assertFalse(a["agregacao_comparavel"])
+
     def test_live_e_backtest_nao_se_misturam(self):
         self.db.registrar_previsao(previsao())
         self.db.registrar_observacao(obs())
