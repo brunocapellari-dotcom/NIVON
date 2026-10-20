@@ -52,7 +52,10 @@ def fretes(valores=None):
                 "origem_ibge": ORIGEM, "destino_ibge": DESTINO,
                 "produto": "MILHO", "veiculo": "RODOTREM",
                 "pedagio": "ADICIONAL", "natureza": "OFERTA",
-                "unidade": "BRL/T", "lote_id": f"FAZENDA-{i}",
+                "unidade": "BRL/T", "lote_id": f"LOTE-{i}",
+                "pickup_entity_id": "fazenda:001",
+                "transportadora_id": "transportadora:001",
+                "descarga_entity_id": "terminal:001", "regime": "PJ",
                 "preco_rs_t": str(preco+i),
             })
     return registros
@@ -63,6 +66,8 @@ def analisar_frete(linhas, **extras):
         linhas, origem_ibge=ORIGEM, destino_ibge=DESTINO,
         produto="MILHO", veiculo="RODOTREM", pedagio="ADICIONAL",
         as_of="2026-10-20", janela=6, tolerancia_absoluta=2,
+        pickup_entity_id="fazenda:001", transportadora_id="transportadora:001",
+        descarga_entity_id="terminal:001", regime="PJ",
         **extras,
     )
 
@@ -153,7 +158,7 @@ class TestTendenciasPrioritarias(unittest.TestCase):
         self.assertEqual(r["segmento"], "FRETE_ANUNCIADO")
         self.assertEqual(r["reenvios_deduplicados"], 0)
         self.assertEqual(r["lotes_distintos_total_por_dia"], 18)
-        self.assertEqual(r["cobertura_amostral"][0]["preco_mediano_rs_t"], "151")
+        self.assertEqual(r["cobertura_amostral"][0]["preco_mediano_rs_t_mesmo_estabelecimento"], "151")
         self.assertNotIn("volume_transportado", r)
 
     def test_frete_20_reposts_nao_viram_lotes(self):
@@ -173,6 +178,36 @@ class TestTendenciasPrioritarias(unittest.TestCase):
         contraria["valor"] = 200
         linhas.append(contraria)
         with self.assertRaisesRegex(ErroTendencia, "conflitantes"):
+            analisar_frete(linhas)
+
+    def test_frete_nao_agrega_estabelecimentos_no_mesmo_municipio(self):
+        linhas = fretes()
+        linhas[4]["pickup_entity_id"] = "fazenda:outra"
+        with self.assertRaisesRegex(ErroTendencia, "mistura"):
+            analisar_frete(linhas)
+
+    def test_frete_nao_agrega_transportadoras_no_mesmo_estabelecimento(self):
+        linhas = fretes()
+        linhas[4]["transportadora_id"] = "transportadora:outra"
+        with self.assertRaisesRegex(ErroTendencia, "mistura"):
+            analisar_frete(linhas)
+
+    def test_frete_nao_agrega_pontos_de_descarga(self):
+        linhas = fretes()
+        linhas[4]["descarga_entity_id"] = "terminal:outro"
+        with self.assertRaisesRegex(ErroTendencia, "mistura"):
+            analisar_frete(linhas)
+
+    def test_frete_nao_agrega_regimes_pf_pj(self):
+        linhas = fretes()
+        linhas[4]["regime"] = "PF"
+        with self.assertRaisesRegex(ErroTendencia, "mistura"):
+            analisar_frete(linhas)
+
+    def test_frete_requer_identidade_de_estabelecimento_resolvida(self):
+        linhas = fretes()
+        linhas[0].pop("pickup_entity_id")
+        with self.assertRaises(ErroTendencia):
             analisar_frete(linhas)
 
     def test_frete_nao_mistura_destinos(self):
@@ -212,9 +247,9 @@ class TestTendenciasPrioritarias(unittest.TestCase):
             analisar_frete(linhas)
 
     def test_frete_2_lotes_por_dia_ok_1_bloqueia(self):
-        linhas = [r for r in fretes() if r["lote_id"] != "FAZENDA-2"]
+        linhas = [r for r in fretes() if r["lote_id"] != "LOTE-2"]
         self.assertEqual(analisar_frete(linhas)["tendencia"], "ALTA")
-        linhas = [r for r in linhas if r["lote_id"] != "FAZENDA-1"]
+        linhas = [r for r in linhas if r["lote_id"] != "LOTE-1"]
         r = analisar_frete(linhas)
         self.assertEqual(r["status"], "AMOSTRA_INSUFICIENTE")
         self.assertEqual(r["tendencia"], "INDETERMINADA")
