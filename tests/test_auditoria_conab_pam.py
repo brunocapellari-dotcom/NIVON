@@ -53,7 +53,8 @@ def tripla(**alteracoes):
 def pam():
     return dict(dataset_id="IBGE_PAM", cultura="SOJA", ano=2025,
                 produto_ibge="SOJA_GRAO", uf_ibge=51,
-                raw_sha256=SHA_PAM,
+                raw_sha256=SHA_PAM, edicao_id="SINTETICO-01",
+                codigo_categoria_c81="2713",
                 area_colhida_ha="1000", producao_total_t="2900",
                 municipios_no_lote=2,
                 status="AGREGACAO_PARCIAL_SEM_PROVA_COBERTURA",
@@ -136,6 +137,7 @@ class TestAuditoriaConabPam(unittest.TestCase):
         p = pam()
         p["cultura"] = "MILHO"
         p["produto_ibge"] = "MILHO_GRAO_TOTAL"
+        p["codigo_categoria_c81"] = "2711"
         with self.assertRaises(ErroConciliacaoSafra):
             confronto(pacote_conab=r, agregado_pam=p)
 
@@ -191,6 +193,20 @@ class TestAuditoriaConabPam(unittest.TestCase):
         bad["uf_ibge"] = 50
         with self.assertRaises(ErroConciliacaoSafra):
             confronto(agregado_pam=bad)
+
+    def test_edicao_pam_e_c81_sem_permutacao(self):
+        p = pam()
+        p["edicao_id"] = "DIVERGENTE"
+        with self.assertRaisesRegex(ErroConciliacaoSafra, "edição PAM"):
+            confronto(agregado_pam=p)
+        p = pam()
+        p["codigo_categoria_c81"] = "2702"
+        with self.assertRaisesRegex(ErroConciliacaoSafra, "C81"):
+            confronto(agregado_pam=p)
+
+    def test_metadata_pam_invalida_falha_fechada(self):
+        with self.assertRaises(ErroConciliacaoSafra):
+            confronto(meta_pam=None)
 
     def test_mapeamento_de_ano_nao_eh_automatico(self):
         m = periodo()
