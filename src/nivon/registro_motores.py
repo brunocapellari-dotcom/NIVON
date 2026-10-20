@@ -28,8 +28,9 @@ MODULOS=frozenset({
     "motores_agrometeorologia_fao56","motores_hidrologia_cientifica",
     "validacao_previsoes_ambientais","nasa_power_diario",
     "nasa_power_backfill","nasa_power_captura_manual",
+    "hidrologia_chuva_vazao",
     "grade_meteorologica_store","chirps_v3_conservacao",
-    "maritime.intelligence","maritime.maritime_agent","maritime.maritime_store","maritime.cross_domain","maritime.maritime_queue","maritime.maritime_queue_forecast","maritime.maritime_eta","maritime.shipping_pipeline","maritime.port_call_engine","maritime.maritime_final_readiness","maritime.maritime_source_health","maritime.maritime_gateway","maritime.model_validation", "maritime.official_lineup_bridge",
+    "maritime.intelligence","maritime.maritime_agent","maritime.maritime_store","maritime.cross_domain","maritime.maritime_queue","maritime.maritime_queue_forecast","maritime.maritime_eta","maritime.shipping_pipeline","maritime.port_call_engine","maritime.maritime_final_readiness","maritime.maritime_source_health","maritime.maritime_gateway","maritime.model_validation","maritime.official_lineup_bridge",
 
 })
 

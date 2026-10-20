@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 
 from .registro_snapshots import registrar_snapshot
 from .transacoes_sqlite import savepoint_atomico
+from .verificador_bytes_origem import conferir_bytes_origem
 
 class ErroProgressoHistorico(ValueError):
     pass
@@ -98,16 +99,23 @@ def registrar_progresso_local(
     sha256_origem:str,bytes_origem:int,mime_origem:str,
     coletado_em:str,tipo:str="SINTETICO",
     autorizacoes:frozenset[str]=frozenset(),evidencia_direitos:str|None=None,
+    arquivo_origem:bytes|None=None,
 )->dict:
-    """SHA e bytes da fonte são informados pelo caller; NÃO verificados aqui.
+    """Em REAL, exige bytes originais e confere seu hash/tamanho/mime localmente.
 
-    Modo REAL exige catálogo+direitos e futura auditoria independente dos bytes.
+    Ainda não comprova a procedência CONAB nem que o parser leu esses bytes.
     """
     coleta=_utc(coletado_em)
     if tipo=="REAL_AUTORIZADO":
         matches=[x for x in catalogo.get("datasets",[]) if x.get("id")=="CONAB_PROGRESSO_SEMANAL"]
         if len(matches)!=1 or matches[0].get("enabled") is not True or matches[0].get("collection_authorized") is not True:
             raise PermissionError("CONAB progresso real desabilitado no catálogo")
+    if tipo=="REAL_AUTORIZADO" and arquivo_origem is None:
+        raise PermissionError("dados reais exigem bytes de origem para conferir SHA")
+    prova=None
+    if arquivo_origem is not None:
+        prova=conferir_bytes_origem(payload=arquivo_origem,
+            sha256_informado=sha256_origem,tamanho_informado=bytes_origem,mime=mime_origem)
     dados,publicacao=_canonic(registros,coleta)
     preparar_esquema(db)
     with savepoint_atomico(db):
@@ -131,6 +139,8 @@ def registrar_progresso_local(
                 [(sid,k,v) for k,v in dados])
     return {"dataset_id":"CONAB_PROGRESSO_SEMANAL","linhas":len(dados),
             "sha256_informado":sha256_origem,
+            "hash_conferido_com_bytes":prova is not None,
+            "fonte_oficial_ou_parser_homologados":False,
             "nova_versao":snapshot["nova_versao"],"nova_coleta":snapshot["nova_coleta"],
             "estado":"VERSAO_SQLITE_SEM_HOMOLOGACAO_DE_FONTE_OU_PUBLICACAO"}
 
