@@ -760,8 +760,8 @@
       "provider": "UCSB CHIRPS v3",
       "official_url": "https://www.chc.ucsb.edu/data/chirps3",
       "access": "PUBLIC_FILES_API",
-      "rights": "REVIEW",
-      "notes": "Estimativa satélite + estações; não chuva observada no talhão"
+      "rights": "ATTRIBUTION_REVIEW",
+      "notes": "CHIRPS v3 source page identifies CC BY 4.0, requires attribution and version/produto. Daily RNL (ERA5) and SAT (IMERG Late v7) are pentad-derived, Preliminary and Final have different availability."
     },
     {
       "id": "UNCOMTRADE",
@@ -1548,7 +1548,7 @@
       "stage": "CANDIDATE",
       "priority": "P1",
       "existing_module": null,
-      "notes": "Estimativa satélite + estações; não chuva observada no talhão",
+      "notes": "CC BY 4.0; CHIRPS v3 0.05° 1981+; daily rnl/sat are pentad partitions, not station measurements or true same-day NRT. Need sampling/CRS, pentad reconciliation and license attribution.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
@@ -1826,7 +1826,7 @@
       "cadence": "WEEKLY",
       "stage": "CODE_PRESENT",
       "priority": "P0",
-      "existing_module": "conab_agrobr.py",
+      "existing_module": "conab_agrobr.py; progresso_conab_historico.py (normalizador e SQLite local com vintages)",
       "notes": "agrobr 2.0 facultativo; MEDIA_ESTADOS diferente de Brasil; coleta OFF",
       "enabled": false,
       "collection_authorized": false,

@@ -788,7 +788,7 @@
         "url": "https://www.chc.ucsb.edu/data/chirps3",
         "source_proof": "https://www.chc.ucsb.edu/data/chirps3"
       },
-      "implementation_scope": "CATALOG_ONLY: fonte e API real, direitos, grid/latência, parser/QA por versão pendentes",
+      "implementation_scope": "CHIRPS v3: validator de conservação diária/pêntada e separação RNL vs SAT e preliminar vs final; download, recorte espacial, leitura GeoTIFF/NetCDF e histórico incremental ainda não implementados",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -807,7 +807,7 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Estimativa satélite + estações; não chuva observada no talhão",
+      "source_note": "CHIRPS v3: 0.05°, 1981+; diário SAT desagregado por IMERG Late v7 e RNL por ERA5, ambos de pêntada; datas diárias não são janela uniforme de estação. CC BY 4.0.",
       "preliminary_evidence": "CATALOG_ONLY"
     },
     {
@@ -1084,7 +1084,7 @@
         "url": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/progresso-de-safra",
         "source_proof": "https://github.com/bruno-portfolio/agrobr/blob/main/docs/api/conab_progresso.md"
       },
-      "implementation_scope": "conab_agrobr.py + agrobr==2.0.0; direitos e persistencia pendentes",
+      "implementation_scope": "conab_agrobr.py + progresso_conab_historico.py (dados offline semanais, 27 UFs e MEDIA_ESTADOS; coleta desativada)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -3381,7 +3381,7 @@
         "url": "https://power.larc.nasa.gov/docs/services/api/temporal/daily/",
         "source_proof": "https://power.larc.nasa.gov/docs/services/api/temporal/daily/"
       },
-      "implementation_scope": "nasa_power_diario.py planeja URL oficial daily UTC e normaliza JSON offline com QC, missing -999, limites e proveniência; resposta NASA REAL e direitos ainda aguardam homologação",
+      "implementation_scope": "Nasa POWER: planner diário e histórico anual UTC, parser com verificação de coordenadas reais, ingestão manual HTTPS opt-in, cache SHA contra consultas repetidas, histórico bitemporal em SQLite; sem amostra real, agendamento ou publicação homologados",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -3400,7 +3400,7 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Grade diária; não estação",
+      "source_note": "NASA POWER Daily API (1981+), limite 20 variáveis; 0.5° grid global de meteorologia. Evitar consultas repetidas por célula. Sem publicação de dados inferida da coleta.",
       "preliminary_evidence": "CATALOG_ONLY"
     },
     {
