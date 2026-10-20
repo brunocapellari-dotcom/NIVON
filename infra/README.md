@@ -75,3 +75,27 @@ somente um job offline. Nenhum serviço é iniciado sem seleção explícita.
 
 Consulte `docs/INFRAESTRUTURA_OPERACIONAL.md` para a arquitetura e
 `infra/runbooks/operacao.md` para a execução controlada.
+
+## Controle real de execuções (somente para ensaios sintéticos)
+
+Código em `src/nivon/infra_job_ledger.py` e `infra_smoke.py`:
+
+- Ledger SQLite transacional com unicidade `job_key + due_utc`, hash de entrada,
+  tentativas, lease exclusivo, resultado e eventos; estado durável no caminho
+  explicitamente escolhido pelo operador.
+- `READY → RUNNING → SUCCEEDED/FAILED`; expiração ou conclusão tardia vai
+  para `UNCERTAIN` e **não** dispara nova tentativa.
+- Recuperação de estado entre processos e ensaio com
+  `nivon.backup_sqlite` testados. **Sem** cópia criptografada remota.
+- Aceita **somente** `TEST_SYNTHETIC_*`, sem coletor, rede, cron, WhatsApp
+  ou execução real. O scheduler futuro deverá usar esses contratos após gate.
+
+```sh
+PYTHONPATH=src python -m nivon.infra_job_ledger --status
+PYTHONPATH=src python -m nivon.infra_smoke --instante 2026-10-20T12:00:00Z
+```
+
+Para testar estado persistente em diretório privado (modo 0700), use
+`--db /CAMINHO_PRIVADO/ledger.sqlite`. Não coloque SQLite, WAL ou backups
+dentro do repositório, mesmo em branches privadas. **O sucesso do ensaio
+não constitui licença, servidor, agendamento, backup remoto ou go-live.**
