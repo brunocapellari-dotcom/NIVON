@@ -95,6 +95,7 @@ def _parametros(horizonte: object, minimo: object) -> tuple[int, int]:
 def preparar_folds_asof(
     observacoes: Sequence[Mapping], *, calendario: Sequence[str],
     origens_em: Mapping[str, str], as_of_avaliacao: str,
+    serie_id: str, unidade: str, fonte_id: str,
     horizonte_periodos: int, minimo_treino: int = 24,
 ) -> list[dict]:
     """Seleciona edicao observacional mais recente DISPONIVEL em cada origem.
@@ -106,6 +107,9 @@ def preparar_folds_asof(
     horizonte, minimo = _parametros(horizonte_periodos, minimo_treino)
     dias, mapa = _calendario(calendario)
     avaliacao = _instante(as_of_avaliacao, "as_of_avaliacao")
+    for nome, valor in (("serie_id", serie_id), ("unidade", unidade),
+                        ("fonte_id", fonte_id)):
+        _identidade(valor, nome)
     if not isinstance(observacoes, (list, tuple)) or not observacoes:
         raise ErroQuantitativo("observacoes ausentes")
     por_dia: dict[date, list[tuple[datetime, datetime, float, str]]] = defaultdict(list)
@@ -121,6 +125,10 @@ def preparar_folds_asof(
             digest = _hash(row["edicao_sha256"])
         except KeyError as exc:
             raise ErroQuantitativo(f"observacao sem campo {exc.args[0]}") from exc
+        if any(row.get(k) != esperado for k, esperado in (
+                ("serie_id", serie_id), ("unidade", unidade),
+                ("fonte_id", fonte_id))):
+            raise ErroQuantitativo("serie, unidade ou fonte misturadas no fold as-of")
         if dia not in mapa or not (publicacao <= coleta <= avaliacao):
             raise ErroQuantitativo("observacao fora do calendario/corte ou cronologia invalida")
         if publicacao < datetime.combine(dia, time.min, tzinfo=timezone.utc):
@@ -172,7 +180,10 @@ def _limiar(abs_tol: object, rel_tol: object, base: float) -> float:
     r = _numero(rel_tol, "tolerancia_relativa", nao_negativo=True)
     if (a == 0 and r == 0) or r >= 1:
         raise ErroQuantitativo("banda positiva e percentual < 1 obrigatorios")
-    return a + abs(base) * r
+    limiar = a + abs(base) * r
+    if not isfinite(limiar) or limiar <= 0:
+        raise ErroQuantitativo("limiar fora do dominio numerico")
+    return limiar
 
 
 def _classe(delta: float, limiar: float) -> str:
@@ -202,7 +213,8 @@ def avaliar_previsoes_oos(
     if not isinstance(registros, (list, tuple)) or not minimo <= len(registros) <= 100000:
         raise ErroQuantitativo("folds OOS insuficientes ou em excesso")
     usa_prob = any("probabilidades" in r for r in registros if isinstance(r, Mapping))
-    usa_intervalos = any("intervalo_inferior" in r or "intervalo_superior" in r
+    usa_intervalos = any(any(k in r for k in (
+                        "intervalo_inferior", "intervalo_superior", "nivel_intervalo"))
                         for r in registros if isinstance(r, Mapping))
     if usa_prob:
         _limiar(tolerancia_absoluta, tolerancia_relativa, 1)
@@ -243,6 +255,8 @@ def avaliar_previsoes_oos(
             raise ErroQuantitativo("previsao repetida no mesmo alvo e origem")
         vistos.add(chave)
         e, eb = previsto - real, baseline - real
+        if not isfinite(e) or not isfinite(eb):
+            raise ErroQuantitativo("erro com overflow numerico")
         erros.append(e); base_erros.append(eb)
         abs_erros.append(abs(e)); abs_base.append(abs(eb))
         classe_real = None
@@ -289,6 +303,8 @@ def avaliar_previsoes_oos(
     mae_base = sum(abs_base) / n
     rmse = sqrt(sum(e*e for e in erros)/n)
     rmse_base = sqrt(sum(e*e for e in base_erros)/n)
+    if not all(isfinite(x) for x in (mae, mae_base, rmse, rmse_base, sum(erros)/n)):
+        raise ErroQuantitativo("metrica com overflow numerico")
     bins = None
     if usa_prob:
         bins = {c: [
