@@ -125,9 +125,10 @@ class TestIVOLabTemporal(unittest.TestCase):
         alvo = next(x for x in dados if x.competencia == "2023-07")
         alterado = replace(alvo, publicacao=date(2024, 12, 10),
                            coleta=datetime(2024, 12, 11, tzinfo=UTC))
-        p = prever([x for x in dados if x is not alvo] + [alterado])
-        self.assertNotEqual(p["features_asof"]["sazonal_periodo"], "")  # 2023-07 não existe em julho/2024
-        self.assertEqual(p["features_asof"]["sazonal_periodo"], "2023-07")
+        # Em julho/2024, a observação sazonal de julho/2023 foi adiada
+        # para publicação em dezembro/2024. O cálculo precisa falhar fechado.
+        with self.assertRaises(ErroLab):
+            prever([x for x in dados if x is not alvo] + [alterado])
 
 
 if __name__ == "__main__":
