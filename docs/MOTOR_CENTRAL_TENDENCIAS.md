@@ -78,15 +78,16 @@ Este é o recorte **P0** do motor de tendências; os demais 26 domínios quantit
 
 ### 1. FRETE ANUNCIADO — por corredor (prioridade 1)
 
-Chave obrigatória e imutável durante a série:
-`origem_ibge + destino_ibge + produto + veiculo + pedagio + natureza(OFERTA) + unidade(BRL/T)`.
+**Método R01 (integração PR #30): variação pareada de ofertas comerciais**, não mediana diária de níveis de preço por município. A versão anterior estava sujeita ao efeito-composição quando saíam fazendas com preços mais baixos e entravam outras mais caras, mesmo sem qualquer aumento individual.
 
-- Priorizar recortes de Mato Grosso, entre eles: Sorriso–Rondonópolis, Sorriso–Dom Aquino, Sinop–Miritituba/Itaituba; também corredores para Paranaguá, Santos/Guarujá, Uberaba e Araguari, sem fazer equivalência de municípios automaticamente.
-- `lote_id` é um **ID econômico lógico previamente resolvido** pelo sistema de coleta autorizado (inclusive WhatsApp AI); não é quantidade de caminhões, viagens ou volume. O mesmo `lote_id` repetido no mesmo dia e com mesmo preço conta UMA vez. Se o preço divergir, a análise daquele corredor deve bloquear até reconciliação, não escolher preço silenciosamente.
-- Cada dia usa a **mediana** dos R$/t de lotes distintos, com cobertura por dia, SHA das observações, número de lotes e fontes. Amostra com menos de 2 lotes/dia não fornece tendência utilizável. A metodologia precisa de backtest para limiar definitivo de cobertura.
-- `INCLUSO`, `ADICIONAL`, `NAO_INFORMADO` são três contratos econômicos distintos. Não calcular tendência juntando modalidades de pedágio ou veículos diferentes. Também não misturar soja com milho.
-- **A tendência é de ofertas anunciadas**, não de frete médio contratado, frete realizado, disponibilidade de caminhão ou toneladas por dia. Reposts não geram novos lotes nem volume fictício. Para comparar com custo do transportador, incorporar diesel ANP e custo por rota somente em análise complementar documentada.
-- A data representa a referência da divulgação, não a data do embarque real; publicar exige autorização por operação e identificação de cobertura amostral.
+- Chave da série: `origem_ibge + destino_ibge + produto + veiculo + pedagio + natureza(OFERTA) + unidade(BRL/T)`. A chave econômica da comparação temporal é `pickup_entity_id + transportadora_id`, ambos obrigatórios e previamente resolvidos. `lote_id` permanece como referência de anúncio/proveniência, não substitui o estabelecimento.
+- Em cada dia, registros repetidos da mesma combinação ponto de embarque + transportadora com preço idêntico contam uma vez. Preços conflitantes da mesma combinação no mesmo dia bloqueiam a análise; a revisão comercial precisa ser reconciliada por procedimento próprio.
+- Apenas combinações econômicas presentes em **todos os dias da janela** entram no painel. O motor calcula a variação R$/t de cada combinação em relação à sua própria primeira observação, e analisa a mediana **das variações pareadas**, nunca o nível ou média de frete municipal. Troca de composição sem dois pares estáveis retorna `PAINEL_INCOMPARAVEL / INDETERMINADA`.
+- Não calcular, armazenar, exibir ou exportar **média de frete por município**. Município é referência geográfica, não unidade comercial agregada. Tampouco interpretar a variação pareada como preço médio do corredor.
+- Exigir ao menos dois pares por dia, mínimo de dois pares comuns, séries ordenadas e datas disponíveis até o corte. Limiar **absoluto R$/t** pode ser aplicado à diferença; tolerância relativa fica bloqueada nesta versão, pois não pode ser calculada contra mediana de diferenças ancoradas em zero sem normalização específica.
+- Produto, equipamento e pedágio devem permanecer iguais em todo o recorte; `INCLUSO`, `ADICIONAL` e `NAO_INFORMADO` são modalidades diferentes. Regime PF/PJ, local de descarga, frete base, pedágio, frete cheio, distância, R$/TKU e proveniência devem ser preservados nos registros de origem quando disponíveis; comparabilidade adicional deve ser auditada pelo coletor.
+- Prioridade inicial: Sorriso–Rondonópolis, Sorriso–Dom Aquino, Sinop–Miritituba/Itaituba (com distinção do município e distrito); também destinos Paranaguá, Santos e Uberaba. Não presumir equivalência automática entre terminal e cidade.
+- O sinal é **descritivo e não publicável**: frete anunciado não é contrato, embarque efetivo, volume t/dia nem preço de mercado representativo. Reposts não geram novos lotes ou toneladas. Direitos, amostras reais, calendários, backtest point-in-time e processo editorial ainda bloqueiam publicação.
 
 ### 2. CBOT — preço e vencimento homogêneos (prioridade 2)
 
