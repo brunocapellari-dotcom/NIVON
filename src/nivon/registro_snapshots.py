@@ -9,6 +9,8 @@ import re
 import sqlite3
 from datetime import date, datetime, timezone
 
+from .transacoes_sqlite import savepoint_atomico
+
 
 class ErroSnapshot(ValueError):
     pass
@@ -130,7 +132,7 @@ def registrar_snapshot(db: sqlite3.Connection, catalogo: dict, *,
             raise ErroSnapshot("snapshot sintético não pode simular autorização real")
     estado = (dataset_id, fonte_id, sha256, tamanho, mime, schema_versao,
               competencia, ref, pub, tipo, evidencia_direitos)
-    with db:
+    with savepoint_atomico(db):
         anterior = db.execute("SELECT * FROM nivon_snapshots WHERE dataset_id=? AND sha256=?",
                               (dataset_id, sha256)).fetchone()
         nova_versao = anterior is None

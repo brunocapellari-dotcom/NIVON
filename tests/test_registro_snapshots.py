@@ -122,3 +122,11 @@ class TestRegistroSnapshots(unittest.TestCase):
                     coletado_em="2026-10-20T12:00:00Z")
         with self.assertRaises(ErroSnapshot):
             self.registrar(tamanho=850_000_000)
+
+    def test_ledger_preserva_savepoint_de_transacao_externa(self):
+        self.db.execute("SAVEPOINT teste_externo")
+        self.registrar()
+        self.db.execute("ROLLBACK TO SAVEPOINT teste_externo")
+        self.db.execute("RELEASE SAVEPOINT teste_externo")
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM nivon_snapshots").fetchone()[0],0)
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM nivon_coletas").fetchone()[0],0)

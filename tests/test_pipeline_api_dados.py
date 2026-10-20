@@ -133,3 +133,24 @@ class TestPipelineOficialJSON(unittest.TestCase):
         with self.assertRaises(ErroIngestaoAPI):
             observar_asof_coleta(self.db,dataset_id="BCB_PTAX",
                 corte_coleta="2026-10-19T12:00:00Z",incluir_sinteticos=True)
+
+    def test_erro_de_insert_no_normalizado_reverte_proveniencia(self):
+        import sqlite3
+        from nivon.pipeline_api_dados import preparar_tabelas
+        preparar_tabelas(self.db)
+        self.db.execute("""CREATE TRIGGER falha_observacoes BEFORE INSERT ON nivon_observacoes_api
+                           BEGIN SELECT RAISE(ABORT,'falha sintética de armazenamento'); END""")
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.gravar()
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM nivon_snapshots").fetchone()[0],0)
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM nivon_coletas").fetchone()[0],0)
+
+    def test_rollback_json_nao_revoga_transacao_externa(self):
+        self.db.execute("CREATE TABLE testemunha (v INTEGER)")
+        self.db.execute("SAVEPOINT externo")
+        self.db.execute("INSERT INTO testemunha VALUES (123)")
+        self.gravar()
+        self.db.execute("ROLLBACK TO SAVEPOINT externo")
+        self.db.execute("RELEASE SAVEPOINT externo")
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM testemunha").fetchone()[0],0)
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM nivon_snapshots").fetchone()[0],0)
