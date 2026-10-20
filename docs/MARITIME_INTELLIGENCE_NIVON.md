@@ -52,3 +52,22 @@ Custo: **R$ 0 em infraestrutura introduzida por estes commits;** não afirmar qu
 
 ## Proveniência
 Fonte sob a mesma conta GitHub: brunocapellari-dotcom/AgroLogMT, branch main, 19/10/2026. Arquivos foram adaptados por troca de imports. Para rastreabilidade comercial, fixar hashes exatos, diff, direitos autorais e licenças antes da release.
+
+
+## Atualização de integração — 20/10/2026
+
+- API local: src/nivon/maritime/maritime_gateway.py. Rotas GET /v1/maritime/config, /status, /vessels, /lineup, /summary e /vessels/{mmsi}/replay. Apenas 127.0.0.1, GET/HEAD, consulta limitada, sem CORS e sem escrita.
+- UI MapLibre/deck.gl compilada e servida pela mesma origem local. Sem dados homologados, status DATA_GATED e contagens null, nunca zero falsamente observado.
+- MaritimeInternalSnapshot.from_analysis() liga apenas posições AIS corroboradas pelo coordenador à UI, de modo SHADOW_INTERNAL, com auditoria bloqueante, direitos e source health verificados. Não habilita publicação ou API em nuvem. Simulação permanece SYNTHETIC_TEST_ONLY.
+- model_validation.py executa avaliação prequential OOS de ETA e filas com previsões congeladas antes do desfecho, comparação de MAE/RMSE versus baseline, folds temporais e intervalo por fold. Mesmo SHADOW_BASELINE_WIN não promove o modelo.
+- Testes novos: tests/test_maritime_gateway_nivon.py, tests/test_maritime_snapshot_bridge_nivon.py e tests/test_maritime_model_validation.py, além de regressões anteriores. Revalidar em CI após cada commit.
+
+### Execução local
+
+1. Instalar dependências e compilar na pasta maritime_ui com npm ci --ignore-scripts e npm run build.
+2. Na raiz do repositório, executar PYTHONPATH=src python -m nivon.maritime.maritime_gateway --port 8765 --ui-dist maritime_ui/dist.
+3. Abrir http://127.0.0.1:8765/maritime/ no mesmo computador, sem proxy externo.
+
+O executável padrão não injeta AIS nem line-up reais. Integração Python interna pode injetar MaritimeReadAPI(internal=MaritimeInternalSnapshot.from_analysis(report, lineup_calls=...)) após passar pelos gates. Isso NÃO é produção.
+
+**Bloqueios:** API com autenticação para nuvem, coleta AIS licenciada e contínua, line-up real homologado, geofences operacionais, validação externa de previsão, backup em nuvem, revisão de supply chain e sete dias de aceite E2E.
