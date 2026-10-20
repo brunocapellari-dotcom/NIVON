@@ -52,6 +52,25 @@ def capturar_power_manual(db:sqlite3.Connection,*,plano:dict,
         p.username is not None or p.password is not None or
         p.port not in (None,443) or p.fragment):
         raise ErroCapturaPower("host/rota fora da allowlist")
+    from urllib.parse import parse_qs
+    from .nasa_power_diario import planejar_power
+    if plano.get("time_standard")!="UTC":
+        raise ErroCapturaPower("fuso NASA deve ser UTC")
+    try:
+        qs=parse_qs(p.query,strict_parsing=True)
+        if set(qs)!={"parameters","community","longitude","latitude","start","end","format","time-standard"}:
+            raise ErroCapturaPower("parâmetros fora do contrato")
+        try:
+            lat=float(qs["latitude"][0]);lon=float(qs["longitude"][0])
+        except (ValueError,IndexError,KeyError) as exc:
+            raise ErroCapturaPower("coordenadas inválidas") from exc
+        authentic=planejar_power(latitude=lat,longitude=lon,
+            inicio=plano["inicio"],fim=plano["fim"],
+            parametros=tuple(plano["parametros"]))
+    except (ErroPower,ValueError,KeyError,TypeError) as exc:
+        raise ErroCapturaPower("plano NASA malformado") from exc
+    if authentic["url"]!=url or authentic["intervalo_dias"]!=plano.get("intervalo_dias"):
+        raise ErroCapturaPower("plano e URL não coincidem")
     req_sha=hashlib.sha256(url.encode("utf-8")).hexdigest()
     row=db.execute("""SELECT conteudo_sha256 FROM grade_edicao
           WHERE dataset_id='NASA_POWER_AG' AND consulta_sha256=?
