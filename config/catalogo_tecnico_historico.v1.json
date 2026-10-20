@@ -160,12 +160,16 @@
       "interface": "SIDRA API por tabela/variável",
       "evidence": "https://apisidra.ibge.gov.br/",
       "priority": "P0",
-      "risk": "quebras municipais, sigilo, revisão e mudança de definição",
+      "risk": "quebras municipais, sigilo, revisão e mudança de definição PAM 2025 incluiu gergelim sem série municipal anual pré-2025 nessa categoria; milho anual total sem separar 1a e 2a safras; algodão herbáceo em caroço não equivale a pluma; revisão de arredondamento e alterações territoriais.",
       "agrolog_paths": [
         "collector/ibge_pam.py",
         "collector/ibge_pipeline.py"
       ],
-      "status": "NIVON_CANDIDATE"
+      "status": "API_CONTRACT_CODE_PRESENT_PLUS_WEIGHTED_AGGREGATOR_OFFLINE",
+      "nivon_paths": [
+        "src/nivon/agregacao_pam_ibge.py",
+        "tests/test_agregacao_pam_ibge.py"
+      ]
     },
     {
       "id": "IBGE_PPM",

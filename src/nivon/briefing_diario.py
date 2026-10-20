@@ -123,10 +123,6 @@ def selecionar_noticias(
                 "titulo": t, "resumo": resumo, "fonte": fonte, "url": url,
                 "categoria": categoria, "publicado_em": pub,
             }
-            for campo in ("impacto_brasil", "impacto_produtor"):
-                valor = entrada.get(campo)
-                if valor is not None:
-                    observacao[campo] = _texto(valor, campo, maximo=450)
             validos.append(observacao)
         except (ErroBriefing, TypeError, ValueError) as exc:
             rejeitados.append({"indice": pos, "titulo": titulo, "motivo": str(exc)})
@@ -165,7 +161,7 @@ def gerar_texto(
     data_local = agora.astimezone(FUSO_EDICAO)
     inicio = (agora - JANELA_NOTICIAS).astimezone(FUSO_EDICAO)
     linhas = [
-        "📋 *BRIEFING ESTRATÉGICO DO AGRONEGÓCIO — NIVON*",
+        "*RESUMO ESTRATÉGICO DO AGRONEGÓCIO*",
         "📅 " + data_local.strftime("%d/%m/%Y %H:%M") + " (Brasília)",
         "🔎 Notícias de " + inicio.strftime("%d/%m %H:%M") +
         " até " + data_local.strftime("%d/%m %H:%M") + " (24 horas)",
@@ -196,9 +192,6 @@ def gerar_texto(
                 "", "🔹 *" + n["titulo"] + "*",
                 n["resumo"], f"Fonte: {n['fonte']} — publicado {hora} (Brasília)",
             ])
-            for campo, rotulo in (("impacto_brasil", "Brasil"), ("impacto_produtor", "Produtor")):
-                if n.get(campo):
-                    linhas.append(f"▶️ Possível impacto {rotulo} (análise NIVON): {n[campo]}")
             linhas.append(n["url"])
     linhas.extend(["", f"Notícias elegíveis: {len(itens)}. Dados com proveniência; sem inferir fatos ausentes."])
     return "\n".join(linhas), rejeitados

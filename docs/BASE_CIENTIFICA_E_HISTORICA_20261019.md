@@ -88,3 +88,29 @@ Em fevereiro de 2026, o NOAA Climate Prediction Center passou a usar o **Relativ
 O endpoint oficial de dados estruturados é `https://www.cpc.ncep.noaa.gov/data/indices/RONI.ascii.txt`, com linhas `SEAS YR ANOM` e valores trimestrais sobrepostos (DJF, JFM, ... NDJ), desde 1950. Foi documentado e ligado ao parser `noaa_roni.py`, que aceita apenas ERSSTv6, exige continuidade dos centros de temporada, identifica episódios a partir de cinco períodos consecutivos e sinaliza observações recentes como provisórias. https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/
 
 O **último snapshot** desse arquivo pode conter reanálises e correções. O parser não inventa horários de publicação de 1950 a 2026; portanto, `pode_treinar_modelo_point_in_time=False` até obter edições com prova de disponibilidade. Correlação ENSO/chuvaprodutividade não é efeito causal e precisa de blocos sazonais, controle espacial, testes de lead/lag e validação fora de amostra. Nenhuma série RONI foi automaticamente baixada ou agendada.
+
+## Auditoria da produtividade agrícola por safra (20/10/2026)
+
+Modulo src/nivon/auditoria_safra_preditiva.py ligado a SOJA, MILHO, TRIGO, ALGODAO, CANA, SORGO e GERGELIM. Não produz yield a partir de clima, não treina modelo e nunca autoriza previsão.
+
+Contrato: municipio IBGE 7 dígitos, ano da colheita, mesmo produto e unidade kg/ha para previsão/baseline/observado, datas de emissão, disponibilidade, publicação e coleta com fuso, ano final do treino e hashes do RAW observado e da previsão.
+
+Validação: 30+ previsões declaradas fora da amostra, 8+ safras e 3+ municípios. MAE/RMSE versus baseline para conjunto, ano e município, ganho MAE ponderado igualmente por safra e intervalo exploratório via bootstrap circular em blocos de dois anos, seed fixa.
+
+Uma declaração de que a previsão foi fora da amostra e um hash não comprovam treino livre de vazamento. Inspecionar os dados e artefatos realmente disponíveis em cada origem. Intervalo bootstrap não é garantia quando eventos ENSO atravessam anos, há drift ou seleção de modelos.
+
+Fontes previstas: IBGE PAM/SIDRA para observações municipais com versões homologadas; CONAB publica estimativas por edição e granularidade diferente. NOAA RONI, INMET, NASA, CHIRPS e ZARC só podem alimentar um fold se existia evidência de que a versão já estava disponível antes da previsão.
+
+Referências: Hyndman & Athanasopoulos, Time-series Cross-validation, https://otexts.com/fpp3/tscv.html ; literatura sobre produtividade agrícola e separação temporal https://link.springer.com/article/10.1007/s13253-026-00743-8 .
+
+Estado: implementação e testes com fixtures sintéticas. Nenhum backtest de produtividade real foi homologado, não houve ativação ou deploy.
+
+## IBGE PAM — coerência de agregação municipal e UF (20/10/2026)
+
+O agregador `src/nivon/agregacao_pam_ibge.py` soma a área efetivamente colhida e a quantidade produzida dos municípios na MESMA edição/tabela, produto, UF e ano. Produtividade estadual agregada = 1000 x soma(produção_t) / soma(área_ha), nunca a média simples das produtividades municipais. Operações e arredondamentos usam Decimal para reduzir erros evitáveis.
+
+Exige código IBGE 7 dígitos e declaração do produto inequívoca. ALGODÃO HERBÁCEO EM CAROÇO não é algodão em pluma; MILHO GRÃO anual PAM não desagrega safrinha/safra verão. O IBGE incluiu GERGELIM entre as lavouras temporárias a partir da PAM 2025: não inventar séries municipais PAM anteriores; buscar fonte alternativa histórica documentada para esse produto.
+
+O módulo propaga a ambiguidade de arredondamento publicada ao confrontar produtividade com área e produção municipais. Comparação com totais oficiais UF só é calculada quando o chamador confirma universo de municípios completo; ainda assim o resultado é conservador e não equivale a homologação independente. Essa declaração requer prova documental para publicação futura.
+
+Fontes oficiais: IBGE PAM https://www.ibge.gov.br/estatisticas/economicas/agricultura-e-pecuaria/9117-producao-agricola-municipal-culturas-temporarias-e-permanentes.html e https://sidra.ibge.gov.br/tabela/1612 . Diferenciar PAM anual de CONAB por safra, cultura e referência temporal. Sem coleta ativa ou conjunto de municípios real nesta rodada.
