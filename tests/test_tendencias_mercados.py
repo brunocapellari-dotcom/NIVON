@@ -202,6 +202,12 @@ class TestTendenciasPrioritarias(unittest.TestCase):
         self.assertNotIn("preco_mediano_rs_t", str(r))
         self.assertNotIn("media_frete_municipio", str(r))
 
+    def test_r01_limiar_relativo_sem_base_de_preco_nao_e_permitido(self):
+        # O sinal usa diferenças em R$/t ancoradas em zero; taxa relativa
+        # sobre mediana dessas diferenças produziria limiar indefensável.
+        with self.assertRaisesRegex(ErroTendencia, "limiar relativo"):
+            analisar_frete(fretes(), tolerancia_relativa=0.05)
+
     def test_r01_exige_ponto_embarque_e_transportadora(self):
         for campo in ("pickup_entity_id", "transportadora_id"):
             with self.subTest(campo=campo):
