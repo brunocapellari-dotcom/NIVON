@@ -81,16 +81,16 @@ class TestChuvaEnsembleAsOf(unittest.TestCase):
         self.assertGreater(x["crps_medio_mm"], 0)
         self.assertGreater(x["mae_media_ensemble_mm"], 0)
 
-    def test_previsao_emitida_no_inicio_mas_capturada_dentro_do_intervalo_bloqueada(self):
+    def test_previsao_capturada_dentro_do_intervalo_bloqueada(self):
         rows = fixture()
         row = rows[2]
         valid = datetime.fromisoformat(row["valido_em"])
         start = valid - timedelta(days=1)
-        row["emitido_em"] = start.isoformat()
-        row["previsao_publicada_em"] = (start + timedelta(minutes=5)).isoformat()
+        # Emissão/horizonte e publicação continuam válidos: só a captura
+        # cruza o início do acumulado. O erro deve ser necessariamente temporal.
         row["previsao_coletada_em"] = (start + timedelta(minutes=10)).isoformat()
-        with self.assertRaises(ErroVerificacaoChuva):
-            evaluate(rows, horizonte_horas=24)
+        with self.assertRaisesRegex(ErroVerificacaoChuva, "fuga temporal"):
+            evaluate(rows)
 
     def test_bloqueia_acumulacao_maior_que_horizonte(self):
         with self.assertRaises(ErroVerificacaoChuva):
