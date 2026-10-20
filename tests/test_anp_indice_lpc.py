@@ -25,7 +25,7 @@ class TestIndiceLPC(unittest.TestCase):
         self.assertNotIn("revendas_lpc",x["url_pagina"])
 
     def test_semana_ainda_nao_publicada_nao_e_inventada(self):
-        x=descobrir_semanas_lpc("<html><a href='/outro'>index</a></html>".encode(),ano=2026)
+        x=descobrir_semanas_lpc(("<html><body><a href='/outro'>index</a>" + "Descrição da pesquisa semanal"*5 + "</body></html>").encode(),ano=2026)
         self.assertEqual(x["semanas"],[])
         self.assertIn("não significa",x["alerta"])
 
@@ -33,7 +33,7 @@ class TestIndiceLPC(unittest.TestCase):
         self.assertEqual(descobrir_semanas_lpc(self.html(),ano=2025)["total_semanas"],1)
 
     def test_nao_descobre_host_terceiro(self):
-        p=b'<html><a href="https://evil.example/resumo_semanal_lpc_2026-10-04_2026-10-10.xlsx">link</a></html>'
+        p=('<html><body><a href="https://evil.example/resumo_semanal_lpc_2026-10-04_2026-10-10.xlsx">' + "link externo</a>" + "Recursos semanais de petróleo"*3 + "</body></html>").encode()
         self.assertEqual(descobrir_semanas_lpc(p,ano=2026)["semanas"],[])
 
     def test_url_indice_alheia_bloqueada(self):
