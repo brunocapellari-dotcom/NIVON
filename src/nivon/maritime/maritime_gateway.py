@@ -95,6 +95,10 @@ class MaritimeInternalSnapshot:
         ):
             raise ValueError("analise sem bloqueio deterministico; nao exportar")
         port = report.get("port_id")
+        evidence = report.get("evidence", {})
+        if (evidence.get("source_health", {}).get("status") != "FRESH"
+                or evidence.get("ais_trusted_in_port", 0) < 1):
+            raise ValueError("cobertura AIS insuficiente: manter DATA_GATED")
         positions = report.get("trusted_positions_internal_only") or []
         if not isinstance(positions, list):
             raise ValueError("formato AIS interno invalido")
