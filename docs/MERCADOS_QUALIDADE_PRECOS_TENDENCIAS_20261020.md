@@ -37,8 +37,8 @@ Controle de identidade impede misturar futuro/físico, contratos, produtos, pra�
 unidades e fechamento/ajuste. A seleção de vintage ocorre por
 (data_referencia, identidade e fonte). Conteúdos com mesmo hash só são
 deduplicados quando preço, publicação e vínculo de revisão são compatíveis.
-Revisões de preço sem cadeia comprovada **falham em vez de serem arbitrariamente
-substituídas**. Não atribuir retroativamente conhecimento de edição: para
+Revisões de preço sem cadeia declarada **falham em vez de serem arbitrariamente
+substituídas**. O SHA é uma identidade declarada; conferir os bytes brutos no armazenamento do coletor é requisito externo. Não atribuir retroativamente conhecimento de edição: para
 backtest histórico repetir a seleção sob cada as_of de origem.
 
 O método tendencia_preco_auditada consome exclusivamente a série selecionada,
