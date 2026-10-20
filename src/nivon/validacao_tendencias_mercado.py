@@ -130,12 +130,18 @@ def avaliar_probabilidades_tendencia(
     logloss = []
     confiancas = []
     acertos = []
+    # Janela de desfechos em ordem de disponibilidade: O(n log n),
+    # sem reexaminar todo o histórico a cada emissão.
+    maturadas = sorted(normalizados, key=lambda x: x[1])
+    cursor = 0
+    frequencias = Counter()
     for emissao, _, classe, probs in normalizados:
-        disponiveis = [x[2] for x in normalizados if x[1] <= emissao]
-        if len(disponiveis) < minimo_historico:
+        while cursor < len(maturadas) and maturadas[cursor][1] <= emissao:
+            frequencias[maturadas[cursor][2]] += 1
+            cursor += 1
+        if cursor < minimo_historico:
             continue
-        frequencias = Counter(disponiveis)
-        priori = [(frequencias.get(k, 0) + 1) / (len(disponiveis) + 3)
+        priori = [(frequencias.get(k, 0) + 1) / (cursor + 3)
                   for k in CLASSES]
         obs_onehot = [float(k == classe) for k in CLASSES]
         erros.append(sum((p - v)**2 for p, v in zip(probs, obs_onehot)))
