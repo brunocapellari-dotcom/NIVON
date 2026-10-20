@@ -6,7 +6,7 @@ NÃO intervalos de confiança nem probabilidades calibradas.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation, localcontext
 import re
 
@@ -47,7 +47,7 @@ _UFS = frozenset({11,12,13,14,15,16,17,21,22,23,24,25,26,27,28,29,
 _SHA = re.compile(r"[a-f0-9]{64}\Z")
 _HIST_CAMPOS = frozenset({
     "ano_safra", "cultura", "segmento", "produto_fisico", "regiao_ibge",
-    "area_colhida_ha", "producao_t",
+    "competencia", "data_referencia", "area_colhida_ha", "producao_t",
     "publicado_em", "disponivel_em", "coletado_em",
     "fonte_id", "edicao_id", "raw_sha256",
 })
@@ -84,9 +84,21 @@ def _prova(row: dict, cutoff: datetime) -> bool:
     h = row.get("raw_sha256")
     if not isinstance(h, str) or not _SHA.fullmatch(h):
         raise ErroCenarioSafra("raw_sha256 ausente ou inválido")
+    comp = row.get("competencia")
+    if not isinstance(comp, str) or not re.fullmatch(r"20[0-9]{2}(?:/[0-9]{2})?", comp):
+        raise ErroCenarioSafra("competencia: safra comercial inválida")
+    raw_ref = row.get("data_referencia")
+    if not isinstance(raw_ref, str):
+        raise ErroCenarioSafra("data_referencia: data ISO obrigatória")
+    try:
+        ref = date.fromisoformat(raw_ref)
+    except ValueError as exc:
+        raise ErroCenarioSafra("data_referencia: data inválida") from exc
     p = _instante(row.get("publicado_em"), "publicado_em")
     d = _instante(row.get("disponivel_em"), "disponivel_em")
     c = _instante(row.get("coletado_em"), "coletado_em")
+    if ref > datetime.fromisoformat(row["publicado_em"].replace("Z", "+00:00")).date():
+        raise ErroCenarioSafra("referência posterior à publicação")
     if not p <= d <= c:
         raise ErroCenarioSafra("publicação/disponibilidade/coleta cronologicamente inconsistentes")
     return c <= cutoff
@@ -141,6 +153,7 @@ def estimar_oferta_remanescente(
     if not isinstance(observacao_atual, dict) or not isinstance(historico, list):
         raise ErroCenarioSafra("observação e histórico obrigatórios")
     atuais = frozenset({"cultura", "segmento", "produto_fisico", "regiao_ibge",
+                       "competencia", "data_referencia",
                        "area_alvo_colheita_ha", "area_colhida_ha", "producao_colhida_t",
                        "publicado_em", "disponivel_em", "coletado_em", "fonte_id",
                        "edicao_id", "raw_sha256"})
@@ -149,6 +162,8 @@ def estimar_oferta_remanescente(
     ids = (cultura, segmento, produto_fisico, regiao_ibge)
     if tuple(observacao_atual[k] for k in ("cultura", "segmento", "produto_fisico", "regiao_ibge")) != ids:
         raise ErroCenarioSafra("identidade de cultura/safra/produto/região atual divergente")
+    if not observacao_atual["competencia"].startswith(str(ano_safra)):
+        raise ErroCenarioSafra("competência atual divergente da safra")
     if not _prova(observacao_atual, corte):
         raise ErroCenarioSafra("observação atual ainda indisponível no cutoff")
     area_alvo = _decimal(observacao_atual["area_alvo_colheita_ha"], "area_alvo_colheita_ha", positivo=True)
