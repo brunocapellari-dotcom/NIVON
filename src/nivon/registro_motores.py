@@ -24,6 +24,9 @@ MODULOS=frozenset({
     "fertilizantes","anp_ppi","eventos_editoriais","briefing_composto",
     "agentes_nivon","entrega_whatsapp","cotacoes_externas",
     "ana_contrato","series_ambientais","inmet_historico",
+    "ana_hidrowebservice","inmet_bdmep",
+    "motores_agrometeorologia_fao56","motores_hidrologia_cientifica",
+    "validacao_previsoes_ambientais","nasa_power_diario",
 })
 
 

@@ -77,7 +77,7 @@ def extrair_token(payload:bytes)->str:
         raise ErroANAAPI("token SSO ausente ou inválido")
     return token
 
-@dataclass
+@dataclass(repr=False)
 class SessaoANA:
     token:str
     emitido_monotonic:float

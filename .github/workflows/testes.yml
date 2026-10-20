@@ -52,7 +52,7 @@ jobs:
         run: python -m nivon.analise_local --config config/contrato_exemplo_sintetico.json
 
   conferir-schema-mapa:
-    # Acesso de rede e inspeção de fontes somente com disparo manual.
+    # Diagnóstico de fonte real somente manual. Não repetir downloads em todo PR.
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 3
@@ -80,7 +80,7 @@ jobs:
           if-no-files-found: error
 
   inspecao-conab-xls:
-    # Acesso de rede e inspeção de fontes somente com disparo manual.
+    # Diagnóstico de fonte real somente manual. Não repetir downloads em todo PR.
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 6
@@ -103,7 +103,7 @@ jobs:
         run: python scripts/inspecionar_conab_xls.py
 
   inspecao-antt-ferrovias:
-    # Acesso de rede e inspeção de fontes somente com disparo manual.
+    # Diagnóstico de fonte real somente manual. Não repetir downloads em todo PR.
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 6
@@ -140,7 +140,7 @@ jobs:
         run: python scripts/inspecionar_antt_csv.py
 
   inspecao-anp-diesel:
-    # Acesso de rede e inspeção de fontes somente com disparo manual.
+    # Diagnóstico de fonte real somente manual. Não repetir downloads em todo PR.
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5

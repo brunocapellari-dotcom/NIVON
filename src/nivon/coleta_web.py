@@ -48,7 +48,7 @@ class FonteWeb:
         except ValueError as exc:
             if isinstance(exc, ErroAquisicao):
                 raise
-        if self.formato not in ("HTML", "PDF", "CSV", "JSON", "XML"):
+        if self.formato not in ("HTML", "PDF", "CSV", "JSON"):
             raise ErroAquisicao("formato não suportado")
         if not 0 < self.limite_bytes <= 20_000_000:
             raise ErroAquisicao("limite máximo inválido")
@@ -66,7 +66,7 @@ def adquirir_fonte(fonte: FonteWeb, *, abridor=None, instante: datetime | None =
         raise ErroAquisicao("instante sem timezone")
     cliente = abridor if abridor is not None else build_opener(_SemRedirecionar())
     req = Request(fonte.url, headers={
-        "Accept": "text/html,application/pdf,text/csv,application/json,application/rss+xml,application/atom+xml,application/xml",
+        "Accept": "text/html,application/pdf,text/csv,application/json",
         "User-Agent": "NIVON/0.1 (coleta oficial identificada)",
     })
     with cliente.open(req, timeout=20) as response:
@@ -75,8 +75,7 @@ def adquirir_fonte(fonte: FonteWeb, *, abridor=None, instante: datetime | None =
             raise ErroAquisicao("resposta/redirect diferente da fonte autorizada")
         mime = str(response.headers.get("Content-Type", "")).lower().split(";", 1)[0].strip()
         tipos = {"HTML": {"text/html", "application/xhtml+xml"},
-                 "PDF": {"application/pdf"}, "JSON": {"application/json"}, "CSV": {"text/csv", "application/csv", "text/plain"},
-                 "XML": {"application/rss+xml", "application/atom+xml", "application/xml", "text/xml"}}
+                 "PDF": {"application/pdf"}, "JSON": {"application/json"}, "CSV": {"text/csv", "application/csv", "text/plain"}}
         if mime not in tipos[fonte.formato]:
             raise ErroAquisicao("MIME divergente do contrato")
         dados = response.read(fonte.limite_bytes + 1)
