@@ -401,12 +401,12 @@
         "url": "https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/serie-historica-de-precos-de-combustiveis",
         "source_proof": "https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/arquivos/shpc/dsan/2026"
       },
-      "implementation_scope": "anp_diesel.py + anp_manifesto.py: preços por posto CSV mensal com semana inferida; recurso semanal consolidado XLSX oficial identificado, parser específico ainda não homologado",
+      "implementation_scope": "anp_diesel.py CSV mensal por posto (semana INFERIDA) + anp_manifesto.py + anp_semanal_municipios.py (XLSX semanal com layout EXPLÍCITO ainda sem validação real)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "WEEKLY_XLSX_DOWNLOAD_SCHEMA_RIGHTS_VALIDATION",
+      "primary_blocker": "WEEKLY_XLSX_REAL_DOWNLOAD_AND_LAYOUT_HOMOLOGATION",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -429,7 +429,9 @@
         "unidade_preco": "BRL/L",
         "metodologia": "PRECO_MEDIO_MUNICIPAL_ANP_SEMANA_OFICIAL",
         "download_url_real": "PENDENTE_CAPTURA",
-        "schema_real": "NAO_HOMOLOGADO"
+        "schema_real": "NAO_HOMOLOGADO",
+        "parser_modulo": "anp_semanal_municipios.py",
+        "parser_estado": "CODIGO_TESTE_LAYOUT_SINTETICO_SEM_HOMOLOGACAO_REAL"
       }
     },
     {
