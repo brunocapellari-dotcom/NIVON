@@ -32,7 +32,7 @@ def _politica(p: dict, fonte_id: str) -> dict:
     if not isinstance(p,dict) or p.get("fonte_id")!=fonte_id:
         raise ErroCuradoria("política editorial incompatível com a fonte")
     if p.get("status_direitos")!="APROVADA" or not {
-        "LEITURA","ARMAZENAMENTO","RESUMO","PUBLICACAO_DERIVADA",
+        "LEITURA","COLETA","ARMAZENAMENTO","RESUMO","PUBLICACAO_DERIVADA",
     }.issubset(set(p.get("operacoes",[]))):
         raise PermissionError("direitos de coleta/armazenamento/resumo/publicação insuficientes")
     _prova(p.get("licenca_id"),"licença")
@@ -75,6 +75,8 @@ def preparar_noticias_feed(
             if candidate.get("fonte_id")!=fid:
                 raise ErroCuradoria("origem do candidato diferente do feed")
             guid=candidate.get("guid")
+            if not isinstance(guid,str) or not guid:
+                raise ErroCuradoria("GUID ausente ou inválido")
             guid_hash=hashlib.sha256(guid.encode("utf-8")).hexdigest()
             edit=avaliacoes.get(guid_hash)
             if not isinstance(edit,dict):
