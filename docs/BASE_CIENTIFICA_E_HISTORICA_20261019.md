@@ -95,3 +95,32 @@ Este PR foi preparado a partir do commit `3329bbcfda4aadf4f08ea77b64d2abdffe2921
 Durante a auditoria, a linha de desenvolvimento recebeu commits simultâneos de outros módulos; testes que mesclam a branch mais recente podem apresentar falhas de terceiros. O alvo `review/nivon-ciencia-base-20261019` congela **somente a base de verificação científica** para permitir avaliação repetível, sem afirmar compatibilidade final com a branch em movimento.
 
 **Antes do merge de produção**, deve ser realizado merge/rebase limpo contra a branch-integrada vigente, auditoria de conflitos sem perda de novas fontes/contratos, regressão completa e validação independente dos datasets. O sucesso de testes desta revisão congelada NÃO constitui go-live nem liberação de coleta.
+
+## Implementação quantitativa — 20/10/2026 (PR #9, SEM MERGE/DEPLOY)
+
+Os seguintes módulos foram incorporados ao núcleo do Nivon e vinculados ao manifesto de motores:
+
+- modelos_fisicos.py: FAO-56 Penman-Monteith (ET0 diária); NSE e KGE-2009 sobre vazões alinhadas; identidade contábil de rebanho por espécie/categoria. Nenhum desses resultados confirma navegabilidade nem previsão homologada.
+- verificacao_probabilistica.py: Brier, Pinball Loss e cobertura/amplitude de intervalos. Scores não bastam para inferir probabilidade calibrada ou vantagem preditiva.
+- analogos_historicos.py: adaptação metodológica de AgroLogMT/models/analog_years.py com corte de disponibilidade, filtro para não usar anos futuros, exclusão de features constantes e rejeição de histórico insuficiente. Similaridade não é probabilidade.
+- historico_vintages.py: SQLite de edições por série, competência e vintage. Preserva valores exatos como Decimal, hash do bruto e hashes da evidência. Consulta as-of exige publicação, disponibilidade e declaração de prova verificada externamente. Não autentica o documento de prova, licença ou acesso por si só.
+- unidades_mercado.py: conversão dimensional exata em Decimal; especificações padrão CBOT soja/trigo 60 lb/bu, milho 56 lb/bu e cálculo de US¢/lb para USD/t, sem estimar preço de mercado, basis ou paridade.
+
+### Fontes metodológicas
+
+- FAO-56 ET0: https://www.fao.org/4/x0490e/x0490e06.htm
+- USGS NSE/KGE: https://www.usgs.gov/data/daily-streamflow-performance-benchmark-defined-standard-statistical-suite-v10-national
+- NOAA Brier: https://repository.library.noaa.gov/view/noaa/33728
+- CFTC calendário: https://www.cftc.gov/MarketReports/CommitmentsofTraders/ReleaseSchedule/index.htm
+- IBGE abate tabelas 1092/1093/1094: https://sidra.ibge.gov.br/pesquisa/abate/tabelas/
+- USGS novas APIs hidrológicas: https://www.usgs.gov/tools/usgs-water-data-apis ; APIs WaterServices antigas em processo de descontinuação até 2027.
+
+### Condições para homologação
+
+1. Casos de referência verificados, análise de valores extremos, unidades, cobertura, vintages e qualidade de insumos.
+2. Datas comprovadas e golden fixtures de fontes oficiais, sem inventar publicação nem disponibilidade.
+3. Backtest walk-forward contra baseline sazonal ou ingênuo, com treino/validação/teste separados em tempo e geografia; verificar score por cultura, região, regime e horizonte.
+4. Avaliação probabilística calibrada, incerteza, quebra estrutural e estabilidade fora da amostra.
+5. Homologar direitos e acesso por operação, persistência durável, backup/restauração e auditoria independente; não habilitar coleta ou deploy antes.
+
+**Concorrência:** integrar este PR à branch de desenvolvimento vigente com revisão de diffs e regressão. A branch de comparação congelada serve só para garantir teste repetível.

@@ -19,7 +19,8 @@
         "nivon.conab_agrobr:normalizar_progresso",
         "nivon.previsoes_bibliotecas:backtest_mensal",
         "nivon.verificacao_probabilistica:pontuacao_quantis",
-        "nivon.analogos_historicos:encontrar_anos_analogos"
+        "nivon.analogos_historicos:encontrar_anos_analogos",
+        "nivon.unidades_mercado:referencia_bolsa_cbot_usd_t"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -58,7 +59,8 @@
         "nivon.conab_agrobr:normalizar_progresso",
         "nivon.previsoes_bibliotecas:backtest_mensal",
         "nivon.verificacao_probabilistica:pontuacao_quantis",
-        "nivon.analogos_historicos:encontrar_anos_analogos"
+        "nivon.analogos_historicos:encontrar_anos_analogos",
+        "nivon.unidades_mercado:referencia_bolsa_cbot_usd_t"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -93,7 +95,8 @@
         "nivon.motores_agro_estrategicos:safra_comercializacao",
         "nivon.inteligencia_temporal:decompor_mudanca_safra",
         "nivon.inteligencia_temporal:comparar_progresso_safra",
-        "nivon.conab_agrobr:normalizar_progresso"
+        "nivon.conab_agrobr:normalizar_progresso",
+        "nivon.unidades_mercado:referencia_ice_centavos_libra_usd_t"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
@@ -160,7 +163,8 @@
       "front_id": "ACUCAR",
       "entrypoints": [
         "nivon.motores_agro_estrategicos:referencia_acucar_ice",
-        "nivon.motores_cadeias:simular_atr_cana"
+        "nivon.motores_cadeias:simular_atr_cana",
+        "nivon.unidades_mercado:referencia_ice_centavos_libra_usd_t"
       ],
       "data_dependencies": [
         "CONAB_CANA",
@@ -184,7 +188,8 @@
         "nivon.motores_agro_estrategicos:paridade_importacao_trigo",
         "nivon.motores_agro_estrategicos:safra_comercializacao",
         "nivon.inteligencia_temporal:decompor_mudanca_safra",
-        "nivon.conab_agrobr:normalizar_progresso"
+        "nivon.conab_agrobr:normalizar_progresso",
+        "nivon.unidades_mercado:referencia_bolsa_cbot_usd_t"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
