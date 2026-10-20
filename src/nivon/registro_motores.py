@@ -31,6 +31,7 @@ MODULOS=frozenset({
     "hidrologia_chuva_vazao",
     "grade_meteorologica_store","chirps_v3_conservacao",
     "meteorologia_probabilistica","hidrograma_bacia","calibracao_cn_bacias",
+    "ensemble_hidrologico_bacia",
 })
 
 
