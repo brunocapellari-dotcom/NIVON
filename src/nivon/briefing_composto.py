@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from hashlib import sha256
 from math import isfinite
 import re
+import unicodedata
 from .briefing_diario import gerar_texto, ErroBriefing
 
 CORREDORES = {
@@ -15,6 +16,21 @@ CORREDORES = {
     ("SORRISO", "MT", "DOM AQUINO", "MT"),
     ("SINOP", "MT", "MIRITITUBA", "PA"),
 }
+def _normalizar_rota(f: dict) -> tuple[str, str, str, str]:
+    # A equivalência vale para o corredor definido Sinop→Miritituba, distrito
+    # de Itaituba/PA; não declara que a cidade inteira seja o terminal.
+    vals = []
+    for key in ("origem", "uf_origem", "destino", "uf_destino"):
+        val = f[key]
+        if not isinstance(val, str) or not val.strip() or len(val) > 120:
+            raise ValueError("localidade/UF de frete inválida")
+        norm = unicodedata.normalize("NFKD", val)
+        vals.append(" ".join(norm.encode("ascii", "ignore").decode(
+            "ascii").upper().split()))
+    rota = tuple(vals)
+    if rota == ("SINOP", "MT", "ITAITUBA", "PA"):
+        return ("SINOP", "MT", "MIRITITUBA", "PA")
+    return rota
 SECOES = ("BOLSAS", "CAMBIO", "PRECOS", "SAFRA", "PORTOS", "DIESEL",
            "FERTILIZANTES", "CLIMA", "LOGISTICA", "GEOPOLITICA")
 
@@ -32,8 +48,11 @@ assert set(LIMITES_FRESCURA) == set(SECOES)
 
 def montar_briefing(*, noticias: list[dict], fontes: dict,
                     data: str, indicadores: list[dict],
-                    fretes: list[dict] | None = None) -> dict:
+                    fretes: list[dict] | None = None,
+                    max_idade_frete_horas: int = 48) -> dict:
     """Valores externos sem direitos explícitos são BLOQUEADOS, não exibidos."""
+    if (type(max_idade_frete_horas) is not int or not 1 <= max_idade_frete_horas <= 168):
+        raise ErroBriefing("limite de atualização de fretes inválido")
     itens = []
     bloqueios = []
     for registro in indicadores:
@@ -87,8 +106,7 @@ def montar_briefing(*, noticias: list[dict], fontes: dict,
     fretes_aceitos = []
     for f in fretes or []:
         try:
-            rota = tuple(str(f[k]).strip().upper() for k in
-                         ("origem", "uf_origem", "destino", "uf_destino"))
+            rota = _normalizar_rota(f)
             if rota not in CORREDORES:
                 raise ValueError("corredor não contratado")
             if f.get("tipo") != "FRETE_ANUNCIADO":
@@ -100,8 +118,11 @@ def montar_briefing(*, noticias: list[dict], fontes: dict,
             if fonte.get("status_direitos") != "APROVADA" or "PUBLICACAO_DERIVADA" not in fonte.get("operacoes", []):
                 raise PermissionError("frete sem direito de publicação")
             referencia = datetime.fromisoformat(f["referencia"].replace("Z", "+00:00"))
-            if referencia.tzinfo is None:
-                raise ValueError("frete sem timestamp")
+            gerado = datetime.fromisoformat(data.replace("Z", "+00:00"))
+            if referencia.tzinfo is None or gerado.tzinfo is None or referencia > gerado:
+                raise ValueError("frete sem timestamp ou referência futura")
+            if gerado - referencia > timedelta(hours=max_idade_frete_horas):
+                raise ValueError("frete anunciado fora da janela de atualização")
             fretes_aceitos.append((rota, valor, referencia.isoformat()))
         except (KeyError, TypeError, ValueError, PermissionError) as exc:
             bloqueios.append({"tipo": "FRETE", "motivo": str(exc)})
@@ -117,6 +138,7 @@ def montar_briefing(*, noticias: list[dict], fontes: dict,
     return {
         "texto": texto_final, "sha256": sha256(texto_final.encode("utf-8")).hexdigest(),
         "indicadores_incluidos": len(itens),
+        "secoes_presentes": sorted({x["secao"] for x in itens} | ({"FRETES"} if fretes_aceitos else set())),
         "fretes_incluidos": len(fretes_aceitos),
         "rejeicoes": bloqueios + noticias_rejeitadas,
         "status": "PREPARADO_SEM_ENVIO",
