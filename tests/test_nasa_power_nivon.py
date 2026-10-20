@@ -43,6 +43,25 @@ class TestNASA_POWER(unittest.TestCase):
                 coletado_em="2026-10-20T12:00:00Z",
                 fonte_url="http://power.larc.nasa.gov/api/temporal/daily/point")
 
+    def test_consistencia_termica_tmin_tmed_tmax(self):
+        from datetime import date
+        p={"type":"Feature","geometry":{"coordinates":[-55.6,-12.4]},
+           "properties":{"parameter":{
+             "T2M_MIN":{"20261001":25.0},
+             "T2M":{"20261001":24.0},
+             "T2M_MAX":{"20261001":32.0}}}}
+        with self.assertRaisesRegex(ErroCientifico,"média inferior"):
+            normalizar_resposta(p,parametros=("T2M_MIN","T2M","T2M_MAX"),
+                inicio=date(2026,10,1),fim=date(2026,10,1),
+                coletado_em="2026-10-20T12:00:00Z",
+                fonte_url="https://power.larc.nasa.gov/api/temporal/daily/point")
+        p["properties"]["parameter"]["T2M"]["20261001"]=29.0
+        rows=normalizar_resposta(p,parametros=("T2M_MIN","T2M","T2M_MAX"),
+                inicio=date(2026,10,1),fim=date(2026,10,1),
+                coletado_em="2026-10-20T12:00:00Z",
+                fonte_url="https://power.larc.nasa.gov/api/temporal/daily/point")
+        self.assertEqual(len(rows),3)
+
     def test_direitos_sem_homologacao_bloqueiam_rede(self):
         with self.assertRaises(PermissionError):
             coletar_diario(latitude=-12.4,longitude=-55.6,

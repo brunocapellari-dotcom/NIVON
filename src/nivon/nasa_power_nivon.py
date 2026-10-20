@@ -97,6 +97,18 @@ def normalizar_resposta(payload:dict,*,parametros:tuple,inicio:date,fim:date,
                 "valor":v,"unidade":NOMES_UNIDADES[parametro],
                 "natureza":"ESTIMADO","subtipo":"GRADE_NASA_POWER",
                 "fonte_url":fonte_url})
+    # Identidade térmica: média diária entre mínima e máxima da MESMA fonte.
+    por_dia={}
+    for registro in valores:
+        por_dia.setdefault(registro["competencia"],{})[registro["variavel"]]=registro["valor"]
+    for dia,serie in por_dia.items():
+        mn=serie.get("T2M_MIN");me=serie.get("T2M");mx=serie.get("T2M_MAX")
+        if mn is not None and mx is not None and mn>mx:
+            raise ErroCientifico("TMIN>TMAX na série NASA POWER: "+dia)
+        if me is not None and mn is not None and me<mn-0.01:
+            raise ErroCientifico("temperatura média inferior à mínima física no dia: "+dia)
+        if me is not None and mx is not None and me>mx+0.01:
+            raise ErroCientifico("temperatura média superior à máxima física no dia: "+dia)
     return sorted(valores,key=lambda x:(x["competencia"],x["variavel"]))
 
 
