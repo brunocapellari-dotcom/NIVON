@@ -74,8 +74,8 @@ class TestComposicaoPAM(unittest.TestCase):
         i=inputs(area="-",prod="300",yield_="3000")
         result=montar_pam_municipal(**i)
         self.assertEqual(result["registro_agregavel"]["area_colhida_ha"],"0")
-        with self.assertRaises(Exception):
-            agregar_municipios_pam(registros=[result["registro_agregavel"],
-                result["registro_agregavel"]],uf_ibge=51,cultura="SOJA",ano=2025)
+        with self.assertRaisesRegex(Exception,"produção positiva sem área"):
+            agregar_municipios_pam(registros=[dict(result["registro_agregavel"],municipio_ibge="5101001"),
+                dict(result["registro_agregavel"],municipio_ibge="5101002")],uf_ibge=51,cultura="SOJA",ano=2025)
 
 if __name__=="__main__": unittest.main()

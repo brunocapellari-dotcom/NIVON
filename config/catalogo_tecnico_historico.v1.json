@@ -160,15 +160,17 @@
       "interface": "SIDRA API por tabela/variável",
       "evidence": "https://apisidra.ibge.gov.br/",
       "priority": "P0",
-      "risk": "quebras municipais, sigilo, revisão e mudança de definição PAM 2025 incluiu gergelim sem série municipal anual pré-2025 nessa categoria; milho anual total sem separar 1a e 2a safras; algodão herbáceo em caroço não equivale a pluma; revisão de arredondamento e alterações territoriais.",
+      "risk": "quebras municipais, sigilo, revisão e mudança de definição PAM 2025 incluiu gergelim sem série municipal anual pré-2025 nessa categoria; milho anual total sem separar 1a e 2a safras; algodão herbáceo em caroço não equivale a pluma; revisão de arredondamento e alterações territoriais. Variáveis 216 área, 214 quantidade, 112 rendimento precisam ser conferidas com extração real oficial. SIDRA 839 por safra de milho é distinto da tabela 1612 total anual.",
       "agrolog_paths": [
         "collector/ibge_pam.py",
         "collector/ibge_pipeline.py"
       ],
-      "status": "API_CONTRACT_CODE_PRESENT_PLUS_WEIGHTED_AGGREGATOR_OFFLINE",
+      "status": "SYNTHETIC_TRIPLET_COMPOSITION_ADDED_REAL_VARIABLES_NOT_HOMOLOGATED",
       "nivon_paths": [
         "src/nivon/agregacao_pam_ibge.py",
-        "tests/test_agregacao_pam_ibge.py"
+        "tests/test_agregacao_pam_ibge.py",
+        "src/nivon/composicao_pam_sidra.py",
+        "tests/test_composicao_pam_sidra.py"
       ]
     },
     {

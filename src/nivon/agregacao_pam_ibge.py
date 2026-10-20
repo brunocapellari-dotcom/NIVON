@@ -1,7 +1,8 @@
 """Agregação municipal IBGE PAM: área e produção somadas, yield ponderado.
 
 Não equivale a série completa da UF nem reconciliação automática com CONAB.
-Milho PAM = total em grão (não separa safrinha); algodão em caroço != pluma.
+PAM tabela 1612 = milho total em grão; a tabela 839 separa 1ª e 2ª safras.
+Algodão em caroço != pluma.
 Gergerlim incluído no escopo da PAM em 2025, não extrapolar séries anteriores.
 """
 from __future__ import annotations
@@ -128,7 +129,7 @@ def agregar_municipios_pam(*,registros:list[dict],uf_ibge:int,
         "municipios_reprovados_arredondamento":reproves,
         "status":"AGREGACAO_PARCIAL_SEM_PROVA_COBERTURA",
         "cobertura_uf_completa_confirmada":False,
-        "nota":"Nunca calcular produtividade UF por média aritmética. IBGE PAM não distingue safrinha e algodão caroço não é pluma. Revisar edição e unidades.",
+        "nota":"Nunca calcular produtividade UF por média aritmética. SIDRA 1612 não distingue safrinha; SIDRA 839 distingue 1ª e 2ª safras. Algodão caroço não é pluma. Revisar edição e unidades.",
         "habilita_modelo":False,
     }
 

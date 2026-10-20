@@ -114,3 +114,13 @@ Exige código IBGE 7 dígitos e declaração do produto inequívoca. ALGODÃO HE
 O módulo propaga a ambiguidade de arredondamento publicada ao confrontar produtividade com área e produção municipais. Comparação com totais oficiais UF só é calculada quando o chamador confirma universo de municípios completo; ainda assim o resultado é conservador e não equivale a homologação independente. Essa declaração requer prova documental para publicação futura.
 
 Fontes oficiais: IBGE PAM https://www.ibge.gov.br/estatisticas/economicas/agricultura-e-pecuaria/9117-producao-agricola-municipal-culturas-temporarias-e-permanentes.html e https://sidra.ibge.gov.br/tabela/1612 . Diferenciar PAM anual de CONAB por safra, cultura e referência temporal. Sem coleta ativa ou conjunto de municípios real nesta rodada.
+
+## PAM 1612 — composição rigorosa de três variáveis sem rede
+
+Implementado `composicao_pam_sidra.py`, que recebe três respostas RAW independentes do parser SIDRA para área colhida, quantidade e rendimento municipal (códigos consultados **216, 214, 112**, exigindo conferência na amostra oficial), preserva hashes por resposta, unidade, marcador estatístico, categoria c81, data de coleta, resolução declarada e hash da evidência dessa resolução. Um pacote não se torna automaticamente edição oficial nem histórico conhecido point-in-time.
+
+Casos especiais: os marcadores de ausência e sigilo são reprovados; `0` arredondado é distinto de `-` zero absoluto; diferença de unidades, município, cultura ou ano reprova o contrato. Três capturas em até 10 minutos são uma checagem técnica, **não prova** que foram publicadas na mesma edição.
+
+Segundo SIDRA/IBGE, tabela **1612** divulga o milho total em grão; a tabela **839** apresenta primeira e segunda safras separadamente desde 2003. A tabela 839 não deve ser fundida com as séries totais 1612 nem com a temporada comercial CONAB sem reconciliação.
+
+Documentação oficial: https://sidra.ibge.gov.br/pesquisa/pam/tabelas/ ; https://sidra.ibge.gov.br/tabela/1612 ; https://sidra.ibge.gov.br/tabela/839 . Metadados de códigos de variáveis ainda precisam ser auditados contra resposta real da API; não inferir mais códigos sem revisão.
