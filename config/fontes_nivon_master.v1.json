@@ -1181,7 +1181,7 @@
       "cadence": "WEEKLY",
       "stage": "CODE_PRESENT",
       "priority": "P0",
-      "existing_module": "anp_diesel.py; anp_manifesto.py (parser local e descoberta de links offline)",
+      "existing_module": "anp_diesel.py; anp_manifesto.py (CSV mensal postos) + anp_semanal_municipios.py (semanal XLSX layout a homologar)",
       "notes": "Duas bases distintas: CSV mensal por posto (agregação com semana inferida) e XLSX semanal municipal oficial ANP; priorizar publicação semanal real quando homologada.",
       "enabled": false,
       "collection_authorized": false,
