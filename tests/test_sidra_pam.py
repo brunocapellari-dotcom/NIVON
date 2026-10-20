@@ -6,7 +6,7 @@ def plano():
                              codigo_produto_c81="2692",codigo_variavel="109")
 def retorno(valor):
     cab={"D1C":"Município (Código)","D2C":"Variável (Código)",
-         "D3C":"Ano (Código)","D4C":"Produto (Código)",
+         "D3C":"Ano (Código)","D4C":"Produto das lavouras temporárias (Código)",
          "V":"Valor","MN":"Unidade de Medida"}
     dado={"D1C":"5107925","D2C":"109","D3C":"2025","D4C":"2692",
           "V":valor,"MN":"Toneladas"}
