@@ -51,3 +51,15 @@ P3: xclim, MJO, ENSO, projeções subestacionais integradas a culturas e hidrolo
 P4: DGMR apenas P&D com dados e GPU disponíveis legalmente e desempenho comparado a baselines. Não pressupor GPU gratuita.
 
 Estado: documento de seleção técnica, não implementação. Revisar versões, compatibilidade e licenças antes de instalar. Sem novos coletores ativos, chaves, agendamentos ou deploy.
+
+## Visualização geográfica (imagens fornecidas como referência)
+
+| Repositório | Uso | Licença declarada | Gate |
+|---|---|---|---|
+| https://github.com/maplibre/maplibre-gl-js | Mapa vetorial base e camadas interativas | BSD-3-Clause, verificar arquivo LICENSE | Fonte do basemap, limites e crédito |
+| https://github.com/Leaflet/Leaflet | Pontos de estações, clusters e popups em mapa 2D simples | BSD-2-Clause | Não duplicar MapLibre na mesma tela sem motivo |
+| https://github.com/developmentseed/titiler | Servir tiles raster de rasters COG | MIT | Servidor e demanda CPU/RAM/custo, ativação tardia |
+| https://github.com/cogeotiff/rio-tiler | Ler subconjuntos georreferenciados de imagens raster | BSD-3-Clause | Preferir recortes e tile cache |
+| https://github.com/visgl/deck.gl | Renderizar grandes volumes de observações | MIT | GPU de cliente e necessidade real, só após benchmark |
+
+Direção: começar com MapLibre **ou** Leaflet, marcadores de estação com QC e data/hora, mapas atuais e séries históricas; depois overlays raster pré-processados e tiles. Colorização não transforma valor estimado por grade em medição de estação. Testar acessibilidade, legendas, filtros, linha temporal, declinação de resolução/escala, zoom e performance mobile. Estilo cartográfico original do NIVON; não reproduzir mapa comercial alheio.
