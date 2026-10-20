@@ -30,6 +30,10 @@ jobs:
         env:
           PYTHONPATH: src
         run: python -m unittest discover -s tests -v
+      - name: Auditar dependencias declaradas sem instalar pacotes ou consultar CVEs
+        env:
+          PYTHONPATH: src
+        run: python -m nivon.pesquisa_dependencias --verificar
       - name: Conferir catálogo mestre e cobertura de indicadores
         env:
           PYTHONPATH: src
