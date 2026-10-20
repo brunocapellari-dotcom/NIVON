@@ -43,11 +43,12 @@
       "authority": "CODEBA",
       "kind": "PORTO_ORGANIZADO",
       "parent_port_id": null,
-      "lineup_source_url": null,
+      "lineup_source_url": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/porto_aratu.php?secao=tportos_aratu",
       "endpoint_verified": false,
       "commercial_rights": "PENDING",
       "parser_homologated": false,
-      "live_enabled": false
+      "live_enabled": false,
+      "discovery_status": "PUBLIC_PAGE_CANDIDATE_UNVERIFIED"
     },
     {
       "id": "AREIA_BRANCA",
@@ -134,11 +135,12 @@
       "authority": "CODEBA",
       "kind": "PORTO_ORGANIZADO",
       "parent_port_id": null,
-      "lineup_source_url": null,
+      "lineup_source_url": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/site.php?secao=tportos_ilheus",
       "endpoint_verified": false,
       "commercial_rights": "PENDING",
       "parser_homologated": false,
-      "live_enabled": false
+      "live_enabled": false,
+      "discovery_status": "PUBLIC_PAGE_CANDIDATE_UNVERIFIED"
     },
     {
       "id": "IMBITUBA",
@@ -186,11 +188,12 @@
       "authority": "EMAP",
       "kind": "PORTO_ORGANIZADO",
       "parent_port_id": null,
-      "lineup_source_url": null,
+      "lineup_source_url": "https://www.portodoitaqui.com.br/porto-agora/navios",
       "endpoint_verified": false,
       "commercial_rights": "PENDING",
       "parser_homologated": false,
-      "live_enabled": false
+      "live_enabled": false,
+      "discovery_status": "PUBLIC_PAGE_CANDIDATE_UNVERIFIED"
     },
     {
       "id": "LAGUNA",
@@ -355,11 +358,12 @@
       "authority": "CODEBA",
       "kind": "PORTO_ORGANIZADO",
       "parent_port_id": null,
-      "lineup_source_url": null,
+      "lineup_source_url": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/site.php?secao=tportos_salvador",
       "endpoint_verified": false,
       "commercial_rights": "PENDING",
       "parser_homologated": false,
-      "live_enabled": false
+      "live_enabled": false,
+      "discovery_status": "PUBLIC_PAGE_CANDIDATE_UNVERIFIED"
     },
     {
       "id": "SANTANA",
@@ -381,11 +385,12 @@
       "authority": "CDP",
       "kind": "PORTO_ORGANIZADO",
       "parent_port_id": null,
-      "lineup_source_url": null,
+      "lineup_source_url": "https://www.cdp.com.br/programacao-de-navios-do-porto-de-santarem/",
       "endpoint_verified": false,
       "commercial_rights": "PENDING",
       "parser_homologated": false,
-      "live_enabled": false
+      "live_enabled": false,
+      "discovery_status": "PUBLIC_PAGE_CANDIDATE_UNVERIFIED"
     },
     {
       "id": "SANTOS",
