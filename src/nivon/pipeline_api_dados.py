@@ -97,15 +97,14 @@ def _normalizar_bytes(payload, dataset_id, plano, coleta):
 
 def preparar_tabelas(db):
     db.execute("PRAGMA foreign_keys=ON")
-    db.executescript("""
-       CREATE TABLE IF NOT EXISTS nivon_observacoes_api (
+    # executescript() faria COMMIT implícito, quebrando savepoints externos.
+    db.execute("""CREATE TABLE IF NOT EXISTS nivon_observacoes_api (
          snapshot_id INTEGER NOT NULL REFERENCES nivon_snapshots(id),
          chave TEXT NOT NULL,
          observacao_json TEXT NOT NULL,
          PRIMARY KEY(snapshot_id,chave)
-       );
-       CREATE INDEX IF NOT EXISTS idx_nivon_api_chave ON nivon_observacoes_api(chave);
-    """)
+       )""")
+    db.execute("CREATE INDEX IF NOT EXISTS idx_nivon_api_chave ON nivon_observacoes_api(chave)")
 
 def ingerir_json_local(db:sqlite3.Connection, catalogo:dict, *, payload:bytes,
                        dataset_id:str, plano:dict, coletado_em:str,
