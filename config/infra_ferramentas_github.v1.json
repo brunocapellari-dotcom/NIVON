@@ -151,6 +151,48 @@
       "installed_by_this_pr": false,
       "runtime_enabled": false,
       "needs_transitive_license_review": true
+    },
+    {
+      "id": "oci-cli",
+      "repository": "https://github.com/oracle/oci-cli",
+      "license_verified_from_repo": "UPL-1.0 OR Apache-2.0",
+      "license_url": "https://github.com/oracle/oci-cli/blob/master/LICENSE.txt",
+      "decision": "ADOPT",
+      "priority": "P0",
+      "purpose": "inventariar recursos e quotas da tenancy OCI somente leitura",
+      "integration": "primeiro read-only na conta com permissão mínima; não provisionar",
+      "gate": "acesso/escopo autorizado, mascarar OCIDs e não gravar credenciais",
+      "installed_by_this_pr": false,
+      "runtime_enabled": false,
+      "needs_transitive_license_review": true
+    },
+    {
+      "id": "opentofu",
+      "repository": "https://github.com/opentofu/opentofu",
+      "license_verified_from_repo": "MPL-2.0",
+      "license_url": "https://github.com/opentofu/opentofu/blob/main/LICENSE",
+      "decision": "BENCHMARK",
+      "priority": "P1",
+      "purpose": "infraestrutura como código reprodutível para OCI sem apply automático",
+      "integration": "comparar IaC mínima contra shell declarativo de uma VM",
+      "gate": "plan revisado e assinatura de custo; apply só depois de homologação",
+      "installed_by_this_pr": false,
+      "runtime_enabled": false,
+      "needs_transitive_license_review": true
+    },
+    {
+      "id": "terraform-provider-oci",
+      "repository": "https://github.com/oracle/terraform-provider-oci",
+      "license_verified_from_repo": "MPL-2.0",
+      "license_url": "https://github.com/oracle/terraform-provider-oci/blob/master/LICENSE.txt",
+      "decision": "BENCHMARK",
+      "priority": "P1",
+      "purpose": "provider oficial OCI para plano OpenTofu com recursos definidos",
+      "integration": "somente versão/digest/plan fixados; nenhuma criação em automático",
+      "gate": "segredos externos, pin de provedor, auditoria da conta e quotas",
+      "installed_by_this_pr": false,
+      "runtime_enabled": false,
+      "needs_transitive_license_review": true
     }
   ]
 }
