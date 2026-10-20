@@ -1,7 +1,8 @@
 # Worker mínimo para validação ARM64/amd64 — NÃO É RELEASE DE PRODUÇÃO.
-# Base deve ser fixada por digest após auditoria de supply chain.
+# Base fixada pelo digest multiarch observado nos builds amd64/arm64 do CI.
+# Digest não substitui SBOM, scan de CVEs ou revisão de release.
 # Não instala pacotes de fontes, chaves, rede, schedulers nem clientes externos.
-FROM python:3.11-slim-bookworm
+FROM python:3.11-slim-bookworm@sha256:0a310eeecf4e1f5a0743f9a6520c90c88d089c903ca5fd283f501e3a805f5f89
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
