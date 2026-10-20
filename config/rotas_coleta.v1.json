@@ -3233,7 +3233,7 @@
         "url": "https://www.gov.br/mdic/pt-br/assuntos/comercio-exterior/estatisticas/base-de-dados-bruta",
         "source_proof": null
       },
-      "implementation_scope": "mdic_municipios.py (parser CSV municipal SH4, importação/exportação; sem coleta)",
+      "implementation_scope": "mdic_manifesto.py (links anuais verificados NCM/SH4; download inativo) + parsers CSV offline",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -3251,8 +3251,8 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Município do exportador/importador e SH4 não equivalem à origem física da carga.",
-      "preliminary_evidence": "OFFICIAL_LAYOUT_PARSER_SYNTHETIC_ONLY"
+      "source_note": "Arquivos anuais publicados no índice oficial (NCM/SH4, exp/imp). CSV ainda não homologado; em SH4 cidade é domicílio fiscal.",
+      "preliminary_evidence": "OFFICIAL_INDEX_VERIFIED_20261019_2025_2026_4_FAMILIES"
     },
     {
       "dataset_id": "MDIC_COMEX_NCM",
@@ -3262,7 +3262,7 @@
         "url": "https://www.gov.br/mdic/pt-br/assuntos/comercio-exterior/estatisticas/base-de-dados-bruta",
         "source_proof": null
       },
-      "implementation_scope": "mdic_exportacao.py e mdic_importacao.py (NCM CSV offline, sem rede)",
+      "implementation_scope": "mdic_manifesto.py (links anuais verificados NCM/SH4; download inativo) + parsers CSV offline",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -3280,8 +3280,8 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "NCM/UF não identifica produtor ou município; exigir tabelas de correlação por período.",
-      "preliminary_evidence": "OFFICIAL_IMPORT_EXPORT_LAYOUT_SYNTHETIC_ONLY"
+      "source_note": "Arquivos anuais publicados no índice oficial (NCM/SH4, exp/imp). CSV ainda não homologado; em SH4 cidade é domicílio fiscal.",
+      "preliminary_evidence": "OFFICIAL_INDEX_VERIFIED_20261019_2025_2026_4_FAMILIES"
     },
     {
       "dataset_id": "NOAA_GFS",
