@@ -1,8 +1,13 @@
 import copy
+import io
+import json
+import tempfile
 import unittest
+from contextlib import redirect_stdout, redirect_stderr
+from pathlib import Path
 
 from nivon.conab_progresso_indice import BASE, ErroIndiceConab, consolidar_paginas
-from nivon.conab_progresso_delta import planejar_delta
+from nivon.conab_progresso_delta import planejar_delta, main
 
 
 def link(inicio="05/10", fim="11/10/26", path="semanal-a",
@@ -148,6 +153,52 @@ class TestDeltaConab(unittest.TestCase):
         falso["dataset_id"] = "OUTRO"
         with self.assertRaises(ErroIndiceConab):
             planejar_delta(self.old, falso)
+
+
+    def test_cli_compara_manifestos_json_em_arquivos_locais(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p = Path(tmp)
+            a, b = p / "anterior.json", p / "atual.json"
+            a.write_text(json.dumps(self.old), encoding="utf-8")
+            b.write_text(json.dumps(self.new), encoding="utf-8")
+            out = io.StringIO()
+            with redirect_stdout(out):
+                status = main(["--anterior", str(a), "--atual", str(b)])
+            self.assertEqual(status, 0)
+            doc = json.loads(out.getvalue())
+            self.assertEqual(doc["por_situacao"], {"SEM_ALTERACAO_VISIVEL": 1})
+            self.assertFalse(doc["autorizacao_execucao"])
+
+    def test_cli_primeiro_manifesto_sem_anterior(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "indice.json"
+            path.write_text(json.dumps(self.new), encoding="utf-8")
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                self.assertEqual(main(["--atual", str(path)]), 0)
+            self.assertEqual(json.loads(stdout.getvalue())["por_situacao"], {"NOVO_LINK": 1})
+
+    def test_cli_bloqueia_json_com_chaves_duplicadas(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "indice.json"
+            path.write_text('{"dataset_id":"CONAB_PROGRESSO_SEMANAL","dataset_id":"OUTRO"}',
+                            encoding="utf-8")
+            with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as erro:
+                main(["--atual", str(path)])
+            self.assertEqual(erro.exception.code, 2)
+
+    def test_cli_bloqueia_symlink_para_manifesto(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "indice.json"
+            path.write_text(json.dumps(self.new), encoding="utf-8")
+            link = Path(tmp) / "atalho.json"
+            try:
+                link.symlink_to(path)
+            except (NotImplementedError, OSError):
+                self.skipTest("sistema sem suporte a symlink")
+            with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as erro:
+                main(["--atual", str(link)])
+            self.assertEqual(erro.exception.code, 2)
 
 
 if __name__ == "__main__":
