@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -22,7 +23,7 @@ ENTRADA = hashlib.sha256(b"NIVON_INFRA_SMOKE_V1_OFFLINE").hexdigest()
 
 def executar_smoke(*, banco: str | Path = ":memory:", instante: str) -> dict:
     now = _instante(instante).isoformat(timespec="microseconds")
-    with abrir_ledger(banco) as db:
+    with closing(abrir_ledger(banco)) as db:
         reg = registrar(db, chave=CHAVE, vencimento=now,
                         input_sha256=ENTRADA, registrado_em=now)
         lease = reservar(db, chave=CHAVE, vencimento=now, agora=now,
