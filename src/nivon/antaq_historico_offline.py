@@ -157,8 +157,14 @@ def importar_arquivos(ano_zip: bytes, mercadoria_zip: bytes, *, ano: int,
     ts = instante(coletado_em)
     if isinstance(ano, bool) or not isinstance(ano, int) or not 2010 <= ano <= ts.year:
         raise ErroAntaq("ano ANTAQ fora do histórico permitido")
-    digest = hashlib.sha256()\n    for payload in (ano_zip, mercadoria_zip):\n        digest.update(len(payload).to_bytes(8, "big"))\n        digest.update(payload)\n    edicao = digest.hexdigest()
-    if conexao.in_transaction:\n        raise ErroAntaq("conexão com transação externa ativa: usar conexão isolada")\n    with _carregar_zip(ano_zip, str(ano) + "Atracacao.txt") as a, _carregar_zip(
+    digest = hashlib.sha256()
+    for payload in (ano_zip, mercadoria_zip):
+        digest.update(len(payload).to_bytes(8, "big"))
+        digest.update(payload)
+    edicao = digest.hexdigest()
+    if conexao.in_transaction:
+        raise ErroAntaq("conexão com transação externa ativa: usar conexão isolada")
+    with _carregar_zip(ano_zip, str(ano) + "Atracacao.txt") as a, _carregar_zip(
         mercadoria_zip, "Mercadoria.txt"
     ) as m:
         if str(ano) + "Carga.txt" not in a.namelist():
