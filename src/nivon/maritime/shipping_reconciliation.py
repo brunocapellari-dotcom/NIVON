@@ -176,7 +176,13 @@ def match_lineup_call(
     """
     start = call.eta_utc - timedelta(days=time_window_days)
     end = call.eta_utc + timedelta(days=time_window_days)
-    candidates = [o for o in observations if start <= o.observed_at_utc <= end]
+    # A matching IMO/MMSI in another known port is not evidence for this call.
+    # Unassigned open-sea positions remain eligible until scoped by lifecycle.
+    candidates = [
+        o for o in observations
+        if start <= o.observed_at_utc <= end
+        and (o.port_id is None or _same_port(call.port_id, o.port_id))
+    ]
 
     exact_imo = [o for o in candidates if call.imo and o.imo and str(call.imo) == str(o.imo)]
     if exact_imo:
@@ -331,6 +337,12 @@ def reconcile_call(
     observations: Sequence[AISObservation],
     operation: PortOperation | None = None,
 ) -> ReconciledCall:
+    if operation is not None:
+        if operation.call_id != call.call_id or not _same_port(call.port_id, operation.port_id):
+            raise ValueError("official operation does not belong to this port call")
+        if not operation.source_id or not operation.source_id.strip():
+            raise ValueError("official operation requires source provenance")
+
     match = match_lineup_call(call, observations)
     vessel_obs = observations_for_call(call, match, observations)
     state, state_flags = derive_ais_state(call, vessel_obs)
