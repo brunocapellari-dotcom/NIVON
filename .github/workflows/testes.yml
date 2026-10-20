@@ -2,9 +2,6 @@ name: Testes locais NIVON
 
 on:
   pull_request:
-  push:
-    branches:
-      - feat/agrobr-portos-motores-agentes-20261019
   workflow_dispatch:
 
 permissions:
@@ -55,6 +52,8 @@ jobs:
         run: python -m nivon.analise_local --config config/contrato_exemplo_sintetico.json
 
   conferir-schema-mapa:
+    # Diagnóstico de fonte real somente manual. Não repetir downloads em todo PR.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 3
     permissions:
@@ -81,6 +80,8 @@ jobs:
           if-no-files-found: error
 
   inspecao-conab-xls:
+    # Diagnóstico de fonte real somente manual. Não repetir downloads em todo PR.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 6
     permissions:
@@ -102,6 +103,8 @@ jobs:
         run: python scripts/inspecionar_conab_xls.py
 
   inspecao-antt-ferrovias:
+    # Diagnóstico de fonte real somente manual. Não repetir downloads em todo PR.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 6
     permissions:
@@ -137,6 +140,8 @@ jobs:
         run: python scripts/inspecionar_antt_csv.py
 
   inspecao-anp-diesel:
+    # Diagnóstico de fonte real somente manual. Não repetir downloads em todo PR.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -154,7 +159,7 @@ jobs:
         run: python scripts/inspecionar_anp_diesel.py
 
   integracao-bibliotecas-opcionais:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.head_ref == 'feat/agrobr-portos-motores-agentes-20261019')
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
