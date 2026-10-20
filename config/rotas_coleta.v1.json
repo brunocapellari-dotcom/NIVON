@@ -134,7 +134,7 @@
         "url": null,
         "source_proof": null
       },
-      "implementation_scope": "NO_PARSER (código citado não implica coletor ativo)",
+      "implementation_scope": "ana_contrato.py planeja janelas 30/366 dias; series_ambientais.py armazena medidas offline; falta SSO ANA, endpoint real, direitos e parser",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -153,7 +153,7 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
+      "source_note": "Não presumir que a página de referência ofereça endpoint de coleta. | Nova API ANA exige SSO autorizado; não utilizar SOAP antigo, cujo prazo publicado era 30/06/2026",
       "preliminary_evidence": "CATALOG_ONLY"
     },
     {
@@ -1650,7 +1650,7 @@
         "url": null,
         "source_proof": null
       },
-      "implementation_scope": "NO_PARSER (código citado não implica coletor ativo)",
+      "implementation_scope": "series_ambientais.py suporta histórico normalizado offline, não é parser de payload INMET e não autoriza coleta",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
