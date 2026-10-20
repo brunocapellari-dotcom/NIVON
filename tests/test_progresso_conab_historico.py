@@ -79,3 +79,33 @@ class TestProgressoConabStore(unittest.TestCase):
     def test_sintetico_excluido_padroes_operacionais(self):
         self.gravar()
         self.assertEqual(self.visao(sim=False)["semanas"],[])
+
+    def test_sha_informado_incorreto_rejeitado_antes_de_gravar(self):
+        from nivon.verificador_bytes_origem import ErroBytesOrigem
+        with self.assertRaises(ErroBytesOrigem):
+            self.gravar(arquivo_origem=b"CONAB CSV exemplo",sha="0"*64)
+        self.assertEqual(self.db.execute("SELECT count(*) FROM nivon_snapshots").fetchone()[0],0)
+    def test_tamanho_arquivo_bruto_divergente_rejeitado(self):
+        from nivon.verificador_bytes_origem import ErroBytesOrigem
+        with self.assertRaises(ErroBytesOrigem):
+            self.gravar(arquivo_origem=b"FONTE_SYNTH")
+    def test_fixture_com_hash_e_bytes_confere_sem_homologar(self):
+        origem=b"FONTE_SYNTH"
+        registro=registrar_progresso_local(self.db,CAT,registros=normal(),
+              sha256_origem=hashlib.sha256(origem).hexdigest(),
+              bytes_origem=len(origem),mime_origem="text/plain",
+              coletado_em="2026-10-20T12:00:00Z",arquivo_origem=origem)
+        self.assertTrue(registro["hash_conferido_com_bytes"])
+        self.assertFalse(registro["fonte_oficial_ou_parser_homologados"])
+    def test_real_com_catalogo_aprovado_sem_bruto_nao_grava(self):
+        aprovado={"datasets":[{"id":"CONAB_PROGRESSO_SEMANAL","source_id":"CONAB",
+                       "enabled":True,"collection_authorized":True}]}
+        with self.assertRaises(PermissionError):
+            registrar_progresso_local(self.db,aprovado,registros=normal(),
+                sha256_origem=hashlib.sha256(b"teste").hexdigest(),
+                bytes_origem=5,mime_origem="text/plain",
+                coletado_em="2026-10-20T12:00:00Z",
+                tipo="REAL_AUTORIZADO",
+                autorizacoes=frozenset({"COLETA","ARMAZENAMENTO"}),
+                evidencia_direitos="DOC-TESTE-2026")
+        self.assertEqual(self.db.execute("SELECT count(*) FROM nivon_snapshots").fetchone()[0],0)

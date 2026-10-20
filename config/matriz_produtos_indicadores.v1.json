@@ -700,7 +700,11 @@
         "impacto_logistico_condicional",
         "curva_chave_interpolada_m3s",
         "balanco_reservatorio_conservacao_m3",
-        "skill_previsao_vazao_nse"
+        "skill_previsao_vazao_nse",
+        "escoamento_direto_evento_scs_cn_mm",
+        "volume_escoamento_evento_scs_cn_m3",
+        "propagacao_muskingum_vazao_m3_s",
+        "erro_balanco_trecho_muskingum_m3"
       ],
       "risks": [
         "Cota de régua não é profundidade ou calado navegável.",

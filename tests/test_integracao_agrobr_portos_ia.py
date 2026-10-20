@@ -115,6 +115,40 @@ class TestPortosReuso(unittest.TestCase):
             processar_documento_porto(self.contrato(), {"conteudo": b"x"})
 
 
+    def test_documento_com_hash_falso_bloqueado_antes_do_parser(self):
+        doc=self.documento("<table><tr><td>teste</td></tr></table>")
+        doc["sha256"]="0"*64
+        with self.assertRaisesRegex(ErroPorto,"SHA-256 divergente"):
+            processar_documento_porto(self.contrato(),doc)
+
+    def test_documento_mutado_apos_hash_rejeitado(self):
+        doc=self.documento("<html>conteudo original</html>")
+        doc["conteudo"]+=b"\ntexto alterado"
+        with self.assertRaisesRegex(ErroPorto,"SHA-256 divergente"):
+            processar_documento_porto(self.contrato(),doc)
+
+    def test_documento_tamanho_ou_fonte_divergente_reprovado(self):
+        doc=self.documento("<html>sem parser ainda</html>")
+        doc["bytes"]=len(doc["conteudo"])+1
+        with self.assertRaisesRegex(ErroPorto,"tamanho declarado"):
+            processar_documento_porto(self.contrato(),doc)
+        doc["bytes"]=len(doc["conteudo"])
+        doc["fonte_id"]="LINEUP_OUTRO"
+        with self.assertRaisesRegex(ErroPorto,"fonte_id divergente"):
+            processar_documento_porto(self.contrato(),doc)
+
+    def test_documento_nao_tem_fuso_ou_mime_correto(self):
+        doc=self.documento("<html>teste</html>")
+        doc["capturado_em"]="2026-10-19T12:00:00"
+        with self.assertRaisesRegex(ErroPorto,"timezone"):
+            processar_documento_porto(self.contrato(),doc)
+        doc["capturado_em"]="2026-10-19T12:00:00Z"
+        doc["mime"]="application/pdf"
+        with self.assertRaisesRegex(ErroPorto,"MIME"):
+            processar_documento_porto(self.contrato(),doc)
+
+
+
 class TestPrevisoesBiblio(unittest.TestCase):
     def serie(self, n=30):
         return [
