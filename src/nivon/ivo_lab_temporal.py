@@ -126,6 +126,7 @@ def _aprender(registros: list[Observacao], alvo: date, *,
     inicio = min(_mes(p) for p in verdades_disponiveis) if verdades_disponiveis else alvo
     pares = []
     competencias_treino = []
+    cadeia_evidencia = []
     cursor = _avancar(inicio, 12)
     while cursor < alvo:
         competencia = cursor.strftime("%Y-%m")
@@ -135,6 +136,9 @@ def _aprender(registros: list[Observacao], alvo: date, *,
             if f is not None:
                 pares.append((f["sazonal"], f["ultimo_conhecido"], float(real.valor)))
                 competencias_treino.append(competencia)
+                cadeia_evidencia.append((competencia, real.valor, real.publicacao.isoformat(),
+                                          real.coleta.isoformat(), f["sazonal_periodo"],
+                                          f["ultimo_periodo"], f["sazonal"], f["ultimo_conhecido"]))
         cursor = _avancar(cursor, 1)
     if len(pares) < minimo_treino:
         raise ErroLab("histórico supervisionado as-of insuficiente")
@@ -147,6 +151,7 @@ def _aprender(registros: list[Observacao], alvo: date, *,
             "amostras_treino": len(pares),
             "primeira_competencia_treino": competencias_treino[0],
             "ultima_competencia_treino": competencias_treino[-1],
+            "checksum_treino": sha256(repr(cadeia_evidencia).encode("utf-8")).hexdigest(),
             "status": "CANDIDATO_NAO_HOMOLOGADO"}
 
 
@@ -227,6 +232,9 @@ def walkforward_asof(
                 "checksum_evidencia": p["checksum_evidencia"],
                 "emitida_em": p["emitida_em"],
                 "observacao_publicada_em": verdade.publicacao.isoformat(),
+                "observacao_coletada_em": verdade.coleta.isoformat(),
+                "ultima_coleta_de_features": p["features_asof"]["ultima_coleta"],
+                "checksum_treino": p["treino"]["checksum_treino"],
             })
         corrente = _avancar(corrente, 1)
     num = len(resultados)
