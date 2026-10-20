@@ -50,6 +50,10 @@ Para fretes, `montar_briefing` só exige `PUBLICACAO_DERIVADA`, enquanto indicad
 
 **Política de red/green:** os testes acima foram escritos para reproduzir falhas na implementação base; status esperado inicialmente = falha de regressão, não homologação. Correção deve ocorrer em branch de implementação, seguida por reteste independente. Caso-controle válido precisa permanecer verde.
 
+## 4.1. NC-AUD-005 — Proteção da branch principal (P1)
+
+Consulta direta a `GET /repos/brunocapellari-dotcom/NIVON/branches/main` em 20/10/2026 retornou `protected: false`, `protection.enabled: false`, e `required_status_checks.enforcement_level: off`; `GET /repos/.../rulesets?includes_parents=true` retornou lista vazia. Portanto, não há barreira configurada de GitHub comprovada contra merge direto sem validação/CI. **Risco de governança P1 e impeditivo para liberar release**, mesmo quando os testes passarem. Recomendação: revisar e habilitar branch protection ou ruleset efetivo com PR review independente e checks obrigatórios; esta auditoria não altera configurações administrativas.
+
 ## 5. Plano de testes por frente
 
 | Frente | Próximo teste verificável |
