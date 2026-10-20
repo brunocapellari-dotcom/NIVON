@@ -46,7 +46,7 @@ def _data(valor: str) -> str:
     if not isinstance(valor,str) or not valor.strip():
         raise ErroFeed("publicação original sem timestamp")
     try:
-        if re.match(r"^\\d{4}-\\d{2}-\\d{2}T",valor.strip()):
+        if re.match(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T",valor.strip()):
             d=instante(valor)
         else:
             d=parsedate_to_datetime(valor)
