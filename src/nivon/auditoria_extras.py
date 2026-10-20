@@ -86,7 +86,7 @@ def _parse_lists(pyproject: dict) -> dict:
         project = pyproject["project"]
         main = project.get("dependencies", [])
         extras = project.get("optional-dependencies", {})
-    except (KeyError, TypeError) as exc:
+    except (KeyError, TypeError, AttributeError) as exc:
         raise ErroDependencias("pyproject sem contratos de build/projeto") from exc
     if (not isinstance(project, dict) or not isinstance(build, list) or
             not isinstance(main, list) or not isinstance(extras, dict)):
