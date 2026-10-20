@@ -15,15 +15,17 @@
       "interface": "API diária documentada",
       "evidence": "https://power.larc.nasa.gov/docs/services/api/temporal/daily/",
       "priority": "P0",
-      "risk": "não tratar estimativa em grade como chuva aferida na fazenda",
+      "risk": "não tratar estimativa em grade como chuva aferida na fazenda O API diário tem LST como padrão; Nivon usa UTC explicitamente e pagina solicitações com aviso de repetição de célula de grade.",
       "agrolog_paths": [
         "collector/nasa_power.py",
         "collector/nasa_power_pipeline.py"
       ],
-      "status": "CODE_OFFLINE_PARSER_READY_NO_REAL_SNAPSHOT",
+      "status": "CODE_OFFLINE_HISTORICAL_RAW_QA_TESTED_FIXTURES_ONLY",
       "nivon_paths": [
         "src/nivon/nasa_power_nivon.py",
-        "tests/test_nasa_power_nivon.py"
+        "src/nivon/pipeline_historico_nasa.py",
+        "tests/test_nasa_power_nivon.py",
+        "tests/test_pipeline_historico_nasa.py"
       ]
     },
     {

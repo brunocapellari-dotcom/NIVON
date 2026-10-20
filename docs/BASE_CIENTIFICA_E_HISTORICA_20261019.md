@@ -124,3 +124,15 @@ Os seguintes módulos foram incorporados ao núcleo do Nivon e vinculados ao man
 5. Homologar direitos e acesso por operação, persistência durável, backup/restauração e auditoria independente; não habilitar coleta ou deploy antes.
 
 **Concorrência:** integrar este PR à branch de desenvolvimento vigente com revisão de diffs e regressão. A branch de comparação congelada serve só para garantir teste repetível.
+
+## Complemento E2E de história — 20/10/2026
+
+Foi implementado `src/nivon/pipeline_historico_nasa.py` com o contrato NASA POWER diário oficial em `time-standard=UTC`, plano paginado por ano (1981 até atual) e restrição explícita de pontos, lotes e parâmetros. Não há egress automático.
+
+O pipeline preserva bytes RAW em SQLite, hash SHA-256, URL/requisição, data de coleta, natureza estimada em grade, valor original normalizado, coordenadas e unidades; permite respostas corrigidas em novas versões sem substituir a anterior. Os testes incluem idempotência, ausência de dados, consistência geográfica, falsificação de URL e conservação de cada RAW. Nunca considera essa versão atual de API como vintage do passado.
+
+A `qualidade()` reporta dias esperados, encontrados, sem registro, faltantes e cobertura por variável. Cobertura alta não demonstra precisão: calibração exige comparações com observações de estações do INMET e cortes point-in-time verificados.
+
+**Fonte primária:** NASA POWER Daily API https://power.larc.nasa.gov/docs/services/api/temporal/daily/ — histórico desde 01/01/1981; LST default, UTC explícito; alerta contra pedidos repetidos na mesma célula de resolução. Não automatizar requests massivos sem política de taxa e deduplicação por célula oficial/variável.
+
+Os dados RAW não são incorporados ao GitHub. A criação de histórico real depende da verificação da licença por operação, amostra real autenticada, persistência durável fora do repositório, cobertura/frescura, backup/restauração e gate de publicação.

@@ -402,7 +402,8 @@
         "nivon.series_ambientais:consultar_asof",
         "nivon.modelos_fisicos:eto_fao56_penman_monteith",
         "nivon.modelos_fisicos:avaliar_vazao_hidrologica",
-        "nivon.nasa_power_nivon:normalizar_resposta"
+        "nivon.nasa_power_nivon:normalizar_resposta",
+        "nivon.pipeline_historico_nasa:planejar_retrocarga"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -606,7 +607,8 @@
         "nivon.verificacao_probabilistica:brier_probabilidade",
         "nivon.verificacao_probabilistica:cobertura_intervalos",
         "nivon.analogos_historicos:encontrar_anos_analogos",
-        "nivon.nasa_power_nivon:normalizar_resposta"
+        "nivon.nasa_power_nivon:normalizar_resposta",
+        "nivon.pipeline_historico_nasa:planejar_retrocarga"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
