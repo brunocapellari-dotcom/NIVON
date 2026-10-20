@@ -21,30 +21,36 @@
       "repository": "https://github.com/Nixtla/mlforecast",
       "purpose": "regressores preditivos com defasagens e covariaveis",
       "license_declared": "Apache-2.0",
-      "status": "CANDIDATE_REVIEW",
+      "status": "OPTIONAL_ADAPTER_IMPLEMENTED",
       "priority": "P0",
-      "integration": "IVO_MODEL_LAB",
-      "gate": "AUDITAR_FEATURES_ASOF_LICENCAS_BACKTEST_RECURSOS"
+      "integration": "src/nivon/ivo_mlforecast_adapter.py; src/nivon/ivo_benchmark_ml.py",
+      "gate": "REQUIRES_EXPLICIT_RIGHTS_HISTORICAL_ASOF_REAL_BACKTEST_AND_INSTALLED_EXTRA",
+      "installation_verified": false,
+      "data_homologated": false
     },
     {
       "id": "RIVER",
       "repository": "https://github.com/online-ml/river",
       "purpose": "aprendizado incremental e deteccao de drift",
       "license_declared": "BSD-3-Clause",
-      "status": "CANDIDATE_REVIEW",
+      "status": "OPTIONAL_ADAPTER_IMPLEMENTED",
       "priority": "P0",
-      "integration": "IVO_ONLINE_LEARNING",
-      "gate": "GARANTIR_LABEL_DISPONIVEL_ANTES_ATUALIZACAO_CONTROLE_DRIFT"
+      "integration": "src/nivon/ivo_river_adapter.py",
+      "gate": "REQUIRES_RELEASED_LABELS_PREQUENTIAL_REAL_DATA_PERFORMANCE_AND_INSTALLED_EXTRA",
+      "installation_verified": false,
+      "data_homologated": false
     },
     {
       "id": "DUCKDB",
       "repository": "https://github.com/duckdb/duckdb",
       "purpose": "consulta e processamento local de historicos tabulares",
       "license_declared": "MIT",
-      "status": "CANDIDATE_REVIEW",
+      "status": "OPTIONAL_ADAPTER_IMPLEMENTED",
       "priority": "P0",
-      "integration": "IVO_HISTORICAL_QUERIES",
-      "gate": "ENCRIPTACAO_BACKUP_PERSISTENCIA_CLOUD_LIMITES"
+      "integration": "src/nivon/ivo_duckdb_adapter.py",
+      "gate": "REQUIRES_APPROVED_LOCAL_PARQUET_SCHEMA_PATH_CONFINEMENT_INSTALLED_EXTRA_AND_BACKUP",
+      "installation_verified": false,
+      "data_homologated": false
     },
     {
       "id": "NETWORKX",
@@ -271,10 +277,12 @@
       "repository": "https://github.com/Nixtla/hierarchicalforecast",
       "purpose": "reconciliar previsoes Brasil UF municipios e safras sem soma dupla",
       "license_declared": "Apache-2.0",
-      "status": "CANDIDATE_REVIEW",
+      "status": "NATIVE_BOTTOMUP_ONLY_LIBRARY_NOT_INSTALLED",
       "priority": "P0",
-      "integration": "RECONCILIACAO_HIERARQUICA",
-      "gate": "HIERARQUIA_COERENTE_EXPERIMENTOS_HISTORICOS_FONTE_HOMOLOGADA"
+      "integration": "src/nivon/ivo_hierarquias.py",
+      "gate": "FULL_PROBABILISTIC_RECONCILIATION_NOT_IMPLEMENTED_REQUIRE_TERRITORIAL_COMPLETENESS_AND_HIERARCHICAL_VALIDATION",
+      "installation_verified": false,
+      "data_homologated": false
     },
     {
       "id": "SKTIME",
@@ -386,5 +394,18 @@
       "integration": "IVO_GEOSPATIAL_API",
       "gate": "NAO_HOSPEDAR_SERVIDOR_ATE_HOMOLOGACAO_LICENCA_FONTE_CUSTO_SEGURANCA"
     }
-  ]
+  ],
+  "integration_notes": {
+    "optional_extras": [
+      "ivo-ml",
+      "ivo-online",
+      "ivo-query"
+    ],
+    "mandatory_dependencies_unchanged": true,
+    "code_live_in_repo": true,
+    "real_backend_tests_in_default_ci": false,
+    "manual_package_validation_required": true,
+    "auto_install": false,
+    "auto_deploy": false
+  }
 }
