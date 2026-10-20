@@ -152,6 +152,8 @@ def compor_pacote_historico(*, db_conab: sqlite3.Connection | None,
                            db_portos: sqlite3.Connection | None,
                            db_mercados: sqlite3.Connection | None = None,
                            incluir_ptax_usd: bool = False,
+                           db_diesel: sqlite3.Connection | None = None,
+                           diesel_localidades: list[dict] | None = None,
                            fontes: dict, gerado_em: str,
                            noticias: list[dict] | None = None,
                            indicadores_externos: list[dict] | None = None,
@@ -191,6 +193,16 @@ def compor_pacote_historico(*, db_conab: sqlite3.Connection | None,
             r=indicador_ptax_sqlite(db_mercados,gerado_em=gerado_em,
                                    fontes=fontes,moeda="USD")
         resultados.append({"origem":"BCB_PTAX",**r})
+        if r["status"]=="INDICADOR_VERIFICADO_TEMPO":
+            indicadores.append(r["indicador"])
+    for local in diesel_localidades or []:
+        if db_diesel is None:
+            r={"status":"SEM_HISTORICO","motivo":"banco municipal diesel não configurado"}
+        else:
+            from .anp_diesel_store import indicador_diesel_municipal
+            r=indicador_diesel_municipal(
+                db_diesel,gerado_em=gerado_em,fontes=fontes,**local)
+        resultados.append({"origem":"ANP_DIESEL",**r})
         if r["status"]=="INDICADOR_VERIFICADO_TEMPO":
             indicadores.append(r["indicador"])
     return {

@@ -415,7 +415,9 @@
         "nivon.inmet_horario_qc:agregar_dias_inmet",
         "nivon.confronto_climatico_qc:confronto_diario_inmet_power",
         "nivon.noaa_roni:importar_roni_ascii",
-        "nivon.noaa_roni:classificar_episodios_roni"
+        "nivon.noaa_roni:classificar_episodios_roni",
+        "nivon.meteorologia_probabilistica:avaliar_ensemble",
+        "nivon.hidrograma_bacia:hidrograma_evento_cn"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -637,7 +639,9 @@
         "nivon.inmet_horario_qc:agregar_dias_inmet",
         "nivon.confronto_climatico_qc:confronto_diario_inmet_power",
         "nivon.noaa_roni:importar_roni_ascii",
-        "nivon.noaa_roni:classificar_episodios_roni"
+        "nivon.noaa_roni:classificar_episodios_roni",
+        "nivon.meteorologia_probabilistica:crps_ensemble",
+        "nivon.meteorologia_probabilistica:avaliar_ensemble"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -652,7 +656,7 @@
         "NASA_GPM_IMERG",
         "NOAA_ENSO_RONI"
       ],
-      "indicators_planned": 15,
+      "indicators_planned": 19,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
       "inputs_reais_homologados": false,
       "previsao_homologada": false,
@@ -678,7 +682,9 @@
         "nivon.modelos_fisicos:avaliar_vazao_hidrologica",
         "nivon.verificacao_probabilistica:cobertura_intervalos",
         "nivon.hidrologia_chuva_vazao:escoamento_scs_cn",
-        "nivon.hidrologia_chuva_vazao:propagar_muskingum"
+        "nivon.hidrologia_chuva_vazao:propagar_muskingum",
+        "nivon.hidrograma_bacia:hidrograma_evento_cn",
+        "nivon.calibracao_cn_bacias:calibrar_cn_historico"
       ],
       "data_dependencies": [
         "ANA_HIDRO",
@@ -691,7 +697,7 @@
         "ERA5_LAND_CDS",
         "NASA_GPM_IMERG"
       ],
-      "indicators_planned": 16,
+      "indicators_planned": 21,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
       "inputs_reais_homologados": false,
       "previsao_homologada": false,

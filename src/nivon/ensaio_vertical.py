@@ -79,6 +79,7 @@ def executar(argv=None) -> dict:
     parser.add_argument("--db-conab",default=None)
     parser.add_argument("--db-portos",default=None)
     parser.add_argument("--db-mercados",default=None)
+    parser.add_argument("--db-diesel",default=None)
     parser.add_argument("--incluir-ptax-usd",action="store_true")
     parser.add_argument("--gerado-em",required=True)
     parser.add_argument("--saida",required=True)
@@ -87,20 +88,26 @@ def executar(argv=None) -> dict:
     contratos=_json(args.contratos)
     cultures=contratos.get("culturas",[])
     ports=contratos.get("portos",[])
+    diesel=contratos.get("diesel",[])
     if (not isinstance(cultures,list) or not isinstance(ports,list)
         or len(cultures)>30 or len(ports)>45
         or not all(isinstance(c,dict) for c in cultures)
-        or not all(isinstance(p,str) and 0<len(p)<=80 for p in ports)):
+        or not all(isinstance(p,str) and 0<len(p)<=80 for p in ports)
+        or not isinstance(diesel,list) or len(diesel)>40
+        or not all(isinstance(x,dict) and set(x)=={"uf","municipio","produto"}
+                   for x in diesel)):
         raise ErroEnsaio("contratos de safra/portos inválidos")
     with closing(_sqlite_ro(args.db_conab)) if args.db_conab else _NoConn() as c:
         with closing(_sqlite_ro(args.db_portos)) if args.db_portos else _NoConn() as p:
             with closing(_sqlite_ro(args.db_mercados)) if args.db_mercados else _NoConn() as m:
-                return _executar_com_bancos(args, pacote, cultures, ports, c, p, m)
+                with closing(_sqlite_ro(args.db_diesel)) if args.db_diesel else _NoConn() as d:
+                    return _executar_com_bancos(args,pacote,cultures,ports,diesel,c,p,m,d)
 
 
-def _executar_com_bancos(args, pacote, cultures, ports, c, p, m):
+def _executar_com_bancos(args, pacote, cultures, ports, diesel, c, p, m, d):
             dados=compor_pacote_historico(
                 db_conab=c,db_portos=p,db_mercados=m,
+                db_diesel=d,diesel_localidades=diesel,
                 incluir_ptax_usd=args.incluir_ptax_usd,gerado_em=args.gerado_em,
                 fontes=pacote.get("fontes",{}),
                 noticias=pacote.get("noticias",[]),

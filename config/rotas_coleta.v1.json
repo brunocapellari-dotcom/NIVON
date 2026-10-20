@@ -1741,7 +1741,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -1771,7 +1771,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -1801,7 +1801,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -1831,7 +1831,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -1861,7 +1861,7 @@
         "url": "https://www.cdp.com.br/programacao-de-navio-do-porto-de-vila-do-conde/",
         "source_proof": null
       },
-      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo)",
+      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo); lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -1890,7 +1890,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -1920,7 +1920,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -1950,7 +1950,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -1980,7 +1980,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2011,7 +2011,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2041,7 +2041,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2071,7 +2071,7 @@
         "url": "https://www.codeba.gov.br/",
         "source_proof": null
       },
-      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo)",
+      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo); lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2100,7 +2100,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2130,7 +2130,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2161,7 +2161,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2191,7 +2191,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2221,7 +2221,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2252,7 +2252,7 @@
         "url": "https://www.portodoitaqui.com.br/porto-agora/navios/esperados",
         "source_proof": null
       },
-      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo)",
+      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo); lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2281,7 +2281,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2311,7 +2311,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2341,7 +2341,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2371,7 +2371,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2402,7 +2402,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2432,7 +2432,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2463,7 +2463,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2493,7 +2493,7 @@
         "url": "https://www.portosdoparana.pr.gov.br/Operacional/Pagina/Atas-do-Corredor-de-Exportacao",
         "source_proof": null
       },
-      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo)",
+      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo); lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2522,7 +2522,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2552,7 +2552,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2583,7 +2583,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2613,7 +2613,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2644,7 +2644,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2674,7 +2674,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2704,7 +2704,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2734,7 +2734,7 @@
         "url": "https://www.portosrs.com.br/site/transparencia/atas_programacao_navio",
         "source_proof": null
       },
-      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo)",
+      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo); lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2763,7 +2763,7 @@
         "url": "https://www.codeba.gov.br/",
         "source_proof": null
       },
-      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo)",
+      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo); lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2792,7 +2792,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2822,7 +2822,7 @@
         "url": "https://www.cdp.com.br/programacao-de-navios-do-porto-de-santarem/",
         "source_proof": null
       },
-      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo)",
+      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo); lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2851,7 +2851,7 @@
         "url": "https://www.portodesantos.com.br/informacoes-operacionais/operacoes-portuarias/navegacao-e-movimento-de-navios/atracacoes-programadas/",
         "source_proof": null
       },
-      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo)",
+      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo); lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2880,7 +2880,7 @@
         "url": "https://www.portosaofrancisco.com.br/public/uploads/pdfs/lineup.pdf",
         "source_proof": null
       },
-      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo)",
+      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo); lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2908,7 +2908,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2938,7 +2938,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2968,7 +2968,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2999,7 +2999,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -3030,7 +3030,7 @@
         "url": "https://www.vale.com/",
         "source_proof": null
       },
-      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo)",
+      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo); lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "RIGHTS_APPROVAL_REQUIRED",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -3060,7 +3060,7 @@
         "url": null,
         "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
