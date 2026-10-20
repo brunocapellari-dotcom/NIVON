@@ -12,6 +12,7 @@ import sqlite3
 from datetime import datetime, timezone
 from math import isfinite
 from .nasa_power_diario import normalizar_power_diario, ErroPower
+from .transacoes_sqlite import savepoint_atomico
 
 class ErroGrade(ValueError):
     pass
@@ -90,7 +91,7 @@ def ingerir_power_local(db,*,bytes_json,plano,coletado_em,
     metadata=(ds,req_sha,sha,lat,lon,result["latitude_grade"],result["longitude_grade"],
               plano["inicio"],plano["fim"],
               published,classe,licenca_evidencia)
-    with db:
+    with savepoint_atomico(db):
         old=db.execute("""SELECT * FROM grade_edicao WHERE dataset_id=?
              AND consulta_sha256=? AND conteudo_sha256=?""",(ds,req_sha,sha)).fetchone()
         if old is None:

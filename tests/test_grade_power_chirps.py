@@ -89,6 +89,16 @@ class TestGradePowerTemporal(unittest.TestCase):
         self.assertTrue(b["nova_captura"])
         self.assertEqual(self.db.execute("SELECT COUNT(*) FROM grade_valor").fetchone()[0],9)
 
+    def test_salvar_sem_commit_de_transacao_externa(self):
+        self.db.execute("CREATE TABLE testemunha(v INTEGER)")
+        self.db.execute("SAVEPOINT transacao_externa")
+        self.db.execute("INSERT INTO testemunha VALUES (1)")
+        salvar(self.db)
+        self.db.execute("ROLLBACK TO SAVEPOINT transacao_externa")
+        self.db.execute("RELEASE SAVEPOINT transacao_externa")
+        self.assertEqual(self.db.execute("SELECT count(*) FROM testemunha").fetchone()[0],0)
+        self.assertEqual(self.db.execute("SELECT count(*) FROM grade_edicao").fetchone()[0],0)
+
     def test_publicacao_apos_coleta_bloqueada(self):
         with self.assertRaises(ErroGrade):
             salvar(self.db,pub="2025-01-08T00:00:00Z")
