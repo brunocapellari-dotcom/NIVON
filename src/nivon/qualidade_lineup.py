@@ -76,12 +76,6 @@ def montar_painel_lineup(registros: list[dict], licencas: dict,
             key=(porto,produto,duv,status)
             if key in eventos_vistos:
                 raise ErroQualidadeLineup("linha duplicada já contabilizada")
-            eventos_vistos.add(key)
-            g=grupos[(porto,produto)]
-            g["escalas"].add(duv)
-            g["status"][status].add(duv)
-            g["fontes"].add(fid)
-            g["referencias"].append(ref)
             vol=r.get("toneladas_programadas")
             lote=str(r.get("lote_id") or "").strip()
             if vol is not None:
@@ -90,7 +84,17 @@ def montar_painel_lineup(registros: list[dict], licencas: dict,
                     or r.get("unidade_confirmada")!="T"
                     or r.get("classe_evidencia")!="LINEUP_INFORMADO"):
                     raise ErroQualidadeLineup("volume sem lote, unidade T ou evidência de programação")
-                g["toneladas_por_lote"][(duv,lote)]=vol
+            eventos_vistos.add(key)
+            g=grupos[(porto,produto)]
+            g["escalas"].add(duv)
+            g["status"][status].add(duv)
+            g["fontes"].add(fid)
+            g["referencias"].append(ref)
+            if vol is not None:
+                lote_key=(duv,lote)
+                if lote_key in g["toneladas_por_lote"]:
+                    raise ErroQualidadeLineup("volume por lote duplicado")
+                g["toneladas_por_lote"][lote_key]=vol
         except (KeyError,TypeError,ValueError,ErroQualidadeLineup) as exc:
             rejeicoes.append({"indice":i,"motivo":str(exc)})
     painel=[]
