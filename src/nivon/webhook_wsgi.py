@@ -9,9 +9,10 @@ import hmac
 from contextlib import closing
 import os
 import re
+import sqlite3
 from urllib.parse import parse_qs
 
-from .outbox_briefing import abrir_outbox
+from .outbox_briefing import abrir_outbox, ErroOutbox
 from .whatsapp_webhook import aplicar_webhook_entregas, ErroWebhook
 
 _MAX = 256_000
@@ -78,8 +79,10 @@ def app(environ: dict, start_response):
                 db,raw_body=raw,signature=signature,app_secret=secret)
     except PermissionError:
         return _response(start_response,"403 Forbidden",b"forbidden")
+    except ErroOutbox:
+        return _response(start_response,"503 Service Unavailable",b"unavailable")
     except (ErroWebhook,ValueError):
         return _response(start_response,"400 Bad Request",b"invalid event")
-    except (OSError,RuntimeError):
+    except (OSError,RuntimeError,sqlite3.DatabaseError):
         return _response(start_response,"503 Service Unavailable",b"unavailable")
     return _response(start_response,"200 OK",b"acknowledged")

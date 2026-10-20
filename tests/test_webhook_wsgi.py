@@ -117,6 +117,14 @@ class TestWebhookWSGI(unittest.TestCase):
         status,_=emitir(self.event(),path="/send")
         self.assertEqual(status,"404 Not Found")
 
+    def test_banco_indisponivel_nao_parece_evento_invalido(self):
+        bad_path=str(Path(self.temp.name)/"pasta_inexistente"/"db.sqlite")
+        with patch.dict(os.environ,{"NIVON_OUTBOX_PATH":bad_path}):
+            status,body=emitir(self.event())
+        self.assertEqual(status,"503 Service Unavailable")
+        self.assertNotIn(b"pasta_inexistente",body)
+        self.assertEqual(self.estado(),"ACCEPTED")
+
     def test_sem_configuracao_falha_fechada(self):
         with patch.dict(os.environ,{"NIVON_META_APP_SECRET":""}):
             status,_=emitir(self.event())
