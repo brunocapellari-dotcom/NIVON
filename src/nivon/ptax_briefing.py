@@ -10,6 +10,7 @@ import hashlib
 import json
 from datetime import date, timedelta
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 from urllib.parse import urlsplit
 
 from .bcb_ptax import normalizar_ptax_odata
@@ -154,7 +155,8 @@ def construir_indicador_ptax(dados: dict, *, gerado_em: str,
         raise ErroPTAXBriefing("BCB não retornou boletim Fechamento; não usar intradiário")
     fechamento=fechamentos[max(fechamentos)]
     d=date.fromisoformat(fechamento["competencia"])
-    if d < agora.date()-timedelta(days=atraso_maximo_dias):
+    data_brasilia=agora.astimezone(ZoneInfo("America/Sao_Paulo")).date()
+    if d < data_brasilia-timedelta(days=atraso_maximo_dias):
         raise ErroPTAXBriefing("último fechamento antigo: mostrar indisponível")
     venda=Decimal(str(fechamento["cotacao_venda_brl_por_moeda"]))
     compra=Decimal(str(fechamento["cotacao_compra_brl_por_moeda"]))
