@@ -58,7 +58,7 @@ def salvar_edicao(db, observacoes, *, publicado_em=None):
         try: date.fromisoformat(publicado_em)
         except (ValueError,TypeError) as exc: raise ErroSerie("publicacao incorreta") from exc
         if publicado_em>iso[:10]:
-            raise ErroSerie("publicação futura relativamente à captura") from exc
+            raise ErroSerie("publicação futura relativamente à captura")
     seen=set()
     for r in observacoes:
         if any(r[k]!=v for k,v in (
