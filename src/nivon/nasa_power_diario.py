@@ -72,6 +72,24 @@ def normalizar_power_diario(*,bytes_json,plano,sha256,coletado_em):
     try:payload=json.loads(bytes_json.decode("utf-8-sig"),object_pairs_hook=_pares)
     except (UnicodeError,json.JSONDecodeError) as exc:
         raise ErroPower("JSON NASA inválido") from exc
+    from urllib.parse import parse_qs
+    qs=parse_qs(p.query,strict_parsing=True)
+    try:
+        solicitada_lat=float(qs["latitude"][0])
+        solicitada_lon=float(qs["longitude"][0])
+    except (KeyError,ValueError,IndexError) as exc:
+        raise ErroPower("coordenadas não informadas no plano") from exc
+    geometry=payload.get("geometry")
+    coords=geometry.get("coordinates") if isinstance(geometry,dict) else None
+    if not isinstance(coords,(list,tuple)) or len(coords)<2:
+        raise ErroPower("coordenadas reais da grade não fornecidas")
+    lon_grade,lat_grade=coords[:2]
+    if (type(lon_grade) not in (int,float) or type(lat_grade) not in (int,float) or
+        not isfinite(lon_grade) or not isfinite(lat_grade) or
+        not (-180<=lon_grade<=180 and -90<=lat_grade<=90)):
+        raise ErroPower("coordenadas de grade inválidas")
+    if abs(lon_grade-solicitada_lon)>0.75 or abs(lat_grade-solicitada_lat)>0.75:
+        raise ErroPower("grade devolvida fora da região solicitada")
     series=payload.get("properties",{}).get("parameter",{})
     if not isinstance(series,dict) or set(series)!=set(plano["parametros"]):
         raise ErroPower("parâmetros NASA ausentes ou não solicitados")
@@ -106,6 +124,7 @@ def normalizar_power_diario(*,bytes_json,plano,sha256,coletado_em):
                      "publicacao":None,"validado_com_estacao":False})
     return {"registros":rows,"numero_dias":len(rows),"parametros":plano["parametros"],
             "periodo":(plano["inicio"],plano["fim"]),"escala_temporal":"DIARIA_UTC",
+            "latitude_grade":float(lat_grade),"longitude_grade":float(lon_grade),
             "conversao_rad_liquida_fao56_realizada":False,
             "classificacao":"RESPOSTA_POWER_NAO_E_MEDICAO_LOCAL",
             "apto_previsao_homologada":False}

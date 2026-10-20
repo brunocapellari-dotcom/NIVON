@@ -1,6 +1,6 @@
 """Ingestão offline e versionada de grades NASA POWER.
 
-Retém coordenadas SOLICITADAS e célula/produto reportados; não disfarça
+Retém coordenadas SOLICITADAS e coordenadas da grade devolvida; não disfarça
 reanálise/grade como estação. Mesmo conteúdo (SHA) é idempotente, revisão
 tem vintage independente. "Publicação" ausente não vira "coleta".
 """
@@ -31,7 +31,8 @@ def abrir_grade(caminho=":memory:"):
     CREATE TABLE IF NOT EXISTS grade_edicao(
       dataset_id TEXT NOT NULL,consulta_sha256 TEXT NOT NULL,
       conteudo_sha256 TEXT NOT NULL,coordenada_lat REAL NOT NULL,
-      coordenada_lon REAL NOT NULL,primeiro_dia TEXT NOT NULL,ultimo_dia TEXT NOT NULL,
+      coordenada_lon REAL NOT NULL,latitude_grade REAL NOT NULL,
+      longitude_grade REAL NOT NULL,primeiro_dia TEXT NOT NULL,ultimo_dia TEXT NOT NULL,
       publicado_utc TEXT,classe TEXT NOT NULL,licenca_evidencia TEXT,
       PRIMARY KEY(dataset_id,consulta_sha256,conteudo_sha256));
     CREATE TABLE IF NOT EXISTS grade_captura(
@@ -86,17 +87,19 @@ def ingerir_power_local(db,*,bytes_json,plano,coletado_em,
     for row in result["registros"]:
         for key,val in row["valores"].items():
             values.append((ds,req_sha,sha,row["data_utc"],key,val,PARAMETROS[key][0]))
-    metadata=(ds,req_sha,sha,lat,lon,plano["inicio"],plano["fim"],
+    metadata=(ds,req_sha,sha,lat,lon,result["latitude_grade"],result["longitude_grade"],
+              plano["inicio"],plano["fim"],
               published,classe,licenca_evidencia)
     with db:
         old=db.execute("""SELECT * FROM grade_edicao WHERE dataset_id=?
              AND consulta_sha256=? AND conteudo_sha256=?""",(ds,req_sha,sha)).fetchone()
         if old is None:
-            db.execute("INSERT INTO grade_edicao VALUES (?,?,?,?,?,?,?,?,?,?)",metadata)
+            db.execute("INSERT INTO grade_edicao VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",metadata)
             db.executemany("INSERT INTO grade_valor VALUES (?,?,?,?,?,?,?)",values)
         else:
             keys=("dataset_id","consulta_sha256","conteudo_sha256",
-                  "coordenada_lat","coordenada_lon","primeiro_dia","ultimo_dia",
+                  "coordenada_lat","coordenada_lon","latitude_grade","longitude_grade",
+                  "primeiro_dia","ultimo_dia",
                   "publicado_utc","classe","licenca_evidencia")
             if tuple(old[k] for k in keys)!=metadata:raise ErroGrade("mesmo hash com metadados conflitantes")
             prev=db.execute("""SELECT dataset_id,consulta_sha256,conteudo_sha256,data_utc,
@@ -131,6 +134,7 @@ def grade_asof(db,*,consulta_sha256,parametro,inicio,fim,
     pub=_utc(corte_publicacao);col=_utc(corte_coleta)
     rows=db.execute("""
        SELECT v.data_utc,v.valor,v.unidade,e.conteudo_sha256,e.publicado_utc,
+           e.latitude_grade,e.longitude_grade,
            MIN(c.coletado_utc) AS primeira_coleta_utc
        FROM grade_valor v
        JOIN grade_edicao e ON e.dataset_id=v.dataset_id

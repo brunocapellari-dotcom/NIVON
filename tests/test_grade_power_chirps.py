@@ -16,7 +16,8 @@ def plano():
                           parametros=("PRECTOTCORR","T2M_MIN","T2M_MAX"))
 
 def raw(chuva=10):
-    return json.dumps({"properties":{"parameter":{
+    return json.dumps({"geometry":{"coordinates":[-55.72,-12.54]},
+                       "properties":{"parameter":{
         "PRECTOTCORR":{"20250101":chuva,"20250102":0,"20250103":-999},
         "T2M_MIN":{"20250101":20,"20250102":21,"20250103":19},
         "T2M_MAX":{"20250101":30,"20250102":31,"20250103":32}
@@ -46,6 +47,8 @@ class TestGradePowerTemporal(unittest.TestCase):
         self.assertFalse(b["nova_captura"])
         rows=serie(self.db,a["consulta_sha256"])
         self.assertEqual(len(rows),3)
+        self.assertAlmostEqual(rows[0]["latitude_grade"],-12.54)
+        self.assertAlmostEqual(rows[0]["longitude_grade"],-55.72)
         self.assertEqual([r["valor"] for r in rows],[10.,0.,None])
         self.assertFalse(a["apto_para_treino_temporal"])
 
