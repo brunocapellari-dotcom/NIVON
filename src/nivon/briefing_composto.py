@@ -12,7 +12,11 @@ from .briefing_diario import gerar_texto, ErroBriefing
 
 CORREDORES = {
     ("SORRISO", "MT", "RONDONOPOLIS", "MT"),
+    ("SORRISO", "MT", "DOM AQUINO", "MT"),
     ("SINOP", "MT", "MIRITITUBA", "PA"),
+    ("SORRISO", "MT", "PARANAGUA", "PR"),
+    ("SORRISO", "MT", "SANTOS", "SP"),
+    ("SORRISO", "MT", "UBERABA", "MG"),
 }
 SECOES = ("BOLSAS", "CAMBIO", "PRECOS", "SAFRA", "PORTOS", "DIESEL",
            "FERTILIZANTES", "CLIMA", "LOGISTICA", "GEOPOLITICA")
@@ -88,16 +92,30 @@ def montar_briefing(*, noticias: list[dict], fontes: dict,
             referencia = datetime.fromisoformat(f["referencia"].replace("Z", "+00:00"))
             if referencia.tzinfo is None:
                 raise ValueError("frete sem timestamp")
-            fretes_aceitos.append((rota, valor, referencia.isoformat()))
+            volume_rotulo = ""
+            if f.get("volume_t_dia") is not None:
+                volume = f["volume_t_dia"]
+                classe = f.get("classificacao_volume")
+                if (isinstance(volume, bool) or not isinstance(volume, (int, float))
+                        or not isfinite(volume) or volume <= 0):
+                    raise ValueError("volume t/dia inválido")
+                if classe not in {"OBSERVADO", "REFERENCIA", "ESTIMADO"}:
+                    raise ValueError("volume sem classificação")
+                if f.get("volume_realizado") is True and classe != "OBSERVADO":
+                    raise ValueError("volume não realizado rotulado como realizado")
+                volume_rotulo = ", " + ("%g" % volume).replace(".", ",") + (
+                    " t/dia (volume " + classe + ")"
+                )
+            fretes_aceitos.append((rota, valor, referencia.isoformat(), volume_rotulo))
         except (KeyError, TypeError, ValueError, PermissionError) as exc:
             bloqueios.append({"tipo": "FRETE", "motivo": str(exc)})
     if fretes_aceitos:
         bloco.extend(["", "*FRETES ANUNCIADOS — CORREDORES*"])
-        for rota, valor, referencia in fretes_aceitos:
+        for rota, valor, referencia, volume_rotulo in fretes_aceitos:
             bloco.append("• " + rota[0] + "/" + rota[1] + " → " +
                          rota[2] + "/" + rota[3] + ": R$ " +
                          ("%.2f" % valor).replace(".", ",") +
-                         "/t (ref. " + referencia + ")")
+                         "/t" + volume_rotulo + " (ref. " + referencia + ")")
         bloco.append("Divulgações de transportadoras; não são viagens realizadas.")
     texto_final = texto + (("\n" + "\n".join(bloco)) if bloco else "")
     return {
