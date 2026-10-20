@@ -401,7 +401,7 @@
         "url": "https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/serie-historica-de-precos-de-combustiveis",
         "source_proof": "https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/arquivos/shpc/dsan/2026"
       },
-      "implementation_scope": "anp_diesel.py (código citado não implica coletor ativo)",
+      "implementation_scope": "anp_diesel.py; anp_manifesto.py (parser local e descoberta de links offline) (sem coleta periódica, dados reais não homologados)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -420,7 +420,7 @@
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Diesel S10/S500: preço observado semanal por cidade, snapshot em CSV publicado mensalmente. Fonte não fornece paridade internacional.",
-      "preliminary_evidence": "PARSER_PRESENT_CHECK_DATA"
+      "preliminary_evidence": "ANP_CSV_AMOSTRA_REAL_E_PLANO_INDICE_OFFLINE"
     },
     {
       "dataset_id": "ANTAQ_MOVIMENTACAO",
@@ -3233,7 +3233,7 @@
         "url": "https://www.gov.br/mdic/pt-br/assuntos/comercio-exterior/estatisticas/base-de-dados-bruta",
         "source_proof": null
       },
-      "implementation_scope": "mdic_manifesto.py (links anuais verificados NCM/SH4; download inativo) + parsers CSV offline",
+      "implementation_scope": "mdic_manifesto.py; mdic_stream.py; mdic_reconciliacao.py; mdic_municipios.py (sem coleta periódica, dados reais não homologados)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -3252,7 +3252,7 @@
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Arquivos anuais publicados no índice oficial (NCM/SH4, exp/imp). CSV ainda não homologado; em SH4 cidade é domicílio fiscal.",
-      "preliminary_evidence": "OFFICIAL_INDEX_VERIFIED_20261019_2025_2026_4_FAMILIES"
+      "preliminary_evidence": "INDEX_OFICIAL_LINKS_VERIFICADOS_PARSERS_STREAM_OFFLINE_SINTETICOS"
     },
     {
       "dataset_id": "MDIC_COMEX_NCM",
@@ -3262,7 +3262,7 @@
         "url": "https://www.gov.br/mdic/pt-br/assuntos/comercio-exterior/estatisticas/base-de-dados-bruta",
         "source_proof": null
       },
-      "implementation_scope": "mdic_manifesto.py (links anuais verificados NCM/SH4; download inativo) + parsers CSV offline",
+      "implementation_scope": "mdic_manifesto.py; mdic_stream.py; mdic_reconciliacao.py; mdic_exportacao.py; mdic_importacao.py (sem coleta periódica, dados reais não homologados)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -3281,7 +3281,7 @@
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Arquivos anuais publicados no índice oficial (NCM/SH4, exp/imp). CSV ainda não homologado; em SH4 cidade é domicílio fiscal.",
-      "preliminary_evidence": "OFFICIAL_INDEX_VERIFIED_20261019_2025_2026_4_FAMILIES"
+      "preliminary_evidence": "INDEX_OFICIAL_LINKS_VERIFICADOS_PARSERS_STREAM_OFFLINE_SINTETICOS"
     },
     {
       "dataset_id": "NOAA_GFS",
