@@ -105,6 +105,14 @@ class TestIndiceSemanalConab(unittest.TestCase):
         with self.assertRaises(ErroIndiceConab):
             consolidar_paginas(pages)
 
+    def test_nao_associa_modificacao_apos_link_nao_relacionado(self):
+        html = (entrada().replace(
+            "<span>— última modificação 19/10/2026 19h20</span>",
+            '<a href="/outra-pagina">Outro recurso</a>'
+            '<span>— última modificação 19/10/2026 19h20</span>'))
+        item = descobrir_indice(html, coletado_em=CAPTURA)["registros"][0]
+        self.assertIsNone(item["ultima_modificacao_texto"])
+
     def test_timestamps_sem_timezone_bloqueados(self):
         with self.assertRaises(ErroIndiceConab):
             descobrir_indice(entrada(), coletado_em="2026-10-20T12:00:00")
