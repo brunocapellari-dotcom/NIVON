@@ -65,6 +65,23 @@ def _numero(valor: object, *, positivo: bool = False) -> Decimal:
     return n
 
 
+def _numero_presente(linha: str, numero: Decimal) -> bool:
+    """Compara grafias brasileiras/internacionais sem aceitar prefixos parciais."""
+    base = format(numero.normalize(), "f")
+    inteiro, _, fracao = base.partition(".")
+    inteiro_us = f"{int(inteiro):,}"
+    inteiros = {inteiro, inteiro_us, inteiro_us.replace(",", ".")}
+    possibilidades = set()
+    for parte in inteiros:
+        if fracao:
+            possibilidades.add(parte + "." + fracao)
+            possibilidades.add(parte + "," + fracao)
+        else:
+            possibilidades.update({parte, parte + ",00", parte + ".00"})
+    return any(re.search(r"(?<![\d.,])" + re.escape(p) + r"(?![\d.,])", linha)
+               for p in possibilidades)
+
+
 def _origem(reg: dict, agora: datetime) -> None:
     """Contrato externo mínimo; os metadados não equivalem a homologação."""
     if (not isinstance(reg.get("fonte_id"), str) or not reg["fonte_id"]
@@ -148,8 +165,14 @@ def _verificar_cotacao(item: dict, agora: datetime, texto: str) -> str:
     else:
         if item.get("periodo_identificado") is not True:
             raise ValueError("período do indicador não identificado")
-    if _normal(item["titulo"]) not in _normal(texto):
-        raise ValueError("cotação auditada ausente do texto")
+    linhas = [linha for linha in texto.splitlines()
+              if _normal(item["titulo"]) in _normal(linha)]
+    referencia_br = ref.strftime("%d/%m/%Y")
+    if not any(_normal(item["unidade"]) in _normal(linha)
+               and _numero_presente(linha, valor)
+               and (ref.date().isoformat() in linha or referencia_br in linha)
+               for linha in linhas):
+        raise ValueError("cotação/unidade/valor/data não reconciliam com texto")
     return grupo
 
 
@@ -165,8 +188,9 @@ def _verificar_frete(item: dict, agora: datetime, texto: str) -> tuple:
                ("pickup_entity_id", "transportadora", "produto", "equipamento",
                 "regime_pf_pj", "condicao_pedagio")):
         raise ValueError("ponto, transportadora ou condição comercial ausente")
-    _numero(item.get("valor_rs_t"), positivo=True)
-    if _instante(item.get("referencia_em")) > agora:
+    valor_frete = _numero(item.get("valor_rs_t"), positivo=True)
+    ref_frete = _instante(item.get("referencia_em"))
+    if ref_frete > agora:
         raise ValueError("frete futuro")
     volume = item.get("volume_t_dia")
     if volume is not None:
@@ -176,14 +200,22 @@ def _verificar_frete(item: dict, agora: datetime, texto: str) -> tuple:
         if (item.get("classificacao_volume") != "OBSERVADO"
                 and item.get("volume_realizado") is True):
             raise ValueError("volume de referência apresentado como realizado")
-    if (_normal(item["origem"]) not in _normal(texto)
-            or _normal(item["destino"]) not in _normal(texto)):
-        raise ValueError("corredor auditado não aparece no briefing")
-    if volume is not None and str(volume) not in texto:
-        raise ValueError("volume auditado ausente do briefing")
+    linhas = [linha for linha in texto.splitlines()
+              if _normal(item["origem"]) in _normal(linha)
+              and _normal(item["destino"]) in _normal(linha)]
+    if not any(_numero_presente(linha, valor_frete)
+               and (ref_frete.date().isoformat() in linha
+                    or ref_frete.strftime("%d/%m/%Y") in linha)
+               for linha in linhas):
+        raise ValueError("corredor/valor/data de frete não reconciliam com texto")
+    if volume is not None and not any(
+            _numero_presente(linha, _numero(volume, positivo=True))
+            for linha in linhas):
+        raise ValueError("volume auditado ausente do corredor")
     if volume is not None and item["classificacao_volume"] != "OBSERVADO":
-        if (f"VOLUME {item['classificacao_volume']}" not in _normal(texto)
-                and f"VOLUME DE {item['classificacao_volume']}" not in _normal(texto)):
+        if not any((f"VOLUME {item['classificacao_volume']}" in _normal(linha)
+                    or f"VOLUME DE {item['classificacao_volume']}" in _normal(linha))
+                   for linha in linhas):
             raise ValueError("volume de referência/estimado sem rótulo editorial")
     return rota
 
