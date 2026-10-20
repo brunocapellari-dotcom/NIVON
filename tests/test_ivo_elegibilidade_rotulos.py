@@ -216,7 +216,14 @@ class TestIVOElegibilidadeRotulos(unittest.TestCase):
         self.assertEqual(x["competencias_asof"],1)
         serie=serie_elegivel_experimental([old,nova],corte=CORTE,
                                         permitir_sintetico=True,minimo_periodos=1)
-        self.assertEqual(serie[0].valor,120.)
+        self.assertEqual([o.valor for o in serie],[100.,120.])
+        from nivon.historico import visao_na_data
+        antigo=visao_na_data(serie,data_corte_publicacao=date(2025,5,1),
+             instante_corte_coleta=datetime(2025,5,1,tzinfo=UTC))
+        recente=visao_na_data(serie,data_corte_publicacao=CORTE.date(),
+             instante_corte_coleta=CORTE)
+        self.assertEqual(antigo[0].valor,100.)
+        self.assertEqual(recente[0].valor,120.)
 
     def test_revisao_futura_nao_fica_elegivel_para_corte_historico(self):
         velha=certificado(1,aprovado_em=datetime(2025,4,1,tzinfo=UTC))
