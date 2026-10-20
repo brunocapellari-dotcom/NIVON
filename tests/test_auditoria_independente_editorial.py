@@ -140,5 +140,28 @@ class TestAuditoriaPreflightIndependente(unittest.TestCase):
         )
 
 
+    def test_p0_cotacao_nao_pode_ser_publicada_antes_do_proprio_fechamento(self):
+        p = pacote_base()
+        # O registro alega um fechamento às 17h, mas edição às 10h do mesmo dia.
+        # As outras provas permanecem sintaticamente válidas.
+        p["cotacoes"][0]["publicado_em"] = "2026-10-19T10:00:00-03:00"
+        resultado = avaliar_previa_editorial(**p)
+        self.assertFalse(
+            resultado["apto_revisao"],
+            "P0: fonte não pode comprovar às 10h um preço cujo fechamento "
+            "de referência só ocorreu às 17h",
+        )
+
+    def test_p0_frete_nao_pode_ser_publicado_antes_da_referencia(self):
+        p = pacote_base()
+        p["fretes"][0]["publicado_em"] = "2026-10-20T08:00:00-03:00"
+        # Frete tem referência às 09h do mesmo dia.
+        resultado = avaliar_previa_editorial(**p)
+        self.assertFalse(
+            resultado["apto_revisao"],
+            "P0: oferta não pode ter sido publicada antes da referência "
+            "que afirma reportar",
+        )
+
 if __name__ == "__main__":
     unittest.main()
