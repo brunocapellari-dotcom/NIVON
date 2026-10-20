@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from copy import deepcopy
+import json
 from datetime import datetime
 import sqlite3
 
@@ -122,6 +123,12 @@ class NivonProjectAdapter:
         self._exigir("NIVON_READ")
         if capability not in _CAPACIDADES or not isinstance(payload, Mapping) or len(payload) > 12:
             raise ErroIntegracaoHermes("capacidade ou argumentos desconhecidos")
+        try:
+            raw = json.dumps(dict(payload), ensure_ascii=False, allow_nan=False)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ErroIntegracaoHermes("argumentos precisam ser JSON estrito") from exc
+        if len(raw.encode("utf-8")) > 65_536:
+            raise ErroIntegracaoHermes("contexto maior que 64 KiB não autorizado")
         data = _instante(payload)
         if capability == "safra.progress.read":
             if self._conab is None:

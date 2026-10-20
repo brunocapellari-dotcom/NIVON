@@ -141,6 +141,18 @@ class TestProjectAdapterHermes(unittest.IsolatedAsyncioTestCase):
             "SEM_HISTORICO")
         self.assertFalse((await adapter.status())["whatsapp_delivery_enabled"])
 
+    async def test_contexto_excessivo_ou_nao_json_bloqueia(self):
+        with self.assertRaises(ErroIntegracaoHermes):
+            await self.adapter.query("briefing.preview", {
+                "gerado_em": NOW,
+                "noticias": [{"titulo": "X" * 70_000}],
+            })
+        with self.assertRaises(ErroIntegracaoHermes):
+            await self.adapter.query("briefing.preview", {
+                "gerado_em": NOW,
+                "noticias": [{"titulo": object()}],
+            })
+
     async def test_busca_apenas_indice_sem_acesso_externo(self):
         r=await self.adapter.search("portos")
         self.assertEqual(r["items"],["portos.lineup.read"])
