@@ -12,6 +12,7 @@ from typing import Mapping, Sequence
 from urllib.parse import urlsplit
 
 from .motor_tendencias import ErroTendencia, tendencia_observada
+from .calendario_sessoes_mercado import validar_cobertura_calendario
 
 
 class ErroQualidadeMercado(ErroTendencia):
@@ -94,7 +95,9 @@ def _identidade(obs: Mapping) -> tuple:
             raise ErroQualidadeMercado("vencimento futuro não canônico")
         if obs.get("localidade_ibge") not in (None, ""):
             raise ErroQualidadeMercado("futuro não é preço físico municipal")
-        return (mercado, produto, contrato, tipo, unidade, None)
+        instrumento = _texto(obs.get("instrumento_id"), "instrumento_id")
+        return (mercado, produto, contrato, tipo, unidade, None,
+                instrumento, None, None, None, None, None)
     if mercado == "FISICO":
         ibge = _texto(obs.get("localidade_ibge"), "localidade_ibge")
         if len(ibge) != 7 or not ibge.isascii() or not ibge.isdecimal():
@@ -103,7 +106,12 @@ def _identidade(obs: Mapping) -> tuple:
             raise ErroQualidadeMercado("preço físico não pode ter vencimento futuro")
         if tipo not in ("INDICADOR_FISICO", "OFERTA", "NEGOCIADO") or unidade not in UNIDADES_FISICAS:
             raise ErroQualidadeMercado("preço físico sem tipologia/unidade válida")
-        return (mercado, produto, None, tipo, unidade, ibge)
+        atributos = tuple(_texto(obs.get(nome), nome) for nome in (
+            "ponto_cotacao_id", "qualidade_id", "condicao_entrega_id",
+            "condicao_pagamento_id", "regime_tributario_id"))
+        if obs.get("instrumento_id") not in (None, ""):
+            raise ErroQualidadeMercado("instrumento futuro indevido em preço físico")
+        return (mercado, produto, None, tipo, unidade, ibge, None, *atributos)
     raise ErroQualidadeMercado("mercado não homologado por este contrato")
 
 
@@ -222,10 +230,23 @@ def preparar_serie_precos(
 def tendencia_preco_auditada(
     registros: Sequence[Mapping], *, as_of: str, janela: int = 6,
     tolerancia_absoluta: float = 0.0, tolerancia_relativa: float = 0.0,
+    calendario_sessoes: Mapping | None = None,
 ) -> dict:
-    """Integra QC temporal à tendência observada; não produz previsão."""
+    """Integra QC temporal à tendência observada; requer calendário para classificar."""
     preparado = preparar_serie_precos(registros, as_of=as_of)
-    serie = preparado["serie"]
+    # Séries de vários anos são armazenadas integralmente, mas a estimativa
+    # robusta usa a janela recente. A base genérica limita entradas a 240.
+    serie = preparado["serie"][-janela:] if type(janela) is int and janela > 0 else preparado["serie"]
+    if calendario_sessoes is None:
+        return {"status": "CALENDARIO_AUSENTE", "orientacao": "OBSERVADA",
+                "tendencia": "INDETERMINADA", "publicavel": False,
+                "probabilidades_calibradas": None,
+                "motivo": "sem calendário de sessões, não provar continuidade da série",
+                "periodos": preparado["periodos"]}
+    cobertura = validar_cobertura_calendario(
+        calendario_sessoes, mercado=preparado["identidade_economica"][0],
+        periodos=[x["periodo"] for x in serie], as_of=as_of,
+    )
     if any(abs(Decimal(x["valor_decimal"]) - Decimal(str(x["valor"]))) >
            Decimal("0.000000001") for x in serie):
         raise ErroQualidadeMercado("perda de precisão na ponte descritiva")
@@ -241,4 +262,5 @@ def tendencia_preco_auditada(
             "identidade_economica": preparado["identidade_economica"],
             "revisoes_resolvidas": preparado["revisoes_resolvidas"],
             "duplicatas_identicas": preparado["duplicatas_identicas"],
+            "cobertura_calendario": cobertura,
             "publicavel": False}
