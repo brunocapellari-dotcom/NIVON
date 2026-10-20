@@ -18,7 +18,10 @@
         "BCB_PTAX",
         "CONAB_ARMAZENS_CAPACIDADE",
         "IMEA_COMERCIALIZACAO_MT",
-        "CONAB_PROGRESSO_SEMANAL"
+        "CONAB_PROGRESSO_SEMANAL",
+        "USDA_WASDE_RELEASE_VINTAGES",
+        "CFTC_COT_WEEKLY",
+        "FAO_FAOSTAT_LONG_RUN"
       ],
       "indicators": [
         "area_ha",
@@ -63,7 +66,10 @@
         "LINEUP_PARANAGUA",
         "CONAB_ARMAZENS_CAPACIDADE",
         "IMEA_COMERCIALIZACAO_MT",
-        "CONAB_PROGRESSO_SEMANAL"
+        "CONAB_PROGRESSO_SEMANAL",
+        "USDA_WASDE_RELEASE_VINTAGES",
+        "CFTC_COT_WEEKLY",
+        "FAO_FAOSTAT_LONG_RUN"
       ],
       "indicators": [
         "safra1_t",
@@ -100,7 +106,9 @@
         "CEPEA_FISICO",
         "LINEUP_SANTOS",
         "IMEA_COMERCIALIZACAO_MT",
-        "CONAB_PROGRESSO_SEMANAL"
+        "CONAB_PROGRESSO_SEMANAL",
+        "CFTC_COT_WEEKLY",
+        "USDA_WASDE_RELEASE_VINTAGES"
       ],
       "indicators": [
         "area_ha",
@@ -130,7 +138,9 @@
         "CEPEA_BOI",
         "SCOT_PECUARIA",
         "MDIC_COMEX_NCM",
-        "B3_FUTUROS"
+        "B3_FUTUROS",
+        "CFTC_COT_WEEKLY",
+        "FAO_FAOSTAT_LONG_RUN"
       ],
       "indicators": [
         "rebanho_cabecas",
@@ -198,7 +208,9 @@
         "MDIC_COMEX_NCM",
         "USDA_PSD",
         "CME_FUTUROS",
-        "CONAB_PROGRESSO_SEMANAL"
+        "CONAB_PROGRESSO_SEMANAL",
+        "CFTC_COT_WEEKLY",
+        "USDA_WASDE_RELEASE_VINTAGES"
       ],
       "indicators": [
         "area_ha",
@@ -430,7 +442,8 @@
         "NASA_POWER_AG",
         "CHIRPS_V3_CHUVA",
         "ERA5_LAND_CDS",
-        "NASA_GPM_IMERG"
+        "NASA_GPM_IMERG",
+        "NOAA_ENSO_RONI"
       ],
       "indicators": [
         "chuva_24h",
@@ -456,7 +469,8 @@
         "WORLD_BANK_COMMODITIES",
         "MDIC_COMEX_NCM",
         "USDA_PSD",
-        "EPE_BEN_SERIES_HISTORICAS"
+        "EPE_BEN_SERIES_HISTORICAS",
+        "CFTC_COT_WEEKLY"
       ],
       "indicators": [
         "usd_brl",
@@ -510,7 +524,8 @@
         "ANP_ETANOL",
         "MDIC_COMEX_NCM",
         "MAPA_AGROSTAT_CADEIAS",
-        "BCB_PTAX"
+        "BCB_PTAX",
+        "FAO_FAOSTAT_LONG_RUN"
       ],
       "indicators": [
         "area_ha",
@@ -541,7 +556,8 @@
         "MDIC_COMEX_NCM",
         "MAPA_AGROSTAT_CADEIAS",
         "BCB_PTAX",
-        "ANTAQ_MOVIMENTACAO"
+        "ANTAQ_MOVIMENTACAO",
+        "FAO_FAOSTAT_LONG_RUN"
       ],
       "indicators": [
         "area_ha",
@@ -576,7 +592,8 @@
         "IBGE_CODIGOS_MUNICIPIOS",
         "ABPA_FRANGO_SETOR",
         "MAPA_SANIDADE_PROTEINAS",
-        "WOAH_ALERTAS_PROTEINAS"
+        "WOAH_ALERTAS_PROTEINAS",
+        "FAO_FAOSTAT_LONG_RUN"
       ],
       "indicators": [
         "abate_cabecas",
@@ -614,7 +631,8 @@
         "IBGE_CODIGOS_MUNICIPIOS",
         "ABPA_SUINO_SETOR",
         "MAPA_SANIDADE_PROTEINAS",
-        "WOAH_ALERTAS_PROTEINAS"
+        "WOAH_ALERTAS_PROTEINAS",
+        "FAO_FAOSTAT_LONG_RUN"
       ],
       "indicators": [
         "abate_cabecas",
@@ -650,7 +668,8 @@
         "NASA_POWER_AG",
         "CHIRPS_V3_CHUVA",
         "ERA5_LAND_CDS",
-        "NASA_GPM_IMERG"
+        "NASA_GPM_IMERG",
+        "NOAA_ENSO_RONI"
       ],
       "indicators": [
         "chuva_observada_mm",
@@ -854,7 +873,8 @@
         "BCB_PTAX",
         "WORLD_BANK_COMMODITIES",
         "MDIC_COMEX_NCM",
-        "WOAH_ALERTAS_PROTEINAS"
+        "WOAH_ALERTAS_PROTEINAS",
+        "NOAA_ENSO_RONI"
       ],
       "indicators": [
         "evento_geopolitico_id",
