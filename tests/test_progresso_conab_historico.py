@@ -25,7 +25,9 @@ class TestProgressoConabStore(unittest.TestCase):
         self.db=abrir_registro()
         self.addCleanup(self.db.close)
     def gravar(self,rows=None,sha=None,tempo="2026-10-20T12:00:00Z",**kw):
-        rows=rows if rows is not None else normal()
+        if rows is None:
+            # Nova aquisição da MESMA fonte, com novo timestamp de captura.
+            rows=[dict(item,coleta=tempo.replace("Z","+00:00")) for item in normal()]
         sha=sha if sha is not None else hashlib.sha256(b"FONTE_SYNTH").hexdigest()
         return registrar_progresso_local(self.db,CAT,registros=rows,
             sha256_origem=sha,bytes_origem=800,mime_origem="text/plain",

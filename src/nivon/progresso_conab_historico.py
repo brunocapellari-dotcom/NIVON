@@ -85,7 +85,10 @@ def _canonic(registros,coleta):
         chave=json.dumps([dado[x] for x in _CHAVE],separators=(",",":"),ensure_ascii=False)
         if chave in chaves:raise ErroProgressoHistorico("cultura/safra/UF/semana duplicada")
         chaves.add(chave)
-        itens.append((chave,json.dumps(dado,ensure_ascii=False,
+        # Hora de captura pertence ao ledger de coletas, NÃO ao conteúdo da edição.
+        # A mesma planilha, capturada novamente, deve ser idempotente.
+        conteudo={k:v for k,v in dado.items() if k!="coleta"}
+        itens.append((chave,json.dumps(conteudo,ensure_ascii=False,
                  sort_keys=True,separators=(",",":"),allow_nan=False)))
     if len(pubs)!=1:raise ErroProgressoHistorico("publicação mista ou desconhecida em parte do arquivo")
     return itens,pubs.pop()
