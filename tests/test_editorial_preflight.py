@@ -161,6 +161,12 @@ class TestPreflightEditorial(unittest.TestCase):
         d["edicao"]["sha256"] = hashlib.sha256(d["edicao"]["texto"].encode()).hexdigest()
         self.assertTrue(any("rótulo" in b for b in avaliar(d)["bloqueios"]))
 
+    def test_noticia_auditada_nao_esta_no_texto(self):
+        d = dados()
+        d["noticias"][0]["titulo"] = "Notícia que não existe na edição atual"
+        self.assertTrue(any("notícia auditada ausente" in b
+                            for b in avaliar(d)["bloqueios"]))
+
     def test_nao_aceita_media_municipal_como_frete_individual(self):
         d = dados()
         d["fretes"][0]["tipo"] = "MEDIA_MUNICIPAL"
