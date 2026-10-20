@@ -66,10 +66,13 @@ class PortCallEngineTests(unittest.TestCase):
 
         official = reconstruct_port_call(
             port_id="SANTOS",
+            call_id="SANTOS:DUV:123",
             ais_points=points,
             official_signals=[
-                OfficialPortSignal("2026-09-15T13:00:00+00:00", "OPERANDO", "aps"),
-                OfficialPortSignal("2026-09-15T18:00:00+00:00", "CONCLUIDO", "aps"),
+                OfficialPortSignal("2026-09-15T13:00:00+00:00", "OPERANDO", "aps",
+                                   port_id="SANTOS", call_id="SANTOS:DUV:123", official_operational=True),
+                OfficialPortSignal("2026-09-15T18:00:00+00:00", "CONCLUIDO", "aps",
+                                   port_id="SANTOS", call_id="SANTOS:DUV:123", official_operational=True),
             ],
         )
         self.assertEqual(official.current_state, "CONCLUIDO")
