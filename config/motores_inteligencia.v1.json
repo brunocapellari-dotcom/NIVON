@@ -328,7 +328,8 @@
         "nivon.maritime.maritime_gateway:MaritimeReadAPI",
         "nivon.maritime.model_validation:evaluate_maritime_forecasts",
         "nivon.maritime.official_lineup_bridge:bridge_official_html_document",
-        "nivon.maritime.antaq_archive:analyze_antaq_archive"
+        "nivon.maritime.antaq_archive:analyze_antaq_archive",
+        "nivon.maritime.antaq_archive:compare_antaq_archive_vintages"
       ],
       "data_dependencies": [
         "LINEUP_SANTOS",
