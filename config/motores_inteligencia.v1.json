@@ -386,7 +386,8 @@
       "front_id": "CLIMA_HIDRO",
       "entrypoints": [
         "nivon.motores_meteo_hidro:balanco_hidrico_solo",
-        "nivon.motores_meteo_hidro:anomalia_nivel_rio"
+        "nivon.motores_meteo_hidro:anomalia_nivel_rio",
+        "nivon.series_ambientais:consultar_asof"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -565,7 +566,11 @@
       "entrypoints": [
         "nivon.motores_meteo_hidro:chuva_anomalia",
         "nivon.motores_meteo_hidro:graus_dia",
-        "nivon.motores_meteo_hidro:janela_chuva_operacao"
+        "nivon.motores_meteo_hidro:janela_chuva_operacao",
+        "nivon.series_ambientais:consultar_asof",
+        "nivon.series_ambientais:preparar_graus_dia",
+        "nivon.inmet_historico:planejar_historico",
+        "nivon.inmet_historico:inspecionar_arquivo"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -587,7 +592,9 @@
       "entrypoints": [
         "nivon.motores_meteo_hidro:anomalia_nivel_rio",
         "nivon.motores_meteo_hidro:anomalia_vazao",
-        "nivon.motores_meteo_hidro:folga_calado_hipotetica"
+        "nivon.motores_meteo_hidro:folga_calado_hipotetica",
+        "nivon.ana_contrato:planejar_janelas",
+        "nivon.series_ambientais:consultar_asof"
       ],
       "data_dependencies": [
         "ANA_HIDRO",

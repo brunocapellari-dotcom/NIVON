@@ -66,9 +66,17 @@ def verificar_estrutura(provider,*,opener=None):
             "quantidade_sem_expor_valores":len(obj["value"]),
             "paginacao_indicada":bool(obj.get("@odata.nextLink"))}
 
-def main():
+def main(argv=None):
+    import argparse
+    p=argparse.ArgumentParser()
+    p.add_argument("--explicit-yes",action="store_true")
+    args=p.parse_args(argv)
+    if not args.explicit_yes:
+        print(json.dumps({"estado":"DESABILITADO_POR_PADRAO"}))
+        return 2
     for id in ("SIDRA","PTAX"):
         print(json.dumps(verificar_estrutura(id),ensure_ascii=False))
+    return 0
 
 if __name__=="__main__":
-    main()
+    raise SystemExit(main())
