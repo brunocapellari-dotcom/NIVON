@@ -84,11 +84,12 @@
       "authority": "CDP",
       "kind": "PORTO_ORGANIZADO",
       "parent_port_id": null,
-      "lineup_source_url": null,
+      "lineup_source_url": "https://www.cdp.com.br/programacao-de-navios-porto-de-belem/",
       "endpoint_verified": false,
       "commercial_rights": "PENDING",
       "parser_homologated": false,
-      "live_enabled": false
+      "live_enabled": false,
+      "discovery_status": "PUBLIC_PAGE_CANDIDATE_UNVERIFIED"
     },
     {
       "id": "CABEDELO",
@@ -455,11 +456,12 @@
       "authority": "CDP",
       "kind": "PORTO_ORGANIZADO",
       "parent_port_id": null,
-      "lineup_source_url": null,
+      "lineup_source_url": "https://www.cdp.com.br/programacao-de-navio-do-porto-de-vila-do-conde/",
       "endpoint_verified": false,
       "commercial_rights": "PENDING",
       "parser_homologated": false,
-      "live_enabled": false
+      "live_enabled": false,
+      "discovery_status": "PUBLIC_PAGE_CANDIDATE_UNVERIFIED"
     },
     {
       "id": "VITORIA",
