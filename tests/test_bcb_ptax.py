@@ -87,3 +87,9 @@ class TestPTAX(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+    def test_paginacao_nao_descarta_boletins(self):
+        with self.assertRaises(ErroPTAX):
+            normalizar_ptax_odata(
+                {"value":[self.row()],"@odata.nextLink":"https://olinda.bcb.gov.br/other"},
+                moeda="USD",coletado_em=COLETA,consulta_url=URL)

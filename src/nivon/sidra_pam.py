@@ -84,13 +84,20 @@ def normalizar_pam_1612(payload:bytes,*,plano:dict,coletado_em:str)->dict:
     cabecalho=dados[0]
     if not isinstance(cabecalho,dict) or not set(campos).issubset(cabecalho):
         raise ErroSIDRAPAM("cabeçalho SIDRA incompatível")
+    # Ordem comprovada da tabela 1612: municipio, variavel, ano, produto.
+    # Cabeçalhos alterados encerram a importação sem atribuição silenciosa.
+    descritores = {"D1C":"Município (Código)","D2C":"Variável (Código)",
+                   "D3C":"Ano (Código)",
+                   "D4C":"Produto das lavouras temporárias (Código)"}
+    if any(cabecalho.get(k)!=v for k,v in descritores.items()):
+        raise ErroSIDRAPAM("ordem ou descritores SIDRA divergentes")
     normalizados=[]
     vistos=set()
     for linha in dados[1:]:
         if not isinstance(linha,dict) or not set(campos).issubset(linha):
             raise ErroSIDRAPAM("registro SIDRA inválido")
         chave=(linha["D1C"],linha["D2C"],linha["D3C"],linha["D4C"])
-        if chave != (plano["municipio_ibge"],str(plano["ano"]),plano["variavel"],
+        if chave != (plano["municipio_ibge"],plano["variavel"],str(plano["ano"]),
                      plano["categoria_c81"]):
             raise ErroSIDRAPAM("município, período ou classificação divergentes")
         if chave in vistos:
@@ -115,8 +122,8 @@ def normalizar_pam_1612(payload:bytes,*,plano:dict,coletado_em:str)->dict:
         unidade=linha["MN"]
         if not isinstance(unidade,str) or not unidade.strip() or len(unidade)>100:
             raise ErroSIDRAPAM("unidade ausente")
-        normalizados.append({"municipio_ibge":chave[0],"ano_civil":int(chave[1]),
-            "variavel_sidra":chave[2],"produto_categoria_c81":chave[3],
+        normalizados.append({"municipio_ibge":chave[0],"ano_civil":int(chave[2]),
+            "variavel_sidra":chave[1],"produto_categoria_c81":chave[3],
             "unidade_original":unidade,"valor":valor,"estado_valor":estado,
             "natureza":"PAM_ANUAL_ESTATISTICA_NAO_PREVISAO"})
     return {"dataset_id":"IBGE_PAM","sha256_original":hashlib.sha256(payload).hexdigest(),

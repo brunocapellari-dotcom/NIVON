@@ -48,3 +48,9 @@ class TestPlanoPTAX(unittest.TestCase):
                                 consulta_url=url)
         self.assertEqual(d["numero_de_boletins"],1)
         self.assertIsNone(d["observacoes"][0]["publicacao"])
+
+    def test_semantica_usd_nao_garante_boletins_intradiarios(self):
+        p=planejar_consultas_ptax(moeda="USD",inicio="2026-10-01",fim="2026-10-02")
+        self.assertEqual(p[0]["semantica"],"DOLAR_DIARIO_NAO_INTRADIARIO")
+        e=planejar_consultas_ptax(moeda="EUR",inicio="2026-10-01",fim="2026-10-02")
+        self.assertIn("MULTIPLOS_BOLETINS",e[0]["semantica"])

@@ -51,6 +51,9 @@ def normalizar_ptax_odata(payload: dict, *, moeda: str, coletado_em: str,
         raise ErroPTAX("resposta OData precisa conter 'value' lista")
     if len(payload["value"]) > 2000:
         raise ErroPTAX("resposta excede janela de ingestão máxima")
+    # Nunca tratar primeira página como histórico completo.
+    if "@odata.nextLink" in payload or "odata.nextLink" in payload:
+        raise ErroPTAX("paginação incompleta: necessário baixar todas as páginas")
     resultado = []
     vistos = set()
     for item in payload["value"]:
