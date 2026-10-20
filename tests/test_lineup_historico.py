@@ -102,3 +102,18 @@ class TestHistoricoLineup(unittest.TestCase):
         self.salvar()
         self.assertIsNone(edicao_lineup_asof(self.db,porto_id="ITAQUI",
            corte_coleta="2026-10-20T20:00:00Z"))
+
+    def test_45_fontes_catalogadas_com_store_inativo(self):
+        import json
+        from pathlib import Path
+        root=Path(__file__).resolve().parents[1]
+        cats=json.loads((root/"config/fontes_nivon_master.v1.json").read_text())
+        routes=json.loads((root/"config/rotas_coleta.v1.json").read_text())
+        dataset=[x for x in cats["datasets"] if x["id"].startswith("LINEUP_")]
+        entries=[x for x in routes["entries"] if x["dataset_id"].startswith("LINEUP_")]
+        self.assertEqual(len(dataset),45)
+        self.assertEqual(len(entries),45)
+        self.assertTrue(all("lineup_historico.py" in x["existing_module"]
+             and not x["enabled"] and not x["collection_authorized"] for x in dataset))
+        self.assertTrue(all("lineup_historico.py" in x["implementation_scope"]
+             and not x["runtime_enabled"] and not x["scheduled_enabled"] for x in entries))
