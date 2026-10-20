@@ -1,0 +1,10 @@
+# Build offline/auditoria: negar todo o contexto, permitir apenas código e contrato.
+*
+!src/
+!src/**
+!config/
+!config/**
+!infra/
+!infra/inventory.v1.json
+!infra/docker/
+!infra/docker/Dockerfile.audit
