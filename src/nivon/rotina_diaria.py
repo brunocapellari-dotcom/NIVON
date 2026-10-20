@@ -74,6 +74,17 @@ def preparar_rotina(*, pacote: dict, gerado_em: str,
     if auditor(payload) is not True:
         return {"status":"REPROVADO_AUDITORIA",
                 "hash":payload["sha256"],"agendado":False}
+    if agendar:
+        # Uma aprovação humana/IA não substitui integridade numérica,
+        # direitos ou frescor. Descarta a edição para envio se qualquer dado
+        # de mercado ou frete necessário tiver sido rejeitado.
+        criticas=[x for x in payload["rejeicoes"]
+                  if x.get("tipo") in {"INDICADOR","FRETE","FRESCURA"}]
+        if criticas:
+            return {"status":"BLOQUEADO_PRE_PUBLICACAO",
+                    "hash":payload["sha256"],"agendado":False,
+                    "rejeicoes_criticas":criticas,
+                    "rejeicoes":payload["rejeicoes"]}
     if not agendar:
         return {"status":"VALIDADO_DRY_RUN",
                 "hash":payload["sha256"],"agendado":False,
