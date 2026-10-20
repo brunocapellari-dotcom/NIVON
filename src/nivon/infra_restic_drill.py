@@ -63,6 +63,8 @@ def _criar_fixture(pasta: Path) -> dict:
         db.executemany("INSERT INTO synthetic_records (valor) VALUES (?)",
                        [("TEST_ONLY_1",), ("TEST_ONLY_2",), ("TEST_ONLY_3",)])
         db.execute("PRAGMA user_version=1")
+        # SQLite backup() pode aguardar indefinidamente com escrita pendente.
+        db.commit()
         return criar_pacote_recuperacao(db, pasta, nome="nivon-sintetico")
 
 
