@@ -15,6 +15,7 @@ from .bcb_ptax import normalizar_ptax_odata
 from .ptax_plano import planejar_consultas_ptax, ErroPlanoPTAX
 from .sidra_pam import normalizar_pam_1612
 from .registro_snapshots import registrar_snapshot, abrir_registro, ErroSnapshot
+from .transacoes_sqlite import savepoint_atomico
 
 class ErroIngestaoAPI(ValueError):
     pass
@@ -127,20 +128,20 @@ def ingerir_json_local(db:sqlite3.Connection, catalogo:dict, *, payload:bytes,
     coleta=_utc(coletado_em)
     dados=_normalizar_bytes(payload,dataset_id,plano,coleta)
     sha=hashlib.sha256(payload).hexdigest()
-    # Todo controle jurídico de dados reais é aplicado no ledger compartilhado.
-    res=registrar_snapshot(
-        db,catalogo,dataset_id=dataset_id,sha256=sha,tamanho=len(payload),
-        mime="application/json",schema_versao=_VERSAO[dataset_id],
-        coletado_em=coleta,publicacao=None,referencia=None,competencia=None,
-        tipo=tipo,autorizacoes=autorizacoes,evidencia_direitos=evidencia_direitos,
-    )
+    # Criar schema antes de iniciar a transação: executescript faz commit implícito.
     preparar_tabelas(db)
-    snap=db.execute(
-        "SELECT id FROM nivon_snapshots WHERE dataset_id=? AND sha256=?",
-        (dataset_id,sha)).fetchone()
-    if snap is None:raise ErroIngestaoAPI("ledger sem snapshot")
-    sid=snap["id"]
-    with db:
+    with savepoint_atomico(db):
+        res=registrar_snapshot(
+            db,catalogo,dataset_id=dataset_id,sha256=sha,tamanho=len(payload),
+            mime="application/json",schema_versao=_VERSAO[dataset_id],
+            coletado_em=coleta,publicacao=None,referencia=None,competencia=None,
+            tipo=tipo,autorizacoes=autorizacoes,evidencia_direitos=evidencia_direitos,
+        )
+        snap=db.execute(
+            "SELECT id FROM nivon_snapshots WHERE dataset_id=? AND sha256=?",
+            (dataset_id,sha)).fetchone()
+        if snap is None:raise ErroIngestaoAPI("ledger sem snapshot")
+        sid=snap["id"]
         antes=dict(db.execute(
             "SELECT chave,observacao_json FROM nivon_observacoes_api WHERE snapshot_id=?",(sid,)))
         atual=dict(dados)
