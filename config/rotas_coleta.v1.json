@@ -1764,7 +1764,7 @@
         "url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
         "source_proof": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios"
       },
-      "implementation_scope": "Índice institucional PortosRio. Parser não desenvolvido; consulta somente após homologação.",
+      "implementation_scope": "lineup_historico.py (registro por edição e as-of); Índice institucional PortosRio. Parser não desenvolvido; consulta somente após homologação.",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -1824,7 +1824,7 @@
         "url": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/porto_aratu.php?secao=tportos_aratu",
         "source_proof": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/porto_aratu.php?secao=tportos_aratu"
       },
-      "implementation_scope": "lineup_portais.py + ingestao_lineup_portais.py (parser offline, bytes com sha256)",
+      "implementation_scope": "lineup_historico.py (registro por edição e as-of); lineup_portais.py + ingestao_lineup_portais.py (parser offline, bytes com sha256)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -1885,7 +1885,7 @@
         "url": "https://www.cdp.com.br/programacao-de-navio-do-porto-de-vila-do-conde/",
         "source_proof": "https://www.cdp.com.br/programacao-de-navio-do-porto-de-vila-do-conde/"
       },
-      "implementation_scope": "lineup_cdp_santarem.interpretar_cdp(): extrai HTML offline por porto; WDT não é DUV",
+      "implementation_scope": "lineup_historico.py (registro por edição e as-of); lineup_cdp_santarem.interpretar_cdp(): extrai HTML offline por porto; WDT não é DUV",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -1946,7 +1946,7 @@
         "url": "https://www.cdp.com.br/programacao-de-navios-porto-de-belem/",
         "source_proof": "https://www.cdp.com.br/programacao-de-navios-porto-de-belem/"
       },
-      "implementation_scope": "lineup_cdp_santarem.interpretar_cdp(): extrai HTML offline por porto; WDT não é DUV",
+      "implementation_scope": "lineup_historico.py (registro por edição e as-of); lineup_cdp_santarem.interpretar_cdp(): extrai HTML offline por porto; WDT não é DUV",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2098,7 +2098,7 @@
         "url": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/site.php?secao=tportos_ilheus",
         "source_proof": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/site.php?secao=tportos_ilheus"
       },
-      "implementation_scope": "lineup_portais.py + ingestao_lineup_portais.py (parser offline, bytes com sha256)",
+      "implementation_scope": "lineup_historico.py (registro por edição e as-of); lineup_portais.py + ingestao_lineup_portais.py (parser offline, bytes com sha256)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2190,7 +2190,7 @@
         "url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
         "source_proof": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios"
       },
-      "implementation_scope": "Índice institucional PortosRio. Parser não desenvolvido; consulta somente após homologação.",
+      "implementation_scope": "lineup_historico.py (registro por edição e as-of); Índice institucional PortosRio. Parser não desenvolvido; consulta somente após homologação.",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2281,7 +2281,7 @@
         "url": "https://www.portodoitaqui.com.br/porto-agora/navios",
         "source_proof": "https://www.portodoitaqui.com.br/porto-agora/navios"
       },
-      "implementation_scope": "lineup_portais.py + ingestao_lineup_portais.py (parser offline, bytes com sha256)",
+      "implementation_scope": "lineup_historico.py (registro por edição e as-of); lineup_portais.py + ingestao_lineup_portais.py (parser offline, bytes com sha256)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2494,7 +2494,7 @@
         "url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
         "source_proof": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios"
       },
-      "implementation_scope": "Índice institucional PortosRio. Parser não desenvolvido; consulta somente após homologação.",
+      "implementation_scope": "lineup_historico.py (registro por edição e as-of); Índice institucional PortosRio. Parser não desenvolvido; consulta somente após homologação.",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2735,7 +2735,7 @@
         "url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
         "source_proof": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios"
       },
-      "implementation_scope": "Índice institucional PortosRio. Parser não desenvolvido; consulta somente após homologação.",
+      "implementation_scope": "lineup_historico.py (registro por edição e as-of); Índice institucional PortosRio. Parser não desenvolvido; consulta somente após homologação.",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2794,7 +2794,7 @@
         "url": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/site.php?secao=tportos_salvador",
         "source_proof": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/site.php?secao=tportos_salvador"
       },
-      "implementation_scope": "lineup_portais.py + ingestao_lineup_portais.py (parser offline, bytes com sha256)",
+      "implementation_scope": "lineup_historico.py (registro por edição e as-of); lineup_portais.py + ingestao_lineup_portais.py (parser offline, bytes com sha256)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -2855,7 +2855,7 @@
         "url": "https://www.cdp.com.br/programacao-de-navios-do-porto-de-santarem/",
         "source_proof": "https://www.cdp.com.br/programacao-de-navios-do-porto-de-santarem/"
       },
-      "implementation_scope": "lineup_cdp_santarem.py (parser offline; WDT não equivale DUV)",
+      "implementation_scope": "lineup_historico.py (registro por edição e as-of); lineup_cdp_santarem.py (parser offline; WDT não equivale DUV)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
