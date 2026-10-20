@@ -358,10 +358,10 @@
     {
       "id": "PORTO_BELEM",
       "provider": "CDP / Belém",
-      "official_url": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias",
-      "access": "OFFICIAL_CATALOG_ENTRY",
+      "official_url": "https://www.cdp.com.br/programacao-de-navios-porto-de-belem/",
+      "access": "PUBLIC_HTML_CANDIDATE_RIGHTS_PENDING",
       "rights": "REVIEW",
-      "notes": "Fonte para identificacao; NAO comprova feed line-up neste terminal; recurso exato ainda nao homologado."
+      "notes": "Tabela institucional CDP possui WDT_ID/QUANTIDADE(T), mas pode conter placeholder; não comprova DUV, data publicada ou navio atual."
     },
     {
       "id": "PORTO_CABEDELO",
@@ -671,9 +671,9 @@
       "id": "PORTO_VILA_CONDE",
       "provider": "CDP/Vila do Conde",
       "official_url": "https://www.cdp.com.br/programacao-de-navio-do-porto-de-vila-do-conde/",
-      "access": "PUBLIC_HTML",
+      "access": "PUBLIC_HTML_CANDIDATE_RIGHTS_PENDING",
       "rights": "REVIEW",
-      "notes": ""
+      "notes": "Tabela institucional CDP possui WDT_ID/QUANTIDADE(T), mas pode conter placeholder; não comprova DUV, data publicada ou navio atual."
     },
     {
       "id": "PORTO_VITORIA",
@@ -2488,7 +2488,7 @@
       "cadence": "DAILY",
       "stage": "DISCOVERY_ONLY",
       "priority": "P1",
-      "existing_module": "lineup_html.py",
+      "existing_module": "lineup_cdp_santarem.py",
       "notes": "Contrato específico exigido; município portuário não implica destino industrial",
       "enabled": false,
       "collection_authorized": false,
@@ -2560,7 +2560,7 @@
       "cadence": "DAILY",
       "stage": "DISCOVERY_ONLY",
       "priority": "P0",
-      "existing_module": "lineup_nacional.py",
+      "existing_module": "lineup_cdp_santarem.py",
       "notes": "Cadastro nacional ANTAQ; nenhum endpoint de line-up verificado. Nao misturar cargas, navios ou portos e terminais pai.",
       "enabled": false,
       "collection_authorized": false,
