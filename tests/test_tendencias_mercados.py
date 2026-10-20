@@ -169,7 +169,7 @@ class TestTendenciasPrioritarias(unittest.TestCase):
         r = analisar_frete(linhas)
         self.assertEqual(r["reenvios_deduplicados"], 20)
         self.assertEqual(r["lotes_distintos_total_por_dia"], 18)
-        self.assertEqual(r["cobertura_amostral"][0]["preco_mediano_rs_t"], "151")
+        self.assertEqual(r["cobertura_amostral"][0]["preco_mediano_rs_t_mesmo_estabelecimento"], "151")
 
     def test_frete_mesmo_lote_diferente_preco_bloqueia(self):
         linhas = fretes()
