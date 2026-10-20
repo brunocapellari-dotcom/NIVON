@@ -88,3 +88,10 @@ Priorizar estas peças (testar API, integridade e licença antes de copiar/impor
 ### Critério de aceite científico
 
 Sem evidência de dados reais históricos, cobertura, licença, erros de previsão e testes de invariantes, o estado é **CANDIDATE / NÃO HOMOLOGADO**. Permite pesquisa e cenário explicitamente rotulado; não permite alegar previsão validada nem go-live.
+
+## Política de integração concorrente / gate de revisão
+
+Este PR foi preparado a partir do commit `3329bbcfda4aadf4f08ea77b64d2abdffe292157` da linha `feat/agrobr-portos-motores-agentes-20261019`.
+Durante a auditoria, a linha de desenvolvimento recebeu commits simultâneos de outros módulos; testes que mesclam a branch mais recente podem apresentar falhas de terceiros. O alvo `review/nivon-ciencia-base-20261019` congela **somente a base de verificação científica** para permitir avaliação repetível, sem afirmar compatibilidade final com a branch em movimento.
+
+**Antes do merge de produção**, deve ser realizado merge/rebase limpo contra a branch-integrada vigente, auditoria de conflitos sem perda de novas fontes/contratos, regressão completa e validação independente dos datasets. O sucesso de testes desta revisão congelada NÃO constitui go-live nem liberação de coleta.
