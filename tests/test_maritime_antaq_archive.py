@@ -133,6 +133,34 @@ class TestAntaqArchive(unittest.TestCase):
         with self.assertRaises(zipfile.BadZipFile):
             evaluate(b"not a ZIP")
 
+    def test_time_cutoff_without_publication_proof_rejected(self):
+        with self.assertRaisesRegex(ValueError, "publicacao verificavel"):
+            evaluate(makezip(), as_of="2026-10-20T16:00:00Z")
+
+    def test_historical_cutoff_cannot_use_archive_collected_later(self):
+        with self.assertRaisesRegex(ValueError, "look-ahead"):
+            evaluate(makezip(), source_published_at="2024-03-01T09:00:00Z",
+                     publication_evidence_id="OFFICIAL_RELEASE_NOTICE_SHA",
+                     as_of="2025-01-01T00:00:00Z")
+
+    def test_published_after_collection_rejected(self):
+        with self.assertRaisesRegex(ValueError, "apos momento de coleta"):
+            evaluate(makezip(), source_published_at="2026-11-01T00:00:00Z",
+                     publication_evidence_id="RELEASE_REF")
+
+    def test_asof_with_dated_provenance_preserved(self):
+        out = evaluate(makezip(), source_published_at="2026-10-19T10:00:00Z",
+                       publication_evidence_id="OFFICIAL_RELEASE_REF",
+                       as_of="2026-10-20T15:00:00Z")
+        self.assertEqual(out.source_published_at, "2026-10-19T10:00:00+00:00")
+        self.assertEqual(out.publication_evidence_id, "OFFICIAL_RELEASE_REF")
+        self.assertEqual(out.monthly_port_cargo[0]["collected_at"], "2026-10-20T14:00:00+00:00")
+        self.assertFalse(out.publication_allowed)
+
+    def test_publication_without_evidence_rejected(self):
+        with self.assertRaisesRegex(ValueError, "evidence_id"):
+            evaluate(makezip(), source_published_at="2026-10-19T10:00:00Z")
+
     def test_no_data_release_unless_validated(self):
         out = evaluate(makezip())
         self.assertEqual(out.classification, "HISTORICO_MENSAL_DECLARADO_NAO_AIS")
