@@ -107,3 +107,21 @@ que haverá custo zero; **apply automático e provisionamento seguem OFF**.
 A OCI CLI é opção prioritária quando existir acesso permitido à conta;
 OpenTofu/provider são BENCHMARK, pois uma única VM não justifica aumentar
 complexidade sem benefício de manutenção comprovado.
+
+## Atualização de implementação — Worker offline (20/10/2026)
+
+**P0-01 avançou parcialmente:** foram acrescentados Dockerfile.worker,
+Compose offline-worker, validação de gates `infra_worker.py`, suíte
+`tests/test_infra_worker.py` e CI Docker. A imagem-base Python está
+fixada por digest de índice multiarch verificado durante builds
+amd64 e arm64; não foi publicada. Em AMD64 foram realizados builds e
+execuções determinísticas, com SQLite persistente de UID 65532 e
+releitura em outro contêiner, sem rede. Em ARM64 foi feito **build sem
+execução nativa**. Não foi criado serviço real, coletor ou agendamento.
+
+**P0-01 ainda NÃO concluído:** falta SBOM, análise de dependências e
+vulnerabilidades, validação em VM ARM64 autorizada e release integrada
+com todas as PRs. P0-02 em diante continuam condicionados aos gates
+anteriores. A próxima tarefa de maior impacto será implementar o
+workflow de backup criptografado com Restic em ambiente exclusivamente
+sintético e restauração independente, sem ligar provedor remoto real.
