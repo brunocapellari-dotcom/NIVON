@@ -61,5 +61,6 @@ class TestAuditoriaColetores(unittest.TestCase):
     def test_pagina_documentacao_nao_homologa_endpoint(self):
         r=auditoria_estatica(self.cat,self.rot)
         index={d["dataset_id"]:d for d in r["datasets"]}
-        self.assertFalse(index["BCB_PTAX"]["recurso_tecnico_identificado"])
+        self.assertTrue(index["BCB_PTAX"]["recurso_tecnico_identificado"])
         self.assertTrue(index["MAPA_SIPEAGRO_RACAO"]["recurso_tecnico_identificado"])
+        self.assertTrue(index["IBGE_PAM"]["recurso_tecnico_identificado"])

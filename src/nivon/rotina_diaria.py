@@ -11,6 +11,7 @@ from typing import Callable
 from zoneinfo import ZoneInfo
 
 from .briefing_composto import montar_briefing
+from .politica_frescura import aplicar_politica_frescura
 from .outbox_briefing import agendar_briefing
 
 
@@ -45,10 +46,16 @@ def preparar_rotina(*, pacote: dict, gerado_em: str,
         raise ErroRotina("geração sem instante válido") from exc
     if now.tzinfo is None:
         raise ErroRotina("geração sem timezone")
+    frescura=aplicar_politica_frescura(
+        pacote.get("indicadores",[]),gerado_em=gerado_em)
     payload=montar_briefing(
         noticias=pacote.get("noticias",[]),fontes=pacote.get("fontes",{}),
-        data=gerado_em,indicadores=pacote.get("indicadores",[]),
+        data=gerado_em,indicadores=frescura["indicadores"],
         fretes=pacote.get("fretes",[]))
+    payload["rejeicoes"].extend([
+        {"tipo":"FRESCURA","motivo":r["motivo"],"secao":r.get("secao")}
+        for r in frescura["recusados"]
+    ])
     faltam=sorted(obrigatorias-set(payload["secoes_presentes"]))
     if faltam:
         return {

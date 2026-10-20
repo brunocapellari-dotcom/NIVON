@@ -20,7 +20,7 @@ CLASSES = frozenset({
     "STREAM_AUTH",
 })
 LOCATORS = frozenset({
-    "DIRECT_PUBLIC_FILE", "PUBLISHED_API_DOC", "PROVIDER_PORTAL", "OFFICIAL_INDEX",
+    "DIRECT_PUBLIC_FILE", "DIRECT_OFFICIAL_API", "PUBLISHED_API_DOC", "PROVIDER_PORTAL", "OFFICIAL_INDEX",
     "OFFICIAL_DASHBOARD", "NOT_VERIFIED_PER_DATASET",
 })
 PROIBIDOS_URL = frozenset({"localhost", "127.0.0.1", "0.0.0.0"})
@@ -109,7 +109,7 @@ def validar_rotas(rotas: dict, catalogo: dict) -> dict:
                 "CONAB": {"www.gov.br", "gov.br", "conab.gov.br", "www.conab.gov.br", "portaldeinformacoes.conab.gov.br"},
                 "ANP": {"www.gov.br", "gov.br"},
                 "MDIC": {"www.gov.br", "gov.br"},
-                "IBGE": {"servicodados.ibge.gov.br"},
+                "IBGE": {"servicodados.ibge.gov.br", "apisidra.ibge.gov.br"},
             }
             if parsed.hostname != fonte_host and parsed.hostname not in homologados.get(d["source_id"], set()):
                 raise ErroRota(f"{id_}: host não demonstrado como domínio oficial da fonte")

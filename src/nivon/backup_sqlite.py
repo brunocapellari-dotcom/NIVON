@@ -17,6 +17,15 @@ class ErroBackup(ValueError):
     pass
 
 
+def _sha256_stream(caminho: Path) -> str:
+    """Hash em blocos de 256 KiB; não carregar SQLite inteiro em memória."""
+    digest = hashlib.sha256()
+    with caminho.open("rb") as arquivo:
+        for bloco in iter(lambda: arquivo.read(262144), b""):
+            digest.update(bloco)
+    return digest.hexdigest()
+
+
 def _integridade(db: sqlite3.Connection) -> None:
     status = db.execute("PRAGMA integrity_check").fetchone()
     if not status or status[0] != "ok":
@@ -40,10 +49,9 @@ def _snapshot_para(conn: sqlite3.Connection, destino: Path) -> str:
             conn.backup(backup)
             _integridade(backup)
         with temporario.open("rb") as arquivo:
-            arquivo_bytes = arquivo.read()
-        if not arquivo_bytes.startswith(b"SQLite format 3\x00"):
-            raise ErroBackup("assinatura SQLite inválida")
-        hash_arquivo = hashlib.sha256(arquivo_bytes).hexdigest()
+            if arquivo.read(16) != b"SQLite format 3\x00":
+                raise ErroBackup("assinatura SQLite inválida")
+        hash_arquivo = _sha256_stream(temporario)
         with temporario.open("rb") as arquivo:
             os.fsync(arquivo.fileno())
         # Link atômico: impede substituir um backup concorrente já existente.
@@ -76,9 +84,9 @@ def restaurar_backup(origem: str | Path, destino: str | Path, *,
     destino = Path(destino)
     if origem.is_symlink() or not origem.is_file():
         raise ErroBackup("backup de origem precisa ser arquivo regular sem link simbólico")
-    if origem.stat().st_size > 1_000_000_000:
-        raise ErroBackup("backup acima do limite de 1 GB")
-    hash_atual = hashlib.sha256(origem.read_bytes()).hexdigest()
+    if not 0 < origem.stat().st_size <= 1_000_000_000:
+        raise ErroBackup("backup vazio ou acima do limite de 1 GB")
+    hash_atual = _sha256_stream(origem)
     if sha256_esperado is not None and hash_atual != sha256_esperado:
         raise ErroBackup("SHA-256 divergente")
     url = "file:" + quote(str(origem.absolute()), safe="/") + "?mode=ro"
