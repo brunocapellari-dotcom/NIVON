@@ -3577,12 +3577,12 @@
         "url": null,
         "source_proof": null
       },
-      "implementation_scope": "briefing_diario.py (código citado não implica coletor ativo)",
+      "implementation_scope": "coleta_web.py XML + rss_radar.py + historico_noticias.py + curadoria_radar.py + pipeline_briefing.py (offline; lista de candidatos NÃO ativada)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "FEED_REAL_RIGHTS_AND_ORIGINAL_PUBLISHED_VERIFICATION",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -3596,8 +3596,41 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
-      "preliminary_evidence": "CATALOG_ONLY"
+      "source_note": "Catálogo de fontes candidatas: CONAB e ANTAQ só possuem índice HTML identificado, não RSS validado; MAPA-SDA aponta RSS.app, de terceiro. Confirmar termos, acesso, origem do artigo e hora de publicação antes de qualquer coleta ou publicação.",
+      "preliminary_evidence": "OFFICIAL_HTML_NEWS_INDEXES_AND_MAPA_SDA_RSS_REFERENCE_DISCOVERED",
+      "candidate_sources": [
+        {
+          "source": "CONAB",
+          "kind": "OFFICIAL_HTML_NEWS_INDEX",
+          "url": "https://www.gov.br/conab/pt-br/comunicacao-institucional/sala-de-imprensa/noticias",
+          "proof": "https://www.gov.br/conab/pt-br/comunicacao-institucional/sala-de-imprensa/noticias",
+          "feed_verified": false,
+          "article_published_timestamp_required": true,
+          "collection_rights": "REVIEW",
+          "runtime_enabled": false
+        },
+        {
+          "source": "ANTAQ",
+          "kind": "OFFICIAL_HTML_NEWS_INDEX",
+          "url": "https://www.gov.br/antaq/pt-br/noticias",
+          "proof": "https://www.gov.br/antaq/pt-br/noticias",
+          "feed_verified": false,
+          "article_published_timestamp_required": true,
+          "collection_rights": "REVIEW",
+          "runtime_enabled": false
+        },
+        {
+          "source": "MAPA_SDA",
+          "kind": "OFFICIAL_PAGE_REFERENCES_THIRD_PARTY_RSS",
+          "url": "https://rss.app/feeds/0OBEfdY9LbabTjin.xml",
+          "proof": "https://www.gov.br/agricultura/pt-br/assuntos/defesa-agropecuaria/plataforma-sda/comunicados-sda/assine-o-feed-1",
+          "feed_verified": false,
+          "third_party_provider": "rss.app",
+          "article_published_timestamp_required": true,
+          "collection_rights": "REVIEW",
+          "runtime_enabled": false
+        }
+      ]
     },
     {
       "dataset_id": "RADAR_REUTERS",
