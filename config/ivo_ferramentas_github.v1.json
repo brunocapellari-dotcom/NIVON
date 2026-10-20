@@ -105,6 +105,26 @@
       "priority": "P0",
       "integration": "src/hermes/self_improvement.py",
       "gate": "EVITAR_DUPLICACAO_AUTORIDADE_CONTROLE_EXTERNALIZADO"
+    },
+    {
+      "id": "WHISPER_CPP",
+      "repository": "https://github.com/ggml-org/whisper.cpp",
+      "purpose": "transcricao por voz local ou no dispositivo do usuario, opcional",
+      "license_declared": "MIT (codigo); pesos e datasets revisar separadamente",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "IVO_VOICE_CLIENT",
+      "gate": "NAO_HABILITAR_MICROFONE_PERMANENTE_NEM_CUSTO_CLOUD_PESOS_DIREITOS"
+    },
+    {
+      "id": "OPENWAKEWORD",
+      "repository": "https://github.com/dscripka/openWakeWord",
+      "purpose": "ativacao por palavra chave no dispositivo cliente",
+      "license_declared": "Apache-2.0 codigo; modelos incluidos CC-BY-NC-SA-4.0",
+      "status": "REFERENCE_ONLY_LICENSE_RESTRICTION",
+      "priority": "P2",
+      "integration": "IVO_VOICE_CLIENT",
+      "gate": "MODELOS_PRETREINADOS_NAO_APROVADOS_PARA_USO_COMERCIAL"
     }
   ]
 }
