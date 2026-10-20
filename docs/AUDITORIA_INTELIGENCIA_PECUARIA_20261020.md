@@ -61,3 +61,26 @@ Fontes oficiais para verificacao:
 - Sem deploy, agendamento, merge, envio WhatsApp, custo ou novos direitos presumidos.
 
 Reproduzir testes sinteticos: PYTHONPATH=src python -m unittest tests.test_pecuaria_ciclos tests.test_pecuaria_mercados
+
+
+## Continuidade 20/10/2026 — contrato JSON SIDRA offline
+
+### Evidências públicas de metodologia (sem confirmação de API de valores)
+- Página de tabelas IBGE: https://sidra.ibge.gov.br/pesquisa/abate/tabelas/ — 1092 bovinos, 1093 suínos, 1094 frangos; dados mensais **dentro** da pesquisa trimestral, não somar total de trimestre e meses.
+- Metodologia IBGE: https://www.ibge.gov.br/estatisticas/economicas/servicos/9203-pesquisas-trimestrais-do-abate-de-animais.html — universo do abate **formal** sob inspeção federal, estadual ou municipal; abate informal não é estimado nessa pesquisa.
+- Norma pública MAPA sobre SIDRA 1092: https://www.gov.br/agricultura/pt-br/assuntos/sustentabilidade/planoabc-abcmais/abc/sinabc/plataforma-abc/capitulos-portugues-metodologia/capitulo-02-informacoes-sobre-a-metodologia-do-painel-de-terminacao-intensiva-ti.pdf — diferencia animais/carcaças, mês 1/2/3, sexo/categoria e inspeção; este contrato **não** substitui missing/censura por zero.
+- Errata histórica IBGE referente ao SIDRA 1094, 05/05/2023, revisões 2008–2022: https://www.ibge.gov.br/estatisticas/economicas/agricultura-e-pecuaria/9203-pesquisas-trimestrais-do-abate-de-animais.html — snapshot atual não é evidência de vintages retroativos.
+
+### Artefatos
+- \`src/nivon/pecuaria_sidra_abate.py\` — parser de bytes JSON salvo localmente, sem rede. Exige mapeamento EXPLÍCITO de DnC para territorio/periodo/variavel/referencia_temporal/inspecao e rebanho apenas em bovinos, mapa de IDs de variáveis e IDs de categorias TOTAL. Detecta dimensão não declarada, variável porcentual, unidade incompatível, soma indevida de categorias, períodos não trimestrais e duplicata; censuras são separadas, nunca zero. Retorna observações canônicas, pares incompletos, SHA256 real do bruto, edição declarada e status não homologado.
+- \`tests/test_pecuaria_sidra_snapshot.py\` — cenários totalmente sintéticos. IDs 9999/8888 e códigos 0 de total são INVENTADOS para prova de contrato; **não representam códigos oficiais do IBGE**.
+- \`config/motores_inteligencia.v1.json\` e \`registro_motores.py\` — parser incluído nas frentes BOI, FRANGO e SUINO, com execução operacional ainda desligada.
+- Dataset existente \`IBGE_ABATE\` corresponde à tabela bovina 1092 em escopo genérico; **não criar dataset 1092 duplicado** antes de reconciliação pelo diretor da plataforma. \`IBGE_ABATE_FRANGO_1094\` e \`IBGE_ABATE_SUINO_1093\` são os IDs canônicos preexistentes.
+
+### Validação REAL ainda pendente — limite material
+- As URLs \`apisidra.ibge.gov.br/values/t/1092\`, 1093 e 1094, e o serviço v3 de metadados, não puderam ter resposta aberta/verificada neste ambiente. Não se atribuir IDs verdadeiros de variáveis/categorias, ordenação D1C...DnC ou unidade MN exata sem capturar ao menos uma amostra autêntica.
+- Para homologar: resolver endpoint HTTPS real e direitos; arquivar somente material autorizado fora do repositório público; registrar prova de download e datas de publicação/coleta, inclusive horário e fuso; confirmar layout/códigos e unidade por espécie; adicionar fixture de estrutura real saneada sem dados sensíveis; executar parser no arquivo real; reconciliar totais nacionais por trimestre com PDF/publicação IBGE; executar retrospectivas e análise de revisões históricas.
+- Não somar N1 (Brasil) com N3 (UF) nem subcategorias com totais. Não tratar código de missing como zero. O total físico brasileiro e o total das UFs podem divergir por confidencialidade e revisões: diagnosticar, não corrigir sem fonte.
+- A assinatura \`status_fonte\`/\`operacoes_autorizadas\` é um gate explícito, não atestado de licença. PENDENTE e falta de direito bloqueiam leitura/armazenamento. Nenhuma fonte, cron ou publicação habilitada.
+
+**Próxima tarefa executável:** verificar resposta de metadados/valores oficiais SIDRA e direitos aplicáveis, mapeando IDs e categorias por tabela/edição; usar arquivo autêntico autorizado para teste e guardar hash/vintage. Depois ligar observações verificadas a séries revisáveis com corte de publicação e modelos por espécie. Sem essa prova, o parser fica CODE_TESTED_SYNTHETIC_ONLY.
