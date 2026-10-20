@@ -121,7 +121,8 @@ def adaptar_evento_whatsapp(
             raise ErroAdaptadorFrete("reajuste sem versão histórica comprovada")
     if evento.get("truth_classification") != "OBSERVADO":
         raise ErroAdaptadorFrete("classe de observação incorreta")
-    if evento.get("rate_unit", "").strip().upper() != "BRL/T":
+    unit = evento.get("rate_unit")
+    if not isinstance(unit, str) or unit.strip().upper() != "BRL/T":
         raise ErroAdaptadorFrete("unidade não é BRL/t explícito")
     valor = _decimal(evento.get("rate"), "rate")
 
@@ -144,9 +145,9 @@ def adaptar_evento_whatsapp(
             or autorizacao.get("provider") != fonte_provider):
         raise ErroAdaptadorFrete("canal/tenant/fonte sem autorização verificada")
     operacoes = autorizacao.get("operacoes_permitidas")
-    if not isinstance(operacoes, (tuple, list, set, frozenset)) or not {
-        "LEITURA", "ARMAZENAMENTO", "ANALISE",
-    }.issubset(set(operacoes)):
+    if (not isinstance(operacoes, (tuple, list, set, frozenset))
+            or any(not isinstance(op, str) for op in operacoes)
+            or not {"LEITURA", "ARMAZENAMENTO", "ANALISE"}.issubset(set(operacoes))):
         raise ErroAdaptadorFrete("direitos de leitura, armazenamento e análise ausentes")
     fonte = _id(autorizacao.get("fonte_id"), "fonte_id")
     if not _SHA.fullmatch(str(autorizacao.get("comprovante_sha256", ""))):
@@ -161,6 +162,10 @@ def adaptar_evento_whatsapp(
         raise ErroAdaptadorFrete("resolução sem evidência vinculada ao evento/versão")
     municipio = _id(resolucao.get("municipio_ibge"), "municipio_ibge")
     destino_id = _id(resolucao.get("destino_ibge"), "destino_ibge")
+    if not (len(municipio) == len(destino_id) == 7
+            and municipio.isascii() and municipio.isdecimal()
+            and destino_id.isascii() and destino_id.isdecimal()):
+        raise ErroAdaptadorFrete("municípios devem usar IDs IBGE de 7 dígitos")
     ponto = _id(resolucao.get("pickup_entity_id"), "pickup_entity_id")
     transp = _id(resolucao.get("transportadora_id"), "transportadora_id")
     descarga = _id(resolucao.get("descarga_entity_id"), "descarga_entity_id")
