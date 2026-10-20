@@ -355,6 +355,36 @@
       "priority": "P1",
       "integration": "IVO_SUPERVISED_ML",
       "gate": "TEMPO_FEATURES_POR_VINTAGE_REGULARIZACAO_OVERFITTING"
+    },
+    {
+      "id": "CONFORMAL_REFERENCE",
+      "repository": "https://github.com/aangelopoulos/conformal-prediction",
+      "purpose": "referencia academica para calibracao de incerteza e testes sob dependencia temporal",
+      "license_declared": "MIT",
+      "status": "RESEARCH_ONLY",
+      "priority": "P1",
+      "integration": "src/nivon/ivo_intervalos.py",
+      "gate": "CALIBRACAO_REAL_POR_CADEIA_REGIME_HORIZONTE_COMPROVAR_COBERTURA"
+    },
+    {
+      "id": "FRICTIONLESS",
+      "repository": "https://github.com/frictionlessdata/frictionless-py",
+      "purpose": "validar schemas e qualidade de arquivos tabulares CSV e planilhas antes da memoria do IVO",
+      "license_declared": "MIT",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "HISTORICO_QUALIDADE",
+      "gate": "COMPARAR_VALIDADORES_CANONICOS_EXISTENTES_CUSTO_DEPENDENCIAS"
+    },
+    {
+      "id": "PYGEOAPI",
+      "repository": "https://github.com/geopython/pygeoapi",
+      "purpose": "publicar e consultar dados espaciais usando padroes abertos OGC",
+      "license_declared": "MIT",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P2",
+      "integration": "IVO_GEOSPATIAL_API",
+      "gate": "NAO_HOSPEDAR_SERVIDOR_ATE_HOMOLOGACAO_LICENCA_FONTE_CUSTO_SEGURANCA"
     }
   ]
 }
