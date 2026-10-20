@@ -17,7 +17,7 @@ class ErroTendencia(ValueError):
 
 
 CLASSES = ("ALTA", "BAIXA", "ESTABILIDADE")
-FREQUENCIAS = ("DIARIA", "SEMANAL", "MENSAL", "ANUAL")
+FREQUENCIAS = ("DIARIA", "SEMANAL", "SESSOES", "MENSAL", "ANUAL")
 
 
 def _numero(valor: object, nome: str, *, nao_negativo: bool = False) -> float:
@@ -77,6 +77,9 @@ def _consecutivo(a: date, b: date, frequencia: str) -> bool:
         return (b - a).days == 1
     if frequencia == "SEMANAL":
         return (b - a).days == 7
+    if frequencia == "SESSOES":
+        # Pregões/sessões não acontecem todo dia; calendário de feriados é QC externo.
+        return 1 <= (b - a).days <= 10
     if frequencia == "MENSAL":
         return a.day == b.day == 1 and b.year * 12 + b.month == a.year * 12 + a.month + 1
     if frequencia == "ANUAL":
@@ -110,7 +113,7 @@ def _voto(delta: float, limiar: float) -> str:
 def tendencia_observada(
     serie: Sequence[Mapping], *, as_of: str, fonte_id: str, unidade: str,
     frequencia: str, janela: int = 6, sazonalidade: int = 0,
-    tolerancia_absoluta: float = 0.0, tolerancia_relativa: float = 0.02,
+    tolerancia_absoluta: float = 0.0, tolerancia_relativa: float = 0.0,
     nao_negativo: bool = True,
 ) -> dict:
     """Classifica movimento descritivo, sem extrapolar para o futuro.
@@ -185,7 +188,7 @@ def tendencia_observada(
 
 def tendencia_projetada(
     base: Mapping, cenarios: Sequence[Mapping], *, as_of: str, fonte_id: str, unidade: str,
-    tolerancia_absoluta: float = 0.0, tolerancia_relativa: float = 0.02,
+    tolerancia_absoluta: float = 0.0, tolerancia_relativa: float = 0.0,
     nao_negativo: bool = True,
 ) -> dict:
     """Consenso de CENÁRIOS futuros; pesos NÃO são probabilidades calibradas.
