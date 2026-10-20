@@ -12,20 +12,12 @@ import json
 import re
 import unicodedata
 
-from .agregacao_pam_ibge import _PRODUTOS, ErroAgregacaoIBGE
+from .agregacao_pam_ibge import _PRODUTOS, C81_PAM_POR_CULTURA, ErroAgregacaoIBGE
 from .sidra_pam import planejar_pam_1612, normalizar_pam_1612, ErroSIDRAPAM
 
 _VARIAVEIS={"AREA_COLHIDA_HA":"216","PRODUCAO_T":"214","RENDIMENTO_KG_HA":"112"}
-# SIDRA tabela 1612, classificação C81 (lavouras temporárias).
-# A correspondência é verificada no dicionário de categorias C81, NÃO no
-# nome comercial nem nas linhas de resultado, que repetem o filtro solicitado.
-# https://sidra.ibge.gov.br/tabela/1612
-# https://sidra.ibge.gov.br/home/pimpfbr/brasil (apenas fonte documental)
-C81_PAM_POR_CULTURA = {
-    "SOJA": "2713", "MILHO": "2711", "TRIGO": "2716",
-    "ALGODAO": "2689", "CANA": "2696", "SORGO": "2714",
-    "GERGELIM": "83383",
-}
+# SIDRA 1612: dicionário C81 compartilhado com o agregador estadual.
+# O módulo reexporta C81_PAM_POR_CULTURA por compatibilidade de contrato.
 
 _UNIDADES={
     "AREA_COLHIDA_HA":{"HECTARES","HECTARE"},

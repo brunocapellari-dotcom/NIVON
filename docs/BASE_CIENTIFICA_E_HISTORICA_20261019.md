@@ -158,3 +158,19 @@ A verificação agora impede reproduzir feijão como soja ou
 trocar culturas entre quaisquer das sete frentes agrícolas.
 Fixtures foram corrigidas e novos testes cobrem a troca
 maliciosa/errada, cada código distinto e a preservação no registro.
+
+### Validação C81 em duas camadas (20/10/2026)
+
+A taxonomia C81 passou a ter uma única fonte canônica de código em
+`src/nivon/agregacao_pam_ibge.py`, reutilizada por
+`src/nivon/composicao_pam_sidra.py`. O leitor municipal reprova
+cultura e categoria incompatíveis antes de ler os RAWs, e o
+agregador **também exige `codigo_categoria_c81`** em todos os
+municípios antes de calcular a produtividade ponderada estadual.
+
+Isso fecha o caminho alternativo de entrada por API interna, scripts
+ou objetos sintéticos que burlavam o leitor municipal.
+Um objeto com `produto_ibge="SOJA_GRAO"` mas C81 `2702`
+é rejeitado, bem como um objeto sem C81. Testes de regressão
+cobrem as duas situações. Direitos, versão de publicação e
+completude territorial seguem pendentes de homologação.

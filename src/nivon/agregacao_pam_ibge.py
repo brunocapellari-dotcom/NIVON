@@ -27,6 +27,14 @@ _PRODUTOS={
 }
 _LIMITES_KG_HA={"SOJA":12000,"MILHO":25000,"TRIGO":14000,"ALGODAO":20000,
                 "CANA":250000,"SORGO":20000,"GERGELIM":10000}
+
+# Contrato de identidade C81 da PAM 1612 centralizado nesta camada,
+# validado no leitor e novamente no agregador, sem derivar cultura de texto.
+C81_PAM_POR_CULTURA = {
+    "SOJA": "2713", "MILHO": "2711", "TRIGO": "2716",
+    "ALGODAO": "2689", "CANA": "2696", "SORGO": "2714",
+    "GERGELIM": "83383",
+}
 _HASH=re.compile(r"[a-f0-9]{64}\Z")
 
 
@@ -49,6 +57,10 @@ def _dados_referencia(r):
         raise ErroAgregacaoIBGE("PAM gergelim não foi incluído antes de 2025")
     if r.get("produto_ibge")!=_PRODUTOS[crop]:
         raise ErroAgregacaoIBGE("produto IBGE incompatível: separar milho safras e algodão caroço/pluma")
+    if r.get("codigo_categoria_c81") != C81_PAM_POR_CULTURA[crop]:
+        raise ErroAgregacaoIBGE(
+            "categoria SIDRA C81 ausente ou incompatível com cultura: "+
+            C81_PAM_POR_CULTURA[crop])
     municipality=r.get("municipio_ibge")
     if not isinstance(municipality,str) or not re.fullmatch(r"[1-9][0-9]{6}",municipality):
         raise ErroAgregacaoIBGE("código municipal IBGE 7 dígitos obrigatório")
@@ -121,7 +133,8 @@ def agregar_municipios_pam(*,registros:list[dict],uf_ibge:int,
     reproves=[x["municipio_ibge"] for x in filas if x["estado"]=="REPROVADO_ROUNDING"]
     return {
         "dataset_id":"IBGE_PAM","ano":ano,"cultura":cultura,
-        "produto_ibge":_PRODUTOS[cultura],"uf_ibge":uf_ibge,
+        "produto_ibge":_PRODUTOS[cultura],"codigo_categoria_c81":C81_PAM_POR_CULTURA[cultura],
+        "uf_ibge":uf_ibge,
         "edicao_id":vintage[0],"raw_sha256":vintage[1],
         "municipios_no_lote":len(filas),
         "area_colhida_ha":str(area),"producao_total_t":str(production),
