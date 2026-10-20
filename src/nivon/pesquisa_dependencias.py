@@ -138,10 +138,14 @@ def inventariar(pyproject: str) -> dict:
             name, constraint = _requisito(item)
             risco = None
         except ErroDependencia:
-            m = re.match(r"\s*([A-Za-z][A-Za-z0-9_.-]*)", item)
+            # Limite inferior simples de build é risco explícito; URL/marker
+            # direto jamais vira exceção tolerada.
+            m = re.fullmatch(
+                r"\s*([A-Za-z][A-Za-z0-9_.-]*)\s*>=\s*(\d+(?:\.\d+){0,3})\s*", item
+            )
             if not m:
-                raise ErroDependencia("nome da ferramenta de build inválido")
-            name, constraint = _nome(m.group(1)), item
+                raise ErroDependencia("requisito de build não auditável")
+            name, constraint = _nome(m.group(1)), ">=" + m.group(2)
             risco = "BUILD_REQUIRES_MANUAL_RESOLUTION_REVIEW"
         build_revisao.append({"distribution": name, "declared": constraint, "risk": risco})
 
