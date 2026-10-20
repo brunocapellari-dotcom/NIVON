@@ -174,3 +174,14 @@ Um objeto com `produto_ibge="SOJA_GRAO"` mas C81 `2702`
 é rejeitado, bem como um objeto sem C81. Testes de regressão
 cobrem as duas situações. Direitos, versão de publicação e
 completude territorial seguem pendentes de homologação.
+
+### Regra de separador ambíguo em dados SIDRA (20/10/2026)
+
+A PAM pode ser exportada por diversas ferramentas em convenções
+numéricas diferentes. O texto `3.750` pode significar 3,75
+ou 3.750 unidades; o parser numérico deve reprovar strings
+com um ponto e três dígitos à direita quando ainda não existe
+metadado oficial verificado da convenção numérica daquele RAW.
+Essa regra evita erros de fator mil em produtividade e produção.
+O desbloqueio exigirá amostra real, metadados do formato, hash,
+e teste de regressão, sem atribuir a priori o significado.

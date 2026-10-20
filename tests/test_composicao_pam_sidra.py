@@ -79,6 +79,13 @@ class TestComposicaoPAM(unittest.TestCase):
             with self.assertRaises(ErroComposicaoPAM):
                 montar_pam_municipal(**i)
 
+    def test_separador_de_milhar_e_decimal_ambiguo_reprovado(self):
+        for texto in ("3.750","12.000","0.000"):
+            with self.assertRaisesRegex(ErroComposicaoPAM,"ambígua"):
+                montar_pam_municipal(**inputs(yield_=texto))
+        x=montar_pam_municipal(**inputs(yield_="3750"))
+        self.assertEqual(x["registro_agregavel"]["rendimento_reportado_kg_ha"],"3750")
+
     def test_unidade_uma_variavel_incompativel(self):
         i=inputs()
         payload=json.loads(i["raws"]["PRODUCAO_T"])

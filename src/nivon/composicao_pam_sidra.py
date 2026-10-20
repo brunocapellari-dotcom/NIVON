@@ -51,6 +51,11 @@ def _stamp(v):
 def _valor_exato(raw):
     if not isinstance(raw,str) or not re.fullmatch(r"\d+(?:[.,]\d+)?",raw):
         raise ErroComposicaoPAM("valor bruto deve ser numérico decimal não negativo")
+    # Texto como 3.750 pode ser decimal ou separador de milhares.
+    # Sem convenção oficial autenticada, bloquear risco de erro 1000x.
+    if re.fullmatch(r"\\d{1,3}\\.\\d{3}",raw):
+        raise ErroComposicaoPAM(
+            "formatação numérica ambígua: ponto decimal ou milhar")
     try:val=Decimal(raw.replace(",","."))
     except InvalidOperation as exc:raise ErroComposicaoPAM("decimal inválido") from exc
     if not val.is_finite() or val>=Decimal("1e16") or len(val.as_tuple().digits)>35:
