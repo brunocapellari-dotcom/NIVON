@@ -21,10 +21,10 @@ def prova(publicado, coletado):
 def dados():
     texto = (
         "*RESUMO ESTRATÉGICO DO AGRONEGÓCIO — NIVON*\n"
-        "Chicago Soja: 1050 USc/bu, fechamento anterior 19/10\n"
+        "Chicago Soja: 1050 USc/bu, fechamento anterior 19/10/2026\n"
         "Plantio de soja avança em Mato Grosso — resumo verificado\n"
         "Sorriso/MT → Dom Aquino/MT: R$ 130/t, 800 t/dia "
-        "(volume REFERENCIA, não realizado)\n"
+        "(volume REFERENCIA, não realizado), ref. 20/10/2026\n"
     )
     edicao = {"estado": "EDICAO_OFFLINE_PREPARADA_SEM_ENVIO",
               "gerado_em": AGORA, "texto": texto,
@@ -148,6 +148,26 @@ class TestPreflightEditorial(unittest.TestCase):
         d["cotacoes"][0]["valor_anterior"] = "1000"
         d["cotacoes"][0]["variacao_pct"] = "20"
         self.assertTrue(any("variação" in b for b in avaliar(d)["bloqueios"]))
+
+    def test_valor_cotacao_diferente_do_publicado_bloqueia(self):
+        d = dados()
+        d["cotacoes"][0]["valor"] = "1051"
+        self.assertTrue(any("não reconciliam com texto" in b
+                            for b in avaliar(d)["bloqueios"]))
+
+    def test_referencia_cotacao_diferente_do_texto_bloqueia(self):
+        d = dados()
+        d["cotacoes"][0]["referencia_em"] = "2026-10-18T17:00:00-03:00"
+        d["cotacoes"][0]["sessao_fechamento"] = "2026-10-18"
+        d["cotacoes"][0]["ultima_sessao_concluida"] = "2026-10-18"
+        self.assertTrue(any("não reconciliam com texto" in b
+                            for b in avaliar(d)["bloqueios"]))
+
+    def test_valor_frete_diferente_do_publicado_bloqueia(self):
+        d = dados()
+        d["fretes"][0]["valor_rs_t"] = "140"
+        self.assertTrue(any("valor/data de frete" in b
+                            for b in avaliar(d)["bloqueios"]))
 
     def test_volume_referencia_nao_virar_realizado(self):
         d = dados()
