@@ -383,7 +383,9 @@
         "nivon.nasa_power_diario:normalizar_power_diario",
         "nivon.nasa_power_backfill:planejar_backfill",
         "nivon.grade_meteorologica_store:grade_asof",
-        "nivon.chirps_v3_conservacao:reconciliar_chirps_pentada"
+        "nivon.chirps_v3_conservacao:reconciliar_chirps_pentada",
+        "nivon.hidrologia_chuva_vazao:escoamento_scs_cn",
+        "nivon.hidrologia_chuva_vazao:propagar_muskingum"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -622,7 +624,9 @@
         "nivon.motores_hidrologia_cientifica:balanco_reservatorio_diario",
         "nivon.motores_hidrologia_cientifica:avaliar_previsao_vazao",
         "nivon.validacao_previsoes_ambientais:validar_hindcast_ambiental",
-        "nivon.chirps_v3_conservacao:reconciliar_chirps_pentada"
+        "nivon.chirps_v3_conservacao:reconciliar_chirps_pentada",
+        "nivon.hidrologia_chuva_vazao:escoamento_scs_cn",
+        "nivon.hidrologia_chuva_vazao:propagar_muskingum"
       ],
       "data_dependencies": [
         "ANA_HIDRO",
@@ -635,7 +639,7 @@
         "ERA5_LAND_CDS",
         "NASA_GPM_IMERG"
       ],
-      "indicators_planned": 12,
+      "indicators_planned": 16,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
       "inputs_reais_homologados": false,
       "previsao_homologada": false,
