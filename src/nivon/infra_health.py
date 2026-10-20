@@ -37,6 +37,7 @@ def _abrir_leitura_ledger(caminho: str | Path) -> sqlite3.Connection:
     if not 0 < dados.st_size <= 1_000_000_000:
         raise ErroSaude("ledger vazio ou acima do limite de inspeção")
     uri = "file:" + quote(str(p.absolute()), safe="/") + "?mode=ro"
+    conn = None
     try:
         conn = sqlite3.connect(uri, uri=True, timeout=2)
         conn.row_factory = sqlite3.Row
@@ -47,7 +48,8 @@ def _abrir_leitura_ledger(caminho: str | Path) -> sqlite3.Connection:
             raise ErroSaude("schema do ledger não verificado")
         return conn
     except (sqlite3.Error, ErroSaude) as exc:
-        conn.close()
+        if conn is not None:
+            conn.close()
         raise ErroSaude("ledger não pode ser inspecionado com segurança") from exc
 
 
