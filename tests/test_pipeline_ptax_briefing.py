@@ -64,7 +64,7 @@ class TestPipelinePTAX(unittest.TestCase):
         self.assertEqual(p["unidade"],"R$/USD")
         self.assertEqual(p["natureza"],"OBSERVADO")
         self.assertEqual(p["competencia"],"2026-10-19")
-        self.assertEqual(p["coletado_em"],"2026-10-20T11:30:00+00:00")
+        self.assertEqual(p["coletado_em"],"2026-10-20T08:30:00-03:00")
         self.assertEqual(p["sha256_origem"],configuracao()["snapshot"]["sha256"])
         self.assertEqual(p["evidencia_direitos_id"],"DOCUMENTO_FICTICIO_TESTE_20261020")
         self.assertEqual(p["sessao_fechamento"],"2026-10-19")
