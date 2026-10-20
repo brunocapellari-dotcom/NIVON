@@ -121,3 +121,18 @@ validador matemático em `src/nivon/infra_oci_quota.py` e guia em
 `infra/oci/README.md`. Quotas são **compartilhadas pela tenancy**; o
 cálculo 1 OCPU/4 GB/50 GB só verifica um candidato isolado, não comprova
 região, capacidade, disponibilidade, assinatura nem custo zero garantido.
+
+## Imagem executável de worker offline (ainda sem produção)
+
+`infra/docker/Dockerfile.worker` e `infra/compose.offline-worker.yaml`
+criam um contêiner Python isolado, não root (UID 65532), sem rede,
+portas ou scheduler. O arquivo Compose só define perfil
+`offline-worker`, por padrão inativo. Um diretório host privado
+é exigido mesmo para simular persistência: não montar bancos reais.
+
+`src/nivon/infra_worker.py` aceita apenas `self-check` e
+`synthetic-once`; **nenhum comando de coleta ou publicação existe**.
+A construção local amd64 e a construção de camadas arm64 são
+verificadas por `.github/workflows/infra_worker.yml`; não há deploy,
+push de imagem ou teste funcional nativo em OCI ARM64. O guia de
+reprodução está em `infra/runbooks/offline_worker.md`.
