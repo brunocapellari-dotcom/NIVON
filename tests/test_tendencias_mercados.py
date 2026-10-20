@@ -53,6 +53,8 @@ def fretes(valores=None):
                 "produto": "MILHO", "veiculo": "RODOTREM",
                 "pedagio": "ADICIONAL", "natureza": "OFERTA",
                 "unidade": "BRL/T", "lote_id": f"FAZENDA-{i}",
+                "pickup_entity_id": f"PONTO-{i}",
+                "transportadora_id": f"TRANSPORTADORA-{i}",
                 "preco_rs_t": str(preco+i),
             })
     return registros
@@ -147,14 +149,66 @@ class TestTendenciasPrioritarias(unittest.TestCase):
         r = analisar_fisico(fisico([100]*6))
         self.assertEqual(r["tendencia"], "ESTABILIDADE")
 
-    def test_frete_mediana_por_lote_sem_pseudovolume(self):
+    def test_frete_variacao_pareada_sem_pseudovolume(self):
         r = analisar_frete(fretes())
         self.assertEqual(r["tendencia"], "ALTA")
         self.assertEqual(r["segmento"], "FRETE_ANUNCIADO")
         self.assertEqual(r["reenvios_deduplicados"], 0)
         self.assertEqual(r["lotes_distintos_total_por_dia"], 18)
-        self.assertEqual(r["cobertura_amostral"][0]["preco_mediano_rs_t"], "151")
+        self.assertEqual(r["cobertura_amostral"][0]["variacao_pareada_mediana_rs_t"], "0")
         self.assertNotIn("volume_transportado", r)
+
+    def test_r01_efeito_composicao_fazendas_estaveis_nao_cria_alta(self):
+        # A=100 em todos os dias; B=200 só nos dias 1-3, C=300 nos
+        # dias 4-6. Preços individuais NÃO sobem. Medianas brutas 150→200
+        # gerariam alta falsa; painel A sozinho é insuficiente.
+        lines = []
+        for idx, dia in enumerate(datas_sessoes()):
+            empresas = (("A", 100), ("B", 200)) if idx < 3 else (("A", 100), ("C", 300))
+            for fazenda, preco in empresas:
+                lines.append({
+                    **obs(dia, preco), "origem_ibge": ORIGEM,
+                    "destino_ibge": DESTINO, "produto": "MILHO",
+                    "veiculo": "RODOTREM", "pedagio": "ADICIONAL",
+                    "natureza": "OFERTA", "unidade": "BRL/T",
+                    "lote_id": "LOTE-" + fazenda,
+                    "pickup_entity_id": fazenda,
+                    "transportadora_id": "TRANSP-" + fazenda,
+                    "preco_rs_t": str(preco),
+                })
+        r = analisar_frete(lines)
+        self.assertEqual(r["status"], "PAINEL_INCOMPARAVEL")
+        self.assertEqual(r["tendencia"], "INDETERMINADA")
+        self.assertFalse(r["publicavel"])
+
+    def test_r01_painel_estavel_com_novos_participantes_nao_cria_alta(self):
+        # Dois pares comparáveis, ambos estáveis; terceiros mudam
+        # de composição e preço entre períodos, mas não afetam o sinal.
+        lines = fretes()
+        for idx, row in enumerate(lines):
+            fazenda = row["lote_id"]
+            if fazenda == "FAZENDA-0":
+                preco = 100
+            elif fazenda == "FAZENDA-1":
+                preco = 200
+            else:
+                preco = 50 if idx // 3 < 3 else 500
+                row["pickup_entity_id"] = "PONTO-X" if idx // 3 < 3 else "PONTO-Y"
+            row["valor"] = preco
+            row["preco_rs_t"] = str(preco)
+        r = analisar_frete(lines)
+        self.assertEqual(r["tendencia"], "ESTABILIDADE")
+        self.assertEqual(len(r["identidades_comparaveis"]), 2)
+        self.assertNotIn("preco_mediano_rs_t", str(r))
+        self.assertNotIn("media_frete_municipio", str(r))
+
+    def test_r01_exige_ponto_embarque_e_transportadora(self):
+        for campo in ("pickup_entity_id", "transportadora_id"):
+            with self.subTest(campo=campo):
+                lines = fretes()
+                lines[0].pop(campo)
+                with self.assertRaises(ErroTendencia):
+                    analisar_frete(lines)
 
     def test_frete_20_reposts_nao_viram_lotes(self):
         linhas = fretes()
@@ -164,7 +218,7 @@ class TestTendenciasPrioritarias(unittest.TestCase):
         r = analisar_frete(linhas)
         self.assertEqual(r["reenvios_deduplicados"], 20)
         self.assertEqual(r["lotes_distintos_total_por_dia"], 18)
-        self.assertEqual(r["cobertura_amostral"][0]["preco_mediano_rs_t"], "151")
+        self.assertEqual(r["cobertura_amostral"][0]["variacao_pareada_mediana_rs_t"], "0")
 
     def test_frete_mesmo_lote_diferente_preco_bloqueia(self):
         linhas = fretes()
