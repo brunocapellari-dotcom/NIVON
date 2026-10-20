@@ -72,9 +72,9 @@ class TestAuditoriaSafra(unittest.TestCase):
         with self.assertRaises(ErroBacktestSafra):self.run_eval(rows)
 
     def test_ano_ou_municipio_insuficientes_reprovados(self):
-        r=self.run_eval(records(years=7,cities=4))
+        r=self.run_eval(records(years=7,cities=5))
         self.assertEqual(r["status"],"REPROVADO_COBERTURA_HISTORICA")
-        r=self.run_eval(records(years=10,cities=2))
+        r=self.run_eval(records(years=16,cities=2))
         self.assertEqual(r["status"],"REPROVADO_COBERTURA_HISTORICA")
 
     def test_numero_infinito_bool_negativo_e_unidade_implicita(self):
