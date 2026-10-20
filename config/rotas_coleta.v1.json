@@ -3381,7 +3381,7 @@
         "url": "https://power.larc.nasa.gov/docs/services/api/temporal/daily/",
         "source_proof": "https://power.larc.nasa.gov/docs/services/api/temporal/daily/"
       },
-      "implementation_scope": "CATALOG_ONLY: fonte e API real, direitos, grid/latência, parser/QA por versão pendentes",
+      "implementation_scope": "nasa_power_diario.py planeja URL oficial daily UTC e normaliza JSON offline com QC, missing -999, limites e proveniência; resposta NASA REAL e direitos ainda aguardam homologação",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,

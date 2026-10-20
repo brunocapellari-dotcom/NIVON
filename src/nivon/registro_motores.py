@@ -26,7 +26,7 @@ MODULOS=frozenset({
     "ana_contrato","series_ambientais","inmet_historico",
     "ana_hidrowebservice","inmet_bdmep",
     "motores_agrometeorologia_fao56","motores_hidrologia_cientifica",
-    "validacao_previsoes_ambientais",
+    "validacao_previsoes_ambientais","nasa_power_diario",
 })
 
 

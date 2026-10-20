@@ -378,7 +378,9 @@
         "nivon.motores_meteo_hidro:anomalia_nivel_rio",
         "nivon.series_ambientais:consultar_asof",
         "nivon.validacao_previsoes_ambientais:validar_hindcast_ambiental",
-        "nivon.validacao_previsoes_ambientais:confrontar_grade_com_estacao"
+        "nivon.validacao_previsoes_ambientais:confrontar_grade_com_estacao",
+        "nivon.nasa_power_diario:planejar_power",
+        "nivon.nasa_power_diario:normalizar_power_diario"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -572,7 +574,9 @@
         "nivon.motores_agrometeorologia_fao56:deficit_hidrico_fenologico",
         "nivon.motores_agrometeorologia_fao56:diagnosticar_chuva_climatologica",
         "nivon.validacao_previsoes_ambientais:validar_hindcast_ambiental",
-        "nivon.validacao_previsoes_ambientais:confrontar_grade_com_estacao"
+        "nivon.validacao_previsoes_ambientais:confrontar_grade_com_estacao",
+        "nivon.nasa_power_diario:planejar_power",
+        "nivon.nasa_power_diario:normalizar_power_diario"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
