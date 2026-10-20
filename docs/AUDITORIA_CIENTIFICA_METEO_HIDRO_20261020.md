@@ -78,3 +78,18 @@ Referências oficiais:
 - Frente 14: CI verde no commit final, revisões de licenças/dados, QA de resultados reais e gates de liberação.
 
 **Estado editorial:** `CODE_ONLY`; sem alegação de previsão operacional, sem integração paga, sem serviços ligados e sem WhatsApp.
+
+
+## 6. Continuação — prevenção de vazamento intraintervalo (20/10/2026)
+
+**Bug científico corrigido:** métricas de acumulados (mm) e vazão média de período (m³/s) não podem validar como previsão ex ante um cenário capturado depois do início da janela cuja observação agrega. Exigir `emissao <= publicacao_previsao <= captura_previsao <= inicio_da_janela` e `features_publicadas_ate <= emissao`, além de publicação/captura da observação posterior ao fechamento da janela.
+
+- `src/nivon/verificacao_chuva_ensemble_asof.py`: motor de verificação de previsão de **chuva acumulada por intervalo**. Requer identidade da estação, produto e versão; janelas não sobrepostas; antecedência ex ante; climatologia disponibilizada antes da janela; membros completos; QC; dados não negativos e nunca converter faltantes em 0. Reutiliza o CRPS empírico do motor já existente e calcula Brier/Brier Skill, MAE/RMSE/viés da média dos membros e confiabilidade por decil, sem promover desempenho.
+- `src/nivon/verificacao_vazao_asof.py`: reforça regra para volume integrado a partir de **vazão média intervalar**; vazão instantânea continua inelegível para essa integração. Calcula agora também antecedência mínima efetiva da **captura ao início do intervalo**.
+- Novas regressões sintéticas em `tests/test_verificacao_chuva_ensemble_asof.py` e `tests/test_verificacao_vazao_asof.py`; todas as flags de produção e homologação continuam desligadas.
+- `config/motores_inteligencia.v1.json` registra verificação de chuva nas frentes METEOROLOGIA e CLIMA_HIDRO; allowlist de `registro_motores.py` preserva importação restrita.
+- **Limites:** a fonte pode rotular incorretamente intervalos e timestamps; os contratos internos não atestam vintages originais, controle de qualidade instrumental, climatologia verdadeiramente livre de look-ahead ou validade dos membros NWP. Correção de viés, probabilidades calibradas e skill em safra dependem de backtests com dados autorizados, holdouts espaciais e edições históricas originais.
+
+**Gate CI:** vincular a execução GitHub Actions ao HEAD final deste PR; nunca reutilizar aprovação de commit anterior para declarar aprovação de alteração posterior.
+
+**Próxima tarefa executável:** ingestão e verificação offline de um conjunto real autorizado de previsões arquivadas (emitidas antes do intervalo) + pluviômetros INMET na mesma janela, com snapshot SHA, calendário de disponibilidade e prova de independência. Enquanto isso não existir, métricas são somente testes sintéticos, sem precisão operacional.
