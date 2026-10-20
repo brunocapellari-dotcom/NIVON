@@ -18,7 +18,8 @@ def fixture(n=36):
         observed = 100.0 + i
         iso = lambda x: x.isoformat()
         rows.append({
-            "estacao_id": "ANA_12345678", "modelo_id": "pesquisa_bacias",\n            "versao_modelo": "modelo_v1", "suporte_temporal": "MEDIA_INTERVALO",
+            "estacao_id": "ANA_12345678", "modelo_id": "pesquisa_bacias",
+            "versao_modelo": "modelo_v1", "suporte_temporal": "MEDIA_INTERVALO",
             "referencia_vertical": "datum_local_ANA",
             "emitido_em": iso(issue),
             "previsao_publicada_em": iso(pub),
@@ -82,7 +83,9 @@ class VerificacaoVazaoTests(unittest.TestCase):
         self.assertIsNone(res["erro_horario_pico_horas"])
 
     def test_nao_mistura_estacao_versao_datum(self):
-        for k, v in (("estacao_id", "ANA_OUTRA_ESTACAO"),\n                     ("modelo_id", "outro_modelo"),\n                     ("suporte_temporal", "INSTANTANEA"),
+        for k, v in (("estacao_id", "ANA_OUTRA_ESTACAO"),
+                     ("modelo_id", "outro_modelo"),
+                     ("suporte_temporal", "INSTANTANEA"),
                      ("versao_modelo", "v2"), ("referencia_vertical", "outro_datum")):
             rows = fixture()
             rows[3][k] = v
