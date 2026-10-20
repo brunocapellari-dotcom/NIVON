@@ -16,6 +16,7 @@ from .curadoria_radar import preparar_noticias_feed
 from .integracao_portos_briefing import montar_briefing_com_portos
 from .lineup_nacional import instante
 from .rss_radar import MAX_BYTES, ler_feed_xml
+from .ptax_briefing import normalizar_snapshot_ptax, construir_indicador_ptax
 
 
 class ErroPipelineBriefing(ValueError):
@@ -30,6 +31,7 @@ def gerar_edicao_offline(*, gerado_em: str, feeds: list[dict],
                          fretes: list[dict] | None = None,
                          registros_portuarios: list[dict] | None = None,
                          licencas_portuarias: dict | None = None,
+                         ptax_snapshots: list[dict] | None = None,
                          catalogo: dict | None = None, escopo: dict | None = None) -> dict:
     """Gera texto WhatsApp/auditoria a partir de dados offline já autorizados.
 
@@ -50,6 +52,32 @@ def gerar_edicao_offline(*, gerado_em: str, feeds: list[dict],
         or not isinstance(fretes,list) or not isinstance(registros_portuarios,list)
         or not isinstance(licencas_portuarias,dict)):
         raise ErroPipelineBriefing("entradas numéricas/portuárias inválidas")
+    if ptax_snapshots is None:
+        ptax_snapshots = []
+    if not isinstance(ptax_snapshots,list) or len(ptax_snapshots)>2:
+        raise ErroPipelineBriefing("snapshots de câmbio excedem USD/EUR permitidos")
+    moedas=set()
+    moeda_infos=[]
+    # Licenças e dataset NÃO são inferidos do snapshot; seu gestor é externo.
+    # O CLI de homologação não altera o catálogo canônico.
+    for source in ptax_snapshots:
+        if not isinstance(source,dict) or not all(k in source for k in (
+                "plano","snapshot","dataset","direitos")):
+            raise ErroPipelineBriefing("PTAX requer plano, snapshot e autorização externa")
+        ptax=normalizar_snapshot_ptax(source["snapshot"],source["plano"])
+        if ptax["moeda"] in moedas:
+            raise ErroPipelineBriefing("moeda PTAX duplicada no briefing")
+        moedas.add(ptax["moeda"])
+        result=construir_indicador_ptax(ptax,gerado_em=gerado_em,
+                        dataset=source["dataset"],direitos=source["direitos"])
+        # Uma fonte canônica para USD/EUR: dois indicadores, um contrato.
+        if "BCB_PTAX" in fontes_indicadores:
+            raise ErroPipelineBriefing("PTAX já declarada manualmente entre os indicadores")
+        indicadores.append(result["indicador"])
+        moeda_infos.append(result["evidencia"])
+    if moeda_infos:
+        fontes_indicadores=dict(fontes_indicadores)
+        fontes_indicadores.update(result["fonte_briefing"])
     ids=set();noticias=[];fontes=dict(fontes_indicadores);issues=[];boletins=[]
     for pos,f in enumerate(feeds):
         if not isinstance(f,dict):
@@ -102,6 +130,7 @@ def gerar_edicao_offline(*, gerado_em: str, feeds: list[dict],
         "sha256":briefing["sha256"],"texto":briefing["texto"],
         "status_portuario":briefing["status_portuario"],
         "fontes_rss":boletins,
+        "evidencias_cambio":moeda_infos,
         "noticias_recebidas_curadas":len(noticias),
         "indicadores_incluidos":briefing["indicadores_incluidos"],
         "fretes_incluidos":briefing["fretes_incluidos"],
