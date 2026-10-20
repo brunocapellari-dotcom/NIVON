@@ -1,0 +1,50 @@
+# Somente dados artificiais. Ensaio Restic cifrado em diretório efêmero do runner.
+# Sem credencial cloud, sem buckets, sem exportação, sem deploy e sem scheduled.
+name: NIVON Restic restore offline sintético
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/infra_restic_drill.yml'
+      - 'src/nivon/infra_restic_drill.py'
+      - 'src/nivon/backup_sqlite.py'
+      - 'src/nivon/pacote_recuperacao.py'
+      - 'tests/test_infra_restic_drill.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-restic-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  restic-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Obter código sem reter credenciais GitHub
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Instalar Restic do repositório Ubuntu no runner efêmero
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq restic
+          restic version
+      - name: Verificar contratos, segredos e recuperação local real
+        env:
+          PYTHONPATH: src
+          NIVON_RUNTIME_ENABLED: "false"
+          NIVON_BACKUP_ENABLED: "false"
+          NIVON_COLLECTORS_ENABLED: "false"
+          NIVON_PUBLICATION_ENABLED: "false"
+        run: |
+          python -m unittest discover -s tests -p test_infra_restic_drill.py -v
+          python -m nivon.infra_restic_drill
+          python -m nivon.infra_restic_drill --synthetic-drill
