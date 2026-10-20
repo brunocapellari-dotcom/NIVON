@@ -24,7 +24,9 @@
         "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
         "nivon.agregacao_pam_ibge:agregar_municipios_pam",
         "nivon.motor_tendencias:tendencia_observada",
-        "nivon.motor_tendencias:tendencia_projetada"
+        "nivon.motor_tendencias:tendencia_projetada",
+        "nivon.tendencias_mercados:tendencia_cbot",
+        "nivon.tendencias_mercados:tendencia_preco_fisico"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -68,7 +70,9 @@
         "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
         "nivon.agregacao_pam_ibge:agregar_municipios_pam",
         "nivon.motor_tendencias:tendencia_observada",
-        "nivon.motor_tendencias:tendencia_projetada"
+        "nivon.motor_tendencias:tendencia_projetada",
+        "nivon.tendencias_mercados:tendencia_cbot",
+        "nivon.tendencias_mercados:tendencia_preco_fisico"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -108,7 +112,8 @@
         "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
         "nivon.agregacao_pam_ibge:agregar_municipios_pam",
         "nivon.motor_tendencias:tendencia_observada",
-        "nivon.motor_tendencias:tendencia_projetada"
+        "nivon.motor_tendencias:tendencia_projetada",
+        "nivon.tendencias_mercados:tendencia_preco_fisico"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
@@ -135,7 +140,8 @@
         "nivon.motores_agro_estrategicos:boi_rendimento_carcaca",
         "nivon.modelos_fisicos:reconciliar_rebanho",
         "nivon.motor_tendencias:tendencia_observada",
-        "nivon.motor_tendencias:tendencia_projetada"
+        "nivon.motor_tendencias:tendencia_projetada",
+        "nivon.tendencias_mercados:tendencia_preco_fisico"
       ],
       "data_dependencies": [
         "IBGE_PPM",
@@ -211,7 +217,9 @@
         "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
         "nivon.agregacao_pam_ibge:agregar_municipios_pam",
         "nivon.motor_tendencias:tendencia_observada",
-        "nivon.motor_tendencias:tendencia_projetada"
+        "nivon.motor_tendencias:tendencia_projetada",
+        "nivon.tendencias_mercados:tendencia_cbot",
+        "nivon.tendencias_mercados:tendencia_preco_fisico"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
@@ -289,7 +297,8 @@
         "nivon.anp_ppi:ler_ppi_xlsx",
         "nivon.anp_ppi:comparar_ppi_com_produtor",
         "nivon.motor_tendencias:tendencia_observada",
-        "nivon.motor_tendencias:tendencia_projetada"
+        "nivon.motor_tendencias:tendencia_projetada",
+        "nivon.tendencias_mercados:tendencia_preco_fisico"
       ],
       "data_dependencies": [
         "ANP_PRECO_REVENDA_DIESEL",
@@ -848,7 +857,8 @@
         "nivon.motores_integracao_estrategica:comparacao_intermodal",
         "nivon.inteligencia_temporal:custo_diesel_por_rota",
         "nivon.motor_tendencias:tendencia_observada",
-        "nivon.motor_tendencias:tendencia_projetada"
+        "nivon.motor_tendencias:tendencia_projetada",
+        "nivon.tendencias_mercados:tendencia_frete_anunciado"
       ],
       "data_dependencies": [
         "FRETES_WHATSAPP_AUTORIZADO",
