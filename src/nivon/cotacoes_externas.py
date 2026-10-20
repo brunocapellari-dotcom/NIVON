@@ -17,7 +17,7 @@ class ErroMercado(ValueError):
 
 FONTES = {"CME", "ICE", "B3", "CEPEA", "IMEA"}
 TIPOS = {"FECHAMENTO", "AJUSTE", "INDICADOR_FISICO"}
-UNIDADES = {"USD/BU", "USD/T", "USD/SHORT_TON", "USC/LB", "USD/CWT",
+UNIDADES = {"USD/BU", "USD/T", "USD/SHORT_TON", "USC/LB", "USC/BU", "USD/CWT",
             "BRL/SC60KG", "BRL/ARROBA", "BRL/L", "BRL/T", "USD/SC60KG"}
 
 
@@ -58,6 +58,6 @@ def cotacao_para_briefing(item: dict, direito: dict, *, gerado_em: str) -> dict:
         raise ErroMercado("produto não especificado")
     return {"titulo":f"{produto.strip()} {str(item.get('contrato') or '').strip()}".strip(),
             "valor":f"{valor} {item['unidade']}",
-            "fonte":fonte,"referencia":ref.date().isoformat(),
+            "fonte":fonte,"referencia":ref.isoformat(),
             "detalhes_fonte":source,"mercado_tipo":item["tipo"],
             "licenca_id":direito["id_aprovacao"]}
