@@ -19,7 +19,12 @@ class ErroCDP(ValueError):
     pass
 
 
-URL_SANTAREM = "https://www.cdp.com.br/programacao-de-navios-do-porto-de-santarem/"
+URLS_CDP = {
+    "SANTAREM": "https://www.cdp.com.br/programacao-de-navios-do-porto-de-santarem/",
+    "BELEM": "https://www.cdp.com.br/programacao-de-navios-porto-de-belem/",
+    "BARCARENA_VILA_DO_CONDE": "https://www.cdp.com.br/programacao-de-navio-do-porto-de-vila-do-conde/",
+}
+URL_SANTAREM = URLS_CDP["SANTAREM"]
 
 
 def _nome(text: str) -> str:
@@ -88,11 +93,17 @@ def _data(s: str):
     except ValueError as exc:raise ErroCDP("data CDP no formato dd/mm/yyyy inválida") from exc
 
 
-def interpretar_santarem(html: str, *, coletado_em: str, fonte_url: str=URL_SANTAREM,
-                        horizonte_dias: int=30) -> dict:
+def interpretar_cdp(html: str, *, porto_id: str, coletado_em: str,
+                    fonte_url: str | None = None, horizonte_dias: int=30) -> dict:
+    if porto_id not in URLS_CDP:
+        raise ErroCDP("porto não possui parser CDP homologável")
+    esperado=URLS_CDP[porto_id]
+    fonte_url=fonte_url or esperado
     parsed=urlsplit(fonte_url)
-    if parsed.scheme!="https" or parsed.hostname!="www.cdp.com.br" or parsed.path!=urlsplit(URL_SANTAREM).path:
-        raise ErroCDP("URL diferente do portal oficial de Santarém")
+    if (parsed.scheme!="https" or parsed.hostname!="www.cdp.com.br"
+            or parsed.path!=urlsplit(esperado).path or parsed.query or parsed.fragment
+            or parsed.username or parsed.password or parsed.port not in (None,443)):
+        raise ErroCDP("URL diferente do portal oficial do porto CDP")
     if not isinstance(html,str) or not html.strip() or len(html)>8_000_000:
         raise ErroCDP("HTML ausente ou excessivo")
     agora=instante(coletado_em)
@@ -110,6 +121,9 @@ def interpretar_santarem(html: str, *, coletado_em: str, fonte_url: str=URL_SANT
             if len(row)!=len(head):raise ErroCDP("tabela CDP com linha desalinhada")
             rid=row[ix["WDT_ID"]].strip()
             navio=row[ix["NAVIO"]].strip()
+            if navio.lower() in {"navio", "vessel", "-"} and not row[ix["QUANTIDADE(T)"]].strip():
+                # Placeholder público da CDP. Não é um navio real.
+                continue
             if not rid.isdigit() or not navio:raise ErroCDP("navio ou WDT ID inválidos")
             # WDT é registro de tabela, NÃO identificador nacional da viagem.
             key=(tabelas,rid)
@@ -135,7 +149,7 @@ def interpretar_santarem(html: str, *, coletado_em: str, fonte_url: str=URL_SANT
             if antigo:antigos+=1
             for produto,volume in zip(produtos,valores):
                 registros.append({
-                    "porto_id":"SANTAREM","registro_wdt":rid,
+                    "porto_id":porto_id,"registro_wdt":rid,
                     "tabela_origem":tabelas,"navio":navio,
                     "produto_original":produto,"toneladas_na_pagina":_ton(volume),
                     "unidade":"T_DECLARADA_NA_TABELA", "duv":None,
@@ -147,9 +161,16 @@ def interpretar_santarem(html: str, *, coletado_em: str, fonte_url: str=URL_SANT
                     "apto_briefing":False,
                 })
     if not tabelas or not registros:
-        raise ErroCDP("nenhuma tabela Santarém compatível e com registros")
-    return {"porto_id":"SANTAREM","registros":registros,
+        raise ErroCDP("nenhuma tabela CDP compatível com registros reais identificáveis")
+    return {"porto_id":porto_id,"registros":registros,
             "linhas_origem":len(identificadores),
             "linhas_antigas_ou_sem_data":antigos,
             "status":"EXTRAIDO_OFFLINE_SEM_DUV_NEM_DATA_PUBLICACAO",
             "aviso":"WDT não equivale a DUV; produtos da mesma linha não contam como navios adicionais."}
+
+
+def interpretar_santarem(html: str, *, coletado_em: str,
+                        fonte_url: str=URL_SANTAREM, horizonte_dias: int=30) -> dict:
+    """Compatibilidade para o coletor de Santarém, sem mudar contratos anteriores."""
+    return interpretar_cdp(html,porto_id="SANTAREM",coletado_em=coletado_em,
+                          fonte_url=fonte_url,horizonte_dias=horizonte_dias)
