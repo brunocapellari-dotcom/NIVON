@@ -42,7 +42,7 @@ def arquivar_replay_sintetico(relatorio: dict, *, ledger: LedgerPrevisoes,
         if periodo in ids:
             raise ErroLedger("competência duplicada")
         ids.add(periodo)
-        versao_id = "IVO_BLENDED_SEASONAL"
+        versao_id = "IVO_BLENDED_SEASONAL_" + relatorio["produto"]
         src = relatorio["fonte"]
         eixo = (versao_id, versao, src, relatorio["variavel"],
                 relatorio["produto"], relatorio["regiao"], relatorio["unidade"], periodo)
