@@ -272,3 +272,82 @@ def analyze_antaq_archive(
             warnings=tuple(warnings),
             monthly_port_cargo=tuple(output),
         )
+
+
+
+def compare_antaq_archive_vintages(
+    previous: AntaqArchiveSummary,
+    current: AntaqArchiveSummary,
+) -> dict[str, Any]:
+    """Diff of editions for the same official publication year.
+
+    Missing rows in the new edition are not silently transformed to 0 tonnes.
+    No roll-forward or vintage promotion happens inside this function.
+    """
+    if previous.archive_year != current.archive_year:
+        raise ValueError("revisoes devem ter o mesmo ano de referencia")
+    if previous.source_id != current.source_id:
+        raise ValueError("fonte distinta nao e revisao da mesma serie")
+    if previous.collected_at > current.collected_at:
+        raise ValueError("revisao com coleta cronologicamente anterior")
+    if (previous.source_published_at is not None
+            and current.source_published_at is not None
+            and previous.source_published_at > current.source_published_at):
+        raise ValueError("revisao publicada antes da edicao comparada")
+    if previous.archive_sha256 == current.archive_sha256:
+        return {
+            "status": "IDENTICAL_ARCHIVE",
+            "source_id": previous.source_id,
+            "reference_year": previous.archive_year,
+            "old_sha256": previous.archive_sha256,
+            "new_sha256": current.archive_sha256,
+            "changes": [], "publication_allowed": False,
+        }
+    dims = (
+        "year", "month", "port_name_published", "terminal_name_published",
+        "uf", "commodity_code", "commodity_name_published",
+        "direction_published", "cargo_nature_published", "navigation_published",
+    )
+    def index(rows):
+        out = {}
+        for row in rows:
+            k = tuple(row.get(field) for field in dims)
+            if k in out:
+                raise ValueError("duplicata em grupo de competencia")
+            out[k] = row
+        return out
+    a = index(previous.monthly_port_cargo)
+    b = index(current.monthly_port_cargo)
+    changes = []
+    for k in sorted(a.keys() | b.keys(), key=lambda v: tuple(str(x) for x in v)):
+        old = a.get(k)
+        new = b.get(k)
+        old_t = Decimal(old["gross_tonnes_published"]) if old else None
+        new_t = Decimal(new["gross_tonnes_published"]) if new else None
+        if old_t == new_t:
+            continue
+        status = ("ADDED_IN_NEW_PUBLICATION" if old_t is None
+                  else "ABSENT_FROM_NEW_PUBLICATION" if new_t is None
+                  else "REVISED_REPORTED_VOLUME")
+        changes.append({
+            "dimension": dict(zip(dims, k)),
+            "change_class": status,
+            "old_tonnes": str(old_t) if old_t is not None else None,
+            "new_tonnes": str(new_t) if new_t is not None else None,
+            "delta_tonnes": str(new_t - old_t) if old_t is not None and new_t is not None else None,
+            "evidence_class": "REVISAO_DE_DADOS_ESTATISTICOS_INFORMADOS",
+        })
+    return {
+        "status": "HISTORICAL_REVISION_DIAGNOSTIC",
+        "source_id": previous.source_id,
+        "reference_year": previous.archive_year,
+        "old_sha256": previous.archive_sha256,
+        "new_sha256": current.archive_sha256,
+        "old_collected_at": previous.collected_at,
+        "new_collected_at": current.collected_at,
+        "old_published_at": previous.source_published_at,
+        "new_published_at": current.source_published_at,
+        "changes": changes,
+        "publication_allowed": False,
+        "do_not_treat_missing_as_zero": True,
+    }
