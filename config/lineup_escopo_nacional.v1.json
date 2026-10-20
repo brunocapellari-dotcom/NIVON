@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "project": "NIVON",
-  "updated_on": "2026-10-19",
+  "updated_on": "2026-10-20",
   "scope": "INVENTARIO_NACIONAL_PARA_HOMOLOGACAO_NAO_INVENTARIO_TOTAL_DOS_TUPS",
   "source_ports_organized": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias",
   "source_private_register": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/instalacoes-privadas",

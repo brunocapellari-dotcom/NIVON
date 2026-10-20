@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 
 from .mdic_stream import processar_arquivo_anual
 from .registro_snapshots import registrar_snapshot, ErroSnapshot
+from .transacoes_sqlite import savepoint_atomico
 
 class ErroIngestaoMDIC(ValueError):
     pass
@@ -100,15 +101,15 @@ def ingerir_arquivo_mdic(
         antigo["direcao"]!=direcao or antigo["granularidade"]!=granularidade
     ):
         raise ErroIngestaoMDIC("SHA repetido com seleção/classificação divergente")
-    snapshot=registrar_snapshot(db,catalogo,dataset_id=did,
-        sha256=resultado["sha256_original"],tamanho=resultado["bytes_original"],
-        mime="text/csv",schema_versao="MDIC_ANUAL_1",coletado_em=coleta,
-        competencia=str(ano),publicacao=None,referencia=None,tipo=tipo,
-        autorizacoes=autorizacoes,evidencia_direitos=evidencia_direitos)
-    _tabelas(db)
-    sid=db.execute("SELECT id FROM nivon_snapshots WHERE dataset_id=? AND sha256=?",
-                   (did,resultado["sha256_original"])).fetchone()[0]
-    with db:
+    # Ledger + agregado são indivisíveis: falha em um reverte o outro.
+    with savepoint_atomico(db):
+        snapshot=registrar_snapshot(db,catalogo,dataset_id=did,
+            sha256=resultado["sha256_original"],tamanho=resultado["bytes_original"],
+            mime="text/csv",schema_versao="MDIC_ANUAL_1",coletado_em=coleta,
+            competencia=str(ano),publicacao=None,referencia=None,tipo=tipo,
+            autorizacoes=autorizacoes,evidencia_direitos=evidencia_direitos)
+        sid=db.execute("SELECT id FROM nivon_snapshots WHERE dataset_id=? AND sha256=?",
+                       (did,resultado["sha256_original"])).fetchone()[0]
         previo=db.execute("SELECT * FROM nivon_mdic_agregados WHERE snapshot_id=?",(sid,)).fetchone()
         if previo is not None:
             if (previo["resultado_json"]!=normal or previo["ano"]!=ano or

@@ -8,7 +8,8 @@ def plano():
           parametros=["PRECTOTCORR","T2M_MAX","T2M_MIN"])
 
 def fixture(*,missing=False):
-    return json.dumps({"properties":{"parameter":{
+    return json.dumps({"geometry":{"coordinates":[-56.1,-15.6]},
+                       "properties":{"parameter":{
         "PRECTOTCORR":{"20250101":10,"20250102":-999 if missing else 0,"20250103":25},
         "T2M_MAX":{"20250101":30,"20250102":29,"20250103":33},
         "T2M_MIN":{"20250101":20,"20250102":19,"20250103":22}
@@ -39,9 +40,16 @@ class TestNASA_POWER_UTC(unittest.TestCase):
     def test_serie_diaria_com_metadados(self):
         r=obter()
         self.assertEqual(r["numero_dias"],3)
+        self.assertAlmostEqual(r["latitude_grade"],-15.6)
+        self.assertAlmostEqual(r["longitude_grade"],-56.1)
         self.assertEqual(r["registros"][0]["valores"]["PRECTOTCORR"],10.)
         self.assertEqual(r["registros"][1]["valores"]["PRECTOTCORR"],0.)
         self.assertFalse(r["apto_previsao_homologada"])
+
+    def test_nao_aceita_grade_fora_da_regiao(self):
+        obj=json.loads(fixture())
+        obj["geometry"]["coordinates"]=[10,10]
+        with self.assertRaises(ErroPower):obter(json.dumps(obj).encode())
 
     def test_missing_sentinel_nao_vira_zero(self):
         r=obter(fixture(missing=True))

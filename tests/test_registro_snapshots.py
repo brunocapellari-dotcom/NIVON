@@ -64,10 +64,32 @@ class TestRegistroSnapshots(unittest.TestCase):
         with self.assertRaises(PermissionError): self.registrar(tipo="REAL_AUTORIZADO")
         self.assertEqual(self.db.execute("SELECT count(*) FROM nivon_snapshots").fetchone()[0],0)
 
-    def test_real_com_autorizacao_documentada(self):
-        r=self.registrar(tipo="REAL_AUTORIZADO",autorizacoes=frozenset({"COLETA","ARMAZENAMENTO"}),
-                         evidencia_direitos="DOC-2026-001")
+    def test_real_com_autorizacao_documentada_so_em_catalogo_habilitado(self):
+        local_cat={"datasets":[{"id":D,"source_id":"IBGE",
+                                 "enabled":True,"collection_authorized":True}]}
+        r=registrar_snapshot(self.db,local_cat,**(self.a | {
+            "tipo":"REAL_AUTORIZADO",
+            "autorizacoes":frozenset({"COLETA","ARMAZENAMENTO"}),
+            "evidencia_direitos":"DOC-2026-001"}))
         self.assertEqual(r["tipo"],"REAL_AUTORIZADO")
+
+    def test_real_mesmo_com_direitos_declarados_bloqueado_se_catalogo_off(self):
+        with self.assertRaises(PermissionError):
+            self.registrar(tipo="REAL_AUTORIZADO",
+                autorizacoes=frozenset({"COLETA","ARMAZENAMENTO"}),
+                evidencia_direitos="DOC-2026-001")
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM nivon_snapshots").fetchone()[0],0)
+
+    def test_real_exige_both_boolean_flags_exatamente_true(self):
+        for enabled, autorizado in ((False,True),(True,False),(1,True),(True,1),(None,True)):
+            cat={"datasets":[{"id":D,"source_id":"IBGE",
+                               "enabled":enabled,"collection_authorized":autorizado}]}
+            with self.assertRaises(PermissionError):
+                registrar_snapshot(self.db,cat,**(self.a | {
+                    "tipo":"REAL_AUTORIZADO",
+                    "autorizacoes":frozenset({"COLETA","ARMAZENAMENTO"}),
+                    "evidencia_direitos":"DOC-2026-001"}))
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM nivon_snapshots").fetchone()[0],0)
 
     def test_sintetico_nao_pode_se_disfarcar_de_licenciado(self):
         with self.assertRaises(ErroSnapshot):
@@ -122,3 +144,11 @@ class TestRegistroSnapshots(unittest.TestCase):
                     coletado_em="2026-10-20T12:00:00Z")
         with self.assertRaises(ErroSnapshot):
             self.registrar(tamanho=850_000_000)
+
+    def test_ledger_preserva_savepoint_de_transacao_externa(self):
+        self.db.execute("SAVEPOINT teste_externo")
+        self.registrar()
+        self.db.execute("ROLLBACK TO SAVEPOINT teste_externo")
+        self.db.execute("RELEASE SAVEPOINT teste_externo")
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM nivon_snapshots").fetchone()[0],0)
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM nivon_coletas").fetchone()[0],0)

@@ -9,6 +9,8 @@ import re
 import sqlite3
 from datetime import date, datetime, timezone
 
+from .transacoes_sqlite import savepoint_atomico
+
 
 class ErroSnapshot(ValueError):
     pass
@@ -104,8 +106,13 @@ def registrar_snapshot(db: sqlite3.Connection, catalogo: dict, *,
     if (not isinstance(sha256, str) or not _SHA.fullmatch(sha256)
             or type(tamanho) is not int or not 0 < tamanho <= _LIMITE_POR_DATASET.get(dataset_id, _LIMITE_PADRAO)):
         raise ErroSnapshot("hash/tamanho inválido")
-    if mime not in {"text/csv", "text/plain", "application/json", "application/pdf",
-                    "application/vnd.ms-excel"}:
+    # HTML somente para dataset LINEUP_* com validador próprio, não geral.
+    mimes={"text/csv", "text/plain", "application/json", "application/pdf",
+           "application/vnd.ms-excel",
+           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
+    if dataset_id.startswith("LINEUP_"):
+        mimes.add("text/html")
+    if mime not in mimes:
         raise ErroSnapshot("MIME não homologado para o registro")
     if (not isinstance(schema_versao, str) or not 1 <= len(schema_versao) <= 80
             or not re.fullmatch(r"[A-Za-z0-9._-]+", schema_versao)):
@@ -120,6 +127,11 @@ def registrar_snapshot(db: sqlite3.Connection, catalogo: dict, *,
     if tipo not in _TIPOS:
         raise ErroSnapshot("tipo de snapshot desconhecido")
     if tipo == "REAL_AUTORIZADO":
+        # Este é o gate CENTRAL: a declaração de direitos do chamador não
+        # pode contornar o estado OFF no catálogo canônico.
+        if (match[0].get("enabled") is not True
+                or match[0].get("collection_authorized") is not True):
+            raise PermissionError("snapshot real bloqueado: dataset desativado no catálogo")
         if not {"COLETA", "ARMAZENAMENTO"}.issubset(autorizacoes):
             raise PermissionError("direitos por operação não aprovados")
         if (not isinstance(evidencia_direitos, str) or not
@@ -130,7 +142,7 @@ def registrar_snapshot(db: sqlite3.Connection, catalogo: dict, *,
             raise ErroSnapshot("snapshot sintético não pode simular autorização real")
     estado = (dataset_id, fonte_id, sha256, tamanho, mime, schema_versao,
               competencia, ref, pub, tipo, evidencia_direitos)
-    with db:
+    with savepoint_atomico(db):
         anterior = db.execute("SELECT * FROM nivon_snapshots WHERE dataset_id=? AND sha256=?",
                               (dataset_id, sha256)).fetchone()
         nova_versao = anterior is None
