@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import patch
 
 from nivon.infra_restic_drill import (
-    ErroRestic, _comando, _credenciais_temporarias, _guardas, executar_drill,
+    ErroRestic, _comando, _credenciais_temporarias, _guardas, _criar_fixture, executar_drill,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -31,6 +31,19 @@ class TestResticFailClosed(unittest.TestCase):
             with self.subTest(field=field), self.assertRaises(ErroRestic):
                 _guardas({field: "true"})
         _guardas({})
+
+    def test_fixture_fecha_transacao_antes_do_backup(self):
+        # sqlite3.Connection.backup não deve esperar indefinidamente por writer.
+        with tempfile.TemporaryDirectory() as tmp:
+            def validar(conn, pasta, *, nome):
+                self.assertFalse(conn.in_transaction)
+                self.assertEqual(conn.execute(
+                    "SELECT count(*) FROM synthetic_records").fetchone()[0], 3)
+                return {"sha256": "f" * 64}
+            with patch("nivon.infra_restic_drill.criar_pacote_recuperacao",
+                       side_effect=validar):
+                self.assertEqual(_criar_fixture(Path(tmp) / "fixture")["sha256"],
+                                 "f" * 64)
 
     def test_binario_restic_necessario(self):
         with patch("nivon.infra_restic_drill.shutil.which", return_value=None):
