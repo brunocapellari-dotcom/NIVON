@@ -118,7 +118,7 @@ class TestWorkerCompose(unittest.TestCase):
     def test_base_e_contexto_sem_material_restrito(self):
         docker=DOCKERFILE.read_text(encoding="utf-8")
         ignore=(ROOT/".dockerignore").read_text(encoding="utf-8")
-        self.assertIn("FROM python:3.11-slim-bookworm",docker)
+        self.assertRegex(docker,r"FROM python:3\\.11-slim-bookworm@sha256:[0-9a-f]{64}")
         self.assertNotIn("COPY . ",docker)
         self.assertIn("!infra/docker/Dockerfile.worker",ignore)
         for excluded in ("**/.env*", "**/*.sqlite*", "**/*.key"):
