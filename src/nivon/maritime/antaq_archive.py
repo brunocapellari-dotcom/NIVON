@@ -11,6 +11,7 @@ import hashlib
 import io
 import math
 import re
+import unicodedata
 import zipfile
 from collections import defaultdict
 from dataclasses import asdict, dataclass
@@ -43,10 +44,15 @@ def _utc(value: str | datetime, label: str) -> str:
 
 
 def _mes(raw: str) -> int:
-    raw = raw.strip().lower().rstrip(".")
+    raw = unicodedata.normalize("NFKD", raw.strip().lower().rstrip("."))
+    raw = "".join(x for x in raw if not unicodedata.combining(x))
     if raw.isdigit() and 1 <= int(raw) <= 12:
         return int(raw)
-    month = _MONTHS.get(raw[:3])
+    long_names = ("janeiro", "fevereiro", "marco", "abril", "maio",
+                  "junho", "julho", "agosto", "setembro", "outubro",
+                  "novembro", "dezembro")
+    names = {name: idx for idx, name in enumerate(long_names, start=1)}
+    month = _MONTHS.get(raw) or names.get(raw)
     if month is None:
         raise ValueError("mes publicado desconhecido")
     return month
