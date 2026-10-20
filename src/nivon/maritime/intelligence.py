@@ -20,6 +20,7 @@ from .maritime_alerting import decide_alerts, PriorAlert
 from .maritime_weather import MaritimeWeatherRecord, PortWeatherThresholds, assess_maritime_weather
 from .maritime_trade_flow import PortTradeAggregate, LineupAggregate, build_trade_flow_signals
 from .maritime_final_readiness import evaluate_final_readiness
+from .cross_domain import CrossDomainSignal, evaluate_cross_domain
 
 
 def _utc(value: str | datetime, label: str) -> datetime:
@@ -58,6 +59,8 @@ class MaritimeAnalysisRequest:
     weather: MaritimeWeatherRecord | None = None
     weather_thresholds: PortWeatherThresholds | None = None
     previous_alerts: tuple[PriorAlert, ...] = ()
+    cross_domain_signals: tuple[CrossDomainSignal, ...] = ()
+    linked_scope_ids: tuple[str, ...] = ()
 
 
 class MaritimeIntelligenceCoordinator:
@@ -220,6 +223,11 @@ class MaritimeIntelligenceCoordinator:
             scope=port, anomalies=anomalies, now=now,
             prior_alerts=request.previous_alerts,
         )
+        cross_domain = evaluate_cross_domain(
+            now=now, scope_ids=(port, *request.linked_scope_ids),
+            signals=request.cross_domain_signals,
+            queue_status=queue['status'] if queue else None,
+        ) if request.cross_domain_signals else None
         readiness = evaluate_final_readiness(())
         blockers = list(readiness.blocked_gates)
         if not fresh_authorized:
@@ -246,7 +254,7 @@ class MaritimeIntelligenceCoordinator:
             "reconciliation": [reconciliation_to_row(x) for x in reconciled],
             "reconciliation_summary": snapshot_summary(reconciled) if reconciled else None,
             "queue": queue, "queue_forecast": forecast, "weather": weather,
-            "trade_flow": flows,
+            "trade_flow": flows, "cross_domain": cross_domain,
             "anomalies": [a.to_dict() for a in anomalies],
             "alert_candidates_not_dispatched": [a.to_dict() for a in alert_candidates],
             "release": {
