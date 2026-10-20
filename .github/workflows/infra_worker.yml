@@ -54,6 +54,11 @@ jobs:
           docker compose -f infra/compose.offline-worker.yaml --profile offline-worker \
             run --rm --no-deps nivon-offline-worker --mode synthetic-once \
             --instante 2026-10-20T16:30:00-03:00
-          test -s "$state/jobs.sqlite"
+          # Host runner cannot traverse mode-0700 directory owned by uid 65532.
+          sudo test -s "$state/jobs.sqlite"
+          docker compose -f infra/compose.offline-worker.yaml --profile offline-worker \
+            run --rm --no-deps --entrypoint python nivon-offline-worker \
+            -m nivon.infra_health --ledger /var/lib/nivon/state/jobs.sqlite \
+            --agora 2026-10-20T17:00:00-03:00
       - name: Validar geração do filesystem ARM64 sem executar código estrangeiro
         run: docker buildx build --platform linux/arm64 --file infra/docker/Dockerfile.worker --output type=cacheonly .
