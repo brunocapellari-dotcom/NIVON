@@ -153,6 +153,8 @@ def preparar_serie_precos(
             or type(max_registros) is not int or max_registros < 1
             or len(registros) > min(max_registros, 10000)):
         raise ErroQualidadeMercado("lote vazio, inválido ou excessivo")
+    # Um SHA informado não comprova sozinho a integridade dos bytes brutos:
+    # a conferência contra o snapshot do coletor é gate externo obrigatório.
     validadas = [_validar_obs(o, corte) for o in registros]
     identidades = {o["_identidade"] for o in validadas}
     fontes = {o["_fonte"] for o in validadas}
