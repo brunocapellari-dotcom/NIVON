@@ -34,7 +34,8 @@ def url_diaria(*,latitude,longitude,inicio:date,fim:date,parametros:tuple=PERMIT
     return BASE+"?"+urlencode({
         "parameters":",".join(parametros),"community":"AG",
         "longitude":f"{longitude:.6f}","latitude":f"{latitude:.6f}",
-        "start":inicio.strftime("%Y%m%d"),"end":fim.strftime("%Y%m%d"),"format":"JSON"
+        "start":inicio.strftime("%Y%m%d"),"end":fim.strftime("%Y%m%d"),
+        "format":"JSON","time-standard":"UTC"
     })
 
 
