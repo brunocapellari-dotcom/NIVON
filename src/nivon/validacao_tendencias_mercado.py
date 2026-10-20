@@ -7,10 +7,12 @@ Não treina modelos e NÃO certifica calibração ou autorização de publicaç�
 from __future__ import annotations
 
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
 from math import log
 from typing import Mapping, Sequence
+
+from .calendario_sessoes_mercado import indexar_calendario_sessoes
 
 
 class ErroBacktestMercado(ValueError):
@@ -59,6 +61,18 @@ def _vetor(v: object) -> tuple[float, ...]:
     return tuple(float(p) for p in probs)
 
 
+def _sessao(v: object, nome: str) -> str:
+    if not isinstance(v, str) or len(v) != 10:
+        raise ErroBacktestMercado(f"{nome}: data AAAA-MM-DD obrigatória")
+    try:
+        d = date.fromisoformat(v)
+    except ValueError as exc:
+        raise ErroBacktestMercado(f"{nome}: data inválida") from exc
+    if d.isoformat() != v:
+        raise ErroBacktestMercado(f"{nome}: data não canônica")
+    return v
+
+
 def _rotulo(base: Decimal, alvo: Decimal, banda: Decimal) -> str:
     variacao = (alvo - base) / base
     return "ALTA" if variacao > banda else ("BAIXA" if variacao < -banda else "ESTABILIDADE")
@@ -67,6 +81,7 @@ def _rotulo(base: Decimal, alvo: Decimal, banda: Decimal) -> str:
 def avaliar_probabilidades_tendencia(
     previsoes: Sequence[Mapping], *, as_of: str,
     minimo_historico: int = 20, minimo_avaliacao: int = 30,
+    calendario_sessoes: Mapping | None = None,
 ) -> dict:
     """Brier multiclasses e benchmark prequential de frequência histórica.
 
@@ -105,6 +120,8 @@ def avaliar_probabilidades_tendencia(
             probs = _vetor(obs["probabilidades"])
             real = _ident(obs["classe_realizada"], "classe_realizada")
             hash_real = _ident(obs["edicao_real_sha256"], "edicao_real_sha256")
+            sessao_base = _sessao(obs["sessao_base"], "sessao_base")
+            sessao_alvo = _sessao(obs["sessao_alvo"], "sessao_alvo")
         except KeyError as exc:
             raise ErroBacktestMercado(f"campo ausente: {exc.args[0]}") from exc
         if type(horizonte) is not int or not 1 <= horizonte <= 252:
@@ -114,6 +131,11 @@ def avaliar_probabilidades_tendencia(
         if not (inicio <= base_disp <= emissao < alvo_t <= alvo_disp <= corte
                 and treino <= emissao):
             raise ErroBacktestMercado("look-ahead ou evidência temporal inválida")
+        # Sessão é um trade date no offset declarado pelo provedor, não
+        # uma data UTC arbitrária; o calendário controla sua sequência.
+        if (datetime.fromisoformat(obs["base_referencia_em"]).date().isoformat() != sessao_base or
+                datetime.fromisoformat(obs["alvo_referencia_em"]).date().isoformat() != sessao_alvo):
+            raise ErroBacktestMercado("sessão divergente do instante econômico local")
         if real not in CLASSES or real != _rotulo(base, alvo, banda):
             raise ErroBacktestMercado("classe realizada inconsistente com preços e banda")
         identidade.add((serie, versao, regra, horizonte, str(banda)))
@@ -121,9 +143,22 @@ def avaliar_probabilidades_tendencia(
         if chave in visto:
             raise ErroBacktestMercado("previsão duplicada")
         visto.add(chave)
-        normalizados.append((emissao, alvo_disp, real, probs))
+        normalizados.append((emissao, alvo_disp, real, probs, sessao_base, sessao_alvo))
     if len(identidade) != 1:
         raise ErroBacktestMercado("mistura de versão, mercado, banda, horizonte ou regra")
+    if calendario_sessoes is None:
+        return {"status": "HORIZONTE_CALENDARIO_AUSENTE",
+                "avaliacoes": 0, "probabilidades_calibradas": None,
+                "publicavel": False}
+    chave_identidade = next(iter(identidade))
+    mercado = chave_identidade[0].split(":", 1)[0]
+    indice, prova_calendario = indexar_calendario_sessoes(
+        calendario_sessoes, mercado=mercado, as_of=as_of,
+    )
+    for _, _, _, _, sessao_base, sessao_alvo in normalizados:
+        if (sessao_base not in indice or sessao_alvo not in indice or
+                indice[sessao_alvo] - indice[sessao_base] != chave_identidade[3]):
+            raise ErroBacktestMercado("horizonte_sessoes não coincide com calendário declarado")
     normalizados.sort(key=lambda x: x[0])
     erros = []
     referencias = []
@@ -135,7 +170,7 @@ def avaliar_probabilidades_tendencia(
     maturadas = sorted(normalizados, key=lambda x: x[1])
     cursor = 0
     frequencias = Counter()
-    for emissao, _, classe, probs in normalizados:
+    for emissao, _, classe, probs, _, _ in normalizados:
         while cursor < len(maturadas) and maturadas[cursor][1] <= emissao:
             frequencias[maturadas[cursor][2]] += 1
             cursor += 1
@@ -173,6 +208,7 @@ def avaliar_probabilidades_tendencia(
         "regra_rotulagem": next(iter(identidade))[2],
         "horizonte_sessoes": next(iter(identidade))[3],
         "amostra_total": len(normalizados), "avaliacoes": len(erros),
+        "cobertura_calendario": prova_calendario,
         "brier_multiclasse": score, "brier_benchmark_expansivo": base_score,
         "skill_brier_vs_benchmark": 1 - score / base_score if base_score > 0 else None,
         "logloss_media": sum(logloss) / len(logloss),
