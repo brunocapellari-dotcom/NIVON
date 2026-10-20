@@ -44,6 +44,7 @@ def gerar_edicao_offline(*, gerado_em: str, feeds: list[dict],
     if not isinstance(snapshots_xml,dict):
         raise ErroPipelineBriefing("snapshots não informados")
     if indicadores is None:indicadores=[]
+    else: indicadores=list(indicadores)  # nunca mutar a lista do chamador
     if fontes_indicadores is None:fontes_indicadores={}
     if fretes is None:fretes=[]
     if registros_portuarios is None:registros_portuarios=[]
