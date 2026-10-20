@@ -111,3 +111,92 @@ A pasta de provas é um JSON com três arrays \`noticias\`, \`cotacoes\` e
 **Indicadores de aceite da etapa atual:** testes de regressão e revisão de
 código; bloqueio determinístico diante de informação ausente ou falsa;
 nenhuma operação de rede/WhatsApp; integração E2E real ainda NÃO HOMOLOGADA.
+
+
+## Continuação autónoma — 20/10/2026: evidências direto do pipeline
+
+**Objetivo executado em código:** não pedir novamente metadados que o NIVON já
+conhece após o parse do RSS, a curadoria e a renderização. Nenhuma aprovação
+externa é inferida da simples existência do dado.
+
+### Integração implementada
+- \`src/nivon/editorial_evidencias_pipeline.py\` compõe
+  \`evidencias_editoriais\` usando somente notícias efetivamente selecionadas
+  pela mesma política do renderer, SHA-256 real do XML já processado, timestamp
+  de coleta informado no manifesto, origem e evidência de política de direitos.
+- Indicadores e fretes são encaminhados preservando metadados declarados.
+  \`valor_num\` só é aceito como valor numérico estruturado de indicador;
+  textos formatados não são transformados em números automaticamente. Sessão
+  CME/ICE, natureza, unidade, horário de origem e rastreabilidade continuam
+  AUSENTES se os coletores ainda não os fornecem.
+- \`pipeline_briefing.gerar_edicao_offline\` retorna
+  \`evidencias_editoriais\` + \`preflight_editorial\` com todos os motivos
+  de bloqueio. O estado de edição continua
+  \`EDICAO_OFFLINE_PREPARADA_SEM_ENVIO\`, independentemente de resultado de
+  pré-validação.
+- \`scripts/gerar_briefing_offline.py\` já serializa esses campos no arquivo
+  \`*.auditoria.json\` existente, sem novo CLI de coleta, fonte de dados ou
+  armazenamento de texto de terceiros.
+- \`scripts/validar_briefing_offline.py\` agora usa a auditoria existente
+  automaticamente, sem \`--provas\`. Quando for necessário complementar
+  verificações independentes, \`--provas\` é um arquivo suplementar
+  **vinculado ao mesmo SHA da edição**. O módulo
+  \`conciliar_complementos\` rejeita alteração de campos imutáveis, aumento de
+  número de registros, troca de URL/artigo/hash RSS e substituição de origem.
+  Uma nova identidade de evento precisa de \`evidencia_evento_id\`, e
+  publicação original verificada requer \`evidencia_publicacao_original_id\`.
+  Fechamento confirmado requer \`evidencia_sessao_id\`.
+- É intencional que a edição sintética com data de RSS aceita produza
+  \`publicacao_original_verificada=false\` e \`evento_id=null\`.
+  **Sua pré-validação falha até haver comprovação externa.** Esse é o teste
+  funcional de recusa segura, não defeito de disponibilidade.
+
+Exemplo com o mesmo TXT e auditoria de uma geração offline:
+\`\`\`sh
+PYTHONPATH=src python scripts/validar_briefing_offline.py \
+  --texto saida/briefing.txt \
+  --auditoria saida/briefing.auditoria.json
+\`\`\`
+
+Complemento externo opcional (sem direito a alterar fatos conhecidos):
+\`\`\`sh
+PYTHONPATH=src python scripts/validar_briefing_offline.py \
+  --texto saida/briefing.txt \
+  --auditoria saida/briefing.auditoria.json \
+  --provas entradas/complementos_independentes.json
+\`\`\`
+
+O JSON de complemento deve conter \`sha256_edicao\` e três listas alinhadas,
+\`noticias\`, \`cotacoes\`, \`fretes\`, com campos adicionais permitidos somente
+para o mesmo registro; sua validade legal/técnica continua sujeita a
+verificação humana e às evidências de origem. Nunca declarar licença válida a
+partir de um documento sem direitos efetivamente revisados.
+
+### Testes e evidências
+- Integração, hash real do feed sintético, coleta original, pacote em JSON,
+  CLI sem \`--provas\`, bloqueio automático, preservação da proveniência,
+  identidade de acontecimento, impossibilidade de injetar artigo extra e
+  dependência de prova documental: \`tests/test_editorial_pipeline_integrado.py\`.
+- Commit testado: \`aad0354a57e991ceb886619fe8aa01bad973d0ee\`.
+- Execução: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39488632735
+- **1.049 testes aprovados, zero falhas**, na suíte do job principal.
+  Testes usam fixtures; nenhuma coleta real, serviço externo ou canal Meta
+  foram ativados.
+
+### Próximas tarefas (priorizadas)
+1. Associar nativamente a cada indicador publicado a fonte, \`valor_num\`,
+   unidade, natureza, referência/competência, publicação/coleta, SHA do RAW,
+   licença e calendário de fechamento homologado; reconciliar com todos os
+   campos renderizados (incluindo fretes de mesmo corredor e transportadoras).
+2. Vincular \`evento_id\` e documento de decisão editorial à curadoria
+   antes da deduplicação e comprovar publicação original por fonte.
+3. Reconciliar PR #26 com PR #13 e demais branches para evitar regressões de
+   timezone, corte de preços e rotas, sob auditoria independente.
+4. Preparar scheduler diário e ledger de idempotência **desativados**,
+   reserva persistente, backup/restore e integração WhatsApp AI somente
+   após direitos comerciais, opt-in e aprovação de custos/canal.
+5. Cobertura adicional de ICE, CBOT, mercado físico, fertilizantes e line-up
+   nacional depende de dados homologados; não simular disponibilidade.
+
+**Estado operacional mantido:** código offline e CI aprovados em revisão;
+sem deploy, merge, assinatura paga, ativação de fonte ou envios.
