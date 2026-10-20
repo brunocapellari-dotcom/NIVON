@@ -38,7 +38,7 @@ class ErroRota(ValueError):
 
 def carregar_rotas(path: str | Path = ROTAS) -> dict:
     p = Path(path)
-    if p.suffix != ".json" or not p.is_file() or p.is_symlink() or p.stat().st_size > 175_000:
+    if p.suffix != ".json" or not p.is_file() or p.is_symlink() or p.stat().st_size > 250_000:
         raise ErroRota("arquivo de rotas ausente, inválido ou grande demais")
     try:
         o = json.loads(p.read_text(encoding="utf-8"))

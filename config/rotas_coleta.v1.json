@@ -4037,7 +4037,7 @@
     },
     {
       "dataset_id": "NOAA_ENSO_RONI",
-      "collector_class": "OFFICIAL_PUBLIC_FILE",
+      "collector_class": "STRUCTURED_FILE",
       "locator": {
         "kind": "DIRECT_PUBLIC_FILE",
         "url": "https://www.cpc.ncep.noaa.gov/data/indices/RONI.ascii.txt",
