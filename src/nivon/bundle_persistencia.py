@@ -124,9 +124,19 @@ def salvar_ponto_recuperacao(*, bancos: Mapping[str, sqlite3.Connection],
                 "diretorio": str(final),
                 "cloud_duravel": False}
     except BaseException:
-        # A função criou final com exclusividade e somente os 4 arquivos esperados.
-        for nome in tuple(x + ".sqlite" for x in _DB_NAMES) + ("manifest.json",):
-            (final / nome).unlink(missing_ok=True)
+        # O processo criou final privadamente (0700), com exclusividade.
+        # Remover APENAS arquivos próprios, incluindo journals temporários
+        # que sqlite.backup() pode deixar após falha de uma conexão.
+        own = set(x + ".sqlite" for x in _DB_NAMES) | {"manifest.json"}
+        own |= {x + suffix for x in _DB_NAMES
+                for suffix in (".sqlite-wal",".sqlite-shm",".sqlite-journal")}
+        for artefato in final.iterdir():
+            if artefato.name in own or (
+                artefato.name.startswith(".nivon-backup-") and
+                artefato.name.endswith(".sqlite")
+            ):
+                if artefato.is_file() or artefato.is_symlink():
+                    artefato.unlink()
         final.rmdir()
         raise
 
