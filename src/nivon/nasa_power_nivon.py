@@ -39,7 +39,9 @@ def url_diaria(*,latitude,longitude,inicio:date,fim:date,parametros:tuple=PERMIT
 
 
 def normalizar_resposta(payload:dict,*,parametros:tuple,inicio:date,fim:date,
-                        coletado_em:str,fonte_url:str) -> list[dict]:
+                        coletado_em:str,fonte_url:str,
+                        latitude_solicitada:float|None=None,
+                        longitude_solicitada:float|None=None) -> list[dict]:
     if not isinstance(payload,dict) or payload.get("type") not in (None,"Feature"):
         raise ErroCientifico("payload POWER inválido")
     geo=payload.get("geometry",{}).get("coordinates")
@@ -49,13 +51,20 @@ def normalizar_resposta(payload:dict,*,parametros:tuple,inicio:date,fim:date,
     lon,lat=geo[:2]
     if not -180<=lon<=180 or not -90<=lat<=90:
         raise ErroCientifico("coordenadas do payload inconsistentes")
+    # Grade NASA pode representar ponto próximo, mas não outra região.
+    if latitude_solicitada is not None and abs(lat-latitude_solicitada)>0.75:
+        raise ErroCientifico("grade de latitude diferente da região solicitada")
+    if longitude_solicitada is not None and abs(lon-longitude_solicitada)>0.75:
+        raise ErroCientifico("grade de longitude diferente da região solicitada")
     p=payload.get("properties",{}).get("parameter")
     if not isinstance(p,dict) or set(p)!=set(parametros):
         raise ErroCientifico("parâmetros recebidos diferem dos solicitados")
     d=datetime.fromisoformat(coletado_em.replace("Z","+00:00"))
     if d.tzinfo is None:raise ErroCientifico("coleta com fuso obrigatório")
-    if urlsplit(fonte_url).hostname!="power.larc.nasa.gov":
-        raise ErroCientifico("URL da evidência não é NASA")
+    source=urlsplit(fonte_url)
+    if (source.scheme!="https" or source.hostname!="power.larc.nasa.gov"
+        or source.username or source.password or source.port not in (None,443)):
+        raise ErroCientifico("URL da evidência NASA insegura")
     valores=[]
     duplicados=set()
     for parametro in parametros:
@@ -115,4 +124,5 @@ def coletar_diario(*,latitude,longitude,inicio:date,fim:date,
             raise ErroCientifico("resposta NASA POWER excessiva")
         payload=json.loads(raw.decode("utf-8"))
     return normalizar_resposta(payload,parametros=parametros,inicio=inicio,fim=fim,
-        coletado_em=datetime.now(timezone.utc).isoformat(),fonte_url=url_resposta)
+        coletado_em=datetime.now(timezone.utc).isoformat(),fonte_url=url_resposta,
+        latitude_solicitada=latitude,longitude_solicitada=longitude)

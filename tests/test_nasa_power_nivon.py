@@ -29,6 +29,20 @@ class TestNASA_POWER(unittest.TestCase):
         self.assertIsNone(rows[0]["publicacao"])
         self.assertEqual([r["valor"] for r in rows if r["variavel"]=="PRECTOTCORR" and r["competencia"]=="2026-10-02"],[None])
 
+    def test_nasa_resposta_outra_regiao_e_url_insegura_bloqueados(self):
+        p=self.payload()
+        with self.assertRaises(ErroCientifico):
+            normalizar_resposta(p,parametros=("PRECTOTCORR","T2M"),
+                inicio=date(2026,10,1),fim=date(2026,10,2),
+                coletado_em="2026-10-20T12:00:00Z",
+                fonte_url="https://power.larc.nasa.gov/api/temporal/daily/point",
+                latitude_solicitada=-20.,longitude_solicitada=-55.6)
+        with self.assertRaises(ErroCientifico):
+            normalizar_resposta(p,parametros=("PRECTOTCORR","T2M"),
+                inicio=date(2026,10,1),fim=date(2026,10,2),
+                coletado_em="2026-10-20T12:00:00Z",
+                fonte_url="http://power.larc.nasa.gov/api/temporal/daily/point")
+
     def test_direitos_sem_homologacao_bloqueiam_rede(self):
         with self.assertRaises(PermissionError):
             coletar_diario(latitude=-12.4,longitude=-55.6,
