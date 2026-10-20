@@ -27,6 +27,26 @@ sem HTTP. `src/nivon/antaq_zip_autorizado.py` oferece um coletor HTTPS de URL fi
 tipos e datas, hash por edição, rollback em fonte inconsistente e idempotência.
 Séries históricas são movimentação observada; nunca devem virar line-up de hoje.
 
+
+### Importação offline de arquivos autorizados
+
+Com os arquivos anuais e o catálogo de mercadorias obtidos por meios permitidos,
+execute em um ambiente que possua diretório para dados persistentes:
+
+```sh
+PYTHONPATH=src python scripts/importar_antaq_historico.py \
+  --ano 2024 \
+  --anual /dados/2024.zip \
+  --mercadorias /dados/Mercadoria.zip \
+  --banco /dados/antaq.sqlite \
+  --coletado-em 2026-10-19T22:00:00-03:00
+```
+
+A execução é offline e gera somente banco local: **não é backup em nuvem nem
+coleta contínua.** O banco deve ser incluído em uma rotina autorizada de backup
+antes de uso operacional. O comando exige ZIPs existentes e não obtém arquivos
+pela internet nem resolve por si só a licença de redistribuição.
+
 ## 2. Novos acessos oficiais encontrados
 
 - CDP: https://www.cdp.com.br/companhia-docas-do-para/programacao-de-navios/
