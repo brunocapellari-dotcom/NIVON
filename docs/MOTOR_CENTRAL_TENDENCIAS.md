@@ -70,3 +70,58 @@ PYTHONPATH=src python -m nivon.registro_motores
 ```
 
 Fixtures sintéticas não provam valor preditivo nem autorizam go-live.
+
+
+## PRIORIDADE OPERACIONAL (20/10/2026): FRETES, CBOT E PREÇO FÍSICO
+
+Este é o recorte **P0** do motor de tendências; os demais 26 domínios quantitativos são capacidades secundárias. O código específico reside em `src/nivon/tendencias_mercados.py` e possui regressões em `tests/test_tendencias_mercados.py`.
+
+### 1. FRETE ANUNCIADO — por corredor (prioridade 1)
+
+Chave obrigatória e imutável durante a série:
+`origem_ibge + destino_ibge + produto + veiculo + pedagio + natureza(OFERTA) + unidade(BRL/T)`.
+
+- Priorizar recortes de Mato Grosso, entre eles: Sorriso–Rondonópolis, Sorriso–Dom Aquino, Sinop–Miritituba/Itaituba; também corredores para Paranaguá, Santos/Guarujá, Uberaba e Araguari, sem fazer equivalência de municípios automaticamente.
+- `lote_id` é um **ID econômico lógico previamente resolvido** pelo sistema de coleta autorizado (inclusive WhatsApp AI); não é quantidade de caminhões, viagens ou volume. O mesmo `lote_id` repetido no mesmo dia e com mesmo preço conta UMA vez. Se o preço divergir, a análise daquele corredor deve bloquear até reconciliação, não escolher preço silenciosamente.
+- Cada dia usa a **mediana** dos R$/t de lotes distintos, com cobertura por dia, SHA das observações, número de lotes e fontes. Amostra com menos de 2 lotes/dia não fornece tendência utilizável. A metodologia precisa de backtest para limiar definitivo de cobertura.
+- `INCLUSO`, `ADICIONAL`, `NAO_INFORMADO` são três contratos econômicos distintos. Não calcular tendência juntando modalidades de pedágio ou veículos diferentes. Também não misturar soja com milho.
+- **A tendência é de ofertas anunciadas**, não de frete médio contratado, frete realizado, disponibilidade de caminhão ou toneladas por dia. Reposts não geram novos lotes nem volume fictício. Para comparar com custo do transportador, incorporar diesel ANP e custo por rota somente em análise complementar documentada.
+- A data representa a referência da divulgação, não a data do embarque real; publicar exige autorização por operação e identificação de cobertura amostral.
+
+### 2. CBOT — preço e vencimento homogêneos (prioridade 2)
+
+Chave: `mercado=CME + produto(SOJA/MILHO/TRIGO) + contrato(AAAA-MM) + tipo(FECHAMENTO/AJUSTE) + unidade(USC/BU)`.
+
+- Nunca comparar soja NOV/26 com MAR/27 como se fosse movimento de um ativo estável; `tendencia_cbot` rejeita misturas.
+- Séries contínuas e roll devem ter política explícita de continuidade, datas de rolagem e ajuste retrospectivo, construídos e validados separadamente, **não** por esta primeira versão.
+- Usar fechamento/ajuste datados, calendário de pregões válido e direitos de mercado. Não confundir centavos/bushel com dólares/tonelada. Comparações com preço físico em reais exigem conversão física exata, PTAX do período, praça, prêmio/basis, sazonalidade e custos observados.
+- Visões futuras desejadas: 5, 20 e 60 pregões; volatilidade e probabilidade somente após treino histórico e calibração point-in-time.
+
+### 3. PREÇO FÍSICO — por produto e município (prioridade 3)
+
+Chave: `produto + localidade_ibge(7 dígitos) + tipo(INDICADOR_FISICO/OFERTA/NEGOCIADO) + unidade`.
+
+- Soja, milho, trigo e outras cadeias do registro; preço físico pode usar `BRL/SC60KG`, `BRL/T` ou `BRL/ARROBA` quando adequados ao produto. Não misturar praça, produto, categoria de preço ou unidade.
+- O preço físico de Sorriso/MT não equivale a preço em Paranaguá. Se um indicador usar metodologia regional agregada, sua identidade geográfica deve ser descrita e um adaptador próprio deverá preservar essa granularidade.
+- Fonte observacional, precisão, alterações metodológicas, coleta, publicação, licença e histórico de revisões devem ser rastreados.
+
+### Quadro operacional planejado
+
+| Indicador | Tendência observada | 7 dias | 30 dias | 90 dias | Fonte e data |
+|---|---|---|---|---|---|
+| Frete Sorriso → Rondonópolis (MILHO/RODOTREM) | calculável com série homologada | futuro modelo | futuro modelo | futuro modelo | obrigatório |
+| Frete Sinop → Miritituba (SOJA/RODOTREM) | calculável com série homologada | futuro modelo | futuro modelo | futuro modelo | obrigatório |
+| CBOT SOJA NOV/26 (USC/BU) | calculável com série homologada | futuro modelo | futuro modelo | futuro modelo | obrigatório |
+| Preço físico SOJA Sorriso/MT (R$/sc) | calculável com série homologada | futuro modelo | futuro modelo | futuro modelo | obrigatório |
+
+**Nenhuma linha acima é uma cotação atual ou previsão já calculada**. Horizontes dependem de conjunto de dados, unidade e calendário; uma tendência observada não pode ser apresentada como projeção para 7/30/90 dias.
+
+### Gate de integração
+
+1. Homologar schema, direitos e proveniência dos históricos dos coletores de fretes autorizados, CME/licenciada, CEPEA/IMEA/mercado físico e BCB/PTAX; nenhum status falso de ativo.
+2. Implementar pipeline as-of com revisões e agregação por sessão/corredor, capturando cobertura e correções.
+3. Calibrar limiares por produto/corredor/praça em treino sem vazamento, avaliar walk-forward temporal e reportar MAE, acerto de direção, calibração (Brier/reliability) e estabilidade por regime.
+4. Somente então habilitar probabilidades, previsão setorial e síntese IVO, com validação de licenças para publicação.
+5. Integrar no painel e em uma seção de tendências do briefing, somente após homologação editorial; WhatsApp AI mantém responsabilidade exclusiva pelo transporte de mensagens.
+
+O código nesta PR é **exclusivamente offline com fixtures sintéticas** e não executa coletas, envios, deploy ou publicação.
