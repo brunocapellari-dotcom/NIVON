@@ -11,6 +11,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import sqlite3
 import tempfile
 from datetime import datetime, timezone
@@ -124,20 +125,12 @@ def salvar_ponto_recuperacao(*, bancos: Mapping[str, sqlite3.Connection],
                 "diretorio": str(final),
                 "cloud_duravel": False}
     except BaseException:
-        # O processo criou final privadamente (0700), com exclusividade.
-        # Remover APENAS arquivos próprios, incluindo journals temporários
-        # que sqlite.backup() pode deixar após falha de uma conexão.
-        own = set(x + ".sqlite" for x in _DB_NAMES) | {"manifest.json"}
-        own |= {x + suffix for x in _DB_NAMES
-                for suffix in (".sqlite-wal",".sqlite-shm",".sqlite-journal")}
-        for artefato in final.iterdir():
-            if artefato.name in own or (
-                artefato.name.startswith(".nivon-backup-") and
-                artefato.name.endswith(".sqlite")
-            ):
-                if artefato.is_file() or artefato.is_symlink():
-                    artefato.unlink()
-        final.rmdir()
+        # final foi criado por esta chamada com exclusividade e modo 0700.
+        # SQLite pode deixar sidecars com nomes temporários imprevisíveis.
+        # shutil.rmtree no Linux é resistente à troca de symlinks por FD.
+        if not shutil.rmtree.avoids_symlink_attacks:
+            raise ErroBundle("limpeza de snapshot requer rmtree resistente a symlink")
+        shutil.rmtree(final)
         raise
 
 
