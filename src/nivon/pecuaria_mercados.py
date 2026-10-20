@@ -56,7 +56,7 @@ def selecionar_vintage_precos(*, serie, especie, indicador, praca, fonte_id, cor
     if any(not isinstance(x, str) or not x.strip() for x in (praca, fonte_id)):
         raise DadoInvalido("praca e fonte obrigatorias")
     corte = _instante(corte_asof)
-    if not isinstance(serie, (tuple, list)) or len(serie) > 20000:
+    if not isinstance(serie, (tuple, list)) or len(serie) > 1200:
         raise DadoInvalido("serie ausente ou acima do limite")
     edicoes = {}
     for obs in serie:
@@ -65,14 +65,23 @@ def selecionar_vintage_precos(*, serie, especie, indicador, praca, fonte_id, cor
         _exigir_identidade(obs, especie=especie, indicador=indicador,
                            unidade=unidade, praca=praca, fonte_id=fonte_id)
         mes = _mes(obs.get("competencia"))
+        referencia = obs.get("data_referencia")
+        if not isinstance(referencia, str) or not re.fullmatch(r"20\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])", referencia):
+            raise DadoInvalido("data_referencia YYYY-MM-DD obrigatoria")
+        try:
+            ref_dt = datetime.fromisoformat(referencia).replace(tzinfo=timezone.utc)
+        except ValueError as exc:
+            raise DadoInvalido("data_referencia invalida") from exc
+        if 12 * ref_dt.year + ref_dt.month != mes:
+            raise DadoInvalido("referencia fora da competencia")
         if type(obs.get("valor")) not in (int, float) or not isfinite(obs["valor"]) or obs["valor"] <= 0:
             raise DadoInvalido("preco deve ser positivo finito")
         sha = obs.get("origem_sha256")
         if not isinstance(sha, str) or not re.fullmatch(r"[a-f0-9]{64}", sha):
             raise DadoInvalido("SHA256 de origem obrigatorio")
         pub, coleta = _instante(obs.get("publicacao")), _instante(obs.get("coleta"))
-        if pub > coleta:
-            raise DadoInvalido("publicacao posterior a coleta")
+        if pub > coleta or ref_dt > pub:
+            raise DadoInvalido("cronologia referencia/publicacao/coleta incoerente")
         if mes > 12 * corte.year + corte.month:
             continue
         if pub > corte or coleta > corte:
@@ -125,7 +134,7 @@ def backtest_sazonal_pecuaria(*, serie, especie, indicador, praca,
     for alvo in sorted(final):
         ano, mes = divmod(alvo - 1, 12)
         inicio = f"{ano:04d}-{mes+1:02d}-01T00:00:00+00:00"
-        if _instante(inicio) >= corte:
+        if alvo >= 12 * corte.year + corte.month:
             continue
         disponivel = selecionar_vintage_precos(serie=serie, especie=especie,
             indicador=indicador, praca=praca, fonte_id=fonte_id, corte_asof=inicio)
