@@ -1,0 +1,110 @@
+{
+  "schema_version": "1.0.0",
+  "project": "NIVON",
+  "updated_on": "2026-10-20",
+  "purpose": "Classificar a natureza da fonte e impedir rotulos falsamente realizados no IVO.",
+  "default_policy": "DENY_REAL_TRAINING_UNTIL_SOURCE_VINTAGE_LABEL_LICENSE_AND_INDEPENDENT_REVIEW",
+  "training_right_is_not_implied_by_collection": true,
+  "source_policies": [
+    {
+      "id": "CONAB_GRAOS_SERIES",
+      "source_id": "CONAB",
+      "role": "SAFRA_INFORMADA_OU_PROJETADA",
+      "candidate_target": "PRODUCAO_POR_SAFRA",
+      "status": "BLOQUEADO_LABEL_REALIZADO",
+      "validation": "Exigir comprovacao da condicao consolidada por safra; nao converter informado em realizado"
+    },
+    {
+      "id": "CONAB_GRAOS_LEVANTAMENTOS",
+      "source_id": "CONAB",
+      "role": "ESTIMATIVA_DE_SAFRA_COM_VINTAGES",
+      "candidate_target": "PRODUCAO_POR_SAFRA",
+      "status": "BLOQUEADO_LABEL_REALIZADO",
+      "validation": "Separar levantamento inicial, revisoes, encerramento do ciclo e referencia consolidada"
+    },
+    {
+      "id": "CONAB_PROGRESSO_SEMANAL",
+      "source_id": "CONAB",
+      "role": "PROGRESSO_INFORMADO_POR_ESTADOS",
+      "candidate_target": "PLANTIO_OU_COLHEITA_PCT",
+      "status": "BLOQUEADO_LABEL_REALIZADO",
+      "validation": "Percentuais informados nao equivalem a volume colhido; nao usar MEDIA_ESTADOS como Brasil ponderado"
+    },
+    {
+      "id": "IBGE_LSPA",
+      "source_id": "IBGE",
+      "role": "ESTIMATIVA_ANO_CIVIL_REVISAO_MENSAL",
+      "candidate_target": "QUANTIDADE_PRODUZIDA",
+      "status": "BLOQUEADO_LABEL_REALIZADO",
+      "validation": "Acompanhamento mensal estimado; valor do ano inteiro nao e volume realizado do mes"
+    },
+    {
+      "id": "IBGE_PAM",
+      "source_id": "IBGE",
+      "role": "ESTATISTICA_ANUAL_AGRICOLA_PUBLICADA",
+      "candidate_target": "PRODUCAO_ANUAL",
+      "status": "REVISAO_METODOLOGICA_NECESSARIA",
+      "validation": "Analisar metodologia, qualidade e vintages do dado anual antes de uso como referencia"
+    },
+    {
+      "id": "INMET_ESTACOES",
+      "source_id": "INMET",
+      "role": "MEDICAO_PONTUAL_ESTACAO",
+      "candidate_target": "CHUVA_TEMPERATURA_VENTO",
+      "status": "VALIDACAO_ESTACAO_E_DIREITOS_PENDENTE",
+      "validation": "Qualidade sensor, faltantes, metadados geografico e serie diaria completa"
+    },
+    {
+      "id": "ANA_HIDRO",
+      "source_id": "ANA",
+      "role": "MEDICAO_HIDROLOGICA_PONTUAL",
+      "candidate_target": "COTA_VAZAO_CHUVA",
+      "status": "VALIDACAO_ESTACAO_E_DIREITOS_PENDENTE",
+      "validation": "Curva chave, consistencia, mudancas de estacao e revisoes hidrometricas"
+    },
+    {
+      "id": "ANP_PRECO_REVENDA_DIESEL",
+      "source_id": "ANP",
+      "role": "PRECO_AMOSTRAL_REVENDAS",
+      "candidate_target": "PRECO_REVENDA_RS_L",
+      "status": "VALIDACAO_METODOLOGIA_E_DIREITOS_PENDENTE",
+      "validation": "Separar Diesel Diesel S10 precos revenda base amostral e semanas inferidas"
+    },
+    {
+      "id": "MDIC_COMEX_NCM",
+      "source_id": "MDIC",
+      "role": "COMERCIO_EXTERIOR_DECLARADO",
+      "candidate_target": "EXPORTACAO_IMPORTACAO_MENSAL",
+      "status": "VALIDACAO_METODOLOGIA_E_DIREITOS_PENDENTE",
+      "validation": "Dados declarados de embarque/comercio nao equivalem a producao agricola nem line-up"
+    },
+    {
+      "id": "IBGE_ABATE_FRANGO_1094",
+      "source_id": "IBGE",
+      "role": "ESTATISTICA_PECUARIA_TRIMESTRAL",
+      "candidate_target": "ABATE_FRANGOS",
+      "status": "VALIDACAO_METODOLOGIA_E_DIREITOS_PENDENTE",
+      "validation": "Respeitar periodicidade trimestre categorias e revisoes"
+    },
+    {
+      "id": "IBGE_ABATE_SUINO_1093",
+      "source_id": "IBGE",
+      "role": "ESTATISTICA_PECUARIA_TRIMESTRAL",
+      "candidate_target": "ABATE_SUINOS",
+      "status": "VALIDACAO_METODOLOGIA_E_DIREITOS_PENDENTE",
+      "validation": "Respeitar periodicidade trimestre categorias e revisoes"
+    }
+  ],
+  "references": [
+    {
+      "source": "CONAB",
+      "url": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras"
+    },
+    {
+      "source": "IBGE_LSPA",
+      "url": "https://www.ibge.gov.br/estatisticas/economicas/agricultura-e-pecuaria/9201-levantamento-sistematico-da-producao-agricola.html"
+    }
+  ],
+  "automatic_approval": false,
+  "real_data_training_enabled": false
+}
