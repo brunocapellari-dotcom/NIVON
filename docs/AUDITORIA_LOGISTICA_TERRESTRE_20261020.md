@@ -80,3 +80,18 @@ O contrato da atestação é candidato para futura interface entre projetos, nã
 - **P0**: integrar PR #30 (variação pareada) sem recuperar análise por mediana de anúncios misturados e sem conflito com PR #18. Confirmar CI e auditoria independente.
 - **P0**: conciliar ANP semanal da PR #8 com `anp_diesel_store` da PR #12, 3 arquivos históricos reais, edição/as-of e licenças.
 - **P1**: auditar distâncias DNIT e pedágios por equipamento/categoria, condições PF/PJ e sentido; instrumentar custos de frota apenas com premissas documentadas.
+
+
+## Continuidade 20/10/2026 — histórico bitemporal ANP semanal oficial
+
+A PR #8 implementou dois parsers candidatos distintos: `anp_resumo_lpc.py` para o RESUMO SEMANAL LPC com aba MUNICIPIOS (fonte `ANP_RESUMO_LPC_SEMANAL`) e `anp_semanal_municipios.py` para o arquivo anual semanal com layout informado. Nenhum deles comprovou ainda três XLSX reais e datas de publicação originais. O `anp_diesel_store.py` da PR #12 **NÃO pode receber diretamente essas séries** porque seu contrato exige `semana_inicio_inferida` e mediana/mínimo/máximo do CSV mensal, enquanto LPC semanal contém a média e a semana oficial. Converter uma na outra fabrica dados.
+
+Novo `anp_semanal_store.py` é **store SQLite sem abertura de banco externo ou I/O de rede**. Recebe precisamente o resultado de `ler_resumo_semanal_lpc` com arquivo SHA, URL ANP original, `data_publicacao` e prova externa de publicação separada; mantém tabelas distintas para edições, capturas e médias municipais amostrais por semana oficial. Não armazena postos individuais, não insere linha ausente como zero e não mistura DIESEL e DIESEL S10. Serialização numérica é Decimal textual.
+
+O histórico permite idempotência por hash original e múltiplas capturas da mesma edição. Para leitura `as_of`, uma edição só aparece se **data de publicação, primeira captura histórica conhecida e semana oficial** eram anteriores ao corte. Reedições da mesma semana com preços/postos divergentes bloqueiam seleção silenciosa; dado antigo é marcado vencido. A consulta devolve `publicavel=false` em qualquer situação, inclusive quando a fonte foi classificada REAL_AUTORIZADO para armazenamento. Direitos de redistribuição do indicador devem passar em gate posterior, diferente do direito de gravar. A fonte real ainda exige atestação e **não** foi ingerida.
+
+Os campos `prova_publicacao_sha` e `prova_direitos_sha` são referências a evidências externas a verificar por agente independente; nenhum hash por si só prova autorização ou a data real da edição. O módulo não infere retroativamente uma publicação a partir de data da coleta.
+
+Testes: `tests/test_anp_semanal_store.py` (PIT, idempotência, versões, conflito, datas futuras, permissões, preço, produtos, município e semântica); a execução GitHub Actions no HEAD final deve ser verificada.
+
+**Gatilhos restantes P0:** merge coordenado da PR #8 sem perder `anp_resumo_lpc.py`; leitura de 3 arquivos XLSX oficiais homologados, comprovação de publicação de cada edição, licença para coleta/armazenamento e eventual publicação comercial, storage durável protegido/backup+restore, monitoramento de disponibilização e revisão de dados, reconciliação de datas as-of com o calendário oficial, integração ao briefing somente depois de homologação. Não inferir preço de abastecimento contratado ou repasse à tarifa de frete.
