@@ -160,7 +160,7 @@ class TestIVOIntervalos(unittest.TestCase):
     def test_pode_limitar_janela_para_regime_recente(self):
         a = intervalo_empirico_asof(self.alvo, self.aval, max_folds=12)
         self.assertEqual(a["candidatos_elegiveis"], 12)
-        self.assertEqual(a["raio_erro"], 22.)
+        self.assertEqual(a["raio_erro"], 23.)  # 11º erro de 12, k=ceil(13*0.8)=11
 
 
 if __name__ == "__main__":
