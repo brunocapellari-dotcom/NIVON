@@ -671,7 +671,9 @@
         "brier_score_eventos_meteorologicos",
         "brier_skill_climatologia",
         "crps_ensemble",
-        "calibracao_probabilidades_por_faixa"
+        "calibracao_probabilidades_por_faixa",
+        "chuva_prevista_areal_bacia_mm_por_intervalo",
+        "pesos_grade_meteorologica_auditaveis"
       ],
       "risks": [
         "Normais e dados devem ter mesmo período e estação; anomalia simples não é SPI.",
@@ -713,7 +715,13 @@
         "hidrograma_unitario_bacia_m3_s",
         "conservacao_hidrograma_evento_m3",
         "cn_calibrado_holdout_temporal",
-        "skill_cn_holdout_baseline"
+        "skill_cn_holdout_baseline",
+        "pico_vazao_direta_quantiles_m3_s",
+        "volume_escoamento_direto_quantiles_m3",
+        "fracao_ensemble_acima_limiar_condicional",
+        "validacao_horizonte_meteorologico_bacia",
+        "chuva_areal_nwp_mm_por_intervalo",
+        "cobertura_celulas_bacia"
       ],
       "risks": [
         "Cota de régua não é profundidade ou calado navegável.",
