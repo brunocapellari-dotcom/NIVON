@@ -388,7 +388,8 @@
         "nivon.hidrologia_chuva_vazao:propagar_muskingum",
         "nivon.meteorologia_probabilistica:avaliar_ensemble",
         "nivon.hidrograma_bacia:hidrograma_evento_cn",
-        "nivon.ensemble_hidrologico_bacia:cenario_ensemble_bacia"
+        "nivon.ensemble_hidrologico_bacia:cenario_ensemble_bacia",
+        "nivon.chuva_areal_ensemble:agregar_ensemble_chuva_areal"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -592,7 +593,8 @@
         "nivon.grade_meteorologica_store:grade_asof",
         "nivon.chirps_v3_conservacao:reconciliar_chirps_pentada",
         "nivon.meteorologia_probabilistica:crps_ensemble",
-        "nivon.meteorologia_probabilistica:avaliar_ensemble"
+        "nivon.meteorologia_probabilistica:avaliar_ensemble",
+        "nivon.chuva_areal_ensemble:agregar_ensemble_chuva_areal"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -606,7 +608,7 @@
         "ERA5_LAND_CDS",
         "NASA_GPM_IMERG"
       ],
-      "indicators_planned": 19,
+      "indicators_planned": 21,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
       "inputs_reais_homologados": false,
       "previsao_homologada": false,
@@ -633,7 +635,8 @@
         "nivon.hidrologia_chuva_vazao:propagar_muskingum",
         "nivon.hidrograma_bacia:hidrograma_evento_cn",
         "nivon.calibracao_cn_bacias:calibrar_cn_historico",
-        "nivon.ensemble_hidrologico_bacia:cenario_ensemble_bacia"
+        "nivon.ensemble_hidrologico_bacia:cenario_ensemble_bacia",
+        "nivon.chuva_areal_ensemble:agregar_ensemble_chuva_areal"
       ],
       "data_dependencies": [
         "ANA_HIDRO",
@@ -646,7 +649,7 @@
         "ERA5_LAND_CDS",
         "NASA_GPM_IMERG"
       ],
-      "indicators_planned": 25,
+      "indicators_planned": 27,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
       "inputs_reais_homologados": false,
       "previsao_homologada": false,

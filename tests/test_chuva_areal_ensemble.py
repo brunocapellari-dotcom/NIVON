@@ -108,6 +108,11 @@ class TestAgregacaoChuvaAreal(unittest.TestCase):
         with self.assertRaises(ErroChuvaAreal):
             run(emitido_em="2026-10-16T01:00:00Z")
 
+    def test_analise_historica_nao_se_passa_por_forecast(self):
+        for name in ("CHIRPS_V3_RNL", "IMERG_V07_FINAL", "NASA_POWER_AG", "ERA5_LAND"):
+            with self.subTest(produto=name), self.assertRaises(ErroChuvaAreal):
+                run(produto_previsao=name)
+
     def test_membros_repetidos_bloqueados(self):
         m=members();m[1]["membro_id"]="GEFS_01"
         with self.assertRaises(ErroChuvaAreal):run(membros_grade=m)

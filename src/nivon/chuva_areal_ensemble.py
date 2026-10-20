@@ -51,6 +51,12 @@ def agregar_ensemble_chuva_areal(
                     ("produto NWP",produto_previsao),("versão NWP",versao_previsao)):
         if not isinstance(v,str) or not 8<=len(v.strip())<=240:
             raise ErroChuvaAreal(label+": informação de proveniência obrigatória")
+    # Meteorological analyses and reanalyses do not issue future forecasts.
+    if produto_previsao.upper().startswith((
+        "CHIRPS", "IMERG", "GPM_", "NASA_POWER", "ERA5",
+        "INMET", "ANA_HIDRO"
+    )):
+        raise ErroChuvaAreal("reanalise ou observacao nao e previsao NWP")
     if not isinstance(pesos_sha256,str) or not _SHA.fullmatch(pesos_sha256):
         raise ErroChuvaAreal("hash dos pesos GIS ausente")
     area=_n(area_bacia_km2,"área bacia km²",0.000001,10_000_000)
