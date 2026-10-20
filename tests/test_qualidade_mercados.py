@@ -14,7 +14,7 @@ SHA3 = "c" * 64
 def row(d="2026-10-13", preco="1050.125", **kw):
     obj = {
         "mercado": "CME", "produto": "SOJA", "contrato": "2026-11",
-        "tipo": "AJUSTE", "unidade": "USC/BU",
+        "tipo": "AJUSTE", "unidade": "USC/BU", "instrumento_id": "ZS",
         "data_referencia": d, "competencia": d[:7],
         "referencia_em": d + "T16:00:00-04:00",
         "publicacao_em": d + "T16:30:00-04:00",
@@ -31,11 +31,21 @@ def datas():
             "2026-10-13", "2026-10-14", "2026-10-15"]
 
 
+def calendario(sessoes=None, **kw):
+    cal = {"mercado": "CME", "fonte_id": "CALENDARIO_TESTE",
+           "edicao_sha256": SHA3, "publicacao_em": "2026-10-01T10:00:00Z",
+           "coleta_em": "2026-10-01T11:00:00Z",
+           "sessoes": sessoes if sessoes is not None else datas()}
+    cal.update(kw)
+    return cal
+
+
 class TestQualidadeMercado(unittest.TestCase):
     def test_serie_homogenea_e_tendencia_descritiva(self):
         a = [row(d, str(1050+i*5)) for i, d in enumerate(datas())]
         r = tendencia_preco_auditada(a, as_of="2026-10-20T12:00:00Z",
-                                    janela=6, tolerancia_absoluta=5)
+                                    janela=6, tolerancia_absoluta=5,
+                                    calendario_sessoes=calendario())
         self.assertEqual(r["tendencia"], "ALTA")
         self.assertFalse(r["publicavel"])
         self.assertIsNone(r["probabilidades_calibradas"])
@@ -106,13 +116,63 @@ class TestQualidadeMercado(unittest.TestCase):
                                       as_of="2026-10-20T12:00:00Z")
 
     def test_fisico_nao_e_futuro(self):
-        base = row(mercado="FISICO", contrato=None, localidade_ibge="5107602",
-                   tipo="INDICADOR_FISICO", unidade="BRL/SC60KG", preco="140")
+        base = row(mercado="FISICO", contrato=None, instrumento_id=None,
+                   localidade_ibge="5107602", tipo="INDICADOR_FISICO",
+                   unidade="BRL/SC60KG", preco="140",
+                   ponto_cotacao_id="ARMAZEM-X", qualidade_id="SOJA-PADRAO-A",
+                   condicao_entrega_id="FOB", condicao_pagamento_id="D+7",
+                   regime_tributario_id="IMPOSTO_DECLARADO")
         r = preparar_serie_precos([base], as_of="2026-10-20T12:00:00Z")
         self.assertEqual(r["identidade_economica"][5], "5107602")
         with self.assertRaises(ErroQualidadeMercado):
             preparar_serie_precos([dict(base, localidade_ibge="4106902"), base],
                                   as_of="2026-10-20T12:00:00Z")
+
+    def test_ponto_e_condicoes_fisicas_nao_podem_ser_misturados(self):
+        base = row(mercado="FISICO", contrato=None, instrumento_id=None,
+                   localidade_ibge="5107602", tipo="INDICADOR_FISICO",
+                   unidade="BRL/SC60KG", preco="140",
+                   ponto_cotacao_id="ARMAZEM-X", qualidade_id="SOJA-01",
+                   condicao_entrega_id="FOB", condicao_pagamento_id="D+7",
+                   regime_tributario_id="REGIME-A")
+        for atributo, diferente in (
+            ("ponto_cotacao_id", "ARMAZEM-Y"),
+            ("qualidade_id", "SOJA-02"),
+            ("condicao_entrega_id", "CIF"),
+            ("condicao_pagamento_id", "A_VISTA"),
+            ("regime_tributario_id", "REGIME-B"),
+        ):
+            with self.subTest(atributo=atributo):
+                outro = dict(base, **{atributo: diferente},
+                             data_referencia="2026-10-14", competencia="2026-10",
+                             referencia_em="2026-10-14T16:00:00-04:00",
+                             publicacao_em="2026-10-14T16:30:00-04:00",
+                             coleta_em="2026-10-14T17:00:00-04:00")
+                with self.assertRaisesRegex(ErroQualidadeMercado, "mistura"):
+                    preparar_serie_precos([base, outro], as_of="2026-10-20T12:00:00Z")
+        with self.assertRaisesRegex(ErroQualidadeMercado, "ponto_cotacao_id"):
+            preparar_serie_precos([dict(base, ponto_cotacao_id=None)],
+                                  as_of="2026-10-20T12:00:00Z")
+
+    def test_futuros_instrumentos_diferentes_bloqueados(self):
+        with self.assertRaisesRegex(ErroQualidadeMercado, "mistura"):
+            preparar_serie_precos([row(), row(d="2026-10-14", instrumento_id="OUTRO")],
+                                  as_of="2026-10-20T12:00:00Z")
+
+    def test_sem_calendario_nao_classifica_alta(self):
+        serie = [row(d, str(1050+i*5)) for i, d in enumerate(datas())]
+        r = tendencia_preco_auditada(serie, as_of="2026-10-20T12:00:00Z",
+                                    janela=6, tolerancia_absoluta=5)
+        self.assertEqual(r["status"], "CALENDARIO_AUSENTE")
+        self.assertEqual(r["tendencia"], "INDETERMINADA")
+
+    def test_lacuna_em_sessao_declarada_bloqueia(self):
+        serie = [row(d, str(1050+i*5)) for i, d in enumerate(datas())]
+        cal = calendario(sessoes=datas()[:3]+["2026-10-12"]+datas()[3:])
+        with self.assertRaisesRegex(ValueError, "lacuna"):
+            tendencia_preco_auditada(serie, as_of="2026-10-20T12:00:00Z",
+                                    janela=6, tolerancia_absoluta=5,
+                                    calendario_sessoes=cal)
 
     def test_sem_licenca_implicita_ou_rede(self):
         r = preparar_serie_precos([row()], as_of="2026-10-20T12:00:00Z")
