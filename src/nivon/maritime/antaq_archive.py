@@ -22,6 +22,7 @@ from typing import Any
 MAX_ZIP_BYTES = 150_000_000
 MAX_UNCOMPRESSED = 1_200_000_000
 MAX_ROWS = 6_000_000
+MAX_GROUPS = 200_000
 _MONTHS = dict(zip(
     ("jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"),
     range(1, 13),
@@ -105,6 +106,7 @@ class AntaqArchiveSummary:
 def analyze_antaq_archive(
     payload: bytes, *, year: int, source_id: str, collected_at: str | datetime,
     rights_to_read: bool = False, max_cargo_rows: int = MAX_ROWS,
+    max_groups: int = MAX_GROUPS,
     source_published_at: str | datetime | None = None,
     publication_evidence_id: str | None = None,
     as_of: str | datetime | None = None,
@@ -137,6 +139,8 @@ def analyze_antaq_archive(
         raise ValueError("ZIP vazio ou excessivo")
     if not 1 <= max_cargo_rows <= MAX_ROWS:
         raise ValueError("max_cargo_rows fora de faixa")
+    if not 1 <= max_groups <= MAX_GROUPS:
+        raise ValueError("max_groups fora de faixa")
     digest = hashlib.sha256(payload).hexdigest()
     with zipfile.ZipFile(io.BytesIO(payload), "r") as archive:
         selected = {}
@@ -229,6 +233,8 @@ def analyze_antaq_archive(
                      row["Tipo Navegação"])
             aggregates[group][0] += kg
             aggregates[group][1] += 1
+            if len(aggregates) > max_groups:
+                raise ValueError("grupos distintos excedem limite de memoria")
             matched += 1
         total = matched + orphan
         if not total:
