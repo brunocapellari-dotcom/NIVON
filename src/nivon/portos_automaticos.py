@@ -5,6 +5,8 @@ Nenhum porto torna-se homologado apenas por este módulo.
 """
 from __future__ import annotations
 
+import hashlib
+import re
 from dataclasses import dataclass
 from datetime import date, datetime
 from urllib.parse import urlsplit
@@ -80,8 +82,33 @@ def processar_documento_porto(contrato: ContratoPorto, documento: dict) -> dict:
         raise ErroPorto("documento ausente")
     if documento.get("url") != contrato.fonte.url:
         raise ErroPorto("proveniência não corresponde ao contrato")
-    if not documento.get("sha256") or not documento.get("capturado_em"):
-        raise ErroPorto("metadados de evidência ausentes")
+    sha=documento.get("sha256")
+    if not isinstance(sha,str) or not re.fullmatch(r"[a-f0-9]{64}",sha):
+        raise ErroPorto("SHA-256 obrigatório e com 64 caracteres hexadecimais")
+    if hashlib.sha256(dados).hexdigest()!=sha:
+        raise ErroPorto("documento alterado após coleta: SHA-256 divergente")
+    if documento.get("bytes") is not None and (
+            type(documento["bytes"]) is not int or documento["bytes"]!=len(dados)):
+        raise ErroPorto("tamanho declarado diverge dos bytes originais")
+    if documento.get("fonte_id") is not None and documento["fonte_id"]!=contrato.fonte.fonte_id:
+        raise ErroPorto("fonte_id divergente do contrato")
+    capturado=documento.get("capturado_em")
+    if not isinstance(capturado,str):
+        raise ErroPorto("timestamp obrigatório")
+    try:
+        momento=datetime.fromisoformat(capturado.replace("Z","+00:00"))
+    except ValueError as exc:
+        raise ErroPorto("timestamp ISO inválido") from exc
+    if momento.tzinfo is None or momento.utcoffset() is None:
+        raise ErroPorto("timestamp sem timezone")
+    mime=documento.get("mime")
+    if mime is not None:
+        permitidos=({"text/html","application/xhtml+xml"} if contrato.modo.startswith("HTML")
+                    else {"application/pdf"})
+        if mime not in permitidos:
+            raise ErroPorto("MIME do documento divergente do parser")
+    if contrato.modo.startswith("PDF") and not dados.startswith(b"%PDF-"):
+        raise ErroPorto("assinatura PDF não corresponde ao contrato")
     if contrato.modo.startswith("HTML"):
         try:
             texto = dados.decode("utf-8-sig", errors="strict")

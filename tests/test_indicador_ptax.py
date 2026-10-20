@@ -52,8 +52,10 @@ class TestPTAXIndicador(unittest.TestCase):
             self.db,CAT,dataset_id="BCB_PTAX",
             payload=body(entries if entries is not None else [boletim()]),
             plano=PLAN,coletado_em=coleta,tipo=tipo,
-            autorizacoes=frozenset({"COLETA","ARMAZENAMENTO"}),
-            evidencia_direitos="APENAS_FIXTURE_TESTE",
+            autorizacoes=(frozenset({"COLETA","ARMAZENAMENTO"})
+                          if tipo=="REAL_AUTORIZADO" else frozenset()),
+            evidencia_direitos=("APENAS_FIXTURE_TESTE"
+                                if tipo=="REAL_AUTORIZADO" else None),
         )
 
     def test_ptax_fechamento_no_briefing_sem_dolar_comercial(self):

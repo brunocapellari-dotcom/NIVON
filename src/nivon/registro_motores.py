@@ -29,6 +29,7 @@ MODULOS=frozenset({
     "validacao_previsoes_ambientais","nasa_power_diario",
     "nasa_power_backfill","nasa_power_captura_manual",
     "grade_meteorologica_store","chirps_v3_conservacao",
+    "hidrologia_chuva_vazao",
     "modelos_fisicos","verificacao_probabilistica","analogos_historicos","unidades_mercado",
 })
 

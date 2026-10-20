@@ -107,7 +107,8 @@ def registrar_snapshot(db: sqlite3.Connection, catalogo: dict, *,
             or type(tamanho) is not int or not 0 < tamanho <= _LIMITE_POR_DATASET.get(dataset_id, _LIMITE_PADRAO)):
         raise ErroSnapshot("hash/tamanho inválido")
     if mime not in {"text/csv", "text/plain", "application/json", "application/pdf",
-                    "application/vnd.ms-excel"}:
+                    "application/vnd.ms-excel",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}:
         raise ErroSnapshot("MIME não homologado para o registro")
     if (not isinstance(schema_versao, str) or not 1 <= len(schema_versao) <= 80
             or not re.fullmatch(r"[A-Za-z0-9._-]+", schema_versao)):
