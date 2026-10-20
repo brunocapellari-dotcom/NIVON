@@ -794,6 +794,38 @@
       "access": "PUBLIC_DATA",
       "rights": "REVIEW",
       "notes": ""
+    },
+    {
+      "id": "NASA_POWER",
+      "provider": "NASA POWER Agroclimatology",
+      "official_url": "https://power.larc.nasa.gov/",
+      "access": "PUBLIC_DOCUMENTED_API",
+      "rights": "REVIEW",
+      "notes": "Séries modeladas/em grade, não estação observacional. Licença específica e uso comercial por operação a verificar."
+    },
+    {
+      "id": "COPERNICUS_CDS",
+      "provider": "Copernicus Climate Data Store / ECMWF",
+      "official_url": "https://cds.climate.copernicus.eu/",
+      "access": "CDS_AUTH_API",
+      "rights": "ATTRIBUTION_REVIEW",
+      "notes": "ERA5-Land reanálise, não observação. Registro/CDS API e CC-BY-4.0 do dataset; rever termos da conta e de publicação."
+    },
+    {
+      "id": "UCSB_CHC",
+      "provider": "Climate Hazards Center, UCSB — CHIRPS",
+      "official_url": "https://www.chc.ucsb.edu/",
+      "access": "PUBLISHED_GRIDDED_DATA",
+      "rights": "REVIEW",
+      "notes": "CHIRPS v3 estimativas pluviais 1981+, distinguir produto preliminary de final e usar licença verificada."
+    },
+    {
+      "id": "CFTC",
+      "provider": "US CFTC Public Reporting / COT",
+      "official_url": "https://publicreporting.cftc.gov/",
+      "access": "SOCRATA_PUBLIC_PORTAL",
+      "rights": "REVIEW",
+      "notes": "Posicionamento de futuros semanal com classificações e histórico por regime de relatório, não preço nem cotação."
     }
   ],
   "datasets": [
@@ -4743,6 +4775,225 @@
       "priority": "P2",
       "existing_module": null,
       "notes": "",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "NASA_POWER_AGRO_DAILY",
+      "source_id": "NASA_POWER",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "CANA",
+        "GERGELIM"
+      ],
+      "topic": "meteorologia_agroclimatica_diaria_grade_1981",
+      "mode": "API_DAILY_POINT",
+      "cadence": "DAILY",
+      "stage": "CANDIDATE",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Identificada na pesquisa 19/10/2026. Fonte/endpoint/documentação não equivalem à homologação, coleta ou licença.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "COPERNICUS_ERA5_LAND",
+      "source_id": "COPERNICUS_CDS",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "CANA",
+        "GERGELIM",
+        "LOGISTICA"
+      ],
+      "topic": "reanálise_atmosferica_terrestre_horaria_desde_1950",
+      "mode": "CDS_ARCO_REANALYSIS",
+      "cadence": "DAILY",
+      "stage": "CANDIDATE",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Identificada na pesquisa 19/10/2026. Fonte/endpoint/documentação não equivalem à homologação, coleta ou licença.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "UCSB_CHIRPS_V3",
+      "source_id": "UCSB_CHC",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "CANA",
+        "GERGELIM",
+        "LOGISTICA"
+      ],
+      "topic": "precipitacao_gridded_preliminar_final_desde_1981",
+      "mode": "PUBLISHED_GRIDDED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "CANDIDATE",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Identificada na pesquisa 19/10/2026. Fonte/endpoint/documentação não equivalem à homologação, coleta ou licença.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "NOAA_ENSO_RONI",
+      "source_id": "NOAA",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "CANA",
+        "GERGELIM"
+      ],
+      "topic": "indice_enso_relativo_e_vintages_desde_1950",
+      "mode": "OFFICIAL_INDEX_DOWNLOAD",
+      "cadence": "MONTHLY",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Identificada na pesquisa 19/10/2026. Fonte/endpoint/documentação não equivalem à homologação, coleta ou licença.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "CFTC_COT_WEEKLY",
+      "source_id": "CFTC",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "ACUCAR",
+        "BOI"
+      ],
+      "topic": "posicionamento_participantes_futuros_cftc",
+      "mode": "SOCRATA_DATASET_API",
+      "cadence": "WEEKLY",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Identificada na pesquisa 19/10/2026. Fonte/endpoint/documentação não equivalem à homologação, coleta ou licença.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "USDA_WASDE_RELEASE_VINTAGES",
+      "source_id": "USDA",
+      "group": "BALANCO",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "SORGO",
+        "ACUCAR",
+        "BOI",
+        "FRANGO",
+        "SUINO"
+      ],
+      "topic": "revisoes_mensais_de_oferta_demanda_por_edicao_1973",
+      "mode": "USDA_OFFICIAL_ARCHIVE",
+      "cadence": "MONTHLY",
+      "stage": "CANDIDATE",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Identificada na pesquisa 19/10/2026. Fonte/endpoint/documentação não equivalem à homologação, coleta ou licença.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "FAO_FAOSTAT_LONG_RUN",
+      "source_id": "FAO",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "CANA",
+        "SORGO",
+        "GERGELIM",
+        "BOI",
+        "FRANGO",
+        "SUINO"
+      ],
+      "topic": "estatisticas_agricolas_e_pecuarias_longo_prazo",
+      "mode": "FAOSTAT_TABLES",
+      "cadence": "ANNUAL",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Identificada na pesquisa 19/10/2026. Fonte/endpoint/documentação não equivalem à homologação, coleta ou licença.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,

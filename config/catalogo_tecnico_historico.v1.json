@@ -1,0 +1,340 @@
+{
+  "project": "NIVON",
+  "schema_version": "1.0",
+  "reference_date": "2026-10-19",
+  "canonical_catalog": "config/fontes_nivon_master.v1.json",
+  "canonical_routes": "config/rotas_coleta.v1.json",
+  "model_coverage": "config/matriz_produtos_indicadores.v1.json",
+  "policy": "DOCUMENTAL_DISCOVERY_NO_AUTOMATIC_COLLECTION_NO_MERGE_NO_DEPLOY",
+  "historical_sources": [
+    {
+      "id": "NASA_POWER_AGRO_DAILY",
+      "history": "1981-presente, diário, temporalidade depende do parâmetro",
+      "nature": "REANALYSIS_OR_MODELLED_GRIDDED",
+      "resolution": "grade original de cada parâmetro; não atribuir resolução de estação",
+      "interface": "API diária documentada",
+      "evidence": "https://power.larc.nasa.gov/docs/services/api/temporal/daily/",
+      "priority": "P0",
+      "risk": "não tratar estimativa em grade como chuva aferida na fazenda",
+      "agrolog_paths": [
+        "collector/nasa_power.py",
+        "collector/nasa_power_pipeline.py"
+      ],
+      "status": "DOCUMENTED_NO_NIVON_LIVE_SNAPSHOT"
+    },
+    {
+      "id": "COPERNICUS_ERA5_LAND",
+      "history": "1950-presente, horário",
+      "nature": "REANALYSIS",
+      "resolution": "0,1 grau aproximadamente 9 km",
+      "interface": "CDS API, ARCO Zarr mediante cadastro/credencial",
+      "evidence": "https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land",
+      "priority": "P0",
+      "risk": "reanálise não é observação; necessário bias correction e agregação espacial",
+      "agrolog_paths": [
+        "collector/copernicus_climate.py",
+        "models/weather_multimodel.py"
+      ],
+      "status": "DOCUMENTED_NO_NIVON_LIVE_SNAPSHOT"
+    },
+    {
+      "id": "UCSB_CHIRPS_V3",
+      "history": "1981-presente próximo, preliminary/final",
+      "nature": "SATELLITE_STATION_BLEND_ESTIMATE",
+      "resolution": "0,05 grau",
+      "interface": "Arquivos públicos; localizar recurso e licença exata",
+      "evidence": "https://www.chc.ucsb.edu/data/chirps3",
+      "priority": "P0",
+      "risk": "preliminary deve ser reprocessado quando final sair; sem dupla contagem com INMET",
+      "agrolog_paths": [
+        "collector/climate_grid.py"
+      ],
+      "status": "DOCUMENTED_NO_NIVON_LIVE_SNAPSHOT"
+    },
+    {
+      "id": "NOAA_ENSO_RONI",
+      "history": "1950-presente, trimestral móvel atualizado mensalmente",
+      "nature": "CLIMATE_INDEX",
+      "resolution": "índice regional oceânico",
+      "interface": "página oficial; sem API confirmada",
+      "evidence": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/v5/",
+      "priority": "P1",
+      "risk": "RONI oficial a partir de 2026; não concatenar ONI e RONI como uma variável; rastrear revisão",
+      "agrolog_paths": [
+        "models/analog_years.py"
+      ],
+      "status": "DOCUMENTED_NO_NIVON_LIVE_SNAPSHOT"
+    },
+    {
+      "id": "CFTC_COT_WEEKLY",
+      "history": "diferentes inícios por formato de relatório; consultar dataset específico",
+      "nature": "REGULATORY_POSITIONING_REPORTED",
+      "resolution": "semanal e por contrato/família",
+      "interface": "Socrata SODA; dataset ID e campos a homologar",
+      "evidence": "https://publicreporting.cftc.gov/",
+      "priority": "P1",
+      "risk": "publicação sexta-feira vs posição terça-feira; não é preço nem posição atual",
+      "agrolog_paths": [
+        "cftc_cot/client.py",
+        "cftc_cot/datasets.py"
+      ],
+      "status": "DOCUMENTED_NO_NIVON_LIVE_SNAPSHOT"
+    },
+    {
+      "id": "USDA_WASDE_RELEASE_VINTAGES",
+      "history": "arquivo de edições desde 1973; dados consolidados CSV 2010-2026",
+      "nature": "PUBLISHED_ESTIMATE_AND_REVISION",
+      "resolution": "mensal; país/commodity/marketing year",
+      "interface": "relatórios oficiais XML/XLS/TXT/PDF; CSV consolidado separado",
+      "evidence": "https://www.usda.gov/about-usda/general-information/staff-offices/office-chief-economist/commodity-markets/wasde-report",
+      "priority": "P0",
+      "risk": "backtest somente com valor publicado na data de corte; não usar tabela revisada no passado",
+      "agrolog_paths": [
+        "collector/usda_wasde.py",
+        "models/point_in_time.py"
+      ],
+      "status": "DOCUMENTED_NO_NIVON_LIVE_SNAPSHOT"
+    },
+    {
+      "id": "FAO_FAOSTAT_LONG_RUN",
+      "history": "série longa varia por domínio, ano, país e revisão; verificar início na série",
+      "nature": "STATISTICAL_OBSERVED_OR_ESTIMATED_BY_SERIES",
+      "resolution": "anual e por país/produto",
+      "interface": "FAOSTAT arquivos/API somente após resolver documentação",
+      "evidence": "https://www.fao.org/faostat/en/#data",
+      "priority": "P1",
+      "risk": "mudança de classificação, unidade, regime e método; não substituir granularidade municipal",
+      "agrolog_paths": [
+        "contracts/global_supply_demand.v1.schema.json"
+      ],
+      "status": "DISCOVERY_API_UNVERIFIED"
+    },
+    {
+      "id": "CONAB_GRAOS_SERIES",
+      "history": "retrocarga desde edição oficial disponível; início por produto e tipo",
+      "nature": "OFFICIAL_PUBLISHED_ESTIMATE",
+      "resolution": "safra/UF/produto/edição",
+      "interface": "XLS oficial CONAB; amostras reais anteriores já testadas",
+      "evidence": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras",
+      "priority": "P0",
+      "risk": "produções revisadas; armazenar todas as edições; volume não anualizar indevidamente",
+      "agrolog_paths": [
+        "collector/conab_safra.py",
+        "collector/conab_safra_history.py"
+      ],
+      "status": "NIVON_REAL_SAMPLE_EXISTS_NOT_OPERATIONAL"
+    },
+    {
+      "id": "CONAB_PROGRESSO_SEMANAL",
+      "history": "edições semanais disponíveis, sem inventar publicação",
+      "nature": "OFFICIAL_REPORTED_PROGRESS",
+      "resolution": "UF/cultura/operação/semana",
+      "interface": "agrobr CONAB progresso opcional",
+      "evidence": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras",
+      "priority": "P0",
+      "risk": "média simples entre UFs não é média Brasil por área",
+      "agrolog_paths": [
+        "collector/conab_safra_history.py"
+      ],
+      "status": "NIVON_CODE_OFFLINE"
+    },
+    {
+      "id": "IBGE_PAM",
+      "history": "série histórica por produto e variável; consultar SIDRA",
+      "nature": "OFFICIAL_STATISTICAL",
+      "resolution": "municipal/anual",
+      "interface": "SIDRA API por tabela/variável",
+      "evidence": "https://apisidra.ibge.gov.br/",
+      "priority": "P0",
+      "risk": "quebras municipais, sigilo, revisão e mudança de definição",
+      "agrolog_paths": [
+        "collector/ibge_pam.py",
+        "collector/ibge_pipeline.py"
+      ],
+      "status": "NIVON_CANDIDATE"
+    },
+    {
+      "id": "IBGE_PPM",
+      "history": "série variável por espécie; consultar SIDRA",
+      "nature": "OFFICIAL_STATISTICAL",
+      "resolution": "municipal/anual",
+      "interface": "SIDRA API",
+      "evidence": "https://sidra.ibge.gov.br/",
+      "priority": "P0",
+      "risk": "rebanho é estoque estatístico, não fluxo de abate disponível",
+      "agrolog_paths": [
+        "collector/ibge_pam.py"
+      ],
+      "status": "NIVON_CANDIDATE"
+    },
+    {
+      "id": "IBGE_ABATE_FRANGO_1094",
+      "history": "série da pesquisa trimestral, ano inicial conforme tabela",
+      "nature": "OFFICIAL_STATISTICAL",
+      "resolution": "trimestre/UF",
+      "interface": "IBGE SIDRA tabela 1094",
+      "evidence": "https://sidra.ibge.gov.br/",
+      "priority": "P0",
+      "risk": "abate fiscalizado não representa todo o plantel",
+      "agrolog_paths": [
+        "models/operational_models.py"
+      ],
+      "status": "NIVON_CODE_OFFLINE"
+    },
+    {
+      "id": "IBGE_ABATE_SUINO_1093",
+      "history": "série da pesquisa trimestral, ano inicial conforme tabela",
+      "nature": "OFFICIAL_STATISTICAL",
+      "resolution": "trimestre/UF",
+      "interface": "IBGE SIDRA tabela 1093",
+      "evidence": "https://sidra.ibge.gov.br/",
+      "priority": "P0",
+      "risk": "peso de carcaça difere de peso vivo e cortes",
+      "agrolog_paths": [
+        "models/operational_models.py"
+      ],
+      "status": "NIVON_CODE_OFFLINE"
+    },
+    {
+      "id": "INMET_ESTACOES",
+      "history": "BDMEP convencional diária; automáticas pacotes anuais; por estação",
+      "nature": "IN_SITU_OBSERVED",
+      "resolution": "estação/dia ou hora",
+      "interface": "BDMEP/arquivo anual; revisão de autorização e formato",
+      "evidence": "https://bdmep.inmet.gov.br/",
+      "priority": "P0",
+      "risk": "falhas, mudança de estação, sensores, timezone e acumulados",
+      "agrolog_paths": [
+        "collector/inmet_daily.py"
+      ],
+      "status": "NIVON_CANDIDATE"
+    },
+    {
+      "id": "CPTEC_MERGE",
+      "history": "histórico conforme produto STAC/arquivo; início por versão",
+      "nature": "SATELLITE_STATION_MERGED_ESTIMATE",
+      "resolution": "grade horária/diária",
+      "interface": "INPE MERGE GRIB2/STAC",
+      "evidence": "https://data.inpe.br/dados/merge/",
+      "priority": "P0",
+      "risk": "MERGE é estimativa espacial, não medição de estação; não confundir com previsão",
+      "agrolog_paths": [
+        "collector/climate_grid.py",
+        "collector/cptec_forecast.py"
+      ],
+      "status": "NIVON_CANDIDATE"
+    },
+    {
+      "id": "ANA_HIDRO",
+      "history": "séries por estação e variável, períodos e qualidades distintos",
+      "nature": "IN_SITU_OBSERVED_AND_ADOPTED",
+      "resolution": "estação/nível/vazão",
+      "interface": "HidroWebService REST com acesso solicitado à ANA",
+      "evidence": "https://www.snirh.gov.br/hidroweb/acesso-api",
+      "priority": "P0",
+      "risk": "necessário cadastro de API; cota não é profundidade navegável",
+      "agrolog_paths": [
+        "collector/ana_hidrowebservice.py",
+        "models/hydrology.py"
+      ],
+      "status": "NIVON_CANDIDATE_AUTH_REQUIRED"
+    },
+    {
+      "id": "USDA_NASS",
+      "history": "varia por commodity/programa",
+      "nature": "OFFICIAL_SURVEY_AND_CENSUS",
+      "resolution": "estados/condados/semana/ano",
+      "interface": "QuickStats API exige chave",
+      "evidence": "https://quickstats.nass.usda.gov/api",
+      "priority": "P1",
+      "risk": "CV, supressões e load_time; chave de API não entra no GitHub",
+      "agrolog_paths": [
+        "collector/nass_quickstats.py"
+      ],
+      "status": "NIVON_CANDIDATE_KEY_REQUIRED"
+    },
+    {
+      "id": "MDIC_COMEX_NCM",
+      "history": "1997-presente, mensal por NCM; 1989-1996 NBM separado",
+      "nature": "CUSTOMS_TRADE_REPORTED",
+      "resolution": "mês/NCM/UF/país/via/URF",
+      "interface": "CSV oficial com correlações vigentes",
+      "evidence": "https://www.gov.br/mdic/pt-br/assuntos/comercio-exterior/estatisticas/base-de-dados-bruta",
+      "priority": "P0",
+      "risk": "UF da mercadoria não identifica produtor; SH4 não é NCM; FOB não é preço físico local",
+      "agrolog_paths": [
+        "collector/comexstat.py",
+        "collector/comexstat_pipeline.py"
+      ],
+      "status": "NIVON_CODE_OFFLINE"
+    },
+    {
+      "id": "WORLD_BANK_COMMODITIES",
+      "history": "arquivos oficiais mensais e anuais; corte exato por série a verificar",
+      "nature": "MARKET_COMMODITY_AGGREGATE",
+      "resolution": "mensal/anual, USD/unidade específica",
+      "interface": "Pink Sheet XLS",
+      "evidence": "https://thedocs.worldbank.org/en/doc/18675f1d1639c7a34d463f59263ba0a2-0050012025/",
+      "priority": "P1",
+      "risk": "benchmark global não é cotação física nem substitui futuro CME",
+      "agrolog_paths": [
+        "models/operational_models.py"
+      ],
+      "status": "NIVON_CANDIDATE"
+    },
+    {
+      "id": "CME_FUTUROS",
+      "history": "histórico licenciado, data e contrato por vencimento",
+      "nature": "LICENSED_EXCHANGE_SETTLEMENT",
+      "resolution": "pregão/contrato/vencimento",
+      "interface": "CME DataMine/API sob contrato",
+      "evidence": "https://www.cmegroup.com/market-data/market-data-api.html",
+      "priority": "P0",
+      "risk": "licença de distribuição; não usar contrato contínuo sem política de rolagem",
+      "agrolog_paths": [
+        "collector/zero_cost_market.py"
+      ],
+      "status": "BLOCKED_RIGHTS"
+    },
+    {
+      "id": "B3_FUTUROS",
+      "history": "arquivos históricos sob condições e produtos específicos",
+      "nature": "LICENSED_EXCHANGE_SETTLEMENT",
+      "resolution": "pregão/contrato/vencimento",
+      "interface": "B3 histórico; coleta automatizada proibida na página consultada",
+      "evidence": "https://b3.com.br/pt_br/market-data-e-indices/servicos-de-dados/market-data/historico/boletins-diarios/pesquisa-por-pregao/pesquisa-por-pregao/",
+      "priority": "P0",
+      "risk": "NÃO automatizar scraping da página; negociar via canal autorizado antes de qualquer acesso",
+      "agrolog_paths": [
+        "collector/zero_cost_market.py"
+      ],
+      "status": "BLOCKED_RIGHTS_AUTOMATION"
+    }
+  ],
+  "evidence_policy": {
+    "available_as_of": "max(data_publicacao_ou_disponibilizacao, acesso_legitimo_comprovado)",
+    "four_dates": [
+      "competencia",
+      "referencia",
+      "publicacao",
+      "coleta"
+    ],
+    "required_fields": [
+      "fonte_primaria",
+      "tipo_evidencia",
+      "produto",
+      "local",
+      "unidade",
+      "cobertura_espacial",
+      "metodo",
+      "versao",
+      "vintage",
+      "hash_raw",
+      "licenca",
+      "data_publicacao"
+    ],
+    "no_api_implied_by_url": true,
+    "publication_rights_separate_from_reading": true,
+    "originals_outside_github": true
+  }
+}

@@ -3913,6 +3913,220 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
       "preliminary_evidence": "CATALOG_ONLY"
+    },
+    {
+      "dataset_id": "NASA_POWER_AGRO_DAILY",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PUBLISHED_API_DOC",
+        "url": "https://power.larc.nasa.gov/docs/services/api/temporal/daily/",
+        "source_proof": "https://power.larc.nasa.gov/docs/services/api/temporal/daily/"
+      },
+      "implementation_scope": "NO_PARSER; reuso AgroLog sujeito a auditoria de dependência e teste com snapshot real",
+      "authentication": "PUBLIC_ANONYMOUS_RIGHTS_REVIEW",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "SOURCE_RIGHTS_AND_REAL_SAMPLE_VALIDATION",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "POINT_IN_TIME_VINTAGE_AUDIT",
+        "MODEL_BENCHMARK_AND_PHYSICAL_IDENTITY"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "API documentada; verificar resposta histórica, versões e termos.",
+      "preliminary_evidence": "OFFICIAL_DOCUMENTATION_RESEARCH_ONLY"
+    },
+    {
+      "dataset_id": "COPERNICUS_ERA5_LAND",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land",
+        "source_proof": "https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land"
+      },
+      "implementation_scope": "NO_PARSER; reuso AgroLog sujeito a auditoria de dependência e teste com snapshot real",
+      "authentication": "REGISTRATION_CDS_KEY_REQUIRED",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "SOURCE_RIGHTS_AND_REAL_SAMPLE_VALIDATION",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "POINT_IN_TIME_VINTAGE_AUDIT",
+        "MODEL_BENCHMARK_AND_PHYSICAL_IDENTITY"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Cadastro/CDS token; grade ARCO ou recuperação conforme termo.",
+      "preliminary_evidence": "OFFICIAL_DOCUMENTATION_RESEARCH_ONLY"
+    },
+    {
+      "dataset_id": "UCSB_CHIRPS_V3",
+      "collector_class": "STRUCTURED_FILE",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://www.chc.ucsb.edu/data/chirps3",
+        "source_proof": "https://www.chc.ucsb.edu/data/chirps3"
+      },
+      "implementation_scope": "NO_PARSER; reuso AgroLog sujeito a auditoria de dependência e teste com snapshot real",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "SOURCE_RIGHTS_AND_REAL_SAMPLE_VALIDATION",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "POINT_IN_TIME_VINTAGE_AUDIT",
+        "MODEL_BENCHMARK_AND_PHYSICAL_IDENTITY"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Preliminary não é final; identificar asset por versão e grid.",
+      "preliminary_evidence": "OFFICIAL_DOCUMENTATION_RESEARCH_ONLY"
+    },
+    {
+      "dataset_id": "NOAA_ENSO_RONI",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": null
+      },
+      "implementation_scope": "NO_PARSER; reuso AgroLog sujeito a auditoria de dependência e teste com snapshot real",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "SOURCE_RIGHTS_AND_REAL_SAMPLE_VALIDATION",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "POINT_IN_TIME_VINTAGE_AUDIT",
+        "MODEL_BENCHMARK_AND_PHYSICAL_IDENTITY",
+        "EXACT_ENDPOINT_UNKNOWN",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Página NOAA RONI confirmada; URL em host diferente de fonte canônica; homologar origem e parser.",
+      "preliminary_evidence": "OFFICIAL_DOCUMENTATION_RESEARCH_ONLY"
+    },
+    {
+      "dataset_id": "CFTC_COT_WEEKLY",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://publicreporting.cftc.gov/",
+        "source_proof": "https://publicreporting.cftc.gov/"
+      },
+      "implementation_scope": "NO_PARSER; reuso AgroLog sujeito a auditoria de dependência e teste com snapshot real",
+      "authentication": "PUBLIC_SOCRATA_RIGHTS_REVIEW",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "SOURCE_RIGHTS_AND_REAL_SAMPLE_VALIDATION",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "POINT_IN_TIME_VINTAGE_AUDIT",
+        "MODEL_BENCHMARK_AND_PHYSICAL_IDENTITY"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Selecionar datasets Socrata  por versão/tipo de relatório, mapear contrato e família.",
+      "preliminary_evidence": "OFFICIAL_DOCUMENTATION_RESEARCH_ONLY"
+    },
+    {
+      "dataset_id": "USDA_WASDE_RELEASE_VINTAGES",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": null
+      },
+      "implementation_scope": "NO_PARSER; reuso AgroLog sujeito a auditoria de dependência e teste com snapshot real",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "SOURCE_RIGHTS_AND_REAL_SAMPLE_VALIDATION",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "POINT_IN_TIME_VINTAGE_AUDIT",
+        "MODEL_BENCHMARK_AND_PHYSICAL_IDENTITY",
+        "EXACT_ENDPOINT_UNKNOWN",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Arquivo de edições USDA 1973+, CSV consolidado 2010+; preservar cada data de publicação.",
+      "preliminary_evidence": "OFFICIAL_DOCUMENTATION_RESEARCH_ONLY"
+    },
+    {
+      "dataset_id": "FAO_FAOSTAT_LONG_RUN",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://www.fao.org/faostat/en/#data",
+        "source_proof": "https://www.fao.org/faostat/en/#data"
+      },
+      "implementation_scope": "NO_PARSER; reuso AgroLog sujeito a auditoria de dependência e teste com snapshot real",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "SOURCE_RIGHTS_AND_REAL_SAMPLE_VALIDATION",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "POINT_IN_TIME_VINTAGE_AUDIT",
+        "MODEL_BENCHMARK_AND_PHYSICAL_IDENTITY"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "API/tabulação/versão e períodos por domínio ainda a homologar.",
+      "preliminary_evidence": "OFFICIAL_DOCUMENTATION_RESEARCH_ONLY"
     }
   ]
 }

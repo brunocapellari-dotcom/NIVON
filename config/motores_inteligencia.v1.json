@@ -31,7 +31,10 @@
         "BCB_PTAX",
         "CONAB_ARMAZENS_CAPACIDADE",
         "IMEA_COMERCIALIZACAO_MT",
-        "CONAB_PROGRESSO_SEMANAL"
+        "CONAB_PROGRESSO_SEMANAL",
+        "USDA_WASDE_RELEASE_VINTAGES",
+        "CFTC_COT_WEEKLY",
+        "FAO_FAOSTAT_LONG_RUN"
       ],
       "indicators_planned": 18,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -67,7 +70,10 @@
         "LINEUP_PARANAGUA",
         "CONAB_ARMAZENS_CAPACIDADE",
         "IMEA_COMERCIALIZACAO_MT",
-        "CONAB_PROGRESSO_SEMANAL"
+        "CONAB_PROGRESSO_SEMANAL",
+        "USDA_WASDE_RELEASE_VINTAGES",
+        "CFTC_COT_WEEKLY",
+        "FAO_FAOSTAT_LONG_RUN"
       ],
       "indicators_planned": 16,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -93,7 +99,9 @@
         "CEPEA_FISICO",
         "LINEUP_SANTOS",
         "IMEA_COMERCIALIZACAO_MT",
-        "CONAB_PROGRESSO_SEMANAL"
+        "CONAB_PROGRESSO_SEMANAL",
+        "CFTC_COT_WEEKLY",
+        "USDA_WASDE_RELEASE_VINTAGES"
       ],
       "indicators_planned": 11,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -114,7 +122,9 @@
         "CEPEA_BOI",
         "SCOT_PECUARIA",
         "MDIC_COMEX_NCM",
-        "B3_FUTUROS"
+        "B3_FUTUROS",
+        "CFTC_COT_WEEKLY",
+        "FAO_FAOSTAT_LONG_RUN"
       ],
       "indicators_planned": 7,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -177,7 +187,9 @@
         "MDIC_COMEX_NCM",
         "USDA_PSD",
         "CME_FUTUROS",
-        "CONAB_PROGRESSO_SEMANAL"
+        "CONAB_PROGRESSO_SEMANAL",
+        "CFTC_COT_WEEKLY",
+        "USDA_WASDE_RELEASE_VINTAGES"
       ],
       "indicators_planned": 9,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -385,7 +397,11 @@
         "ECMWF_MODELOS",
         "ANA_HIDRO",
         "ZARC_JANELAS",
-        "CONAB_PROGRESSO_SEMANAL"
+        "CONAB_PROGRESSO_SEMANAL",
+        "NASA_POWER_AGRO_DAILY",
+        "COPERNICUS_ERA5_LAND",
+        "UCSB_CHIRPS_V3",
+        "NOAA_ENSO_RONI"
       ],
       "indicators_planned": 7,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -409,7 +425,8 @@
         "WORLD_BANK_COMMODITIES",
         "MDIC_COMEX_NCM",
         "USDA_PSD",
-        "EPE_BEN_SERIES_HISTORICAS"
+        "EPE_BEN_SERIES_HISTORICAS",
+        "CFTC_COT_WEEKLY"
       ],
       "indicators_planned": 8,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -462,7 +479,8 @@
         "ANP_ETANOL",
         "MDIC_COMEX_NCM",
         "MAPA_AGROSTAT_CADEIAS",
-        "BCB_PTAX"
+        "BCB_PTAX",
+        "FAO_FAOSTAT_LONG_RUN"
       ],
       "indicators_planned": 12,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -486,7 +504,8 @@
         "MDIC_COMEX_NCM",
         "MAPA_AGROSTAT_CADEIAS",
         "BCB_PTAX",
-        "ANTAQ_MOVIMENTACAO"
+        "ANTAQ_MOVIMENTACAO",
+        "FAO_FAOSTAT_LONG_RUN"
       ],
       "indicators_planned": 11,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -514,7 +533,8 @@
         "IBGE_CODIGOS_MUNICIPIOS",
         "ABPA_FRANGO_SETOR",
         "MAPA_SANIDADE_PROTEINAS",
-        "WOAH_ALERTAS_PROTEINAS"
+        "WOAH_ALERTAS_PROTEINAS",
+        "FAO_FAOSTAT_LONG_RUN"
       ],
       "indicators_planned": 13,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -542,7 +562,8 @@
         "IBGE_CODIGOS_MUNICIPIOS",
         "ABPA_SUINO_SETOR",
         "MAPA_SANIDADE_PROTEINAS",
-        "WOAH_ALERTAS_PROTEINAS"
+        "WOAH_ALERTAS_PROTEINAS",
+        "FAO_FAOSTAT_LONG_RUN"
       ],
       "indicators_planned": 13,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -566,7 +587,11 @@
         "NOAA_GFS",
         "ECMWF_MODELOS",
         "ZARC_JANELAS",
-        "CONAB_PROGRESSO_SEMANAL"
+        "CONAB_PROGRESSO_SEMANAL",
+        "NASA_POWER_AGRO_DAILY",
+        "COPERNICUS_ERA5_LAND",
+        "UCSB_CHIRPS_V3",
+        "NOAA_ENSO_RONI"
       ],
       "indicators_planned": 10,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -590,7 +615,9 @@
         "CPTEC_MERGE",
         "NOAA_GFS",
         "ANTAQ_MOVIMENTACAO",
-        "ONTL_REDE_CUSTOS"
+        "ONTL_REDE_CUSTOS",
+        "COPERNICUS_ERA5_LAND",
+        "UCSB_CHIRPS_V3"
       ],
       "indicators_planned": 9,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -714,7 +741,8 @@
         "BCB_PTAX",
         "WORLD_BANK_COMMODITIES",
         "MDIC_COMEX_NCM",
-        "WOAH_ALERTAS_PROTEINAS"
+        "WOAH_ALERTAS_PROTEINAS",
+        "NOAA_ENSO_RONI"
       ],
       "indicators_planned": 10,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
