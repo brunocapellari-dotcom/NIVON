@@ -430,12 +430,12 @@
         "url": "https://www.gov.br/antaq/pt-br/central-de-conteudos/publicacoes-da-antaq/estatisticos-aquaviarios",
         "source_proof": null
       },
-      "implementation_scope": "portos.py (código citado não implica coletor ativo)",
+      "implementation_scope": "portos.py; maritime.antaq_archive:analyze_antaq_archive (somente arquivo histórico oficial, offline)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "PUBLIC_ANNUAL_ZIP_UNAVAILABLE_2026_10_20",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -448,7 +448,7 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Toneladas realizadas agregadas distintas do line-up por navio.",
+      "source_note": "20/10/2026: o download histórico do Estatístico Aquaviário redireciona para aviso de indisponibilidade da ANTAQ. Importar apenas ZIPs oficiais históricos já obtidos de forma autorizada: Atracacao/Carga/Mercadoria, verificar SHA-256, versão e competência. Carga tem múltiplas linhas por atracação; dado estatístico NÃO comprova cada escala AIS nem operação em tempo real; sem tentativa de bypass do WAF.",
       "preliminary_evidence": "DATASET_DISCOVERY"
     },
     {
