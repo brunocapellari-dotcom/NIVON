@@ -397,6 +397,11 @@ function renderOperationalBrief() {
     els.briefBody.innerHTML = '<article class="brief-section"><div><h3>Dados indisponíveis</h3><span class="evidence-tag">DATA_GATED</span></div><p>Nenhuma operação portuária ou posição AIS foi homologada. Ausência de dados não significa zero navios, zero filas ou zero embarques.</p></article>';
     return;
   }
+  if (state.gatewayMode === 'SHADOW_LINEUP_ONLY') {
+    els.briefGenerated.textContent = 'programação oficial — sem AIS';
+    els.briefBody.innerHTML = '<article class="brief-section"><div><h3>Programações de navios</h3><span class="evidence-tag">INFORMADO_PROGRAMADO</span></div><p>Há registros de line-up provenientes de documento oficial validado. Não há dados AIS homologados para confirmar aproximação, fundeio, atracação ou embarque realizado. Estatísticas físicas permanecem indisponíveis.</p></article>';
+    return;
+  }
   const report = buildOperationalBrief(state.summary, state.lineup);
   els.briefGenerated.textContent = new Intl.DateTimeFormat('pt-BR', {hour: '2-digit', minute: '2-digit'}).format(new Date());
   const divergenceRows = [...report.conflicts, ...report.unmatched].slice(0, 5);
@@ -532,6 +537,8 @@ async function refreshAll({fit = false} = {}) {
       setStatus('idle', 'SIMULAÇÃO — sem dados reais');
     } else if (state.gatewayMode === 'SHADOW_INTERNAL') {
       setStatus('idle', 'ANÁLISE INTERNA — não publicar');
+    } else if (state.gatewayMode === 'SHADOW_LINEUP_ONLY') {
+      setStatus('idle', 'PROGRAMAÇÃO OFICIAL — sem AIS');
     } else {
       setStatus('error', 'origem não homologada');
     }
