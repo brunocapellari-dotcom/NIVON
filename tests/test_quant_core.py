@@ -147,12 +147,17 @@ class ValidacaoQuantitativa(unittest.TestCase):
             obs.append({"periodo": dt, "valor": 10+i,
                         "publicado_em": instant(dt, 16),
                         "coletado_em": instant(dt, 17),
-                        "edicao_sha256": SHA})
+                        "edicao_sha256": SHA,
+                        "serie_id": "CBOT_SOJA_NOV26", "unidade": "USC/BU",
+                        "fonte_id": "TESTE"})
         obs.append({"periodo": CAL[3], "valor": 999,
                     "publicado_em": instant(CAL[6], 16),
-                    "coletado_em": instant(CAL[6], 17), "edicao_sha256": "b"*64})
+                    "coletado_em": instant(CAL[6], 17), "edicao_sha256": "b"*64,
+                    "serie_id": "CBOT_SOJA_NOV26", "unidade": "USC/BU",
+                    "fonte_id": "TESTE"})
         folds = preparar_folds_asof(
-            obs, calendario=CAL, origens_em={CAL[5]: instant(CAL[5])},
+            obs, calendario=CAL, serie_id="CBOT_SOJA_NOV26", unidade="USC/BU",
+            fonte_id="TESTE", origens_em={CAL[5]: instant(CAL[5])},
             as_of_avaliacao=instant(CAL[10]),
             horizonte_periodos=1, minimo_treino=4,
         )
@@ -164,12 +169,34 @@ class ValidacaoQuantitativa(unittest.TestCase):
         obs = [{"periodo": CAL[i], "valor": i+1,
                 "publicado_em": instant(CAL[i], 16),
                 "coletado_em": instant(CAL[i], 17),
-                "edicao_sha256": SHA} for i in range(8) if i != 4]
+                "edicao_sha256": SHA,
+                "serie_id": "CBOT_SOJA_NOV26", "unidade": "USC/BU",
+                "fonte_id": "TESTE"} for i in range(8) if i != 4]
         with self.assertRaisesRegex(ErroQuantitativo, "incompleto"):
             preparar_folds_asof(obs, calendario=CAL,
+                serie_id="CBOT_SOJA_NOV26", unidade="USC/BU", fonte_id="TESTE",
                 origens_em={CAL[5]: instant(CAL[5])},
                 as_of_avaliacao=instant(CAL[10]),
                 horizonte_periodos=1, minimo_treino=4)
+
+    def test_folds_asof_rejeitam_unidades_misturadas(self):
+        obs = [{"periodo": CAL[i], "valor": i+1,
+                "publicado_em": instant(CAL[i], 16),
+                "coletado_em": instant(CAL[i], 17),
+                "edicao_sha256": SHA, "serie_id": "CBOT_SOJA_NOV26",
+                "unidade": "USC/BU", "fonte_id": "TESTE"} for i in range(8)]
+        obs[4]["unidade"] = "BRL/T"
+        with self.assertRaisesRegex(ErroQuantitativo, "misturadas"):
+            preparar_folds_asof(obs, calendario=CAL,
+                serie_id="CBOT_SOJA_NOV26", unidade="USC/BU", fonte_id="TESTE",
+                origens_em={CAL[5]: instant(CAL[5])},
+                as_of_avaliacao=instant(CAL[10]), horizonte_periodos=1, minimo_treino=4)
+
+    def test_overflow_numerico_e_bloqueado(self):
+        rows = arquivo()
+        rows[0]["previsto"] = 1e308
+        with self.assertRaisesRegex(ErroQuantitativo, "overflow"):
+            avaliar(rows)
 
 
 if __name__ == "__main__":
