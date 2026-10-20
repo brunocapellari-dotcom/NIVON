@@ -60,10 +60,15 @@ Para fechamento operacional:
 1. Obter XLSX oficial por acesso permitido; preservar hash e a página de versão.
 2. Documentar colunas reais, tipos, datas de início/fim oficiais, unidade R$/L,
    formato produto Diesel vs Diesel S10, municípios efetivamente amostrados.
-3. Implementar e testar parser XLSX contra amostras reais de três publicações
-   antes de habilitar coleta/agendamento e publicação derivada.
-4. Alertar município sem pesquisa e arquivo defasado, sem inventar preço.
-5. Conciliar com histórico semanal agregado da própria ANP quando disponível.
+3. **Já existe** `anp_semanal_municipios.interpretar_anp_semanal_xlsx` que usa
+   `openpyxl` opcional, contrato de layout externo, semana oficial de sete dias,
+   município, Diesel/Diesel S10, média e número de postos. Os testes
+   `tests/test_anp_semanal_municipios.py` usam planilhas sintéticas e só executam
+   com `openpyxl` disponível; não comprovam as colunas do XLSX público.
+4. Homologar o layout com três amostras reais de datas diferentes antes de
+   habilitar coleta/agendamento e publicação derivada.
+5. Alertar município sem pesquisa e arquivo defasado, sem inventar preço.
+6. Conciliar com histórico semanal agregado da própria ANP quando disponível.
 
 ## Status objetivo
 
@@ -73,7 +78,7 @@ Para fechamento operacional:
 | PTAX ODbL | Licença identificada; requisitos operacionais ainda sob revisão |
 | PTAX download real + agendamento | Desabilitado |
 | ANP CSV mensal postos | Parser existente, semanas inferidas documentadas |
-| ANP XLSX semanal municípios 2026 | Página oficial identificada; esquema não verificado |
+| ANP XLSX semanal municípios 2026 | Parser genérico implementado e testes sintéticos; XLSX real e esquema ainda não homologados |
 | ANP custo/mercado produtor e paridade internacional | Fora destas médias de revenda |
 | Publicação e WhatsApp | Não ativados |
 
