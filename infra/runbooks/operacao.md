@@ -88,3 +88,17 @@ copia para nuvem. Nenhuma evidência de recuperação remota é reivindicada.
   automaticamente o banco a volume efêmero de contêiner.
 - Cron/systemd/cloud scheduler continuam NÃO configurados. Não criar
   secretamente loops infinitos nem execução silenciosa em CI.
+
+## Ferramentas de diagnóstico sem rede
+
+```sh
+PYTHONPATH=src python -m nivon.infra_health
+PYTHONPATH=src python -m nivon.infra_oci_quota
+```
+
+Ambos operam com arquivos de configuração locais; o primeiro pode abrir
+um ledger sintético **somente leitura** com `--ledger`. Não
+confundir o status `CANDIDATO_COMPATIVEL_SOZINHO` da proposta OCI
+com elegibilidade da tenancy. Qualquer tentativa de homologação antes
+de evidenciar home region, recursos totais ocupados, backup, IAM e
+segregação continua bloqueada. Nunca colar chaves e tokens no repositório.
