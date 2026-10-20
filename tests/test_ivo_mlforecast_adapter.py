@@ -63,7 +63,7 @@ class TestIVOMLForecast(unittest.TestCase):
     def test_backfill_tardio_igualmente_nao_finge_captura(self):
         a=serie()
         a=[replace(x,coleta=datetime(2026,9,4,tzinfo=UTC))
-           if x.competencia=="2026-04" else x for x in a]
+           if x.competencia in ("2026-02","2026-03","2026-04") else x for x in a]
         with self.assertRaises(ErroLab):
             prever(a)
 
@@ -85,7 +85,7 @@ class TestIVOMLForecast(unittest.TestCase):
                     prever_mlforecast_asof(serie(),periodo_alvo="2026-06",
                        fonte="CONAB",variavel="VOLUME",produto="SOJA",
                        regiao="MT",unidade="t",dados_autorizados=True,
-                       backend=lambda s,h:v)
+                       backend=lambda s,h,value=value:value)
 
     def test_janela_invalida_e_backend_invalido(self):
         with self.assertRaises(ErroLab):
