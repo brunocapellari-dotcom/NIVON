@@ -430,12 +430,12 @@
         "url": "https://www.gov.br/antaq/pt-br/central-de-conteudos/publicacoes-da-antaq/estatisticos-aquaviarios",
         "source_proof": null
       },
-      "implementation_scope": "portos.py (código citado não implica coletor ativo)",
+      "implementation_scope": "antaq_zip_autorizado.py + antaq_historico_offline.py (ZIPs locais 2010+, relacionamento atracação-carga-mercadoria)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "REAL_ZIP_ACCESS_RIGHTS_AND_LAYOUT_VALIDATION",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -448,8 +448,12 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Toneladas realizadas agregadas distintas do line-up por navio.",
-      "preliminary_evidence": "DATASET_DISCOVERY"
+      "source_note": "Histórico mensal observado, não line-up em tempo real. ZIPs anuais ainda não testados em acesso real. WAF/retirada da fonte não podem ser contornados.",
+      "preliminary_evidence": "OFFICIAL_OPEN_DATA_DESCRIPTION_AND_UNVERIFIED_ZIP_URL_CANDIDATES",
+      "candidate_source_files": [
+        "https://estatistica.antaq.gov.br/ea/txt/{ANO}.zip",
+        "https://estatistica.antaq.gov.br/ea/txt/Mercadoria.zip"
+      ]
     },
     {
       "dataset_id": "ANTT_CIOT",
@@ -1734,16 +1738,16 @@
       "dataset_id": "LINEUP_ARATU",
       "collector_class": "PUBLISHED_DOCUMENT",
       "locator": {
-        "kind": "NOT_VERIFIED_PER_DATASET",
-        "url": null,
-        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/porto_aratu.php?secao=tportos_aratu",
+        "source_proof": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/porto_aratu.php?secao=tportos_aratu"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_portais.py + ingestao_lineup_portais.py (parser offline, bytes com sha256)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "primary_blocker": "RIGHTS_AND_THREE_REAL_SNAPSHOTS_PENDING",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -1753,12 +1757,13 @@
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
         "LICENSED_PUBLICATION_GATE",
-        "EXACT_ENDPOINT_UNKNOWN"
+        "VERIFY_PUBLICATION_TIMESTAMP",
+        "VERIFY_QUANTITY_UNIT"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
-      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+      "source_note": "CANDIDATO apenas. Não homologado: conferir página atual, formato, licença, fuso, last_updated e unidades; não afirmar line-up atual.",
+      "preliminary_evidence": "INSTITUTIONAL_URL_DISCOVERED_NO_REAL_SNAPSHOT"
     },
     {
       "dataset_id": "LINEUP_AREIA_BRANCA",
@@ -2004,16 +2009,16 @@
       "dataset_id": "LINEUP_ILHEUS",
       "collector_class": "PUBLISHED_DOCUMENT",
       "locator": {
-        "kind": "PROVIDER_PORTAL",
-        "url": "https://www.codeba.gov.br/",
-        "source_proof": null
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/site.php?secao=tportos_ilheus",
+        "source_proof": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/site.php?secao=tportos_ilheus"
       },
-      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo)",
+      "implementation_scope": "lineup_portais.py + ingestao_lineup_portais.py (parser offline, bytes com sha256)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "RIGHTS_AND_THREE_REAL_SNAPSHOTS_PENDING",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -2022,12 +2027,14 @@
         "HISTORICAL_BACKFILL",
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
-        "LICENSED_PUBLICATION_GATE"
+        "LICENSED_PUBLICATION_GATE",
+        "VERIFY_PUBLICATION_TIMESTAMP",
+        "VERIFY_QUANTITY_UNIT"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
-      "preliminary_evidence": "CATALOG_ONLY"
+      "source_note": "CANDIDATO apenas. Não homologado: conferir página atual, formato, licença, fuso, last_updated e unidades; não afirmar line-up atual.",
+      "preliminary_evidence": "INSTITUTIONAL_URL_DISCOVERED_NO_REAL_SNAPSHOT"
     },
     {
       "dataset_id": "LINEUP_IMBITUBA",
@@ -2185,16 +2192,16 @@
       "dataset_id": "LINEUP_ITAQUI",
       "collector_class": "PUBLISHED_DOCUMENT",
       "locator": {
-        "kind": "PROVIDER_PORTAL",
-        "url": "https://www.portodoitaqui.com.br/porto-agora/navios/esperados",
-        "source_proof": null
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://www.portodoitaqui.com.br/porto-agora/navios",
+        "source_proof": "https://www.portodoitaqui.com.br/porto-agora/navios"
       },
-      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo)",
+      "implementation_scope": "lineup_portais.py + ingestao_lineup_portais.py (parser offline, bytes com sha256)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "RIGHTS_AND_THREE_REAL_SNAPSHOTS_PENDING",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -2203,12 +2210,14 @@
         "HISTORICAL_BACKFILL",
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
-        "LICENSED_PUBLICATION_GATE"
+        "LICENSED_PUBLICATION_GATE",
+        "VERIFY_PUBLICATION_TIMESTAMP",
+        "VERIFY_QUANTITY_UNIT"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
-      "preliminary_evidence": "CATALOG_ONLY"
+      "source_note": "CANDIDATO apenas. Não homologado: conferir página atual, formato, licença, fuso, last_updated e unidades; não afirmar line-up atual.",
+      "preliminary_evidence": "INSTITUTIONAL_URL_DISCOVERED_NO_REAL_SNAPSHOT"
     },
     {
       "dataset_id": "LINEUP_LAGUNA",
@@ -2696,16 +2705,16 @@
       "dataset_id": "LINEUP_SALVADOR",
       "collector_class": "PUBLISHED_DOCUMENT",
       "locator": {
-        "kind": "PROVIDER_PORTAL",
-        "url": "https://www.codeba.gov.br/",
-        "source_proof": null
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/site.php?secao=tportos_salvador",
+        "source_proof": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/site.php?secao=tportos_salvador"
       },
-      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo)",
+      "implementation_scope": "lineup_portais.py + ingestao_lineup_portais.py (parser offline, bytes com sha256)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "RIGHTS_AND_THREE_REAL_SNAPSHOTS_PENDING",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -2714,12 +2723,14 @@
         "HISTORICAL_BACKFILL",
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
-        "LICENSED_PUBLICATION_GATE"
+        "LICENSED_PUBLICATION_GATE",
+        "VERIFY_PUBLICATION_TIMESTAMP",
+        "VERIFY_QUANTITY_UNIT"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
-      "preliminary_evidence": "CATALOG_ONLY"
+      "source_note": "CANDIDATO apenas. Não homologado: conferir página atual, formato, licença, fuso, last_updated e unidades; não afirmar line-up atual.",
+      "preliminary_evidence": "INSTITUTIONAL_URL_DISCOVERED_NO_REAL_SNAPSHOT"
     },
     {
       "dataset_id": "LINEUP_SANTANA",
@@ -2755,16 +2766,16 @@
       "dataset_id": "LINEUP_SANTAREM",
       "collector_class": "PUBLISHED_DOCUMENT",
       "locator": {
-        "kind": "PROVIDER_PORTAL",
+        "kind": "OFFICIAL_INDEX",
         "url": "https://www.cdp.com.br/programacao-de-navios-do-porto-de-santarem/",
-        "source_proof": null
+        "source_proof": "https://www.cdp.com.br/programacao-de-navios-do-porto-de-santarem/"
       },
-      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo)",
+      "implementation_scope": "lineup_cdp_santarem.py (parser offline; WDT não equivale DUV)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "RIGHTS_AND_THREE_REAL_SNAPSHOTS_PENDING",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -2773,12 +2784,14 @@
         "HISTORICAL_BACKFILL",
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
-        "LICENSED_PUBLICATION_GATE"
+        "LICENSED_PUBLICATION_GATE",
+        "VERIFY_PUBLICATION_TIMESTAMP",
+        "VERIFY_QUANTITY_UNIT"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
-      "preliminary_evidence": "CATALOG_ONLY"
+      "source_note": "CANDIDATO apenas. Não homologado: conferir página atual, formato, licença, fuso, last_updated e unidades; não afirmar line-up atual.",
+      "preliminary_evidence": "INSTITUTIONAL_URL_DISCOVERED_NO_REAL_SNAPSHOT"
     },
     {
       "dataset_id": "LINEUP_SANTOS",
