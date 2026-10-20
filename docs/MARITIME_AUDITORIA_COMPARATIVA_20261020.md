@@ -59,9 +59,9 @@
 - [ ] Gateway autenticado, observabilidade, operação contínua, backup criptografado/restauração, reconciliação diária e teste operacional de 7 dias — somente após gates.
 
 ## Verificação desta PR
-- Testes novos: `tests/test_maritime_event_integrity.py`, 11 cenários sintéticos.
+- Testes novos: `tests/test_maritime_event_integrity.py`, 12 cenários sintéticos, incluindo mistura de MMSIs.
 - Comandos: `PYTHONPATH=src python -m unittest discover -s tests -v`; `cd maritime_ui && npm ci --ignore-scripts && npm run build`.
-- Resultado CI para SHA `7314bd5ee50ec0cd34d211bbbba1b73caf2a9008`: workflow Python [39482029967](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39482029967) aprovado (1018 testes, 5 ignorados); build marítimo [39482029936](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39482029936) aprovado.
-- **Alterar este documento muda o SHA:** confirmar nova CI antes de marcar a branch resultante como verificada.
+- Resultado CI para SHA de código e testes `3be4e42c4a4a207ff5b7e523e67748d574dd2f23`: workflow Python [39482547228](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39482547228) aprovado (1019 testes, 5 ignorados); build marítimo [39482547193](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39482547193) aprovado.
+- **Nota:** esta atualização de documentação não altera código nem testes; as CIs citadas cobrem o último SHA de código. Uma futura alteração funcional exige CI no novo SHA antes de merge.
 
 **STATUS OPERACIONAL:** CODE_TESTED_SYNTHETIC_ONLY / RELEASE_BLOCKED / NO_DEPLOY.
