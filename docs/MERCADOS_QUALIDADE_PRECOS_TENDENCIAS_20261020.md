@@ -33,8 +33,15 @@ Entradas para nivon.qualidade_mercados.preparar_serie_precos:
   coleta posteriores;
 - **Corte:** as_of ISO 8601 com offset, depois da coleta da edição selecionada.
 
-Controle de identidade impede misturar futuro/físico, contratos, produtos, praças,
-unidades e fechamento/ajuste. A seleção de vintage ocorre por
+Controle de identidade impede misturar futuro/físico, contratos, produtos,
+unidades e fechamento/ajuste. Futuros exigem instrumento_id para separar
+símbolos/espécies de contrato e vencimento. Físicos exigem
+ponto_cotacao_id, qualidade_id, condicao_entrega_id,
+condicao_pagamento_id e regime_tributario_id além do município IBGE;
+**município não é ponto físico e não representa preço médio municipal**.
+Esses campos são identificadores obrigatórios com reconciliação upstream:
+strings declaradas NÃO certificam especificações oficiais ou qualidade real.
+Séries com atributos divergentes falham, mesmo no mesmo município. A seleção de vintage ocorre por
 (data_referencia, identidade e fonte). Conteúdos com mesmo hash só são
 deduplicados quando preço, publicação e vínculo de revisão são compatíveis.
 Revisões de preço sem cadeia declarada **falham em vez de serem arbitrariamente
@@ -45,12 +52,32 @@ O método tendencia_preco_auditada consome exclusivamente a série selecionada,
 chama o Theil–Sen observado já existente e preserva publicavel=false. O limiar
 de estabilidade é parametrizado em unidade/mercado, nunca universal.
 
+### Calendário de sessões, lacunas e históricos extensos
+
+O método agora exige `calendario_sessoes` para **classificar**; quando ausente,
+retorna `CALENDARIO_AUSENTE / INDETERMINADA` sem falso sinal. O contrato
+`nivon.calendario_sessoes_mercado.validar_cobertura_calendario` exige
+mercado, fonte_id, edicao_sha256, publicacao_em, coleta_em e lista
+cronologicamente crescente de sessões. Não permite sessões duplicadas,
+observações fora da cobertura, coleta/publicação após as_of, nem lacunas
+internas em uma janela descritiva. O código não consulta calendários oficiais.
+A existência de SHA declarado e datas não prova que o calendário é genuíno:
+**`calendario_oficial_comprovado=false`** em todas as saídas offline.
+
+O armazenamento normaliza até 10.000 registros, enquanto a estimativa
+Theil–Sen usa apenas as últimas `janela` observações após controle de
+vintages e exige cobertura de todas as sessões dessa janela. O resultado
+continua descritivo (não forecast). O contrato recusa decimais que seriam
+zero ou infinito na ponte numérica float; o valor Decimal original segue
+preservado separadamente, sem transformar preço histórico em negócio real.
+
 **Limites atuais:** contratos permitidos de CME (soja, milho, trigo em USc/bu),
 ICE (açúcar, algodão e café em USc/lb) e físicos nas unidades explicitadas
 no código. A allowlist é mínima; não assumir que qualquer produto ICE usa a
 mesma especificação ou que preço municipal representa negócio fechado.
-Calendário oficial de pregão, timezone IANA da bolsa, settlement corrigido,
-séries contínuas e metadata de feriados ainda NÃO implementados. O offset
+Ingestão/validação independente de calendário oficial, timezone IANA da bolsa,
+settlement corrigido, séries contínuas, verificações de holidays e metadata
+de feriados ainda NÃO implementados. O offset
 explícito não prova que o provedor publicou no fuso correto.
 
 ## 3. Avaliação probabilística (novo)
@@ -138,3 +165,20 @@ com intervalos de incerteza e validação fora da amostra.
   merge, deploy ou custo incremental.
 - Integração de produção exige aceite das frentes Coletores, Estatística,
   IVO, Editorial, Governança e do PR central de integração.
+
+
+## 7. Continuidade desta frente — 20/10/2026
+
+**Correções novas:** comparabilidade físico por ponto/qualidade/entrega/
+pagamento/regime fiscal; instrumento futuro explícito; calendário injetado
+antes de classificar tendência; recusa de lacunas entre sessões declaradas;
+janela robusta para históricos acima de 240 observações; proteção contra
+float infinito/zero; regressões sintéticas dedicadas. Nenhuma dessas
+alterações constitui conexão com mercado real ou licença.
+
+**Próxima ação P0:** amarrar o horizonte de `horizonte_sessoes` à contagem de
+sessões reais em cada previsão auditada. Hoje o campo é validado quanto a
+inteiro/intervalo, mas o motor probabilístico ainda não comprova que a
+distância entre `base_referencia_em` e `alvo_referencia_em` representa
+esse número de pregões. Só promover skill e calibração após esse gate, mais
+vintages as-of, evidência de emissão da previsão, auditoria de fonte e holdout.
