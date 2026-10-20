@@ -71,6 +71,7 @@ class NivonProjectAdapter:
         fontes: Mapping[str, dict],
         conab: sqlite3.Connection | None = None,
         portos: sqlite3.Connection | None = None,
+        mercados: sqlite3.Connection | None = None,
         outbox: sqlite3.Connection | None = None,
         portos_esperados: tuple[str, ...] = (),
     ) -> None:
@@ -82,6 +83,7 @@ class NivonProjectAdapter:
         self._fontes = deepcopy(dict(fontes))
         self._conab = conab
         self._portos = portos
+        self._mercados = mercados
         self._outbox = outbox
         if not isinstance(portos_esperados, tuple):
             raise ErroIntegracaoHermes("monitoramento portuário inválido")
@@ -163,7 +165,7 @@ class NivonProjectAdapter:
             )
         # Preview: aceita apenas documentos/observações previamente adquiridos
         # e autorizados. Devolve texto somente se auditor determinístico aprovar.
-        allowed = {"gerado_em", "noticias", "indicadores", "fretes", "culturas", "portos"}
+        allowed = {"gerado_em", "noticias", "indicadores", "fretes", "culturas", "portos", "incluir_ptax_usd"}
         if not set(payload) <= allowed:
             raise ErroIntegracaoHermes("campo externo não contratado")
         noticias = _lista(payload, "noticias", _MAX_NOTICIAS, dict)
@@ -173,8 +175,12 @@ class NivonProjectAdapter:
         portos = _lista(payload, "portos", _MAX_PORTOS, str)
         if any(len(s) > 80 for s in portos):
             raise ErroIntegracaoHermes("porto muito longo")
+        if type(payload.get("incluir_ptax_usd",False)) is not bool:
+            raise ErroIntegracaoHermes("incluir_ptax_usd deve ser booleano")
         agregado = compor_pacote_historico(
             db_conab=self._conab, db_portos=self._portos,
+            db_mercados=self._mercados,
+            incluir_ptax_usd=payload.get("incluir_ptax_usd",False),
             fontes=self._fontes, gerado_em=data,
             noticias=noticias, indicadores_externos=indicadores,
             fretes=fretes, culturas=culturas, portos=portos,

@@ -150,6 +150,8 @@ def indicador_porto(
 
 def compor_pacote_historico(*, db_conab: sqlite3.Connection | None,
                            db_portos: sqlite3.Connection | None,
+                           db_mercados: sqlite3.Connection | None = None,
+                           incluir_ptax_usd: bool = False,
                            fontes: dict, gerado_em: str,
                            noticias: list[dict] | None = None,
                            indicadores_externos: list[dict] | None = None,
@@ -179,6 +181,16 @@ def compor_pacote_historico(*, db_conab: sqlite3.Connection | None,
             r=indicador_porto(db_portos,porto=port,gerado_em=gerado_em,
                               fontes=fontes)
         resultados.append({"origem":"PORTOS",**r})
+        if r["status"]=="INDICADOR_VERIFICADO_TEMPO":
+            indicadores.append(r["indicador"])
+    if incluir_ptax_usd:
+        if db_mercados is None:
+            r={"status":"SEM_HISTORICO","motivo":"banco PTAX não configurado"}
+        else:
+            from .indicador_ptax import indicador_ptax_sqlite
+            r=indicador_ptax_sqlite(db_mercados,gerado_em=gerado_em,
+                                   fontes=fontes,moeda="USD")
+        resultados.append({"origem":"BCB_PTAX",**r})
         if r["status"]=="INDICADOR_VERIFICADO_TEMPO":
             indicadores.append(r["indicador"])
     return {
