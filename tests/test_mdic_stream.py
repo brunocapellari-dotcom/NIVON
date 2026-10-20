@@ -1,3 +1,4 @@
+import hashlib
 import tempfile
 import unittest
 from pathlib import Path
@@ -94,3 +95,19 @@ class TestMDICStream(unittest.TestCase):
             p=self.criar("EXP_2026.csv",EXP,[linha(EXP,**kw)])
             with self.assertRaises(ErroStreamMDIC):
                 self.processar(p,direcao="EXPORTACAO",granularidade="NCM",codigos={"12019000"})
+
+    def test_hash_refere_se_aos_bytes_realmente_consumidos_incluindo_bom_crlf(self):
+        p=self.dir/"EXP_2026.csv"
+        data=("\ufeff"+";".join(EXP)+"\r\n"+linha(EXP)+"\r\n").encode("utf-8")
+        p.write_bytes(data)
+        r=self.processar(p,direcao="EXPORTACAO",granularidade="NCM",
+                        codigos={"12019000"})
+        self.assertEqual(r["sha256_original"],hashlib.sha256(data).hexdigest())
+        self.assertEqual(r["bytes_original"],len(data))
+        self.assertEqual(r["linhas_total"],1)
+
+    def test_hardlink_diferente_com_mesmo_nome_versao_local(self):
+        p=self.criar("EXP_2026.csv",EXP,[linha(EXP)])
+        r=self.processar(p,direcao="EXPORTACAO",granularidade="NCM",
+                        codigos={"12019000"})
+        self.assertEqual(r["sha256_original"],hashlib.sha256(p.read_bytes()).hexdigest())

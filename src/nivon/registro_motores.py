@@ -30,6 +30,7 @@ MODULOS=frozenset({
     "nasa_power_backfill","nasa_power_captura_manual",
     "hidrologia_chuva_vazao",
     "grade_meteorologica_store","chirps_v3_conservacao",
+    "meteorologia_probabilistica","hidrograma_bacia","calibracao_cn_bacias",
 })
 
 
