@@ -94,13 +94,24 @@
       "gate": "BACKUP_RESTORE"
     },
     {
+      "id": "job_ledger",
+      "layer": "operations",
+      "state": "CODE_ONLY",
+      "live_enabled": false,
+      "depends_on": [
+        "data_storage"
+      ],
+      "gate": "DURABILITY"
+    },
+    {
       "id": "collector_scheduler",
       "layer": "ingestion",
       "state": "NOT_IMPLEMENTED",
       "live_enabled": false,
       "depends_on": [
         "compute",
-        "data_storage"
+        "data_storage",
+        "job_ledger"
       ],
       "gate": "SOURCE_RIGHTS"
     },
