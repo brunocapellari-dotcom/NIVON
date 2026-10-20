@@ -399,7 +399,9 @@
         "nivon.grade_meteorologica_store:grade_asof",
         "nivon.chirps_v3_conservacao:reconciliar_chirps_pentada",
         "nivon.hidrologia_chuva_vazao:escoamento_scs_cn",
-        "nivon.hidrologia_chuva_vazao:propagar_muskingum"
+        "nivon.hidrologia_chuva_vazao:propagar_muskingum",
+        "nivon.meteorologia_probabilistica:avaliar_ensemble",
+        "nivon.hidrograma_bacia:hidrograma_evento_cn"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -601,7 +603,9 @@
         "nivon.nasa_power_captura_manual:capturar_power_manual",
         "nivon.grade_meteorologica_store:ingerir_power_local",
         "nivon.grade_meteorologica_store:grade_asof",
-        "nivon.chirps_v3_conservacao:reconciliar_chirps_pentada"
+        "nivon.chirps_v3_conservacao:reconciliar_chirps_pentada",
+        "nivon.meteorologia_probabilistica:crps_ensemble",
+        "nivon.meteorologia_probabilistica:avaliar_ensemble"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -615,7 +619,7 @@
         "ERA5_LAND_CDS",
         "NASA_GPM_IMERG"
       ],
-      "indicators_planned": 15,
+      "indicators_planned": 19,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
       "inputs_reais_homologados": false,
       "previsao_homologada": false,
@@ -639,7 +643,9 @@
         "nivon.validacao_previsoes_ambientais:validar_hindcast_ambiental",
         "nivon.chirps_v3_conservacao:reconciliar_chirps_pentada",
         "nivon.hidrologia_chuva_vazao:escoamento_scs_cn",
-        "nivon.hidrologia_chuva_vazao:propagar_muskingum"
+        "nivon.hidrologia_chuva_vazao:propagar_muskingum",
+        "nivon.hidrograma_bacia:hidrograma_evento_cn",
+        "nivon.calibracao_cn_bacias:calibrar_cn_historico"
       ],
       "data_dependencies": [
         "ANA_HIDRO",
@@ -652,7 +658,7 @@
         "ERA5_LAND_CDS",
         "NASA_GPM_IMERG"
       ],
-      "indicators_planned": 16,
+      "indicators_planned": 21,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
       "inputs_reais_homologados": false,
       "previsao_homologada": false,

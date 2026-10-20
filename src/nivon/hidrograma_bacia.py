@@ -85,8 +85,10 @@ def hidrograma_evento_cn(*,chuva_intervalos,passo_horas,numero_curva,
         q=escoamento_scs_cn(chuva_evento_mm=cumulative,numero_curva=numero_curva,
                            area_bacia_km2=area,fracao_abstracao_inicial=fracao_abstracao_inicial,
                            fonte_cn=fonte_cn,fonte_chuva=fonte_chuva)["escoamento_direto_estimado_mm"]
-        dq=max(0.,q-previous_excess)
-        if dq<-1e-8:raise ErroHidrograma("escoamento acumulado diminuiu")
+        delta=q-previous_excess
+        if delta<-1e-8:
+            raise ErroHidrograma("escoamento acumulado diminuiu")
+        dq=max(0.,delta)
         increments.append(dq)
         previous_excess=q
     # Convolution is volume preserving including full recession tail.
