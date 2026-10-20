@@ -148,6 +148,38 @@ class TestIVOPAMBridge(unittest.TestCase):
         with self.assertRaises(ErroPontePAM):
             self.preparar(coletado_em="2026-10-19T13:00:00Z")
 
+    def test_registro_real_declarado_nao_certifica_valor_agricola(self):
+        # Flag real no catálogo DE TESTE comprova apenas o contrato local;
+        # não há afirmação de licença real ou homologação externa.
+        cat={"datasets":[{"id":"IBGE_PAM","source_id":"IBGE",
+                          "enabled":True,"collection_authorized":True,
+                          "training_authorized":False}]}
+        raw=payload()
+        registrar_snapshot(
+            self.db,cat,dataset_id="IBGE_PAM",
+            sha256=sha256(raw).hexdigest(),tamanho=len(raw),
+            mime="application/json",schema_versao="sidra_pam_1612_v1",
+            coletado_em=COLETA,competencia="2025",
+            referencia="2025-12-31",publicacao="2026-09-01",
+            tipo="REAL_AUTORIZADO",
+            autorizacoes=frozenset(("COLETA","ARMAZENAMENTO")),
+            evidencia_direitos="DIREITO_TESTE_SEM_VALIDADE_REAL")
+        r=self.preparar()
+        self.assertEqual(r["tipo_snapshot"],"REAL_AUTORIZADO")
+        self.assertEqual(r["observacao"].natureza,"INFORMADO")
+        self.assertFalse(r["treino_real_autorizado"])
+        self.assertFalse(r["label_final_certificado"])
+        self.assertEqual(r["fonte_publicacao"],
+                         "DECLARACAO_LEDGER_NAO_CONFIRMADA_NO_JSON")
+
+    def test_numerico_sem_proveniencia_exata_de_arquivo_nao_aceito(self):
+        raw=payload()
+        self.registrar(raw)
+        self.db.execute(
+            "UPDATE nivon_snapshots SET bytes=bytes+1 WHERE dataset_id='IBGE_PAM'")
+        with self.assertRaises(ErroPontePAM):
+            self.preparar(raw)
+
     def test_nao_promove_estatistica_pam_para_modelo_mensal(self):
         self.registrar()
         r=self.preparar()
