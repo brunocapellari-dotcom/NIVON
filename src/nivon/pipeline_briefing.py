@@ -17,6 +17,7 @@ from .integracao_portos_briefing import montar_briefing_com_portos
 from .lineup_nacional import instante
 from .rss_radar import MAX_BYTES, ler_feed_xml
 from .ptax_briefing import normalizar_snapshot_ptax, construir_indicador_ptax
+from .anp_diesel_briefing import montar_indicadores_diesel
 
 
 class ErroPipelineBriefing(ValueError):
@@ -32,6 +33,7 @@ def gerar_edicao_offline(*, gerado_em: str, feeds: list[dict],
                          registros_portuarios: list[dict] | None = None,
                          licencas_portuarias: dict | None = None,
                          ptax_snapshots: list[dict] | None = None,
+                         diesel_resumos: list[dict] | None = None,
                          catalogo: dict | None = None, escopo: dict | None = None) -> dict:
     """Gera texto WhatsApp/auditoria a partir de dados offline já autorizados.
 
@@ -79,6 +81,32 @@ def gerar_edicao_offline(*, gerado_em: str, feeds: list[dict],
     if moeda_infos:
         fontes_indicadores=dict(fontes_indicadores)
         fontes_indicadores.update(result["fonte_briefing"])
+    if diesel_resumos is None:
+        diesel_resumos = []
+    if not isinstance(diesel_resumos,list) or len(diesel_resumos)>2:
+        raise ErroPipelineBriefing("máximo de dois arquivos diesel ANP por edição")
+    diesel_infos=[]
+    if diesel_resumos and "ANP" in fontes_indicadores:
+        raise ErroPipelineBriefing("fonte ANP declarada manualmente e automaticamente")
+    for source in diesel_resumos:
+        if not isinstance(source,dict) or not {
+            "resultado","publicado_em","dataset","direitos","layout_homologado"
+        }.issubset(source):
+            raise ErroPipelineBriefing("resumo ANP exige dados, publicação e governança explícitos")
+        item=montar_indicadores_diesel(
+            source["resultado"],gerado_em=gerado_em,
+            publicado_em=source["publicado_em"],dataset=source["dataset"],
+            direitos=source["direitos"],
+            layout_homologado=source["layout_homologado"],
+            max_dias_defasagem=source.get("max_dias_defasagem",14),
+            municipios=source.get("municipios"),
+        )
+        if diesel_infos:
+            raise ErroPipelineBriefing("somente uma edição semanal ANP de diesel permitida")
+        indicadores.extend(item["indicadores"])
+        diesel_infos.append(item["evidencia"])
+        fontes_indicadores=dict(fontes_indicadores)
+        fontes_indicadores.update(item["fontes"])
     ids=set();noticias=[];fontes=dict(fontes_indicadores);issues=[];boletins=[]
     for pos,f in enumerate(feeds):
         if not isinstance(f,dict):
@@ -132,6 +160,7 @@ def gerar_edicao_offline(*, gerado_em: str, feeds: list[dict],
         "status_portuario":briefing["status_portuario"],
         "fontes_rss":boletins,
         "evidencias_cambio":moeda_infos,
+        "evidencias_diesel":diesel_infos,
         "noticias_recebidas_curadas":len(noticias),
         "indicadores_incluidos":briefing["indicadores_incluidos"],
         "fretes_incluidos":briefing["fretes_incluidos"],
