@@ -153,6 +153,11 @@ def preparar_tripla_conab(*, linhas: list[dict], uf: str, cultura: str,
         "subdivisao": subdivisao, "safra": safra,
         "arquivo": arquivo, "raw_sha256": snapshot_meta["raw_sha256"],
         "classificacao": classes.pop(), "cutoff": cutoff.isoformat(),
+        "competencia": safra, "data_referencia": None,
+        "data_publicacao": _instante(snapshot_meta["publicado_em"], "publicado_em").isoformat(),
+        "data_coleta": _instante(snapshot_meta["coletado_em"], "coletado_em").isoformat(),
+        "edicao_id": snapshot_meta["edicao_id"],
+        "prova_disponibilidade_sha256": snapshot_meta["prova_disponibilidade_sha256"],
         "area_informada_conab_ha": str(area),
         "produtividade_informada_kg_ha": str(produtividade),
         "producao_informada_conab_t": str(producao),
@@ -197,8 +202,16 @@ def confrontar_conab_pam(*, pacote_conab: dict, agregado_pam: dict,
     uf_conab = pacote_conab.get("uf")
     if uf_conab not in UF_IBGE or agregado_pam.get("uf_ibge") != int(UF_IBGE[uf_conab]):
         raise ErroConciliacaoSafra("geografia CONAB/PAM divergente")
+    if not isinstance(meta_pam, dict):
+        raise ErroConciliacaoSafra("snapshot IBGE PAM ausente")
     if meta_pam.get("fonte_id") != "IBGE" or meta_pam.get("raw_sha256") != agregado_pam.get("raw_sha256"):
+
         raise ErroConciliacaoSafra("RAW PAM e snapshot de origem incompatíveis")
+    if agregado_pam.get("edicao_id") != meta_pam.get("edicao_id"):
+        raise ErroConciliacaoSafra("edição PAM agregada diverge do snapshot")
+    esperada_c81 = "2713" if cultura == "SOJA" else "2711"
+    if agregado_pam.get("codigo_categoria_c81") != esperada_c81:
+        raise ErroConciliacaoSafra("identidade C81 PAM incompatível com cultura")
     if not isinstance(conversao_temporal, dict) or set(conversao_temporal) != {
             "safra_conab", "ano_pam", "metodo", "prova_sha256"}:
         raise ErroConciliacaoSafra("mapeamento temporal explícito obrigatório")
