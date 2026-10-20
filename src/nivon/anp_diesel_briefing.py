@@ -32,8 +32,7 @@ def montar_indicadores_diesel(
         raise PermissionError("coleta e redistribuição ANP não homologadas")
     if (not isinstance(direitos,dict) or direitos.get("status")!="APROVADA"
         or not direitos.get("evidencia_id") or
-        not {"LEITURA","COLETA","ARMAZENAMENTO","PUBLICACAO_DERIVADA"}.
-        issubset(set(direitos.get("operacoes",[])))):
+        not {"LEITURA","COLETA","ARMAZENAMENTO","PUBLICACAO_DERIVADA"}.issubset(set(direitos.get("operacoes",[])))):
         raise PermissionError("direitos ANP de derivado não comprovados")
     if layout_homologado is not True or not direitos.get("layout_real_sha256"):
         raise PermissionError("layout XLSX real e prova de versão não homologados")
