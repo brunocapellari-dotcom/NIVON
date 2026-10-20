@@ -240,6 +240,8 @@ def avaliar_previa_editorial(*, edicao: dict, gerado_em: str,
             chaves.add(url)
             titulos.add(titulo)
             eventos.add(evento)
+            if titulo not in _normal(texto):
+                raise ValueError("notícia auditada ausente do texto")
         except (ValueError, KeyError, TypeError) as exc:
             bloqueios.append(f"NOTICIA_{i}:{exc}")
 
