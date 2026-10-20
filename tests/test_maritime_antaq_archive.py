@@ -4,7 +4,7 @@ import zipfile
 import unittest
 from datetime import datetime, timezone
 
-from nivon.maritime.antaq_archive import analyze_antaq_archive
+from nivon.maritime.antaq_archive import analyze_antaq_archive, compare_antaq_archive_vintages
 
 STAMP = "2026-10-20T14:00:00Z"
 AT_HEADER = "IDAtracacao;Ano;Mes;Porto Atracação;Terminal;SGUF;Data Atracação\n"
@@ -160,6 +160,50 @@ class TestAntaqArchive(unittest.TestCase):
     def test_publication_without_evidence_rejected(self):
         with self.assertRaisesRegex(ValueError, "evidence_id"):
             evaluate(makezip(), source_published_at="2026-10-19T10:00:00Z")
+
+    def test_revised_annual_archive_reports_delta_without_overwriting_history(self):
+        before = evaluate(makezip())
+        updated = evaluate(makezip(
+            cargo=CA_HEADER+"100;1201;2.000,00;Embarcados;Granel Sólido;Longo Curso\n"
+                            +"200;3105;450,00;Desembarcados;Granel Sólido;Longo Curso\n"))
+        diff = compare_antaq_archive_vintages(before, updated)
+        self.assertEqual(diff["status"], "HISTORICAL_REVISION_DIAGNOSTIC")
+        self.assertFalse(diff["publication_allowed"])
+        self.assertEqual(len(diff["changes"]), 1)
+        self.assertEqual(diff["changes"][0]["delta_tonnes"], "665.00")
+        self.assertTrue(diff["do_not_treat_missing_as_zero"])
+
+    def test_missing_category_is_unknown_not_minus_previous_tonnes(self):
+        previous = evaluate(makezip())
+        altered = evaluate(makezip(
+            cargo=CA_HEADER+"100;1201;1.335,00;Embarcados;Granel Sólido;Longo Curso\n"))
+        diff = compare_antaq_archive_vintages(previous, altered)
+        missing = [x for x in diff["changes"] if x["change_class"] == "ABSENT_FROM_NEW_PUBLICATION"]
+        self.assertEqual(len(missing), 1)
+        self.assertIsNone(missing[0]["delta_tonnes"])
+        self.assertIsNone(missing[0]["new_tonnes"])
+
+    def test_identical_sha_does_not_create_false_revision(self):
+        previous = evaluate(makezip())
+        same = evaluate(makezip())
+        result = compare_antaq_archive_vintages(previous, same)
+        self.assertEqual(result["status"], "IDENTICAL_ARCHIVE")
+        self.assertEqual(result["changes"], [])
+
+    def test_cross_year_or_source_cannot_be_conflated(self):
+        from dataclasses import replace
+        previous = evaluate(makezip())
+        with self.assertRaises(ValueError):
+            compare_antaq_archive_vintages(previous, replace(previous, archive_year=2023))
+        with self.assertRaises(ValueError):
+            compare_antaq_archive_vintages(previous, replace(previous, source_id="DIFFERENT_SOURCE"))
+
+    def test_future_revisions_cannot_be_older(self):
+        from dataclasses import replace
+        previous = evaluate(makezip())
+        new = evaluate(makezip(cargo=CA_HEADER+"100;1201;100,00;Embarcados;Granel Sólido;Longo Curso\n"))
+        with self.assertRaises(ValueError):
+            compare_antaq_archive_vintages(previous, replace(new, collected_at="2026-10-19T00:00:00+00:00"))
 
     def test_no_data_release_unless_validated(self):
         out = evaluate(makezip())
