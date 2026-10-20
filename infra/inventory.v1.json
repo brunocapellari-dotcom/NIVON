@@ -1,0 +1,207 @@
+{
+  "schema": "nivon.infrastructure.v1",
+  "as_of": "2026-10-20",
+  "authority": "REVIEW_ONLY",
+  "deployment": {
+    "authorized": false,
+    "active": false,
+    "provider_candidate": "ORACLE_CLOUD_ALWAYS_FREE",
+    "account_resources_verified": false,
+    "quota_and_billing_verified": false,
+    "paid_services_allowed": false,
+    "approved_monthly_brl": 0,
+    "notebook_dependency_allowed": false
+  },
+  "environments": [
+    {
+      "id": "development",
+      "purpose": "offline tests and code review",
+      "runtime_enabled": false,
+      "contains_real_sensitive_data": false
+    },
+    {
+      "id": "staging",
+      "purpose": "cloud validation after explicit infrastructure approval",
+      "runtime_enabled": false,
+      "contains_real_sensitive_data": false
+    },
+    {
+      "id": "production",
+      "purpose": "validated licensed data and approved publications only",
+      "runtime_enabled": false,
+      "contains_real_sensitive_data": false
+    }
+  ],
+  "storage_policy": {
+    "source_of_truth": "versioned evidence ledger with database indexes",
+    "raw_path": "/var/lib/nivon/raw",
+    "state_path": "/var/lib/nivon/state",
+    "analytics_path": "/var/lib/nivon/analytics",
+    "model_path": "/var/lib/nivon/models",
+    "local_backups_path": "/var/backups/nivon",
+    "remote_backup_required": true,
+    "remote_backup_verified": false,
+    "encrypted_remote_backup_verified": false,
+    "restore_in_separate_environment_verified": false,
+    "public_repository_may_store_real_data": false
+  },
+  "components": [
+    {
+      "id": "git",
+      "layer": "control",
+      "state": "VERIFIED_CODE_ONLY",
+      "live_enabled": false,
+      "depends_on": [],
+      "gate": "REVIEW_AND_RELEASE"
+    },
+    {
+      "id": "compute",
+      "layer": "infrastructure",
+      "state": "NOT_VERIFIED",
+      "live_enabled": false,
+      "depends_on": [],
+      "gate": "OCI_ACCOUNT_QUOTAS"
+    },
+    {
+      "id": "secrets",
+      "layer": "security",
+      "state": "NOT_IMPLEMENTED",
+      "live_enabled": false,
+      "depends_on": [
+        "compute"
+      ],
+      "gate": "SECRETS_AND_IAM"
+    },
+    {
+      "id": "data_storage",
+      "layer": "data",
+      "state": "CODE_ONLY",
+      "live_enabled": false,
+      "depends_on": [
+        "compute",
+        "secrets"
+      ],
+      "gate": "DURABILITY"
+    },
+    {
+      "id": "backup_offsite",
+      "layer": "data",
+      "state": "NOT_IMPLEMENTED",
+      "live_enabled": false,
+      "depends_on": [
+        "data_storage"
+      ],
+      "gate": "BACKUP_RESTORE"
+    },
+    {
+      "id": "collector_scheduler",
+      "layer": "ingestion",
+      "state": "NOT_IMPLEMENTED",
+      "live_enabled": false,
+      "depends_on": [
+        "compute",
+        "data_storage"
+      ],
+      "gate": "SOURCE_RIGHTS"
+    },
+    {
+      "id": "data_quality",
+      "layer": "ingestion",
+      "state": "CODE_ONLY",
+      "live_enabled": false,
+      "depends_on": [
+        "data_storage"
+      ],
+      "gate": "REAL_SOURCE_VALIDATION"
+    },
+    {
+      "id": "forecast_engines",
+      "layer": "analytics",
+      "state": "CODE_ONLY",
+      "live_enabled": false,
+      "depends_on": [
+        "data_quality"
+      ],
+      "gate": "REAL_HISTORICAL_BACKTEST"
+    },
+    {
+      "id": "ivo",
+      "layer": "intelligence",
+      "state": "CODE_ONLY",
+      "live_enabled": false,
+      "depends_on": [
+        "forecast_engines",
+        "data_storage"
+      ],
+      "gate": "GOVERNED_AGENT_E2E"
+    },
+    {
+      "id": "private_api",
+      "layer": "serving",
+      "state": "NOT_IMPLEMENTED",
+      "live_enabled": false,
+      "depends_on": [
+        "compute",
+        "secrets",
+        "data_quality"
+      ],
+      "gate": "AUTH_AND_TLS"
+    },
+    {
+      "id": "maritime_cockpit",
+      "layer": "serving",
+      "state": "CODE_ONLY",
+      "live_enabled": false,
+      "depends_on": [
+        "private_api"
+      ],
+      "gate": "AIS_LINEUP_LICENSED"
+    },
+    {
+      "id": "briefing_whatsapp_bridge",
+      "layer": "delivery",
+      "state": "CODE_ONLY",
+      "live_enabled": false,
+      "depends_on": [
+        "data_quality",
+        "private_api"
+      ],
+      "gate": "PUBLISH_AND_PROVIDER"
+    },
+    {
+      "id": "observability",
+      "layer": "operations",
+      "state": "NOT_IMPLEMENTED",
+      "live_enabled": false,
+      "depends_on": [
+        "compute"
+      ],
+      "gate": "ALERTS_AND_RECOVERY"
+    }
+  ],
+  "release_gates": {
+    "REVIEW_AND_RELEASE": false,
+    "OCI_ACCOUNT_QUOTAS": false,
+    "SECRETS_AND_IAM": false,
+    "DURABILITY": false,
+    "BACKUP_RESTORE": false,
+    "SOURCE_RIGHTS": false,
+    "REAL_SOURCE_VALIDATION": false,
+    "REAL_HISTORICAL_BACKTEST": false,
+    "GOVERNED_AGENT_E2E": false,
+    "AUTH_AND_TLS": false,
+    "AIS_LINEUP_LICENSED": false,
+    "PUBLISH_AND_PROVIDER": false,
+    "ALERTS_AND_RECOVERY": false,
+    "ZERO_COST_PROOF": false,
+    "INDEPENDENT_SECURITY_REVIEW": false,
+    "OPERATOR_HOMOLOGATION": false
+  },
+  "evidence": {
+    "repository": "brunocapellari-dotcom/NIVON",
+    "base_branch": "feat/nucleo-motores-v0-1-20261016",
+    "operational_deployment": "NOT_VERIFIED",
+    "cloud_assets": "NOT_VERIFIED",
+    "synthetic_test_success_does_not_approve_real_data": true
+  }
+}
