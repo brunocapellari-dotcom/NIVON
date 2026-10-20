@@ -17,11 +17,12 @@
       "authority": "PortosRio",
       "kind": "PORTO_ORGANIZADO",
       "parent_port_id": null,
-      "lineup_source_url": null,
+      "lineup_source_url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
       "endpoint_verified": false,
       "commercial_rights": "PENDING",
       "parser_homologated": false,
-      "live_enabled": false
+      "live_enabled": false,
+      "discovery_status": "OFFICIAL_NAVIGATION_INDEX_ONLY"
     },
     {
       "id": "ANTONINA",
@@ -162,11 +163,12 @@
       "authority": "PortosRio",
       "kind": "PORTO_ORGANIZADO",
       "parent_port_id": null,
-      "lineup_source_url": null,
+      "lineup_source_url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
       "endpoint_verified": false,
       "commercial_rights": "PENDING",
       "parser_homologated": false,
-      "live_enabled": false
+      "live_enabled": false,
+      "discovery_status": "OFFICIAL_NAVIGATION_INDEX_ONLY"
     },
     {
       "id": "ITAJAI",
@@ -254,11 +256,12 @@
       "authority": "PortosRio",
       "kind": "PORTO_ORGANIZADO",
       "parent_port_id": null,
-      "lineup_source_url": null,
+      "lineup_source_url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
       "endpoint_verified": false,
       "commercial_rights": "PENDING",
       "parser_homologated": false,
-      "live_enabled": false
+      "live_enabled": false,
+      "discovery_status": "OFFICIAL_NAVIGATION_INDEX_ONLY"
     },
     {
       "id": "PARANAGUA",
@@ -332,11 +335,12 @@
       "authority": "PortosRio",
       "kind": "PORTO_ORGANIZADO",
       "parent_port_id": null,
-      "lineup_source_url": null,
+      "lineup_source_url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
       "endpoint_verified": false,
       "commercial_rights": "PENDING",
       "parser_homologated": false,
-      "live_enabled": false
+      "live_enabled": false,
+      "discovery_status": "OFFICIAL_NAVIGATION_INDEX_ONLY"
     },
     {
       "id": "RIO_GRANDE",
