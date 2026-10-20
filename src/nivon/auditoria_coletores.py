@@ -32,8 +32,8 @@ def auditoria_estatica(catalogo: dict, rotas: dict, *, prioridade: str | None=No
         rota=entradas[dado["id"]]
         src=fontes[dado["source_id"]]
         acesso_restrito = src["rights"]=="RESTRICTED" or dado["stage"]=="BLOCKED_RIGHTS"
-        # Página da documentação não é endpoint de dados homologado.
-        endpoint=rota["locator"]["kind"]=="DIRECT_PUBLIC_FILE"
+        # Página da documentação não é endpoint; API confirmada em execução única.
+        endpoint=rota["locator"]["kind"] in ("DIRECT_PUBLIC_FILE","DIRECT_OFFICIAL_API")
         codigo = bool(dado.get("existing_module")) or dado["stage"] in ("CODE_PRESENT","REAL_SNAPSHOT_TESTED")
         amostra_real = dado["stage"]=="REAL_SNAPSHOT_TESTED"
         bloqueios=list(rota["gates_missing"])

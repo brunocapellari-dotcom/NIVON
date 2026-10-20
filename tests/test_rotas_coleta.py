@@ -77,11 +77,14 @@ class TestRotasColetores(unittest.TestCase):
         with self.assertRaises(ErroRota):
             validar_rotas(doc, self.catalogo)
 
-    def test_nao_inferir_endpoint_inexistente(self):
+    def test_endpoint_sidra_oficial_nao_implica_coleta(self):
+        e = next(e for e in self.rotas["entries"] if e["dataset_id"] == "IBGE_PAM")
+        self.assertEqual(e["locator"]["kind"], "DIRECT_OFFICIAL_API")
+        self.assertTrue(e["locator"]["url"].startswith("https://apisidra.ibge.gov.br/values/t/1612"))
+        self.assertFalse(e["runtime_enabled"])
         doc = copy.deepcopy(self.rotas)
-        e = next(e for e in doc["entries"] if e["dataset_id"] == "IBGE_PAM")
-        self.assertIsNone(e["locator"]["url"])
-        e["locator"]["kind"] = "DIRECT_PUBLIC_FILE"
+        m = next(x for x in doc["entries"] if x["dataset_id"] == "IBGE_PAM")
+        m["locator"]["url"] = "https://evil.example/values/t/1612"
         with self.assertRaises(ErroRota):
             validar_rotas(doc, self.catalogo)
 

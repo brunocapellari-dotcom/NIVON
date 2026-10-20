@@ -634,11 +634,11 @@
       "dataset_id": "BCB_PTAX",
       "collector_class": "OFFICIAL_API",
       "locator": {
-        "kind": "PUBLISHED_API_DOC",
-        "url": "https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/documentacao",
-        "source_proof": "https://dadosabertos.bcb.gov.br/dataset/taxas-de-cambio-todos-os-boletins-diarios"
+        "kind": "DIRECT_OFFICIAL_API",
+        "url": "https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/",
+        "source_proof": "https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/documentacao"
       },
-      "implementation_scope": "bcb_ptax.py + ptax_plano.py (normalizador e URLs oficiais sem acesso HTTP)",
+      "implementation_scope": "ptax_plano.py + bcb_ptax.py + pipeline_api_dados.py (USD diário real schema, sem operação)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -655,8 +655,8 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "OData PTAX, escolher boletim, compra/venda e horário; não usar como preço de commodity.",
-      "preliminary_evidence": "ODATA_DOCUMENTADA_PLANO_OFFLINE_TESTES_SINTETICOS"
+      "source_note": "Endpoint OData do dólar por período verificado no esquema; NÃO comprova todos boletins nem a operação EUR e nenhum direito de publicação.",
+      "preliminary_evidence": "OFFICIAL_ODATA_USD_SCHEMA_OBSERVED_20261019_EUR_UNTESTED"
     },
     {
       "dataset_id": "BCB_SGS_FOCUS",
@@ -1463,11 +1463,11 @@
       "dataset_id": "IBGE_PAM",
       "collector_class": "OFFICIAL_API",
       "locator": {
-        "kind": "NOT_VERIFIED_PER_DATASET",
-        "url": null,
-        "source_proof": null
+        "kind": "DIRECT_OFFICIAL_API",
+        "url": "https://apisidra.ibge.gov.br/values/t/1612",
+        "source_proof": "https://apisidra.ibge.gov.br/home/ajuda"
       },
-      "implementation_scope": "sidra_pam.py (PAM tabela 1612, contrato por município e categoria, sem HTTP)",
+      "implementation_scope": "sidra_pam.py + pipeline_api_dados.py (schema real 1612 verificado, consultas planejadas, sem agendamento)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -1476,8 +1476,6 @@
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
-        "EXACT_ENDPOINT_UNKNOWN",
-        "DISCOVER_OFFICIAL_DATA_RESOURCE",
         "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
         "HISTORICAL_BACKFILL",
         "SCHEDULE_AND_FRESHNESS",
@@ -1486,8 +1484,8 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
-      "preliminary_evidence": "TABLE_1612_PAM_DOCUMENTADA_FORMATO_RESPOSTA_SINTETICO_A_HOMOLOGAR"
+      "source_note": "API SIDRA 1612 verificada no formato municipal; URL base parametrizada, valores/total/vigencia/licenca ainda não homologados.",
+      "preliminary_evidence": "OFFICIAL_API_SCHEMA_OBSERVED_20261019_MUNICIPIO_C81_ANUAL"
     },
     {
       "dataset_id": "IBGE_PPM",
