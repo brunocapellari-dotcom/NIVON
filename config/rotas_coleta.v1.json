@@ -1084,7 +1084,7 @@
         "url": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/progresso-de-safra",
         "source_proof": "https://github.com/bruno-portfolio/agrobr/blob/main/docs/api/conab_progresso.md"
       },
-      "implementation_scope": "conab_agrobr.py + agrobr==2.0.0; direitos e persistencia pendentes",
+      "implementation_scope": "conab_agrobr.py + progresso_conab_historico.py (dados offline semanais, 27 UFs e MEDIA_ESTADOS; coleta desativada)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,

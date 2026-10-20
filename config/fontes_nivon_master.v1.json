@@ -1826,7 +1826,7 @@
       "cadence": "WEEKLY",
       "stage": "CODE_PRESENT",
       "priority": "P0",
-      "existing_module": "conab_agrobr.py",
+      "existing_module": "conab_agrobr.py; progresso_conab_historico.py (normalizador e SQLite local com vintages)",
       "notes": "agrobr 2.0 facultativo; MEDIA_ESTADOS diferente de Brasil; coleta OFF",
       "enabled": false,
       "collection_authorized": false,
