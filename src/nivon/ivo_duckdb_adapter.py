@@ -117,6 +117,17 @@ def carregar_asof_parquet(
     if executor is not None and not callable(executor):
         raise ErroParquet("executor inválido")
     path,size=_arquivo(diretorio,arquivo,max_bytes)
+    def hash_atual():
+        h=sha256()
+        with path.open("rb") as stream:
+            while True:
+                bloco=stream.read(1024*1024)
+                if not bloco: break
+                h.update(bloco)
+        return h.hexdigest()
+    # Antes e depois da query: impede evidência inconsistida por
+    # modificação de arquivo com o mesmo tamanho durante a leitura.
+    digest_antes=hash_atual()
     sqlargs=[str(path),fonte,variavel,produto,regiao,unidade,max_linhas+1]
     rows=(executor or _run_duckdb)(CONSULTA,sqlargs)
     if not isinstance(rows,(tuple,list)) or len(rows)>max_linhas:
@@ -143,18 +154,12 @@ def carregar_asof_parquet(
             raise ErroParquet("observação Parquet viola contrato temporal") from exc
     selecionadas=visao_na_data(observacoes,data_corte_publicacao=corte_publicacao,
                                 instante_corte_coleta=cutoff)
-    # SHA de bytes reais, não de string/path inventado.
-    digest=sha256()
-    with path.open("rb") as stream:
-        while True:
-            block=stream.read(1024*1024)
-            if not block:break
-            digest.update(block)
-    if path.stat().st_size!=size:
+    digest_depois=hash_atual()
+    if path.stat().st_size!=size or digest_antes!=digest_depois:
         raise ErroParquet("arquivo mudou durante a consulta")
     return {
         "estado":"VISAO_PARQUET_OFFLINE_NAO_HOMOLOGADA",
-        "arquivo_sha256":digest.hexdigest(),"tamanho_bytes":size,
+        "arquivo_sha256":digest_depois,"tamanho_bytes":size,
         "linhas_consultadas":len(observacoes),"linhas_asof":len(selecionadas),
         "corte_publicacao":corte_publicacao.isoformat(),
         "corte_coleta":cutoff.isoformat(),"observacoes":selecionadas,
