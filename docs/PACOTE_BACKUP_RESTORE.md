@@ -1,0 +1,7 @@
+# NIVON — pacote de recuperação e restore drill SQLite
+
+`src/nivon/pacote_recuperacao.py` permite montar um pacote local com: (1) banco `.sqlite` produzido via API oficial de backup do SQLite, (2) manifesto JSON com SHA-256, tamanho, versão SQLite e **somente nomes/contagens de tabelas**, e (3) prova de restauração em diretório efêmero comparando estrutura e contagens. Testes cobrem integridade, alterações, tentativa de path traversal, links simbólicos, JSON com chaves duplicadas, ausência de dados individuais no manifesto e bloqueio de sobrescrita.
+
+**Atenção:** a cópia SQLite contém os dados do banco; o manifesto NÃO contém os valores das linhas. SHA-256 e contagens verificam integridade contra alterações acidentais, mas NÃO são assinatura digital nem prova de autenticidade de um operador malicioso. O pacote NÃO é criptografado e NÃO deve ser colocado em repositórios GitHub públicos ou artefatos de CI. Guardar dados pessoais somente em armazenamento privado com controles de acesso e prazo de retenção. `backup_remoto_confirmado=False` e `criptografia_confirmada=False` permanecem explícitos.
+
+Pré-requisitos de go-live: escolher serviço em nuvem que cumpra uso privado gratuito e durável, definir autenticação e segregação, criptografia robusta, rotação e retenção, verificar quotas e limitar custos, realizar restore drill em infraestrutura separada, homologar direitos das fontes. Não há upload, agendamento, credencial, novo custo ou deploy neste incremento.
