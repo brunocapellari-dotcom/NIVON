@@ -86,7 +86,8 @@ nivon.validacao_tendencias_mercado.avaliar_probabilidades_tendencia avalia
 **previsões previamente emitidas**, não fabrica previsões. Para cada registro:
 
 - mesma serie_id e modelo_versao, regra_rotulagem, horizonte_sessoes e
-  banda_relativa para toda a amostra;
+  banda_relativa para toda a amostra; calendário injetado obrigatório e
+  contagem exata de sessões entre sessao_base e sessao_alvo;
 - emitido_em posterior à disponibilidade do preço-base e anterior ao preço
   futuro, treinado_ate não posterior à emissão;
 - valor_base e valor_alvo decimais positivos; classe_realizada recalculada
@@ -176,9 +177,19 @@ janela robusta para históricos acima de 240 observações; proteção contra
 float infinito/zero; regressões sintéticas dedicadas. Nenhuma dessas
 alterações constitui conexão com mercado real ou licença.
 
-**Próxima ação P0:** amarrar o horizonte de `horizonte_sessoes` à contagem de
-sessões reais em cada previsão auditada. Hoje o campo é validado quanto a
-inteiro/intervalo, mas o motor probabilístico ainda não comprova que a
-distância entre `base_referencia_em` e `alvo_referencia_em` representa
-esse número de pregões. Só promover skill e calibração após esse gate, mais
-vintages as-of, evidência de emissão da previsão, auditoria de fonte e holdout.
+**Concluído neste PR:** o backtest probabilístico só pontua previsões
+com calendário declarado válido. Cada registro exige agora `sessao_base`
+e `sessao_alvo`, conferidos com os instantes de referência no offset
+fornecido, e `horizonte_sessoes` precisa ser exatamente a distância de
+índices entre sessões do calendário. Sem calendário, o status passa a
+`HORIZONTE_CALENDARIO_AUSENTE` (sem Brier/skill calculados), mantendo
+`publicavel=false` e `probabilidades_calibradas=null`.
+
+**Próxima ação P0:** ingerir vintages reais autorizados e firmar contrato de
+integridade dos brutos, calendário oficial versionado e evidência imutável
+de emissão de cada previsão; adicionar snapshot de previsão por origin time,
+holdout temporal e auditoria de licença. Uma edição de calendário de revisão
+posterior pode ser usada para verificação ex post de horizonte, mas NÃO pode
+ser apresentada como feature conhecida na emissão de previsão histórica.
+O calendário injetado é declarado, não validado contra fontes oficiais,
+e nenhum Brier sintético comprova poder preditivo ou calibração comercial.
