@@ -432,7 +432,8 @@
         "nivon.noaa_roni:importar_roni_ascii",
         "nivon.noaa_roni:classificar_episodios_roni",
         "nivon.meteorologia_probabilistica:avaliar_ensemble",
-        "nivon.hidrograma_bacia:hidrograma_evento_cn"
+        "nivon.hidrograma_bacia:hidrograma_evento_cn",
+        "nivon.ensemble_hidrologico_bacia:cenario_ensemble_bacia"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -705,7 +706,8 @@
         "nivon.hidrologia_chuva_vazao:escoamento_scs_cn",
         "nivon.hidrologia_chuva_vazao:propagar_muskingum",
         "nivon.hidrograma_bacia:hidrograma_evento_cn",
-        "nivon.calibracao_cn_bacias:calibrar_cn_historico"
+        "nivon.calibracao_cn_bacias:calibrar_cn_historico",
+        "nivon.ensemble_hidrologico_bacia:cenario_ensemble_bacia"
       ],
       "data_dependencies": [
         "ANA_HIDRO",
@@ -718,7 +720,7 @@
         "ERA5_LAND_CDS",
         "NASA_GPM_IMERG"
       ],
-      "indicators_planned": 21,
+      "indicators_planned": 25,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
       "inputs_reais_homologados": false,
       "previsao_homologada": false,
