@@ -52,3 +52,31 @@ Código/testes sintéticos são somente provas de regras. Não houve coleta/arma
 `diesel_pressao.py` gera cenário matemático **hipotético**: litros = distância operacional validada × consumo específico informado; custo combustível por t = litros × preço diesel por litro / carga informada. Diferença de custo por t NÃO implica repasse ao frete anunciado/contratado. Proíbe mistura DIESEL/DIESEL S10, ausência de evidência, número não finito e premissa fora de faixa. O preço ANP de revenda é amostral, não custo observado do transportador. Testes em `tests/test_diesel_pressao.py`.
 
 **Gates preservados:** não há coleta automática de combustível, integração operacional da ANP semanal, custo real de frota, pagamento de pedágio ou volume observado a partir destes módulos.
+
+
+## Continuidade 20/10/2026 — ponte E2E offline entre WhatsApp AI e NIVON
+
+Auditoria efetiva dos contratos:
+- `WHATSAPP_AI/app/models.py` e `app/pipeline.py`: o evento possui `event_id/version/tenant_id/classification/source_event_ids/rate/rate_unit/entities/provenance`. `loading_point` e `company` podem ter `canonical_id=None`; o pipeline permite evento sem estabelecimento, pedágio, equipamento e regime. A existência de evento na outbox **não comprova** que ele seja comparável comercialmente.
+- `AgroLogMT/gateway/freight_ingest.py`: aceita eventos canônicos com `entities` e `raw_reference`, mas sua classe `FREIGHT_OFFER` não exige pickup canônico; ingestão não homologa a observação para análise do NIVON.
+- `AgroLogMT/collector/freight_observations.py`: cluster por município/destino/produto/preço/dia não deve ser usado como prova de mesmo embarque/transportadora; não pode governar deduplicação comercial do NIVON.
+- A PR #30 criou uma análise de variação pareada e gates R01 (painel constante). **Integrar a lógica dessa PR com esta branch, sem sobrescrever os mesmos arquivos arbitrariamente.**
+
+Novo `src/nivon/fretes_adapter_whatsapp.py` implementa uma ponte 100% offline:
+1. Consome envelope compatível com `FreightEvent` do WhatsApp AI, somente `FREIGHT_OFFER` ou `UPDATE` economicamente comprovado. Rejeita `CANCELLATION`, `FREIGHT_REQUEST`, inferido, unidade misturada, evento futuro, data sem timezone ou valor ambíguo.
+2. EXIGE resolução canônica externa vinculada a **tenant + event_id + version + source_event_id** com SHA-256 de evidência e correspondência de origem IBGE, destino IBGE, pickup, transportadora, descarga, equipamento, produto, regime PF/PJ e natureza do preço `BASE`. Se entidades já contiverem `canonical_id`, divergência é bloqueante.
+3. EXIGE atestação autorizada com identificador de fonte, provider, tenant, SHA-256 de evidência e operações `LEITURA`, `ARMAZENAMENTO` e `ANALISE`. O coletor **não pode fabricar atestação a partir do próprio conteúdo da mensagem**.
+4. Diferencia pedágio adicional com valor verificado do caso `NAO_INFORMADO`. Desconhecido não vira zero, `frete_cheio` fica nulo. Impede tratar valor cheio como base por conveniência.
+5. Gera IDs pseudonimizados HMAC-SHA256 com chave de runtime e isolamento de tenants para publicação, registro (event_id+versão) e oferta econômica. Não retorna texto bruto, contato, número de WhatsApp ou referências RAW.
+6. Envia `OfertaFrete` ao registro já existente, preservando evolução de preços em vez de colapsar reajustes em repostagens. **Não** consulta nem publica dados reais.
+
+O contrato da atestação é candidato para futura interface entre projetos, não prova que uma assinatura, autorização externa ou resolução operacional esteja implantada. O SHA citado garante referência a um artefato declarado, **não verifica automaticamente sua autenticidade**. Antes de uso real, o emissor confiável deve conferir RAW com acesso autorizado, política/assinatura do registro de direitos, origem dos identificadores canônicos, anti-replay, sigilo da chave HMAC e revogação. Teste de integração de rede/WhatsApp permanece bloqueado.
+
+**Teste sintético isolado**: `PYTHONPATH=src python -m unittest tests.test_fretes_adapter_whatsapp -v`; suíte total em `.github/workflows/testes.yml` deve aprovar no SHA final.
+
+### Pendências reordenadas após PR #30
+
+- **P0**: conciliar adaptador/contratos de propriedade de origem com WhatsApp AI/AgroLog; carregar eventos reais somente sob licença e escopo comprovados; testar revogação e reprocessamento.
+- **P0**: integrar PR #30 (variação pareada) sem recuperar análise por mediana de anúncios misturados e sem conflito com PR #18. Confirmar CI e auditoria independente.
+- **P0**: conciliar ANP semanal da PR #8 com `anp_diesel_store` da PR #12, 3 arquivos históricos reais, edição/as-of e licenças.
+- **P1**: auditar distâncias DNIT e pedágios por equipamento/categoria, condições PF/PJ e sentido; instrumentar custos de frota apenas com premissas documentadas.
