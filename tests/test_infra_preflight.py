@@ -48,7 +48,7 @@ class InfraPreflightTests(unittest.TestCase):
             validar_inventario(self.doc)
 
     def test_rejeita_dependencia_ciclica(self):
-        self.doc["components"][0]["depends_on"] = ["observability"]
+        self.doc["components"][1]["depends_on"] = ["observability"]
         with self.assertRaises(InfraError):
             validar_inventario(self.doc)
 
