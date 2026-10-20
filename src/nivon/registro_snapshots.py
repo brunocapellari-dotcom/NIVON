@@ -127,6 +127,11 @@ def registrar_snapshot(db: sqlite3.Connection, catalogo: dict, *,
     if tipo not in _TIPOS:
         raise ErroSnapshot("tipo de snapshot desconhecido")
     if tipo == "REAL_AUTORIZADO":
+        # Este é o gate CENTRAL: a declaração de direitos do chamador não
+        # pode contornar o estado OFF no catálogo canônico.
+        if (match[0].get("enabled") is not True
+                or match[0].get("collection_authorized") is not True):
+            raise PermissionError("snapshot real bloqueado: dataset desativado no catálogo")
         if not {"COLETA", "ARMAZENAMENTO"}.issubset(autorizacoes):
             raise PermissionError("direitos por operação não aprovados")
         if (not isinstance(evidencia_direitos, str) or not
