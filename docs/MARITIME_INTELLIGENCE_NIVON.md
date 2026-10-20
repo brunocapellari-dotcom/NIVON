@@ -71,3 +71,28 @@ Fonte sob a mesma conta GitHub: brunocapellari-dotcom/AgroLogMT, branch main, 19
 O executável padrão não injeta AIS nem line-up reais. Integração Python interna pode injetar MaritimeReadAPI(internal=MaritimeInternalSnapshot.from_analysis(report, lineup_calls=...)) após passar pelos gates. Isso NÃO é produção.
 
 **Bloqueios:** API com autenticação para nuvem, coleta AIS licenciada e contínua, line-up real homologado, geofences operacionais, validação externa de previsão, backup em nuvem, revisão de supply chain e sete dias de aceite E2E.
+
+
+## Auditoria das fontes marítimas — 20/10/2026
+
+Catálogo canônico existente: config/rotas_coleta.v1.json e config/fontes_nivon_master.v1.json, com a cobertura de LINEUP_SANTOS, LINEUP_PARANAGUA, LINEUP_SANTAREM, LINEUP_BARCARENA_VILA_DO_CONDE, LINEUP_ITAQUI, ANTAQ_MOVIMENTACAO e AIS_POSICOES. Esta investigação não cria fontes duplicadas.
+
+1. APS Santos: https://www.portodesantos.com.br/informacoes-operacionais/operacoes-portuarias/navegacao-e-movimento-de-navios/atracacoes-programadas/ — há programação oficial, com navio, IMO, DUV, ETA e outros campos conforme a edição. É programação informada, não carga realizada. O parser oficial é nivon._agrolog_portos_html; a nova ligação tipada é nivon.maritime.official_lineup_bridge.
+2. Portos do Paraná: https://www.portosdoparana.pr.gov.br/ — disponibiliza atalhos para line-up, manobras, marés e tempo. O parser PDF já está em portos_automaticos. Requer edição/documento, série, hash e testes específicos; a página inicial NÃO é um feed estruturado.
+3. ANTAQ: https://www.gov.br/antaq/pt-br/acesso-a-informacao/dados-abertos e https://www.gov.br/antaq/pt-br/central-de-conteudos/publicacoes-da-antaq/estatisticos-aquaviarios — base pública oficial para movimentação e atracação observadas em escala estatística, sujeitas a competência, revisões e disponibilidade de downloads. O novo SDP começou retomada de envio em outubro/2026; estatística agregada não substitui um evento operacional individual, e painel inacessível não autoriza bypass de WAF.
+4. AISStream: https://github.com/aisstream/issues/issues/290 e https://github.com/aisstream/aisstream/issues/16 — há pedidos públicos de esclarecimento sobre licença comercial, armazenamento, retenção e redistribuição, sem prova documental obtida nesta auditoria. AISSTREAM fica explicitamente NO_LIVE_ACCESS e NO_REDISSEMINATION até permissões formais por operação.
+
+### Gates por fluxo
+
+- Leitura de página pública ≠ permissão automaticamente verificada para armazenamento, streaming comercial, redistribuição e envio de dados de terceiros.
+- A ponte HTML exige FonteWeb autorizada, SHA-256, URL/domínio canônico, instante com fuso, identificador de escala DUV/ID e ETA com horário explícito; entradas sem identidade/horário não viram previsões. Chamar a função não coleta a rede: só recebe bytes previamente adquiridos por canal aprovado.
+- A visualização SHADOW_LINEUP_ONLY aceita somente a saída do bridge e permissão específica de exibição. Exibe contagem de escalas programadas; não gera número zero de navios físicos, fila ou tonelagem embarcada.
+- Não ativar busca contínua, armazenamento ou redistribuição AISStream até licença independente revisada. Não fornecer tokens de provedores no frontend.
+
+### Pendências práticas
+
+- Santos: confirmar edição atual e validar parser com três documentos reais de dias distintos, incluindo publicação e captura.
+- CDP Santarém/Vila do Conde: verificar layout atual e datas/IDs de escala, sem assumir que um mesmo site equivale a um porto único.
+- Paranaguá e Itaqui: testar documentos PDF efetivos com serie/data; falhar fechado quando arquivo/link mudar.
+- ANTAQ: localizar e homologar pacote de dados históricos de atracação/movimentação com schema e licença efetivamente acessíveis, registrar versões e hash, evitar interpretações de realização a partir de line-up.
+- AIS: resolver autorizações e cobertura antes de capturar posições em nuvem.
