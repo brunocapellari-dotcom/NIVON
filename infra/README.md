@@ -99,3 +99,25 @@ Para testar estado persistente em diretório privado (modo 0700), use
 `--db /CAMINHO_PRIVADO/ledger.sqlite`. Não coloque SQLite, WAL ou backups
 dentro do repositório, mesmo em branches privadas. **O sucesso do ensaio
 não constitui licença, servidor, agendamento, backup remoto ou go-live.**
+
+## Verificação passiva do estado e dimensionamento OCI
+
+Diagnóstico de saúde `src/nivon/infra_health.py`:
+
+```sh
+PYTHONPATH=src python -m nivon.infra_health
+PYTHONPATH=src python -m nivon.infra_health --require-operational
+PYTHONPATH=src python -m nivon.infra_health --ledger /CAMINHO_PRIVADO/ledger.sqlite
+```
+
+A leitura é somente local e somente leitura: não cria banco ausente, não
+renova lease, não executa job nem atesta serviço remoto. Detecta
+`RUNNING` vencido, `UNCERTAIN`, backup remoto sem comprovação, ausência
+de cloud e gates bloqueados. `--require-operational` retorna 3 porque
+o projeto ainda não tem go-live.
+
+O candidato OCI está em `infra/oci/capacidade-candidata.v1.json`, seu
+validador matemático em `src/nivon/infra_oci_quota.py` e guia em
+`infra/oci/README.md`. Quotas são **compartilhadas pela tenancy**; o
+cálculo 1 OCPU/4 GB/50 GB só verifica um candidato isolado, não comprova
+região, capacidade, disponibilidade, assinatura nem custo zero garantido.
