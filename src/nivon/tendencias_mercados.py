@@ -158,6 +158,8 @@ def tendencia_frete_anunciado(
     veiculo = _identidade(veiculo, "veiculo", tamanho=60)
     if pedagio not in PEDAGIO:
         raise ErroTendencia("condição de pedágio precisa ser informada")
+    if tolerancia_relativa != 0:
+        raise ErroTendencia("limiar relativo de frete exige normalização pareada própria; usar tolerância absoluta em BRL/T")
     if type(minimo_lotes_dia) is not int or not 2 <= minimo_lotes_dia <= 100:
         raise ErroTendencia("minimo_lotes_dia fora do intervalo")
     if not isinstance(ofertas, (tuple, list)) or len(ofertas) > 10000:
