@@ -19,6 +19,7 @@ from .indicadores_historicos import (
     compor_pacote_historico, indicador_conab, indicador_porto
 )
 from .rotina_diaria import preparar_rotina
+from .observabilidade_local import monitorar_operacao
 
 
 class ErroIntegracaoHermes(ValueError):
@@ -70,6 +71,8 @@ class NivonProjectAdapter:
         fontes: Mapping[str, dict],
         conab: sqlite3.Connection | None = None,
         portos: sqlite3.Connection | None = None,
+        outbox: sqlite3.Connection | None = None,
+        portos_esperados: tuple[str, ...] = (),
     ) -> None:
         if not callable(autorizador) or not isinstance(fontes, Mapping):
             raise ErroIntegracaoHermes("requer autorização de identidade e fontes")
@@ -79,6 +82,10 @@ class NivonProjectAdapter:
         self._fontes = deepcopy(dict(fontes))
         self._conab = conab
         self._portos = portos
+        self._outbox = outbox
+        if not isinstance(portos_esperados, tuple):
+            raise ErroIntegracaoHermes("monitoramento portuário inválido")
+        self._portos_esperados = portos_esperados
 
     def _exigir(self, permissao: str = "NIVON_READ") -> None:
         if self._autorizar(permissao) is not True:
@@ -212,8 +219,15 @@ class NivonProjectAdapter:
         self._exigir()
         if since is not None and (not isinstance(since, datetime) or since.tzinfo is None):
             raise ErroIntegracaoHermes("since sem fuso")
+        instante = datetime.now().astimezone().isoformat()
+        # O clock real de infraestrutura deve ser autenticado/sincronizado pelo host.
+        diagnostico = monitorar_operacao(
+            gerado_em=instante, conab=self._conab, portos=self._portos,
+            outbox=self._outbox, portos_esperados=self._portos_esperados,
+        )
         return {
-            "status": "MONITORAMENTO_EXTERNO_NAO_ATIVO",
-            "alerts": [],
-            "warning": "lista vazia não prova ausência de incidentes",
+            "status": diagnostico["estado"],
+            "alerts": diagnostico["alertas"],
+            "coverage": diagnostico["cobertura"],
+            "warning": "monitoramento somente local; não prova ausência de incidentes",
         }
