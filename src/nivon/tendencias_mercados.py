@@ -140,11 +140,16 @@ def tendencia_preco_fisico(
 def tendencia_frete_anunciado(
     ofertas: Sequence[Mapping], *, origem_ibge: str, destino_ibge: str,
     produto: str, veiculo: str, pedagio: str, as_of: str,
+    pickup_entity_id: str, transportadora_id: str,
+    descarga_entity_id: str, regime: str,
     janela: int = 6, minimo_lotes_dia: int = 2,
     tolerancia_absoluta: float = 0, tolerancia_relativa: float = 0,
 ) -> dict:
-    """Mediana diária por lotes únicos; sem misturar corredores ou tipos de oferta.
+    """Tendência apenas no MESMO estabelecimento, transportadora e condições.
 
+    Nunca agregar/mensurar preços pela média ou mediana municipal. A mediana
+    temporal, quando calculável, é restrita a lotes distintos da mesma
+    transportadora e estabelecimento, com destino de descarga e regime iguais.
     O identificador de lote deve ser previamente resolvido pelo WhatsApp AI
     ou outro coletor autorizado. Mesmo lote e dia com preços divergentes bloqueia
     a análise; reenvios idênticos não pesam duas vezes.
@@ -155,6 +160,11 @@ def tendencia_frete_anunciado(
         raise ErroTendencia("origem e destino iguais")
     produto = _identidade(produto, "produto", tamanho=60)
     veiculo = _identidade(veiculo, "veiculo", tamanho=60)
+    pickup_entity_id = _identidade(pickup_entity_id, "pickup_entity_id", tamanho=150)
+    transportadora_id = _identidade(transportadora_id, "transportadora_id", tamanho=150)
+    descarga_entity_id = _identidade(descarga_entity_id, "descarga_entity_id", tamanho=150)
+    if regime not in {"PF", "PJ", "NAO_INFORMADO"}:
+        raise ErroTendencia("regime de frete PF/PJ inválido")
     if pedagio not in PEDAGIO:
         raise ErroTendencia("condição de pedágio precisa ser informada")
     if type(minimo_lotes_dia) is not int or not 2 <= minimo_lotes_dia <= 100:
@@ -177,6 +187,10 @@ def tendencia_frete_anunciado(
             obs.get("pedagio") != pedagio,
             obs.get("natureza") != "OFERTA",
             obs.get("unidade") != "BRL/T",
+            obs.get("pickup_entity_id") != pickup_entity_id,
+            obs.get("transportadora_id") != transportadora_id,
+            obs.get("descarga_entity_id") != descarga_entity_id,
+            obs.get("regime") != regime,
         )):
             raise ErroTendencia("frete mistura corredor, produto, veículo, pedágio, natureza ou unidade")
         lote = _identidade(obs.get("lote_id"), "lote_id", tamanho=150)
@@ -224,7 +238,7 @@ def tendencia_frete_anunciado(
         samples.append(sample)
         coverage.append({
             "periodo": periodo, "lotes_distintos": len(lotes),
-            "preco_mediano_rs_t": str(preco_mediano),
+            "preco_mediano_rs_t_mesmo_estabelecimento": str(preco_mediano),
             "fontes_distintas": len(set().union(*(x["fontes"] for x in lotes.values()))),
             "prova_sha256": digest,
         })
@@ -238,6 +252,10 @@ def tendencia_frete_anunciado(
         **result, "segmento": "FRETE_ANUNCIADO",
         "origem_ibge": origem_ibge, "destino_ibge": destino_ibge,
         "produto": produto, "veiculo": veiculo, "pedagio": pedagio,
+        "pickup_entity_id": pickup_entity_id,
+        "transportadora_id": transportadora_id,
+        "descarga_entity_id": descarga_entity_id, "regime": regime,
+        "escopo_precos": "MESMO_ESTABELECIMENTO_TRANSPORTADORA_DESCARGA_CONDICOES",
         "observacoes_brutas": len(ofertas), "reenvios_deduplicados": repetidos,
         "lotes_distintos_total_por_dia": sum(r["lotes_distintos"] for r in coverage),
         "cobertura_amostral": coverage, "direitos_publicacao_verificados": False,
