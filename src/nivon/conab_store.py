@@ -8,6 +8,8 @@ import sqlite3
 from datetime import datetime, timezone
 from math import isfinite
 
+from .transacoes_sqlite import savepoint_atomico
+
 class ErroSerie(ValueError):pass
 
 
@@ -55,6 +57,8 @@ def salvar_edicao(db, observacoes, *, publicado_em=None):
         from datetime import date
         try: date.fromisoformat(publicado_em)
         except (ValueError,TypeError) as exc: raise ErroSerie("publicacao incorreta") from exc
+        if publicado_em>iso[:10]:
+            raise ErroSerie("publicação futura relativamente à captura")
     seen=set()
     for r in observacoes:
         if any(r[k]!=v for k,v in (
@@ -66,7 +70,7 @@ def salvar_edicao(db, observacoes, *, publicado_em=None):
         k=(r["regiao_uf"],r["safra"],r["indicador"])
         if k in seen: raise ErroSerie("duplicata na edição")
         seen.add(k)
-    with db:
+    with savepoint_atomico(db):
         existe=db.execute("SELECT publicado_em FROM conab_edicoes WHERE fonte_sha=? AND arquivo=?",
                           (sha,arq)).fetchone()
         nova=existe is None
@@ -87,6 +91,20 @@ def salvar_edicao(db, observacoes, *, publicado_em=None):
             anterior=db.execute("SELECT count(*) FROM conab_observacoes WHERE fonte_sha=? AND arquivo=?",
                                 (sha,arq)).fetchone()[0]
             if anterior!=len(observacoes): raise ErroSerie("mesma edição, linhas divergentes")
+            # Igualdade efetiva das observações; mesma quantidade NÃO basta.
+            guardado=db.execute("""SELECT produto,subdivisao,uf,safra,indicador,unidade,
+                    valor,classe,rotulo_original,cabecalho_inferido
+                    FROM conab_observacoes
+                    WHERE fonte_sha=? AND arquivo=? ORDER BY uf,safra,indicador""",
+                    (sha,arq)).fetchall()
+            recebido=sorted([
+                (produto,subdiv,r["regiao_uf"],r["safra"],r["indicador"],
+                 r["unidade"],float(r["valor"]),r["classificacao"],
+                 r["rotulo_coluna_original"],int(r["rotulo_coluna_inferido"]))
+                for r in observacoes
+            ],key=lambda x:(x[2],x[3],x[4]))
+            if [tuple(row) for row in guardado]!=recebido:
+                raise ErroSerie("mesmo hash com conteúdo/valores divergentes")
             if existe["publicado_em"] is None and publicado_em:
                 db.execute("UPDATE conab_edicoes SET publicado_em=? WHERE fonte_sha=? AND arquivo=?",
                            (publicado_em,sha,arq))
