@@ -38,6 +38,8 @@ class TestIVOReplayPersistido(unittest.TestCase):
         try:
             with self.assertRaises(PermissionError):
                 arquivar_replay_sintetico(r,ledger=led)
+            with self.assertRaises(PermissionError):
+                arquivar_replay_sintetico(r,ledger=led,autorizado=True)
             imp=arquivar_replay_sintetico(r,ledger=led,autorizado=True,fixture_sintetica_confirmada=True)
             self.assertEqual(imp["previsoes_novas"],12)
             self.assertEqual(imp["observacoes_novas"],12)
