@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .bcb_ptax import normalizar_ptax_odata
+from .ptax_plano import planejar_consultas_ptax, ErroPlanoPTAX
 from .sidra_pam import normalizar_pam_1612
 from .registro_snapshots import registrar_snapshot, abrir_registro, ErroSnapshot
 
@@ -61,6 +62,16 @@ def _normalizar_bytes(payload, dataset_id, plano, coleta):
     if dataset_id=="BCB_PTAX":
         if not isinstance(plano,dict) or plano.get("dataset_id")!="BCB_PTAX":
             raise ErroIngestaoAPI("plano PTAX inválido")
+        try:
+            dia_inicio=datetime.fromisoformat(plano["inicio"]).date()
+            dia_fim=datetime.fromisoformat(plano["fim"]).date()
+            janela=(dia_fim-dia_inicio).days+1
+            valido=planejar_consultas_ptax(moeda=plano["moeda"],
+                       inicio=plano["inicio"],fim=plano["fim"],dias_janela=janela)
+        except (KeyError,TypeError,ValueError,ErroPlanoPTAX) as exc:
+            raise ErroIngestaoAPI("plano PTAX divergente") from exc
+        if len(valido)!=1 or valido[0]!=plano:
+            raise ErroIngestaoAPI("plano PTAX não foi produzido pelo planejador")
         norm=normalizar_ptax_odata(dados,moeda=plano["moeda"],
                                    coletado_em=coleta,consulta_url=plano["url"])
         obs=norm["observacoes"]
@@ -159,6 +170,12 @@ def observar_asof_coleta(db:sqlite3.Connection, *, dataset_id:str,
         raise ErroIngestaoAPI("janela as-of grande demais: exigir filtro por período")
     saida={}
     for row in registros:
+        if row["chave"] in saida:
+            anterior=saida[row["chave"]]
+            if (anterior["primeira_visao_na_consulta"]==row["coletado_utc"] and
+                    anterior["sha256"]!=row["sha256"] and
+                    anterior["observacao"]!=json.loads(row["observacao_json"])):
+                raise ErroIngestaoAPI("vintages conflitantes na mesma coleta, revisar origem")
         if row["chave"] not in saida:
             item=json.loads(row["observacao_json"])
             saida[row["chave"]]={"observacao":item,"sha256":row["sha256"],

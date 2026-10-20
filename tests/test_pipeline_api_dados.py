@@ -109,3 +109,16 @@ class TestPipelineOficialJSON(unittest.TestCase):
         payload=b'{"value":[],"@odata.nextLink":"https://olinda.bcb.gov.br/next"}'
         with self.assertRaises(Exception):
             self.gravar(payload=payload)
+
+    def test_plano_ptax_adulterado_bloqueado(self):
+        plano=ptaxplano()
+        plano["url"]="https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/INVENTADO"
+        with self.assertRaises(ErroIngestaoAPI):
+            self.gravar(plano=plano)
+
+    def test_vintages_conflitantes_mesma_coleta_bloqueadas(self):
+        self.gravar(payload=ptaxpayload(5.1))
+        self.gravar(payload=ptaxpayload(5.3))
+        with self.assertRaises(ErroIngestaoAPI):
+            observar_asof_coleta(self.db,dataset_id="BCB_PTAX",
+                corte_coleta="2026-10-19T12:00:00Z",incluir_sinteticos=True)
