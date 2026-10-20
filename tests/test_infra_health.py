@@ -36,7 +36,7 @@ class TestInfraHealth(unittest.TestCase):
                       input_sha256=self.SHA, registrado_em=self.DUE)
             if running or done:
                 job = reservar(conn, chave=self.KEY, vencimento=self.DUE,
-                              agora=now, lease_segundos=180)
+                              agora=now, lease_segundos=30)
                 if done:
                     finalizar(conn, chave=self.KEY, vencimento=self.DUE,
                              agora="2026-10-20T15:59:01Z", token=job["token"],
