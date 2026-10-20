@@ -48,3 +48,48 @@ PYTHONPATH=src python -m unittest discover -s tests -p 'test_pesquisa_tecnologic
 **Próxima ação:** medir uma prova dlt **apenas depois** da liberação jurídica/técnica de uma edição histórica oficial e comparação com a implementação existente. Paralelamente, rever e executar os extras do IVO em sandbox restrito, sem gastos ou ativação de produção.
 
 **Regra:** o resultado deste auditor é inventário e bloqueios, não atestado de segurança ou aptidão operacional. A política do delta mantém `allow_install: false` para todos os registros, mesmo quando uma adoção for tecnicamente aprovada.
+
+
+## Continuidade autônoma — rodada de dependências opcionais, 20/10/2026
+
+**Prioridade confirmada:** as bibliotecas opcionais MLForecast, River e DuckDB têm
+adaptadores no IVO e declarações em \`pyproject.toml\`, mas não há comprovação
+de instalação, resolução travada com hashes, varredura de vulnerabilidades ou
+testes com os pacotes instalados na CI padrão. Evitar substituir adaptadores
+ou instalar qualquer ferramenta sem essa evidência.
+
+**Código incremental:** \`src/nivon/auditoria_extras.py\` implementa pré-voo
+estático, somente leitura e sem dependências adicionais. Examina todos os
+grupos do \`pyproject.toml\`, cruza StatsForecast, MLForecast, River e DuckDB
+com o catálogo IVO e bloqueia requisitos inseguros/não suportados (URL,
+VCS, local paths, markers, extras aninhados), versões contraditórias e
+divergência de especificação da mesma distribuição entre grupos opcionais.
+Versões de precisão diferente, como 2 e 2.0, são normalizadas nos limites.
+Não é um resolver PEP 440 universal; sintaxe não reconhecida é bloqueada
+para inspeção manual.
+
+**Teste:** \`tests/test_auditoria_extras.py\` valida os gates com fixtures e
+inclui integração com os arquivos verdadeiros do repositório. Executar:
+
+\`\`\`bash
+PYTHONPATH=src python -m nivon.auditoria_extras
+PYTHONPATH=src python -m unittest discover -s tests -p 'test_auditoria_extras.py' -v
+PYTHONPATH=src python -m unittest discover -s tests -v
+\`\`\`
+
+O resultado \`ANALYSIS_TYPE=STATIC_DIRECT_REQUIREMENTS_ONLY\` jamais deve ser
+publicado como SBOM completo, auditoria de CVEs, revisão transitiva ou teste
+de bibliotecas instaladas. Um pin exato de dependência direta **não** é lock
+transitivo por hash. Flags \`*_verified\` permanecem falsas. A liberação fica
+bloqueada para revisão independente de versões, transitivas, vulnerabilidades,
+licenças e smoke-tests opcionais em sandbox isolado.
+
+**Dependências:** a branch de pesquisa está empilhada na PR #7 (IVO), que
+recebeu commits novos em 20/10/2026. Antes de merge, avaliar regressões
+no SHA integrado com o IVO atualizado e coordenação da PR #13.
+
+**Próxima tarefa executável:** produzir o experimento de auditabilidade de
+SBOM/lock no ambiente isolado, quando houver revisão de transitivas e rede
+autorizada; em paralelo, avaliar se um piloto de fonte oficial autorizada
+justifica dlt frente ao orquestrador nativo. Nenhuma aquisição de dados,
+instalação ou deploy foi feito nesta rodada.
