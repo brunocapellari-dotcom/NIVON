@@ -200,3 +200,27 @@ partir de um documento sem direitos efetivamente revisados.
 
 **Estado operacional mantido:** código offline e CI aprovados em revisão;
 sem deploy, merge, assinatura paga, ativação de fonte ou envios.
+
+
+## Integração incremental: PTAX → evidência financeira (20/10/2026)
+
+O conector offline \`ptax_briefing.construir_indicador_ptax\` já verificava
+SHA do JSON original, tipo de boletim \`Fechamento\`, moedas USD/EUR,
+competência e cotação de venda. Nesta rodada ele também entrega ao motor
+editorial \`valor_num\`, \`grupo=CAMBIO\`, \`unidade=R$/USD\` ou
+\`R$/EUR\`, natureza, competência, horário de coleta preservado, SHA original
+do snapshot e documento de direitos declarado pela fonte. O renderer
+preserva quatro casas decimais e explicita a unidade.
+
+**Limite explícito:** \`Fechamento\` na resposta OData não prova que essa
+é a última sessão concluída nem fornece o horário externo de publicação.
+Por isso \`ultima_sessao_concluida=None\`,
+\`fechamento_confirmado=False\` e \`publicado_em=None\` permanecem
+sem preenchimento positivo. O preflight bloqueia esse candidato até a
+homologação do calendário, edição e direitos da fonte. Não houve consulta
+real a BCB, ativação de rota, alteração de licença ou disponibilização
+de preços em produção.
+
+Regressões acrescentadas a \`tests/test_pipeline_ptax_briefing.py\`
+conferem os campos oriundos do snapshot de teste, proibição de marcar
+última sessão automaticamente e bloqueio por falta de prova independente.
