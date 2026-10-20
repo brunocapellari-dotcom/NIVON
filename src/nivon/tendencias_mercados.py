@@ -143,11 +143,12 @@ def tendencia_frete_anunciado(
     janela: int = 6, minimo_lotes_dia: int = 2,
     tolerancia_absoluta: float = 0, tolerancia_relativa: float = 0,
 ) -> dict:
-    """Mediana diária por lotes únicos; sem misturar corredores ou tipos de oferta.
+    """Tendência de variações PAREADAS por ponto de embarque e transportadora.
 
-    O identificador de lote deve ser previamente resolvido pelo WhatsApp AI
-    ou outro coletor autorizado. Mesmo lote e dia com preços divergentes bloqueia
-    a análise; reenvios idênticos não pesam duas vezes.
+    Não agrega níveis de frete por município/corredor. Compara somente
+    identidade econômica presente em TODOS os dias da janela e mesmas
+    condições comerciais; mudanças de composição não geram tendência falsa.
+    Lote/ anúncio é proveniência, não unidade estatística independente.
     """
     origem_ibge = _ibge(origem_ibge, "origem_ibge")
     destino_ibge = _ibge(destino_ibge, "destino_ibge")
@@ -161,8 +162,9 @@ def tendencia_frete_anunciado(
         raise ErroTendencia("minimo_lotes_dia fora do intervalo")
     if not isinstance(ofertas, (tuple, list)) or len(ofertas) > 10000:
         raise ErroTendencia("ofertas inválidas ou excessivas")
+
     corte = _data(as_of, "as_of")
-    dias: dict[str, dict[str, dict]] = defaultdict(dict)
+    dias: dict[str, dict[tuple[str, str], dict]] = defaultdict(dict)
     repetidos = 0
     for obs in ofertas:
         if not isinstance(obs, Mapping):
@@ -180,66 +182,98 @@ def tendencia_frete_anunciado(
         )):
             raise ErroTendencia("frete mistura corredor, produto, veículo, pedágio, natureza ou unidade")
         lote = _identidade(obs.get("lote_id"), "lote_id", tamanho=150)
+        pickup = _identidade(obs.get("pickup_entity_id"), "pickup_entity_id", tamanho=150)
+        transportadora = _identidade(obs.get("transportadora_id"), "transportadora_id", tamanho=150)
         preco = _dinheiro(obs.get("preco_rs_t"), "preco_rs_t")
-        # O núcleo genérico exige obs.valor. Ele precisa ser o mesmo preço sem arredondamento oculto.
         if Decimal(str(obs["valor"])) != preco:
             raise ErroTendencia("preço anunciado e valor de série divergem")
         periodo = ref.isoformat()
-        anterior = dias[periodo].get(lote)
+        identidade = (pickup, transportadora)
+        anterior = dias[periodo].get(identidade)
         if anterior:
             if anterior["preco"] != preco:
-                raise ErroTendencia("ofertas conflitantes do mesmo lote/dia: reconciliação obrigatória")
+                raise ErroTendencia(
+                    "ofertas conflitantes do mesmo estabelecimento/transportadora/dia: reconciliação obrigatória"
+                )
             repetidos += 1
+            anterior["lotes"].add(lote)
             anterior["sha"].add(obs["edicao_sha256"])
             anterior["fontes"].add(fonte)
             anterior["publicacao"] = max(anterior["publicacao"], obs["publicacao"])
             anterior["coleta"] = max(anterior["coleta"], obs["coleta"])
         else:
-            dias[periodo][lote] = {
+            dias[periodo][identidade] = {
                 "preco": preco, "publicacao": obs["publicacao"],
                 "coleta": obs["coleta"], "fontes": {fonte},
-                "sha": {obs["edicao_sha256"]},
+                "sha": {obs["edicao_sha256"]}, "lotes": {lote},
             }
 
-    samples = []
-    coverage = []
-    for periodo, lotes in sorted(dias.items()):
-        if len(lotes) < minimo_lotes_dia:
+    ordenados = sorted(dias.items())
+    if len(ordenados) < janela:
+        return {"status": "DADOS_INSUFICIENTES", "tendencia": "INDETERMINADA",
+                "orientacao": "OBSERVADA", "publicavel": False,
+                "necessarias": janela, "disponiveis": len(ordenados)}
+    selecionados = ordenados[-janela:]
+    for periodo, itens in selecionados:
+        if len(itens) < minimo_lotes_dia:
             return {"status": "AMOSTRA_INSUFICIENTE", "tendencia": "INDETERMINADA",
                     "orientacao": "OBSERVADA", "publicavel": False,
-                    "motivo": "dia com poucos lotes econômicos independentes",
-                    "dia": periodo, "lotes_distintos": len(lotes),
+                    "motivo": "dia com poucos estabelecimentos/transportadoras distintos",
+                    "dia": periodo, "lotes_distintos": len(itens),
                     "minimo_lotes_dia": minimo_lotes_dia}
-        preco_mediano = median(x["preco"] for x in lotes.values())
-        provas = sorted((k, str(v["preco"]), sorted(v["sha"]), sorted(v["fontes"]))
-                        for k, v in lotes.items())
+
+    painel = set.intersection(*(set(itens) for _, itens in selecionados))
+    if len(painel) < minimo_lotes_dia:
+        return {"status": "PAINEL_INCOMPARAVEL", "tendencia": "INDETERMINADA",
+                "orientacao": "OBSERVADA", "publicavel": False,
+                "motivo": "composição de estabelecimentos/transportadoras varia sem painel pareado suficiente",
+                "pares_comparaveis": len(painel), "minimo_pares": minimo_lotes_dia}
+    pares = sorted(painel)
+    base = selecionados[0][1]
+    samples = []
+    coverage = []
+    for periodo, itens in selecionados:
+        # Diferença do MESMO estabelecimento e transportadora contra sua
+        # própria primeira observação. Não calcula média nem preço municipal.
+        variacoes = [itens[k]["preco"] - base[k]["preco"] for k in pares]
+        variacao_mediana = median(variacoes)
+        provas = [(list(k), str(itens[k]["preco"]), sorted(itens[k]["lotes"]),
+                   sorted(itens[k]["sha"]), sorted(itens[k]["fontes"])) for k in pares]
         digest = sha256(json.dumps(provas, ensure_ascii=True,
                                    separators=(",", ":")).encode("utf-8")).hexdigest()
         sample = {
-            "periodo": periodo, "publicacao": max(x["publicacao"] for x in lotes.values()),
-            "coleta": max(x["coleta"] for x in lotes.values()),
-            "valor": float(preco_mediano), "fonte_id": "NIVON_FRETE_LOTES_UNICOS",
+            "periodo": periodo,
+            "publicacao": max(itens[k]["publicacao"] for k in pares),
+            "coleta": max(itens[k]["coleta"] for k in pares),
+            "valor": float(variacao_mediana),
+            "fonte_id": "NIVON_FRETE_VARIACAO_PAREADA",
             "edicao_sha256": digest,
         }
         samples.append(sample)
         coverage.append({
-            "periodo": periodo, "lotes_distintos": len(lotes),
-            "preco_mediano_rs_t": str(preco_mediano),
-            "fontes_distintas": len(set().union(*(x["fontes"] for x in lotes.values()))),
+            "periodo": periodo,
+            "identidades_observadas": len(itens),
+            "pares_comparaveis": len(pares),
+            "variacao_pareada_mediana_rs_t": str(variacao_mediana),
+            "fontes_distintas": len(set().union(*(itens[k]["fontes"] for k in pares))),
             "prova_sha256": digest,
         })
     result = tendencia_observada(
-        samples, as_of=as_of, fonte_id="NIVON_FRETE_LOTES_UNICOS",
+        samples, as_of=as_of, fonte_id="NIVON_FRETE_VARIACAO_PAREADA",
         unidade="BRL/T", frequencia="SESSOES", janela=janela,
         tolerancia_absoluta=tolerancia_absoluta,
-        tolerancia_relativa=tolerancia_relativa,
+        tolerancia_relativa=tolerancia_relativa, nao_negativo=False,
     )
     return {
         **result, "segmento": "FRETE_ANUNCIADO",
         "origem_ibge": origem_ibge, "destino_ibge": destino_ibge,
         "produto": produto, "veiculo": veiculo, "pedagio": pedagio,
+        "metrica_tendencia": "VARIACAO_PAREADA_POR_ESTABELECIMENTO_TRANSPORTADORA",
+        "identidades_comparaveis": [
+            {"pickup_entity_id": a, "transportadora_id": b} for a, b in pares
+        ],
         "observacoes_brutas": len(ofertas), "reenvios_deduplicados": repetidos,
-        "lotes_distintos_total_por_dia": sum(r["lotes_distintos"] for r in coverage),
+        "lotes_distintos_total_por_dia": sum(x["identidades_observadas"] for x in coverage),
         "cobertura_amostral": coverage, "direitos_publicacao_verificados": False,
-        "alerta": "Tendência de OFERTAS anunciadas; não é valor contratado, embarque realizado, frete médio do mercado ou volume transportado.",
+        "alerta": "Variação pareada de FRETES ANUNCIADOS; não é média municipal, preço de mercado, contrato, embarque ou volume realizado.",
     }
