@@ -26,6 +26,7 @@ def _tempo(texto: str) -> datetime:
 def monitorar_operacao(*, gerado_em: str, conab: sqlite3.Connection | None = None,
                       portos: sqlite3.Connection | None = None,
                       outbox: sqlite3.Connection | None = None,
+                      mercados: sqlite3.Connection | None = None,
                       portos_esperados: tuple[str,...] = ()) -> dict:
     agora=_tempo(gerado_em)
     if not isinstance(portos_esperados,tuple) or len(portos_esperados)>45 or len(set(portos_esperados))!=len(portos_esperados):
@@ -77,6 +78,33 @@ def monitorar_operacao(*, gerado_em: str, conab: sqlite3.Connection | None = Non
             except (sqlite3.Error,ErroObservabilidade):
                 cobertura["portos"]="ERRO_BANCO"
                 emitir("PORTO_BANCO_INVALIDO","CRITICO",porto,"erro em histórico portuário")
+    if mercados is None:
+        cobertura["ptax"]="NAO_CONFIGURADO"
+    else:
+        try:
+            result=mercados.execute("""
+                SELECT MAX(c.coletado_utc)
+                FROM nivon_coletas c
+                JOIN nivon_snapshots s ON s.id=c.snapshot_id
+                WHERE s.dataset_id='BCB_PTAX' AND s.tipo='REAL_AUTORIZADO'
+            """).fetchone()
+            stamp=result[0] if result else None
+            cobertura["ptax"]="CONSULTADO"
+            if stamp is None:
+                emitir("PTAX_SEM_COLETA_REAL","ALERTA","BCB_PTAX",
+                       "sem registro de captura real autorizado")
+            else:
+                idade=agora-_tempo(stamp)
+                if idade<timedelta(0):
+                    emitir("PTAX_COLETA_FUTURA","CRITICO","BCB_PTAX",
+                           "captura PTAX com data futura")
+                elif idade>timedelta(hours=168):
+                    emitir("PTAX_COLETA_ATRASADA","ALERTA","BCB_PTAX",
+                           "última captura PTAX real há mais de 7 dias; verificar também a data do boletim")
+        except (sqlite3.Error,ErroObservabilidade):
+            cobertura["ptax"]="ERRO_BANCO"
+            emitir("PTAX_BANCO_INVALIDO","CRITICO","BCB_PTAX",
+                   "erro lendo histórico de captura do Banco Central")
     if outbox is None:
         cobertura["outbox"]="NAO_CONFIGURADO"
     else:

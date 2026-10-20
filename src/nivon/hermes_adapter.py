@@ -229,7 +229,8 @@ class NivonProjectAdapter:
         # O clock real de infraestrutura deve ser autenticado/sincronizado pelo host.
         diagnostico = monitorar_operacao(
             gerado_em=instante, conab=self._conab, portos=self._portos,
-            outbox=self._outbox, portos_esperados=self._portos_esperados,
+            outbox=self._outbox, mercados=self._mercados,
+            portos_esperados=self._portos_esperados,
         )
         return {
             "status": diagnostico["estado"],
