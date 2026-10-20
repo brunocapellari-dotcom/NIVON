@@ -60,10 +60,14 @@ def analisar_requisito(texto: str) -> dict:
     lower = [(op, v) for op, v in clausulas if op in (">", ">=")]
     upper = [(op, v) for op, v in clausulas if op in ("<", "<=")]
     if lower and upper:
-        # Esta verificação simples detecta inversões óbvias sem tentar substituir
-        # um resolver PEP 440 para versões/dev/pre-releases.
-        maxima_lower = max(tuple(int(n) for n in v.split(".")) for _, v in lower)
-        minima_upper = min(tuple(int(n) for n in v.split(".")) for _, v in upper)
+        # Normalização numérica: 2, 2.0 e 2.0.0 representam o mesmo limite.
+        # Não substitui um resolver PEP 440 (pré-releases são recusados acima).
+        def versao_chave(v: str) -> tuple[int, ...]:
+            parts = tuple(int(n) for n in v.split("."))
+            return parts + (0,) * (4 - len(parts))
+
+        maxima_lower = max(versao_chave(v) for _, v in lower)
+        minima_upper = min(versao_chave(v) for _, v in upper)
         if maxima_lower > minima_upper or (
             maxima_lower == minima_upper and
             (any(op == ">" for op, _ in lower) or any(op == "<" for op, _ in upper))
@@ -84,8 +88,17 @@ def _parse_lists(pyproject: dict) -> dict:
         extras = project.get("optional-dependencies", {})
     except (KeyError, TypeError) as exc:
         raise ErroDependencias("pyproject sem contratos de build/projeto") from exc
-    if not isinstance(build, list) or not isinstance(main, list) or not isinstance(extras, dict):
-        raise ErroDependencias("tipo de lista de dependências inválido")
+    if (not isinstance(project, dict) or not isinstance(build, list) or
+            not isinstance(main, list) or not isinstance(extras, dict)):
+        raise ErroDependencias("tipo de seção/lista de dependências inválido")
+    for item in build + main:
+        if not isinstance(item, str):
+            raise ErroDependencias("dependência não textual")
+    for value in extras.values():
+        if not isinstance(value, list):
+            raise ErroDependencias("extra exige lista")
+    # Um único resultado de dependências sem resolver ou instalar pacotes.
+
     groups = {"build-system": build, "runtime": main}
     for key, deps in extras.items():
         if not isinstance(key, str) or not NOME.fullmatch(key) or not isinstance(deps, list):
