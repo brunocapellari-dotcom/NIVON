@@ -124,3 +124,37 @@ Casos especiais: os marcadores de ausência e sigilo são reprovados; `0` arredo
 Segundo SIDRA/IBGE, tabela **1612** divulga o milho total em grão; a tabela **839** apresenta primeira e segunda safras separadamente desde 2003. A tabela 839 não deve ser fundida com as séries totais 1612 nem com a temporada comercial CONAB sem reconciliação.
 
 Documentação oficial: https://sidra.ibge.gov.br/pesquisa/pam/tabelas/ ; https://sidra.ibge.gov.br/tabela/1612 ; https://sidra.ibge.gov.br/tabela/839 . Metadados de códigos de variáveis ainda precisam ser auditados contra resposta real da API; não inferir mais códigos sem revisão.
+
+## Auditoria de equivalência da classificação C81 — 20/10/2026
+
+Foi encontrado um **erro real de teste e contrato**: `tests/test_composicao_pam_sidra.py`
+marcava SOJA com categoria C81 **2702**, correspondente a **feijão (em grão)**.
+Na tabela 1612, SOJA (em grão) é C81 **2713**. A API não impediria a
+confusão, pois o plano de consulta, o retorno e o falso rótulo estariam
+internamente coerentes. A validação foi corrigida para reprovar
+`codigo_c81` incompatível com `cultura` *antes* de atribuir dados.
+
+O mapa controlado do produto na PAM 1612 passou a ser:
+
+| Cultura NIVON | C81 | Definição IBGE |
+|---|---|---|
+| SOJA | 2713 | Soja (em grão) |
+| MILHO | 2711 | Milho (em grão), total anual da 1612 |
+| TRIGO | 2716 | Trigo (em grão) |
+| ALGODAO | 2689 | Algodão herbáceo (em caroço), NÃO pluma |
+| CANA | 2696 | Cana-de-açúcar |
+| SORGO | 2714 | Sorgo (em grão) |
+| GERGELIM | 83383 | Gergelim, inclusão PAM 2025 |
+
+**Proveniência da taxonomia:** catálogo derivado dos metadados SIDRA
+(classificação C81, tabela 1612), conferido com
+https://sidra.ibge.gov.br/tabela/1612 e a exposição textual do
+metadado em https://quantilica.com/fish/classificacoes/81
+em 20/10/2026. A exposição é agregadora e deve ser reconfirmada com
+resposta primária real antes de homologar produção; o mapeamento
+NÃO autoriza automaticamente coleta, edição histórica ou comércio.
+
+A verificação agora impede reproduzir feijão como soja ou
+trocar culturas entre quaisquer das sete frentes agrícolas.
+Fixtures foram corrigidas e novos testes cobrem a troca
+maliciosa/errada, cada código distinto e a preservação no registro.

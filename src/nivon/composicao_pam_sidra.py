@@ -16,6 +16,17 @@ from .agregacao_pam_ibge import _PRODUTOS, ErroAgregacaoIBGE
 from .sidra_pam import planejar_pam_1612, normalizar_pam_1612, ErroSIDRAPAM
 
 _VARIAVEIS={"AREA_COLHIDA_HA":"216","PRODUCAO_T":"214","RENDIMENTO_KG_HA":"112"}
+# SIDRA tabela 1612, classificação C81 (lavouras temporárias).
+# A correspondência é verificada no dicionário de categorias C81, NÃO no
+# nome comercial nem nas linhas de resultado, que repetem o filtro solicitado.
+# https://sidra.ibge.gov.br/tabela/1612
+# https://sidra.ibge.gov.br/home/pimpfbr/brasil (apenas fonte documental)
+C81_PAM_POR_CULTURA = {
+    "SOJA": "2713", "MILHO": "2711", "TRIGO": "2716",
+    "ALGODAO": "2689", "CANA": "2696", "SORGO": "2714",
+    "GERGELIM": "83383",
+}
+
 _UNIDADES={
     "AREA_COLHIDA_HA":{"HECTARES","HECTARE"},
     "PRODUCAO_T":{"TONELADAS","TONELADA"},
@@ -70,6 +81,13 @@ def montar_pam_municipal(
     """
     if cultura not in _PRODUTOS:
         raise ErroComposicaoPAM("cultura fora da PAM temporária suportada")
+    # A falha detectada em 20/10/2026: código 2702 (feijão) foi usado
+    # indevidamente em fixture com rótulo de SOJA; a API validaria o
+    # filtro e o pipeline atribuiria uma cultura falsa sem este bloqueio.
+    if codigo_c81 != C81_PAM_POR_CULTURA[cultura]:
+        raise ErroComposicaoPAM(
+            "C81 incompatível com cultura: esperada categoria "+
+            C81_PAM_POR_CULTURA[cultura])
     if cultura=="GERGELIM" and ano<2025:
         raise ErroComposicaoPAM("PAM gergelim não era publicado para esses anos")
     if not isinstance(prova_categoria_url,str) or not prova_categoria_url.startswith(
@@ -123,6 +141,7 @@ def montar_pam_municipal(
     digest=sha256("|".join(f"{x}:{hashes[x]}" for x in sorted(hashes)).encode()).hexdigest()
     record={
         "municipio_ibge":municipio_ibge,"ano":ano,"cultura":cultura,
+        "codigo_categoria_c81":codigo_c81,
         "produto_ibge":_PRODUTOS[cultura],
         "area_colhida_ha":str(result["AREA_COLHIDA_HA"]),
         "quantidade_produzida_t":str(result["PRODUCAO_T"]),
@@ -138,6 +157,8 @@ def montar_pam_municipal(
         "coletado_primeiro_utc":min(timestamps).isoformat(),
         "coletado_ultimo_utc":max(timestamps).isoformat(),
         "prova_categoria_url":prova_categoria_url,
+        "codigo_categoria_c81":codigo_c81,
+        "mapping_c81":"SIDRA_1612_TEMPORARIAS_2026_10_20",
         "prova_resolucoes_sha256":prova_resolucoes_sha256,
         "status":"PACOTE_SIDRA_OFFLINE_SEM_EDICAO_OU_PUBLICACAO_COMPROVADA",
         "publicado_em":None,"disponivel_em":None,
