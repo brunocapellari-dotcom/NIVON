@@ -69,3 +69,22 @@ copia para nuvem. Nenhuma evidência de recuperação remota é reivindicada.
 - Aprovação de operação explícita, documentada por humano responsável.
 
 **Qualquer item faltante: permanecer em homologação, não inventar status.**
+
+## Controle de jobs e modo degradado
+
+- O módulo `nivon.infra_job_ledger` guarda apenas metadados dos ensaios
+  `TEST_SYNTHETIC_*`, em arquivo SQLite cuja pasta pertence ao operador e
+  não é acessível por grupo/terceiros (0700). Banco 0600, `synchronous=FULL`
+  e WAL para arquivo local; não usar NFS sem validação de locking.
+- Um job é reservado numa transação `BEGIN IMMEDIATE`; o lease não concede
+  autorização de usar uma fonte. Chave/dia e hash diferentes provocam bloqueio.
+- Um job `RUNNING` que perdeu lease não pode ser repetido automaticamente:
+  torna-se `UNCERTAIN`. Um operador deverá reconciliar evidências externas
+  no módulo futuro antes de autorizar qualquer nova tentativa.
+- O comando `PYTHONPATH=src python -m nivon.infra_smoke` exerce somente
+  cálculo determinístico sintético em memória; nunca toca serviços reais.
+  `--db` aponta para armazenamento local privado quando desejado.
+- Se houver falta de banco/backup, bloquear cadências; **não** mover
+  automaticamente o banco a volume efêmero de contêiner.
+- Cron/systemd/cloud scheduler continuam NÃO configurados. Não criar
+  secretamente loops infinitos nem execução silenciosa em CI.
