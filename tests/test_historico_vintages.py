@@ -12,7 +12,9 @@ def item(edicao,valor,publicado,coletado="2026-10-20T08:00:00-04:00",
         classe_evidencia="ESTIMADO",publicado_em=publicado,
         disponivel_em=disponivel if disponivel is not None else publicado,
         coletado_em=coletado,fonte_url="https://www.gov.br/conab/",
-        raw_sha256=hashlib.sha256(edicao.encode()).hexdigest())
+        raw_sha256=hashlib.sha256(edicao.encode()).hexdigest(),
+        disponibilidade_verificada=True,
+        prova_disponibilidade_sha256=hashlib.sha256(("evidence-"+edicao).encode()).hexdigest())
 
 
 class TestVintages(unittest.TestCase):
@@ -42,6 +44,8 @@ class TestVintages(unittest.TestCase):
     def test_falta_data_publicacao_exclui_backtest(self):
         a=item("2026-01","1000","2026-01-12T09:00:00-04:00")
         a["publicado_em"]=a["disponivel_em"]=None
+        a["disponibilidade_verificada"]=False
+        a["prova_disponibilidade_sha256"]=None
         self.s.gravar(a)
         self.assertIsNone(self.q("2026-10-20T08:00:00-04:00"))
 
@@ -53,6 +57,17 @@ class TestVintages(unittest.TestCase):
                disponivel="2026-01-01T09:00:00-04:00")
         with self.assertRaises(ErroCientifico):
             normalizar_edicao(b)
+
+    def test_sem_prova_nao_aceita_historico_asof(self):
+        a=item("2026-01","1000","2026-01-12T09:00:00-04:00")
+        a["disponibilidade_verificada"]=False
+        a["prova_disponibilidade_sha256"]=None
+        self.s.gravar(a)
+        self.assertIsNone(self.q("2026-10-20T12:00:00-04:00"))
+        b=item("2026-02","1100","2026-02-12T09:00:00-04:00")
+        b["prova_disponibilidade_sha256"]=None
+        with self.assertRaises(ErroCientifico):
+            self.s.gravar(b)
 
     def test_numeros_ruins_bloqueados(self):
         a=item("2026-01","NaN","2026-01-12T09:00:00-04:00")

@@ -2,7 +2,8 @@
 
 SQLite é apenas a camada local de índice normalizado. RAW imutável autorizado,
 licença por operação, backups e execução remota permanecem gates separados.
-Nunca inventar publication/availability; sem ambas não entra no backtest.
+Nunca inventar publication/availability; sem ambas e prova verificada externamente,
+não entra no backtest. Booleano e hash são declaração, não validação automática.
 """
 from __future__ import annotations
 
@@ -19,6 +20,7 @@ _CAMPOS = frozenset({
     "source_id","dataset_id","serie_id","competencia","referencia","edicao_id",
     "unidade","valor","classe_evidencia","publicado_em","disponivel_em",
     "coletado_em","fonte_url","raw_sha256",
+    "disponibilidade_verificada","prova_disponibilidade_sha256",
 })
 _ID = re.compile(r"^[A-Z][A-Z0-9_]{1,90}$")
 _HASH = re.compile(r"^[a-f0-9]{64}$")
@@ -29,6 +31,8 @@ CREATE TABLE IF NOT EXISTS edicoes (
  unidade TEXT NOT NULL, valor TEXT NOT NULL, classe_evidencia TEXT NOT NULL,
  publicado_em TEXT, disponivel_em TEXT, coletado_em TEXT NOT NULL,
  fonte_url TEXT NOT NULL, raw_sha256 TEXT NOT NULL,
+ disponibilidade_verificada INTEGER NOT NULL CHECK (disponibilidade_verificada IN (0,1)),
+ prova_disponibilidade_sha256 TEXT,
  PRIMARY KEY (dataset_id,serie_id,competencia,edicao_id)
 );
 CREATE INDEX IF NOT EXISTS idx_asof ON edicoes
@@ -72,15 +76,26 @@ def normalizar_edicao(item:dict) -> dict:
     link=urlsplit(str(d["fonte_url"]))
     if link.scheme!="https" or not link.hostname or link.username or link.password or link.port not in (None,443):
         raise ErroCientifico("link de evidência deve ser HTTPS sem credenciais")
+    if type(d["disponibilidade_verificada"]) is not bool:
+        raise ErroCientifico("disponibilidade_verificada requer bool validado externamente")
+    proof=d["prova_disponibilidade_sha256"]
+    if d["disponibilidade_verificada"]:
+        if not isinstance(proof,str) or not _HASH.fullmatch(proof):
+            raise ErroCientifico("hash de prova histórica independente obrigatório")
+    elif proof is not None:
+        raise ErroCientifico("registro não verificado não pode apresentar prova aprovada")
     d["valor"]=_valor(d["valor"])
     d["publicado_em"]=_utc(d["publicado_em"],"publicado_em")
     d["disponivel_em"]=_utc(d["disponivel_em"],"disponivel_em")
     d["coletado_em"]=_utc(d["coletado_em"],"coletado_em")
     if (d["publicado_em"] is None)!=(d["disponivel_em"] is None):
         raise ErroCientifico("publicação e disponibilidade devem ser ambas comprovadas ou ambas nulas")
+    if d["disponibilidade_verificada"] and d["publicado_em"] is None:
+        raise ErroCientifico("não verificar disponibilidade sem publicação conhecida")
     if d["publicado_em"] is not None:
         if not d["publicado_em"]<=d["disponivel_em"]<=d["coletado_em"]:
             raise ErroCientifico("sequência temporal publicação-disponibilidade-coleta impossível")
+    d["disponibilidade_verificada"]=int(d["disponibilidade_verificada"])
     return d
 
 
@@ -119,7 +134,7 @@ class ArmazemVintages:
             raise ErroCientifico("identidade da série incompleta")
         row=self.conn.execute(
             """SELECT * FROM edicoes WHERE dataset_id=? AND serie_id=? AND competencia=?
-               AND disponivel_em IS NOT NULL AND disponivel_em<=?
+               AND disponibilidade_verificada=1 AND disponivel_em IS NOT NULL AND disponivel_em<=?
                ORDER BY disponivel_em DESC, publicado_em DESC, edicao_id DESC LIMIT 1""",
             (dataset_id,serie_id,competencia,corte)
         ).fetchone()
