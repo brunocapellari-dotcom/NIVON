@@ -86,6 +86,8 @@ class AntaqArchiveSummary:
     archive_sha256: str
     archive_year: int
     collected_at: str
+    source_published_at: str | None
+    publication_evidence_id: str | None
     classification: str
     status: str
     count_atracacoes_distinct: int
@@ -103,6 +105,9 @@ class AntaqArchiveSummary:
 def analyze_antaq_archive(
     payload: bytes, *, year: int, source_id: str, collected_at: str | datetime,
     rights_to_read: bool = False, max_cargo_rows: int = MAX_ROWS,
+    source_published_at: str | datetime | None = None,
+    publication_evidence_id: str | None = None,
+    as_of: str | datetime | None = None,
 ) -> AntaqArchiveSummary:
     """Build monthly throughput from a verified, locally provided annual ZIP.
 
@@ -116,6 +121,18 @@ def analyze_antaq_archive(
     if not isinstance(year, int) or not 2010 <= year <= 2100:
         raise ValueError("ano de arquivo invalido")
     collected = _utc(collected_at, "collected_at")
+    published = (_utc(source_published_at, "source_published_at")
+                 if source_published_at is not None else None)
+    if (published is None) != (publication_evidence_id is None):
+        raise ValueError("data de publicacao e evidence_id devem existir juntas")
+    if published is not None and published > collected:
+        raise ValueError("data publicada apos momento de coleta")
+    if as_of is not None:
+        cutoff = _utc(as_of, "as_of")
+        if published is None:
+            raise ValueError("benchmark temporal exige publicacao verificavel")
+        if collected > cutoff or published > cutoff:
+            raise ValueError("look-ahead: arquivo publicado/coletado apos corte")
     if not isinstance(payload, bytes) or not payload or len(payload) > MAX_ZIP_BYTES:
         raise ValueError("ZIP vazio ou excessivo")
     if not 1 <= max_cargo_rows <= MAX_ROWS:
@@ -229,6 +246,10 @@ def analyze_antaq_archive(
                 "source_cargo_rows": rows_count,
                 "source_id": source_id, "source_sha256": digest,
                 "competence": f"{yr:04d}-{month:02d}",
+                "reference_period": f"{yr:04d}-{month:02d}",
+                "source_published_at": published,
+                "publication_evidence_id": publication_evidence_id,
+                "collected_at": collected,
                 "evidence_class": "DECLARADO_ESTATISTICO_ANTAQ",
                 "observed_ship_count": None,  # Cargo rows != number of port calls.
             })
@@ -239,7 +260,8 @@ def analyze_antaq_archive(
             warnings.append("unknown_commodity_code_in_source")
         return AntaqArchiveSummary(
             source_id=source_id, archive_sha256=digest, archive_year=year,
-            collected_at=collected,
+            collected_at=collected, source_published_at=published,
+            publication_evidence_id=publication_evidence_id,
             classification="HISTORICO_MENSAL_DECLARADO_NAO_AIS",
             status="OFFLINE_SOURCE_FILE_ONLY",
             count_atracacoes_distinct=len(atracacoes),
