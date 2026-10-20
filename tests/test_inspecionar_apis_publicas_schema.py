@@ -42,3 +42,9 @@ class TestSchemaProbe(unittest.TestCase):
     def test_provedor_nao_previsto_nao_abre_rede(self):
         with self.assertRaises(ValueError):
             verificar_estrutura("PRIVATE")
+
+    def test_sem_explicit_yes_nao_chama_rede(self):
+        from scripts.inspecionar_apis_publicas_schema import main
+        with patch("scripts.inspecionar_apis_publicas_schema.build_opener",
+                   side_effect=AssertionError("rede indevida")):
+            self.assertEqual(main([]),2)
