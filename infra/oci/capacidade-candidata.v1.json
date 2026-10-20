@@ -1,0 +1,46 @@
+{
+  "schema": "nivon.oci.capacity_candidate.v1",
+  "as_of": "2026-10-20",
+  "official_documentation_url": "https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm",
+  "review_only": true,
+  "provisioning_authorized": false,
+  "paid_fallback_allowed": false,
+  "quota_reference_not_tenancy_proof": {
+    "a1_ocpus_total": 2,
+    "a1_memory_gb_total": 12,
+    "a1_ocpu_hours_month": 1500,
+    "a1_memory_gb_hours_month": 9000,
+    "boot_and_block_gb_total": 200,
+    "object_storage_gb_total": 20
+  },
+  "nivon_candidate": {
+    "shape": "VM.Standard.A1.Flex",
+    "ocpus": 1,
+    "memory_gb": 4,
+    "boot_gb": 50,
+    "additional_block_gb": 0,
+    "object_gb": 5,
+    "maximum_calendar_hours": 744,
+    "public_ip_required": false,
+    "public_ports_requested": []
+  },
+  "tenant_evidence": {
+    "home_region": null,
+    "home_region_verified": false,
+    "shape_capacity_verified": false,
+    "billing_and_quota_verified": false,
+    "other_a1_ocpus_used": null,
+    "other_a1_memory_gb_used": null,
+    "other_boot_block_gb_used": null,
+    "other_object_gb_used": null,
+    "other_a1_ocpu_hours_current_month": null,
+    "other_a1_memory_gb_hours_current_month": null
+  },
+  "limits": {
+    "additional_paid_resources": false,
+    "automatic_upgrade": false,
+    "disallow_other_project_quota_assumptions": true,
+    "requires_operator_release_gate": true,
+    "requires_offsite_backup_and_restore": true
+  }
+}
