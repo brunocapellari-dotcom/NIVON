@@ -182,7 +182,7 @@
     {
       "id": "observability",
       "layer": "operations",
-      "state": "NOT_IMPLEMENTED",
+      "state": "CODE_ONLY",
       "live_enabled": false,
       "depends_on": [
         "compute"
