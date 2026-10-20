@@ -11,7 +11,8 @@ IDENTIDADE = dict(cultura="SOJA", segmento="SOJA",
 
 
 def atual(**overrides):
-    row = dict(IDENTIDADE, area_alvo_colheita_ha="100",
+    row = dict(IDENTIDADE, competencia="2026/27",
+               data_referencia="2026-10-18", area_alvo_colheita_ha="100",
                area_colhida_ha="10", producao_colhida_t="10",
                publicado_em="2026-10-19T10:00:00-03:00",
                disponivel_em="2026-10-19T11:00:00-03:00",
@@ -25,7 +26,8 @@ def historico():
     series = []
     for ix, ano in enumerate(range(2018, 2023), 1):
         series.append(dict(
-            IDENTIDADE, ano_safra=ano, area_colhida_ha="100",
+            IDENTIDADE, ano_safra=ano, competencia=f"{ano}/{str(ano+1)[-2:]}",
+            data_referencia=f"{ano}-12-31", area_colhida_ha="100",
             producao_t=str(ix * 100),
             publicado_em=f"{ano + 1}-06-01T10:00:00-03:00",
             disponivel_em=f"{ano + 1}-06-02T10:00:00-03:00",
@@ -144,6 +146,16 @@ class TestInteligenciaAgricola(unittest.TestCase):
                       produto_fisico="GERGELIM_SEMENTE", obs=obs, hist=rows)
         self.assertEqual(result["estado"], "HISTORICO_ASOF_INSUFICIENTE")
         self.assertIsNone(result["cenarios"])
+
+    def test_competencia_e_referencia_nunca_vazam_futuro(self):
+        with self.assertRaises(ErroCenarioSafra):
+            rodar(obs=atual(competencia="2025/26"))
+        with self.assertRaises(ErroCenarioSafra):
+            rodar(obs=atual(data_referencia="2026-10-21"))
+        rows = historico()
+        rows[0]["competencia"] = "2021/22"
+        with self.assertRaises(ErroCenarioSafra):
+            rodar(hist=rows)
 
     def test_temporal_duplicatas_hash_regiao_e_valores_nan(self):
         rows = historico()
