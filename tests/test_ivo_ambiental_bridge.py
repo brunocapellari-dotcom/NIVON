@@ -78,7 +78,7 @@ class TestIVOAmbientalBridge(unittest.TestCase):
 
     def test_coleta_apos_corte_nao_entra(self):
         self.salvar()
-        r=self.mes(corte_publicacao=dt(2026,3,4),corte_coleta=dt(2026,3,3))
+        r=self.mes(corte_publicacao=dt(2026,3,3),corte_coleta=dt(2026,3,3))
         self.assertEqual(r["dias_ausentes"],28)
 
     def test_corte_com_mes_incompleto_rejeita(self):
