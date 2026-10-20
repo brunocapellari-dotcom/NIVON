@@ -6,7 +6,7 @@ Cada linha é uma previsão emitida para o MESMO horizonte e ponto de medição.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from math import fsum, isfinite, sqrt
 
 
@@ -80,7 +80,7 @@ def avaliar_hidrograma_asof(
       previsto_m3_s, baseline_m3_s, qualidade, modo_validacao.
 
     O campo FORA_AMOSTRA é autodeclarado e NÃO prova que o treino é independente.
-    Captura do prognóstico após o instante válido é barrada (não comprova
+    Captura do prognóstico após o INÍCIO do intervalo é barrada (não comprova
     que o prognóstico estava disponível point-in-time). Séries devem ser
     contínuas no passo informado, sem fundir postos, datums ou modelos.
     Vazões DEVEM ser médias do intervalo encerrado em valido_em; o pico
@@ -94,6 +94,8 @@ def avaliar_hidrograma_asof(
         _ident(value, name)
     lead = _num(horizonte_horas, "horizonte em horas", 1, 720)
     step = _num(passo_horas, "passo em horas", 1 / 60, 168)
+    if lead < step:
+        raise ErroVerificacaoVazao("horizonte deve cobrir toda a média intervalar")
     if type(minimo) is not int or not 30 <= minimo <= 10000:
         raise ErroVerificacaoVazao("mínimo de 30 verificações")
     if not isinstance(registros, (list, tuple)) or not minimo <= len(registros) <= 50000:
@@ -102,6 +104,7 @@ def avaliar_hidrograma_asof(
     observed, forecast, baseline, instants = [], [], [], []
     prev_valid = None
     effective_leads = []
+    forecast_pre_interval_leads = []
     for row in registros:
         if not isinstance(row, dict):
             raise ErroVerificacaoVazao("registro não estruturado")
@@ -121,7 +124,8 @@ def avaliar_hidrograma_asof(
         base_pub = _utc(row.get("baseline_publicado_em"), "publicação baseline")
         obs_pub = _utc(row.get("observado_publicado_em"), "publicação observada")
         obs_capture = _utc(row.get("observado_coletado_em"), "captura observada")
-        if not (feature <= issue <= published <= captured <= valid <= obs_pub <= obs_capture):
+        start = valid - timedelta(hours=step)
+        if not (feature <= issue <= published <= captured <= start <= valid <= obs_pub <= obs_capture):
             raise ErroVerificacaoVazao("fuga temporal: emissão/vintage/publicação/coleta")
         if base_pub > published:
             raise ErroVerificacaoVazao("baseline indisponível no instante da previsão")
@@ -132,6 +136,7 @@ def avaliar_hidrograma_asof(
         prev_valid = valid
         instants.append(valid)
         effective_leads.append((valid - published).total_seconds() / 3600)
+        forecast_pre_interval_leads.append((start - captured).total_seconds() / 3600)
         observed.append(_num(row.get("observado_m3_s"), "observação m3/s"))
         forecast.append(_num(row.get("previsto_m3_s"), "previsão m3/s"))
         baseline.append(_num(row.get("baseline_m3_s"), "baseline m3/s"))
@@ -159,6 +164,7 @@ def avaliar_hidrograma_asof(
         "versao_modelo": versao_modelo, "referencia_vertical": referencia_vertical,
         "n": n, "horizonte_emissao_horas": lead, "passo_horas": step,
         "antecedencia_efetiva_minima_horas": min(effective_leads),
+        "antecedencia_minima_ao_inicio_do_intervalo_horas": min(forecast_pre_interval_leads),
         "inicio_validade_utc": instants[0].isoformat(),
         "fim_validade_utc": instants[-1].isoformat(),
         "mae_m3_s": fsum(abs(e) for e in errors) / n,
