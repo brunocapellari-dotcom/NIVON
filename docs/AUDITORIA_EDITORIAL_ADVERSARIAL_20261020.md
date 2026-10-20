@@ -43,6 +43,22 @@ PYTHONPATH=src python -m unittest discover -s tests -p 'test_auditoria_independe
 PYTHONPATH=src python -m unittest discover -s tests -v
 ```
 
+## 2º lote de achados — falhas cronológicas de publicação (reteste)
+
+**Novo commit de testes:** `84e1f729be812306ed0743ddc7b1ed1599fd31ab`.  
+**Workflow:** https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39489197988  
+**Resultado independente:** `Ran 1044 tests in 1.235s / FAILED (failures=6)`. Os quatro achados anteriores permanecem, e dois novos testes foram reproduzidos como falhas.
+
+| Identificador | Severidade | Evidência | Gate requerido |
+|---|---|---|---|
+| NC-AUD-010 | P0 | Fechamento referenciado às 17h, supostamente publicado às 10h do mesmo dia, foi aceito | Exigir `data_publicacao >= referencia_em` ou contrato expresso de preview/projeção que impeça promover a fechamento observado |
+| NC-AUD-011 | P0 | Oferta de frete referenciada às 09h, supostamente publicada às 08h, foi aceita como corrente | Recusar ou segregar anúncio futuro/antecipado e não declarar observado atual sem cronologia verificável |
+
+Os dois testes passaram pelo parser de origem sem erro e **falharam nas expectativas de rejeição**. Não há prova de uso produtivo. O gate temporal deve preservar fusos de referência, calendário econômico e conceitos de *publicação original* versus coleta ou atualização.
+
+**Total no módulo PR #26:** seis casos adversariais de falha (cinco P0 e um P1) mais controle positivo verde.  
+**Dependência:** as correções de negócio devem ser integradas ao pipeline editorial e retestadas no SHA de release, sem modificar expectativa dos testes.
+
 ## Pendências e responsabilidades
 
 1. **Editorial (PR #26):** corrigir NC-AUD-006, 007 e 009 na implementação, com provas estruturadas verificáveis e testes sobre o calendário da fonte; corrigir NC-AUD-008 sem aceitar sessão inválida ou vintage futuro.
