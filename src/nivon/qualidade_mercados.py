@@ -8,6 +8,7 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
+from math import isfinite
 from typing import Mapping, Sequence
 from urllib.parse import urlsplit
 
@@ -75,6 +76,14 @@ def _preco(v: object) -> Decimal:
         raise ErroQualidadeMercado("preço decimal inválido") from exc
     if not p.is_finite() or p <= 0 or len(p.as_tuple().digits) > 16:
         raise ErroQualidadeMercado("preço fora dos limites ou não finito")
+    # A ponte descritiva legada ainda aceita float; decimal subnormal
+    # ou de magnitude infinita NÃO deve entrar como zero ou infinito.
+    try:
+        representacao = float(p)
+    except (ValueError, OverflowError) as exc:
+        raise ErroQualidadeMercado("preço fora da capacidade da ponte numérica") from exc
+    if not isfinite(representacao) or representacao <= 0:
+        raise ErroQualidadeMercado("preço fora da capacidade da ponte numérica")
     return p
 
 
