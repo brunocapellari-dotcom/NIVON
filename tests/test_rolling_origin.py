@@ -93,6 +93,35 @@ class TestRollingOrigin(unittest.TestCase):
         # A janela no fold tardio começa em 23 e inclui o dado revisado.
         self.assertEqual(evidencias[CAL[42]][CAL[25]], 900)
 
+    def test_hash_do_snapshot_asof_reprodutivel_e_sensivel_a_revisao(self):
+        modelo = lambda treino, _: treino[-1]["valor"] + 2
+        primeiro = rodar(modelo)["arquivo_avaliacao"]
+        segundo = rodar(modelo)["arquivo_avaliacao"]
+        self.assertEqual(
+            [x["snapshot_treino_sha256"] for x in primeiro],
+            [x["snapshot_treino_sha256"] for x in segundo],
+        )
+        self.assertTrue(all(len(x["snapshot_treino_sha256"]) == 64 for x in primeiro))
+        obs = dados()
+        obs.append({
+            "serie_id": "CBOT_SOJA_NOV26", "unidade": "USC/BU",
+            "fonte_id": "FONTE_TESTE", "periodo": CAL[25],
+            "valor": 900, "publicado_em": instante(CAL[35], 16),
+            "coletado_em": instante(CAL[35], 17),
+            "edicao_sha256": "a"*64,
+        })
+        revisado = rodar(modelo, obs=obs)["arquivo_avaliacao"]
+        self.assertEqual(primeiro[0]["snapshot_treino_sha256"],
+                         revisado[0]["snapshot_treino_sha256"])
+        self.assertNotEqual(primeiro[3]["snapshot_treino_sha256"],
+                            revisado[3]["snapshot_treino_sha256"])
+
+    def test_valida_cada_valor_do_treino_nao_apenas_o_ultimo(self):
+        obs = dados()
+        obs[19]["valor"] = -50
+        with self.assertRaisesRegex(ErroQuantitativo, "treino.valor"):
+            rodar(lambda t, _: t[-1]["valor"] + 2, obs=obs)
+
     def test_contexto_e_treino_imutaveis(self):
         def ataque(treino, ctx):
             with self.assertRaises(TypeError):
