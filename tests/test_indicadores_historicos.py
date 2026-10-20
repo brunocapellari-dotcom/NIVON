@@ -41,7 +41,7 @@ class TestIntegracaoHistoricosBriefing(unittest.TestCase):
             status="PROGRAMADO")
         gravar_documento_porto(self.p,{
             "status":"EXTRAIDO_AGUARDA_HOMOLOGACAO","porto":"SANTOS",
-            "fonte":PORTO_URL,"documento_sha256":hashlib.sha256(b"html sintético").hexdigest(),
+            "fonte":PORTO_URL,"documento_sha256":hashlib.sha256("html sintético".encode("utf-8")).hexdigest(),
             "capturado_em":"2026-10-20T08:00:00+00:00","registros":[prog],
         },evidence_id="DOCUMENTO_FIXTURE",direitos_confirmados=True)
 
