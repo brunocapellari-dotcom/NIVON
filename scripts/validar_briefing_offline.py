@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 
 from nivon.editorial_preflight import avaliar_previa_editorial
+from nivon.editorial_evidencias_pipeline import conciliar_complementos
 
 
 def _ler(path: Path, *, limite: int) -> str:
@@ -19,14 +20,21 @@ def _ler(path: Path, *, limite: int) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def executar(*, texto: Path, auditoria: Path, provas: Path) -> dict:
+def executar(*, texto: Path, auditoria: Path, provas: Path | None = None) -> dict:
     raw = _ler(texto, limite=200_000)
     # O gerador existente acrescenta exatamente um terminador de linha ao TXT.
     conteudo = raw[:-1] if raw.endswith("\n") else raw
     edicao = json.loads(_ler(auditoria, limite=1_000_000))
-    evidencia = json.loads(_ler(provas, limite=1_000_000))
-    if not isinstance(edicao, dict) or not isinstance(evidencia, dict):
-        raise ValueError("pacotes JSON devem ser objetos")
+    if not isinstance(edicao, dict):
+        raise ValueError("auditoria deve ser objeto")
+    automaticas = edicao.get("evidencias_editoriais")
+    if not isinstance(automaticas, dict) or automaticas.get("sha256_edicao") != edicao.get("sha256"):
+        raise ValueError("evidências automáticas ausentes/divergentes do SHA")
+    if provas is None:
+        evidencia = automaticas
+    else:
+        suplemento = json.loads(_ler(provas, limite=1_000_000))
+        evidencia = conciliar_complementos(automaticas, suplemento)
     if "texto" in edicao:
         raise ValueError("auditoria não pode substituir o texto assinado")
     edicao["texto"] = conteudo
@@ -42,7 +50,8 @@ def main(argv=None) -> int:
     p = argparse.ArgumentParser(description="NIVON: auditar briefing, SEM ENVIO")
     p.add_argument("--texto", type=Path, required=True)
     p.add_argument("--auditoria", type=Path, required=True)
-    p.add_argument("--provas", type=Path, required=True)
+    p.add_argument("--provas", type=Path,
+                   help="Complementos independentes indexados e vinculados ao SHA; opcional")
     args = p.parse_args(argv)
     try:
         relatorio = executar(texto=args.texto, auditoria=args.auditoria,
