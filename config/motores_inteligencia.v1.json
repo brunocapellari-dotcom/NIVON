@@ -1,7 +1,7 @@
 {
   "project": "NIVON",
   "schema_version": "1.0",
-  "updated_on": "2026-10-19",
+  "updated_on": "2026-10-20",
   "default_policy": "ENGINES_OFFLINE_NO_SCHEDULE_OR_DEPLOY",
   "description": "Motor presente não implica fonte autorizada, histórico real, previsão validada ou produção. CLIMA_HIDRO é fachada legada, não série duplicada.",
   "engines": [
@@ -20,7 +20,9 @@
         "nivon.previsoes_bibliotecas:backtest_mensal",
         "nivon.verificacao_probabilistica:pontuacao_quantis",
         "nivon.analogos_historicos:encontrar_anos_analogos",
-        "nivon.unidades_mercado:referencia_bolsa_cbot_usd_t"
+        "nivon.unidades_mercado:referencia_bolsa_cbot_usd_t",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -60,7 +62,9 @@
         "nivon.previsoes_bibliotecas:backtest_mensal",
         "nivon.verificacao_probabilistica:pontuacao_quantis",
         "nivon.analogos_historicos:encontrar_anos_analogos",
-        "nivon.unidades_mercado:referencia_bolsa_cbot_usd_t"
+        "nivon.unidades_mercado:referencia_bolsa_cbot_usd_t",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -96,7 +100,9 @@
         "nivon.inteligencia_temporal:decompor_mudanca_safra",
         "nivon.inteligencia_temporal:comparar_progresso_safra",
         "nivon.conab_agrobr:normalizar_progresso",
-        "nivon.unidades_mercado:referencia_ice_centavos_libra_usd_t"
+        "nivon.unidades_mercado:referencia_ice_centavos_libra_usd_t",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
@@ -121,7 +127,9 @@
       "front_id": "BOI",
       "entrypoints": [
         "nivon.motores_agro_estrategicos:boi_rendimento_carcaca",
-        "nivon.modelos_fisicos:reconciliar_rebanho"
+        "nivon.modelos_fisicos:reconciliar_rebanho",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "IBGE_PPM",
@@ -145,7 +153,9 @@
       "front_id": "BEZERRO",
       "entrypoints": [
         "nivon.motores_agro_estrategicos:relacao_troca_bezerro",
-        "nivon.modelos_fisicos:reconciliar_rebanho"
+        "nivon.modelos_fisicos:reconciliar_rebanho",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "IBGE_PPM",
@@ -164,7 +174,9 @@
       "entrypoints": [
         "nivon.motores_agro_estrategicos:referencia_acucar_ice",
         "nivon.motores_cadeias:simular_atr_cana",
-        "nivon.unidades_mercado:referencia_ice_centavos_libra_usd_t"
+        "nivon.unidades_mercado:referencia_ice_centavos_libra_usd_t",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "CONAB_CANA",
@@ -189,7 +201,9 @@
         "nivon.motores_agro_estrategicos:safra_comercializacao",
         "nivon.inteligencia_temporal:decompor_mudanca_safra",
         "nivon.conab_agrobr:normalizar_progresso",
-        "nivon.unidades_mercado:referencia_bolsa_cbot_usd_t"
+        "nivon.unidades_mercado:referencia_bolsa_cbot_usd_t",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
@@ -214,7 +228,9 @@
       "entrypoints": [
         "nivon.motores_agro_estrategicos:sorgo_substituicao_racao",
         "nivon.motores_agro_estrategicos:safra_comercializacao",
-        "nivon.inteligencia_temporal:decompor_mudanca_safra"
+        "nivon.inteligencia_temporal:decompor_mudanca_safra",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
@@ -235,7 +251,9 @@
         "nivon.motores_agro_estrategicos:paridade_fertilizante",
         "nivon.motores_integracao_estrategica:demanda_fertilizante_cenario",
         "nivon.fertilizantes:classificar_ncm",
-        "nivon.fertilizantes:consolidar_importacoes"
+        "nivon.fertilizantes:consolidar_importacoes",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "MDIC_COMEX_FERT",
@@ -259,7 +277,9 @@
         "nivon.inteligencia_temporal:decompor_variacao_preco",
         "nivon.inteligencia_temporal:custo_diesel_por_rota",
         "nivon.anp_ppi:ler_ppi_xlsx",
-        "nivon.anp_ppi:comparar_ppi_com_produtor"
+        "nivon.anp_ppi:comparar_ppi_com_produtor",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "ANP_PRECO_REVENDA_DIESEL",
@@ -286,7 +306,9 @@
       "entrypoints": [
         "nivon.motores_agro_estrategicos:simulacao_etanol_ddg",
         "nivon.motores:verificar_teto_materia_seca",
-        "nivon.motores:estimar_milho_por_etanol"
+        "nivon.motores:estimar_milho_por_etanol",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "ETANOL_MILHO_ANP",
@@ -308,7 +330,9 @@
       "entrypoints": [
         "nivon.motores_integracao_estrategica:comparacao_intermodal",
         "nivon.destinos:analisar_destinos",
-        "nivon.lineup_nacional:consolidar"
+        "nivon.lineup_nacional:consolidar",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "ANTT_MDFE_RODOVIARIO",
@@ -336,7 +360,9 @@
         "nivon.inteligencia_temporal:benchmark_sazonal_mensal",
         "nivon.lineup_nacional:normalizar_linha",
         "nivon.lineup_nacional:consolidar",
-        "nivon.portos_automaticos:processar_documento_porto"
+        "nivon.portos_automaticos:processar_documento_porto",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "LINEUP_SANTOS",
@@ -417,7 +443,9 @@
         "nivon.noaa_roni:importar_roni_ascii",
         "nivon.noaa_roni:classificar_episodios_roni",
         "nivon.meteorologia_probabilistica:avaliar_ensemble",
-        "nivon.hidrograma_bacia:hidrograma_evento_cn"
+        "nivon.hidrograma_bacia:hidrograma_evento_cn",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -448,7 +476,9 @@
         "nivon.inteligencia_temporal:decompor_variacao_preco",
         "nivon.previsoes_bibliotecas:prever_mensal",
         "nivon.verificacao_probabilistica:pontuacao_quantis",
-        "nivon.verificacao_probabilistica:brier_probabilidade"
+        "nivon.verificacao_probabilistica:brier_probabilidade",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "BCB_PTAX",
@@ -501,7 +531,9 @@
         "nivon.motores_cadeias:simular_atr_cana",
         "nivon.motores_agro_estrategicos:referencia_acucar_ice",
         "nivon.inteligencia_temporal:decompor_mudanca_safra",
-        "nivon.inteligencia_temporal:comparar_progresso_safra"
+        "nivon.inteligencia_temporal:comparar_progresso_safra",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "CONAB_CANA",
@@ -527,7 +559,9 @@
         "nivon.motores_cadeias:paridade_gergelim",
         "nivon.cadeias_adicionais:analisar_cadeia",
         "nivon.inteligencia_temporal:decompor_mudanca_safra",
-        "nivon.inteligencia_temporal:concentracao_fluxos"
+        "nivon.inteligencia_temporal:concentracao_fluxos",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "CONAB_GERGELIM_SERIES",
@@ -552,7 +586,9 @@
         "nivon.motores_cadeias:margem_proteina",
         "nivon.motores_cadeias:peso_medio_carcaca",
         "nivon.motores_cadeias:classificar_risco",
-        "nivon.modelos_fisicos:reconciliar_rebanho"
+        "nivon.modelos_fisicos:reconciliar_rebanho",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "IBGE_ABATE_FRANGO_1094",
@@ -582,7 +618,9 @@
         "nivon.motores_cadeias:margem_proteina",
         "nivon.motores_cadeias:peso_medio_carcaca",
         "nivon.motores_cadeias:classificar_risco",
-        "nivon.modelos_fisicos:reconciliar_rebanho"
+        "nivon.modelos_fisicos:reconciliar_rebanho",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "IBGE_ABATE_SUINO_1093",
@@ -641,7 +679,9 @@
         "nivon.noaa_roni:importar_roni_ascii",
         "nivon.noaa_roni:classificar_episodios_roni",
         "nivon.meteorologia_probabilistica:crps_ensemble",
-        "nivon.meteorologia_probabilistica:avaliar_ensemble"
+        "nivon.meteorologia_probabilistica:avaliar_ensemble",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -684,7 +724,9 @@
         "nivon.hidrologia_chuva_vazao:escoamento_scs_cn",
         "nivon.hidrologia_chuva_vazao:propagar_muskingum",
         "nivon.hidrograma_bacia:hidrograma_evento_cn",
-        "nivon.calibracao_cn_bacias:calibrar_cn_historico"
+        "nivon.calibracao_cn_bacias:calibrar_cn_historico",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "ANA_HIDRO",
@@ -709,7 +751,9 @@
       "entrypoints": [
         "nivon.motores_integracao_estrategica:pressao_armazenagem",
         "nivon.inteligencia_temporal:benchmark_sazonal_mensal",
-        "nivon.previsoes_bibliotecas:backtest_mensal"
+        "nivon.previsoes_bibliotecas:backtest_mensal",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "CONAB_ARMAZENS_CAPACIDADE",
@@ -734,7 +778,9 @@
         "nivon.mdic_importacao:resumir_importacao_csv",
         "nivon.inteligencia_temporal:concentracao_fluxos",
         "nivon.inteligencia_temporal:benchmark_sazonal_mensal",
-        "nivon.fertilizantes:consolidar_importacoes"
+        "nivon.fertilizantes:consolidar_importacoes",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "MDIC_COMEX_NCM",
@@ -758,7 +804,9 @@
         "nivon.motores_agro_estrategicos:paridade_diesel",
         "nivon.motores_integracao_estrategica:sensibilidade_macro",
         "nivon.inteligencia_temporal:decompor_variacao_preco",
-        "nivon.anp_ppi:ler_ppi_xlsx"
+        "nivon.anp_ppi:ler_ppi_xlsx",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "EIA_OIL",
@@ -784,7 +832,9 @@
       "entrypoints": [
         "nivon.motores_integracao_estrategica:custo_frete_rodoviario",
         "nivon.motores_integracao_estrategica:comparacao_intermodal",
-        "nivon.inteligencia_temporal:custo_diesel_por_rota"
+        "nivon.inteligencia_temporal:custo_diesel_por_rota",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "FRETES_WHATSAPP_AUTORIZADO",
@@ -835,7 +885,9 @@
         "nivon.motores_integracao_estrategica:margem_processamento",
         "nivon.motores_agro_estrategicos:esmagamento_soja",
         "nivon.inteligencia_temporal:benchmark_sazonal_mensal",
-        "nivon.previsoes_bibliotecas:backtest_mensal"
+        "nivon.previsoes_bibliotecas:backtest_mensal",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "ABIOVE_SOJA_ESMAGAMENTO",
