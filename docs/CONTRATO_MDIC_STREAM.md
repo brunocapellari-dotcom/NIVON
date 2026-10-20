@@ -13,3 +13,7 @@ Antes de go-live: direitos por operação, teste integral de arquivo real autori
 ## Verificação pontual de cabeçalhos 2026 (19/10/2026)
 
 Foi executada no GitHub Actions uma tentativa de ler somente os primeiros 4.096 bytes de cada um dos quatro CSVs oficiais anuais de 2026, sem armazenar linhas nem dados individuais. Todas as quatro requisições a `balanca.mdic.gov.br` retornaram `URLError`, portanto **não é possível declarar o layout real validado pelo recurso remoto**. O índice HTML do MDIC foi previamente acessado com sucesso e confirmou os links anuais, mas confirmação de link **não é acesso aos bytes**. O workflow de inspeção foi removido para não repetir a tentativa em todo PR. Os layouts dos parsers seguem baseados no esquema textual da publicação oficial e nos testes sintéticos.
+
+## Uma passagem de leitura e hash (20/10/2026)
+
+O código passou a ler os CSVs com `TextIOWrapper(BufferedReader)` sobre um leitor que calcula SHA-256 **sobre os mesmos bytes consumidos pelo parser**. Não há segunda leitura entre a obtenção do hash e os cálculos. O arquivo é aberto sem seguir link simbólico quando o SO disponibiliza `O_NOFOLLOW`, e são comparados tamanho, dispositivo, inode, mtime e ctime antes e depois do processamento, incluindo a quantidade efetivamente lida. Isso reduz riscos de inconsistência entre hash e valores diante de alterações concorrentes; não substitui controle de acesso ao diretório e não comprova a origem oficial do CSV. Testes incluem BOM UTF-8/CRLF e hashes byte a byte.
