@@ -21,7 +21,13 @@ _TIPOS = {"SINTETICO", "REAL_AUTORIZADO"}
 # A ampliação de tamanho aplica-se APENAS ao snapshot TXT CONAB SICARM.
 # Metadados persistidos, nunca os bytes ou registros individuais.
 _LIMITE_PADRAO = 20_000_000
-_LIMITE_POR_DATASET = {"CONAB_ARMAZENS_CAPACIDADE": 120_000_000}
+_LIMITE_POR_DATASET = {
+    "CONAB_ARMAZENS_CAPACIDADE": 120_000_000,
+    # CSV MDIC publicado por ano pode ultrapassar o limite padrão;
+    # ledger armazena somente metadados e hashes, jamais os CSVs.
+    "MDIC_COMEX_NCM": 1_500_000_000,
+    "MDIC_COMEX_MUNICIPIO_SH4": 1_500_000_000,
+}
 
 
 def _instante(txt: str) -> str:
