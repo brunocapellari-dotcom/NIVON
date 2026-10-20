@@ -186,6 +186,8 @@ def estimar_oferta_remanescente(
         if type(y) is not int or not 1970 <= y < ano_safra or y in vistos:
             raise ErroCenarioSafra("safra futura, duplicada ou inválida")
         vistos.add(y)
+        if not row["competencia"].startswith(str(y)):
+            raise ErroCenarioSafra("competência histórica divergente da safra")
         elegivel = _prova(row, corte)
         # Validar também dados não elegíveis para não tolerar conteúdos malformados.
         area = _decimal(row["area_colhida_ha"], "area_colhida_ha")
