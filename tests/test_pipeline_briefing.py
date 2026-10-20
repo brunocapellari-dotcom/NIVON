@@ -7,13 +7,13 @@ from nivon.pipeline_briefing import gerar_edicao_offline, ErroPipelineBriefing
 from nivon.rss_radar import ler_feed_xml
 
 AGORA="2026-10-20T09:00:00-03:00"
-XML=b'''<?xml version="1.0"?><rss version="2.0"><channel>
+XML='''<?xml version="1.0"?><rss version="2.0"><channel>
  <item><title>Milho verão avança na safra brasileira</title>
  <guid>plantio-milho-20261020</guid>
  <link>https://dados.example.com/noticia/milho</link>
  <pubDate>Tue, 20 Oct 2026 08:00:00 -0300</pubDate>
  <description>Plantio de milho na safra brasileira progrediu na última semana.</description>
- </item></channel></rss>'''
+ </item></channel></rss>'''.encode('utf-8')
 
 
 def dados():
