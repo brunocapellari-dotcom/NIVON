@@ -49,7 +49,7 @@ def planejar_consultas_ptax(*,moeda:str,inicio:str,fim:str,dias_janela:int=20)->
             "inicio":cursor.isoformat(),"fim":final.isoformat(),
             "url":BASE+endpoint+"?"+urlencode(params),
             "estado":"PLANEJADO_OFFLINE_SEM_COLETA",
-            "semantica":"BOLETINS_DIARIOS_NAO_FECHAMENTO",
+            "semantica":("DOLAR_DIARIO_NAO_INTRADIARIO" if moeda=="USD" else "MOEDA_MULTIPLOS_BOLETINS_POSSIVEIS"),
         })
         cursor=final+timedelta(days=1)
     return saida

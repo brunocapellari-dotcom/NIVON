@@ -5,10 +5,10 @@ def plano():
     return planejar_pam_1612(municipio_ibge="5107925",ano=2025,
                              codigo_produto_c81="2692",codigo_variavel="109")
 def retorno(valor):
-    cab={"D1C":"Município (Código)","D2C":"Ano (Código)",
-         "D3C":"Variável (Código)","D4C":"Produto (Código)",
+    cab={"D1C":"Município (Código)","D2C":"Variável (Código)",
+         "D3C":"Ano (Código)","D4C":"Produto (Código)",
          "V":"Valor","MN":"Unidade de Medida"}
-    dado={"D1C":"5107925","D2C":"2025","D3C":"109","D4C":"2692",
+    dado={"D1C":"5107925","D2C":"109","D3C":"2025","D4C":"2692",
           "V":valor,"MN":"Toneladas"}
     return json.dumps([cab,dado]).encode()
 def tratar(payload,**kwargs):
@@ -62,3 +62,16 @@ class TestSIDRAPAM(unittest.TestCase):
         with self.assertRaises(ErroSIDRAPAM):tratar(retorno("-1"))
     def test_resposta_vazia_nao_e_zero(self):
         with self.assertRaises(ErroSIDRAPAM):tratar(b"[]")
+
+    def test_cabecalho_antigo_deve_falhar(self):
+        rows=json.loads(retorno("1"))
+        rows[0]["D2C"]="Ano (Código)"
+        rows[0]["D3C"]="Variável (Código)"
+        with self.assertRaises(ErroSIDRAPAM):
+            tratar(json.dumps(rows).encode())
+
+    def test_eixos_reais_independentes(self):
+        v=tratar(retorno("15"))["observacoes"][0]
+        self.assertEqual(v["ano_civil"],2025)
+        self.assertEqual(v["variavel_sidra"],"109")
+        self.assertEqual(v["produto_categoria_c81"],"2692")
