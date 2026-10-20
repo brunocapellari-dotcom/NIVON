@@ -1646,11 +1646,11 @@
       "dataset_id": "INMET_ESTACOES",
       "collector_class": "OFFICIAL_API",
       "locator": {
-        "kind": "NOT_VERIFIED_PER_DATASET",
-        "url": null,
-        "source_proof": null
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://portal.inmet.gov.br/dadoshistoricos/",
+        "source_proof": "https://portal.inmet.gov.br/dadoshistoricos/"
       },
-      "implementation_scope": "series_ambientais.py suporta histórico normalizado offline, não é parser de payload INMET e não autoriza coleta",
+      "implementation_scope": "inmet_historico.py planeja ZIPs anuais oficiais de 2000–2026 e faz inspeção offline; series_ambientais.py guarda medições já normalizadas; falta validação do CSV real, direitos, download e coleta diária",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,

@@ -557,7 +557,9 @@
         "nivon.motores_meteo_hidro:graus_dia",
         "nivon.motores_meteo_hidro:janela_chuva_operacao",
         "nivon.series_ambientais:consultar_asof",
-        "nivon.series_ambientais:preparar_graus_dia"
+        "nivon.series_ambientais:preparar_graus_dia",
+        "nivon.inmet_historico:planejar_historico",
+        "nivon.inmet_historico:inspecionar_arquivo"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",

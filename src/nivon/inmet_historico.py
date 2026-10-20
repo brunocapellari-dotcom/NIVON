@@ -96,14 +96,14 @@ def inspecionar_arquivo(caminho: str | Path, *, ano:int)->dict:
             "schema_homologado":False,"coleta_automatizada":False,
             "alerta":"Não assumir que uma hora de chuva é chuva diária; data UTC e limites físicos exigem validação."}
 
-def obter_csv_em_memoria(caminho:str|Path,*,nome:str,max_bytes:int=8_000_000)->bytes:
+def obter_csv_em_memoria(caminho:str|Path,*,ano:int,nome:str,max_bytes:int=8_000_000)->bytes:
     """Leitura explícita somente de CSV; CRC pelo ZipFile.read; nunca escreve."""
     name=_validar_nome(nome)
     if not name.lower().endswith(".csv"):
         raise ErroHistoricoINMET("somente membros CSV")
     if type(max_bytes) is not int or not 0<max_bytes<=MAX_MEMBRO_CSV:
         raise ErroHistoricoINMET("limite de leitura inválido")
-    inventory=inspecionar_arquivo(caminho,ano=PRIMEIRO_ANO_PUBLICADO)
+    inventory=inspecionar_arquivo(caminho,ano=ano)
     match=[x for x in inventory["csv"] if x["nome"]==name]
     if len(match)!=1 or match[0]["bytes"]>max_bytes:
         raise ErroHistoricoINMET("CSV inexistente ou maior que limite")
