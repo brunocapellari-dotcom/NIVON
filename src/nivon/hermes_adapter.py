@@ -1,0 +1,212 @@
+"""Adaptador NIVON para o contrato hermes.contracts.ProjectAdapter.
+
+Sem dependência em runtime do repositório Hermes: compatibilidade estrutural
+com seus métodos async health/status/capabilities/query/execute/search/alerts.
+
+Ações são read-only, autorizadas pelo chamador. Nunca aceita caminho de arquivo,
+SQL, URL, nome de módulo, prompt ou acesso a segredos fornecidos pelo agente.
+Não importa Hermes em produção nem assume que ele esteja operacional.
+"""
+from __future__ import annotations
+
+from collections.abc import Callable, Mapping
+from copy import deepcopy
+from datetime import datetime
+import sqlite3
+
+from .indicadores_historicos import (
+    compor_pacote_historico, indicador_conab, indicador_porto
+)
+from .rotina_diaria import preparar_rotina
+
+
+class ErroIntegracaoHermes(ValueError):
+    pass
+
+
+_CAPACIDADES = frozenset({
+    "safra.progress.read",
+    "portos.lineup.read",
+    "briefing.preview",
+})
+_MAX_NOTICIAS = 30
+_MAX_INDICADORES = 100
+_MAX_FRETES = 40
+_MAX_CULTURAS = 12
+_MAX_PORTOS = 20
+
+
+def _lista(payload: Mapping, key: str, max_items: int, kind: type) -> list:
+    value = payload.get(key, [])
+    if not isinstance(value, list) or len(value) > max_items or any(
+        not isinstance(x, kind) for x in value
+    ):
+        raise ErroIntegracaoHermes("contrato de entrada inválido: " + key)
+    return value
+
+
+def _instante(payload: Mapping) -> str:
+    value = payload.get("gerado_em")
+    if not isinstance(value, str) or len(value) > 40:
+        raise ErroIntegracaoHermes("hora com fuso obrigatória")
+    try:
+        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ErroIntegracaoHermes("hora inválida") from exc
+    if dt.tzinfo is None or dt.utcoffset() is None:
+        raise ErroIntegracaoHermes("hora sem fuso")
+    return value
+
+
+class NivonProjectAdapter:
+    """Fronteira de consulta NIVON -> Hermes, A0/A1, sem execução mutável."""
+
+    key = "NIVON"
+
+    def __init__(
+        self, *,
+        autorizador: Callable[[str], bool],
+        fontes: Mapping[str, dict],
+        conab: sqlite3.Connection | None = None,
+        portos: sqlite3.Connection | None = None,
+    ) -> None:
+        if not callable(autorizador) or not isinstance(fontes, Mapping):
+            raise ErroIntegracaoHermes("requer autorização de identidade e fontes")
+        if any(not isinstance(k, str) or not isinstance(v, dict) for k, v in fontes.items()):
+            raise ErroIntegracaoHermes("mapa de fontes inválido")
+        self._autorizar = autorizador
+        self._fontes = deepcopy(dict(fontes))
+        self._conab = conab
+        self._portos = portos
+
+    def _exigir(self, permissao: str = "NIVON_READ") -> None:
+        if self._autorizar(permissao) is not True:
+            raise PermissionError("identidade/escopo não autorizados")
+
+    async def health(self) -> Mapping[str, object]:
+        self._exigir()
+        bancos = {}
+        for nome, db in (("conab", self._conab), ("portos", self._portos)):
+            if db is None:
+                bancos[nome] = "UNCONFIGURED"
+                continue
+            try:
+                row = db.execute("SELECT 1").fetchone()
+                bancos[nome] = "QUERY_OK" if row and row[0] == 1 else "ERROR"
+            except sqlite3.Error:
+                bancos[nome] = "ERROR"
+        return {
+            "project": self.key,
+            "status": "READ_ONLY_ADAPTER",
+            "bancos": bancos,
+            "production_ready": False,
+            "authenticated_execution": False,
+        }
+
+    async def status(self) -> Mapping[str, object]:
+        self._exigir()
+        return {
+            "project": self.key, "mode": "OFFLINE_READ_ONLY",
+            "autonomy": "A1_MAX",
+            "real_time_collectors": "NOT_CONTROLLED_HERE",
+            "model_validated_on_real_data": False,
+            "whatsapp_delivery_enabled": False,
+            "external_actions": False,
+        }
+
+    async def capabilities(self) -> set[str]:
+        self._exigir()
+        return set(_CAPACIDADES)
+
+    async def query(self, capability: str, payload: Mapping[str, object]) -> Mapping[str, object]:
+        self._exigir("NIVON_READ")
+        if capability not in _CAPACIDADES or not isinstance(payload, Mapping) or len(payload) > 12:
+            raise ErroIntegracaoHermes("capacidade ou argumentos desconhecidos")
+        data = _instante(payload)
+        if capability == "safra.progress.read":
+            if self._conab is None:
+                return {"status": "SEM_HISTORICO"}
+            keys = ("cultura", "safra", "operacao", "uf", "semana")
+            if set(payload) != set(keys) | {"gerado_em"} or any(
+                not isinstance(payload[k], str) or len(payload[k]) > 50
+                for k in keys
+            ):
+                raise ErroIntegracaoHermes("seletores de progresso inválidos")
+            return indicador_conab(
+                self._conab, fontes=self._fontes, gerado_em=data,
+                **{k: payload[k] for k in keys},
+            )
+        if capability == "portos.lineup.read":
+            if set(payload) != {"porto", "gerado_em"} or not isinstance(payload["porto"], str):
+                raise ErroIntegracaoHermes("seletores de porto inválidos")
+            if self._portos is None:
+                return {"status": "SEM_HISTORICO"}
+            if len(payload["porto"]) > 80:
+                raise ErroIntegracaoHermes("porto inválido")
+            return indicador_porto(
+                self._portos, fontes=self._fontes, gerado_em=data,
+                porto=payload["porto"],
+            )
+        # Preview: aceita apenas documentos/observações previamente adquiridos
+        # e autorizados. Devolve texto somente se auditor determinístico aprovar.
+        allowed = {"gerado_em", "noticias", "indicadores", "fretes", "culturas", "portos"}
+        if not set(payload) <= allowed:
+            raise ErroIntegracaoHermes("campo externo não contratado")
+        noticias = _lista(payload, "noticias", _MAX_NOTICIAS, dict)
+        indicadores = _lista(payload, "indicadores", _MAX_INDICADORES, dict)
+        fretes = _lista(payload, "fretes", _MAX_FRETES, dict)
+        culturas = _lista(payload, "culturas", _MAX_CULTURAS, dict)
+        portos = _lista(payload, "portos", _MAX_PORTOS, str)
+        if any(len(s) > 80 for s in portos):
+            raise ErroIntegracaoHermes("porto muito longo")
+        agregado = compor_pacote_historico(
+            db_conab=self._conab, db_portos=self._portos,
+            fontes=self._fontes, gerado_em=data,
+            noticias=noticias, indicadores_externos=indicadores,
+            fretes=fretes, culturas=culturas, portos=portos,
+        )
+        bloqueios = [
+            {"origem": x["origem"], "status": x["status"]}
+            for x in agregado["resultados"]
+            if x["status"] != "INDICADOR_VERIFICADO_TEMPO"
+        ]
+        if bloqueios:
+            return {"status": "BLOQUEADO_HISTORICOS",
+                    "detalhes": bloqueios, "envio": False}
+        result = preparar_rotina(
+            pacote=agregado["pacote"], gerado_em=data,
+            auditor=lambda x: len(x["rejeicoes"]) == 0, agendar=False
+        )
+        if result["status"] != "VALIDADO_DRY_RUN":
+            return {"status": result["status"],
+                    "faltam": result.get("faltam", []), "envio": False}
+        return {
+            "status": "PREVIEW_AUDITADO_NAO_PUBLICADO",
+            "texto": result["texto"],
+            "sha256": result["hash"],
+            "envio": False, "custo": 0,
+            "modelo_preditivo_homologado": False,
+        }
+
+    async def execute(self, capability: str, payload: Mapping[str, object]) -> Mapping[str, object]:
+        """Não delegar write/send/purchase a uma IA, nem com prompt convincente."""
+        raise PermissionError("NIVON: nenhuma ação mutável exposta ao Hermes")
+
+    async def search(self, query: str, *, limit: int = 10) -> Mapping[str, object]:
+        self._exigir()
+        if not isinstance(query, str) or not 0 < len(query) <= 150 or not 1 <= limit <= 20:
+            raise ErroIntegracaoHermes("busca inválida")
+        # Não confundir o índice local de capacidades com pesquisa web/científica.
+        itens = [c for c in sorted(_CAPACIDADES) if query.casefold() in c.casefold()]
+        return {"status": "INDICE_LOCAL_CAPACIDADES", "items": itens[:limit],
+                "external_research_executed": False}
+
+    async def alerts(self, *, since: datetime | None = None) -> Mapping[str, object]:
+        self._exigir()
+        if since is not None and (not isinstance(since, datetime) or since.tzinfo is None):
+            raise ErroIntegracaoHermes("since sem fuso")
+        return {
+            "status": "MONITORAMENTO_EXTERNO_NAO_ATIVO",
+            "alerts": [],
+            "warning": "lista vazia não prova ausência de incidentes",
+        }
