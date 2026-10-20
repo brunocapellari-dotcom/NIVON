@@ -1,0 +1,13 @@
+# Ambiente de revisão OFFLINE, não é imagem de aplicação em produção.
+# Validar/pinar o digest multiarquitetura antes de qualquer release.
+FROM python:3.11-slim-bookworm
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app/src
+WORKDIR /app
+COPY src/ /app/src/
+COPY config/ /app/config/
+COPY infra/inventory.v1.json /app/infra/inventory.v1.json
+USER 65532:65532
+CMD ["python", "-m", "nivon.infra_preflight"]
