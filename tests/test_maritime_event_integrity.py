@@ -51,6 +51,17 @@ class MaritimeEventIntegrityTests(unittest.TestCase):
         self.assertNotIn("FUNDEADO", states)
         self.assertNotIn("AGUARDANDO", states)
 
+    def test_mixed_vessel_ais_cannot_construct_a_single_port_call(self):
+        first = ais_point("10:00", "ANCHORAGE", 1)
+        second = AisStatePoint(
+            observed_at="2026-10-20T10:20:00+00:00",
+            mmsi="710999999", port_id="SANTOS", zone="ANCHORAGE",
+            quality_status="CONFIRMED_SEQUENCE",
+            corroborated=True, observation_id="ais-other-vessel",
+        )
+        with self.assertRaisesRegex(ValueError, "one known MMSI"):
+            reconstruct_port_call(port_id="SANTOS", ais_points=[first, second])
+
     def test_long_ais_blackout_cannot_prove_continuous_dwell(self):
         points = [
             ais_point("10:00", "BERTH", 1),
