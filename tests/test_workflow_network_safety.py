@@ -14,8 +14,8 @@ class TestWorkflowNetworkSafety(unittest.TestCase):
         for nome in EXTERNOS:
             bloco="  "+nome+":"
             self.assertIn(bloco,conteudo)
-            match=re.search(r"(?m)^  "+re.escape(nome)+r":\\s*\\n" +
-                            r"([\\s\\S]*?)(?=^  [A-Za-z0-9_-]+:\\s*$|\\Z)",conteudo)
+            match=re.search(r"(?m)^  "+re.escape(nome)+r":\s*\n" +
+                            r"([\s\S]*?)(?=^  [A-Za-z0-9_-]+:\s*$|\Z)",conteudo)
             self.assertIsNotNone(match)
             resto=match.group(1)
             self.assertIn("if: github.event_name == 'workflow_dispatch'",resto,
