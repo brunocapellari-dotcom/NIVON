@@ -27,3 +27,7 @@ O teste descartável de leitura limitada (16.384 bytes; sem persistência) confi
 O constante `LAYOUT_CONAB_SICARM_HEADER_V1` mapeia: `identificacao_armazem`, `nom_municipio`, `cod_ibge`, `uf`, `qtd_capacidade_estatica(t)`. Também existem colunas de capacidade de expedição e recepção, que **não podem ser somadas à capacidade estática**. O arquivo inclui campos pessoais/comerciais, que devem ser excluídos dos agregados.
 
 A inspeção transitória do CI foi removida após comprovar o cabeçalho. O script continua manual, exigindo `--explicit-yes` e sem agendamento. Permanecem bloqueados a importação de dados reais como histórico homologado, a publicação comercial e o agendamento até revisão de direitos, reconciliação nacional e teste de recuperação.
+
+## Verificação integral efêmera — 19/10/2026
+
+Foi executada uma tentativa única em GitHub Actions de obter o TXT integral diretamente da URL oficial, com limite de 120 MB e diretório temporário; **a conexão falhou com `URLError` antes da inspeção do arquivo completo**. Não foi persistido nem publicado qualquer cadastro bruto. O resultado **não permite homologar** linhas totais, unicidade global, capacidade municipal ou divergências de layout além da amostra prévia de cabeçalho. O job efêmero foi retirado do workflow para evitar custos/requisições recorrentes. O importador e a suíte sintética permanecem disponíveis para arquivo local explicitamente autorizado.

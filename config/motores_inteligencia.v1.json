@@ -559,7 +559,9 @@
         "nivon.series_ambientais:consultar_asof",
         "nivon.series_ambientais:preparar_graus_dia",
         "nivon.inmet_historico:planejar_historico",
-        "nivon.inmet_historico:inspecionar_arquivo"
+        "nivon.inmet_historico:inspecionar_arquivo",
+        "nivon.inmet_bdmep:conferir_zip_bdmep",
+        "nivon.inmet_bdmep:receber_bdmep"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -583,7 +585,10 @@
         "nivon.motores_meteo_hidro:anomalia_vazao",
         "nivon.motores_meteo_hidro:folga_calado_hipotetica",
         "nivon.ana_contrato:planejar_janelas",
-        "nivon.series_ambientais:consultar_asof"
+        "nivon.series_ambientais:consultar_asof",
+        "nivon.ana_hidrowebservice:credenciais_ambiente",
+        "nivon.ana_hidrowebservice:normalizar_adotada",
+        "nivon.ana_hidrowebservice:construir_consulta_adotada"
       ],
       "data_dependencies": [
         "ANA_HIDRO",
