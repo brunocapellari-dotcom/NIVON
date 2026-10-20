@@ -826,6 +826,14 @@
       "access": "PUBLIC_DATA",
       "rights": "REVIEW",
       "notes": ""
+    },
+    {
+      "id": "CFTC",
+      "provider": "US CFTC Public Reporting / COT",
+      "official_url": "https://publicreporting.cftc.gov/",
+      "access": "SOCRATA_PUBLIC_PORTAL",
+      "rights": "REVIEW",
+      "notes": "Posicionamento de futuros semanal com classificações e histórico por regime de relatório, não preço nem cotação."
     }
   ],
   "datasets": [
@@ -2240,8 +2248,8 @@
       "cadence": "ANNUAL",
       "stage": "CODE_PRESENT",
       "priority": "P1",
-      "existing_module": "sidra_pam.py; pipeline_api_dados.py (API local/SQLite, schema real, sem coleta automática)",
-      "notes": "",
+      "existing_module": "sidra_pam.py; pipeline_api_dados.py (API local/SQLite, schema real, sem coleta automática); agregacao_pam_ibge.py (agregação estadual parcial e conferência área×produtividade com Decimal; testes sintéticos)",
+      "notes": "PAM municipal não separa safrinha; algodão em caroço não é pluma; gergelim incluído na PAM 2025 sem retroagir 1974. Agregação UF exige soma de área/produção, produtividade ponderada, vintages e universo completo comprovado.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
@@ -4903,6 +4911,133 @@
       "priority": "P2",
       "existing_module": null,
       "notes": "",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "NOAA_ENSO_RONI",
+      "source_id": "NOAA",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "CANA",
+        "GERGELIM"
+      ],
+      "topic": "indice_enso_relativo_e_vintages_desde_1950",
+      "mode": "OFFICIAL_INDEX_DOWNLOAD",
+      "cadence": "MONTHLY",
+      "stage": "CODE_PRESENT",
+      "priority": "P1",
+      "existing_module": "src/nivon/noaa_roni.py (parser ERSSTv6 RONI ASCII; episódios >= 5 temporadas e vintages desconhecidas)",
+      "notes": "NOAA CPC substituiu ONI pelo RONI na monitorização oficial em fevereiro/2026. Endpoint textual histórico verificado, vintages antigas NÃO recuperadas; sem acesso externo automatizado, sem treino validado.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "CFTC_COT_WEEKLY",
+      "source_id": "CFTC",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "ACUCAR",
+        "BOI"
+      ],
+      "topic": "posicionamento_participantes_futuros_cftc",
+      "mode": "SOCRATA_DATASET_API",
+      "cadence": "WEEKLY",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Identificada na pesquisa 19/10/2026. Fonte/endpoint/documentação não equivalem à homologação, coleta ou licença.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "USDA_WASDE_RELEASE_VINTAGES",
+      "source_id": "USDA",
+      "group": "BALANCO",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "SORGO",
+        "ACUCAR",
+        "BOI",
+        "FRANGO",
+        "SUINO"
+      ],
+      "topic": "revisoes_mensais_de_oferta_demanda_por_edicao_1973",
+      "mode": "USDA_OFFICIAL_ARCHIVE",
+      "cadence": "MONTHLY",
+      "stage": "CANDIDATE",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Identificada na pesquisa 19/10/2026. Fonte/endpoint/documentação não equivalem à homologação, coleta ou licença.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "FAO_FAOSTAT_LONG_RUN",
+      "source_id": "FAO",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "CANA",
+        "SORGO",
+        "GERGELIM",
+        "BOI",
+        "FRANGO",
+        "SUINO"
+      ],
+      "topic": "estatisticas_agricolas_e_pecuarias_longo_prazo",
+      "mode": "FAOSTAT_TABLES",
+      "cadence": "ANNUAL",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Identificada na pesquisa 19/10/2026. Fonte/endpoint/documentação não equivalem à homologação, coleta ou licença.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,

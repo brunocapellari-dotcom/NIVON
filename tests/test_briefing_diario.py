@@ -89,6 +89,27 @@ class TestBriefingDiario(unittest.TestCase):
         self.assertNotIn("R$ 120", texto)
         self.assertIn("Notícias elegíveis: 0", texto)
 
+    def test_titulo_editorial_padrao_e_sem_secoes_de_impactos(self):
+        item=noticia()
+        item["impacto_brasil"]="TEXTO INTERNO QUE NAO DEVE SER PUBLICADO"
+        item["impacto_produtor"]="SEGUNDA ANALISE NAO CONTRATADA"
+        texto,rejeicoes=gerar_texto([item],FONTES,gerado_em=AGORA)
+        self.assertTrue(texto.startswith("*RESUMO ESTRATÉGICO DO AGRONEGÓCIO*"))
+        self.assertIn("Fato verificado.",texto)
+        self.assertNotIn("TEXTO INTERNO",texto)
+        self.assertNotIn("SEGUNDA ANALISE",texto)
+        self.assertNotIn("Possível impacto",texto)
+        self.assertEqual(rejeicoes,[])
+
+    def test_noticia_antiga_nao_retorna_por_ter_analise_nova(self):
+        item=noticia(publicado="2026-10-15T10:00:00-03:00")
+        item["impacto_brasil"]="Atualizado hoje"
+        texto,rejeicoes=gerar_texto([item],FONTES,gerado_em=AGORA)
+        self.assertNotIn("Safra de soja",texto)
+        self.assertNotIn("Atualizado hoje",texto)
+        self.assertIn("Nenhuma notícia elegível",texto)
+        self.assertEqual(len(rejeicoes),1)
+
     def test_url_http_rejeitada(self):
         a, rejeitadas = self.escolher([noticia(url="http://example.org/a")])
         self.assertFalse(a)

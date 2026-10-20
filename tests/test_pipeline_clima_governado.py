@@ -15,14 +15,15 @@ class TestPipelineClimaGovernado(unittest.TestCase):
         self.assertFalse(ids["METEOROLOGIA"]["operational_enabled"])
     def test_fonte_chirps_licenca_com_atribuicao_pendente(self):
         c=carregar_catalogo();meta=validar_catalogo(c)
-        self.assertEqual(meta["datasets"],135)
+        self.assertEqual(meta["datasets"],len(c["datasets"]))
+        self.assertGreaterEqual(meta["datasets"],135)
         source=next(x for x in c["sources"] if x["id"]=="UCSB_CHC")
         self.assertEqual(source["rights"],"ATTRIBUTION_REVIEW")
         ds=next(x for x in c["datasets"] if x["id"]=="CHIRPS_V3_CHUVA")
         self.assertIn("CC BY 4.0",ds["notes"])
         self.assertFalse(ds["enabled"])
         routes=carregar_rotas()
-        self.assertEqual(validar_rotas(routes,c)["rotas"],135)
+        self.assertEqual(validar_rotas(routes,c)["rotas"],len(c["datasets"]))
         self.assertTrue(all(not r["runtime_enabled"] and not r["scheduled_enabled"] for r in routes["entries"]))
 if __name__=="__main__":
     unittest.main()
