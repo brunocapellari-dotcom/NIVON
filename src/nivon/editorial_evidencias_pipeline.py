@@ -123,3 +123,84 @@ def montar_candidatos_evidencias(
                   "não constituem prova independente de licença, publicação "
                   "original, calendário de bolsa ou transporte realizado."),
     }
+
+
+CHAVES_IMUTAVEIS = {
+    "noticias": frozenset({
+        "fonte_id", "titulo", "url", "publicado_em", "coletado_em",
+        "sha256_origem", "direitos_publicacao", "evidencia_direitos_id",
+    }),
+    "cotacoes": frozenset({"fonte_id", "titulo", "direitos_publicacao",
+                           "evidencia_direitos_id"}),
+    "fretes": frozenset({
+        "fonte_id", "tipo", "origem", "uf_origem", "destino", "uf_destino",
+        "valor_rs_t", "referencia_em", "direitos_publicacao",
+        "evidencia_direitos_id",
+    }),
+}
+# Chaves explicitamente editáveis pelo operador apenas com declaração externa.
+COMPLEMENTOS = {
+    "noticias": frozenset({"evento_id", "publicacao_original_verificada",
+                            "evidencia_publicacao_original_id",
+                            "evidencia_evento_id"}),
+    "cotacoes": frozenset({
+        "grupo", "valor", "unidade", "competencia", "natureza",
+        "referencia_em", "publicado_em", "coletado_em", "sha256_origem",
+        "sessao_fechamento", "ultima_sessao_concluida", "fechamento_confirmado",
+        "periodo_identificado", "valor_anterior", "variacao_pct",
+        "evidencia_sessao_id",
+    }),
+    "fretes": frozenset({
+        "pickup_entity_id", "transportadora", "produto", "equipamento",
+        "regime_pf_pj", "condicao_pedagio", "publicado_em", "coletado_em",
+        "sha256_origem", "volume_t_dia", "classificacao_volume",
+        "volume_realizado", "evidencia_registro_id",
+    }),
+}
+
+
+def conciliar_complementos(candidatos: dict, complemento: dict) -> dict:
+    """Aplica somente evidências suplementares; preserva o que o pipeline conhece.
+
+    O complemento deve ser indexado exatamente como a auditoria, sem adições
+    silenciosas de matérias, preços ou fretes. É prova declarada e NÃO valida
+    independentemente a licença ou o calendário da fonte.
+    """
+    if not isinstance(candidatos, dict) or candidatos.get("estado") != "CANDIDATOS_NAO_HOMOLOGADOS":
+        raise ValueError("pacote automático inválido")
+    if not isinstance(complemento, dict) or complemento.get("sha256_edicao") != candidatos.get("sha256_edicao"):
+        raise ValueError("complemento não está vinculado ao SHA da edição")
+    saida = {}
+    for categoria in ("noticias", "cotacoes", "fretes"):
+        base = candidatos.get(categoria)
+        extra = complemento.get(categoria)
+        if not isinstance(base, list) or not isinstance(extra, list) or len(base) != len(extra):
+            raise ValueError("tamanho da seção editorial divergente: " + categoria)
+        combinados = []
+        for index, (original, adicional) in enumerate(zip(base, extra)):
+            if not isinstance(original, dict) or not isinstance(adicional, dict):
+                raise ValueError("prova não estruturada")
+            for chave in CHAVES_IMUTAVEIS[categoria]:
+                if chave in adicional and adicional[chave] != original.get(chave):
+                    raise ValueError("proveniência imutável divergente: " + categoria + "/" + chave)
+            novo = dict(original)
+            for chave, valor in adicional.items():
+                if chave not in COMPLEMENTOS[categoria] and chave not in CHAVES_IMUTAVEIS[categoria]:
+                    raise ValueError("campo suplementar não autorizado: " + chave)
+                if chave in COMPLEMENTOS[categoria]:
+                    anterior = original.get(chave)
+                    if anterior not in (None, False) and anterior != valor:
+                        raise ValueError("alteração de fato conhecido: " + categoria + "/" + chave)
+                    novo[chave] = valor
+            if categoria == "noticias":
+                if novo.get("publicacao_original_verificada") is True:
+                    if not isinstance(novo.get("evidencia_publicacao_original_id"), str) or len(novo["evidencia_publicacao_original_id"]) < 8:
+                        raise ValueError("publicação original marcada sem ID da prova externa")
+                if novo.get("evento_id") and not novo.get("evidencia_evento_id"):
+                    raise ValueError("evento editorial não vinculado a decisão documentada")
+            if categoria == "cotacoes" and novo.get("fechamento_confirmado") is True:
+                if not isinstance(novo.get("evidencia_sessao_id"), str) or len(novo["evidencia_sessao_id"]) < 8:
+                    raise ValueError("sessão declarada sem evidência externa")
+            combinados.append(novo)
+        saida[categoria] = combinados
+    return saida
