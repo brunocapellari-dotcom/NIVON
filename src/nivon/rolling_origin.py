@@ -6,7 +6,8 @@ Metadados/forecasts fornecidos exigem comprovação independente de origem.
 """
 from __future__ import annotations
 
-from datetime import datetime
+from hashlib import sha256
+import json
 from math import isfinite
 from types import MappingProxyType
 from typing import Callable, Mapping, Sequence
@@ -81,6 +82,10 @@ def executar_rolling_origin_asof(
         bruto = fold["treino_asof"]
         if len(bruto) != tamanho_treino:
             raise ErroQuantitativo("tamanho de treinamento inconsistente")
+        # Checar toda a janela, não somente o último preço do benchmark.
+        # Um dado negativo interior também contaminaria uma previsão de preço.
+        for row in bruto:
+            _numero(row["valor"], "treino.valor", nao_negativo=nao_negativo)
         # Cópias independentes, só leitura e sem qualquer rótulo de avaliação.
         treino = tuple(MappingProxyType({
             "periodo": row["periodo"], "valor": row["valor"],
@@ -96,6 +101,18 @@ def executar_rolling_origin_asof(
             "emitido_em": fold["emitido_em"],
             "horizonte_periodos": horizonte_periodos,
         })
+        snapshot = {
+            "serie_id": serie_id, "unidade": unidade, "fonte_id": fonte_id,
+            "modelo_id": modelo_id, "periodo_origem": fold["periodo_origem"],
+            "emitido_em": fold["emitido_em"],
+            "horizonte_periodos": horizonte_periodos,
+            "tamanho_treino": tamanho_treino,
+            "treino_asof": [dict(row) for row in treino],
+        }
+        digest_treino = sha256(json.dumps(
+            snapshot, sort_keys=True, ensure_ascii=True, allow_nan=False,
+            separators=(",", ":"),
+        ).encode("utf-8")).hexdigest()
         saida = _resultado_modelo(modelo(treino, contexto),
                                  nao_negativo=nao_negativo)
         disponibilidade = max(_instante(r["disponivel_em"], "disponivel_em")
@@ -118,6 +135,7 @@ def executar_rolling_origin_asof(
             "observado_publicado_em": fold["real_publicado_em"],
             "observado_coletado_em": fold["real_coletado_em"],
             "edicao_sha256": fold["real_edicao_sha256"],
+            "snapshot_treino_sha256": digest_treino,
             "valor_base": base, "baseline": base, "real": real,
             **saida,
         }
