@@ -56,7 +56,7 @@ class MaritimeForecastCase:
         outcome = _time(self.outcome_recorded_at, "outcome_recorded_at")
         trained = _time(self.training_cutoff_at, "training_cutoff_at")
         published = _time(self.latest_feature_published_at, "latest_feature_published_at")
-        if not (trained <= published <= predicted < target <= outcome <= as_of):
+        if not (trained <= predicted and published <= predicted < target <= outcome <= as_of):
             raise ValueError("look-ahead, alvo futuro ou ordem temporal inconsistente")
         for v in (self.actual_value, self.candidate_value, self.baseline_value):
             if isinstance(v, bool) or not math.isfinite(float(v)):
