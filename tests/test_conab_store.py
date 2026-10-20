@@ -68,7 +68,7 @@ class TestArmazenamentoConab(unittest.TestCase):
     def test_coleta_sem_fuso_rejeitada(self):
         with self.assertRaises(ErroSerie): salvar_edicao(self.db,registros(tempo="2026-10-18T13:00:00"))
 
-if __name__=="__main__": unittest.main()
+
 
 
     def test_hash_igual_valor_diferente_nao_muda_coletas(self):
@@ -103,3 +103,5 @@ if __name__=="__main__": unittest.main()
             salvar_edicao(self.db,registros())
         self.assertEqual(self.db.execute("SELECT count(*) FROM conab_edicoes").fetchone()[0],0)
         self.assertEqual(self.db.execute("SELECT count(*) FROM conab_coletas").fetchone()[0],0)
+
+if __name__=="__main__": unittest.main()
