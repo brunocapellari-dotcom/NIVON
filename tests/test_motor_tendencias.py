@@ -184,5 +184,25 @@ class TestMotorTendencias(unittest.TestCase):
         self.assertFalse(hasattr(engine, "httpx"))
 
 
+    def test_pregoes_com_fim_de_semana_nao_sao_serie_diaria(self):
+        serie = diario([100, 101, 102, 103, 104, 105])
+        dias = ["2026-10-09", "2026-10-13", "2026-10-14",
+                "2026-10-15", "2026-10-16", "2026-10-19"]
+        for row, dt in zip(serie, dias):
+            row["periodo"] = row["publicacao"] = row["coleta"] = dt
+        r = tendencia_observada(
+            serie, as_of="2026-10-20", fonte_id="TESTE", unidade="centavos/bu",
+            frequencia="SESSOES", janela=6, tolerancia_absoluta=1)
+        self.assertEqual(r["tendencia"], "ALTA")
+        with self.assertRaises(ErroTendencia):
+            observada(serie)
+
+    def test_sem_limiar_expresso_bloqueia(self):
+        with self.assertRaisesRegex(ErroTendencia, "limiar"):
+            tendencia_observada(
+                diario([1, 2, 3, 4, 5, 6]), as_of="2026-10-20",
+                fonte_id="TESTE", unidade="R$/t", frequencia="DIARIA")
+
+
 if __name__ == "__main__":
     unittest.main()
