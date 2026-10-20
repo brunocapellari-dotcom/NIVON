@@ -39,7 +39,7 @@ class TestNOAARONI(unittest.TestCase):
     def test_ano_repetido_e_lacuna_rejeitados(self):
         s=source().decode().splitlines()
         with self.assertRaises(ErroRONI):
-            self.fetch(raw=("\n".join([s[0]]+s[2:])+"\n").encode())
+            self.fetch(raw=("\n".join([s[0],s[1]]+s[3:])+"\n").encode())
         with self.assertRaises(ErroRONI):
             self.fetch(raw=("\n".join(s+[s[-1]])+"\n").encode())
 
