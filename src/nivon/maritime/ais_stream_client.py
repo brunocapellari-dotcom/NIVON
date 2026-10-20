@@ -4,6 +4,8 @@ from __future__ import annotations
 import json
 import random
 import time
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from collections.abc import Callable, Iterator
 from typing import Any
 from urllib.parse import urlsplit
@@ -15,16 +17,55 @@ AISSTREAM_URL = "wss://stream.aisstream.io/v0/stream"
 AISSTREAM_HOST = "stream.aisstream.io"
 
 
+@dataclass(frozen=True)
+class AISStreamRights:
+    """Explicit, externally verified per-operation permit. No implicit free license."""
+    evidence_id: str
+    granted_by: str
+    collected_permission: bool
+    commercial_display_permission: bool
+    storage_permission: bool
+    expires_at: str
+
+    def validate(self, operation: str, *, now: datetime | None = None) -> None:
+        if not self.evidence_id.strip() or not self.granted_by.strip():
+            raise PermissionError("AISStream: evidencia/autorizador ausente")
+        try:
+            expiry = datetime.fromisoformat(self.expires_at.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise PermissionError("AISStream: autorizacao sem validade verificavel") from exc
+        if expiry.tzinfo is None or expiry.utcoffset() is None:
+            raise PermissionError("AISStream: validade sem timezone")
+        current = now or datetime.now(timezone.utc)
+        if current.tzinfo is None or current.utcoffset() is None:
+            raise PermissionError("AISStream: data de verificacao sem timezone")
+        if expiry <= current.astimezone(timezone.utc):
+            raise PermissionError("AISStream: direitos vencidos")
+        if operation == "COLLECT" and not self.collected_permission:
+            raise PermissionError("AISStream: coleta sem autorizacao")
+        if operation == "STORE" and not self.storage_permission:
+            raise PermissionError("AISStream: armazenamento sem autorizacao")
+        if operation == "DISPLAY_COMMERCIAL" and not self.commercial_display_permission:
+            raise PermissionError("AISStream: redistribuicao/exibicao sem autorizacao")
+        if operation not in {"COLLECT", "STORE", "DISPLAY_COMMERCIAL"}:
+            raise ValueError("operacao AISStream desconhecida")
+
+
+
+
 def _validate_stream_url(url: str) -> None:
     parsed = urlsplit(url)
-    if parsed.scheme != "wss" or parsed.hostname != AISSTREAM_HOST or parsed.username or parsed.password:
-        raise ValueError("AISStream exige WSS no host oficial stream.aisstream.io")
+    if (parsed.scheme != "wss" or parsed.hostname != AISSTREAM_HOST
+            or parsed.username or parsed.password or parsed.port not in (None, 443)
+            or parsed.path != "/v0/stream" or parsed.query or parsed.fragment):
+        raise ValueError("AISStream exige WSS e endpoint oficial exato sem redirecionamento")
 
 
 def stream_once(
     *,
     api_key: str,
     bounding_boxes: list[list[list[float]]],
+    rights: AISStreamRights | None = None,
     mmsi_filter: list[str] | None = None,
     max_messages: int | None = None,
     max_seconds: float | None = None,
@@ -38,12 +79,15 @@ def stream_once(
     Heartbeats are operational telemetry, not source offsets. max_seconds permits
     bounded Cloud Run capture windows while preserving reconnect between windows.
     """
+    if rights is None:
+        raise PermissionError("AISStream: autorizacao documental de coleta ausente")
+    rights.validate("COLLECT")
+    _validate_stream_url(url)
     try:
         from websockets.sync.client import connect
     except ImportError as exc:  # pragma: no cover
         raise RuntimeError("instale websockets>=15,<16 para AIS live") from exc
 
-    _validate_stream_url(url)
     subscription = build_subscription(api_key, bounding_boxes, mmsi_filter)
     count = 0
     deadline = time.monotonic() + max_seconds if max_seconds is not None else None
@@ -101,6 +145,7 @@ def run_forever(
     *,
     api_key: str,
     bounding_boxes: list[list[list[float]]],
+    rights: AISStreamRights | None = None,
     on_record: Callable[[dict[str, Any]], None],
     mmsi_filter: list[str] | None = None,
     stop_after_records: int | None = None,
@@ -112,6 +157,9 @@ def run_forever(
     on_reconnect: Callable[[dict[str, Any]], None] | None = None,
 ) -> int:
     """Reconnect with bounded exponential backoff until record/time limit is reached."""
+    if rights is None:
+        raise PermissionError("AISStream: autorizacao documental de coleta ausente")
+    rights.validate("COLLECT")
     delivered = 0
     failures = 0
     overall_deadline = time.monotonic() + stop_after_seconds if stop_after_seconds is not None else None
@@ -123,6 +171,7 @@ def run_forever(
         try:
             for row in stream_once(
                 api_key=api_key,
+                rights=rights,
                 bounding_boxes=bounding_boxes,
                 mmsi_filter=mmsi_filter,
                 max_messages=remaining_records,
