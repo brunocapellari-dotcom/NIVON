@@ -530,6 +530,8 @@ async function refreshAll({fit = false} = {}) {
       setStatus('idle', 'dados não homologados');
     } else if (state.gatewayMode === 'SYNTHETIC_TEST_ONLY') {
       setStatus('idle', 'SIMULAÇÃO — sem dados reais');
+    } else if (state.gatewayMode === 'SHADOW_INTERNAL') {
+      setStatus('idle', 'ANÁLISE INTERNA — não publicar');
     } else {
       setStatus('error', 'origem não homologada');
     }
