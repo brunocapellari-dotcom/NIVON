@@ -77,7 +77,7 @@ class TestAuditoriaANPOffline(unittest.TestCase):
             self.audit(saida=self.index)
 
     def test_link_sem_data_nao_e_semana_zero(self):
-        self.index.write_bytes(b"<html><body><a href='/anp'>Indice ANP</a></body></html>")
+        self.index.write_bytes(("<html><body><a href='/anp'>Indice ANP</a>" + "Estudo semanal sem links "*7 + "</body></html>").encode())
         res=self.audit()
         self.assertIn("SEM_SEMANA_LOCALIZADA_NO_INDICE",res["alertas"])
 
