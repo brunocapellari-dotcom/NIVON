@@ -1,0 +1,110 @@
+{
+  "project": "NIVON",
+  "module": "IVO",
+  "schema_version": "1.0",
+  "updated_on": "2026-10-19",
+  "default_policy": "RESEARCH_ONLY_NO_AUTO_INSTALL_NO_NETWORK_NO_COST",
+  "notes": "Repositórios de ferramentas, não novas fontes de dados ou coletores operacionais. Direitos por versão, dependências transitivas, limites de custo e segurança devem ser auditados antes da instalação. O código desenvolvido aqui é independente de bibliotecas terceiras.",
+  "components": [
+    {
+      "id": "STATSFORECAST",
+      "repository": "https://github.com/Nixtla/statsforecast",
+      "purpose": "previsoes estatisticas, intervalos e baseline sazonal",
+      "license_declared": "Apache-2.0",
+      "status": "ALREADY_OPTIONAL_IN_NIVON",
+      "priority": "P0",
+      "integration": "src/nivon/previsoes_bibliotecas.py",
+      "gate": "VALIDAR_VERSAO_COMPATIVEL_SERIES_REAIS_BACKTEST_ASOF"
+    },
+    {
+      "id": "MLFORECAST",
+      "repository": "https://github.com/Nixtla/mlforecast",
+      "purpose": "regressores preditivos com defasagens e covariaveis",
+      "license_declared": "Apache-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P0",
+      "integration": "IVO_MODEL_LAB",
+      "gate": "AUDITAR_FEATURES_ASOF_LICENCAS_BACKTEST_RECURSOS"
+    },
+    {
+      "id": "RIVER",
+      "repository": "https://github.com/online-ml/river",
+      "purpose": "aprendizado incremental e deteccao de drift",
+      "license_declared": "BSD-3-Clause",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P0",
+      "integration": "IVO_ONLINE_LEARNING",
+      "gate": "GARANTIR_LABEL_DISPONIVEL_ANTES_ATUALIZACAO_CONTROLE_DRIFT"
+    },
+    {
+      "id": "DUCKDB",
+      "repository": "https://github.com/duckdb/duckdb",
+      "purpose": "consulta e processamento local de historicos tabulares",
+      "license_declared": "MIT",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P0",
+      "integration": "IVO_HISTORICAL_QUERIES",
+      "gate": "ENCRIPTACAO_BACKUP_PERSISTENCIA_CLOUD_LIMITES"
+    },
+    {
+      "id": "NETWORKX",
+      "repository": "https://github.com/networkx/networkx",
+      "purpose": "grafo de eventos, mecanismos e dependencias causais hipoteticas",
+      "license_declared": "BSD-3-Clause",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "IVO_EVENT_GRAPH",
+      "gate": "AVALIAR_NAO_CONFUNDIR_CORRELACAO_COM_CAUSALIDADE"
+    },
+    {
+      "id": "LLAMAINDEX",
+      "repository": "https://github.com/run-llama/llama_index",
+      "purpose": "recuperacao de documentos, citacoes e RAG",
+      "license_declared": "MIT-core; plugins variam",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "IVO_KNOWLEDGE_RETRIEVAL",
+      "gate": "AUDITORIA_PLUGIN_E_DEPS_EVITAR_CHAMADAS_PAGAS"
+    },
+    {
+      "id": "MLFLOW",
+      "repository": "https://github.com/mlflow/mlflow",
+      "purpose": "versoes, experimentos, comparacao e auditoria",
+      "license_declared": "Apache-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "IVO_EXPERIMENT_REGISTRY",
+      "gate": "COMPARAR_SQLITE_EXISTENTE_CUSTO_OPERACIONAL_BACKUP"
+    },
+    {
+      "id": "DOWHY",
+      "repository": "https://github.com/py-why/dowhy",
+      "purpose": "validacao de hipoteses e inferencia causal",
+      "license_declared": "MIT",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P2",
+      "integration": "IVO_CAUSAL_RESEARCH",
+      "gate": "EXIGE_DESENHO_CAUSAL_IDENTIFICABILIDADE"
+    },
+    {
+      "id": "GRAPH_RAG",
+      "repository": "https://github.com/microsoft/graphrag",
+      "purpose": "referencia de extracao de relacoes entre documentos",
+      "license_declared": "MIT",
+      "status": "REFERENCE_ONLY_MAINTENANCE",
+      "priority": "P2",
+      "integration": "RESEARCH_ONLY",
+      "gate": "PROJETO_EM_MANUTENCAO_SEM_USO_RUNTIME"
+    },
+    {
+      "id": "HERMES_SELF_IMPROVEMENT",
+      "repository": "https://github.com/brunocapellari-dotcom/Hermes-AI-Platform",
+      "purpose": "workflow de autoaperfeicoamento com testes, auditoria e rollback",
+      "license_declared": "INTERNAL_REUSE_REVIEW",
+      "status": "REUSE_CONTRACT_ONLY",
+      "priority": "P0",
+      "integration": "src/hermes/self_improvement.py",
+      "gate": "EVITAR_DUPLICACAO_AUTORIDADE_CONTROLE_EXTERNALIZADO"
+    }
+  ]
+}
