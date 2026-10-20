@@ -38,7 +38,7 @@ class TestIVOReplayPersistido(unittest.TestCase):
         try:
             with self.assertRaises(PermissionError):
                 arquivar_replay_sintetico(r,ledger=led)
-            imp=arquivar_replay_sintetico(r,ledger=led,autorizado=True)
+            imp=arquivar_replay_sintetico(r,ledger=led,autorizado=True,fixture_sintetica_confirmada=True)
             self.assertEqual(imp["previsoes_novas"],12)
             self.assertEqual(imp["observacoes_novas"],12)
             self.assertEqual(imp["modo"],"BACKTEST")
@@ -50,7 +50,7 @@ class TestIVOReplayPersistido(unittest.TestCase):
             self.assertAlmostEqual(dados["mae"],r["mae_modelo"])
             self.assertAlmostEqual(dados["mae_baseline"],r["mae_baseline"])
             self.assertFalse(dados["promocao_automatica"])
-            segundo=arquivar_replay_sintetico(r,ledger=led,autorizado=True)
+            segundo=arquivar_replay_sintetico(r,ledger=led,autorizado=True,fixture_sintetica_confirmada=True)
             self.assertEqual(segundo["previsoes_novas"],0)
             self.assertEqual(segundo["observacoes_novas"],0)
             self.assertEqual(led.avaliar(
@@ -64,7 +64,7 @@ class TestIVOReplayPersistido(unittest.TestCase):
         led=LedgerPrevisoes()
         try:
             with self.assertRaises(ErroLedger):
-                arquivar_replay_sintetico(r,ledger=led,autorizado=True)
+                arquivar_replay_sintetico(r,ledger=led,autorizado=True,fixture_sintetica_confirmada=True)
             a=led.avaliar(corte=datetime(2025,1,1,tzinfo=timezone.utc))
             self.assertEqual(a["avaliadas"],0)
         finally:led.close()
@@ -75,7 +75,7 @@ class TestIVOReplayPersistido(unittest.TestCase):
         led=LedgerPrevisoes()
         try:
             with self.assertRaises(ErroLedger):
-                arquivar_replay_sintetico(r,ledger=led,autorizado=True)
+                arquivar_replay_sintetico(r,ledger=led,autorizado=True,fixture_sintetica_confirmada=True)
         finally:led.close()
 
     def test_replay_nao_pode_se_prometer_homologado(self):
@@ -84,7 +84,7 @@ class TestIVOReplayPersistido(unittest.TestCase):
         led=LedgerPrevisoes()
         try:
             with self.assertRaises(ErroLedger):
-                arquivar_replay_sintetico(r,ledger=led,autorizado=True)
+                arquivar_replay_sintetico(r,ledger=led,autorizado=True,fixture_sintetica_confirmada=True)
         finally:led.close()
 
 
