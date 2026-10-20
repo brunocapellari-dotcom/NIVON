@@ -21,7 +21,7 @@ def amostra(especie="BOVINO", indicador="BOI_GORDO", meses=40, delta=0):
             "especie": especie, "indicador": indicador,
             "unidade": MERCADOS[especie][indicador],
             "praca": "MT-SORRISO", "fonte_id": FONTE,
-            "competencia": competencia, "valor": float(valor),
+            "competencia": competencia, "data_referencia": competencia + "-20", "valor": float(valor),
             "publicacao": competencia + "-20T12:00:00Z",
             "coleta": competencia + "-21T12:00:00Z",
             "origem_sha256": SHA,
@@ -104,6 +104,8 @@ class TestPecuariaMercados(unittest.TestCase):
         for mod in ({"publicacao": "2026-01-01T10:00:00"},
                     {"valor": -1}, {"valor": float("nan")},
                     {"origem_sha256": "abc"},
+                    {"data_referencia": "2022-01-20"},
+                    {"data_referencia": "2023-02-31"},
                     {"coleta": "2022-01-01T00:00:00Z"}):
             a = args()
             a["serie"][0].update(mod)
