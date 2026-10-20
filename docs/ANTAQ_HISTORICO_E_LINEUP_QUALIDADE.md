@@ -52,7 +52,7 @@ pela internet nem resolve por si só a licença de redistribuição.
 - CDP: https://www.cdp.com.br/companhia-docas-do-para/programacao-de-navios/
   - índice contempla Vila do Conde/SCAP, Belém, Miramar, Outeiro e Santarém;
   - página Santarém: https://www.cdp.com.br/programacao-de-navios-do-porto-de-santarem/
-  - a tabela possui linhas antigas (ex. 2022). Agendar coleta sem filtrar
+  - o parser offline `lineup_cdp_santarem.py` separa várias mercadorias de uma linha WDT e mantém a quantidade em toneladas de cada mercadoria, mas a linha WDT não equivale a DUV nem comprova embarque realizado.\n  - a tabela possui linhas antigas (ex. 2022). Agendar coleta sem filtrar
     data da linha produz falseamento de situação atual.
 - Portos RS: https://www.portosrs.com.br/site/
   - links para esperado, programado, em operação, fundeado e line-up de Rio Grande;
