@@ -385,7 +385,11 @@
         "ECMWF_MODELOS",
         "ANA_HIDRO",
         "ZARC_JANELAS",
-        "CONAB_PROGRESSO_SEMANAL"
+        "CONAB_PROGRESSO_SEMANAL",
+        "NASA_POWER_AG",
+        "CHIRPS_V3_CHUVA",
+        "ERA5_LAND_CDS",
+        "NASA_GPM_IMERG"
       ],
       "indicators_planned": 7,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -561,7 +565,10 @@
         "nivon.inmet_historico:planejar_historico",
         "nivon.inmet_historico:inspecionar_arquivo",
         "nivon.inmet_bdmep:conferir_zip_bdmep",
-        "nivon.inmet_bdmep:receber_bdmep"
+        "nivon.inmet_bdmep:receber_bdmep",
+        "nivon.motores_agrometeorologia_fao56:et0_fao56_diaria",
+        "nivon.motores_agrometeorologia_fao56:deficit_hidrico_fenologico",
+        "nivon.motores_agrometeorologia_fao56:diagnosticar_chuva_climatologica"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -569,9 +576,13 @@
         "NOAA_GFS",
         "ECMWF_MODELOS",
         "ZARC_JANELAS",
-        "CONAB_PROGRESSO_SEMANAL"
+        "CONAB_PROGRESSO_SEMANAL",
+        "NASA_POWER_AG",
+        "CHIRPS_V3_CHUVA",
+        "ERA5_LAND_CDS",
+        "NASA_GPM_IMERG"
       ],
-      "indicators_planned": 10,
+      "indicators_planned": 15,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
       "inputs_reais_homologados": false,
       "previsao_homologada": false,
@@ -588,7 +599,10 @@
         "nivon.series_ambientais:consultar_asof",
         "nivon.ana_hidrowebservice:credenciais_ambiente",
         "nivon.ana_hidrowebservice:normalizar_adotada",
-        "nivon.ana_hidrowebservice:construir_consulta_adotada"
+        "nivon.ana_hidrowebservice:construir_consulta_adotada",
+        "nivon.motores_hidrologia_cientifica:curva_chave_interpolada",
+        "nivon.motores_hidrologia_cientifica:balanco_reservatorio_diario",
+        "nivon.motores_hidrologia_cientifica:avaliar_previsao_vazao"
       ],
       "data_dependencies": [
         "ANA_HIDRO",
@@ -596,9 +610,12 @@
         "CPTEC_MERGE",
         "NOAA_GFS",
         "ANTAQ_MOVIMENTACAO",
-        "ONTL_REDE_CUSTOS"
+        "ONTL_REDE_CUSTOS",
+        "CHIRPS_V3_CHUVA",
+        "ERA5_LAND_CDS",
+        "NASA_GPM_IMERG"
       ],
-      "indicators_planned": 9,
+      "indicators_planned": 12,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
       "inputs_reais_homologados": false,
       "previsao_homologada": false,

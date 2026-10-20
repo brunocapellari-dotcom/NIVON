@@ -24,10 +24,10 @@ class TestIntegracaoConvergente(unittest.TestCase):
 
     def test_130_datasets_rotas_e_96_fontes_sem_execucao(self):
         meta=validar_catalogo(self.cat)
-        self.assertEqual(meta["datasets"],131)
-        self.assertEqual(meta["fontes"],96)
+        self.assertEqual(meta["datasets"],135)
+        self.assertEqual(meta["fontes"],100)
         self.assertEqual(meta["portos_br"],45)
-        self.assertEqual(validar_rotas(self.rotas,self.cat)["rotas"],131)
+        self.assertEqual(validar_rotas(self.rotas,self.cat)["rotas"],135)
         self.assertTrue(all(not d["enabled"] for d in self.cat["datasets"]))
         self.assertTrue(all(not r["runtime_enabled"] and not r["scheduled_enabled"] for r in self.rotas["entries"]))
 
