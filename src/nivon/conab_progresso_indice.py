@@ -70,25 +70,27 @@ class _Ancora(HTMLParser):
         self.links = []
         self.atual = None
         self.rotulo = []
-        self.trailer = []
+        self.indice_trailer = None
 
     def handle_starttag(self, tag, attrs):
         if tag == "a":
+            # Nunca atribuir metadados após um link não relacionado ao boletim.
+            self.indice_trailer = None
             self.atual = dict(attrs).get("href")
             self.rotulo = []
-            self.trailer = [] if not self.links else self.trailer
 
     def handle_data(self, data):
         if self.atual is not None:
             self.rotulo.append(data)
-        elif self.links:
-            self.links[-1]["trailer"] += " " + data[:200]
+        elif self.indice_trailer is not None:
+            self.links[self.indice_trailer]["trailer"] += " " + data[:200]
 
     def handle_endtag(self, tag):
         if tag == "a" and self.atual is not None:
             rotulo = " ".join(" ".join(self.rotulo).split())
             if ROTULO.fullmatch(rotulo):
                 self.links.append({"href": self.atual, "label": rotulo, "trailer": ""})
+                self.indice_trailer = len(self.links) - 1
             self.atual = None
             self.rotulo = []
 
