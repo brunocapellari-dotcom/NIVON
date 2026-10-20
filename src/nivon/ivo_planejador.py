@@ -96,7 +96,7 @@ def planejar_consulta(pergunta: str, *, catalogo=None, matriz=None, registro=Non
     fontes = {f["id"]: f for f in catalogo["sources"]}
     if len(sistemas) != len(matriz["systems"]) or len(motores) != len(registro["engines"]):
         raise ErroPlanejamento("frentes ou motores duplicados")
-    if not set(sistemas).issubset(motores) or not set(sistemas).issubset(TERMOS | {"CLIMA_HIDRO"}):
+    if not set(sistemas).issubset(motores) or not set(sistemas).issubset(set(TERMOS) | {"CLIMA_HIDRO"}):
         raise ErroPlanejamento("registro de motores inconsistente")
     if any(m.get("operational_enabled") is not False or
            m.get("previsao_homologada") is not False for m in motores.values()):
