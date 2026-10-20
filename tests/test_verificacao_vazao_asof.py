@@ -13,7 +13,7 @@ def fixture(n=36):
     rows = []
     for i in range(n):
         valid = base + timedelta(days=i + 2)
-        issue = valid - timedelta(hours=24)
+        issue = valid - timedelta(hours=48)
         pub = issue + timedelta(minutes=30)
         observed = 100.0 + i
         iso = lambda x: x.isoformat()
@@ -41,7 +41,7 @@ def run(rows):
         registros=rows, estacao_id="ANA_12345678",
         modelo_id="pesquisa_bacias", versao_modelo="modelo_v1",
         referencia_vertical="datum_local_ANA",
-        horizonte_horas=24, passo_horas=24,
+        horizonte_horas=48, passo_horas=24,
         fonte_observada="ANA_HidroWeb_snapshot_test",
         fonte_baseline="baseline_persistencia_snapshot_test",
     )
@@ -58,7 +58,7 @@ class VerificacaoVazaoTests(unittest.TestCase):
         self.assertAlmostEqual(result["skill_mse_baseline"], 1)
         self.assertFalse(result["homologado"])
         self.assertFalse(result["origem_vintages_auditada_externamente"])
-        self.assertAlmostEqual(result["antecedencia_efetiva_minima_horas"], 23.5)
+        self.assertAlmostEqual(result["antecedencia_efetiva_minima_horas"], 47.5)
 
     def test_erro_constante_volumetrico_fisicamente_consistente(self):
         rows = fixture()
@@ -144,6 +144,25 @@ class VerificacaoVazaoTests(unittest.TestCase):
                 referencia_vertical="datum_local_ANA", horizonte_horas=24,
                 passo_horas=24, fonte_observada="ANA_teste",
                 fonte_baseline="base_teste", minimo=29,
+            )
+
+    def test_previsao_intraintervalo_de_vazao_bloqueada(self):
+        rows = fixture()
+        valid = datetime.fromisoformat(rows[3]["valido_em"])
+        start = valid - timedelta(hours=24)
+        rows[3]["previsao_coletada_em"] = (start + timedelta(minutes=1)).isoformat()
+        with self.assertRaises(ErroVerificacaoVazao):
+            run(rows)
+
+    def test_horizonte_curto_demais_para_vazao_media_24h(self):
+        with self.assertRaises(ErroVerificacaoVazao):
+            avaliar_hidrograma_asof(
+                registros=fixture(), estacao_id="ANA_12345678",
+                modelo_id="pesquisa_bacias", versao_modelo="modelo_v1",
+                referencia_vertical="datum_local_ANA",
+                horizonte_horas=12, passo_horas=24,
+                fonte_observada="ANA_HidroWeb_snapshot_test",
+                fonte_baseline="baseline_persistencia_snapshot_test",
             )
 
     def test_horizonte_e_timezone_obrigatorios(self):
