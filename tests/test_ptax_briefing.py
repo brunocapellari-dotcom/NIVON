@@ -143,6 +143,13 @@ class TestPTAXBriefing(unittest.TestCase):
         with self.assertRaises(ErroPTAXBriefing):
             normalizar_snapshot_ptax(snap,plano())
 
+    def test_defasagem_pelo_dia_de_brasilia_nao_pelo_utc(self):
+        x,_=self.processar()
+        r=construir_indicador_ptax(
+            x,gerado_em="2026-10-20T23:30:00-03:00",
+            dataset=dataset(),direitos=direitos(),atraso_maximo_dias=1)
+        self.assertIn("5.0600",r["indicador"]["valor"])
+
     def test_boletim_muito_antigo_nao_e_preco_do_dia(self):
         x,_=self.processar()
         with self.assertRaisesRegex(ErroPTAXBriefing,"antigo"):
