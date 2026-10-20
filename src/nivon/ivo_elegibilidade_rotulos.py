@@ -251,13 +251,22 @@ def serie_elegivel_experimental(atestacoes: list[AtestacaoResultado], *,
     catalogo: dict | None = None, minimo_periodos: int = 3,
     registro_db: sqlite3.Connection | None = None,
 ) -> tuple[Observacao, ...]:
-    """Nunca habilita treino real: apenas fixtures sintéticas com gate aprovado."""
+    """Preserva todas as vintages sintéticas elegíveis, sem treino real.
+
+    A função consumidora deve aplicar visao_na_data em CADA emissão
+    histórica: um snapshot único atual destruiria a trilha de revisões.
+    """
     resultado = avaliar_elegibilidade(
         atestacoes, corte=corte, permitir_sintetico=permitir_sintetico,
         catalogo=catalogo, registro_db=registro_db,
         minimo_periodos=minimo_periodos)
     if resultado["estado"] != "ELEGIVEL_EXPERIMENTO_SINTETICO":
         raise PermissionError("labels não habilitados para laboratório sintético")
-    return tuple(visao_na_data(
-        [a.observacao for a in atestacoes],
-        data_corte_publicacao=corte.date(), instante_corte_coleta=corte))
+    # NÃO colapsar as revisões num snapshot "atual". Treinamento
+    # walk-forward precisa das versões antigas para reconstruir o que
+    # realmente era conhecido em cada emissão histórica.
+    return tuple(sorted(
+        (a.observacao for a in atestacoes),
+        key=lambda o: (o.competencia, o.publicacao,
+                       _utc(o.coleta, "coleta"), o.edicao),
+    ))
