@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation, localcontext
-from hashlib import sha256
 import re
 
 
@@ -47,7 +46,8 @@ _UFS = frozenset({11,12,13,14,15,16,17,21,22,23,24,25,26,27,28,29,
                  31,32,33,35,41,42,43,50,51,52,53})
 _SHA = re.compile(r"[a-f0-9]{64}\Z")
 _HIST_CAMPOS = frozenset({
-    "ano_safra", "area_colhida_ha", "producao_t",
+    "ano_safra", "cultura", "segmento", "produto_fisico", "regiao_ibge",
+    "area_colhida_ha", "producao_t",
     "publicado_em", "disponivel_em", "coletado_em",
     "fonte_id", "edicao_id", "raw_sha256",
 })
@@ -121,9 +121,9 @@ def estimar_oferta_remanescente(
 ) -> dict:
     """Cenários Q10/Q50/Q90 de rendimento histórico para área ainda por colher.
 
-    observacao_atual: area_alvo_colheita_ha (projeção de área final),
+    observacao_atual: identidade da cultura/segmento/produto/região + area_alvo_colheita_ha (projeção de área final),
       area_colhida_ha, producao_colhida_t + metadados de proveniência.
-    historico: uma observação por safra ANTERIOR do mesmo segmento/produto/região,
+    historico: mesmas chaves canônicas; uma observação por safra ANTERIOR do mesmo segmento/produto/região,
       com area_colhida_ha, producao_t e metadados de publicação/captura.
     Nenhum valor pode ser tratado como predição validada ou volume realizado.
     """
@@ -140,11 +140,15 @@ def estimar_oferta_remanescente(
     corte = _instante(emitido_em, "emitido_em")
     if not isinstance(observacao_atual, dict) or not isinstance(historico, list):
         raise ErroCenarioSafra("observação e histórico obrigatórios")
-    atuais = frozenset({"area_alvo_colheita_ha", "area_colhida_ha", "producao_colhida_t",
+    atuais = frozenset({"cultura", "segmento", "produto_fisico", "regiao_ibge",
+                       "area_alvo_colheita_ha", "area_colhida_ha", "producao_colhida_t",
                        "publicado_em", "disponivel_em", "coletado_em", "fonte_id",
                        "edicao_id", "raw_sha256"})
     if set(observacao_atual) != atuais:
         raise ErroCenarioSafra("contrato de observação atual incompleto ou alterado")
+    ids = (cultura, segmento, produto_fisico, regiao_ibge)
+    if tuple(observacao_atual[k] for k in ("cultura", "segmento", "produto_fisico", "regiao_ibge")) != ids:
+        raise ErroCenarioSafra("identidade de cultura/safra/produto/região atual divergente")
     if not _prova(observacao_atual, corte):
         raise ErroCenarioSafra("observação atual ainda indisponível no cutoff")
     area_alvo = _decimal(observacao_atual["area_alvo_colheita_ha"], "area_alvo_colheita_ha", positivo=True)
@@ -161,6 +165,8 @@ def estimar_oferta_remanescente(
     for row in historico:
         if not isinstance(row, dict) or set(row) != _HIST_CAMPOS:
             raise ErroCenarioSafra("contrato histórico incompleto ou alterado")
+        if tuple(row[k] for k in ("cultura", "segmento", "produto_fisico", "regiao_ibge")) != ids:
+            raise ErroCenarioSafra("mistura histórica de cultura, safra, produto físico ou região")
         y = row["ano_safra"]
         if type(y) is not int or not 1970 <= y < ano_safra or y in vistos:
             raise ErroCenarioSafra("safra futura, duplicada ou inválida")
