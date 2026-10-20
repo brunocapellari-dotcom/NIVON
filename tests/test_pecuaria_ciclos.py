@@ -9,22 +9,22 @@ FONTE = "hipotese sintetica identificada; nao dado real"
 
 
 class TestPecuariaCiclos(unittest.TestCase):
-    def teste_racao(self):
+    def _racao(self):
         return dict(fracao_milho=.65, fracao_farelo_soja=.30, fracao_outros=.05,
                     preco_milho_rs_t=1000, preco_farelo_soja_rs_t=2000,
                     preco_outros_rs_t=500, fonte_parametros=FONTE)
 
     def test_racao_em_rs_kg_e_nao_rs_t(self):
-        self.assertAlmostEqual(custo_racao_kg(**self.teste_racao()), 1.275)
+        self.assertAlmostEqual(custo_racao_kg(**self._racao()), 1.275)
 
     def test_racao_sem_balanco_rejeitada(self):
         with self.assertRaises(DadoInvalido):
-            custo_racao_kg(**dict(self.teste_racao(), fracao_milho=.5))
+            custo_racao_kg(**dict(self._racao(), fracao_milho=.5))
 
     def test_racao_nao_admite_preco_negativo_nan_bool(self):
         for preco in (True, -1, float("nan"), float("inf")):
             with self.assertRaises(DadoInvalido):
-                custo_racao_kg(**dict(self.teste_racao(), preco_milho_rs_t=preco))
+                custo_racao_kg(**dict(self._racao(), preco_milho_rs_t=preco))
 
     def test_bovino_arroba_carcaca_e_margem_por_cabeca(self):
         x = simular_ciclo_bovino(
