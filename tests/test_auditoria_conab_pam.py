@@ -148,6 +148,7 @@ class TestAuditoriaConabPam(unittest.TestCase):
         p = pam()
         p["cultura"] = "MILHO"
         p["produto_ibge"] = "MILHO_GRAO_TOTAL"
+        p["codigo_categoria_c81"] = "2711"
         result = confronto(pacote_conab=r, agregado_pam=p)
         self.assertEqual(result["diferenca_producao_t"], "100")
 
