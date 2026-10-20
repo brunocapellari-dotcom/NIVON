@@ -77,10 +77,66 @@ class MaritimeShadowFixture:
             raise ValueError("staging fixture must be explicitly synthetic")
 
 
+@dataclass(frozen=True)
+class MaritimeInternalSnapshot:
+    """Only audit-produced nonpublishable results, never a public/live source."""
+    vessel_rows: tuple[dict, ...]
+    lineup_rows: tuple[dict, ...]
+    replay_rows: tuple[dict, ...]
+
+    @classmethod
+    def from_analysis(cls, report: dict, *, lineup_calls: tuple = ()) -> "MaritimeInternalSnapshot":
+        if (
+            report.get("engine") != "NIVON_MARITIME_INTELLIGENCE_V1"
+            or report.get("status") != "SHADOW_DIAGNOSTIC"
+            or report.get("publication_allowed") is not False
+            or report.get("external_actions_allowed") is not False
+            or report.get("release", {}).get("status") != "BLOCKED"
+        ):
+            raise ValueError("analise sem bloqueio deterministico; nao exportar")
+        port = report.get("port_id")
+        positions = report.get("trusted_positions_internal_only") or []
+        if not isinstance(positions, list):
+            raise ValueError("formato AIS interno invalido")
+        for x in positions:
+            if x.get("port_id") != port or x.get("quality_status") != "CONFIRMED_SEQUENCE":
+                raise ValueError("posicao AIS nao corroborada ou porto incorreto")
+        reconciled = {x["call_id"]: x for x in report.get("reconciliation", [])}
+        lineup: list[dict] = []
+        if lineup_calls and report.get("evidence", {}).get("lineup_analyzed") != len(lineup_calls):
+            raise ValueError("line-up nao aprovado no coordenador")
+        for call in lineup_calls:
+            if call.port_id != port:
+                raise ValueError("line-up fora do escopo")
+            match = reconciled.get(call.call_id, {})
+            lineup.append({
+                "port_id": port, "call_id": call.call_id,
+                "vessel_name": call.vessel_name, "imo": call.imo, "mmsi": call.mmsi,
+                "eta": str(call.eta), "collected_at": str(call.collected_at),
+                "product": call.product, "planned_volume_t": call.planned_volume_t,
+                "reconciled_state": match.get("state", "PROGRAMMED"),
+                "evidence_class": "INFORMADO_LINEUP",
+                "match_method": match.get("match_method"),
+                "match_confidence": match.get("match_confidence"),
+                "flags_json": "[]",
+                "calculated_at": report.get("calculated_at"),
+            })
+        return cls(
+            vessel_rows=tuple(dict(x) for x in positions),
+            lineup_rows=tuple(lineup),
+            replay_rows=tuple(dict(x) for x in positions),
+        )
+
+
 class MaritimeReadAPI:
-    def __init__(self, *, fixture: MaritimeShadowFixture | None = None) -> None:
+    def __init__(self, *, fixture: MaritimeShadowFixture | None = None,
+                 internal: MaritimeInternalSnapshot | None = None) -> None:
+        if fixture is not None and internal is not None:
+            raise ValueError("nao misturar simulacao e evidencia interna")
         self.fixture = fixture
-        self.mode = "SYNTHETIC_TEST_ONLY" if fixture else "DATA_GATED"
+        self.internal = internal
+        self.mode = ("SHADOW_INTERNAL" if internal is not None else
+                     "SYNTHETIC_TEST_ONLY" if fixture is not None else "DATA_GATED")
 
     def resolve(self, path: str, query: str = "") -> tuple[int, dict]:
         if len(path) > 200 or len(query) > 512:
@@ -105,8 +161,10 @@ class MaritimeReadAPI:
         meta = {
             "status": self.mode,
             "publication_allowed": False,
-            "data_origin": "SYNTHETIC_FIXTURE" if self.fixture else "NO_SOURCE",
-            "evidence_class": "SIMULADO" if self.fixture else "SEM_DADO",
+            "data_origin": ("AUDITED_INTERNAL_NOT_PUBLISHED" if self.internal is not None else
+                            "SYNTHETIC_FIXTURE" if self.fixture is not None else "NO_SOURCE"),
+            "evidence_class": ("DIAGNOSTICO_INTERNO" if self.internal is not None else
+                               "SIMULADO" if self.fixture is not None else "SEM_DADO"),
             "warning": "Staging local: nenhum dado ou operacao real homologados",
         }
         if path == "/v1/maritime/config":
@@ -148,7 +206,7 @@ class MaritimeReadAPI:
             return {**meta, "data": rows[:limit]}
         _parameter(p, "hours", default=24, minimum=1, maximum=168)
         _parameter(p, "future_hours", default=336, minimum=1, maximum=1080)
-        if not self.fixture:
+        if self.fixture is None and self.internal is None:
             return {**meta, "data": {
                 "vessels_live": None, "vessels_approaching": None,
                 "vessels_waiting": None, "vessels_berthed": None,
@@ -177,7 +235,8 @@ class MaritimeReadAPI:
             return float("-inf")
 
     def _rows(self, name: str) -> tuple[dict, ...]:
-        return getattr(self.fixture, name) if self.fixture else ()
+        obj = self.internal if self.internal is not None else self.fixture
+        return getattr(obj, name) if obj is not None else ()
 
 
 class MaritimeLocalWSGI:
