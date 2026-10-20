@@ -117,6 +117,13 @@ def ingerir_json_local(db:sqlite3.Connection, catalogo:dict, *, payload:bytes,
     """
     if dataset_id not in _CAMPOS:
         raise ErroIngestaoAPI("dataset não suportado")
+    if tipo == "REAL_AUTORIZADO":
+        # Direitos informados pelo chamador não substituem a governança do catálogo.
+        matches=[x for x in catalogo.get("datasets",[])
+                 if x.get("id")==dataset_id]
+        if (len(matches)!=1 or matches[0].get("enabled") is not True
+                or matches[0].get("collection_authorized") is not True):
+            raise PermissionError("registro real bloqueado: dataset desativado no catálogo")
     coleta=_utc(coletado_em)
     dados=_normalizar_bytes(payload,dataset_id,plano,coleta)
     sha=hashlib.sha256(payload).hexdigest()

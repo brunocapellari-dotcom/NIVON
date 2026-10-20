@@ -60,7 +60,18 @@ class TestPipelineOficialJSON(unittest.TestCase):
     def test_real_requires_documented_rights(self):
         with self.assertRaises(PermissionError):
             self.gravar(tipo="REAL_AUTORIZADO")
-        ok=self.gravar(tipo="REAL_AUTORIZADO",
+        with self.assertRaises(PermissionError):
+            self.gravar(tipo="REAL_AUTORIZADO",
+                autorizacoes=frozenset({"COLETA","ARMAZENAMENTO"}),
+                evidencia_direitos="DOC-2026-001")
+        # Catálogo real continua OFF; testar o caminho de aprovação
+        # somente em catálogo isolado e sintético desta unidade de teste.
+        fixture_cat={"datasets":[{"id":"BCB_PTAX","source_id":"BCB",
+                                   "enabled":True,"collection_authorized":True}]}
+        ok=ingerir_json_local(self.db,fixture_cat,dataset_id="BCB_PTAX",
+                payload=ptaxpayload(),plano=ptaxplano(),
+                coletado_em="2026-10-19T12:00:00Z",
+                tipo="REAL_AUTORIZADO",
                 autorizacoes=frozenset({"COLETA","ARMAZENAMENTO"}),
                 evidencia_direitos="DOC-2026-001")
         self.assertTrue(ok["nova_versao"])
