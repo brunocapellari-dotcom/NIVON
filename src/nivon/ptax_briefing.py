@@ -163,14 +163,27 @@ def construir_indicador_ptax(dados: dict, *, gerado_em: str,
     if not (venda.is_finite() and compra.is_finite() and venda>=compra>0):
         raise ErroPTAXBriefing("compra/venda PTAX inválida")
     moeda=dados["moeda"]
-    texto=f"R$ {venda:.4f}/{moeda} (venda, PTAX fechamento)"
+    texto=f"R$ {venda:.4f}/{moeda} (venda, PTAX fechamento; R$/{moeda})"
     return {
         "indicador":{"fonte_id":"BCB_PTAX","secao":"CAMBIO",
+                     "grupo":"CAMBIO",
                      "titulo":f"{moeda}/BRL — PTAX fechamento","valor":texto,
+                     "valor_num":str(venda),"unidade":f"R$/{moeda}",
+                     "competencia":fechamento["competencia"],
+                     "natureza":"OBSERVADO",
                      "referencia":fechamento["referencia"],
+                     "coletado_em":dados["coletado_em"],
+                     "sha256_origem":dados["sha256"],
+                     "sessao_fechamento":fechamento["competencia"],
+                     # Último boletim encontrado no RAW != última sessão oficial concluída.
+                     "ultima_sessao_concluida":None,
+                     "fechamento_confirmado":False,
+                     # Endpoint OData não expõe timestamp de publicação deste boletim.
+                     "publicado_em":None,
                      "fonte":"Banco Central do Brasil (PTAX, ODbL)"},
         "fonte_briefing":{"BCB_PTAX":{"status_direitos":"APROVADA",
-                          "operacoes":["LEITURA","PUBLICACAO_DERIVADA"]}},
+                          "operacoes":["LEITURA","PUBLICACAO_DERIVADA"],
+                          "id_aprovacao":direitos["evidencia_id"]}},
         "evidencia":{"snapshot_sha256":dados.get("sha256"),
                     "fechamento_competencia":d.isoformat(),
                     "cotacao_compra":str(compra),"cotacao_venda":str(venda),
