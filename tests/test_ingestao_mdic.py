@@ -67,6 +67,9 @@ class TestMDICIngestao(unittest.TestCase):
               direcao="EXPORTACAO",granularidade="NCM",
               codigos=frozenset({"12019000","31021010"}),
               coletado_em="2026-10-20T14:00:00Z")
+        self.assertEqual(
+            self.db.execute("SELECT count(*) FROM nivon_coletas").fetchone()[0],1,
+            "ingestão recusada nunca deve registrar coleta adicional")
     def test_backup_restore_aggregate_and_ledger(self):
         self.ingerir()
         backup=self.dir/"copia.sqlite"

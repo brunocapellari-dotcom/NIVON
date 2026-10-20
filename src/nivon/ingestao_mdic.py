@@ -80,6 +80,26 @@ def ingerir_arquivo_mdic(
         granularidade=granularidade,codigos=codigos,coletado_em=coleta,
         limite_bytes=limite_bytes)
     _conferir_resumo(resultado)
+    normal=json.dumps({
+        "codigos_solicitados":sorted(codigos),
+        "recortes":resultado["recortes"],
+        "totais_arquivo_por_mes":resultado["totais_arquivo_por_mes"],
+        "linhas_total":resultado["linhas_total"],
+        "linhas_filtradas":resultado["linhas_filtradas"],
+    },ensure_ascii=False,sort_keys=True,separators=(",",":"),allow_nan=False)
+    # Rejeitar alteração de filtro ANTES de registrar data de coleta no ledger.
+    # Ingestões recusadas não podem parecer observações históricas válidas.
+    _tabelas(db)
+    antigo=db.execute("""SELECT a.resultado_json,a.ano,a.direcao,a.granularidade
+        FROM nivon_mdic_agregados a
+        JOIN nivon_snapshots s ON s.id=a.snapshot_id
+        WHERE s.dataset_id=? AND s.sha256=?""",
+        (did,resultado["sha256_original"])).fetchone()
+    if antigo is not None and (
+        antigo["resultado_json"]!=normal or antigo["ano"]!=ano or
+        antigo["direcao"]!=direcao or antigo["granularidade"]!=granularidade
+    ):
+        raise ErroIngestaoMDIC("SHA repetido com seleção/classificação divergente")
     snapshot=registrar_snapshot(db,catalogo,dataset_id=did,
         sha256=resultado["sha256_original"],tamanho=resultado["bytes_original"],
         mime="text/csv",schema_versao="MDIC_ANUAL_1",coletado_em=coleta,
@@ -88,13 +108,6 @@ def ingerir_arquivo_mdic(
     _tabelas(db)
     sid=db.execute("SELECT id FROM nivon_snapshots WHERE dataset_id=? AND sha256=?",
                    (did,resultado["sha256_original"])).fetchone()[0]
-    normal=json.dumps({
-        "codigos_solicitados":sorted(codigos),
-        "recortes":resultado["recortes"],
-        "totais_arquivo_por_mes":resultado["totais_arquivo_por_mes"],
-        "linhas_total":resultado["linhas_total"],
-        "linhas_filtradas":resultado["linhas_filtradas"],
-    },ensure_ascii=False,sort_keys=True,separators=(",",":"),allow_nan=False)
     with db:
         previo=db.execute("SELECT * FROM nivon_mdic_agregados WHERE snapshot_id=?",(sid,)).fetchone()
         if previo is not None:
