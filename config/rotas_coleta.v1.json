@@ -401,12 +401,12 @@
         "url": "https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/serie-historica-de-precos-de-combustiveis",
         "source_proof": "https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/arquivos/shpc/dsan/2026"
       },
-      "implementation_scope": "anp_diesel.py; anp_manifesto.py (parser local e descoberta de links offline) (sem coleta periódica, dados reais não homologados)",
+      "implementation_scope": "anp_diesel.py + anp_manifesto.py: preços por posto CSV mensal com semana inferida; recurso semanal consolidado XLSX oficial identificado, parser específico ainda não homologado",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "WEEKLY_XLSX_DOWNLOAD_SCHEMA_RIGHTS_VALIDATION",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -419,8 +419,18 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Diesel S10/S500: preço observado semanal por cidade, snapshot em CSV publicado mensalmente. Fonte não fornece paridade internacional.",
-      "preliminary_evidence": "ANP_CSV_AMOSTRA_REAL_E_PLANO_INDICE_OFFLINE"
+      "source_note": "Para preço semanal por município priorizar planilha oficial ANP 'semanal-municipios-2026.xlsx'. Não tratar agrupamento domingo-sábado do CSV mensal como série semanal oficial ANP. Download e schema reais pendentes.",
+      "preliminary_evidence": "OFFICIAL_WEEKLY_MUNICIPAL_XLSX_INDEX_VERIFIED_20261020_DOWNLOAD_NOT_TESTED",
+      "recurso_prioritario_semanal": {
+        "url_pagina": "https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/precos-revenda-e-de-distribuicao-combustiveis/shlp/semanal/semanal-municipios-2026.xlsx/view",
+        "indice": "https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/precos-revenda-e-de-distribuicao-combustiveis/shlp/semanal/",
+        "ano": 2026,
+        "formato_publicado": "XLSX",
+        "unidade_preco": "BRL/L",
+        "metodologia": "PRECO_MEDIO_MUNICIPAL_ANP_SEMANA_OFICIAL",
+        "download_url_real": "PENDENTE_CAPTURA",
+        "schema_real": "NAO_HOMOLOGADO"
+      }
     },
     {
       "dataset_id": "ANTAQ_MOVIMENTACAO",
@@ -642,12 +652,12 @@
         "url": "https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/",
         "source_proof": "https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/documentacao"
       },
-      "implementation_scope": "ptax_plano.py + bcb_ptax.py + pipeline_api_dados.py (USD diário real schema, sem operação)",
+      "implementation_scope": "ptax_plano.py + bcb_ptax.py + ptax_briefing.py + pipeline_briefing.py: OData USD/EUR, Fechamento estrito, captura autorizada offline/mocks; sem scheduler",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "CATALOG_RUNTIME_OFF_ODBL_COMPLIANCE_SCHEDULER",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -659,8 +669,18 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Endpoint OData do dólar por período verificado no esquema; NÃO comprova todos boletins nem a operação EUR e nenhum direito de publicação.",
-      "preliminary_evidence": "OFFICIAL_ODATA_USD_SCHEMA_OBSERVED_20261019_EUR_UNTESTED"
+      "source_note": "BCB publica PTAX em OData com licença ODbL e fechamento de boletim distinto de spot/interbancário. Código de acesso e adaptação ao briefing testados com fixtures; não ativado em produção.",
+      "preliminary_evidence": "BCB_ODATA_LICENSE_ODBL_DOCUMENTED_PARSER_AND_BRIEFING_TESTED_OFFLINE",
+      "licenca_publica_verificada": {
+        "id": "ODbL-1.0",
+        "published_at": "https://dadosabertos.bcb.gov.br/dataset/dolar-americano-usd-todos-os-boletins-diarios",
+        "requisitos_pendentes": [
+          "REVISAR_ATTRIBUTION",
+          "REVISAR_SHAREALIKE_DADOS_DERIVADOS",
+          "DOCUMENTAR_DIREITOS_COMERCIAIS"
+        ],
+        "status": "LICENCA_IDENTIFICADA_OBRIGACOES_NAO_HOMOLOGADAS"
+      }
     },
     {
       "dataset_id": "BCB_SGS_FOCUS",
