@@ -156,6 +156,14 @@
       "notes": ""
     },
     {
+      "id": "COPERNICUS_CDS",
+      "provider": "Copernicus ERA5 Land",
+      "official_url": "https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land?tab=documentation",
+      "access": "PUBLIC_FILES_API",
+      "rights": "REVIEW",
+      "notes": "Reanálise 0.1 grau; revisões e latência; API CDS requer acesso"
+    },
+    {
       "id": "CPTEC",
       "provider": "INPE/CPTEC",
       "official_url": "https://www.cptec.inpe.br/",
@@ -282,6 +290,22 @@
       "access": "PUBLIC_BULK",
       "rights": "REVIEW",
       "notes": ""
+    },
+    {
+      "id": "NASA_GPM",
+      "provider": "NASA GPM IMERG v07",
+      "official_url": "https://gpm.nasa.gov/data/imerg",
+      "access": "PUBLIC_FILES_API",
+      "rights": "REVIEW",
+      "notes": "Estimativas meia hora com versão/latência; nunca confundir taxa com acumulado"
+    },
+    {
+      "id": "NASA_POWER",
+      "provider": "NASA Langley POWER",
+      "official_url": "https://power.larc.nasa.gov/docs/services/api/temporal/daily/",
+      "access": "PUBLIC_FILES_API",
+      "rights": "REVIEW",
+      "notes": "Grade diária; não estação"
     },
     {
       "id": "NOAA",
@@ -730,6 +754,14 @@
       "access": "PUBLIC_STATISTICS",
       "rights": "REVIEW",
       "notes": ""
+    },
+    {
+      "id": "UCSB_CHC",
+      "provider": "UCSB CHIRPS v3",
+      "official_url": "https://www.chc.ucsb.edu/data/chirps3",
+      "access": "PUBLIC_FILES_API",
+      "rights": "ATTRIBUTION_REVIEW",
+      "notes": "CHIRPS v3 source page identifies CC BY 4.0, requires attribution and version/produto. Daily RNL (ERA5) and SAT (IMERG Late v7) are pentad-derived, Preliminary and Final have different availability."
     },
     {
       "id": "UNCOMTRADE",
@@ -1497,6 +1529,38 @@
       "downstream_contract": "OBSERVACAO_CANONICA_V1"
     },
     {
+      "id": "CHIRPS_V3_CHUVA",
+      "source_id": "UCSB_CHC",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "SORGO",
+        "CANA",
+        "GERGELIM",
+        "LOGISTICA"
+      ],
+      "topic": "chuva_1981_05_graus",
+      "mode": "DOWNLOAD",
+      "cadence": "DAILY",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "CC BY 4.0; CHIRPS v3 0.05° 1981+; daily rnl/sat are pentad partitions, not station measurements or true same-day NRT. Need sampling/CRS, pentad reconciliation and license attribution.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
       "id": "CME_FUTUROS",
       "source_id": "CME",
       "group": "PRECOS",
@@ -1762,7 +1826,7 @@
       "cadence": "WEEKLY",
       "stage": "CODE_PRESENT",
       "priority": "P0",
-      "existing_module": "conab_agrobr.py",
+      "existing_module": "conab_agrobr.py; progresso_conab_historico.py (normalizador e SQLite local com vintages)",
       "notes": "agrobr 2.0 facultativo; MEDIA_ESTADOS diferente de Brasil; coleta OFF",
       "enabled": false,
       "collection_authorized": false,
@@ -1897,6 +1961,38 @@
       "priority": "P1",
       "existing_module": null,
       "notes": "Balanço anual agregado, desde 1970 conforme disponibilidade por série; não é disponibilidade semanal.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ERA5_LAND_CDS",
+      "source_id": "COPERNICUS_CDS",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "SORGO",
+        "CANA",
+        "GERGELIM",
+        "LOGISTICA"
+      ],
+      "topic": "reanálise_solo_1950",
+      "mode": "DOWNLOAD",
+      "cadence": "DAILY",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Reanálise 0.1 grau; revisões e latência; API CDS requer acesso",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
@@ -4144,6 +4240,70 @@
       "priority": "P0",
       "existing_module": "mdic_manifesto.py; mdic_stream.py; mdic_reconciliacao.py; mdic_exportacao.py; mdic_importacao.py",
       "notes": "Parser offline exportação NCM/UF/país/via/URF com testes sintéticos; importação e bulk reais pendentes; sem município SH4",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "NASA_GPM_IMERG",
+      "source_id": "NASA_GPM",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "SORGO",
+        "CANA",
+        "GERGELIM",
+        "LOGISTICA"
+      ],
+      "topic": "chuva_multisatelite",
+      "mode": "DOWNLOAD",
+      "cadence": "DAILY",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Estimativas meia hora com versão/latência; nunca confundir taxa com acumulado",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "NASA_POWER_AG",
+      "source_id": "NASA_POWER",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "SORGO",
+        "CANA",
+        "GERGELIM",
+        "LOGISTICA"
+      ],
+      "topic": "meteorologia_radiacao_diaria",
+      "mode": "API",
+      "cadence": "DAILY",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Grade diária; não estação",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
