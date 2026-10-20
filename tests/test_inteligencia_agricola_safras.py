@@ -62,9 +62,9 @@ class TestInteligenciaAgricola(unittest.TestCase):
         self.assertEqual(result["cenarios"]["Q50"]["producao_final_condicional_t"],
                          "280.0")
         self.assertEqual(result["cenarios"]["Q10"]["producao_final_condicional_t"],
-                         "136.00")
+                         "136.0")
         self.assertEqual(result["cenarios"]["Q90"]["producao_final_condicional_t"],
-                         "424.00")
+                         "424.0")
         self.assertFalse(result["habilita_previsao"])
         self.assertFalse(result["habilita_publicacao"])
 
