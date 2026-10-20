@@ -89,6 +89,8 @@ def normalizar_snapshot_ptax(snapshot: dict, plano: dict) -> dict:
         return d
     try:
         body=json.loads(payload.decode("utf-8-sig"),object_pairs_hook=no_duplicate)
+    except ErroPTAXBriefing:
+        raise
     except (ValueError,UnicodeError) as exc:
         raise ErroPTAXBriefing("resposta PTAX não é JSON válido") from exc
     norm=normalizar_ptax_odata(body,moeda=plano["moeda"],
