@@ -415,7 +415,8 @@
       "entrypoints": [
         "nivon.motores_integracao_estrategica:sensibilidade_macro",
         "nivon.bcb_ptax:normalizar_ptax_odata",
-        "nivon.inteligencia_temporal:decompor_variacao_preco"
+        "nivon.inteligencia_temporal:decompor_variacao_preco",
+        "nivon.previsoes_bibliotecas:prever_mensal"
       ],
       "data_dependencies": [
         "BCB_PTAX",
