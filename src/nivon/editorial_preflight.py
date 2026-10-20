@@ -78,8 +78,15 @@ def _numero_presente(linha: str, numero: Decimal) -> bool:
             possibilidades.add(parte + "," + fracao)
         else:
             possibilidades.update({parte, parte + ",00", parte + ".00"})
-    return any(re.search(r"(?<![\d.,])" + re.escape(p) + r"(?![\d.,])", linha)
-               for p in possibilidades)
+    padroes = [re.escape(p) for p in possibilidades]
+    # Escalas financeiras como PTAX têm quatro casas mesmo quando o Decimal
+    # normalizado termina em zero (ex.: 5.0600 == 5.06).
+    if fracao:
+        for parte in inteiros:
+            padroes.extend(re.escape(parte) + sep + re.escape(fracao) + r"0*"
+                           for sep in (r"\.", ","))
+    return any(re.search(r"(?<![\d.,])" + p + r"(?![\d.,])", linha)
+               for p in padroes)
 
 
 def _origem(reg: dict, agora: datetime) -> None:
