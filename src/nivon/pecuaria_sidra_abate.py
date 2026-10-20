@@ -192,3 +192,43 @@ def normalizar_snapshot_sidra_abate(
             "classificacao": "NORMALIZACAO_OFFLINE_NAO_HOMOLOGADA",
             "coleta_real_executada": False, "previsao_homologada": False,
             "limitacao": "IDs/codigos de categorias exigem verificacao da fonte; sem prova de vintages anteriores."}
+
+
+
+def auditar_agregados_sidra_abate(*, resultado: Mapping[str, object]) -> list[dict]:
+    """Comparar BR e 27 UFs apenas quando ambos cobrem a mesma medida/periodo.
+
+    Sem imputar UFs suprimidas, sem assumir que uma divergencia prove erro.
+    Resultado nao promove serie, cotacao ou previsao.
+    """
+    if not isinstance(resultado, Mapping) or resultado.get("classificacao") != "NORMALIZACAO_OFFLINE_NAO_HOMOLOGADA":
+        raise DadoInvalido("auditoria exige snapshot normalizado sem homologacao")
+    obs = resultado.get("observacoes")
+    if not isinstance(obs, list) or any(not isinstance(o, ObservacaoCadeia) for o in obs):
+        raise DadoInvalido("observacoes invalidas na auditoria")
+    if any(o.produto != resultado.get("especie") or o.fonte_id != "IBGE" for o in obs):
+        raise DadoInvalido("fontes ou especies misturadas")
+    periodos = defaultdict(dict)
+    for o in obs:
+        chave = (o.competencia, o.indicador)
+        if o.uf in periodos[chave]:
+            raise DadoInvalido("observacao duplicada na auditoria")
+        periodos[chave][o.uf] = o.valor
+    relatorio = []
+    for (competencia, indicador), valores in sorted(periodos.items()):
+        ufs = [u for u in valores if u != "BR"]
+        esperado = len(UF_IBGE)
+        item = {"especie": resultado["especie"], "competencia": competencia,
+                "indicador": indicador, "unidade": UNIDADE_CANONICA[indicador],
+                "ufs_presentes": len(ufs), "ufs_esperadas": esperado,
+                "valor_brasil": valores.get("BR"), "soma_ufs": None,
+                "residuo_brasil_menos_ufs": None,
+                "status": "INCOMPLETO_SEM_IMPUTACAO"}
+        if "BR" in valores and len(ufs) == esperado:
+            soma = sum(valores[u] for u in UF_IBGE.values())
+            item["soma_ufs"] = soma
+            item["residuo_brasil_menos_ufs"] = valores["BR"] - soma
+            item["status"] = ("CONSISTENTE" if valores["BR"] == soma
+                              else "DIVERGENCIA_A_INVESTIGAR")
+        relatorio.append(item)
+    return relatorio
