@@ -8,6 +8,7 @@
 !infra/inventory.v1.json
 !infra/docker/
 !infra/docker/Dockerfile.audit
+!infra/docker/Dockerfile.worker
 
 # Nunca incluir segredos ou bancos mesmo se estiverem dentro de paths permitidos.
 **/.env*
