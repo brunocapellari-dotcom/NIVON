@@ -105,3 +105,28 @@ class TestRegistroSnapshots(unittest.TestCase):
                 sha256=hashlib.sha256(b"SICARM-2").hexdigest(),
                 tamanho=120_000_001,mime="text/plain",schema_versao="SICARM_header_v1",
                 coletado_em="2026-10-19T12:00:00Z")
+
+
+    def test_limite_csv_mdic_apenas_para_metadados_dataset_especifico(self):
+        for dataset in ("MDIC_COMEX_NCM","MDIC_COMEX_MUNICIPIO_SH4"):
+            cat={"datasets":[{"id":dataset,"source_id":"MDIC"}]}
+            result=registrar_snapshot(self.db,cat,dataset_id=dataset,
+                sha256=hashlib.sha256(dataset.encode()).hexdigest(),
+                tamanho=850_000_000,mime="text/csv",schema_versao="MDIC_ANUAL_1",
+                coletado_em="2026-10-20T12:00:00Z")
+            self.assertTrue(result["nova_versao"])
+            with self.assertRaises(ErroSnapshot):
+                registrar_snapshot(self.db,cat,dataset_id=dataset,
+                    sha256=hashlib.sha256((dataset+"2").encode()).hexdigest(),
+                    tamanho=1_500_000_001,mime="text/csv",schema_versao="MDIC_ANUAL_1",
+                    coletado_em="2026-10-20T12:00:00Z")
+        with self.assertRaises(ErroSnapshot):
+            self.registrar(tamanho=850_000_000)
+
+    def test_ledger_preserva_savepoint_de_transacao_externa(self):
+        self.db.execute("SAVEPOINT teste_externo")
+        self.registrar()
+        self.db.execute("ROLLBACK TO SAVEPOINT teste_externo")
+        self.db.execute("RELEASE SAVEPOINT teste_externo")
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM nivon_snapshots").fetchone()[0],0)
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM nivon_coletas").fetchone()[0],0)

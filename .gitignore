@@ -19,6 +19,10 @@ segredos/
 *.arrow
 *.csv
 *.xlsx
+*.zip
+*.env.backup
+*.sqlite-shm
+*.sqlite-wal
 *.pdf
 __pycache__/
 *.py[cod]

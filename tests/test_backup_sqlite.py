@@ -80,3 +80,29 @@ class TestBackupLocal(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestBackupStreaming(unittest.TestCase):
+    def test_restore_without_read_bytes_entire_backup(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as root:
+            db=sqlite3.connect(":memory:")
+            try:
+                db.execute("CREATE TABLE dados (id INTEGER, corpo BLOB)")
+                db.execute("INSERT INTO dados VALUES (?,?)", (1, b"A"*(2*1024*1024)))
+                db.commit()
+                pasta=Path(root)
+                arq=pasta/"backup.sqlite"
+                copia=criar_backup(db,arq)
+                with patch.object(Path,"read_bytes",side_effect=AssertionError("leitura integral proibida")):
+                    restored=restaurar_backup(arq,pasta/"restore.sqlite",
+                                               sha256_esperado=copia["sha256"])
+                self.assertEqual(restored["integridade"],"OK")
+            finally:
+                db.close()
+
+    def test_empty_file_and_integrity_fail_closed(self):
+        with tempfile.TemporaryDirectory() as root:
+            src=Path(root)/"vazio.sqlite";src.write_bytes(b"")
+            with self.assertRaises(ErroBackup):
+                restaurar_backup(src,Path(root)/"saida.sqlite")

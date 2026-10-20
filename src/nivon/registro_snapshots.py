@@ -9,6 +9,8 @@ import re
 import sqlite3
 from datetime import date, datetime, timezone
 
+from .transacoes_sqlite import savepoint_atomico
+
 
 class ErroSnapshot(ValueError):
     pass
@@ -21,7 +23,13 @@ _TIPOS = {"SINTETICO", "REAL_AUTORIZADO"}
 # A ampliação de tamanho aplica-se APENAS ao snapshot TXT CONAB SICARM.
 # Metadados persistidos, nunca os bytes ou registros individuais.
 _LIMITE_PADRAO = 20_000_000
-_LIMITE_POR_DATASET = {"CONAB_ARMAZENS_CAPACIDADE": 120_000_000}
+_LIMITE_POR_DATASET = {
+    "CONAB_ARMAZENS_CAPACIDADE": 120_000_000,
+    # CSV MDIC publicado por ano pode ultrapassar o limite padrão;
+    # ledger armazena somente metadados e hashes, jamais os CSVs.
+    "MDIC_COMEX_NCM": 1_500_000_000,
+    "MDIC_COMEX_MUNICIPIO_SH4": 1_500_000_000,
+}
 
 
 def _instante(txt: str) -> str:
@@ -124,7 +132,7 @@ def registrar_snapshot(db: sqlite3.Connection, catalogo: dict, *,
             raise ErroSnapshot("snapshot sintético não pode simular autorização real")
     estado = (dataset_id, fonte_id, sha256, tamanho, mime, schema_versao,
               competencia, ref, pub, tipo, evidencia_direitos)
-    with db:
+    with savepoint_atomico(db):
         anterior = db.execute("SELECT * FROM nivon_snapshots WHERE dataset_id=? AND sha256=?",
                               (dataset_id, sha256)).fetchone()
         nova_versao = anterior is None
