@@ -24,12 +24,12 @@ def serie():
 
 
 def bench(dados,**kw):
-    return benchmark_ml_asof(
-        dados,fonte="CONAB",variavel="PRODUCAO",produto="SOJA",
+    opts=dict(fonte="CONAB",variavel="PRODUCAO",produto="SOJA",
         regiao="MT",unidade="t",inicio="2024-01",fim="2024-06",
         corte_avaliacao=datetime(2025,2,1,tzinfo=UTC),
-        dados_autorizados=True, backend=lambda s,h:s[-1][1]+h,
-        **kw)
+        dados_autorizados=True, backend=lambda s,h:s[-1][1]+h)
+    opts.update(kw)
+    return benchmark_ml_asof(dados,**opts)
 
 
 class TestIVOBacktestML(unittest.TestCase):
