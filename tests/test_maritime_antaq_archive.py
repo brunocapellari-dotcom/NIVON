@@ -120,6 +120,14 @@ class TestAntaqArchive(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "arquivo duplicado"):
             evaluate(makezip(extra={"folder/2024Atracacao.txt":AT_HEADER}))
 
+    def test_distinct_group_limit_prevents_memory_exhaustion(self):
+        with self.assertRaisesRegex(ValueError, "limite de memoria"):
+            evaluate(makezip(), max_groups=1)
+
+    def test_invalid_group_limit_rejected(self):
+        with self.assertRaisesRegex(ValueError, "max_groups"):
+            evaluate(makezip(), max_groups=0)
+
     def test_max_rows_does_not_silently_truncate(self):
         with self.assertRaisesRegex(ValueError, "limite"):
             evaluate(makezip(),max_cargo_rows=2)
