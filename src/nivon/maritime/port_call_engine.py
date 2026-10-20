@@ -27,7 +27,11 @@ class OfficialPortSignal:
     state: str
     source_id: str
     terminal_id: str | None = None
-    official_operational: bool = True
+    # Both scope keys are mandatory when attesting an operational event.
+    port_id: str | None = None
+    call_id: str | None = None
+    # Fail closed: merely appearing in a line-up does not make an event official.
+    official_operational: bool = False
 
 
 @dataclass(frozen=True)
@@ -140,6 +144,7 @@ def reconstruct_port_call(
     port_id: str,
     ais_points: Iterable[AisStatePoint],
     official_signals: Iterable[OfficialPortSignal] = (),
+    call_id: str | None = None,
     scheduled_at: str | None = None,
     anchorage_dwell_minutes: float = 10.0,
     waiting_dwell_minutes: float = 30.0,
@@ -299,6 +304,17 @@ def reconstruct_port_call(
         if not signal.official_operational:
             flags.add("nonofficial_port_signal_excluded")
             continue
+        # A source name and a timestamp alone do not bind an event to a visit.
+        # Reject the entire reconstruction rather than silently joining a
+        # completion from a different voyage/DUV or from another port.
+        if not call_id or not call_id.strip():
+            raise ValueError("official port event requires target call_id")
+        if not signal.call_id or signal.call_id.strip() != call_id.strip():
+            raise ValueError("official port event call_id mismatch")
+        if not signal.port_id or signal.port_id.strip().upper() != canonical_port:
+            raise ValueError("official port event port_id mismatch")
+        if not signal.source_id or not signal.source_id.strip():
+            raise ValueError("official port event requires source_id")
         token = _state_token(signal.state)
         aliases = {
             "BERTHED": "ATRACADO",
@@ -324,7 +340,7 @@ def reconstruct_port_call(
             source_kind="PORT_OPERATION_OFFICIAL",
             confidence=1.0,
             terminal_id=signal.terminal_id,
-            evidence_refs=(signal.source_id,),
+            evidence_refs=(signal.source_id, f"port:{canonical_port}", f"call:{call_id.strip()}"),
         ))
 
     # AIS after a prior berth can support physical unberthing/departure but never
