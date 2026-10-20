@@ -81,6 +81,19 @@ class DependenciasPreflightTests(unittest.TestCase):
         with self.assertRaises(ErroDependencias):
             analisar_requisito("pandas>=2,<2")
 
+    def test_equal_versions_with_different_precision_rejected(self):
+        for spec in ("pandas>=2,<2.0", "pandas>=2.0,<2", "pandas>2,<2.0.0"):
+            with self.subTest(spec=spec), self.assertRaises(ErroDependencias):
+                analisar_requisito(spec)
+
+    def test_compatible_mixed_precision_bounds_accepted(self):
+        self.assertTrue(analisar_requisito("pandas>=2,<2.1")["direct_range_bounded"])
+
+    def test_malformed_project_toml_rejected(self):
+        with self.assertRaises(ErroDependencias):
+            inspecionar('[build-system]\nrequires = ["setuptools>=68"]\n'
+                       '[project]\ndependencies = "river>=0.22,<1"\n', self.ivo)
+
     def test_repeated_clause_rejected(self):
         with self.assertRaises(ErroDependencias):
             analisar_requisito("river>=1,>=1")
