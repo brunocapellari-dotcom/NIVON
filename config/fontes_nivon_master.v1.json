@@ -318,10 +318,10 @@
     {
       "id": "PORTO_ANGRA_DOS_REIS",
       "provider": "PortosRio / Angra dos Reis",
-      "official_url": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias",
-      "access": "OFFICIAL_CATALOG_ENTRY",
+      "official_url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
+      "access": "INSTITUTIONAL_NAVIGATION_INDEX_RIGHTS_PENDING",
       "rights": "REVIEW",
-      "notes": "Fonte para identificacao; NAO comprova feed line-up neste terminal; recurso exato ainda nao homologado."
+      "notes": "Portal PortosRio com links por porto; confirmar destino do recurso e conteúdo atual. Nenhum feed aprovado."
     },
     {
       "id": "PORTO_ANTONINA",
@@ -422,10 +422,10 @@
     {
       "id": "PORTO_ITAGUAI",
       "provider": "PortosRio / Itaguaí",
-      "official_url": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias",
-      "access": "OFFICIAL_CATALOG_ENTRY",
+      "official_url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
+      "access": "INSTITUTIONAL_NAVIGATION_INDEX_RIGHTS_PENDING",
       "rights": "REVIEW",
-      "notes": "Fonte para identificacao; NAO comprova feed line-up neste terminal; recurso exato ainda nao homologado."
+      "notes": "Portal PortosRio com links por porto; confirmar destino do recurso e conteúdo atual. Nenhum feed aprovado."
     },
     {
       "id": "PORTO_ITAJAI",
@@ -502,10 +502,10 @@
     {
       "id": "PORTO_NITEROI",
       "provider": "PortosRio / Niterói",
-      "official_url": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias",
-      "access": "OFFICIAL_CATALOG_ENTRY",
+      "official_url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
+      "access": "INSTITUTIONAL_NAVIGATION_INDEX_RIGHTS_PENDING",
       "rights": "REVIEW",
-      "notes": "Fonte para identificacao; NAO comprova feed line-up neste terminal; recurso exato ainda nao homologado."
+      "notes": "Portal PortosRio com links por porto; confirmar destino do recurso e conteúdo atual. Nenhum feed aprovado."
     },
     {
       "id": "PORTO_PARANAGUA",
@@ -566,10 +566,10 @@
     {
       "id": "PORTO_RIO_DE_JANEIRO",
       "provider": "PortosRio / Rio de Janeiro",
-      "official_url": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias",
-      "access": "OFFICIAL_CATALOG_ENTRY",
+      "official_url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
+      "access": "INSTITUTIONAL_NAVIGATION_INDEX_RIGHTS_PENDING",
       "rights": "REVIEW",
-      "notes": "Fonte para identificacao; NAO comprova feed line-up neste terminal; recurso exato ainda nao homologado."
+      "notes": "Portal PortosRio com links por porto; confirmar destino do recurso e conteúdo atual. Nenhum feed aprovado."
     },
     {
       "id": "PORTO_RIOGRANDE",
@@ -577,7 +577,7 @@
       "official_url": "https://www.portosrs.com.br/site/transparencia/atas_programacao_navio",
       "access": "PUBLIC_HTML_PDF",
       "rights": "REVIEW",
-      "notes": ""
+      "notes": " A Portos RS disponibiliza relatório público de navios por situação no Portoweb; links específicos exigem prova de atualidade e versão do PDF."
     },
     {
       "id": "PORTO_SALVADOR",
