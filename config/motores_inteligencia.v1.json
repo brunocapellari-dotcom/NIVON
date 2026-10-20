@@ -410,7 +410,10 @@
         "nivon.modelos_fisicos:eto_fao56_penman_monteith",
         "nivon.modelos_fisicos:avaliar_vazao_hidrologica",
         "nivon.hidrologia_chuva_vazao:escoamento_scs_cn",
-        "nivon.hidrologia_chuva_vazao:propagar_muskingum"
+        "nivon.hidrologia_chuva_vazao:propagar_muskingum",
+        "nivon.inmet_horario_qc:extrair_horarios_inmet",
+        "nivon.inmet_horario_qc:agregar_dias_inmet",
+        "nivon.confronto_climatico_qc:confronto_diario_inmet_power"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -627,7 +630,10 @@
         "nivon.modelos_fisicos:eto_fao56_penman_monteith",
         "nivon.verificacao_probabilistica:brier_probabilidade",
         "nivon.verificacao_probabilistica:cobertura_intervalos",
-        "nivon.analogos_historicos:encontrar_anos_analogos"
+        "nivon.analogos_historicos:encontrar_anos_analogos",
+        "nivon.inmet_horario_qc:extrair_horarios_inmet",
+        "nivon.inmet_horario_qc:agregar_dias_inmet",
+        "nivon.confronto_climatico_qc:confronto_diario_inmet_power"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -681,7 +687,7 @@
         "ERA5_LAND_CDS",
         "NASA_GPM_IMERG"
       ],
-      "indicators_planned": 12,
+      "indicators_planned": 16,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
       "inputs_reais_homologados": false,
       "previsao_homologada": false,

@@ -1708,12 +1708,12 @@
         "url": "https://portal.inmet.gov.br/dadoshistoricos/",
         "source_proof": "https://portal.inmet.gov.br/dadoshistoricos/"
       },
-      "implementation_scope": "inmet_historico.py planeja ZIPs anuais oficiais de 2000–2026 e faz inspeção offline; series_ambientais.py guarda medições já normalizadas; falta validação do CSV real, direitos, download e coleta diária",
+      "implementation_scope": "inmet_historico.py (ZIP anual), inmet_bdmep.py (link privado), inmet_horario_qc.py (CSV horário, 24/24, zero vs faltante, UTC e QC), series_ambientais.py (edições) e confronto_climatico_qc.py (INMET × NASA POWER, min 30 pares e QC externo); SEM coleta recorrente ou dados reais homologados",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "REAL_CSV_SAMPLE_INSTRUMENT_QC_AND_RIGHTS",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -1723,7 +1723,10 @@
         "HISTORICAL_BACKFILL",
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
-        "LICENSED_PUBLICATION_GATE"
+        "LICENSED_PUBLICATION_GATE",
+        "INMET_HOURLY_REAL_SCHEMA_VALIDATION",
+        "INMET_UTC_INTERVAL_END_CONVENTION_PROOF",
+        "STATION_QC_EXTERNAL_AND_GEOLOCATION"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",

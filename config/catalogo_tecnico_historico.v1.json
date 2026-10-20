@@ -213,11 +213,17 @@
       "interface": "BDMEP/arquivo anual; revisão de autorização e formato",
       "evidence": "https://bdmep.inmet.gov.br/",
       "priority": "P0",
-      "risk": "falhas, mudança de estação, sensores, timezone e acumulados",
+      "risk": "falhas, mudança de estação, sensores, timezone e acumulados INMET automático bruto sem QA oficial; missing 9999/NULL/branco; hora UTC exige comprovação de intervalo de precipitação antes de confrontar grade diária.",
       "agrolog_paths": [
         "collector/inmet_daily.py"
       ],
-      "status": "NIVON_CANDIDATE"
+      "status": "CSV_HOURLY_PARSER_AND_GRID_COMPARISON_SYNTHETIC_TESTS_ONLY",
+      "nivon_paths": [
+        "src/nivon/inmet_horario_qc.py",
+        "src/nivon/confronto_climatico_qc.py",
+        "tests/test_inmet_horario_qc.py",
+        "tests/test_confronto_climatico_qc.py"
+      ]
     },
     {
       "id": "CPTEC_MERGE",

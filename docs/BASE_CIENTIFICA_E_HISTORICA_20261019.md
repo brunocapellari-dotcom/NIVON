@@ -68,3 +68,15 @@ Testes de paridade: `tests/test_paridade_motores_cientificos.py` compara a equa�
 O código possui parsers, planejadores, métricas, histórico e controle de licença. A **próxima etapa verificável** é coletar amostras **reais e autorizadas**, persistir RAW fora do GitHub, cruzar NASA/CHIRPS com INMET, carregar versões CONAB/WASDE, executar backtests point-in-time, calibrar modelos e fazer avaliação independente por região e regime. Até isso ocorrer, não afirmar que o Nivon já possui séries históricas completas ou previsão científica validada.
 
 **Integração:** esta entrega foi reconciliada com a branch de desenvolvimento no commit base `e0a5553175f83650d22e15349ca5d36eee8d0f87` (20/10/2026), sem deploy. Alterações concorrentes posteriores requerem revisão de conflitos.
+
+## INMET horário e confronto estação–grade — 20/10/2026
+
+`inmet_horario_qc.py` interpreta bytes CSV horários INMET do ZIP previamente inspecionado, respeitando WMO, UTC, separadores decimais, SHA do bruto e ausências. Chuva rotulada ao dia UTC somente com 24/24 horas válidas, sem inventar zero. Tmin/Tmax amostradas de bulbo seco não equivalem a extremos de instrumento dedicado.
+
+`confronto_climatico_qc.py` confronta dados preliminares de estação com versões NASA selecionadas por `grade_asof`, somente após prova externa de QC instrumental e do intervalo horário de chuva, coordenadas comprovadas, dados temporais compatíveis e ao menos 30 pares válidos. Produz MAE/RMSE/viés **descritivos**, sem inferir skill preditiva.
+
+INMET informa explicitamente que seus dados automáticos horários são brutos, podem conter 9999/NULL/branco e usam UTC: https://portal.inmet.gov.br/noticias/saiba-como-acessar-os-dados-meteorol%C3%B3gicos-dispon%C3%ADveis-no-site-do-inmet
+
+BDMEP: https://bdmep.inmet.gov.br/ — links privados de exportação são temporários; não os registrar no GitHub. O email BDMEP de 25/08/2026 não é uma amostra CSV já homologada pelo Nivon.
+
+Indicadores hidrológicos SCS-CN/Muskingum restaurados após merges concorrentes; registrar cálculo e resíduo sem assumir navegabilidade de rio.
