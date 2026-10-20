@@ -89,3 +89,20 @@ def validar_cobertura_calendario(
         "publicavel": False,
         "calendario_oficial_comprovado": False,
     }
+
+
+def indexar_calendario_sessoes(
+    calendario: Mapping, *, mercado: str, as_of: str,
+) -> tuple[dict[str, int], dict]:
+    """Indexa uma única vez uma edição declarada para validar horizontes.
+
+    O calendário precisa ter captura anterior ao corte analisado. A validade
+    oficial das datas permanece uma verificação externa obrigatória.
+    """
+    if not isinstance(calendario, Mapping):
+        raise ErroCalendarioMercado("calendário ausente")
+    sessoes = calendario.get("sessoes")
+    prova = validar_cobertura_calendario(
+        calendario, mercado=mercado, periodos=sessoes, as_of=as_of,
+    )
+    return {dia: i for i, dia in enumerate(sessoes)}, prova
