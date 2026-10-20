@@ -27,6 +27,8 @@ MODULOS=frozenset({
     "ana_hidrowebservice","inmet_bdmep",
     "motores_agrometeorologia_fao56","motores_hidrologia_cientifica",
     "validacao_previsoes_ambientais","nasa_power_diario",
+    "nasa_power_backfill","nasa_power_captura_manual",
+    "grade_meteorologica_store","chirps_v3_conservacao",
 })
 
 

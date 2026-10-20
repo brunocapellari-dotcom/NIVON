@@ -380,7 +380,10 @@
         "nivon.validacao_previsoes_ambientais:validar_hindcast_ambiental",
         "nivon.validacao_previsoes_ambientais:confrontar_grade_com_estacao",
         "nivon.nasa_power_diario:planejar_power",
-        "nivon.nasa_power_diario:normalizar_power_diario"
+        "nivon.nasa_power_diario:normalizar_power_diario",
+        "nivon.nasa_power_backfill:planejar_backfill",
+        "nivon.grade_meteorologica_store:grade_asof",
+        "nivon.chirps_v3_conservacao:reconciliar_chirps_pentada"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -576,7 +579,13 @@
         "nivon.validacao_previsoes_ambientais:validar_hindcast_ambiental",
         "nivon.validacao_previsoes_ambientais:confrontar_grade_com_estacao",
         "nivon.nasa_power_diario:planejar_power",
-        "nivon.nasa_power_diario:normalizar_power_diario"
+        "nivon.nasa_power_diario:normalizar_power_diario",
+        "nivon.nasa_power_backfill:planejar_backfill",
+        "nivon.nasa_power_backfill:diagnosticar_cache_backfill",
+        "nivon.nasa_power_captura_manual:capturar_power_manual",
+        "nivon.grade_meteorologica_store:ingerir_power_local",
+        "nivon.grade_meteorologica_store:grade_asof",
+        "nivon.chirps_v3_conservacao:reconciliar_chirps_pentada"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -611,7 +620,8 @@
         "nivon.motores_hidrologia_cientifica:curva_chave_interpolada",
         "nivon.motores_hidrologia_cientifica:balanco_reservatorio_diario",
         "nivon.motores_hidrologia_cientifica:avaliar_previsao_vazao",
-        "nivon.validacao_previsoes_ambientais:validar_hindcast_ambiental"
+        "nivon.validacao_previsoes_ambientais:validar_hindcast_ambiental",
+        "nivon.chirps_v3_conservacao:reconciliar_chirps_pentada"
       ],
       "data_dependencies": [
         "ANA_HIDRO",
