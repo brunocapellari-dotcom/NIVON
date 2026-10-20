@@ -19,15 +19,15 @@ class TestAuditoriaProntidao(unittest.TestCase):
 
     def test_diagnostico_nao_afirma_go_live(self):
         x=diagnostico_atual()
-        self.assertEqual(x["datasets"],131)
+        self.assertEqual(x["datasets"],len(self.c["datasets"]))
         self.assertEqual(x["lineups_catalogados"],45)
         self.assertEqual(x["frentes"],28)
         self.assertEqual(x["coletas_operacionais"],0)
         self.assertEqual(x["motores_preditivos_homologados"],0)
         self.assertGreaterEqual(x["funcoes_vinculadas"],100)
         self.assertEqual(x["status"],"BLOQUEADO_PARA_GO_LIVE")
-        self.assertEqual(sum(x["datasets_por_estagio"].values()),131)
-        self.assertEqual(len(x["datasets_detalhados"]),131)
+        self.assertEqual(sum(x["datasets_por_estagio"].values()),len(self.c["datasets"]))
+        self.assertEqual(len(x["datasets_detalhados"]),len(self.c["datasets"]))
 
     def test_bloqueio_ativacao_clandestina(self):
         c=copy.deepcopy(self.c);c["datasets"][0]["enabled"]=True
