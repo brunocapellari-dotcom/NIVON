@@ -105,8 +105,12 @@ class TestBundleMultifonte(unittest.TestCase):
         self.assertFalse((self.root/"restore").exists())
 
     def test_nome_adicional_nao_homologado_recusado(self):
+        dados=dict(self.db)
+        dados["desconhecido"]=self.db["diesel"]
         with self.assertRaises(ErroBundle):
-            self.salvar(names=("conab","portos","outbox","desconhecido"))
+            salvar_ponto_recuperacao(
+                bancos=dados,destino_raiz=self.snap,snapshot_id="bundle_20261020",
+                escritores_pausados=True,coletado_em="2026-10-20T15:00:00+00:00")
         self.assertEqual(list(self.snap.iterdir()),[])
 
     def test_destino_existente_nunca_sobrescrito(self):
