@@ -1799,16 +1799,16 @@
       "dataset_id": "LINEUP_BARCARENA_VILA_DO_CONDE",
       "collector_class": "PUBLISHED_DOCUMENT",
       "locator": {
-        "kind": "PROVIDER_PORTAL",
+        "kind": "OFFICIAL_INDEX",
         "url": "https://www.cdp.com.br/programacao-de-navio-do-porto-de-vila-do-conde/",
-        "source_proof": null
+        "source_proof": "https://www.cdp.com.br/programacao-de-navio-do-porto-de-vila-do-conde/"
       },
-      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo)",
+      "implementation_scope": "lineup_cdp_santarem.interpretar_cdp(): extrai HTML offline por porto; WDT não é DUV",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "RIGHTS_SOURCE_TIMESTAMP_DUV_AND_THREE_SNAPSHOTS",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -1817,12 +1817,14 @@
         "HISTORICAL_BACKFILL",
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
-        "LICENSED_PUBLICATION_GATE"
+        "LICENSED_PUBLICATION_GATE",
+        "VERIFY_PUBLICATION_TIMESTAMP",
+        "VERIFY_VESSEL_SCALE_ID"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
-      "preliminary_evidence": "CATALOG_ONLY"
+      "source_note": "A tabela CDP inclui placeholders e datas possivelmente antigas. Sem DUV ou publicação horária comprovada, não entra como line-up diário de navios.",
+      "preliminary_evidence": "OFFICIAL_PORTAL_TABLE_CANDIDATE_NOT_SNAPSHOT_TESTED"
     },
     {
       "dataset_id": "LINEUP_BARRA_DO_RIACHO",
@@ -1858,16 +1860,16 @@
       "dataset_id": "LINEUP_BELEM",
       "collector_class": "PUBLISHED_DOCUMENT",
       "locator": {
-        "kind": "NOT_VERIFIED_PER_DATASET",
-        "url": null,
-        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://www.cdp.com.br/programacao-de-navios-porto-de-belem/",
+        "source_proof": "https://www.cdp.com.br/programacao-de-navios-porto-de-belem/"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao",
+      "implementation_scope": "lineup_cdp_santarem.interpretar_cdp(): extrai HTML offline por porto; WDT não é DUV",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "primary_blocker": "RIGHTS_SOURCE_TIMESTAMP_DUV_AND_THREE_SNAPSHOTS",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -1877,12 +1879,13 @@
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
         "LICENSED_PUBLICATION_GATE",
-        "EXACT_ENDPOINT_UNKNOWN"
+        "VERIFY_PUBLICATION_TIMESTAMP",
+        "VERIFY_VESSEL_SCALE_ID"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
-      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+      "source_note": "A tabela CDP inclui placeholders e datas possivelmente antigas. Sem DUV ou publicação horária comprovada, não entra como line-up diário de navios.",
+      "preliminary_evidence": "OFFICIAL_PORTAL_TABLE_CANDIDATE_NOT_SNAPSHOT_TESTED"
     },
     {
       "dataset_id": "LINEUP_CABEDELO",
