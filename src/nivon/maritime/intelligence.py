@@ -236,6 +236,27 @@ class MaritimeIntelligenceCoordinator:
             blockers.append("lineup_not_authorized")
         if not trusted:
             blockers.append("ais_not_corroborated")
+        trusted_latest: dict[str, AISObservation] = {}
+        for point in trusted:
+            key = str(point.mmsi or "")
+            if key not in trusted_latest or point.observed_at_utc > trusted_latest[key].observed_at_utc:
+                trusted_latest[key] = point
+        # Internal map adapter may consume these after the audit gate. It cannot
+        # treat AIS presence as an official berth or cargo realization.
+        trusted_positions = [
+            {
+                "mmsi": point.mmsi, "imo": point.imo,
+                "vessel_name": point.vessel_name,
+                "latitude": point.latitude, "longitude": point.longitude,
+                "sog_kn": point.sog_kn, "cog_deg": point.cog_deg,
+                "port_id": point.port_id, "terminal_id": point.terminal_id,
+                "zone": point.zone, "observed_at": point.observed_at_utc.isoformat(),
+                "source_id": point.source_id,
+                "quality_status": "CONFIRMED_SEQUENCE",
+                "evidence_class": "AIS_POSITION_OBSERVED_GEOFENCE_INFERRED",
+            }
+            for point in sorted(trusted_latest.values(), key=lambda item: item.observed_at_utc, reverse=True)
+        ]
         return {
             "engine": "NIVON_MARITIME_INTELLIGENCE_V1",
             "port_id": port, "calculated_at": now.isoformat(),
@@ -250,6 +271,7 @@ class MaritimeIntelligenceCoordinator:
                 "lineup_analyzed": len(reconciled),
                 "official_operations_verified": request.official_operations_verified,
             },
+            "trusted_positions_internal_only": trusted_positions,
             "port_calls": port_calls,
             "reconciliation": [reconciliation_to_row(x) for x in reconciled],
             "reconciliation_summary": snapshot_summary(reconciled) if reconciled else None,
