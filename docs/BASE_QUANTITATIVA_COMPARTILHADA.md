@@ -58,3 +58,61 @@ PYTHONPATH=src python -m unittest discover -s tests -v
 ```
 
 **Limite:** nenhum desses testes sintéticos é evidência de previsibilidade de frete, preço físico ou CME. 
+
+## Ciclo seguinte — runner rolling-origin com previsão estritamente ex-ante (20/10/2026)
+
+`src/nivon/rolling_origin.py` acrescenta `executar_rolling_origin_asof`, usando
+o preparador as-of e **reestimando/chamando o modelo separadamente para cada origem**.
+O callback recebe exclusivamente uma tupla imutável de observações históricas e contexto
+imutável contendo origem, emissão, alvo e horizonte. O observado do alvo não é passado
+ao callback: só é adicionado **após** seu retorno ao arquivo de avaliação.
+
+O baseline implementado é `PERSISTENCIA_ASOF` (último valor conhecido naquele
+corte), por indicador homogêneo; a mesma auditoria `avaliar_previsoes_oos` executa
+as métricas OOS. O runner não instala dependências, não chama coletores nem altera
+os adaptadores comerciais. Forecasts podem retornar ponto, bandas/intervalos e
+probabilidades com schema restrito; scores são calculados depois do resultado real.
+
+**Atenção:** a função modelo fornecida é código Python arbitrário, podendo consultar
+globais e serviços externos; a biblioteca só impede vazamento **por argumentos**
+do callback. Não há sandbox de execução: provar ausência de leakage requer code
+review e execução isolada. Não usar um callback que consulta o arquivo integral.
+Backtest com vintages reconstituídos não demonstra que as edições estavam
+realmente acessíveis historicamente: exigem-se logs brutos/SHAs e origem verificável.
+
+### Exemplo de teste sintético do runner
+
+```python
+from nivon.rolling_origin import executar_rolling_origin_asof
+def persistencia(treino, ctx):
+    return treino[-1]["valor"]  # sem acesso ao resultado futuro
+resultado = executar_rolling_origin_asof(
+    observacoes=arquivo_vintages, calendario=calendario_curado,
+    origens_em=origens_com_timestamp, as_of_avaliacao="2026-10-20T20:00:00Z",
+    serie_id="CBOT_SOJA_NOV26", unidade="USC/BU", fonte_id="FONTE_CURADA",
+    modelo_id="PERSISTENCIA_V1", horizonte_periodos=5, tamanho_treino=30,
+    modelo=persistencia, min_folds=10, tolerancia_absoluta=3.0,
+)
+assert resultado["publicavel"] is False
+```
+
+A frente de Mercados desenvolve `validacao_tendencias_mercado.py` em branch
+separada, já com benchmark probabilístico expansivo. Ela deverá ser **conciliada**
+por contrato e convenção de Brier: `quant_core` usa soma/3 e o validador setorial
+usa soma pura. Ambas as métricas são válidas, porém não numericamente
+comparáveis sem multiplicar/dividir por três. Não criar pipelines paralelos de calibração.
+
+A frente de Logística possui `fretes_registros.py` com
+`pickup_entity_id`, `transportadora_id`, `descarga_entity_id` e
+regime PF/PJ; sua estrutura deverá alimentar filtros de séries equivalentes.
+Issue #25 permanece até correção efetiva do adaptador de tendências.
+
+### Gate adicional de aceitação
+
+- CI no SHA final contendo runner e testes adversariais, sem afirmar skill com
+  dados sintéticos;
+- calendários de pregão/feriados e vintages de fontes autorizadas;
+- avaliar modelos com treinamento que não lê labels futuros, janelas de calibração
+  separadas e holdout temporal não reutilizado na escolha de modelo;
+- comparar baselines por série/horizonte/regime, auditar métricas probabilísticas,
+  amostra efetiva e dependência temporal, e bloquear previsão em caso de degradação.
