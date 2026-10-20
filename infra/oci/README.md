@@ -70,3 +70,12 @@ provar quotas e liberar os gates de persistência, segurança e recuperação.
 
 O pacote pode ser adaptado a outra nuvem ou ao ambiente OCI já existente
 sem replicar bancos, serviços da Holding ou do WhatsApp AI.
+
+## Inventário automatizado (futuro e somente leitura)
+
+Ferramentas de referência: [Oracle OCI CLI](https://github.com/oracle/oci-cli),
+[OpenTofu](https://github.com/opentofu/opentofu) e
+[Oracle Terraform Provider](https://github.com/oracle/terraform-provider-oci).
+Nenhuma está instalada ou configurada por esta entrega.
+A futura coleta autenticada de metadados da tenancy deverá usar permissões
+mínimas de leitura, sem guardar chaves no GitHub e sem executar `apply`.
