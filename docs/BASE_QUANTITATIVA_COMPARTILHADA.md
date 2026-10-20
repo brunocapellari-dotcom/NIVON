@@ -11,11 +11,17 @@
 - Falta um provedor único de calendários de pregão confiáveis e séries versionadas; datas diárias não provam fechamento antes de uma emissão intradiária. Dados reais, direitos, point-in-time, sobrevivência de metodologias e holdout externo não foram auditados.
 - Há risco de falso skill quando scores de teste sintético ou pseudo-OOS são promovidos a previsão calibrada. Não fazer isso.
 
+## Inventario verificavel do manifesto de motores (PR #12)
+
+O arquivo config/motores_inteligencia.v1.json registra **28 frentes de dominio, 270 vinculacoes, 120 entrypoints distintos em 54 modulos e 288 indicadores planejados**. O registro bloqueia operacao e previsao homologada em todas as frentes. Essas contagens nao sao modelos estatisticos distintos nem dados realmente alimentados.
+
+**Bloqueio P0 especifico:** tendencias_mercados.py/tendencia_frete_anunciado aceita agregacao por municipio/corredor sem identidade obrigatoria do estabelecimento, transportadora, descarga e regime. A mediana de lotes distintos nao deve substituir comparacao do mesmo estabelecimento em condicoes equivalentes. Issue #25 documenta correcao setorial com testes. Nao calcular medias municipais de frete.
+
 ## Contratos adicionados
 
-Arquivo src/nivon/quant_core.py, **sem dependências externas**:
+Arquivo src/nivon/quant_core.py, **sem dependências externas**. Numeros nao finitos, erros/metrica em overflow, identificadores misturados e intervalo incompleto causam falha:
 
-1. preparar_folds_asof: seleciona para cada origem exclusivamente a edição observacional cujo timestamp de publicação E coleta precede a emissão. Falha com falta de dado ou edição ambígua. Recebe calendário de sessões/competências fornecido pelo módulo setorial. Só entrega fold de avaliação, sem chamar modelo ou acessar rede.
+1. preparar_folds_asof: seleciona para cada origem exclusivamente a edição observacional cujo timestamp de publicação E coleta precede a emissão; exige também serie_id, unidade e fonte_id homogeneos. Falha com falta de dado ou edição ambígua. Recebe calendário de sessões/competências fornecido pelo módulo setorial. Só entrega fold de avaliação, sem chamar modelo ou acessar rede.
 2. avaliar_previsoes_oos: exige série, modelo, unidade, baseline e horizonte constantes, identidade exata da origem/alvo no calendário, timestamp com fuso para feature, treino, emissão, publicação e coleta do observado, além de SHA de edição. Devolve MAE, RMSE, viés, baseline, ganho relativo quando definido, acerto direcional (banda explícita), Brier multiclasse, bins de confiabilidade e cobertura/largura dos intervalos quando fornecidos. Brier = média de 3 erros quadráticos (não soma), logo só comparar scores com a mesma convenção.
 3. tendencia_empirica_oos: produz frequência preditiva suavizada de ALTA/ESTABILIDADE/BAIXA propagando os erros históricos declarados OOS do MESMO modelo/série/unidade/horizonte para a previsão nova. Exige 30 resíduos com resultado publicado **antes da nova emissão** e impede misturar segmentos. **Não chama essa frequência de calibrada.** A hipótese de estabilidade dos resíduos entre regimes ainda precisa ser testada.
 
