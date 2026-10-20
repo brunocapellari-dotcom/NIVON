@@ -120,6 +120,7 @@ def selecionar_noticias(
             if pub > agora:
                 raise ErroBriefing("publicação futura")
             observacao = {
+                "fonte_id": entrada["fonte_id"],
                 "titulo": t, "resumo": resumo, "fonte": fonte, "url": url,
                 "categoria": categoria, "publicado_em": pub,
             }
