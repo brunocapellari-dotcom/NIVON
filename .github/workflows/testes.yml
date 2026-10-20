@@ -149,3 +149,19 @@ jobs:
         env:
           PYTHONPATH: src
         run: python scripts/inspecionar_anp_diesel.py
+
+
+  inspecao-unica-mdic-links:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Somente nomes de arquivos e host oficial, sem baixar CSVs
+        run: python scripts/inspecionar_mdic_indice.py --explicit-yes
