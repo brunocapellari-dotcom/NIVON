@@ -174,6 +174,36 @@ class TestQualidadeMercado(unittest.TestCase):
                                     janela=6, tolerancia_absoluta=5,
                                     calendario_sessoes=cal)
 
+    def test_decimais_incompatíveis_com_motor_float_falham(self):
+        for preco in ("1E1000", "1E-1000"):
+            with self.subTest(preco=preco), self.assertRaisesRegex(
+                ErroQualidadeMercado, "ponte numérica"
+            ):
+                preparar_serie_precos([row(preco=preco)],
+                                      as_of="2026-10-20T12:00:00Z")
+
+    def test_mais_de_240_observacoes_com_janela_de_seis(self):
+        # O histórico pode superar a limitação de 240 da API genérica,
+        # pois a janela robusta é o único subconjunto entregue ao motor.
+        inicio = date(2025, 1, 1)
+        dias = []
+        cursor = inicio
+        while len(dias) < 260:
+            if cursor.weekday() < 5:
+                dias.append(cursor.isoformat())
+            cursor += timedelta(days=1)
+        serie = [row(d, str(950+i)) for i, d in enumerate(dias)]
+        cal = calendario(
+            sessoes=dias, publicacao_em="2024-12-01T10:00:00Z",
+            coleta_em="2024-12-01T11:00:00Z")
+        r = tendencia_preco_auditada(
+            serie, as_of="2026-10-20T12:00:00Z",
+            janela=6, tolerancia_absoluta=2,
+            calendario_sessoes=cal)
+        self.assertEqual(r["tendencia"], "ALTA")
+        self.assertEqual(r["cobertura_calendario"]["sessoes_conferidas"], 6)
+        self.assertFalse(r["publicavel"])
+
     def test_sem_licenca_implicita_ou_rede(self):
         r = preparar_serie_precos([row()], as_of="2026-10-20T12:00:00Z")
         self.assertFalse(r["publicavel"])
