@@ -51,3 +51,49 @@ A CLI retorna manifesto JSON, não registros de plantio ou colheita. Para vária
 - Cobertura retroativa completa: **não atestada**.
 - Gate de direitos e operacional permanece OFF.
 - Testes precisam ser registrados no SHA final da PR; criar testes não significa executá-los.
+
+## Planejamento incremental OFFLINE — continuação em 20/10/2026
+
+O módulo `src/nivon/conab_progresso_delta.py` compara dois manifestos JSON
+provenientes de `consolidar_paginas`, sem HTTP, scheduler, cópia de dados
+agrícolas ou consultas ao banco. Compara intervalos, URL e texto de
+"última modificação"; nenhum desses elementos é hash do arquivo-fonte.
+
+Categorias explícitas: `NOVO_LINK`, `URL_ALTERADA`,
+`METADADO_ALTERADO`, `SEM_ALTERACAO_VISIVEL` e
+`NAO_VISIVEL_NA_AMOSTRA_ATUAL`. A última significa falta de cobertura
+da amostra atual de páginas e **não remoção confirmada**. Nenhuma categoria
+autoriza coleta automática ou comprova revisão do boletim.
+
+Para executar com manifestos locais criados legitimamente e **já
+consolidados**:
+
+```sh
+PYTHONPATH=src python -m nivon.conab_progresso_delta \
+  --anterior /caminho/privado/indice_anterior.json \
+  --atual /caminho/privado/indice_atual.json
+```
+
+Na primeira captura, omita `--anterior`. O CLI recusa symlinks,
+JSON malformado, chaves repetidas, hashes inválidos, URLs externas,
+datas sem fuso, instantâneos intercalados e status falsos de publicação.
+O resultado é um **plano não executável**, útil para conferência humana
+e priorização de validação de arquivos autorizados. Nunca substitui
+SHA dos próprios boletins ou vintages de publicação.
+
+## Dois armazenamentos legados: fronteira pendente de unificação
+
+O repositório possui `progresso_store.py` (tabelas `progresso_edicoes`,
+`progresso_coletas`, `progresso_observacoes`) e
+`progresso_conab_historico.py` (tabelas `nivon_conab_progresso`,
+com `nivon_snapshots` e `nivon_coletas`). São **contratos diferentes**;
+não replicar automaticamente dados entre eles e não tratar contagens
+de ambos como linhas únicas de um histórico consolidado.
+
+A continuidade deve escolher canonicamente o ledger
+`nivon_snapshots` e a trilha `nivon_coletas` somente após
+teste de migração, prova de bytes originais, chaves e deduplicação,
+revisões, `as-of` por publicação e coleta, direitos por operação
+e backup/restauração. Até lá, consumidores não devem somar séries
+dos dois armazenamentos, nem declarar qualquer um operacional em
+produção. A execução do delta de índices não grava em nenhum deles.
