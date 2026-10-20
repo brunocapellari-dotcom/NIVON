@@ -146,3 +146,28 @@ específica -> snapshot/qualidade -> commit atômico de checkpoint -> backup
 remoto verificado -> observabilidade -> publicação separada. O pipeline
 real precisará ser modelado por etapas com efeito externo e compensação
 explícita; não reutilizar o simulador como executor de coletas reais.
+
+## 9. Diagnóstico passivo e controle da proposta OCI
+
+O módulo `infra_health.py` oferece auditoria local de leitura do manifesto
+e de um SQLite de jobs sintéticos em diretório privado (sem abrir
+serviços, criar bancos ou mudar estados). Se um lease está vencido,
+o diagnóstico não tenta repetir o trabalho nem conclui que ocorreu
+um resultado real. A saída operacional permanece `NOT_OPERATIONAL`
+mesmo que o conjunto de testes sintéticos passe.
+
+O módulo `infra_oci_quota.py` valida aritmética de CPU, memória,
+horas de uso por mês e quotas públicas para uma **única proposta**
+A1, com configuração em `infra/oci/capacidade-candidata.v1.json`.
+A conta OCI, região principal, consumo prévio da Holding, capacidade
+disponível, preços condicionais e limites de outros serviços não
+foram auditados; não declarar elegibilidade financeira por esse teste.
+
+```sh
+PYTHONPATH=src python -m nivon.infra_health
+PYTHONPATH=src python -m nivon.infra_oci_quota
+```
+
+A proposta atual não é um deploy, e não autoriza VM paga nem o uso de
+quota pertencente aos demais projetos. Ver o plano de conferência
+`infra/oci/README.md`.
