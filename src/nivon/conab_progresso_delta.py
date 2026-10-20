@@ -6,8 +6,11 @@ Sem comprovante de captura integral da paginação, ausência não é remoção.
 """
 from __future__ import annotations
 
+import argparse
+import json
 import re
 from collections import Counter
+from pathlib import Path
 from datetime import date, datetime, timedelta
 
 from .conab_progresso_indice import (
@@ -152,3 +155,47 @@ def planejar_delta(anterior: dict | None, atual: dict) -> dict:
         "itens": itens,
         "proxima_acao": "HOMOLOGAR_DIREITOS_RAW_E_COMPARAR_BYTES_DOS_BOLETINS_AUTORIZADOS",
     }
+
+
+def _chaves_unicas(pares):
+    out = {}
+    for key, val in pares:
+        if key in out:
+            raise ErroIndiceConab("manifesto JSON com chave duplicada")
+        out[key] = val
+    return out
+
+
+def _ler_manifesto(path: str) -> dict:
+    arquivo = Path(path)
+    if arquivo.is_symlink() or not arquivo.is_file():
+        raise ErroIndiceConab("manifesto deve ser arquivo JSON regular, sem symlink")
+    if not 0 < arquivo.stat().st_size <= 2_000_000:
+        raise ErroIndiceConab("manifesto ultrapassa limite de 2 MB")
+    try:
+        obj = json.loads(arquivo.read_text(encoding="utf-8"),
+                         object_pairs_hook=_chaves_unicas)
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise ErroIndiceConab("manifesto JSON inválido") from exc
+    if not isinstance(obj, dict):
+        raise ErroIndiceConab("manifesto deve ser objeto JSON")
+    return obj
+
+
+def main(argv=None) -> int:
+    parser = argparse.ArgumentParser(description="CONAB: comparar índices sem HTTP, download ou DB")
+    parser.add_argument("--atual", required=True, help="Manifesto de consolidar_paginas")
+    parser.add_argument("--anterior", help="Manifesto de consolidar_paginas anterior")
+    args = parser.parse_args(argv)
+    try:
+        antigo = _ler_manifesto(args.anterior) if args.anterior else None
+        atual = _ler_manifesto(args.atual)
+        out = planejar_delta(antigo, atual)
+    except (OSError, ErroIndiceConab) as exc:
+        parser.error(str(exc))
+    print(json.dumps(out, ensure_ascii=False, sort_keys=True, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
