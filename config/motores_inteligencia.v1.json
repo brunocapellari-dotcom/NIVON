@@ -130,7 +130,10 @@
       "front_id": "BOI",
       "entrypoints": [
         "nivon.motores_agro_estrategicos:boi_rendimento_carcaca",
-        "nivon.modelos_fisicos:reconciliar_rebanho"
+        "nivon.modelos_fisicos:reconciliar_rebanho",
+        "nivon.pecuaria_ciclos:simular_ciclo_bovino",
+        "nivon.pecuaria_mercados:tendencia_observada_pecuaria",
+        "nivon.pecuaria_mercados:backtest_sazonal_pecuaria"
       ],
       "data_dependencies": [
         "IBGE_PPM",
@@ -154,7 +157,9 @@
       "front_id": "BEZERRO",
       "entrypoints": [
         "nivon.motores_agro_estrategicos:relacao_troca_bezerro",
-        "nivon.modelos_fisicos:reconciliar_rebanho"
+        "nivon.modelos_fisicos:reconciliar_rebanho",
+        "nivon.pecuaria_mercados:tendencia_observada_pecuaria",
+        "nivon.pecuaria_mercados:backtest_sazonal_pecuaria"
       ],
       "data_dependencies": [
         "IBGE_PPM",
@@ -574,7 +579,10 @@
         "nivon.motores_cadeias:margem_proteina",
         "nivon.motores_cadeias:peso_medio_carcaca",
         "nivon.motores_cadeias:classificar_risco",
-        "nivon.modelos_fisicos:reconciliar_rebanho"
+        "nivon.modelos_fisicos:reconciliar_rebanho",
+        "nivon.pecuaria_ciclos:simular_lote_frango",
+        "nivon.pecuaria_mercados:tendencia_observada_pecuaria",
+        "nivon.pecuaria_mercados:backtest_sazonal_pecuaria"
       ],
       "data_dependencies": [
         "IBGE_ABATE_FRANGO_1094",
@@ -604,7 +612,10 @@
         "nivon.motores_cadeias:margem_proteina",
         "nivon.motores_cadeias:peso_medio_carcaca",
         "nivon.motores_cadeias:classificar_risco",
-        "nivon.modelos_fisicos:reconciliar_rebanho"
+        "nivon.modelos_fisicos:reconciliar_rebanho",
+        "nivon.pecuaria_ciclos:simular_lote_suino",
+        "nivon.pecuaria_mercados:tendencia_observada_pecuaria",
+        "nivon.pecuaria_mercados:backtest_sazonal_pecuaria"
       ],
       "data_dependencies": [
         "IBGE_ABATE_SUINO_1093",
