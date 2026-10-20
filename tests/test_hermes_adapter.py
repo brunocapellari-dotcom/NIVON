@@ -88,7 +88,7 @@ class TestProjectAdapterHermes(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(resp["status"],"PREVIEW_AUDITADO_NAO_PUBLICADO")
         self.assertFalse(resp["envio"])
         self.assertIn("Line-up SANTOS",resp["texto"])
-        self.assertIn("Soja — Semeadura MT",resp["texto"])
+        self.assertIn("SOJA — Semeadura MT",resp["texto"])
         self.assertIn("Teste bolsa",resp["texto"])
         self.assertFalse(resp["modelo_preditivo_homologado"])
 
