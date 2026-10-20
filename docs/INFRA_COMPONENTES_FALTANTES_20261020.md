@@ -92,3 +92,18 @@ O próximo código executável prioritário é **runtime container ARM64
 sem segredos + backup restic verificável + controlador de jobs
 configurável que continue OFF**. Ativar uma fonte real somente depois de
 direitos, persistência e recuperação homologados.
+
+## Ferramentas adicionais de infraestrutura como código (OCI)
+
+A auditoria posterior identificou também soluções oficiais de código aberto:
+[Oracle OCI CLI](https://github.com/oracle/oci-cli) (UPL-1.0/Apache-2.0)
+para inventário read-only de recursos e limites com credenciais segregadas;
+[OpenTofu](https://github.com/opentofu/opentofu) (MPL-2.0) e
+[provider OCI da Oracle](https://github.com/oracle/terraform-provider-oci)
+(MPL-2.0) como candidatos para provisionamento reprodutível somente após
+homologação. `terraform plan` ou `tofu plan` não confirma por si só
+que haverá custo zero; **apply automático e provisionamento seguem OFF**.
+
+A OCI CLI é opção prioritária quando existir acesso permitido à conta;
+OpenTofu/provider são BENCHMARK, pois uma única VM não justifica aumentar
+complexidade sem benefício de manutenção comprovado.
