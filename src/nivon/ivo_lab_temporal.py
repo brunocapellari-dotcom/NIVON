@@ -125,6 +125,7 @@ def _aprender(registros: list[Observacao], alvo: date, *,
     verdades_disponiveis = _snapshot(registros, corte)
     inicio = min(_mes(p) for p in verdades_disponiveis) if verdades_disponiveis else alvo
     pares = []
+    competencias_treino = []
     cursor = _avancar(inicio, 12)
     while cursor < alvo:
         competencia = cursor.strftime("%Y-%m")
@@ -133,6 +134,7 @@ def _aprender(registros: list[Observacao], alvo: date, *,
             f = _features(registros, cursor)
             if f is not None:
                 pares.append((f["sazonal"], f["ultimo_conhecido"], float(real.valor)))
+                competencias_treino.append(competencia)
         cursor = _avancar(cursor, 1)
     if len(pares) < minimo_treino:
         raise ErroLab("histórico supervisionado as-of insuficiente")
@@ -143,8 +145,8 @@ def _aprender(registros: list[Observacao], alvo: date, *,
     peso = min(1., max(0., coef))
     return {"peso_recente": peso, "peso_sazonal": 1-peso,
             "amostras_treino": len(pares),
-            "primeira_competencia_treino": _avancar(alvo, -len(pares)).strftime("%Y-%m")
-                if False else None,
+            "primeira_competencia_treino": competencias_treino[0],
+            "ultima_competencia_treino": competencias_treino[-1],
             "status": "CANDIDATO_NAO_HOMOLOGADO"}
 
 
