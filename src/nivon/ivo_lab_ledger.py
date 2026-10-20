@@ -18,9 +18,10 @@ def _identidade(partes: tuple[str, ...]) -> str:
 
 
 def arquivar_replay_sintetico(relatorio: dict, *, ledger: LedgerPrevisoes,
-                              autorizado: bool = False, versao: str = "LAB_V1") -> dict:
-    if autorizado is not True:
-        raise PermissionError("persistência de replay requer autorização explícita")
+                              autorizado: bool = False, fixture_sintetica_confirmada: bool = False,
+                              versao: str = "LAB_V1") -> dict:
+    if autorizado is not True or fixture_sintetica_confirmada is not True:
+        raise PermissionError("replay exige autorização e confirmação explícita de dados sintéticos")
     if not isinstance(ledger, LedgerPrevisoes) or not isinstance(relatorio, dict):
         raise ErroLedger("ledger ou relatório inválido")
     if relatorio.get("estado") != "BACKTEST_OFFLINE_NAO_HOMOLOGADO" or relatorio.get("promocao_automatica") is not False:
