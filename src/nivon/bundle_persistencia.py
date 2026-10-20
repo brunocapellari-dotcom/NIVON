@@ -1,6 +1,7 @@
 """Snapshots consistentes por banco, manifesto e recuperação do estado NIVON.
 
-Escopo: progresso CONAB, programações portuárias e outbox do briefing.
+Escopo mínimo: CONAB, programações portuárias e outbox do briefing.
+Opcionalmente inclui PTAX e diesel municipal em snapshot V2.
 Não afirma consistência transacional ENTRE bancos nem cloud durável. O chamador
 deve pausar escritores ANTES da captura, em um diretório privado já preparado.
 Nenhuma API de nuvem, cron, deploy ou coleta é iniciada automaticamente.
@@ -22,6 +23,28 @@ from typing import Mapping
 from .backup_sqlite import criar_backup, restaurar_backup, ErroBackup
 
 _DB_NAMES = ("conab", "portos", "outbox")
+_OPTIONAL_NAMES = ("mercados", "diesel")
+_ALLOWED_NAMES = frozenset(_DB_NAMES + _OPTIONAL_NAMES)
+
+
+def _nomes_bancos(provided) -> tuple[str, ...]:
+    if (not isinstance(provided, Mapping)
+        or not set(_DB_NAMES).issubset(provided)
+        or not set(provided).issubset(_ALLOWED_NAMES)):
+        raise ErroBundle("CONAB/portos/outbox obrigatórios; adicionais permitidos mercados/diesel")
+    return _DB_NAMES + tuple(k for k in _OPTIONAL_NAMES if k in provided)
+
+
+def _nomes_manifesto(manifest: dict) -> tuple[str, ...]:
+    bancos=manifest.get("bancos")
+    if not isinstance(bancos,dict):
+        raise ErroBundle("manifesto sem bancos")
+    nomes=_nomes_bancos(bancos)
+    schema=("NIVON_SQLITE_BUNDLE_V1" if len(nomes)==3
+            else "NIVON_SQLITE_BUNDLE_V2")
+    if manifest.get("schema")!=schema:
+        raise ErroBundle("versão de manifesto incompatível com bancos")
+    return nomes
 _BATCH_RE = re.compile(r"[a-zA-Z0-9][a-zA-Z0-9_-]{3,79}\Z")
 _SHA_RE = re.compile(r"[a-f0-9]{64}\Z")
 
@@ -67,13 +90,12 @@ def salvar_ponto_recuperacao(*, bancos: Mapping[str, sqlite3.Connection],
     """Não pode ser chamado se houver escritores concorrentes nos bancos.
 
     Basta uma falha para descartar o diretório de snapshot incompleto.
-    A marca COMPLETO é escrita e sincronizada somente após os três backups.
+    A marca COMPLETO é escrita e sincronizada somente após todos os backups.
     """
     if escritores_pausados is not True:
         raise PermissionError("ponto de recuperação exige janela sem escritores")
     _id_valido(snapshot_id)
-    if not isinstance(bancos, Mapping) or set(bancos) != set(_DB_NAMES):
-        raise ErroBundle("os três bancos são obrigatórios")
+    nomes=_nomes_bancos(bancos)
     try:
         instante = datetime.fromisoformat(coletado_em.replace("Z", "+00:00"))
     except (AttributeError, ValueError) as exc:
@@ -90,7 +112,7 @@ def salvar_ponto_recuperacao(*, bancos: Mapping[str, sqlite3.Connection],
         raise ErroBundle("snapshot id já existe") from exc
     try:
         backups = {}
-        for nome in _DB_NAMES:
+        for nome in nomes:
             info = criar_backup(bancos[nome], final / (nome + ".sqlite"))
             backups[nome] = {
                 "filename": nome + ".sqlite",
@@ -99,7 +121,8 @@ def salvar_ponto_recuperacao(*, bancos: Mapping[str, sqlite3.Connection],
                 "integridade": info["integridade"],
             }
         manifest = {
-            "schema": "NIVON_SQLITE_BUNDLE_V1",
+            "schema": ("NIVON_SQLITE_BUNDLE_V1" if len(nomes)==3
+                       else "NIVON_SQLITE_BUNDLE_V2"),
             "snapshot_id": snapshot_id,
             "coletado_em": instante.astimezone(timezone.utc).isoformat(),
             "backup_por_banco_coerente": True,
@@ -135,7 +158,8 @@ def salvar_ponto_recuperacao(*, bancos: Mapping[str, sqlite3.Connection],
 
 
 def verificar_ponto_recuperacao(*, raiz: str | Path,
-                              snapshot_id: str) -> dict:
+                              snapshot_id: str,
+                              bancos_exigidos: frozenset[str] | None = None) -> dict:
     """Verifica metadados, hash e integridade SQLite sem restaurar dados."""
     _id_valido(snapshot_id)
     root=Path(raiz)
@@ -143,14 +167,17 @@ def verificar_ponto_recuperacao(*, raiz: str | Path,
     pasta=root / snapshot_id
     _dir_seguro(pasta)
     manifest=_json_restrito(pasta / "manifest.json")
-    if (manifest.get("schema") != "NIVON_SQLITE_BUNDLE_V1"
-        or manifest.get("snapshot_id") != snapshot_id
-        or manifest.get("status") != "COMPLETO_LOCAL_SEM_PROVA_NUVEM"
-        or not isinstance(manifest.get("bancos"), dict)
-        or set(manifest["bancos"]) != set(_DB_NAMES)):
+    if (manifest.get("snapshot_id") != snapshot_id
+        or manifest.get("status") != "COMPLETO_LOCAL_SEM_PROVA_NUVEM"):
         raise ErroBundle("manifesto não reconhecido ou incompleto")
+    nomes=_nomes_manifesto(manifest)
+    if bancos_exigidos is not None:
+        if (not isinstance(bancos_exigidos,frozenset)
+            or not bancos_exigidos.issubset(_ALLOWED_NAMES)
+            or not bancos_exigidos.issubset(nomes)):
+            raise ErroBundle("snapshot não cobre todos os bancos exigidos")
     status={}
-    for nome in _DB_NAMES:
+    for nome in nomes:
         info=manifest["bancos"][nome]
         if not isinstance(info, dict) or info.get("filename") != nome+".sqlite":
             raise ErroBundle("arquivo de banco fora da lista autorizada")
@@ -184,9 +211,12 @@ def verificar_ponto_recuperacao(*, raiz: str | Path,
 
 
 def recuperar_ponto(*, raiz: str | Path, snapshot_id: str,
-                   destino_novo: str | Path) -> dict:
-    """Restaura três bancos em NOVO diretório vazio, sem sobrescrita."""
-    v=verificar_ponto_recuperacao(raiz=raiz,snapshot_id=snapshot_id)
+                   destino_novo: str | Path,
+                   bancos_exigidos: frozenset[str] | None = None) -> dict:
+    """Restaura bancos disponíveis em NOVO diretório, sem sobrescrita."""
+    v=verificar_ponto_recuperacao(
+        raiz=raiz,snapshot_id=snapshot_id,bancos_exigidos=bancos_exigidos)
+    nomes=_nomes_manifesto(v["manifest"])
     dest=Path(destino_novo)
     if dest.exists() or dest.is_symlink():
         raise ErroBundle("recuperação não sobrescreve diretório existente")
@@ -195,18 +225,18 @@ def recuperar_ponto(*, raiz: str | Path, snapshot_id: str,
     _dir_seguro(dest.parent)
     dest.mkdir(mode=0o700,exist_ok=False)
     try:
-        for nome in _DB_NAMES:
+        for nome in nomes:
             info=v["manifest"]["bancos"][nome]
             restaurar_backup(Path(raiz)/snapshot_id/info["filename"],
                              dest/(nome+".sqlite"),
                              sha256_esperado=info["sha256"])
         _fsync_dir(dest)
         return {"status":"RESTAURADO_EM_DIRETORIO_NOVO",
-                "bancos":_DB_NAMES,
+                "bancos":nomes,
                 "diretorio":str(dest),
                 "requires_manual_cutover":True}
     except BaseException:
-        for nome in _DB_NAMES:
+        for nome in nomes:
             (dest/(nome+".sqlite")).unlink(missing_ok=True)
         dest.rmdir()
         raise
