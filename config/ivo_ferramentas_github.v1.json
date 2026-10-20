@@ -67,10 +67,12 @@
       "repository": "https://github.com/run-llama/llama_index",
       "purpose": "recuperacao de documentos, citacoes e RAG",
       "license_declared": "MIT-core; plugins variam",
-      "status": "CANDIDATE_REVIEW",
+      "status": "NATIVE_LEXICAL_RETRIEVAL_ADAPTER_LIBRARY_NOT_INSTALLED",
       "priority": "P1",
-      "integration": "IVO_KNOWLEDGE_RETRIEVAL",
-      "gate": "AUDITORIA_PLUGIN_E_DEPS_EVITAR_CHAMADAS_PAGAS"
+      "integration": "src/nivon/ivo_conhecimento_adapter.py",
+      "gate": "REQUIRES_HERMES_KNOWLEDGE_FACTORY_SIGNED_APPROVED_SNAPSHOT_AND_RIGHTS_LLM_OUTPUT_UNTRUSTED",
+      "installation_verified": false,
+      "data_homologated": false
     },
     {
       "id": "MLFLOW",
@@ -406,6 +408,7 @@
     "real_backend_tests_in_default_ci": false,
     "manual_package_validation_required": true,
     "auto_install": false,
-    "auto_deploy": false
+    "auto_deploy": false,
+    "knowledge_claims": "Read-only local lexical retrieval prototype; no canonical writes and no LlamaIndex package installed"
   }
 }
