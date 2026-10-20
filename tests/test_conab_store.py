@@ -68,4 +68,40 @@ class TestArmazenamentoConab(unittest.TestCase):
     def test_coleta_sem_fuso_rejeitada(self):
         with self.assertRaises(ErroSerie): salvar_edicao(self.db,registros(tempo="2026-10-18T13:00:00"))
 
+
+
+
+    def test_hash_igual_valor_diferente_nao_muda_coletas(self):
+        salvar_edicao(self.db,registros())
+        with self.assertRaises(ErroSerie):
+            salvar_edicao(self.db,registros(tempo="2026-10-19T12:00:00Z",prod=110))
+        self.assertEqual(self.db.execute("SELECT count(*) FROM conab_coletas").fetchone()[0],1)
+        self.assertEqual(self.db.execute("SELECT valor FROM conab_observacoes").fetchone()[0],100)
+
+    def test_hash_igual_unidade_diferente_bloqueada(self):
+        salvar_edicao(self.db,registros())
+        rows=registros(tempo="2026-10-19T12:00:00Z")
+        rows[0]["unidade"]="KG"
+        with self.assertRaises(ErroSerie):
+            salvar_edicao(self.db,rows)
+
+    def test_publicacao_futura_rejeitada(self):
+        with self.assertRaises(ErroSerie):
+            salvar_edicao(self.db,registros(),publicado_em="2026-10-22")
+
+    def test_transacao_externa_nao_comitada_pelo_store(self):
+        self.db.execute("SAVEPOINT teste_externo")
+        salvar_edicao(self.db,registros())
+        self.db.execute("ROLLBACK TO SAVEPOINT teste_externo")
+        self.db.execute("RELEASE SAVEPOINT teste_externo")
+        self.assertEqual(self.db.execute("SELECT count(*) FROM conab_edicoes").fetchone()[0],0)
+
+    def test_falha_de_insercao_reverte_edicao_e_coleta(self):
+        self.db.execute("""CREATE TRIGGER injetar_falha BEFORE INSERT ON conab_observacoes
+                           BEGIN SELECT RAISE(ABORT,'falha sintética'); END""")
+        with self.assertRaises(sqlite3.IntegrityError):
+            salvar_edicao(self.db,registros())
+        self.assertEqual(self.db.execute("SELECT count(*) FROM conab_edicoes").fetchone()[0],0)
+        self.assertEqual(self.db.execute("SELECT count(*) FROM conab_coletas").fetchone()[0],0)
+
 if __name__=="__main__": unittest.main()
