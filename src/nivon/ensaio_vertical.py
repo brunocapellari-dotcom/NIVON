@@ -80,11 +80,13 @@ def executar(argv=None) -> dict:
     parser.add_argument("--db-portos",default=None)
     parser.add_argument("--db-mercados",default=None)
     parser.add_argument("--db-diesel",default=None)
+    parser.add_argument("--licencas-mercados",default=None)
     parser.add_argument("--incluir-ptax-usd",action="store_true")
     parser.add_argument("--gerado-em",required=True)
     parser.add_argument("--saida",required=True)
     args=parser.parse_args(argv)
     pacote=_json(args.entrada)
+    licencas=_json(args.licencas_mercados) if args.licencas_mercados else {}
     contratos=_json(args.contratos)
     cultures=contratos.get("culturas",[])
     ports=contratos.get("portos",[])
@@ -101,13 +103,15 @@ def executar(argv=None) -> dict:
         with closing(_sqlite_ro(args.db_portos)) if args.db_portos else _NoConn() as p:
             with closing(_sqlite_ro(args.db_mercados)) if args.db_mercados else _NoConn() as m:
                 with closing(_sqlite_ro(args.db_diesel)) if args.db_diesel else _NoConn() as d:
-                    return _executar_com_bancos(args,pacote,cultures,ports,diesel,c,p,m,d)
+                    return _executar_com_bancos(args,pacote,cultures,ports,diesel,c,p,m,d,licencas)
 
 
-def _executar_com_bancos(args, pacote, cultures, ports, diesel, c, p, m, d):
+def _executar_com_bancos(args, pacote, cultures, ports, diesel, c, p, m, d, licencas):
             dados=compor_pacote_historico(
                 db_conab=c,db_portos=p,db_mercados=m,
                 db_diesel=d,diesel_localidades=diesel,
+                cotacoes_licenciadas=pacote.get("cotacoes_licenciadas"),
+                licencas_verificadas=licencas,
                 incluir_ptax_usd=args.incluir_ptax_usd,gerado_em=args.gerado_em,
                 fontes=pacote.get("fontes",{}),
                 noticias=pacote.get("noticias",[]),

@@ -73,6 +73,7 @@ class NivonProjectAdapter:
         portos: sqlite3.Connection | None = None,
         mercados: sqlite3.Connection | None = None,
         diesel: sqlite3.Connection | None = None,
+        licencas_mercado: Mapping[str, dict] | None = None,
         outbox: sqlite3.Connection | None = None,
         portos_esperados: tuple[str, ...] = (),
     ) -> None:
@@ -86,6 +87,9 @@ class NivonProjectAdapter:
         self._portos = portos
         self._mercados = mercados
         self._diesel = diesel
+        if licencas_mercado is not None and not isinstance(licencas_mercado,Mapping):
+            raise ErroIntegracaoHermes("licenças de mercado inválidas")
+        self._licencas_mercado = deepcopy(dict(licencas_mercado or {}))
         self._outbox = outbox
         if not isinstance(portos_esperados, tuple):
             raise ErroIntegracaoHermes("monitoramento portuário inválido")
@@ -167,7 +171,7 @@ class NivonProjectAdapter:
             )
         # Preview: aceita apenas documentos/observações previamente adquiridos
         # e autorizados. Devolve texto somente se auditor determinístico aprovar.
-        allowed = {"gerado_em", "noticias", "indicadores", "fretes", "culturas", "portos", "incluir_ptax_usd", "diesel_localidades"}
+        allowed = {"gerado_em", "noticias", "indicadores", "fretes", "culturas", "portos", "incluir_ptax_usd", "diesel_localidades", "cotacoes_licenciadas"}
         if not set(payload) <= allowed:
             raise ErroIntegracaoHermes("campo externo não contratado")
         noticias = _lista(payload, "noticias", _MAX_NOTICIAS, dict)
@@ -176,6 +180,7 @@ class NivonProjectAdapter:
         culturas = _lista(payload, "culturas", _MAX_CULTURAS, dict)
         portos = _lista(payload, "portos", _MAX_PORTOS, str)
         diesel_localidades = _lista(payload, "diesel_localidades", 40, dict)
+        cotacoes_licenciadas = _lista(payload, "cotacoes_licenciadas", 40, dict)
         if any(set(loc)!={"uf","municipio","produto"} for loc in diesel_localidades):
             raise ErroIntegracaoHermes("seletores municipais diesel inválidos")
         if any(len(s) > 80 for s in portos):
@@ -187,6 +192,8 @@ class NivonProjectAdapter:
             db_mercados=self._mercados,
             incluir_ptax_usd=payload.get("incluir_ptax_usd",False),
             db_diesel=self._diesel, diesel_localidades=diesel_localidades,
+            cotacoes_licenciadas=cotacoes_licenciadas,
+            licencas_verificadas=self._licencas_mercado,
             fontes=self._fontes, gerado_em=data,
             noticias=noticias, indicadores_externos=indicadores,
             fretes=fretes, culturas=culturas, portos=portos,

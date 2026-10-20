@@ -154,6 +154,8 @@ def compor_pacote_historico(*, db_conab: sqlite3.Connection | None,
                            incluir_ptax_usd: bool = False,
                            db_diesel: sqlite3.Connection | None = None,
                            diesel_localidades: list[dict] | None = None,
+                           cotacoes_licenciadas: list[dict] | None = None,
+                           licencas_verificadas: dict | None = None,
                            fontes: dict, gerado_em: str,
                            noticias: list[dict] | None = None,
                            indicadores_externos: list[dict] | None = None,
@@ -205,6 +207,27 @@ def compor_pacote_historico(*, db_conab: sqlite3.Connection | None,
         resultados.append({"origem":"ANP_DIESEL",**r})
         if r["status"]=="INDICADOR_VERIFICADO_TEMPO":
             indicadores.append(r["indicador"])
+    if cotacoes_licenciadas:
+        from .cotacoes_briefing import preparar_cotacoes_licenciadas
+        resultado_mercado=preparar_cotacoes_licenciadas(
+            cotacoes=cotacoes_licenciadas,
+            licencas_verificadas=licencas_verificadas or {},
+            gerado_em=gerado_em)
+        if resultado_mercado["recusados"]:
+            resultados.append({
+                "origem":"MERCADOS_LICENCIADOS",
+                "status":"BLOQUEADO_COTACOES",
+                "motivo":"uma ou mais observações externas foram recusadas",
+                "indices_recusados":[r["indice"] for r in resultado_mercado["recusados"]],
+            })
+        else:
+            indicadores.extend(resultado_mercado["indicadores"])
+            resultados.append({
+                "origem":"MERCADOS_LICENCIADOS",
+                "status":"INDICADOR_VERIFICADO_TEMPO",
+                "evidencias":resultado_mercado["evidencias"],
+                "observacoes":len(resultado_mercado["indicadores"]),
+            })
     return {
         "pacote":{
             "noticias":noticias, "indicadores":indicadores,
