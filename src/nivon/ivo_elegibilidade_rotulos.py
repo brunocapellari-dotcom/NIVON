@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import re
+import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from hashlib import sha256
@@ -125,9 +126,44 @@ def _catalogo_autoriza(catalogo: dict | None, atestacao: AtestacaoResultado) -> 
             and d.get("training_authorized") is True)
 
 
+
+def _registro_confere(db: sqlite3.Connection | None, a: AtestacaoResultado) -> bool:
+    """Verifica metadados já escritos no ledger de snapshots do NIVON.
+
+    Metadata não comprova origem externa; uma prova jurídica autenticada e
+    checagem de hashes dos bytes reais seguem gates externos obrigatórios.
+    """
+    if not isinstance(db, sqlite3.Connection):
+        return False
+    try:
+        rows = db.execute(
+            """SELECT s.fonte_id,s.sha256,s.publicacao,s.tipo,
+                      s.evidencia_direitos,c.coletado_utc
+               FROM nivon_snapshots s JOIN nivon_coletas c ON c.snapshot_id=s.id
+               WHERE s.dataset_id=? AND s.sha256=?""",
+            (a.dataset_id,a.arquivo_sha256)).fetchall()
+    except sqlite3.Error:
+        return False
+    o=a.observacao
+    for row in rows:
+        fonte,sha,publicacao,tipo,direito,coleta=tuple(row)
+        if (fonte,sha,publicacao,tipo,direito)!=(
+                o.fonte,a.arquivo_sha256,o.publicacao.isoformat(),
+                "REAL_AUTORIZADO",a.direitos_ref):
+            continue
+        try:
+            instante=datetime.fromisoformat(coleta.replace("Z","+00:00"))
+        except (AttributeError,ValueError,TypeError):
+            continue
+        if instante.tzinfo is not None and instante.astimezone(timezone.utc)==_utc(o.coleta,"coleta"):
+            return True
+    return False
+
+
 def avaliar_elegibilidade(
     atestacoes: list[AtestacaoResultado], *, corte: datetime,
     catalogo: dict | None = None, permitir_sintetico: bool = False,
+    registro_db: sqlite3.Connection | None = None,
     minimo_periodos: int = 3,
 ) -> dict:
     """Analisa todo o pacote ou bloqueia tudo; não devolve linhas de treino.
@@ -173,8 +209,11 @@ def avaliar_elegibilidade(
         if a.modalidade == "SINTETICO":
             if not permitir_sintetico or not a.dataset_id.startswith("TESTE_"):
                 bloqueios.append("FIXTURE_SINTETICA_NAO_AUTORIZADA")
-        elif not _catalogo_autoriza(catalogo, a):
-            bloqueios.append("CATALOGO_REAL_SEM_AUTORIZACAO_DE_TREINO")
+        else:
+            if not _catalogo_autoriza(catalogo, a):
+                bloqueios.append("CATALOGO_REAL_SEM_AUTORIZACAO_DE_TREINO")
+            if not _registro_confere(registro_db, a):
+                bloqueios.append("SNAPSHOT_REAL_SEM_PROVENIENCIA_CONFERIDA")
     if len(modalidades) != 1:
         bloqueios.append("REAL_E_SINTETICO_MISTURADOS")
     revisoes = visao_na_data(
@@ -210,11 +249,13 @@ def avaliar_elegibilidade(
 def serie_elegivel_experimental(atestacoes: list[AtestacaoResultado], *,
     corte: datetime, permitir_sintetico: bool = False,
     catalogo: dict | None = None, minimo_periodos: int = 3,
+    registro_db: sqlite3.Connection | None = None,
 ) -> tuple[Observacao, ...]:
     """Nunca habilita treino real: apenas fixtures sintéticas com gate aprovado."""
     resultado = avaliar_elegibilidade(
         atestacoes, corte=corte, permitir_sintetico=permitir_sintetico,
-        catalogo=catalogo, minimo_periodos=minimo_periodos)
+        catalogo=catalogo, registro_db=registro_db,
+        minimo_periodos=minimo_periodos)
     if resultado["estado"] != "ELEGIVEL_EXPERIMENTO_SINTETICO":
         raise PermissionError("labels não habilitados para laboratório sintético")
     return tuple(visao_na_data(
