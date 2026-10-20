@@ -20,7 +20,18 @@ def reconcile_lineup_snapshot(
     ais_observations: Sequence[AISObservation],
     operations: Iterable[PortOperation] = (),
 ) -> list[ReconciledCall]:
-    operation_by_call = {row.call_id: row for row in operations}
+    # A call is a distinct port visit, not an operator/cargo row. Duplicated
+    # call IDs require an upstream one-to-many normalization, not silent counting.
+    ids = [call.call_id for call in lineup_calls]
+    if len(ids) != len(set(ids)):
+        raise ValueError("duplicate line-up call_id: normalize cargo rows before reconciliation")
+
+    operation_by_call: dict[str, PortOperation] = {}
+    for row in operations:
+        if row.call_id in operation_by_call:
+            raise ValueError("duplicate official operation call_id: ambiguous evidence")
+        operation_by_call[row.call_id] = row
+
     return [
         reconcile_call(call, ais_observations, operation_by_call.get(call.call_id))
         for call in lineup_calls
