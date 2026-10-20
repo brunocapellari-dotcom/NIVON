@@ -110,6 +110,7 @@ def validar_rotas(rotas: dict, catalogo: dict) -> dict:
                 "ANP": {"www.gov.br", "gov.br"},
                 "MDIC": {"www.gov.br", "gov.br"},
                 "IBGE": {"servicodados.ibge.gov.br", "apisidra.ibge.gov.br"},
+                "NOAA": {"www.cpc.ncep.noaa.gov"},
             }
             if parsed.hostname != fonte_host and parsed.hostname not in homologados.get(d["source_id"], set()):
                 raise ErroRota(f"{id_}: host não demonstrado como domínio oficial da fonte")
