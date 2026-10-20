@@ -140,7 +140,7 @@ def _aprender(registros: list[Observacao], alvo: date, *,
         raise ErroLab("histórico supervisionado as-of insuficiente")
     distancias = [recent - sazonal for sazonal, recent, _ in pares]
     soma_quadrados = sum(d * d for d in distancias)
-    numerador = sum(d * (real - sazonal) for d, (_, _, real) in zip(distancias, pares))
+    numerador = sum(d * (real - sazonal) for d, (sazonal, _, real) in zip(distancias, pares))
     coef = numerador / ((1 + regularizacao) * soma_quadrados) if soma_quadrados else 0.
     peso = min(1., max(0., coef))
     return {"peso_recente": peso, "peso_sazonal": 1-peso,
