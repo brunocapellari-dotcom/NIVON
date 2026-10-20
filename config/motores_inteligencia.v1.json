@@ -24,7 +24,9 @@
         "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
         "nivon.agregacao_pam_ibge:agregar_municipios_pam",
         "nivon.composicao_pam_sidra:montar_pam_municipal",
-        "nivon.inteligencia_agricola_safras:estimar_oferta_remanescente"
+        "nivon.inteligencia_agricola_safras:estimar_oferta_remanescente",
+        "nivon.auditoria_conab_pam:preparar_tripla_conab",
+        "nivon.auditoria_conab_pam:confrontar_conab_pam"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -68,7 +70,9 @@
         "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
         "nivon.agregacao_pam_ibge:agregar_municipios_pam",
         "nivon.composicao_pam_sidra:montar_pam_municipal",
-        "nivon.inteligencia_agricola_safras:estimar_oferta_remanescente"
+        "nivon.inteligencia_agricola_safras:estimar_oferta_remanescente",
+        "nivon.auditoria_conab_pam:preparar_tripla_conab",
+        "nivon.auditoria_conab_pam:confrontar_conab_pam"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
