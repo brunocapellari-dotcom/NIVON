@@ -3920,7 +3920,7 @@
         "url": "https://power.larc.nasa.gov/docs/services/api/temporal/daily/",
         "source_proof": "https://power.larc.nasa.gov/docs/services/api/temporal/daily/"
       },
-      "implementation_scope": "nasa_power_nivon.py (endpoint e parser) + pipeline_historico_nasa.py (plano anual paginado, RAW SQLite imutável, relatório qualidade, importação sob licença manual); SEM API live homologada, sem scheduler",
+      "implementation_scope": "nasa_power_nivon.py (endpoint e parser) + pipeline_historico_nasa.py (plano anual paginado, RAW SQLite imutável, relatório qualidade, importação sob licença manual); SEM API live homologada, sem scheduler + vinculo_historico_nasa.py (ledger canônico de snapshots SEM retroagir publicação)",
       "authentication": "PUBLIC_ANONYMOUS_RIGHTS_REVIEW",
       "last_verified_data": null,
       "runtime_enabled": false,

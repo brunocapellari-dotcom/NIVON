@@ -25,7 +25,10 @@
         "src/nivon/nasa_power_nivon.py",
         "src/nivon/pipeline_historico_nasa.py",
         "tests/test_nasa_power_nivon.py",
-        "tests/test_pipeline_historico_nasa.py"
+        "tests/test_pipeline_historico_nasa.py",
+        "src/nivon/vinculo_historico_nasa.py",
+        "tests/test_vinculo_historico_nasa.py",
+        "tests/test_paridade_motores_cientificos.py"
       ]
     },
     {

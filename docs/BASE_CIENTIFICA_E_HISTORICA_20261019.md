@@ -136,3 +136,13 @@ A `qualidade()` reporta dias esperados, encontrados, sem registro, faltantes e c
 **Fonte primária:** NASA POWER Daily API https://power.larc.nasa.gov/docs/services/api/temporal/daily/ — histórico desde 01/01/1981; LST default, UTC explícito; alerta contra pedidos repetidos na mesma célula de resolução. Não automatizar requests massivos sem política de taxa e deduplicação por célula oficial/variável.
 
 Os dados RAW não são incorporados ao GitHub. A criação de histórico real depende da verificação da licença por operação, amostra real autenticada, persistência durável fora do repositório, cobertura/frescura, backup/restauração e gate de publicação.
+
+### Ledger canônico e paridade entre motores
+
+`vinculo_historico_nasa.py` reconcilia o RAW NASA POWER com o registro central `registro_snapshots.py`, com SHA-256 de bytes preservados, identidade da URL oficial, data de coleta, esquema de dados e tipo `SINTETICO` ou `REAL_AUTORIZADO`. Sem publicação comprovada, a visão histórica as-of retorna vazia mesmo se o RAW estiver íntegro; direitos de armazenamento não autorizam previsão retrospectiva.
+
+`tests/test_paridade_motores_cientificos.py` compara o ET0 da implementação operacional detalhada `motores_agrometeorologia_fao56.py` com a equação FAO-56 reduzida de `modelos_fisicos.py`. Compara também NSE de `motores_hidrologia_cientifica.py` com `modelos_fisicos.py`. São implementações complementares, sujeitas a paridade matemática — não manter variantes divergentes publicando números distintos.
+
+**Escolha de método:** `motores_agrometeorologia_fao56.et0_fao56_diaria` é a entrada completa de variáveis TMin/TMax/RH/vento/radiação; `modelos_fisicos.eto_fao56_penman_monteith` é verificação por termos reduzidos. O saldo negativo ET0 é tratado de maneira diferente pelos módulos (truncamento explicitado no primeiro, reprovação no segundo); qualquer divergência de caso real continua bloqueada até parecer científico.
+
+Os snapshots e scores matemáticos ainda não substituem dados observados, validação empírica, curva-chave, calibração nem licença do dado de mercado. As rotinas não foram ativadas.
