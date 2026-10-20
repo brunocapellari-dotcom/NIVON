@@ -80,3 +80,11 @@ INMET informa explicitamente que seus dados automáticos horários são brutos, 
 BDMEP: https://bdmep.inmet.gov.br/ — links privados de exportação são temporários; não os registrar no GitHub. O email BDMEP de 25/08/2026 não é uma amostra CSV já homologada pelo Nivon.
 
 Indicadores hidrológicos SCS-CN/Muskingum restaurados após merges concorrentes; registrar cálculo e resíduo sem assumir navegabilidade de rio.
+
+## ENSO RONI oficial — ERSSTv6 (verificado em 20/10/2026)
+
+Em fevereiro de 2026, o NOAA Climate Prediction Center passou a usar o **Relative Oceanic Niño Index (RONI)** para designação oficial dos episódios ENSO; o ONI segue publicado como índice diferente, não como continuação dos mesmos valores. Fonte: https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/announcement.php
+
+O endpoint oficial de dados estruturados é `https://www.cpc.ncep.noaa.gov/data/indices/RONI.ascii.txt`, com linhas `SEAS YR ANOM` e valores trimestrais sobrepostos (DJF, JFM, ... NDJ), desde 1950. Foi documentado e ligado ao parser `noaa_roni.py`, que aceita apenas ERSSTv6, exige continuidade dos centros de temporada, identifica episódios a partir de cinco períodos consecutivos e sinaliza observações recentes como provisórias. https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/
+
+O **último snapshot** desse arquivo pode conter reanálises e correções. O parser não inventa horários de publicação de 1950 a 2026; portanto, `pode_treinar_modelo_point_in_time=False` até obter edições com prova de disponibilidade. Correlação ENSO/chuvaprodutividade não é efeito causal e precisa de blocos sazonais, controle espacial, testes de lead/lag e validação fora de amostra. Nenhuma série RONI foi automaticamente baixada ou agendada.

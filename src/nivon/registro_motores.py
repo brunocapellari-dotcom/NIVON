@@ -30,7 +30,7 @@ MODULOS=frozenset({
     "nasa_power_backfill","nasa_power_captura_manual",
     "grade_meteorologica_store","chirps_v3_conservacao",
     "hidrologia_chuva_vazao",
-    "modelos_fisicos","verificacao_probabilistica","analogos_historicos","unidades_mercado","inmet_horario_qc","confronto_climatico_qc",
+    "modelos_fisicos","verificacao_probabilistica","analogos_historicos","unidades_mercado","inmet_horario_qc","confronto_climatico_qc","noaa_roni",
 })
 
 

@@ -413,7 +413,9 @@
         "nivon.hidrologia_chuva_vazao:propagar_muskingum",
         "nivon.inmet_horario_qc:extrair_horarios_inmet",
         "nivon.inmet_horario_qc:agregar_dias_inmet",
-        "nivon.confronto_climatico_qc:confronto_diario_inmet_power"
+        "nivon.confronto_climatico_qc:confronto_diario_inmet_power",
+        "nivon.noaa_roni:importar_roni_ascii",
+        "nivon.noaa_roni:classificar_episodios_roni"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -633,7 +635,9 @@
         "nivon.analogos_historicos:encontrar_anos_analogos",
         "nivon.inmet_horario_qc:extrair_horarios_inmet",
         "nivon.inmet_horario_qc:agregar_dias_inmet",
-        "nivon.confronto_climatico_qc:confronto_diario_inmet_power"
+        "nivon.confronto_climatico_qc:confronto_diario_inmet_power",
+        "nivon.noaa_roni:importar_roni_ascii",
+        "nivon.noaa_roni:classificar_episodios_roni"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",

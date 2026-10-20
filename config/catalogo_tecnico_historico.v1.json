@@ -66,14 +66,18 @@
       "history": "1950-presente, trimestral móvel atualizado mensalmente",
       "nature": "CLIMATE_INDEX",
       "resolution": "índice regional oceânico",
-      "interface": "página oficial; sem API confirmada",
-      "evidence": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/v5/",
+      "interface": "arquivo NOAA CPC oficial ASCII, SEAS YR ANOM ERSSTv6; sem download automático",
+      "evidence": "https://www.cpc.ncep.noaa.gov/data/indices/RONI.ascii.txt",
       "priority": "P1",
-      "risk": "RONI oficial a partir de 2026; não concatenar ONI e RONI como uma variável; rastrear revisão",
+      "risk": "RONI oficial a partir de 2026; não concatenar ONI e RONI como uma variável; rastrear revisão NOAA ERSSTv6 é oficial de 2026; o ONI histórico continua distinto; a janela DJF/JFM/.../NDJ é média móvel de 3 meses; o dado revisado de 1950 não prova sua publicação à época.",
       "agrolog_paths": [
         "models/analog_years.py"
       ],
-      "status": "DOCUMENTED_NO_NIVON_LIVE_SNAPSHOT"
+      "status": "PARSER_OFFLINE_READY_NO_REAL_VINTAGE",
+      "nivon_paths": [
+        "src/nivon/noaa_roni.py",
+        "tests/test_noaa_roni.py"
+      ]
     },
     {
       "id": "CFTC_COT_WEEKLY",

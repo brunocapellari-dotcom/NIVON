@@ -4037,18 +4037,18 @@
     },
     {
       "dataset_id": "NOAA_ENSO_RONI",
-      "collector_class": "DISCOVERY_REQUIRED",
+      "collector_class": "OFFICIAL_PUBLIC_FILE",
       "locator": {
-        "kind": "NOT_VERIFIED_PER_DATASET",
-        "url": null,
-        "source_proof": null
+        "kind": "DIRECT_PUBLIC_FILE",
+        "url": "https://www.cpc.ncep.noaa.gov/data/indices/RONI.ascii.txt",
+        "source_proof": "https://www.cpc.ncep.noaa.gov/data/indices/index.shtml"
       },
-      "implementation_scope": "NO_PARSER; reuso AgroLog sujeito a auditoria de dependência e teste com snapshot real",
+      "implementation_scope": "noaa_roni.py (leitura ASCII SEAS YR ANOM, ERSSTv6, SHA/versão, temporadas móveis, regras de 5 sequências) — offline e sem coleta; histórico disponível hoje não reconstitui publicações anteriores",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "SOURCE_RIGHTS_AND_REAL_SAMPLE_VALIDATION",
+      "primary_blocker": "OLD_VINTAGES_SOURCE_RIGHTS_AND_HISTORICAL_PUBLICATION",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -4059,13 +4059,13 @@
         "LICENSED_PUBLICATION_GATE",
         "POINT_IN_TIME_VINTAGE_AUDIT",
         "MODEL_BENCHMARK_AND_PHYSICAL_IDENTITY",
-        "EXACT_ENDPOINT_UNKNOWN",
-        "DISCOVER_OFFICIAL_DATA_RESOURCE"
+        "RONI_HISTORICAL_RELEASE_VINTAGES",
+        "RONI_REAL_RAW_INGEST_AND_QA"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Página NOAA RONI confirmada; URL em host diferente de fonte canônica; homologar origem e parser.",
-      "preliminary_evidence": "OFFICIAL_DOCUMENTATION_RESEARCH_ONLY"
+      "source_note": "NOAA CPC oficial ERSSTv6 RONI; histórico retrospectivo desde 1950. Comparar ONI apenas como índice diferente. Dados recentes revisáveis em até dois meses e publicação efetiva exige prova.",
+      "preliminary_evidence": "OFFICIAL_CPC_RONI_ASCII_V6_URL_VERIFIED_20261020"
     },
     {
       "dataset_id": "CFTC_COT_WEEKLY",
