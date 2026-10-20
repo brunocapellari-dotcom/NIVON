@@ -72,7 +72,7 @@ def avaliar_hidrograma_asof(
     """Avalia vazões de um posto e horizonte com rastreabilidade temporal.
 
     Cada registro requer:
-      estacao_id, versao_modelo, referencia_vertical, emitido_em,
+      estacao_id, modelo_id, versao_modelo, referencia_vertical,\n      suporte_temporal=MEDIA_INTERVALO, emitido_em,
       previsao_publicada_em, previsao_coletada_em, valido_em,
       features_publicadas_ate, baseline_publicado_em,
       observado_publicado_em, observado_coletado_em, observado_m3_s,
@@ -81,7 +81,7 @@ def avaliar_hidrograma_asof(
     O campo FORA_AMOSTRA é autodeclarado e NÃO prova que o treino é independente.
     Captura do prognóstico após o instante válido é barrada (não comprova
     que o prognóstico estava disponível point-in-time). Séries devem ser
-    contínuas no passo informado, sem fundir postos, datums ou modelos.
+    contínuas no passo informado, sem fundir postos, datums ou modelos.\n    Vazões DEVEM ser médias do intervalo encerrado em valido_em; o pico\n    é máximo da média intervalar, não pico instantâneo de cheia.
     """
     for name, value in (("estação", estacao_id), ("modelo", modelo_id),
                         ("versão do modelo", versao_modelo),
@@ -102,7 +102,7 @@ def avaliar_hidrograma_asof(
     for row in registros:
         if not isinstance(row, dict):
             raise ErroVerificacaoVazao("registro não estruturado")
-        if (row.get("estacao_id") != estacao_id or
+        if (row.get("estacao_id") != estacao_id or\n            row.get("modelo_id") != modelo_id or\n            row.get("suporte_temporal") != "MEDIA_INTERVALO" or
             row.get("versao_modelo") != versao_modelo or
             row.get("referencia_vertical") != referencia_vertical):
             raise ErroVerificacaoVazao("estação, versão ou datum incompatível")
@@ -163,12 +163,12 @@ def avaliar_hidrograma_asof(
         "kge": _indice_kge_2009(observed, forecast),
         "rmse_baseline_m3_s": sqrt(baseline_sq / n),
         "skill_mse_baseline": 1 - sq / baseline_sq if baseline_sq > 0 else None,
-        "volume_observado_m3": obs_volume,
+        "volume_observado_m3": obs_volume,\n        "integracao_volume": "SOMA_MEDIAS_INTERVALARES_MULTIPLICADAS_PELO_PASSO",
         "volume_previsto_m3": forecast_volume,
         "erro_volume_m3": forecast_volume - obs_volume,
         "erro_volume_percentual": (100 * (forecast_volume / obs_volume - 1)
                                     if obs_volume > 0 else None),
-        "pico_observado_m3_s": peak_obs, "pico_previsto_m3_s": peak_pred,
+        "pico_observado_m3_s": peak_obs, "pico_previsto_m3_s": peak_pred,\n        "tipo_pico": "MAXIMO_DE_MEDIA_INTERVALAR_NAO_PICO_INSTANTANEO",
         "erro_horario_pico_horas": peak_offset,
         "fonte_observada": fonte_observada, "fonte_baseline": fonte_baseline,
         "natureza": "VERIFICACAO_HIDROLOGICA_ASOF_RETROSPECTIVA",
