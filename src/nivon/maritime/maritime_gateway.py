@@ -5,7 +5,6 @@ Neither this server nor a shadow snapshot confers operational readiness or data 
 """
 from __future__ import annotations
 
-import ipaddress
 import json
 import mimetypes
 import re
@@ -184,30 +183,65 @@ class MaritimeReadAPI:
 class MaritimeLocalWSGI:
     """GET/HEAD only; host allowlist, no CORS, no static path traversal."""
 
-    def __init__(self, api: MaritimeReadAPI | None = None) -> None:
+    def __init__(self, api: MaritimeReadAPI | None = None,
+                 static_root: str | Path | None = None) -> None:
         self.api = api or MaritimeReadAPI()
+        self.static_root = Path(static_root).resolve() if static_root is not None else None
 
     def __call__(self, environ: dict, start_response):
         method = environ.get("REQUEST_METHOD", "")
         host = environ.get("HTTP_HOST", "").split(":")[0].lower()
-        if host not in {"127.0.0.1", "localhost", "::1"}:
-            status, payload = "403 Forbidden", {"error": "untrusted_host"}
-        elif method not in {"GET", "HEAD"}:
-            status, payload = "405 Method Not Allowed", {"error": "read_only"}
-        else:
-            code, payload = self.api.resolve(
-                environ.get("PATH_INFO", ""), environ.get("QUERY_STRING", "")
-            )
-            status = {200: "200 OK", 400: "400 Bad Request", 404: "404 Not Found"}[code]
+        if host not in {"127.0.0.1", "localhost"}:
+            return self._json(start_response, "403 Forbidden", {"error": "untrusted_host"}, method)
+        if method not in {"GET", "HEAD"}:
+            return self._json(start_response, "405 Method Not Allowed", {"error": "read_only"}, method)
+        path = environ.get("PATH_INFO", "")
+        if self.static_root is not None and (path == "/maritime/" or path.startswith("/assets/")):
+            return self._static(start_response, method, path)
+        code, payload = self.api.resolve(path, environ.get("QUERY_STRING", ""))
+        status = {200: "200 OK", 400: "400 Bad Request", 404: "404 Not Found"}[code]
+        return self._json(start_response, status, payload, method)
+
+    @staticmethod
+    def _json(start_response, status: str, payload: dict, method: str):
         data = json.dumps(payload, ensure_ascii=False, allow_nan=False).encode("utf-8")
         start_response(status, list(_HEADERS) + [("Content-Length", str(len(data)))])
         return [data] if method != "HEAD" else [b""]
 
+    def _static(self, start_response, method: str, path: str):
+        """Staging same-origin frontend; reject traversal/symlink and arbitrary files."""
+        assert self.static_root is not None
+        relative = ("index.html" if path == "/maritime/" else path.lstrip("/"))
+        candidate = self.static_root / relative
+        resolved = candidate.resolve()
+        if not resolved.is_relative_to(self.static_root) or candidate.is_symlink() or not candidate.is_file():
+            return self._json(start_response, "404 Not Found", {"error": "asset_not_found"}, method)
+        if candidate.stat().st_size > 8 * 1024 * 1024:
+            return self._json(start_response, "413 Content Too Large", {"error": "asset_too_large"}, method)
+        content = candidate.read_bytes()
+        mime = mimetypes.guess_type(candidate.name)[0] or "application/octet-stream"
+        if mime in {"text/html", "text/javascript", "application/javascript", "text/css"}:
+            mime += "; charset=utf-8"
+        headers = [
+            ("Content-Type", mime), ("Content-Length", str(len(content))),
+            ("X-Content-Type-Options", "nosniff"), ("X-Frame-Options", "DENY"),
+            ("Referrer-Policy", "no-referrer"), ("Cache-Control", "no-store"),
+            ("Cross-Origin-Resource-Policy", "same-origin"),
+            ("Content-Security-Policy",
+             "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; "
+             "script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; "
+             "img-src 'self' data: blob: https:; connect-src 'self' https:; "
+             "worker-src 'self' blob:; font-src 'self' data:"),
+        ]
+        start_response("200 OK", headers)
+        return [content] if method != "HEAD" else [b""]
 
-def serve_loopback_only(*, port: int = 8765) -> None:
+
+def serve_loopback_only(*, port: int = 8765,
+                        static_root: str | Path | None = None) -> None:
     if not 1024 <= port <= 65535:
         raise ValueError("porta insegura ou fora de intervalo")
-    with make_server("127.0.0.1", port, MaritimeLocalWSGI()) as server:
+    with make_server("127.0.0.1", port, MaritimeLocalWSGI(static_root=static_root)) as server:
         server.serve_forever()
 
 
@@ -215,5 +249,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="NIVON Maritime staging read-only localhost")
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--ui-dist", type=Path, default=None,
+                        help="diretorio opcional maritime_ui/dist compilado localmente")
     args = parser.parse_args()
-    serve_loopback_only(port=args.port)
+    serve_loopback_only(port=args.port, static_root=args.ui_dist)
