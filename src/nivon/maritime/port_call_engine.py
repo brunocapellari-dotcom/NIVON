@@ -156,6 +156,12 @@ def reconstruct_port_call(
         raise ValueError("port_id obrigatório")
 
     points = sorted(list(ais_points), key=lambda point: _utc(point.observed_at))
+    # This reconstructor represents ONE vessel visit; mixing MMSIs could create
+    # a fictitious arrival, berth or departure from two independent ships.
+    if points:
+        identities = {str(point.mmsi).strip() for point in points}
+        if len(identities) != 1 or not next(iter(identities)) or "None" in identities:
+            raise ValueError("port-call AIS reconstruction requires one known MMSI")
     official = sorted(list(official_signals), key=lambda signal: _utc(signal.observed_at))
     flags: set[str] = set()
     events: list[PortCallEvent] = []
