@@ -56,7 +56,7 @@ def obter(*,abridor=None):
         hosts[u.hostname]+=1
         nome=PurePosixPath(u.path).name
         if any(y in nome for y in ("2025","2026")) and len(nomes)<15:
-            nomes.append({"arquivo":nome[:110],"host":u.hostname})
+            nomes.append({"arquivo":nome[:110],"host":u.hostname,"caminho":u.path[:240]})
         for y in ("2025","2026"):
             if y in nome:anos[y]+=1
     return {"status":"METADADOS_LINKS_HTML_SEM_DOWNLOAD",
