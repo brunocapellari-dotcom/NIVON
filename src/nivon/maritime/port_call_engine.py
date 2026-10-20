@@ -99,17 +99,40 @@ def _corroborated_run(
     minimum_dwell_minutes: float,
     after: datetime | None = None,
 ) -> list[AisStatePoint]:
-    selected = [
-        point for point in _zone_run(points, zone, after=after)
-        if point.corroborated and point.quality_status == "CONFIRMED_SEQUENCE"
-    ]
-    if len(selected) < minimum_messages:
-        return []
-    selected.sort(key=lambda point: _utc(point.observed_at))
-    dwell = (_utc(selected[-1].observed_at) - _utc(selected[0].observed_at)).total_seconds() / 60.0
-    if dwell < minimum_dwell_minutes:
-        return []
-    return selected
+    # A dwell event must be supported by one uninterrupted, bounded-gap sequence.
+    # Filtering by zone first would incorrectly join positions across a voyage,
+    # a berth exit, or a multi-hour AIS coverage outage.
+    ordered = sorted(points, key=lambda point: _utc(point.observed_at))
+    run: list[AisStatePoint] = []
+    max_gap_minutes = 60.0
+
+    def supported(candidate: list[AisStatePoint]) -> bool:
+        return (
+            len(candidate) >= minimum_messages
+            and (_utc(candidate[-1].observed_at) - _utc(candidate[0].observed_at)).total_seconds() / 60.0
+            >= minimum_dwell_minutes
+        )
+
+    for point in ordered:
+        observed = _utc(point.observed_at)
+        eligible = (
+            (after is None or observed > after)
+            and point.zone.upper() == zone.upper()
+            and point.corroborated
+            and point.quality_status == "CONFIRMED_SEQUENCE"
+        )
+        if not eligible:
+            if supported(run):
+                return run
+            run = []
+            continue
+        if run and (observed - _utc(run[-1].observed_at)).total_seconds() / 60.0 > max_gap_minutes:
+            if supported(run):
+                return run
+            run = []
+        run.append(point)
+
+    return run if supported(run) else []
 
 
 def reconstruct_port_call(
