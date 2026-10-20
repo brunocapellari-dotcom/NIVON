@@ -74,7 +74,7 @@ class TestFAO56(unittest.TestCase):
             amostras_anuais_referencia_mm=chuva,
             anos_referencia=ano,fonte="fixture 1991–2020")
         self.assertAlmostEqual(x["anomalia_percentual"],-16.6666666667)
-        self.assertEqual(x["percentil_empirico"],100*16/30)
+        self.assertEqual(x["percentil_empirico"],55.0)  # 16 abaixo e 1 igual: mid-rank
         self.assertIn("NAO_SPI",x["classificacao"])
         with self.assertRaises(ErroAgrometeo):
             diagnosticar_chuva_climatologica(chuva_acumulada_mm=100,

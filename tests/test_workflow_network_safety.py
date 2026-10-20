@@ -1,4 +1,5 @@
 """Guarda de CI: testes sintéticos automáticos; redes externas só opt-in."""
+import re
 import unittest
 from pathlib import Path
 
@@ -13,7 +14,10 @@ class TestWorkflowNetworkSafety(unittest.TestCase):
         for nome in EXTERNOS:
             bloco="  "+nome+":"
             self.assertIn(bloco,conteudo)
-            resto=conteudo.split(bloco,1)[1].split("\n  ",1)[0]
+            match=re.search(r"(?m)^  "+re.escape(nome)+r":\\s*\\n" +
+                            r"([\\s\\S]*?)(?=^  [A-Za-z0-9_-]+:\\s*$|\\Z)",conteudo)
+            self.assertIsNotNone(match)
+            resto=match.group(1)
             self.assertIn("if: github.event_name == 'workflow_dispatch'",resto,
                 msg=f"{nome} deve requerer disparo manual")
 
