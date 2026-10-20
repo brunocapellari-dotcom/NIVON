@@ -9,3 +9,7 @@ O portal oficial de dados abertos da ANP reúne (a) arquivos mensais de registro
 Para ingestão, os arquivos atuais de revenda mensal têm dados cadastrais de postos: não commitar, logar, publicar ou armazenar CNPJ/razão/endereço. O normalizador existente `anp_diesel.py` gera somente preços amostrais municipais/semanais inferidos, e não diesel A no produtor nem PPI internacional.
 
 O histórico semanal publicado pela ANP tem janela longa e preços agregados próprios; exige parser por layout/ciclo, não deve ser fundido com a série derivada de CSV bruto sem validação de metodologia. Revisar direitos por operação, edição histórica, testes reais, reconciliação, persistência durável e restore antes de ativar coletas automáticas. Custo adicional ou deploy não autorizado.
+
+## Status de CI em 19/10/2026
+
+`anp_manifesto.py` e seus testes sintéticos passaram no GitHub Actions. O catálogo de links identificado a partir de páginas oficiais **não** significa execução automática de download; a pesquisa agregada semanal de preço por município usa ciclo e metodologia diferente dos CSV mensais de postos.
