@@ -781,6 +781,36 @@
       "preliminary_evidence": "CATALOG_ONLY"
     },
     {
+      "dataset_id": "CHIRPS_V3_CHUVA",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://www.chc.ucsb.edu/data/chirps3",
+        "source_proof": "https://www.chc.ucsb.edu/data/chirps3"
+      },
+      "implementation_scope": "CHIRPS v3: validator de conservação diária/pêntada e separação RNL vs SAT e preliminar vs final; download, recorte espacial, leitura GeoTIFF/NetCDF e histórico incremental ainda não implementados",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "EXACT_ENDPOINT_UNKNOWN",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "CHIRPS v3: 0.05°, 1981+; diário SAT desagregado por IMERG Late v7 e RNL por ERA5, ambos de pêntada; datas diárias não são janela uniforme de estação. CC BY 4.0.",
+      "preliminary_evidence": "CATALOG_ONLY"
+    },
+    {
       "dataset_id": "CME_FUTUROS",
       "collector_class": "ACCESS_GATED",
       "locator": {
@@ -1054,7 +1084,7 @@
         "url": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/progresso-de-safra",
         "source_proof": "https://github.com/bruno-portfolio/agrobr/blob/main/docs/api/conab_progresso.md"
       },
-      "implementation_scope": "conab_agrobr.py + agrobr==2.0.0; direitos e persistencia pendentes",
+      "implementation_scope": "conab_agrobr.py + progresso_conab_historico.py (dados offline semanais, 27 UFs e MEDIA_ESTADOS; coleta desativada)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -1222,6 +1252,36 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "BEN anual, anos de competência e atualizações/revisões das planilhas.",
       "preliminary_evidence": "OFFICIAL_SERIES_DISCOVERED"
+    },
+    {
+      "dataset_id": "ERA5_LAND_CDS",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land?tab=documentation",
+        "source_proof": "https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land?tab=documentation"
+      },
+      "implementation_scope": "CATALOG_ONLY: fonte e API real, direitos, grid/latência, parser/QA por versão pendentes",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "EXACT_ENDPOINT_UNKNOWN",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Reanálise 0.1 grau; revisões e latência; API CDS requer acesso",
+      "preliminary_evidence": "CATALOG_ONLY"
     },
     {
       "dataset_id": "ETANOL_MILHO_ANP",
@@ -3284,6 +3344,66 @@
       "preliminary_evidence": "INDEX_OFICIAL_LINKS_VERIFICADOS_PARSERS_STREAM_OFFLINE_SINTETICOS"
     },
     {
+      "dataset_id": "NASA_GPM_IMERG",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://gpm.nasa.gov/data/imerg",
+        "source_proof": "https://gpm.nasa.gov/data/imerg"
+      },
+      "implementation_scope": "CATALOG_ONLY: fonte e API real, direitos, grid/latência, parser/QA por versão pendentes",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "EXACT_ENDPOINT_UNKNOWN",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Estimativas meia hora com versão/latência; nunca confundir taxa com acumulado",
+      "preliminary_evidence": "CATALOG_ONLY"
+    },
+    {
+      "dataset_id": "NASA_POWER_AG",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://power.larc.nasa.gov/docs/services/api/temporal/daily/",
+        "source_proof": "https://power.larc.nasa.gov/docs/services/api/temporal/daily/"
+      },
+      "implementation_scope": "Nasa POWER: planner diário e histórico anual UTC, parser com verificação de coordenadas reais, ingestão manual HTTPS opt-in, cache SHA contra consultas repetidas, histórico bitemporal em SQLite; sem amostra real, agendamento ou publicação homologados",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "EXACT_ENDPOINT_UNKNOWN",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "NASA POWER Daily API (1981+), limite 20 variáveis; 0.5° grid global de meteorologia. Evitar consultas repetidas por célula. Sem publicação de dados inferida da coleta.",
+      "preliminary_evidence": "CATALOG_ONLY"
+    },
+    {
       "dataset_id": "NOAA_GFS",
       "collector_class": "API_OR_FILE",
       "locator": {
@@ -3911,98 +4031,6 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
       "preliminary_evidence": "CATALOG_ONLY"
-    },
-    {
-      "dataset_id": "NASA_POWER_AGRO_DAILY",
-      "collector_class": "OFFICIAL_API",
-      "locator": {
-        "kind": "PUBLISHED_API_DOC",
-        "url": "https://power.larc.nasa.gov/docs/services/api/temporal/daily/",
-        "source_proof": "https://power.larc.nasa.gov/docs/services/api/temporal/daily/"
-      },
-      "implementation_scope": "nasa_power_nivon.py (endpoint e parser) + pipeline_historico_nasa.py (plano anual paginado, RAW SQLite imutável, relatório qualidade, importação sob licença manual); SEM API live homologada, sem scheduler + vinculo_historico_nasa.py (ledger canônico de snapshots SEM retroagir publicação)",
-      "authentication": "PUBLIC_ANONYMOUS_RIGHTS_REVIEW",
-      "last_verified_data": null,
-      "runtime_enabled": false,
-      "scheduled_enabled": false,
-      "primary_blocker": "REAL_SAMPLE_RIGHTS_HISTORY_BACKFILL",
-      "gates_missing": [
-        "VERIFY_COLLECTION_RIGHTS",
-        "VERIFY_STORAGE_RIGHTS",
-        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
-        "HISTORICAL_BACKFILL",
-        "SCHEDULE_AND_FRESHNESS",
-        "DURABLE_PERSISTENCE_AND_RESTORE",
-        "LICENSED_PUBLICATION_GATE",
-        "POINT_IN_TIME_VINTAGE_AUDIT",
-        "MODEL_BENCHMARK_AND_PHYSICAL_IDENTITY",
-        "INDEPENDENT_SOURCE_AVAILABILITY_PROOF",
-        "REAL_RAW_SAMPLE_AND_BACKTEST_ASOF_PROOF"
-      ],
-      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
-      "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "API documentada; verificar resposta histórica, versões e termos.",
-      "preliminary_evidence": "OFFICIAL_DOCUMENTATION_RESEARCH_ONLY"
-    },
-    {
-      "dataset_id": "COPERNICUS_ERA5_LAND",
-      "collector_class": "OFFICIAL_API",
-      "locator": {
-        "kind": "OFFICIAL_INDEX",
-        "url": "https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land",
-        "source_proof": "https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land"
-      },
-      "implementation_scope": "NO_PARSER; reuso AgroLog sujeito a auditoria de dependência e teste com snapshot real",
-      "authentication": "REGISTRATION_CDS_KEY_REQUIRED",
-      "last_verified_data": null,
-      "runtime_enabled": false,
-      "scheduled_enabled": false,
-      "primary_blocker": "SOURCE_RIGHTS_AND_REAL_SAMPLE_VALIDATION",
-      "gates_missing": [
-        "VERIFY_COLLECTION_RIGHTS",
-        "VERIFY_STORAGE_RIGHTS",
-        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
-        "HISTORICAL_BACKFILL",
-        "SCHEDULE_AND_FRESHNESS",
-        "DURABLE_PERSISTENCE_AND_RESTORE",
-        "LICENSED_PUBLICATION_GATE",
-        "POINT_IN_TIME_VINTAGE_AUDIT",
-        "MODEL_BENCHMARK_AND_PHYSICAL_IDENTITY"
-      ],
-      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
-      "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Cadastro/CDS token; grade ARCO ou recuperação conforme termo.",
-      "preliminary_evidence": "OFFICIAL_DOCUMENTATION_RESEARCH_ONLY"
-    },
-    {
-      "dataset_id": "UCSB_CHIRPS_V3",
-      "collector_class": "STRUCTURED_FILE",
-      "locator": {
-        "kind": "OFFICIAL_INDEX",
-        "url": "https://www.chc.ucsb.edu/data/chirps3",
-        "source_proof": "https://www.chc.ucsb.edu/data/chirps3"
-      },
-      "implementation_scope": "NO_PARSER; reuso AgroLog sujeito a auditoria de dependência e teste com snapshot real",
-      "authentication": "VERIFY_PER_SOURCE",
-      "last_verified_data": null,
-      "runtime_enabled": false,
-      "scheduled_enabled": false,
-      "primary_blocker": "SOURCE_RIGHTS_AND_REAL_SAMPLE_VALIDATION",
-      "gates_missing": [
-        "VERIFY_COLLECTION_RIGHTS",
-        "VERIFY_STORAGE_RIGHTS",
-        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
-        "HISTORICAL_BACKFILL",
-        "SCHEDULE_AND_FRESHNESS",
-        "DURABLE_PERSISTENCE_AND_RESTORE",
-        "LICENSED_PUBLICATION_GATE",
-        "POINT_IN_TIME_VINTAGE_AUDIT",
-        "MODEL_BENCHMARK_AND_PHYSICAL_IDENTITY"
-      ],
-      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
-      "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Preliminary não é final; identificar asset por versão e grid.",
-      "preliminary_evidence": "OFFICIAL_DOCUMENTATION_RESEARCH_ONLY"
     },
     {
       "dataset_id": "NOAA_ENSO_RONI",

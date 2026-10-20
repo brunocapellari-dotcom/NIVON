@@ -78,6 +78,8 @@ def executar(argv=None) -> dict:
     parser.add_argument("--contratos",required=True)
     parser.add_argument("--db-conab",default=None)
     parser.add_argument("--db-portos",default=None)
+    parser.add_argument("--db-mercados",default=None)
+    parser.add_argument("--incluir-ptax-usd",action="store_true")
     parser.add_argument("--gerado-em",required=True)
     parser.add_argument("--saida",required=True)
     args=parser.parse_args(argv)
@@ -92,8 +94,14 @@ def executar(argv=None) -> dict:
         raise ErroEnsaio("contratos de safra/portos inválidos")
     with closing(_sqlite_ro(args.db_conab)) if args.db_conab else _NoConn() as c:
         with closing(_sqlite_ro(args.db_portos)) if args.db_portos else _NoConn() as p:
+            with closing(_sqlite_ro(args.db_mercados)) if args.db_mercados else _NoConn() as m:
+                return _executar_com_bancos(args, pacote, cultures, ports, c, p, m)
+
+
+def _executar_com_bancos(args, pacote, cultures, ports, c, p, m):
             dados=compor_pacote_historico(
-                db_conab=c,db_portos=p,gerado_em=args.gerado_em,
+                db_conab=c,db_portos=p,db_mercados=m,
+                incluir_ptax_usd=args.incluir_ptax_usd,gerado_em=args.gerado_em,
                 fontes=pacote.get("fontes",{}),
                 noticias=pacote.get("noticias",[]),
                 indicadores_externos=pacote.get("indicadores",[]),

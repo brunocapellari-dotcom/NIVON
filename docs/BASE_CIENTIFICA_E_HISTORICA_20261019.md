@@ -1,148 +1,70 @@
-# NIVON — Catálogo histórico-científico e motores preditivos (19/10/2026)
+# NIVON — Base histórica, científica e preditiva integrada
 
-**Escopo:** agricultura, pecuária, hidrologia, meteorologia, mercados/bolsas e impactos cruzados. **Status:** pesquisa, cadastro e planejamento de homologação; SEM coleta recorrente, SEM licença presumida, SEM deploy. Base de trabalho: branch `feat/agrobr-portos-motores-agentes-20261019` no commit `3329bbcfda4aadf4f08ea77b64d2abdffe292157`.
+**Referência:** 20/10/2026. **Estado:** implementação e documentação versionadas, sem deploy, coleta recorrente ou previsão homologada.
 
-## Integração real ao Nivon
+## Fonte de verdade e sem duplicação
 
-- `config/fontes_nivon_master.v1.json` continua **única fonte canônica** de fontes/datasets, com 96 → 100 fontes e 131 → 138 datasets.
-- `config/rotas_coleta.v1.json` continua fonte única de localização técnica, controles de licença e implementação. 138 rotas, **todas desativadas**.
-- `config/matriz_produtos_indicadores.v1.json` associa as novas bases aos sistemas que as consumirão.
-- `config/motores_inteligencia.v1.json` espelha dependências da matriz sem declarar homologação.
-- `config/catalogo_tecnico_historico.v1.json` registra **metadados de pesquisa/evidência** por dataset já canônico; não duplica cadastro operacional.
-- `config/bibliotecas_cientificas.v1.json` registra código do AgroLog e bibliotecas externas com licença/decisão, sem instalação automática.
+A fonte de verdade de metadados operacionais permanece nos arquivos:
+- `config/fontes_nivon_master.v1.json`: **101 fontes e 139 datasets** após a reconciliação de outubro de 2026.
+- `config/rotas_coleta.v1.json`: endpoint, documentação, tipo de aquisição, direitos separados, status, código e bloqueios por dataset.
+- `config/matriz_produtos_indicadores.v1.json`: dependências de dados para as 28 frentes.
+- `config/motores_inteligencia.v1.json`: funções matemáticas/ambientais ligadas às frentes, **sem habilitar operação**.
+- `config/catalogo_tecnico_historico.v1.json`: evidências documentais e cobertura histórico-científica sem criar outros cadastros de operação.
+- `config/bibliotecas_cientificas.v1.json`: bibliotecas e códigos do AgroLog/GitHub com licença e finalidade.
 
-## Bases históricas prioritárias verificadas
+**Aliases conceituais removidos para impedir duplicação de séries:**
 
-| Dataset NIVON | Histórico comprovado ou condicionante | Tipo de evidência | Uso científico |
-|---|---|---|---|
-| NASA_POWER_AGRO_DAILY | Diário desde 1981, grade original por parâmetro | modelo/reanálise | baseline regional clima e radiação |
-| COPERNICUS_ERA5_LAND | 1950+, horário, 0,1° | reanálise | histórico coerente do clima/solo |
-| UCSB_CHIRPS_V3 | 1981+, chuva 0,05°, prévia e final | satélite+estações | seca, chuva e risco por região |
-| NOAA_ENSO_RONI | 1950+, sazonal móvel | índice climático | ENSO e anos análogos; não misturar RONI e ONI |
-| USDA_WASDE_RELEASE_VINTAGES | edições desde 1973; CSV consolidado 2010+ | estimativas e revisões | erro de previsão em vintage real |
-| MDIC_COMEX_NCM (existente) | 1997+, mensal por NCM; NBM 1989-96 separado | comércio exterior reportado | demanda/fluxos e balanços |
-| ANA_HIDRO (existente) | varia por estação; exige solicitação de API | cota/vazão observadas/adotadas | estações e hidrologia por bacia |
-| IBGE_PAM / IBGE_PPM (existentes) | por tabela, variável, município e revisão | estatística oficial | agricultura, rebanho e produção |
-| CFTC_COT_WEEKLY | histórico varia por tipo de relatório | posições reportadas | posicionamento especulativo/comercial, não preço |
-| CME_FUTUROS / B3_FUTUROS (existentes) | por contrato/dia, direitos restritos | negociação/ajuste | curva futura, spreads, basis; não automatizar sem licença |
+| ID redundante da pesquisa anterior | Dataset canônico único na plataforma |
+| --- | --- |
+| `NASA_POWER_AGRO_DAILY` | `NASA_POWER_AG` |
+| `UCSB_CHIRPS_V3` | `CHIRPS_V3_CHUVA` |
+| `COPERNICUS_ERA5_LAND` | `ERA5_LAND_CDS` |
 
-**Outras fontes já canônicas preservadas**: CONAB semanal e séries/armazenagem, INMET, CPTEC/MERGE, USDA PSD/NASS, CEPEA/IMEA, MAPA, FAO, ANP, World Bank, CFTC agora cadastrado; sem duplicar IDs existentes.
+**Não executar os antigos módulos concorrentes de coleta NASA** (`nasa_power_nivon.py`, `pipeline_historico_nasa.py`, `vinculo_historico_nasa.py`), cuja lógica foi superada por componentes mais completos incorporados em paralelo pelo desenvolvimento principal. Os commits antigos ficam preservados no histórico Git, mas esses arquivos não integram o tree reconciliado.
 
-### Restrições encontradas e documentadas
+## Coletores oficiais canônicos e profundidade histórica
 
-1. ANA HidroWebService possui Swagger com séries, mas **o acesso automatizado é sujeito a solicitação de credenciais à ANA** (https://www.snirh.gov.br/hidroweb/acesso-api). Não criar chaves nem contornar autenticação.
-2. B3 proíbe explicitamente **coleta automatizada, incluindo IA**, na página de pesquisa por pregão (https://b3.com.br/pt_br/market-data-e-indices/servicos-de-dados/market-data/historico/boletins-diarios/pesquisa-por-pregao/pesquisa-por-pregao/). CME requer tratamento de licença de market data/histórico/redistribuição.
-3. CHIRPS **preliminary/final**, CONAB e USDA/WASDE **vintages**, INMET estação e ERA5 grade/reanálise **não são sinônimos**.
-4. O software open source não transfere direito de acessar, armazenar ou redistribuir dados externos. Verificar licença por biblioteca, dependência transitiva e finalidade comercial.
-
-## Núcleo matemático obrigatório — não admitir números sem sentido
-
-### 1. Identidades físicas e unidades
-
-- **Produção agrícola**: produção (t) = área colhida (ha) × produtividade (kg/ha) / 1000. Tolerância **derivada do arredondamento e precisão das fontes**, não tolerância arbitrária universal.
-- **Oferta/uso**: estoque inicial + produção + importações = consumo interno + exportação + perdas + estoque final + ajuste estatístico **explícito e auditável**. Não corrigir erro escondendo-o em consumo.
-- **Animal**: peso carcaça (kg) = peso vivo (kg) × rendimento, com base e definição equivalentes. Não somar cabeças, kg vivo, cortes e carcaça.
-- **Água**: armazenamento final = armazenamento inicial + precipitação − evapotranspiração real − escoamento/percolação; respeitar limites físicos e unidades. ETo (FAO-56) e Kc por cultura/fase, nunca inventados.
-- **Energia e preço**: futures US¢/lb, USD/bu, USD/t, R$/sc60kg, R$/arroba exigem dicionário de contratos, densidades, especificação e conversores auditados. Preço futuro ≠ preço produtor.
-- **Hidro**: nível observado em régua (cm) ≠ profundidade/canal/carga transportável. Vazão e cota dependem de curva-chave local, batimetria e datum.
-
-### 2. Regras estatísticas contra previsões enganosas
-
-- Dados **as-of**: usar apenas informações que existiam na data de decisão; armazenar competência, referência, publicação, coleta e, quando disponível, instante de liberação efetiva.
-- Backtest walk-forward, folds por **safra, geografia e regime**, sem treino no futuro, sem vazamento por revisão do histórico ou normalização ajustada no conjunto de teste.
-- Comparar com baselines de última safra, sazonal ingênuo, média histórica e modelos científicos simples; medir MAE, RMSE, MASE/sMAPE onde adequados; evitar MAPE em série zero/próxima de zero.
-- Previsão probabilística: cobertura empírica de intervalos, pinball/CRPS e Brier para eventos quando aplicável, calibração e verificação da frequência real.
-- Testar resíduos, sazonalidade, quebras estruturais, multicolinearidade, tamanhos amostrais, agregação regional, dependência espacial e mudanças de fonte.
-- Sob desempenho inferior aos baselines, evidência insuficiente ou dados vencidos, **degradar para cenário não homologado**, não publicar como previsão confiável.
-- Toda previsão terá unidade, fonte, vintage, horizonte, faixa de incerteza, hipótese e limite de interpretação. Não usar o LLM para inventar parâmetro, elasticidade ou probabilidade.
-
-### 3. Especificidade dos motores
-
-| Motor | Teoria/método necessário | Prova quantitativa |
+| Fonte/dataset | Histórico | Implementação no repositório / restrição |
 |---|---|---|
-| Agricultura | balanço hídrico, graus-dia, fenologia, FAO AquaCrop/DSSAT quando aplicável, regressão hierárquica e yield-forecast | backtest por município/UF/safra; predição física plausível |
-| Pecuária | estrutura por coortes, ciclo, reprodução, ganho de peso, abate, alimentação, preços e elasticidade | conservações de rebanho, pesos, defasagem biológica e margem por sistema |
-| Meteorologia | análise espacial, correção de viés, ensambles, verificação de precipitação/temperatura, anos análogos | skill por horizonte/região/estação e cobertura probabilística |
-| Hidrologia | curva-chave, balanço hídrico de bacia, chuva-vazão, extremos e hidrogramas | NSE/KGE + viés/erro por estação e condição; não declarar navegabilidade |
-| Bolsas | especificação do contrato, rolagem, term structure, basis, carry, hedge, volatilidade, regimes e risco | backtest por regime/contrato, custos de transação, janela as-of; direitos resolvidos |
+| NASA POWER / `NASA_POWER_AG` | diário de 1981 a quase tempo real | `nasa_power_diario.py`, `nasa_power_backfill.py`, `nasa_power_captura_manual.py`, `grade_meteorologica_store.py`; UTC explícito, cache, origem, QA e direitos; sem ingestão de longo período homologada |
+| CHIRPS v3 / `CHIRPS_V3_CHUVA` | 1981+, preliminar/final | `chirps_v3_conservacao.py`; separar RNL/SAT e reconciliar pêntadas; sem série nacional materializada |
+| ERA5-Land / `ERA5_LAND_CDS` | 1950+, horário | CDS/ECMWF, registro/termos; sem extração em lote validada |
+| NOAA RONI / `NOAA_ENSO_RONI` | 1950+, séries mensais e médias móveis | pesquisa documental, sem API específica homologada; não concatenar índices ONI/RONI sem método |
+| USDA/WASDE / `USDA_WASDE_RELEASE_VINTAGES` | arquivo de edições desde 1973 | `AgroLogMT/collector/usda_wasde.py`; exige parser, versionamento real e evidência de publicação |
+| USDA NASS / `USDA_NASS` | por cultura/estatística | `AgroLogMT/collector/nass_quickstats.py`; chave e licença por operação |
+| IBGE PAM/PPM/ABATE | conforme tabela, município e competência | SIDRA e módulos de ingestão já existentes, sem presumir ausência de revisão |
+| CONAB, MDIC, ANP e ANA | conforme dataset oficial | preservar coletores e contratos de progresso, safra, exportação, diesel e hidrologia da branch integrada |
+| CFTC COT / `CFTC_COT_WEEKLY` | varia por tipo de relatório | Socrata/CFTC; posição de terça é divulgada depois, usar data de disponibilidade |
+| FAO FAOSTAT / `FAO_FAOSTAT_LONG_RUN` | séries anuais variam por domínio | dados oficiais, agrupar por área/produto/ano/método, sem inferir série municipal |
+| CME/ICE/B3 | conforme licença contratual | **direitos restritos**; não automatizar a página B3 nem tratar contratos contínuos sem ajuste explícito |
 
-**Pesquisa científica base**: FAO-56 evapotranspiração (https://www.fao.org/4/X0490E/X0490E00.htm); AquaCrop FAO (https://www.fao.org/aquacrop); DSSAT open source (https://dssat.net/development/open-source/). São referências e frameworks a avaliar, **não modelos calibrados já implementados**.
+**Fontes/documentação:** https://power.larc.nasa.gov/docs/services/api/temporal/daily/ ; https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land ; https://www.chc.ucsb.edu/data/chirps3 ; https://www.usda.gov/about-usda/general-information/staff-offices/office-chief-economist/commodity-markets/wasde-report ; https://publicreporting.cftc.gov/
 
-## Reuso identificado no AgroLogMT
+## Motores matemáticos e qual módulo usar
 
-Priorizar estas peças (testar API, integridade e licença antes de copiar/importar):
-- **Dados e história:** `collector/conab_safra_history.py`, `collector/conab_safra.py`, `collector/nasa_power.py`, `collector/ana_hidrowebservice.py`, `collector/usda_wasde.py`, `collector/nass_quickstats.py`, `collector/inmet_daily.py`, `cftc_cot/client.py`.
-- **Métodos físicos:** `models/agroclimate.py` com Hargreaves-Samani, graus-dia e balde hídrico; `models/hydrology.py` com climatologia e tendências; `models/weather_multimodel.py` com consenso por execução e quantis.
-- **Validação:** `models/analog_years.py`, `models/backtest.py`, `models/point_in_time.py`, `models/promotion.py` para análogos, backtests, prevenção de look-ahead e promoção de modelos.
-- **Não incorporar automaticamente:** workers GCP, dependências BigQuery, schedulers, credenciais, integrações custosas, backfill sem direitos, serviços de mercado restrito ou qualquer deploy legado.
+Aproveitamento científico do AgroLog e complementos do Nivon devem ser tratados como **biblioteca única com testes de paridade**:
+- `motores_agrometeorologia_fao56.py`: entrada completa observacional (temperatura, umidade, radiação *líquida*, vento a 2m e altitude), ET0 FAO-56, déficit hídrico e percentil de chuva. **A radiação solar de onda curta do NASA POWER não equivale a Rn líquida**.
+- `modelos_fisicos.py`: equação FAO-56 reduzida independente; teste de concordância com a implementação meteorológica principal; reconciliação do estoque do rebanho por espécie e categoria; métricas hidrológicas NSE e KGE-2009.
+- `motores_hidrologia_cientifica.py`: curvas-chave apenas **interpoladas entre aforos confiáveis**, balanço físico de reservatórios e skill de vazão contra persistência. Não converter automaticamente cota de régua em calado navegável.
+- `verificacao_probabilistica.py`: Brier, Pinball e cobertura de intervalos sem confundir score com probabilidade calibrada.
+- `analogos_historicos.py`: método AgroLog de distância euclidiana padronizada com filtro de disponibilidade temporal; anos análogos **não** são previsão causal nem probabilidade.
+- `unidades_mercado.py`: conversão em Decimal de massa, bushels específicos da CBOT e US¢/lb, sem inferir preço produtor, basis, câmbio ou prêmios.
+- `qualidade_cientifica.py`: identidades safra e estoques, erros de conservação e backtests sem uso de dados futuros.
+- `historico_vintages.py`: índice genérico SQLite de edições e disponibilidades comprovadas; complementa `registro_snapshots.py` (ledger de metadados) e `avaliacao_vintages.py` (avaliação preditiva).
 
-## Sequência única de homologação sem expansão avulsa
+Testes de paridade: `tests/test_paridade_motores_cientificos.py` compara a equação FAO-56 e o NSE calculados pelas implementações independentes. Testes de sintaxe e paridade não substituem calibração agronômica.
 
-1. Confirmar diretos por operação e endpoints; amostras reais autorizadas, hashes, parser e reconciliação. Corrigir metadados datados, sem inferir data de publicação.
-2. Retrocarga mais antiga **tecnicamente e juridicamente acessível**, separada por série e preservando RAW fora do GitHub, revisões e datas as-of.
-3. Conferir identidade física, versão de unidade, cobertura e estatística descritiva; identificar impossibilidades, lacunas e quebras.
-4. Reutilizar os motores AgroLog selecionados após revisão de código/dependências, traduzindo para contratos NIVON e testes de regressão.
-5. Backtest walk-forward real com baseline e relatório de erros por região/cultura; auditor independente.
-6. Somente então habilitar indicadores ou IA narrativa; a produção e WhatsApp continuam fora deste PR.
+## Regras matemáticas e critérios de rejeição
 
-### Critério de aceite científico
+1. **Coerência física**: produção = área colhida × produtividade/1000; balanço oferta/uso; conservação de cabeças por categoria; cota-vazão conforme datum/curva-chave; volume de água no reservatório; conversões de energia, massa, velocidade e unidades por contrato. Resíduos são publicados ou reprovados; jamais ajuste escondido.
+2. **Qualidade de observação**: sensor versus grade/reanálise e estimativa; coordenadas, resolução, timezone, valores ausentes, mudanças de estação e versões do modelo; não interpolar dados inexistentes como fatos.
+3. **Histórico point-in-time**: competência, referência, publicação, disponibilização verificável e coleta. Backfill de arquivo atual sem prova de publicação **não** reconstrói o que era conhecido no passado.
+4. **Previsão**: comparar com persistência, sazonal ingênuo, média histórica e modelo científico simples, em folds walk-forward e recortes espaciais/por cultura. Medir MAE/RMSE, NSE/KGE para vazão, Brier e cobertura para probabilidades. A incerteza não deve ser fabricada.
+5. **Promoção**: aceitação depende de baselines vencidos fora da amostra, cobertura histórica/espacial, prova de vintages, auditoria de direitos, teste E2E com dados reais, segurança, restore e viabilidade operacional. Não habilitar automaticamente modelos por testes sintéticos.
+6. **Licença e segurança**: autorização de leitura, download, armazenamento, derivação e redistribuição são diferentes. Segredos e RAW não entram no GitHub. Não fazer crawling, contornar bloqueios ou iniciar serviço pago.
 
-Sem evidência de dados reais históricos, cobertura, licença, erros de previsão e testes de invariantes, o estado é **CANDIDATE / NÃO HOMOLOGADO**. Permite pesquisa e cenário explicitamente rotulado; não permite alegar previsão validada nem go-live.
+## Próxima execução necessária
 
-## Política de integração concorrente / gate de revisão
+O código possui parsers, planejadores, métricas, histórico e controle de licença. A **próxima etapa verificável** é coletar amostras **reais e autorizadas**, persistir RAW fora do GitHub, cruzar NASA/CHIRPS com INMET, carregar versões CONAB/WASDE, executar backtests point-in-time, calibrar modelos e fazer avaliação independente por região e regime. Até isso ocorrer, não afirmar que o Nivon já possui séries históricas completas ou previsão científica validada.
 
-Este PR foi preparado a partir do commit `3329bbcfda4aadf4f08ea77b64d2abdffe292157` da linha `feat/agrobr-portos-motores-agentes-20261019`.
-Durante a auditoria, a linha de desenvolvimento recebeu commits simultâneos de outros módulos; testes que mesclam a branch mais recente podem apresentar falhas de terceiros. O alvo `review/nivon-ciencia-base-20261019` congela **somente a base de verificação científica** para permitir avaliação repetível, sem afirmar compatibilidade final com a branch em movimento.
-
-**Antes do merge de produção**, deve ser realizado merge/rebase limpo contra a branch-integrada vigente, auditoria de conflitos sem perda de novas fontes/contratos, regressão completa e validação independente dos datasets. O sucesso de testes desta revisão congelada NÃO constitui go-live nem liberação de coleta.
-
-## Implementação quantitativa — 20/10/2026 (PR #9, SEM MERGE/DEPLOY)
-
-Os seguintes módulos foram incorporados ao núcleo do Nivon e vinculados ao manifesto de motores:
-
-- modelos_fisicos.py: FAO-56 Penman-Monteith (ET0 diária); NSE e KGE-2009 sobre vazões alinhadas; identidade contábil de rebanho por espécie/categoria. Nenhum desses resultados confirma navegabilidade nem previsão homologada.
-- verificacao_probabilistica.py: Brier, Pinball Loss e cobertura/amplitude de intervalos. Scores não bastam para inferir probabilidade calibrada ou vantagem preditiva.
-- analogos_historicos.py: adaptação metodológica de AgroLogMT/models/analog_years.py com corte de disponibilidade, filtro para não usar anos futuros, exclusão de features constantes e rejeição de histórico insuficiente. Similaridade não é probabilidade.
-- historico_vintages.py: SQLite de edições por série, competência e vintage. Preserva valores exatos como Decimal, hash do bruto e hashes da evidência. Consulta as-of exige publicação, disponibilidade e declaração de prova verificada externamente. Não autentica o documento de prova, licença ou acesso por si só.
-- unidades_mercado.py: conversão dimensional exata em Decimal; especificações padrão CBOT soja/trigo 60 lb/bu, milho 56 lb/bu e cálculo de US¢/lb para USD/t, sem estimar preço de mercado, basis ou paridade.
-
-### Fontes metodológicas
-
-- FAO-56 ET0: https://www.fao.org/4/x0490e/x0490e06.htm
-- USGS NSE/KGE: https://www.usgs.gov/data/daily-streamflow-performance-benchmark-defined-standard-statistical-suite-v10-national
-- NOAA Brier: https://repository.library.noaa.gov/view/noaa/33728
-- CFTC calendário: https://www.cftc.gov/MarketReports/CommitmentsofTraders/ReleaseSchedule/index.htm
-- IBGE abate tabelas 1092/1093/1094: https://sidra.ibge.gov.br/pesquisa/abate/tabelas/
-- USGS novas APIs hidrológicas: https://www.usgs.gov/tools/usgs-water-data-apis ; APIs WaterServices antigas em processo de descontinuação até 2027.
-
-### Condições para homologação
-
-1. Casos de referência verificados, análise de valores extremos, unidades, cobertura, vintages e qualidade de insumos.
-2. Datas comprovadas e golden fixtures de fontes oficiais, sem inventar publicação nem disponibilidade.
-3. Backtest walk-forward contra baseline sazonal ou ingênuo, com treino/validação/teste separados em tempo e geografia; verificar score por cultura, região, regime e horizonte.
-4. Avaliação probabilística calibrada, incerteza, quebra estrutural e estabilidade fora da amostra.
-5. Homologar direitos e acesso por operação, persistência durável, backup/restauração e auditoria independente; não habilitar coleta ou deploy antes.
-
-**Concorrência:** integrar este PR à branch de desenvolvimento vigente com revisão de diffs e regressão. A branch de comparação congelada serve só para garantir teste repetível.
-
-## Complemento E2E de história — 20/10/2026
-
-Foi implementado `src/nivon/pipeline_historico_nasa.py` com o contrato NASA POWER diário oficial em `time-standard=UTC`, plano paginado por ano (1981 até atual) e restrição explícita de pontos, lotes e parâmetros. Não há egress automático.
-
-O pipeline preserva bytes RAW em SQLite, hash SHA-256, URL/requisição, data de coleta, natureza estimada em grade, valor original normalizado, coordenadas e unidades; permite respostas corrigidas em novas versões sem substituir a anterior. Os testes incluem idempotência, ausência de dados, consistência geográfica, falsificação de URL e conservação de cada RAW. Nunca considera essa versão atual de API como vintage do passado.
-
-A `qualidade()` reporta dias esperados, encontrados, sem registro, faltantes e cobertura por variável. Cobertura alta não demonstra precisão: calibração exige comparações com observações de estações do INMET e cortes point-in-time verificados.
-
-**Fonte primária:** NASA POWER Daily API https://power.larc.nasa.gov/docs/services/api/temporal/daily/ — histórico desde 01/01/1981; LST default, UTC explícito; alerta contra pedidos repetidos na mesma célula de resolução. Não automatizar requests massivos sem política de taxa e deduplicação por célula oficial/variável.
-
-Os dados RAW não são incorporados ao GitHub. A criação de histórico real depende da verificação da licença por operação, amostra real autenticada, persistência durável fora do repositório, cobertura/frescura, backup/restauração e gate de publicação.
-
-### Ledger canônico e paridade entre motores
-
-`vinculo_historico_nasa.py` reconcilia o RAW NASA POWER com o registro central `registro_snapshots.py`, com SHA-256 de bytes preservados, identidade da URL oficial, data de coleta, esquema de dados e tipo `SINTETICO` ou `REAL_AUTORIZADO`. Sem publicação comprovada, a visão histórica as-of retorna vazia mesmo se o RAW estiver íntegro; direitos de armazenamento não autorizam previsão retrospectiva.
-
-`tests/test_paridade_motores_cientificos.py` compara o ET0 da implementação operacional detalhada `motores_agrometeorologia_fao56.py` com a equação FAO-56 reduzida de `modelos_fisicos.py`. Compara também NSE de `motores_hidrologia_cientifica.py` com `modelos_fisicos.py`. São implementações complementares, sujeitas a paridade matemática — não manter variantes divergentes publicando números distintos.
-
-**Escolha de método:** `motores_agrometeorologia_fao56.et0_fao56_diaria` é a entrada completa de variáveis TMin/TMax/RH/vento/radiação; `modelos_fisicos.eto_fao56_penman_monteith` é verificação por termos reduzidos. O saldo negativo ET0 é tratado de maneira diferente pelos módulos (truncamento explicitado no primeiro, reprovação no segundo); qualquer divergência de caso real continua bloqueada até parecer científico.
-
-Os snapshots e scores matemáticos ainda não substituem dados observados, validação empírica, curva-chave, calibração nem licença do dado de mercado. As rotinas não foram ativadas.
+**Integração:** esta entrega foi reconciliada com a branch de desenvolvimento no commit base `e0a5553175f83650d22e15349ca5d36eee8d0f87` (20/10/2026), sem deploy. Alterações concorrentes posteriores requerem revisão de conflitos.

@@ -22,12 +22,12 @@ class TestIntegracaoConvergente(unittest.TestCase):
         self.assertEqual(datas,ports)
         self.assertTrue(all(not x["live_enabled"] for x in self.escopo["ports"]))
 
-    def test_catalogo_crescente_com_rotas_bijetivas_sem_execucao(self):
+    def test_130_datasets_rotas_e_96_fontes_sem_execucao(self):
         meta=validar_catalogo(self.cat)
         self.assertEqual(meta["datasets"],len(self.cat["datasets"]))
-        self.assertGreaterEqual(meta["datasets"],131)
+        self.assertGreaterEqual(meta["datasets"],135)
         self.assertEqual(meta["fontes"],len(self.cat["sources"]))
-        self.assertGreaterEqual(meta["fontes"],96)
+        self.assertGreaterEqual(meta["fontes"],100)
         self.assertEqual(meta["portos_br"],45)
         self.assertEqual(validar_rotas(self.rotas,self.cat)["rotas"],len(self.cat["datasets"]))
         self.assertTrue(all(not d["enabled"] for d in self.cat["datasets"]))

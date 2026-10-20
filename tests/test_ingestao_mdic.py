@@ -67,6 +67,9 @@ class TestMDICIngestao(unittest.TestCase):
               direcao="EXPORTACAO",granularidade="NCM",
               codigos=frozenset({"12019000","31021010"}),
               coletado_em="2026-10-20T14:00:00Z")
+        self.assertEqual(
+            self.db.execute("SELECT count(*) FROM nivon_coletas").fetchone()[0],1,
+            "ingestão recusada nunca deve registrar coleta adicional")
     def test_backup_restore_aggregate_and_ledger(self):
         self.ingerir()
         backup=self.dir/"copia.sqlite"
@@ -81,3 +84,14 @@ class TestMDICIngestao(unittest.TestCase):
         self.ingerir()
         with self.assertRaises(ErroIngestaoMDIC):
             self.visao(cut="2026-10-20")
+
+    def test_falha_de_insert_em_agregado_reverte_snapshot(self):
+        import sqlite3
+        from nivon.ingestao_mdic import _tabelas
+        _tabelas(self.db)
+        self.db.execute("""CREATE TRIGGER falha_mdic BEFORE INSERT ON nivon_mdic_agregados
+                           BEGIN SELECT RAISE(ABORT,'falha sintética MDIC'); END""")
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.ingerir()
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM nivon_snapshots").fetchone()[0],0)
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM nivon_coletas").fetchone()[0],0)

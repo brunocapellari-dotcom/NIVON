@@ -439,9 +439,10 @@
         "ANA_HIDRO",
         "ZARC_JANELAS",
         "CONAB_PROGRESSO_SEMANAL",
-        "NASA_POWER_AGRO_DAILY",
-        "COPERNICUS_ERA5_LAND",
-        "UCSB_CHIRPS_V3",
+        "NASA_POWER_AG",
+        "CHIRPS_V3_CHUVA",
+        "ERA5_LAND_CDS",
+        "NASA_GPM_IMERG",
         "NOAA_ENSO_RONI"
       ],
       "indicators": [
@@ -664,9 +665,10 @@
         "ECMWF_MODELOS",
         "ZARC_JANELAS",
         "CONAB_PROGRESSO_SEMANAL",
-        "NASA_POWER_AGRO_DAILY",
-        "COPERNICUS_ERA5_LAND",
-        "UCSB_CHIRPS_V3",
+        "NASA_POWER_AG",
+        "CHIRPS_V3_CHUVA",
+        "ERA5_LAND_CDS",
+        "NASA_GPM_IMERG",
         "NOAA_ENSO_RONI"
       ],
       "indicators": [
@@ -679,7 +681,12 @@
         "risco_chuva_trabalho_campo",
         "deficit_et_cultura",
         "excesso_hidrico_mm",
-        "distincao_observado_previsto"
+        "distincao_observado_previsto",
+        "et0_fao56_mm_dia",
+        "deficit_hidrico_fenologico_mm",
+        "percentil_empirico_chuva_30anos",
+        "validacao_chuva_grade_vs_estacao",
+        "skill_previsao_meteorologica"
       ],
       "risks": [
         "Normais e dados devem ter mesmo período e estação; anomalia simples não é SPI.",
@@ -696,8 +703,9 @@
         "NOAA_GFS",
         "ANTAQ_MOVIMENTACAO",
         "ONTL_REDE_CUSTOS",
-        "COPERNICUS_ERA5_LAND",
-        "UCSB_CHIRPS_V3"
+        "CHIRPS_V3_CHUVA",
+        "ERA5_LAND_CDS",
+        "NASA_GPM_IMERG"
       ],
       "indicators": [
         "cota_rio_observada_cm",
@@ -708,7 +716,10 @@
         "tendencia_cheias_estiagens",
         "janela_hidrovia_potencial",
         "folga_calado_hipotetica",
-        "impacto_logistico_condicional"
+        "impacto_logistico_condicional",
+        "curva_chave_interpolada_m3s",
+        "balanco_reservatorio_conservacao_m3",
+        "skill_previsao_vazao_nse"
       ],
       "risks": [
         "Cota de régua não é profundidade ou calado navegável.",

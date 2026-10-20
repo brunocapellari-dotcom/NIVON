@@ -8,31 +8,28 @@
   "policy": "DOCUMENTAL_DISCOVERY_NO_AUTOMATIC_COLLECTION_NO_MERGE_NO_DEPLOY",
   "historical_sources": [
     {
-      "id": "NASA_POWER_AGRO_DAILY",
+      "id": "NASA_POWER_AG",
       "history": "1981-presente, diário, temporalidade depende do parâmetro",
       "nature": "REANALYSIS_OR_MODELLED_GRIDDED",
       "resolution": "grade original de cada parâmetro; não atribuir resolução de estação",
       "interface": "API diária documentada",
       "evidence": "https://power.larc.nasa.gov/docs/services/api/temporal/daily/",
       "priority": "P0",
-      "risk": "não tratar estimativa em grade como chuva aferida na fazenda O API diário tem LST como padrão; Nivon usa UTC explicitamente e pagina solicitações com aviso de repetição de célula de grade.",
+      "risk": "não tratar estimativa em grade como chuva aferida na fazenda O API diário tem LST como padrão; Nivon usa UTC explicitamente e pagina solicitações com aviso de repetição de célula de grade. Coletores científicos duplicados retirados da integração; upstream canônico mantido.",
       "agrolog_paths": [
         "collector/nasa_power.py",
         "collector/nasa_power_pipeline.py"
       ],
-      "status": "CODE_OFFLINE_HISTORICAL_RAW_QA_TESTED_FIXTURES_ONLY",
+      "status": "UPSTREAM_CODE_OFFLINE_ONLY_NO_LIVE_SNAPSHOT",
       "nivon_paths": [
-        "src/nivon/nasa_power_nivon.py",
-        "src/nivon/pipeline_historico_nasa.py",
-        "tests/test_nasa_power_nivon.py",
-        "tests/test_pipeline_historico_nasa.py",
-        "src/nivon/vinculo_historico_nasa.py",
-        "tests/test_vinculo_historico_nasa.py",
-        "tests/test_paridade_motores_cientificos.py"
+        "src/nivon/nasa_power_diario.py",
+        "src/nivon/nasa_power_backfill.py",
+        "src/nivon/nasa_power_captura_manual.py",
+        "src/nivon/grade_meteorologica_store.py"
       ]
     },
     {
-      "id": "COPERNICUS_ERA5_LAND",
+      "id": "ERA5_LAND_CDS",
       "history": "1950-presente, horário",
       "nature": "REANALYSIS",
       "resolution": "0,1 grau aproximadamente 9 km",
@@ -44,10 +41,11 @@
         "collector/copernicus_climate.py",
         "models/weather_multimodel.py"
       ],
-      "status": "DOCUMENTED_NO_NIVON_LIVE_SNAPSHOT"
+      "status": "METADATA_DISCOVERY_NO_REAL_SNAPSHOT",
+      "nivon_paths": []
     },
     {
-      "id": "UCSB_CHIRPS_V3",
+      "id": "CHIRPS_V3_CHUVA",
       "history": "1981-presente próximo, preliminary/final",
       "nature": "SATELLITE_STATION_BLEND_ESTIMATE",
       "resolution": "0,05 grau",
@@ -58,7 +56,10 @@
       "agrolog_paths": [
         "collector/climate_grid.py"
       ],
-      "status": "DOCUMENTED_NO_NIVON_LIVE_SNAPSHOT"
+      "status": "UPSTREAM_CHIRPS_CONSERVATION_CODE_OFFLINE",
+      "nivon_paths": [
+        "src/nivon/chirps_v3_conservacao.py"
+      ]
     },
     {
       "id": "NOAA_ENSO_RONI",

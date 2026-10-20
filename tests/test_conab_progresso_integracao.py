@@ -14,7 +14,7 @@ class TestConabProgressoNaMatriz(unittest.TestCase):
 
     def test_plantio_e_colheita_ligados_a_quatro_culturas(self):
         self.assertEqual(validar_rotas(self.routes,self.cat)["rotas"],len(self.cat["datasets"]))
-        self.assertGreaterEqual(len(self.cat["sources"]),96)
+        self.assertGreaterEqual(len(self.cat["sources"]),100)
         v=validar_registro(self.eng,self.mat)
         self.assertEqual(v["frentes"],28)
         for front in ("SOJA","MILHO","ALGODAO","TRIGO"):

@@ -25,7 +25,11 @@ MODULOS=frozenset({
     "agentes_nivon","entrega_whatsapp","cotacoes_externas",
     "ana_contrato","series_ambientais","inmet_historico",
     "ana_hidrowebservice","inmet_bdmep",
-    "modelos_fisicos","verificacao_probabilistica","analogos_historicos","unidades_mercado","nasa_power_nivon","pipeline_historico_nasa","vinculo_historico_nasa",
+    "motores_agrometeorologia_fao56","motores_hidrologia_cientifica",
+    "validacao_previsoes_ambientais","nasa_power_diario",
+    "nasa_power_backfill","nasa_power_captura_manual",
+    "grade_meteorologica_store","chirps_v3_conservacao",
+    "modelos_fisicos","verificacao_probabilistica","analogos_historicos","unidades_mercado",
 })
 
 
