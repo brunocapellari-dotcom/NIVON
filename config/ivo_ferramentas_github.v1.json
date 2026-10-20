@@ -265,6 +265,96 @@
       "priority": "P2",
       "integration": "EO_PLATFORM_BACKEND",
       "gate": "CUSTO_DO_BACKEND_E_DIREITOS_DOS_DADOS_SEPARADOS_DA_LICENCA_CLIENTE"
+    },
+    {
+      "id": "HIERARCHICALFORECAST",
+      "repository": "https://github.com/Nixtla/hierarchicalforecast",
+      "purpose": "reconciliar previsoes Brasil UF municipios e safras sem soma dupla",
+      "license_declared": "Apache-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P0",
+      "integration": "RECONCILIACAO_HIERARQUICA",
+      "gate": "HIERARQUIA_COERENTE_EXPERIMENTOS_HISTORICOS_FONTE_HOMOLOGADA"
+    },
+    {
+      "id": "SKTIME",
+      "repository": "https://github.com/sktime/sktime",
+      "purpose": "avaliar reducao de duplicidade em experimentos e pipelines temporais",
+      "license_declared": "BSD-3-Clause",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "IVO_MODEL_EVALUATION",
+      "gate": "NAO_INSTALAR_JUNTO_A_MULTIPLOS_FRAMEWORKS_SEM_GANHO_EMPIRICO"
+    },
+    {
+      "id": "GLUONTS",
+      "repository": "https://github.com/awslabs/gluonts",
+      "purpose": "modelos probabilisticos de series e multiplas sazonalidades",
+      "license_declared": "Apache-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P2",
+      "integration": "IVO_PROBABILISTIC_EXPERIMENTS",
+      "gate": "RECURSOS_DE_CPU_RAM_PESOS_DEPENDENCIAS_VALIDAR"
+    },
+    {
+      "id": "POLARS",
+      "repository": "https://github.com/pola-rs/polars",
+      "purpose": "dataframes eficientes em CPU para grandes backfills",
+      "license_declared": "MIT",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "HISTORICO_TRANSFORM",
+      "gate": "MEDIR_MEMORIA_CPU_E_CONFERIR_ENCODING_CSV"
+    },
+    {
+      "id": "SQLITE_VEC",
+      "repository": "https://github.com/asg017/sqlite-vec",
+      "purpose": "busca semantica vetorial local sem servidor extra",
+      "license_declared": "MIT_OR_APACHE-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "IVO_LOCAL_RAG",
+      "gate": "EXTENSAO_BINARIA_WHITELIST_ASSINATURA_SQLITE_CUSTO_EMBEDDINGS"
+    },
+    {
+      "id": "EO_LEARN",
+      "repository": "https://github.com/sentinel-hub/eo-learn",
+      "purpose": "pipeline EO de satelite para fenologia e vegetacao",
+      "license_declared": "MIT",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P2",
+      "integration": "IVO_AGROMETEOROLOGIA_EO",
+      "gate": "DADOS_NAO_INCLUSOS_CUSTO_SATELITE_ETIQUETAS_CALIBRACAO"
+    },
+    {
+      "id": "PYETO",
+      "repository": "https://github.com/woodcrafty/PyETo",
+      "purpose": "calculadora de referencia FAO56 para evapotranspiracao",
+      "license_declared": "BSD-like 3-clause (verify precise metadata)",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "IVO_WATER_BALANCE",
+      "gate": "ALGORITMO_DE_REFERENCIA_NAO_SUBSTITUI_ET0_ESPACIAL_DADOS_CONSISTENTES"
+    },
+    {
+      "id": "CAUSAL_LEARN",
+      "repository": "https://github.com/py-why/causal-learn",
+      "purpose": "descoberta de estruturas causais como gerador de hipoteses",
+      "license_declared": "MIT",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P2",
+      "integration": "IVO_HYPOTHESIS_LAB",
+      "gate": "GRAFO_NAO_E_PROVA_CAUSAL_SEM_DESENHO_INTERVENCIONAL"
+    },
+    {
+      "id": "XGBOOST",
+      "repository": "https://github.com/dmlc/xgboost",
+      "purpose": "baseline robusto para regressao de safras e fretes",
+      "license_declared": "Apache-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "IVO_SUPERVISED_ML",
+      "gate": "TEMPO_FEATURES_POR_VINTAGE_REGULARIZACAO_OVERFITTING"
     }
   ]
 }
