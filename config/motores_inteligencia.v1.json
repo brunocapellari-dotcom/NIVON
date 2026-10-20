@@ -21,7 +21,8 @@
         "nivon.verificacao_probabilistica:pontuacao_quantis",
         "nivon.analogos_historicos:encontrar_anos_analogos",
         "nivon.unidades_mercado:referencia_bolsa_cbot_usd_t",
-        "nivon.auditoria_safra_preditiva:avaliar_backtest_safra"
+        "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
+        "nivon.agregacao_pam_ibge:agregar_municipios_pam"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -62,7 +63,8 @@
         "nivon.verificacao_probabilistica:pontuacao_quantis",
         "nivon.analogos_historicos:encontrar_anos_analogos",
         "nivon.unidades_mercado:referencia_bolsa_cbot_usd_t",
-        "nivon.auditoria_safra_preditiva:avaliar_backtest_safra"
+        "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
+        "nivon.agregacao_pam_ibge:agregar_municipios_pam"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -99,7 +101,8 @@
         "nivon.inteligencia_temporal:comparar_progresso_safra",
         "nivon.conab_agrobr:normalizar_progresso",
         "nivon.unidades_mercado:referencia_ice_centavos_libra_usd_t",
-        "nivon.auditoria_safra_preditiva:avaliar_backtest_safra"
+        "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
+        "nivon.agregacao_pam_ibge:agregar_municipios_pam"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
@@ -193,7 +196,8 @@
         "nivon.inteligencia_temporal:decompor_mudanca_safra",
         "nivon.conab_agrobr:normalizar_progresso",
         "nivon.unidades_mercado:referencia_bolsa_cbot_usd_t",
-        "nivon.auditoria_safra_preditiva:avaliar_backtest_safra"
+        "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
+        "nivon.agregacao_pam_ibge:agregar_municipios_pam"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
@@ -219,7 +223,8 @@
         "nivon.motores_agro_estrategicos:sorgo_substituicao_racao",
         "nivon.motores_agro_estrategicos:safra_comercializacao",
         "nivon.inteligencia_temporal:decompor_mudanca_safra",
-        "nivon.auditoria_safra_preditiva:avaliar_backtest_safra"
+        "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
+        "nivon.agregacao_pam_ibge:agregar_municipios_pam"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
@@ -507,7 +512,8 @@
         "nivon.motores_agro_estrategicos:referencia_acucar_ice",
         "nivon.inteligencia_temporal:decompor_mudanca_safra",
         "nivon.inteligencia_temporal:comparar_progresso_safra",
-        "nivon.auditoria_safra_preditiva:avaliar_backtest_safra"
+        "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
+        "nivon.agregacao_pam_ibge:agregar_municipios_pam"
       ],
       "data_dependencies": [
         "CONAB_CANA",
@@ -534,7 +540,8 @@
         "nivon.cadeias_adicionais:analisar_cadeia",
         "nivon.inteligencia_temporal:decompor_mudanca_safra",
         "nivon.inteligencia_temporal:concentracao_fluxos",
-        "nivon.auditoria_safra_preditiva:avaliar_backtest_safra"
+        "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
+        "nivon.agregacao_pam_ibge:agregar_municipios_pam"
       ],
       "data_dependencies": [
         "CONAB_GERGELIM_SERIES",
