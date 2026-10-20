@@ -89,6 +89,7 @@ def ingerir_arquivo_mdic(
     sid=db.execute("SELECT id FROM nivon_snapshots WHERE dataset_id=? AND sha256=?",
                    (did,resultado["sha256_original"])).fetchone()[0]
     normal=json.dumps({
+        "codigos_solicitados":sorted(codigos),
         "recortes":resultado["recortes"],
         "totais_arquivo_por_mes":resultado["totais_arquivo_por_mes"],
         "linhas_total":resultado["linhas_total"],
