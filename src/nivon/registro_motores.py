@@ -17,7 +17,7 @@ DEFAULT=ROOT/"config"/"motores_inteligencia.v1.json"
 MODULOS=frozenset({
     "motores_agro_estrategicos","motores_meteo_hidro",
     "motores_integracao_estrategica","motores_cadeias","cadeias_adicionais",
-    "inteligencia_temporal","motor_tendencias",
+    "inteligencia_temporal","motor_tendencias","tendencias_mercados",
     "balancos","motores","anp_diesel","destinos","portos",
     "bcb_ptax","briefing_diario","mdic_exportacao","mdic_importacao",
     "conab_agrobr","previsoes_bibliotecas","lineup_nacional","portos_automaticos",
