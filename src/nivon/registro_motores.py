@@ -33,6 +33,7 @@ MODULOS=frozenset({
     "meteorologia_probabilistica","hidrograma_bacia","calibracao_cn_bacias",
     "ensemble_hidrologico_bacia",
     "chuva_areal_ensemble","verificacao_vazao_asof",
+    "verificacao_chuva_ensemble_asof",
 })
 
 
