@@ -17,7 +17,9 @@
         "nivon.inteligencia_temporal:comparar_progresso_safra",
         "nivon.inteligencia_temporal:benchmark_sazonal_mensal",
         "nivon.conab_agrobr:normalizar_progresso",
-        "nivon.previsoes_bibliotecas:backtest_mensal"
+        "nivon.previsoes_bibliotecas:backtest_mensal",
+        "nivon.verificacao_probabilistica:pontuacao_quantis",
+        "nivon.analogos_historicos:encontrar_anos_analogos"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -54,7 +56,9 @@
         "nivon.inteligencia_temporal:comparar_progresso_safra",
         "nivon.inteligencia_temporal:benchmark_sazonal_mensal",
         "nivon.conab_agrobr:normalizar_progresso",
-        "nivon.previsoes_bibliotecas:backtest_mensal"
+        "nivon.previsoes_bibliotecas:backtest_mensal",
+        "nivon.verificacao_probabilistica:pontuacao_quantis",
+        "nivon.analogos_historicos:encontrar_anos_analogos"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -113,7 +117,8 @@
     {
       "front_id": "BOI",
       "entrypoints": [
-        "nivon.motores_agro_estrategicos:boi_rendimento_carcaca"
+        "nivon.motores_agro_estrategicos:boi_rendimento_carcaca",
+        "nivon.modelos_fisicos:reconciliar_rebanho"
       ],
       "data_dependencies": [
         "IBGE_PPM",
@@ -136,7 +141,8 @@
     {
       "front_id": "BEZERRO",
       "entrypoints": [
-        "nivon.motores_agro_estrategicos:relacao_troca_bezerro"
+        "nivon.motores_agro_estrategicos:relacao_troca_bezerro",
+        "nivon.modelos_fisicos:reconciliar_rebanho"
       ],
       "data_dependencies": [
         "IBGE_PPM",
@@ -388,7 +394,9 @@
       "entrypoints": [
         "nivon.motores_meteo_hidro:balanco_hidrico_solo",
         "nivon.motores_meteo_hidro:anomalia_nivel_rio",
-        "nivon.series_ambientais:consultar_asof"
+        "nivon.series_ambientais:consultar_asof",
+        "nivon.modelos_fisicos:eto_fao56_penman_monteith",
+        "nivon.modelos_fisicos:avaliar_vazao_hidrologica"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -416,7 +424,9 @@
         "nivon.motores_integracao_estrategica:sensibilidade_macro",
         "nivon.bcb_ptax:normalizar_ptax_odata",
         "nivon.inteligencia_temporal:decompor_variacao_preco",
-        "nivon.previsoes_bibliotecas:prever_mensal"
+        "nivon.previsoes_bibliotecas:prever_mensal",
+        "nivon.verificacao_probabilistica:pontuacao_quantis",
+        "nivon.verificacao_probabilistica:brier_probabilidade"
       ],
       "data_dependencies": [
         "BCB_PTAX",
@@ -519,7 +529,8 @@
       "entrypoints": [
         "nivon.motores_cadeias:margem_proteina",
         "nivon.motores_cadeias:peso_medio_carcaca",
-        "nivon.motores_cadeias:classificar_risco"
+        "nivon.motores_cadeias:classificar_risco",
+        "nivon.modelos_fisicos:reconciliar_rebanho"
       ],
       "data_dependencies": [
         "IBGE_ABATE_FRANGO_1094",
@@ -548,7 +559,8 @@
       "entrypoints": [
         "nivon.motores_cadeias:margem_proteina",
         "nivon.motores_cadeias:peso_medio_carcaca",
-        "nivon.motores_cadeias:classificar_risco"
+        "nivon.motores_cadeias:classificar_risco",
+        "nivon.modelos_fisicos:reconciliar_rebanho"
       ],
       "data_dependencies": [
         "IBGE_ABATE_SUINO_1093",
@@ -579,7 +591,11 @@
         "nivon.motores_meteo_hidro:graus_dia",
         "nivon.motores_meteo_hidro:janela_chuva_operacao",
         "nivon.series_ambientais:consultar_asof",
-        "nivon.series_ambientais:preparar_graus_dia"
+        "nivon.series_ambientais:preparar_graus_dia",
+        "nivon.modelos_fisicos:eto_fao56_penman_monteith",
+        "nivon.verificacao_probabilistica:brier_probabilidade",
+        "nivon.verificacao_probabilistica:cobertura_intervalos",
+        "nivon.analogos_historicos:encontrar_anos_analogos"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -607,7 +623,9 @@
         "nivon.motores_meteo_hidro:anomalia_vazao",
         "nivon.motores_meteo_hidro:folga_calado_hipotetica",
         "nivon.ana_contrato:planejar_janelas",
-        "nivon.series_ambientais:consultar_asof"
+        "nivon.series_ambientais:consultar_asof",
+        "nivon.modelos_fisicos:avaliar_vazao_hidrologica",
+        "nivon.verificacao_probabilistica:cobertura_intervalos"
       ],
       "data_dependencies": [
         "ANA_HIDRO",
