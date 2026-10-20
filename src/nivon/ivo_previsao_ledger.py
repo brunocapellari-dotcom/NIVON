@@ -9,7 +9,7 @@ import json
 import re
 import sqlite3
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 from math import isfinite
 from pathlib import Path
@@ -188,6 +188,12 @@ class LedgerPrevisoes:
         if not isinstance(item, PrevisaoRegistrada):
             raise ErroLedger("previsão inválida")
         item.validar()
+        if item.modo == "LIVE":
+            instante_real = datetime.now(timezone.utc)
+            if _periodo(item.periodo) <= instante_real:
+                raise ErroLedger("previsão LIVE inserida depois de iniciado mês-alvo")
+            if abs(_instante(item.registrada_em, "registrada_em") - instante_real) > timedelta(minutes=15):
+                raise ErroLedger("previsão LIVE exige registro próximo do relógio real de ingestão")
         return self._anexar("ivo_previsoes", item.id, item)
 
     def registrar_observacao(self, item: ObservacaoPublicada):
@@ -229,7 +235,9 @@ class LedgerPrevisoes:
             real, yhat, base = float(o["valor"]), float(p["estimativa"]), float(p["baseline"])
             li, ls = p["limite_inferior"], p["limite_superior"]
             avaliados.append({
-                "previsao_id": p["id"], "modelo_id": p["modelo_id"], "periodo": p["periodo"],
+                "previsao_id": p["id"], "modelo_id": p["modelo_id"], "versao_modelo": p["versao_modelo"],
+                "indicador": p["indicador"], "geografia": p["geografia"],
+                "unidade": p["unidade"], "periodo": p["periodo"],
                 "horizonte_meses": _mes(_periodo(p["periodo"])) - _mes(p["emitida_em"]),
                 "observado": real, "previsto": yhat, "baseline": base,
                 "erro_absoluto": abs(real - yhat), "erro_baseline": abs(real - base),
@@ -238,22 +246,31 @@ class LedgerPrevisoes:
                 "vintage_publicada_em": o["publicada_em"].isoformat(),
                 "observacao_id": o["id"],
             })
+        # Médias de preços, chuva, volumes, horizontes ou versões distintas
+        # não são comparáveis; manter linhas acessíveis para análise por grupo.
+        grupos = {
+            (x["modelo_id"], x["versao_modelo"], x["indicador"], x["geografia"],
+             x["unidade"], x["horizonte_meses"]) for x in avaliados
+        }
+        comparavel = len(grupos) <= 1
         n = len(avaliados)
         erro = sum(x["erro_absoluto"] for x in avaliados)
         erro_baseline = sum(x["erro_baseline"] for x in avaliados)
         denominador = sum(abs(x["observado"]) for x in avaliados)
         cobertos = [x["dentro_intervalo"] for x in avaliados if x["dentro_intervalo"] is not None]
         return {
-            "status": "AVALIACAO_DESCRITIVA_NAO_HOMOLOGADA",
+            "status": ("AVALIACAO_DESCRITIVA_NAO_HOMOLOGADA" if comparavel
+                       else "BLOQUEADO_AGREGACAO_ESCOPOS_DIFERENTES"),
+            "agregacao_comparavel": comparavel,
             "modo": modo, "verdade": verdade, "corte": corte.isoformat(),
             "modelo_id": modelo_id, "avaliadas": n, "sem_observacao": pendentes,
-            "mae": erro/n if n else None,
-            "mae_baseline": erro_baseline/n if n else None,
-            "wape": erro/denominador if denominador else None,
-            "vies_medio": sum(x["erro_assinado"] for x in avaliados)/n if n else None,
+            "mae": erro/n if n and comparavel else None,
+            "mae_baseline": erro_baseline/n if n and comparavel else None,
+            "wape": erro/denominador if denominador and comparavel else None,
+            "vies_medio": sum(x["erro_assinado"] for x in avaliados)/n if n and comparavel else None,
             "ganho_relativo_baseline": ((erro_baseline - erro)/erro_baseline
-                                       if erro_baseline else None),
-            "cobertura_intervalo": sum(cobertos)/len(cobertos) if cobertos else None,
+                                       if erro_baseline and comparavel else None),
+            "cobertura_intervalo": sum(cobertos)/len(cobertos) if cobertos and comparavel else None,
             "avaliacoes": avaliados,
             "promocao_automatica": False,
             "limitacao": ("Métricas descritivas não substituem revisão de fonte, independência "
