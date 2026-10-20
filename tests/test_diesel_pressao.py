@@ -26,9 +26,9 @@ class TestSensibilidadeDiesel(unittest.TestCase):
     def test_sensibilidade_nao_e_repasse_automatico(self):
         r = calcular()
         self.assertEqual(r["litros_hipoteticos_por_viagem"], "250.0")
-        self.assertEqual(r["custo_base_combustivel_brl_t"], "37.50")
-        self.assertEqual(r["custo_cenario_combustivel_brl_t"], "40.00")
-        self.assertEqual(r["variacao_custo_combustivel_brl_t"], "2.50")
+        self.assertEqual(Decimal(r["custo_base_combustivel_brl_t"]), Decimal("37.50"))
+        self.assertEqual(Decimal(r["custo_cenario_combustivel_brl_t"]), Decimal("40.00"))
+        self.assertEqual(Decimal(r["variacao_custo_combustivel_brl_t"]), Decimal("2.50"))
         self.assertEqual(r["repasse_ao_frete"], "INDETERMINADO")
         self.assertNotIn("volume_realizado", r)
 
