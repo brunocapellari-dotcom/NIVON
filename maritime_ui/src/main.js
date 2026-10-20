@@ -61,6 +61,7 @@ const state = {
   lineup: [],
   summary: {},
   sourceHealth: [],
+  gatewayMode: 'DATA_GATED',
   selected: null,
   replay: null,
   replayCurrent: 0,
@@ -91,6 +92,7 @@ function escapeHtml(value) {
 }
 
 function fmtNumber(value, decimals = 0) {
+  if (value == null || value === '') return '—';
   const number = Number(value);
   if (!Number.isFinite(number)) return '—';
   return new Intl.NumberFormat('pt-BR', {
@@ -100,6 +102,7 @@ function fmtNumber(value, decimals = 0) {
 }
 
 function fmtTonnes(value) {
+  if (value == null || value === '') return '—';
   const number = Number(value);
   if (!Number.isFinite(number)) return '—';
   if (Math.abs(number) >= 1_000_000) return `${fmtNumber(number / 1_000_000, 2)} mi t`;
@@ -118,6 +121,7 @@ function fmtPercentRatio(value) {
 }
 
 function fmtHours(value) {
+  if (value == null || value === '') return '—';
   const number = Number(value);
   return Number.isFinite(number) ? `${fmtNumber(number, 1)} h` : '—';
 }
@@ -350,8 +354,8 @@ function renderSummary(summary = {}) {
   els.metrics.waiting.textContent = fmtNumber(summary.vessels_waiting);
   els.metrics.berthed.textContent = fmtNumber(summary.vessels_berthed);
   els.metrics.lineup.textContent = fmtNumber(summary.lineup_calls);
-  const calls = Number(summary.lineup_calls);
-  const matched = Number(summary.lineup_matched);
+  const calls = summary.lineup_calls == null ? NaN : Number(summary.lineup_calls);
+  const matched = summary.lineup_matched == null ? NaN : Number(summary.lineup_matched);
   els.metrics.match.textContent = Number.isFinite(calls) && calls > 0 && Number.isFinite(matched)
     ? `${fmtNumber((matched / calls) * 100, 0)}%`
     : '—';
@@ -388,6 +392,11 @@ function renderSourceHealth() {
 }
 
 function renderOperationalBrief() {
+  if (state.gatewayMode === 'DATA_GATED') {
+    els.briefGenerated.textContent = 'sem fonte homologada';
+    els.briefBody.innerHTML = '<article class="brief-section"><div><h3>Dados indisponíveis</h3><span class="evidence-tag">DATA_GATED</span></div><p>Nenhuma operação portuária ou posição AIS foi homologada. Ausência de dados não significa zero navios, zero filas ou zero embarques.</p></article>';
+    return;
+  }
   const report = buildOperationalBrief(state.summary, state.lineup);
   els.briefGenerated.textContent = new Intl.DateTimeFormat('pt-BR', {hour: '2-digit', minute: '2-digit'}).format(new Date());
   const divergenceRows = [...report.conflicts, ...report.unmatched].slice(0, 5);
@@ -495,6 +504,9 @@ async function refreshAll({fit = false} = {}) {
       getJson(`/v1/maritime/lineup?${port}past_hours=24&future_hours=336&limit=1000`),
       getJson(`/v1/maritime/summary?${port}hours=24&future_hours=336`),
     ]);
+    const responseModes = [vesselsResponse.status, lineupResponse.status, summaryResponse.status];
+    if (new Set(responseModes).size !== 1) throw new Error('Gateway com estados de evidência inconsistentes');
+    state.gatewayMode = summaryResponse.status || 'DATA_GATED';
     state.vessels = vesselsResponse.data || [];
     state.lineup = lineupResponse.data || [];
     state.summary = summaryResponse.data || {};
@@ -514,7 +526,13 @@ async function refreshAll({fit = false} = {}) {
     els.mapEmpty.classList.toggle('hidden', state.vessels.length > 0);
     if (fit) fitToVessels(state.vessels);
     els.lastUpdate.textContent = `Gateway consultado ${new Intl.DateTimeFormat('pt-BR', {hour: '2-digit', minute: '2-digit', second: '2-digit'}).format(new Date())}`;
-    setStatus('ok', 'gateway ok');
+    if (state.gatewayMode === 'DATA_GATED') {
+      setStatus('idle', 'dados não homologados');
+    } else if (state.gatewayMode === 'SYNTHETIC_TEST_ONLY') {
+      setStatus('idle', 'SIMULAÇÃO — sem dados reais');
+    } else {
+      setStatus('error', 'origem não homologada');
+    }
   } catch (error) {
     console.error(error);
     setStatus('error', 'erro de dados');
