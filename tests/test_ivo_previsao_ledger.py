@@ -128,7 +128,7 @@ class TestIVOLedger(unittest.TestCase):
 
     def test_observacao_mensal_antes_do_fechamento_rejeitada(self):
         with self.assertRaises(ErroLedger):
-            self.db.registrar_observacao(obs(publicada=instante(2026, 1, 20)))
+            self.db.registrar_observacao(obs(publicado=instante(2026, 1, 20)))
 
     def test_bloqueia_intervalo_incompleto_e_invalido(self):
         for alteracao in ({"limite_inferior": None}, {"limite_inferior": 120},
