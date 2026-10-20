@@ -10,7 +10,6 @@ import argparse
 import json
 import re
 import sqlite3
-from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import quote
@@ -156,7 +155,7 @@ def auditar_cobertura_ledger(catalogo: dict, db: sqlite3.Connection | None = Non
         "snapshots_marcados_real": sum(x["snapshots_marcados_real"] for x in data.values()) if db is not None else None,
         "capturas_registradas": sum(x["capturas"] for x in data.values()) if db is not None else None,
         "problemas": problemas,
-        "fonts": [fontes[k] for k in sorted(fontes)],
+        "fontes": [fontes[k] for k in sorted(fontes)],
         "datasets": [data[k] for k in sorted(data)],
         "coleta_automatica_ativada": False,
         "volume_observacoes_reais_comprovado": None,
@@ -191,7 +190,7 @@ def main(argv=None):
                                       prioridade=args.prioridade,gerado_em=args.gerado_em)
         if args.resumo:
             out.pop("datasets")
-            out.pop("fonts")
+            out.pop("fontes")
         print(json.dumps(out,ensure_ascii=False,indent=2,sort_keys=True))
     except (OSError,sqlite3.Error,ValueError) as exc:
         parser.error(str(exc))
