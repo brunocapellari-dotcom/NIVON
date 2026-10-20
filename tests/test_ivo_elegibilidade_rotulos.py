@@ -3,6 +3,7 @@ from dataclasses import replace
 from datetime import date, datetime, timezone, timedelta
 from hashlib import sha256
 
+from nivon.registro_snapshots import abrir_registro, registrar_snapshot
 from nivon.historico import Observacao
 from nivon.ivo_elegibilidade_rotulos import (
     AtestacaoResultado, ErroElegibilidade, avaliar_elegibilidade,
@@ -51,6 +52,33 @@ def pacote(*, modo="SINTETICO"):
     return [certificado(i,modo=modo) for i in range(1,7)]
 
 
+def registro_real_de_teste():
+    """Testa mecanismo de provenance com um catálogo FALSO, não direitos reais."""
+    base=pacote(modo="REAL_AUTORIZADO")
+    dados=[]
+    for i,a in enumerate(base,1):
+        novo_sha=sha256(f"arquivo_testado_{i}".encode()).hexdigest()
+        o=replace(a.observacao,edicao=novo_sha)
+        dados.append(replace(a,arquivo_sha256=novo_sha,observacao=o,
+                             observacao_sha256=hash_observacao(o)))
+    catalogo={"datasets":[{"id":"CONAB_SAFRAS","source_id":"CONAB",
+                 "enabled":True,"collection_authorized":True,
+                 "training_authorized":True}]}
+    db=abrir_registro()
+    for a in dados:
+        o=a.observacao
+        registrar_snapshot(
+            db,catalogo,dataset_id=a.dataset_id,sha256=a.arquivo_sha256,
+            tamanho=500,mime="text/csv",schema_versao="test-v1",
+            coletado_em=o.coleta.isoformat(),competencia=o.competencia,
+            referencia=o.referencia.isoformat(),publicacao=o.publicacao.isoformat(),
+            tipo="REAL_AUTORIZADO",
+            autorizacoes=frozenset({"COLETA","ARMAZENAMENTO"}),
+            evidencia_direitos=a.direitos_ref,
+        )
+    return dados,catalogo,db
+
+
 class TestIVOElegibilidadeRotulos(unittest.TestCase):
     def test_experimento_sintetico_exige_flag_explicita(self):
         x=avaliar_elegibilidade(pacote(),corte=CORTE)
@@ -85,10 +113,43 @@ class TestIVOElegibilidadeRotulos(unittest.TestCase):
                 "enabled":True,"collection_authorized":True,
                 "training_authorized":True}]}
         x=avaliar_elegibilidade(real,corte=CORTE,catalogo=catalogo)
-        self.assertEqual(x["estado"],"CANDIDATO_REAL_COM_APROVACOES_DECLARADAS")
+        self.assertEqual(x["estado"],"BLOQUEADO")
+        self.assertIn("SNAPSHOT_REAL_SEM_PROVENIENCIA_CONFERIDA",x["bloqueios"])
         self.assertFalse(x["homologacao_externa_verificada"])
         with self.assertRaises(PermissionError):
             serie_elegivel_experimental(real,corte=CORTE,catalogo=catalogo)
+
+    def test_registro_snapshots_real_declarado_so_libera_avaliacao(self):
+        labels,catalogo,db=registro_real_de_teste()
+        try:
+            x=avaliar_elegibilidade(labels,corte=CORTE,catalogo=catalogo,registro_db=db)
+            self.assertEqual(x["estado"],"CANDIDATO_REAL_COM_APROVACOES_DECLARADAS")
+            self.assertEqual(x["competencias_asof"],6)
+            self.assertFalse(x["homologacao_externa_verificada"])
+            with self.assertRaises(PermissionError):
+                serie_elegivel_experimental(labels,corte=CORTE,catalogo=catalogo,registro_db=db)
+        finally:
+            db.close()
+
+    def test_registry_hash_de_outra_edicao_nao_burla_evidencia(self):
+        labels,catalogo,db=registro_real_de_teste()
+        try:
+            db.execute("UPDATE nivon_snapshots SET evidencia_direitos='DOCUMENTO_ERRADO' WHERE sha256=?",
+                       (labels[0].arquivo_sha256,))
+            x=avaliar_elegibilidade(labels,corte=CORTE,catalogo=catalogo,registro_db=db)
+            self.assertEqual(x["estado"],"BLOQUEADO")
+            self.assertIn("SNAPSHOT_REAL_SEM_PROVENIENCIA_CONFERIDA",x["bloqueios"])
+        finally:
+            db.close()
+
+    def test_registry_nunca_substitui_permissao_de_treino(self):
+        labels,catalogo,db=registro_real_de_teste()
+        try:
+            catalogo["datasets"][0]["training_authorized"]=False
+            x=avaliar_elegibilidade(labels,corte=CORTE,catalogo=catalogo,registro_db=db)
+            self.assertIn("CATALOGO_REAL_SEM_AUTORIZACAO_DE_TREINO",x["bloqueios"])
+        finally:
+            db.close()
 
     def test_permissa_de_treinar_nao_deriva_de_armazenar(self):
         at=certificado(1,operacoes=frozenset(("ARMAZENAMENTO","ANALISE")))
