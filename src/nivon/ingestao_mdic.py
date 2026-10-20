@@ -4,7 +4,9 @@ Nenhum download ou cópia bruta. Nenhum dado de empresa/posto é armazenado.
 Padrão sintético; modo real exige gate de catálogo e direitos por operação.
 """
 from __future__ import annotations
+import hmac
 import json
+import re
 import sqlite3
 from datetime import datetime, timezone
 
@@ -66,12 +68,15 @@ def ingerir_arquivo_mdic(
     coletado_em:str,tipo:str="SINTETICO",
     autorizacoes:frozenset[str]=frozenset(),evidencia_direitos:str|None=None,
     limite_bytes:int=1_500_000_000,
+    sha256_esperado:str|None=None,
 )->dict:
     """Só recebe arquivo local; não garante que a fonte seja oficial."""
     coleta=_utc(coletado_em)
     did="MDIC_COMEX_NCM" if granularidade=="NCM" else "MDIC_COMEX_MUNICIPIO_SH4"
     if granularidade not in ("NCM","MUNICIPIO_SH4"):
         raise ErroIngestaoMDIC("granularidade fora do contrato")
+    if tipo=="REAL_AUTORIZADO" and sha256_esperado is None:
+        raise PermissionError("MDIC real exige SHA-256 confirmado da aquisição")
     if tipo=="REAL_AUTORIZADO":
         matches=[x for x in catalogo.get("datasets",[]) if x.get("id")==did]
         if (len(matches)!=1 or matches[0].get("enabled") is not True or
@@ -81,6 +86,11 @@ def ingerir_arquivo_mdic(
         granularidade=granularidade,codigos=codigos,coletado_em=coleta,
         limite_bytes=limite_bytes)
     _conferir_resumo(resultado)
+    if sha256_esperado is not None:
+        if (not isinstance(sha256_esperado,str)
+            or re.fullmatch(r"[0-9a-f]{64}",sha256_esperado) is None
+            or not hmac.compare_digest(resultado["sha256_original"],sha256_esperado)):
+            raise ErroIngestaoMDIC("CSV local diverge do SHA-256 da aquisição")
     normal=json.dumps({
         "codigos_solicitados":sorted(codigos),
         "recortes":resultado["recortes"],

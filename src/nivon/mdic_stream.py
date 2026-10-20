@@ -8,6 +8,9 @@ inclusive posições fora do filtro. Não são reconciliação oficial ou frete.
 from __future__ import annotations
 import csv
 import hashlib
+import io
+import os
+from contextlib import contextmanager
 import re
 import stat
 from collections import defaultdict
@@ -20,6 +23,44 @@ from .mdic_municipios import CABECALHO as MUN_HEADER
 
 class ErroStreamMDIC(ValueError):
     pass
+
+
+class _BytesComHash(io.RawIOBase):
+    """Só computa SHA dos bytes entregues ao próprio parser CSV."""
+    def __init__(self, file):
+        self.file=file
+        self.sha=hashlib.sha256()
+        self.quantidade=0
+    def readable(self):
+        return True
+    def readinto(self, buffer):
+        n=self.file.readinto(buffer)
+        if n:
+            self.sha.update(memoryview(buffer)[:n])
+            self.quantidade+=n
+        return n
+    def close(self):
+        if not self.closed:
+            self.file.close()
+        super().close()
+
+@contextmanager
+def _abrir_csv_com_hash(caminho:Path, metadata):
+    """Uma única leitura; sem seguir symlink entre verificação e abertura."""
+    fd=os.open(caminho,os.O_RDONLY|getattr(os,"O_NOFOLLOW",0)|
+               getattr(os,"O_NONBLOCK",0))
+    with os.fdopen(fd,"rb",buffering=0) as original:
+        atual=os.fstat(original.fileno())
+        if (not stat.S_ISREG(atual.st_mode)
+            or (atual.st_dev,atual.st_ino,atual.st_size,atual.st_mtime_ns,
+                atual.st_ctime_ns)!=(metadata.st_dev,metadata.st_ino,
+                                   metadata.st_size,metadata.st_mtime_ns,
+                                   metadata.st_ctime_ns)):
+            raise ErroStreamMDIC("arquivo trocado antes do parser")
+        leitor=_BytesComHash(original)
+        with io.TextIOWrapper(io.BufferedReader(leitor,buffer_size=262144),
+                encoding="utf-8-sig",errors="strict",newline="") as texto:
+            yield texto,leitor,original
 
 _MODO={
     ("EXPORTACAO","NCM"):("EXP", EXP_HEADER),
@@ -49,11 +90,9 @@ def processar_arquivo_anual(caminho: str | Path, *, ano: int, direcao: str,
                             limite_chaves: int=100_000)->dict:
     """Retorna mensal e recortes filtrados (não retorna linhas/PII).
 
-    SHA original calculado no mesmo passe dos registros por um stream binário
-    aberto com TextIOWrapper; não há leitura completa em memória. O arquivo
-    deve permanecer imutável durante a leitura (validar tamanho/mtime final).
+    SHA calculado nos EXATOS bytes consumidos pelo leitor CSV, em uma única
+    passagem. Validar também identidade (inode) e alteração durante leitura.
     """
-    from io import TextIOWrapper
     if (direcao,granularidade) not in _MODO:raise ErroStreamMDIC("modalidade inválida")
     if type(ano) is not int or not 1997<=ano<=2100:
         raise ErroStreamMDIC("ano inválido")
@@ -76,15 +115,11 @@ def processar_arquivo_anual(caminho: str | Path, *, ano: int, direcao: str,
     info=p.stat()
     if not stat.S_ISREG(info.st_mode) or not 0<info.st_size<=limite_bytes:
         raise ErroStreamMDIC("arquivo não regular, vazio ou fora do limite")
-    # Duas passagens sequenciais de 256 KB, sem carregar o CSV inteiro na RAM.
-    hashv=hashlib.sha256()
-    with p.open("rb") as raw:
-        for bloco in iter(lambda:raw.read(262144),b""):
-            hashv.update(bloco)
+    # Uma passagem única; sem janela entre hashing e parsing.
     chaves=defaultdict(lambda:[0,0,0,0,0])
     meses=defaultdict(lambda:[0,0,0,0])
     total=filtradas=0
-    with p.open("r",encoding="utf-8-sig",errors="strict",newline="") as stream:
+    with _abrir_csv_com_hash(p,info) as (stream,medidor,arquivo_binario):
         leitor=csv.DictReader(stream,delimiter=";")
         if tuple(leitor.fieldnames or ())!=header:
             raise ErroStreamMDIC("schema diverge do arquivo anual oficial")
@@ -130,8 +165,14 @@ def processar_arquivo_anual(caminho: str | Path, *, ano: int, direcao: str,
             c=chaves[chave]
             c[0]+=kg;c[1]+=usd;c[2]+=frete;c[3]+=seguro;c[4]+=1
             filtradas+=1
+        lidos=medidor.quantidade
+        digest=medidor.sha.hexdigest()
+        fd_final=os.fstat(arquivo_binario.fileno())
     final=p.stat()
-    if (final.st_size,final.st_mtime_ns,final.st_ino)!=(info.st_size,info.st_mtime_ns,info.st_ino):
+    assinatura=lambda x:(x.st_dev,x.st_ino,x.st_size,x.st_mtime_ns,x.st_ctime_ns)
+    if (assinatura(fd_final)!=assinatura(info)
+            or assinatura(final)!=assinatura(info)
+            or lidos!=info.st_size):
         raise ErroStreamMDIC("arquivo alterado durante leitura, snapshot inconsistente")
     if not total or not filtradas:
         raise ErroStreamMDIC("nenhuma linha selecionada: ausência não representa zero")
@@ -154,7 +195,7 @@ def processar_arquivo_anual(caminho: str | Path, *, ano: int, direcao: str,
         recortes.append(row)
     return {"dataset_id":"MDIC_COMEX_NCM" if granularidade=="NCM" else "MDIC_COMEX_MUNICIPIO_SH4",
             "direcao":direcao,"granularidade":granularidade,"ano":ano,
-            "sha256_original":hashv.hexdigest(),"bytes_original":info.st_size,
+            "sha256_original":digest,"bytes_original":lidos,
             "coletado_em":coleta,"publicado_em":None,
             "linhas_total":total,"linhas_filtradas":filtradas,
             "totais_arquivo_por_mes":[{"competencia":f"{ano}-{mes:02d}",

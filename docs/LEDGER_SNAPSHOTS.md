@@ -14,3 +14,7 @@ Registra **somente metadados** locais em SQLite. Não lê rede, não guarda arqu
 - Testes sintéticos: \`PYTHONPATH=src python -m unittest tests/test_registro_snapshots.py\` (ou \`unittest discover\`).
 
 Os 86 datasets seguem desativados, até gate separado de direito por operação, amostra real, integração de parser, validação semântica, persistência e homologação de publicação.
+
+## Gate central de ativação — 20/10/2026
+
+Além da comprovação explícita de `COLETA` e `ARMAZENAMENTO` por operação e `evidencia_direitos`, o ledger **nega qualquer snapshot REAL_AUTORIZADO quando o dataset no catálogo não declara `enabled is True` E `collection_authorized is True`**. Esse controle é intencionalmente duplicado em relação aos coletores: novos adaptadores não poderão contornar a governança omitindo um gate local. Testes exercitam indicadores falsos, ausentes e valores `1` (que não substituem booleanos explícitos). É controle de execução, não certificação jurídica automática; edição indevida do catálogo também deve ser protegida por revisão humana.
