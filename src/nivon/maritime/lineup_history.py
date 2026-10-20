@@ -6,7 +6,6 @@ Publication evidence and collection times are separate non-imputable gates.
 """
 from __future__ import annotations
 
-import hashlib
 import math
 import re
 from dataclasses import dataclass
@@ -215,3 +214,41 @@ def compare_lineup_vintages(previous: LineupVintage, current: LineupVintage) -> 
                 if prior != updated:
                     changes.append(LineupChange(call_id, name, prior, updated))
     return tuple(changes)
+
+
+def vintage_from_official_bridge(
+    bridge: "LineupBridgeResult", *,
+    reference_date: str,
+    competence: str,
+    published_at: datetime | str | None = None,
+    publication_evidence_id: str | None = None,
+) -> LineupVintage:
+    """Convert an already-acquired official schedule, never scrape or publish.
+
+    The HTML bridge may exclude rows missing reliable DUV or ETA. An incomplete
+    parse cannot be represented as a complete historical lineup edition.
+    Raw/partial evidence must remain in the bridge's separate audit record.
+    """
+    from .official_lineup_bridge import LineupBridgeResult
+
+    if not isinstance(bridge, LineupBridgeResult):
+        raise TypeError("requires official lineup bridge result")
+    if bridge.publication_allowed or bridge.realized_cargo_claimed:
+        raise ValueError("lineup bridge cannot promote publication or realized cargo")
+    if bridge.state != "SHADOW_NOT_HOMOLOGATED":
+        raise ValueError("unexpected lineup bridge lifecycle")
+    if bridge.source_rows <= 0:
+        raise ValueError("empty bridge output is not proof of an empty official schedule")
+    if bridge.excluded or len(bridge.candidates) != bridge.source_rows:
+        raise ValueError("partial lineup parse: excluded or missing source rows")
+    return LineupVintage(
+        port_id=bridge.port_id,
+        source_id=bridge.source_id,
+        source_sha256=bridge.document_sha256,
+        collected_at=bridge.collected_at,
+        reference_date=reference_date,
+        competence=competence,
+        published_at=published_at,
+        publication_evidence_id=publication_evidence_id,
+        calls=bridge.candidates,
+    )
