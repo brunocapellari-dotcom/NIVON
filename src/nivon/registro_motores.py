@@ -24,7 +24,7 @@ MODULOS=frozenset({
     "fertilizantes","anp_ppi","eventos_editoriais","briefing_composto",
     "agentes_nivon","entrega_whatsapp","cotacoes_externas",
     "ana_contrato","series_ambientais",
-    "modelos_fisicos","verificacao_probabilistica","analogos_historicos","unidades_mercado",
+    "modelos_fisicos","verificacao_probabilistica","analogos_historicos","unidades_mercado","nasa_power_nivon",
 })
 
 

@@ -20,7 +20,11 @@
         "collector/nasa_power.py",
         "collector/nasa_power_pipeline.py"
       ],
-      "status": "DOCUMENTED_NO_NIVON_LIVE_SNAPSHOT"
+      "status": "CODE_OFFLINE_PARSER_READY_NO_REAL_SNAPSHOT",
+      "nivon_paths": [
+        "src/nivon/nasa_power_nivon.py",
+        "tests/test_nasa_power_nivon.py"
+      ]
     },
     {
       "id": "COPERNICUS_ERA5_LAND",

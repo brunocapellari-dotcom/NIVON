@@ -3922,12 +3922,12 @@
         "url": "https://power.larc.nasa.gov/docs/services/api/temporal/daily/",
         "source_proof": "https://power.larc.nasa.gov/docs/services/api/temporal/daily/"
       },
-      "implementation_scope": "NO_PARSER; reuso AgroLog sujeito a auditoria de dependência e teste com snapshot real",
+      "implementation_scope": "nasa_power_nivon.py: builder de URL, parser rigoroso, fetch com bloqueio de redirects e direito explícito; sem agendamento, sem histórico real homologado",
       "authentication": "PUBLIC_ANONYMOUS_RIGHTS_REVIEW",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "SOURCE_RIGHTS_AND_REAL_SAMPLE_VALIDATION",
+      "primary_blocker": "REAL_SAMPLE_RIGHTS_HISTORY_BACKFILL",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -3937,7 +3937,8 @@
         "DURABLE_PERSISTENCE_AND_RESTORE",
         "LICENSED_PUBLICATION_GATE",
         "POINT_IN_TIME_VINTAGE_AUDIT",
-        "MODEL_BENCHMARK_AND_PHYSICAL_IDENTITY"
+        "MODEL_BENCHMARK_AND_PHYSICAL_IDENTITY",
+        "INDEPENDENT_SOURCE_AVAILABILITY_PROOF"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
