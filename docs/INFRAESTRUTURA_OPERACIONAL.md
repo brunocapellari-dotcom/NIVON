@@ -125,3 +125,24 @@ provisionamento: https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_to
 Nenhum gate está liberado neste inventário. Quem verificar posteriormente
 deverá associar prova datada e assinada no mecanismo de release, não
 simplesmente mudar booleano em JSON para obter go-live.
+
+## 8. Implementação adicional — execução idempotente em modo sintético
+
+O PR de infraestrutura inclui um ledger SQLite com estado atômico,
+unicidade de job por chave/instante, leases de execução e histórico de
+eventos. Foi ensaiada persistência entre duas conexões, bloqueio de
+duplicação e restauração **local** consistente. O processo executável
+`python -m nivon.infra_smoke` utiliza apenas hash determinístico como
+carga de trabalho.
+
+O contrato evita o erro operacional de tratar timeout como garantia
+de não execução: um lease vencido gera `UNCERTAIN` e exige
+reconciliação; nunca há replay automático sobre possíveis ações externas.
+Hoje não existe driver de coleta ligado a esse ledger, nem scheduler,
+cloud VM ou backups remotos.
+
+**Próxima implantação técnica:** fonte licenciada -> job com autorização
+específica -> snapshot/qualidade -> commit atômico de checkpoint -> backup
+remoto verificado -> observabilidade -> publicação separada. O pipeline
+real precisará ser modelado por etapas com efeito externo e compensação
+explícita; não reutilizar o simulador como executor de coletas reais.
