@@ -9,7 +9,8 @@ def rows():
     digest=sha256(b"fixtures ibge 2025").hexdigest()
     def row(code,area,prod):
         return {"municipio_ibge":code,"ano":2025,"cultura":"SOJA",
-                "produto_ibge":"SOJA_GRAO","area_colhida_ha":area,
+                "produto_ibge":"SOJA_GRAO","codigo_categoria_c81":"2713",
+                "area_colhida_ha":area,
                 "quantidade_produzida_t":prod,"rendimento_reportado_kg_ha":prod*1000/area,
                 "resolucao_area_ha":"1","resolucao_producao_t":"1",
                 "resolucao_rendimento_kg_ha":"1","edicao_id":"SIDRA_2025_FIXTURE",
@@ -47,6 +48,18 @@ class TestAgregacaoPAM(unittest.TestCase):
            cobertura_integral_auditada=True)
         self.assertFalse(r["conservacao_consistente"])
         self.assertEqual(r["residuo_producao_t"],"-1")
+
+    def test_igualdade_c81_obrigatoria_no_agregador(self):
+        agregado=self.call()
+        self.assertEqual(agregado["codigo_categoria_c81"],"2713")
+        falsas=rows()
+        falsas[0]["codigo_categoria_c81"]="2702"  # FEIJÃO, não SOJA
+        with self.assertRaisesRegex(ErroAgregacaoIBGE,"C81"):
+            self.call(falsas)
+        sem_codigo=rows()
+        del sem_codigo[0]["codigo_categoria_c81"]
+        with self.assertRaisesRegex(ErroAgregacaoIBGE,"C81"):
+            self.call(sem_codigo)
 
     def test_nao_mistura_algodao_caroco_pluma(self):
         r=rows()

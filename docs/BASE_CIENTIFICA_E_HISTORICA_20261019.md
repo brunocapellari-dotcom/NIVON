@@ -124,3 +124,64 @@ Casos especiais: os marcadores de ausência e sigilo são reprovados; `0` arredo
 Segundo SIDRA/IBGE, tabela **1612** divulga o milho total em grão; a tabela **839** apresenta primeira e segunda safras separadamente desde 2003. A tabela 839 não deve ser fundida com as séries totais 1612 nem com a temporada comercial CONAB sem reconciliação.
 
 Documentação oficial: https://sidra.ibge.gov.br/pesquisa/pam/tabelas/ ; https://sidra.ibge.gov.br/tabela/1612 ; https://sidra.ibge.gov.br/tabela/839 . Metadados de códigos de variáveis ainda precisam ser auditados contra resposta real da API; não inferir mais códigos sem revisão.
+
+## Auditoria de equivalência da classificação C81 — 20/10/2026
+
+Foi encontrado um **erro real de teste e contrato**: `tests/test_composicao_pam_sidra.py`
+marcava SOJA com categoria C81 **2702**, correspondente a **feijão (em grão)**.
+Na tabela 1612, SOJA (em grão) é C81 **2713**. A API não impediria a
+confusão, pois o plano de consulta, o retorno e o falso rótulo estariam
+internamente coerentes. A validação foi corrigida para reprovar
+`codigo_c81` incompatível com `cultura` *antes* de atribuir dados.
+
+O mapa controlado do produto na PAM 1612 passou a ser:
+
+| Cultura NIVON | C81 | Definição IBGE |
+|---|---|---|
+| SOJA | 2713 | Soja (em grão) |
+| MILHO | 2711 | Milho (em grão), total anual da 1612 |
+| TRIGO | 2716 | Trigo (em grão) |
+| ALGODAO | 2689 | Algodão herbáceo (em caroço), NÃO pluma |
+| CANA | 2696 | Cana-de-açúcar |
+| SORGO | 2714 | Sorgo (em grão) |
+| GERGELIM | 83383 | Gergelim, inclusão PAM 2025 |
+
+**Proveniência da taxonomia:** catálogo derivado dos metadados SIDRA
+(classificação C81, tabela 1612), conferido com
+https://sidra.ibge.gov.br/tabela/1612 e a exposição textual do
+metadado em https://quantilica.com/fish/classificacoes/81
+em 20/10/2026. A exposição é agregadora e deve ser reconfirmada com
+resposta primária real antes de homologar produção; o mapeamento
+NÃO autoriza automaticamente coleta, edição histórica ou comércio.
+
+A verificação agora impede reproduzir feijão como soja ou
+trocar culturas entre quaisquer das sete frentes agrícolas.
+Fixtures foram corrigidas e novos testes cobrem a troca
+maliciosa/errada, cada código distinto e a preservação no registro.
+
+### Validação C81 em duas camadas (20/10/2026)
+
+A taxonomia C81 passou a ter uma única fonte canônica de código em
+`src/nivon/agregacao_pam_ibge.py`, reutilizada por
+`src/nivon/composicao_pam_sidra.py`. O leitor municipal reprova
+cultura e categoria incompatíveis antes de ler os RAWs, e o
+agregador **também exige `codigo_categoria_c81`** em todos os
+municípios antes de calcular a produtividade ponderada estadual.
+
+Isso fecha o caminho alternativo de entrada por API interna, scripts
+ou objetos sintéticos que burlavam o leitor municipal.
+Um objeto com `produto_ibge="SOJA_GRAO"` mas C81 `2702`
+é rejeitado, bem como um objeto sem C81. Testes de regressão
+cobrem as duas situações. Direitos, versão de publicação e
+completude territorial seguem pendentes de homologação.
+
+### Regra de separador ambíguo em dados SIDRA (20/10/2026)
+
+A PAM pode ser exportada por diversas ferramentas em convenções
+numéricas diferentes. O texto `3.750` pode significar 3,75
+ou 3.750 unidades; o parser numérico deve reprovar strings
+com um ponto e três dígitos à direita quando ainda não existe
+metadado oficial verificado da convenção numérica daquele RAW.
+Essa regra evita erros de fator mil em produtividade e produção.
+O desbloqueio exigirá amostra real, metadados do formato, hash,
+e teste de regressão, sem atribuir a priori o significado.
