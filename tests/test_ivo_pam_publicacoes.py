@@ -22,7 +22,7 @@ def quando(data):
 
 def plano():
     return planejar_pam_1612(municipio_ibge="5107925",ano=2025,
-                             codigo_produto_c81="2692",codigo_variavel="109")
+                             codigo_produto_c81="2713",codigo_variavel="214")
 
 
 def json_sidra(valor):
@@ -31,8 +31,8 @@ def json_sidra(valor):
          "D3C":"Ano (Código)",
          "D4C":"Produto das lavouras temporárias (Código)",
          "V":"Valor","MN":"Unidade de Medida"},
-        {"D1C":"5107925","D2C":"109","D3C":"2025",
-         "D4C":"2692","V":str(valor),"MN":"Toneladas"},
+        {"D1C":"5107925","D2C":"214","D3C":"2025",
+         "D4C":"2713","V":str(valor),"MN":"Toneladas"},
     ],ensure_ascii=False).encode()
 
 
@@ -67,7 +67,7 @@ class TestIVOEdicoesPAM(unittest.TestCase):
     def consultar(self,edicoes,cut="2026-10-20"):
         return historico_edicoes_pam_asof(
             edicoes,db=self.db,corte=quando(cut),
-            variavel="109",produto="2692")
+            variavel="214",produto="2713")
 
     def test_divulgacao_e_errata_respeitam_vintages(self):
         a=self.evento("edicao_2025","DIVULGACAO","1500","2026-09-01","2026-09-02")
@@ -121,7 +121,7 @@ class TestIVOEdicoesPAM(unittest.TestCase):
         a=self.evento("edicao_2025","DIVULGACAO","1500","2026-09-01","2026-09-02")
         b=self.evento("errata_2025","ERRATA","1600","2026-10-01","2026-10-02")
         outro=planejar_pam_1612(municipio_ibge="5105259",ano=2025,
-                                 codigo_produto_c81="2692",codigo_variavel="109")
+                                 codigo_produto_c81="2713",codigo_variavel="214")
         with self.assertRaises(ErroPublicacaoPAM):
             self.consultar([a,replace(b,plano=outro)])
 
