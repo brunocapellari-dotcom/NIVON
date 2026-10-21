@@ -12,6 +12,7 @@ from datetime import date, datetime, timezone
 from hashlib import sha256
 from urllib.parse import urlsplit
 from .ivo_pam_bridge import preparar_pam_anual_asof
+from .sidra_pam import planejar_pam_1612, ErroSIDRAPAM
 
 class ErroPublicacaoPAM(ValueError): pass
 
@@ -42,6 +43,16 @@ class EventoPAM:
             raise ErroPublicacaoPAM("tipo de edição inválido")
         if not isinstance(self.plano,dict):
             raise ErroPublicacaoPAM("plano inválido")
+        try:
+            esperado=planejar_pam_1612(
+                municipio_ibge=self.plano.get("municipio_ibge"),
+                ano=self.plano.get("ano"),
+                codigo_produto_c81=self.plano.get("categoria_c81"),
+                codigo_variavel=self.plano.get("variavel"))
+        except ErroSIDRAPAM as exc:
+            raise ErroPublicacaoPAM("escopo anual PAM inválido") from exc
+        if self.plano!=esperado:
+            raise ErroPublicacaoPAM("plano diverge do SIDRA canônico")
         if not isinstance(self.json_original,bytes) or not 0<len(self.json_original)<=2_000_000:
             raise ErroPublicacaoPAM("JSON obrigatório e limitado")
         if (not isinstance(self.documento_pdf,bytes)
@@ -53,9 +64,13 @@ class EventoPAM:
             raise ErroPublicacaoPAM("hash do PDF divergente")
         try: url=urlsplit(self.documento_url)
         except (TypeError,ValueError) as exc: raise ErroPublicacaoPAM("URL inválida") from exc
+        try:
+            porta=url.port
+        except ValueError as exc:
+            raise ErroPublicacaoPAM("porta de URL inválida") from exc
         if (url.scheme!="https" or url.hostname not in (
               "www.ibge.gov.br","biblioteca.ibge.gov.br","agenciadenoticias.ibge.gov.br")
-              or url.username is not None or url.password is not None or url.port is not None
+              or url.username is not None or url.password is not None or porta is not None
               or not url.path or url.path=="/"):
             raise ErroPublicacaoPAM("URL não é documento em domínio IBGE permitido")
         if not isinstance(self.publicado_em,date) or isinstance(self.publicado_em,datetime):
@@ -145,6 +160,7 @@ def historico_edicoes_pam_asof(edicoes:list[EventoPAM],*,db:sqlite3.Connection,
             "json_sha256":sha256(e.json_original).hexdigest(),
             "documento_sha256":e.documento_sha256,
             "documento_url":e.documento_url,
+            "classe_snapshot":v["tipo_snapshot"],
             "revisor_declarado":e.revisor_id,
             "json_coletado_em":e.json_coletado_em.isoformat(),
             "documento_coletado_em":e.documento_coletado_em.isoformat(),
