@@ -195,7 +195,12 @@ class TestBriefingAgentes(unittest.TestCase):
            indicadores=[], fretes=[{
                "fonte_id": "WHATSAPP", "origem": "Sinop", "uf_origem": "MT",
                "destino": "Miritituba", "uf_destino": "PA", "valor_rs_t": 210.0,
-               "referencia": AGORA.isoformat(), "tipo": "FRETE_ANUNCIADO"
+               "referencia": AGORA.isoformat(), "tipo": "FRETE_ANUNCIADO",
+               "pickup_entity_id": "ARMAZEM_SINOP_TESTE",
+               "ponto_embarque": "Armazém de teste Sinop",
+               "transportadora": "Transportadora Sintética",
+               "produto": "SOJA", "equipamento": "BITREM",
+               "regime_pf_pj": "PJ", "condicao_pedagio": "INCLUSO"
            }])
         self.assertIn("SINOP/MT → MIRITITUBA/PA", a["texto"])
         self.assertIn("não são viagens realizadas", a["texto"])
