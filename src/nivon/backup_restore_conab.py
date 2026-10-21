@@ -14,6 +14,7 @@ import shutil
 import sqlite3
 import stat
 from datetime import datetime, timezone
+from contextlib import closing
 from pathlib import Path
 from urllib.parse import quote
 
@@ -102,12 +103,15 @@ def _json_exclusivo(path: Path, value: dict) -> None:
     data = json.dumps(value, ensure_ascii=False, sort_keys=True,
                       indent=2, allow_nan=False)
     # Abrir em modo exclusivo: nunca sobrescrever arquivo pré-existente.
-    with path.open("x", encoding="utf-8") as f:
-        if os.name == "posix":
-            path.chmod(0o600)
-        f.write(data)
-        f.flush()
-        os.fsync(f.fileno())
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(data)
+            f.flush()
+            os.fsync(f.fileno())
+    except BaseException:
+        path.unlink(missing_ok=True)
+        raise
 
 
 def _pairs_unique(pairs):
@@ -211,7 +215,7 @@ def criar_backup_conab(legado_path: str | Path,
             with sqlite3.connect(str(path),timeout=10) as backup_db:
                 src.backup(backup_db, pages=64, sleep=0.05)
             end=datetime.now(timezone.utc).isoformat()
-            with _readonly(path) as validated:
+            with closing(_readonly(path)) as validated:
                 counts = _verificar_integridade(validated,store)
             meta[store] = {
                 "arquivo":_FILES[store],"sha256":_sha(path),
@@ -219,8 +223,8 @@ def criar_backup_conab(legado_path: str | Path,
                 "linhas_por_tabela":counts,"capturado_inicio_utc":begin,
                 "capturado_fim_utc":end,"integridade_sqlite":"ok",
             }
-        with _readonly(target/_FILES["LEGADO"]) as a, \
-             _readonly(target/_FILES["CANONICO"]) as b:
+        with closing(_readonly(target/_FILES["LEGADO"])) as a, \
+             closing(_readonly(target/_FILES["CANONICO"])) as b:
             _caracterizar_par(a,b)
         manifest={
             "schema":_SCHEMA,"criado_utc":datetime.now(timezone.utc).isoformat(),
@@ -280,8 +284,8 @@ def restaurar_em_diretorio_novo(backup_dir: str | Path,
             if dst.stat().st_size!=manifest["arquivos"][store]["bytes"] or \
                _sha(dst)!=manifest["arquivos"][store]["sha256"]:
                 raise ErroBackupConab("cópia restaurada não preserva SHA")
-        with _readonly(target/_FILES["LEGADO"]) as a, \
-             _readonly(target/_FILES["CANONICO"]) as b:
+        with closing(_readonly(target/_FILES["LEGADO"])) as a, \
+             closing(_readonly(target/_FILES["CANONICO"])) as b:
             counts=_caracterizar_par(a,b)
         for store in _FILES:
             if counts[store]!=manifest["arquivos"][store]["linhas_por_tabela"]:
