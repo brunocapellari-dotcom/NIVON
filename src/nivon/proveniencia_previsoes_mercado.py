@@ -212,9 +212,9 @@ def reconciliar_previsao(
     prova = verificar_cadeia_previsoes(cadeia,
                                       cabeca_esperada_sha256=cabeca_esperada_sha256)
     if not isinstance(registro, Mapping) or not any(
-        x["registro_sha256"] == registro.get("registro_sha256") for x in cadeia
+        dict(x) == dict(registro) for x in cadeia
     ):
-        raise ErroRegistroPrevisao("previsão não pertence à cadeia informada")
+        raise ErroRegistroPrevisao("previsão não pertence integralmente à cadeia informada")
     p = registro["previsao"]
     corte = _hora(as_of, "as_of")
     emissao = _hora(p["emitido_em"], "emitido_em")
