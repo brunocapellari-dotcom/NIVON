@@ -391,7 +391,8 @@
         "nivon.ensemble_hidrologico_bacia:cenario_ensemble_bacia",
         "nivon.chuva_areal_ensemble:agregar_ensemble_chuva_areal",
         "nivon.verificacao_vazao_asof:avaliar_hidrograma_asof",
-        "nivon.verificacao_chuva_ensemble_asof:verificar_chuva_ensemble_asof"
+        "nivon.verificacao_chuva_ensemble_asof:verificar_chuva_ensemble_asof",
+        "nivon.pacotes_chuva_asof:montar_e_verificar_pares_chuva"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -597,7 +598,8 @@
         "nivon.meteorologia_probabilistica:crps_ensemble",
         "nivon.meteorologia_probabilistica:avaliar_ensemble",
         "nivon.chuva_areal_ensemble:agregar_ensemble_chuva_areal",
-        "nivon.verificacao_chuva_ensemble_asof:verificar_chuva_ensemble_asof"
+        "nivon.verificacao_chuva_ensemble_asof:verificar_chuva_ensemble_asof",
+        "nivon.pacotes_chuva_asof:montar_e_verificar_pares_chuva"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
