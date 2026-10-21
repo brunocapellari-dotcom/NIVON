@@ -142,3 +142,17 @@ Reproduzir testes sinteticos: PYTHONPATH=src python -m unittest tests.test_pecua
 - Quatro datas canônicas preservadas nos resultados ou objetos: competência, referência, publicação e coleta. Publicação/coleta são DECLARADAS por operador, ainda não comprovadas com divulgação oficial histórica; não promover vintages nem classificação para observado sem evidência.
 
 **Pendências em ordem:** (P0) amostras autênticas API v3/values das 3 tabelas e mapeamento por documentação oficial; (P0) homologação de licença/proveniência de aquisição e publicação, comparando o período do extrato à divulgação original; (P1) reprodução real BR x UFs por cobertura efetiva e revisão; (P1) persistência append-only e backtesting PIT por espécie. Sem merge, deploy, cron, envio ou preço real.
+
+## Continuidade 21/10/2026 — sinais especiais da API SIDRA
+
+### Evidência técnica e correção
+- A documentação CRAN do sidrar (https://cran.r-project.org/web/packages/sidrar/vignettes/Introduction_to_sidrar.html) distingue: `-` = ZERO ABSOLUTO; `X` = dado INIBIDO; `..` = NÃO APLICÁVEL; `...` = NÃO DISPONÍVEL. Não usar pacotes que convertem todos automaticamente em NA sem preservar token original.
+- O antigo parser de abate confundia `-` com NA e o eliminava da série de observações; isso é erro de classificação, não apenas limitação de cobertura.
+- Corrigida src/nivon/pecuaria_sidra_abate.py: `-` convertido explicitamente em zero observacional, SEM imputação; X/../... seguem sem valor e NÃO viram zero. O retorno preserva `marcadores_sidra` com símbolo e significado por UF, trimestre e indicador, sob o SHA256 do bruto.
+- Compatibilidade preservada com `linhas_indisponiveis` e `pecuaria_sidra_vintages`; teste ponta a ponta prova que zero absoluto continua valor zero e X mantém censura, sempre respeitando o corte de coleta.
+- Testes adicionais em tests/test_pecuaria_sidra_snapshot.py para `-`, `X`, `..`, `...`, mistura de valor zero e censura e trânsito para consulta temporal.
+
+### Limites de evidência
+- A semântica dos símbolos foi verificada com referência técnica externa CRAN, não com uma amostra autenticada das tabelas 1092/1093/1094; a homologação oficial ainda precisa de resposta real e validação por tabela.
+- Nenhum coletor/cron, persistência, reclassificação editorial ou série real foi ativado. O estado dos motores continua CODE_TESTED_SYNTHETIC_ONLY.
+- Próximo gate P0: capturar um response real autorizado SIDRA ou Agregados v3 para cada espécie, conferir dimensões, códigos, unidade, sinais especiais, direitos e datas de publicação; registrar hash e validar as revisões por vintage.
