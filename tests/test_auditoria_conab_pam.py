@@ -3,7 +3,9 @@ import unittest
 
 from nivon.auditoria_conab_pam import (
     ErroConciliacaoSafra, preparar_tripla_conab, confrontar_conab_pam,
+    UF_IBGE,
 )
+from nivon.agregacao_pam_ibge import C81_PAM_POR_CULTURA, _UFS
 
 CUT = "2026-10-20T14:00:00-03:00"
 HASH = "a" * 64
@@ -84,6 +86,24 @@ def confronto(**overrides):
 
 
 class TestAuditoriaConabPam(unittest.TestCase):
+    def test_mapa_completo_27_ufs_e_c81_unico(self):
+        self.assertEqual(len(UF_IBGE), 27)
+        self.assertEqual({int(v) for v in UF_IBGE.values()}, _UFS)
+        self.assertEqual(C81_PAM_POR_CULTURA["SOJA"], "2713")
+        self.assertEqual(C81_PAM_POR_CULTURA["MILHO"], "2711")
+        self.assertEqual(len(set(UF_IBGE.values())), 27)
+
+    def test_confronto_conab_pam_disponivel_em_todas_as_ufs(self):
+        for uf, code in UF_IBGE.items():
+            with self.subTest(uf=uf):
+                rows = [dict(row, regiao_uf=uf) for row in conab_rows()]
+                conab = tripla(uf=uf, linhas=rows)
+                agg = dict(pam(), uf_ibge=int(code))
+                res = confronto(pacote_conab=conab, agregado_pam=agg)
+                self.assertEqual(res["uf"], uf)
+                self.assertEqual(res["diferenca_producao_t"], "100")
+                self.assertFalse(res["habilita_publicacao"])
+
     def test_tripla_conab_conservacao_sem_inventar_area_colhida(self):
         r = tripla()
         self.assertEqual(r["estado"], "TRIPLA_CONAB_ASOF_DECLARADA")
