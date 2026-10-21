@@ -127,6 +127,16 @@ def inicializar_store_anp(db: sqlite3.Connection) -> None:
       valido_ate TEXT NOT NULL,
       PRIMARY KEY(sha,dominio)
     );
+    CREATE TABLE IF NOT EXISTS anp_semanal_revogacoes (
+      revogacao_id TEXT PRIMARY KEY, sha TEXT NOT NULL,
+      dominio TEXT NOT NULL CHECK (dominio IN ('DIREITOS_USO','HOMOLOGACAO_LAYOUT')),
+      aprovacao_id TEXT NOT NULL, emissor_id TEXT NOT NULL,
+      motivo_codigo TEXT NOT NULL, emitido_em TEXT NOT NULL,
+      recebido_em TEXT NOT NULL, assinatura_sha256 TEXT NOT NULL,
+      FOREIGN KEY(sha,dominio) REFERENCES anp_semanal_atestacoes(sha,dominio)
+    );
+    CREATE INDEX IF NOT EXISTS idx_anp_revogacoes_consulta
+       ON anp_semanal_revogacoes(sha,recebido_em);
     CREATE TABLE IF NOT EXISTS anp_semanal_capturas (
       sha TEXT NOT NULL REFERENCES anp_semanal_edicoes(sha),
       data_coleta TEXT NOT NULL, PRIMARY KEY (sha, data_coleta)
@@ -317,7 +327,11 @@ def consultar_preco_semanal(
     db.row_factory = sqlite3.Row
     rows = db.execute("""
         SELECT o.*,e.sha,e.fonte_url,e.data_publicacao,
-               MIN(c.data_coleta) AS primeira_coleta
+               MIN(c.data_coleta) AS primeira_coleta,
+               EXISTS(
+                 SELECT 1 FROM anp_semanal_revogacoes rev
+                 WHERE rev.sha=e.sha AND rev.recebido_em<=?
+               ) AS revogada_asof
         FROM anp_semanal_observacoes o
         JOIN anp_semanal_edicoes e ON e.sha=o.sha
         JOIN anp_semanal_capturas c ON c.sha=e.sha
@@ -329,7 +343,7 @@ def consultar_preco_semanal(
           AND o.semana_fim<=? AND e.data_publicacao<=? AND c.data_coleta<=?
         GROUP BY o.sha,o.uf,o.municipio,o.produto,o.semana_inicio
         ORDER BY o.semana_fim DESC LIMIT 1001
-    """, (uf, municipio, produto, corte.date().isoformat(),
+    """, (corte.isoformat(), uf, municipio, produto, corte.date().isoformat(),
           corte.isoformat(), corte.isoformat())).fetchall()
     if not rows:
         return {"status": "SEM_EDICAO_REAL_ASOF", "publicavel": False}
@@ -337,6 +351,15 @@ def consultar_preco_semanal(
         return {"status": "HISTORICO_EXCESSIVO", "publicavel": False}
     semana = rows[0]["semana_fim"]
     atual = [r for r in rows if r["semana_fim"] == semana]
+    # Revogação de qualquer edição da última semana impede fallback
+    # silencioso para outra versão da mesma semana ou uma semana anterior.
+    if any(r["revogada_asof"] for r in atual):
+        return {
+            "status": "EDICAO_REVOGADA",
+            "publicavel": False, "semana_fim": semana,
+            "edicoes_no_periodo": len(atual),
+            "observacao": "Revogação registrada; preço bloqueado no corte as_of",
+        }
     diferentes = {(r["preco_medio"], r["postos"], r["semana_inicio"]) for r in atual}
     if len(diferentes) > 1:
         return {"status": "REVISOES_CONFLITANTES", "publicavel": False,
