@@ -195,6 +195,25 @@ class LineupLedgerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "checksum mismatch"):
                 query(ledger)
 
+    def test_vintage_identity_tampering_blocks_replay(self):
+        with MaritimeStore() as store:
+            ledger = LineupVintageLedger(store)
+            ledger.save(vintage(), storage_authorized=True)
+            store.db.execute(
+                "UPDATE maritime_lineup_vintages SET vintage_id=?", ("0" * 64,)
+            )
+            store.db.commit()
+            with self.assertRaisesRegex(ValueError, "identity or canonical payload"):
+                query(ledger)
+
+    def test_no_publication_timestamp_cannot_be_backfilled_from_collection(self):
+        with MaritimeStore() as store:
+            ledger = LineupVintageLedger(store)
+            ledger.save(vintage(published=None, proof=None), storage_authorized=True)
+            result = query(ledger, at="2026-10-30T23:00:00+00:00")
+            self.assertIsNone(result.snapshot)
+            self.assertIsNone(result.summary()["programmed_call_count"])
+
     def test_second_connection_conflict_not_silent(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "maritime.sqlite"
