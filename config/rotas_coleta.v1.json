@@ -4821,7 +4821,8 @@
         "LICENSED_PUBLICATION_GATE",
         "VALIDATE_LIVE_STAC_RESPONSE",
         "COLLECTION_LICENSE_PER_ASSET",
-        "STAC_PAGINATION_VERSION"
+        "STAC_PAGINATION_VERSION",
+        "REAL_PRODUCTION_RESPONSE_SMOKE"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
@@ -4832,16 +4833,16 @@
       "dataset_id": "ESA_WORLDCOVER_2021_10M",
       "collector_class": "STRUCTURED_FILE",
       "locator": {
-        "kind": "OFFICIAL_INDEX",
-        "url": "https://registry.opendata.aws/esa-worldcover/",
+        "kind": "DIRECT_PUBLIC_FILE",
+        "url": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_S15W057_Map.tif",
         "source_proof": "https://esa-worldcover.org/en/data-access"
       },
-      "implementation_scope": "PUBLIC_AWS_GEOTIFF_DISTRIBUTION; selective_2021_tile_fetch_pending",
+      "implementation_scope": "ONE_SHOT_ESA_HEAD_POINT_TILE_NO_PIXEL_DOWNLOAD",
       "authentication": "NONE_EXPECTED_VERIFY",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "REAL_SAMPLE_RIGHTS_AND_PERSISTENCE",
+      "primary_blocker": "REAL_RESPONSE_SCHEMA_OR_RASTER_NUMERIC_PERSISTENCE",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -4851,27 +4852,29 @@
         "LICENSED_PUBLICATION_GATE",
         "VERIFY_TILE_GRID_BRAZIL_ONLY",
         "ATTRIBUTION_CC_BY_4",
-        "2021_STATIC_NOT_2026"
+        "2021_STATIC_NOT_2026",
+        "REAL_PRODUCTION_RESPONSE_SMOKE",
+        "DATA_SEMANTICS_AND_UNIT_SCHEMA_HOMOLOGATION"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "ESA WorldCover 2021 v200 vigiada, não 2026; COG 10m aberto AWS S3 e Zenodo. Preservar tile, res e taxonomia.",
+      "source_note": "ESA WorldCover 2021 v200 vigiada, não 2026; COG 10m aberto AWS S3 e Zenodo. Preservar tile, res e taxonomia. Um cliente de consulta individual foi implementado com testes sintéticos, ainda sem provas de execução HTTP real no runtime, sem custos ou agendamentos.",
       "preliminary_evidence": "PUBLIC_OFFICIAL_DOCUMENTATION_2026_10_21_NO_PERSISTENCE"
     },
     {
       "dataset_id": "JRC_GSW_AGUA_SUPERFICIAL",
       "collector_class": "STRUCTURED_FILE",
       "locator": {
-        "kind": "OFFICIAL_INDEX",
-        "url": "https://global-surface-water.appspot.com/download",
+        "kind": "DIRECT_OFFICIAL_API",
+        "url": "https://storage.googleapis.com/water-world/downloads_ancillary/WMTS_Global_Surface_WaterV2024.xml",
         "source_proof": "https://global-surface-water.appspot.com/download"
       },
-      "implementation_scope": "OFFICIAL_JRC_RASTER_DOWNLOAD_INDEX; precise tile selection pending",
+      "implementation_scope": "ONE_SHOT_WMTS_CAPABILITIES_XML_METADATA_NOT_PIXEL_QUANTIFICATION",
       "authentication": "NONE_EXPECTED_VERIFY",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "REAL_SAMPLE_RIGHTS_AND_PERSISTENCE",
+      "primary_blocker": "REAL_RESPONSE_SCHEMA_OR_RASTER_NUMERIC_PERSISTENCE",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -4881,11 +4884,13 @@
         "LICENSED_PUBLICATION_GATE",
         "DIFFERENT_LANDSAT_COLLECTIONS",
         "BACKFILL_V14_PLUS_V15_MERGE",
-        "MONTHLY_RECURRENCE_BUG_KNOWN"
+        "MONTHLY_RECURRENCE_BUG_KNOWN",
+        "REAL_PRODUCTION_RESPONSE_SMOKE",
+        "DATA_SEMANTICS_AND_UNIT_SCHEMA_HOMOLOGATION"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "JRC 1984-2024; transição Landsat C1/C2 pode gerar desalinhamento, V1.5 recente não cobre histórico mensal integral. Não interpretar área superficial como vazão/navegabilidade.",
+      "source_note": "JRC 1984-2024; transição Landsat C1/C2 pode gerar desalinhamento, V1.5 recente não cobre histórico mensal integral. Não interpretar área superficial como vazão/navegabilidade. Um cliente de consulta individual foi implementado com testes sintéticos, ainda sem provas de execução HTTP real no runtime, sem custos ou agendamentos.",
       "preliminary_evidence": "PUBLIC_OFFICIAL_DOCUMENTATION_2026_10_21_NO_PERSISTENCE"
     },
     {
@@ -4896,12 +4901,12 @@
         "url": "https://www.ams.usda.gov/sites/default/files/media/GTRTable1.xlsx",
         "source_proof": "https://www.ams.usda.gov/services/transportation-analysis/gtr-datasets"
       },
-      "implementation_scope": "OFFICIAL_XLSX_IDENTIFIED; full workbook schema and refresh still unverified",
+      "implementation_scope": "OFFLINE_OOXML_PARSER_WITH_HTTPS_ONE_SHOT_REAL_SCHEMA_NOT_YET_VALIDATED",
       "authentication": "NONE_EXPECTED_VERIFY",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "REAL_SAMPLE_RIGHTS_AND_PERSISTENCE",
+      "primary_blocker": "REAL_RESPONSE_SCHEMA_OR_RASTER_NUMERIC_PERSISTENCE",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -4911,11 +4916,13 @@
         "LICENSED_PUBLICATION_GATE",
         "VERIFY_XLSX_SHEET_SCHEMA",
         "SEPARATE_FREIGHT_MODE_UNITS",
-        "US_PROXY_NOT_BRAZIL_FREIGHT"
+        "US_PROXY_NOT_BRAZIL_FREIGHT",
+        "REAL_PRODUCTION_RESPONSE_SMOKE",
+        "DATA_SEMANTICS_AND_UNIT_SCHEMA_HOMOLOGATION"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "USDA AMS GTR Tabela 1: indicadores de diesel, barcaça, frete ferroviário e oceânico como proxies, não fretes contratados reais brasileiros.",
+      "source_note": "USDA AMS GTR Tabela 1: indicadores de diesel, barcaça, frete ferroviário e oceânico como proxies, não fretes contratados reais brasileiros. Um cliente de consulta individual foi implementado com testes sintéticos, ainda sem provas de execução HTTP real no runtime, sem custos ou agendamentos.",
       "preliminary_evidence": "PUBLIC_OFFICIAL_DOCUMENTATION_2026_10_21_NO_PERSISTENCE"
     },
     {
@@ -4926,12 +4933,12 @@
         "url": "https://www.ams.usda.gov/sites/default/files/media/GTRTable2A_B.xlsx",
         "source_proof": "https://www.ams.usda.gov/services/transportation-analysis/gtr-datasets"
       },
-      "implementation_scope": "OFFICIAL_XLSX_IDENTIFIED; column mapping and version pending",
+      "implementation_scope": "OFFLINE_OOXML_PARSER_WITH_HTTPS_ONE_SHOT_REAL_SCHEMA_NOT_YET_VALIDATED",
       "authentication": "NONE_EXPECTED_VERIFY",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "REAL_SAMPLE_RIGHTS_AND_PERSISTENCE",
+      "primary_blocker": "REAL_RESPONSE_SCHEMA_OR_RASTER_NUMERIC_PERSISTENCE",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -4941,27 +4948,29 @@
         "LICENSED_PUBLICATION_GATE",
         "VERIFY_XLSX_SHEET_SCHEMA",
         "UNIT_USD_PER_BUSHEL_AND_ORIGIN",
-        "BASIS_NOT_BRAZIL_SPOT_PRICE"
+        "BASIS_NOT_BRAZIL_SPOT_PRICE",
+        "REAL_PRODUCTION_RESPONSE_SMOKE",
+        "DATA_SEMANTICS_AND_UNIT_SCHEMA_HOMOLOGATION"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "USDA AMS GTR Tabelas 2A/2B: preços interior/exportação e spreads; inclui comparações futuros. Não usar como CBOT contínua licenciada.",
+      "source_note": "USDA AMS GTR Tabelas 2A/2B: preços interior/exportação e spreads; inclui comparações futuros. Não usar como CBOT contínua licenciada. Um cliente de consulta individual foi implementado com testes sintéticos, ainda sem provas de execução HTTP real no runtime, sem custos ou agendamentos.",
       "preliminary_evidence": "PUBLIC_OFFICIAL_DOCUMENTATION_2026_10_21_NO_PERSISTENCE"
     },
     {
       "dataset_id": "NOAA_ENSO_INDICES_HISTORICOS",
       "collector_class": "STRUCTURED_FILE",
       "locator": {
-        "kind": "OFFICIAL_INDEX",
-        "url": "https://psl.noaa.gov/data/timeseries/month/",
+        "kind": "DIRECT_OFFICIAL_API",
+        "url": "https://psl.noaa.gov/data/correlation/meiv2.csv",
         "source_proof": "https://psl.noaa.gov/data/timeseries/month/"
       },
-      "implementation_scope": "MONTHLY_ENSO_INDEX_RESEARCH_NO_EXACT_SERIES_ASSET_RESOLVED",
+      "implementation_scope": "NOAA_MEI_V2_MOVING_BIMONTHLY_CSV_PARSER_AND_GET",
       "authentication": "NONE_EXPECTED_VERIFY",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "REAL_SAMPLE_RIGHTS_AND_PERSISTENCE",
+      "primary_blocker": "REAL_RESPONSE_SCHEMA_OR_RASTER_NUMERIC_PERSISTENCE",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -4970,27 +4979,29 @@
         "DURABLE_PERSISTENCE_AND_RESTORE",
         "LICENSED_PUBLICATION_GATE",
         "SELECT_ONI_VS_RONI_VS_MEI_V2",
-        "VERIFY_BASE_PERIOD_AND_REVISIONS"
+        "VERIFY_BASE_PERIOD_AND_REVISIONS",
+        "REAL_PRODUCTION_RESPONSE_SMOKE",
+        "DATA_SEMANTICS_AND_UNIT_SCHEMA_HOMOLOGATION"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "MEI v2, ONI e RONI têm metodologias/janelas diferentes. Usar valor observado mensal; não confundir índice atual com previsão do ENSO.",
+      "source_note": "MEI v2, ONI e RONI têm metodologias/janelas diferentes. Usar valor observado mensal; não confundir índice atual com previsão do ENSO. Um cliente de consulta individual foi implementado com testes sintéticos, ainda sem provas de execução HTTP real no runtime, sem custos ou agendamentos.",
       "preliminary_evidence": "PUBLIC_OFFICIAL_DOCUMENTATION_2026_10_21_NO_PERSISTENCE"
     },
     {
       "dataset_id": "WB_PINK_SHEET_COMMODITIES",
       "collector_class": "STRUCTURED_FILE",
       "locator": {
-        "kind": "OFFICIAL_INDEX",
-        "url": "https://www.worldbank.org/en/research/commodity-markets",
+        "kind": "DIRECT_PUBLIC_FILE",
+        "url": "https://thedocs.worldbank.org/en/doc/18675f1d1639c7a34d463f59263ba0a2-0050012025/related/CMO-Historical-Data-Monthly.xlsx",
         "source_proof": "https://www.worldbank.org/en/research/commodity-markets"
       },
-      "implementation_scope": "PINK_SHEET_HISTORICAL_XLSX_CSV_DOWNLOAD_RESEARCH_PENDING",
+      "implementation_scope": "OOXML_PUBLIC_XLSX_PARSER_WITHOUT_PRICE_UNIT_MAPPING",
       "authentication": "NONE_EXPECTED_VERIFY",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "REAL_SAMPLE_RIGHTS_AND_PERSISTENCE",
+      "primary_blocker": "REAL_RESPONSE_SCHEMA_OR_RASTER_NUMERIC_PERSISTENCE",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -4999,11 +5010,13 @@
         "DURABLE_PERSISTENCE_AND_RESTORE",
         "LICENSED_PUBLICATION_GATE",
         "RESOLVE_ACTUAL_XLSX_CSV_RESOURCE",
-        "VERIFY_PRICE_UNITS_AND_BASE_PERIOD"
+        "VERIFY_PRICE_UNITS_AND_BASE_PERIOD",
+        "REAL_PRODUCTION_RESPONSE_SMOKE",
+        "DATA_SEMANTICS_AND_UNIT_SCHEMA_HOMOLOGATION"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Banco Mundial mensal energia, fertilizantes e commodities globais; proxy internacional, não preço físico regional negociado no Brasil.",
+      "source_note": "Banco Mundial mensal energia, fertilizantes e commodities globais; proxy internacional, não preço físico regional negociado no Brasil. Um cliente de consulta individual foi implementado com testes sintéticos, ainda sem provas de execução HTTP real no runtime, sem custos ou agendamentos.",
       "preliminary_evidence": "PUBLIC_OFFICIAL_DOCUMENTATION_2026_10_21_NO_PERSISTENCE"
     }
   ]
