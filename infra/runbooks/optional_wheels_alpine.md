@@ -33,3 +33,7 @@ Não realizar deploy, transferência de arquivo bruto para outro serviço, publi
 ## Segunda etapa — comparação Debian glibc por dependências incompatíveis com musl
 
 Agrobr e StatsForecast tiveram download binário bloqueado no Alpine em ambos os runners: `duckdb` e `statsforecast` sem wheel compatível, respectivamente. Assim, o workflow único foi ampliado para testar os mesmos grupos sobre **Debian Trixie com digest fixo**, nas duas arquiteturas. Isso não suprime os achados CVE da base Debian: a imagem atual continua bloqueada, e um sucesso do ensaio de wheel significa somente viabilidade técnica de instalação/importação em contêiner de teste. O resultado Debian precisa ser auditado com as versões efetivas e SBOM/CVEs de uma imagem de runtime completa antes de deploy.
+
+## Diagnóstico de instalação versus importação (Debian)
+
+Na execução comparativa [39672663044](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39672663044), os grupos `agro` e `forecast` no Debian conseguiram resolver wheels binárias em AMD64 e ARM64, mas a etapa posterior de instalação/importação offline falhou. O scanner de pacotes Alpine continua bloqueando downloads binários para `duckdb` e `statsforecast`. O código passou a marcar `WHEEL_DOWNLOAD`, `OFFLINE_INSTALL` ou `OFFLINE_IMPORT` e reconhecer somente nomes públicos de bibliotecas/módulos em casos de erro. Logs brutos continuam sem publicação. Nenhum grupo com falha pode ser considerado homologado.

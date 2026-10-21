@@ -88,6 +88,24 @@ def _resumir_falha(stderr: str) -> str:
     if ("Could not find a version that satisfies the requirement" in stderr
             or "no matching distribution" in stderr.lower()):
         return "versão de wheel ausente ou restrições conflitantes"
+    native_lib = re.findall(
+        r"([A-Za-z0-9_+.-]+\\.so(?:\\.[0-9]+)*)[: ]+cannot open shared object",
+        stderr, flags=re.IGNORECASE,
+    )
+    if native_lib:
+        return "biblioteca nativa ausente no container: " + native_lib[-1]
+    module_name = re.findall(
+        r"ModuleNotFoundError: No module named ['\\\"]([A-Za-z0-9_.]{1,80})['\\\"]",
+        stderr,
+    )
+    if module_name:
+        return "módulo Python não importável: " + module_name[-1]
+    if "symbol not found" in stderr.lower() or "undefined symbol" in stderr.lower():
+        return "incompatibilidade de símbolo ou biblioteca nativa"
+    if "importerror" in stderr.lower():
+        return "falha de importação (ImportError)"
+    if "permissionerror" in stderr.lower():
+        return "bloqueio de permissão no ambiente isolado"
     if any(term in stderr.lower() for term in (
         "temporary failure in name resolution", "name or service not known",
         "connection refused", "read timed out", "ssl:", "certificate verify failed",
@@ -97,15 +115,15 @@ def _resumir_falha(stderr: str) -> str:
     return "resolução ou execução falhou; causa indeterminada"
 
 
-def _subprocess(argv: list[str], *, timeout: int, env: dict[str, str] | None = None) -> None:
+def _subprocess(argv: list[str], *, timeout: int, env: dict[str, str] | None = None, stage: str = "UNKNOWN") -> None:
     try:
         r = subprocess.run(argv, check=False, timeout=timeout,
                            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
                            text=True, errors="replace", env=env)
     except (OSError, subprocess.TimeoutExpired) as exc:
-        raise ErroSupplyChain("comando isolado indisponível ou excedeu limite") from exc
+        raise ErroSupplyChain(stage + ": comando isolado indisponível ou excedeu limite") from exc
     if r.returncode:
-        raise ErroSupplyChain(_resumir_falha(r.stderr))
+        raise ErroSupplyChain(stage + ": " + _resumir_falha(r.stderr))
 
 
 def executar(group: str, phase: str, *, pyproject: str, root: str,
@@ -139,7 +157,7 @@ def executar(group: str, phase: str, *, pyproject: str, root: str,
         env = dict(os.environ)
         env["PIP_EXTRA_INDEX_URL"] = ""
         env["PIP_CONFIG_FILE"] = os.devnull
-        _subprocess(command, timeout=190, env=env)
+        _subprocess(command, timeout=190, env=env, stage="WHEEL_DOWNLOAD")
     else:
         count, size = _files(wheels)
         if site.exists() or site.is_symlink():
@@ -151,10 +169,10 @@ def executar(group: str, phase: str, *, pyproject: str, root: str,
         env = dict(os.environ)
         env["PIP_CONFIG_FILE"] = os.devnull
         env["PIP_EXTRA_INDEX_URL"] = ""
-        _subprocess(command, timeout=160, env=env)
+        _subprocess(command, timeout=160, env=env, stage="OFFLINE_INSTALL")
         script = "import site,sys; site.addsitedir(sys.argv[1]); " + SMOKES[group]
         _subprocess([sys.executable, "-I", "-c", script, str(site)], timeout=80,
-                    env=env)
+                    env=env, stage="OFFLINE_IMPORT")
     count, size = _files(wheels)
     return {
         "schema": "nivon.infrastructure.optional_wheels.v1",

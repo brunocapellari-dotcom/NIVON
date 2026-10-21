@@ -76,6 +76,21 @@ class TestOptionalWheels(unittest.TestCase):
         self.assertEqual(_resumir_falha("Connection refused by gateway"), "falha de rede/TLS/índice PyPI; não inferir ausência de wheel")
         self.assertEqual(_resumir_falha("a /tmp/private/token"), "resolução ou execução falhou; causa indeterminada")
 
+    def test_falha_offline_distingue_instalacao_e_importacao(self):
+        with patch("nivon.infra_optional_wheels.subprocess.run") as run:
+            run.return_value.returncode = 1
+            run.return_value.stderr = "ImportError: libgomp.so.1: cannot open shared object file: No such file or directory"
+            with self.assertRaises(ErroSupplyChain) as cm:
+                _subprocess(["python", "-I"], timeout=30, stage="OFFLINE_IMPORT")
+            self.assertIn("OFFLINE_IMPORT", str(cm.exception))
+            self.assertIn("libgomp.so.1", str(cm.exception))
+            self.assertNotIn("No such file or directory", str(cm.exception))
+            run.return_value.stderr = "ERROR: PermissionError: /private/sensitive/path"
+            with self.assertRaises(ErroSupplyChain) as install:
+                _subprocess(["python", "-m", "pip"], timeout=30, stage="OFFLINE_INSTALL")
+            self.assertIn("OFFLINE_INSTALL", str(install.exception))
+            self.assertNotIn("sensitive", str(install.exception))
+
     def test_timeout_fecha_execucao(self):
         with patch("nivon.infra_optional_wheels.subprocess.run",
                    side_effect=subprocess.TimeoutExpired("pip", 10)):
