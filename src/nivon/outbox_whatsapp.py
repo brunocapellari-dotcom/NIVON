@@ -264,6 +264,9 @@ def despachar_registrado(con: sqlite3.Connection, preparado: dict, *,
     _esquema(con)
     con.execute("BEGIN IMMEDIATE")
     try:
+        # Revalidar validade temporal sob a mesma reserva atômica.
+        # A janela pode expirar enquanto a conexão espera o lock SQLite.
+        verificar_autorizacao(documento, assinatura, chave_auditoria=chave_auditoria)
         d=con.execute("""SELECT e.estado,e.payload_sha256,e.edicao,e.destinatario_hmac,
                            a.documento_sha256,a.sha256_editorial,a.revogado_em
                            FROM nivon_envios e LEFT JOIN nivon_autorizacoes a
