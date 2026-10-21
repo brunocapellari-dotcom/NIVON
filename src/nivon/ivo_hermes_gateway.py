@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 from typing import Callable
 
@@ -38,6 +38,8 @@ class VinculoRecursoIVO:
     projeto: str
     direito_consulta: bool
     verificado_em: datetime
+    expira_em: datetime | None = None
+    revogado_em: datetime | None = None
 
 
 def _instante(valor: datetime) -> datetime:
@@ -138,7 +140,14 @@ class GatewayHermesIVO:
                     or binding.documento_sha256 != claim.documento_sha256
                     or binding.auditoria_id != claim.auditoria_id
                     or binding.texto_sha256 != sha256(claim.texto.encode("utf-8")).hexdigest()
+                    or binding.expira_em is None
                     or _instante(binding.verificado_em) > agora
+                    or _instante(binding.expira_em) <= agora
+                    or _instante(binding.expira_em) <= _instante(binding.verificado_em)
+                    or _instante(binding.expira_em) - _instante(binding.verificado_em)
+                       > timedelta(minutes=5)
+                    or (binding.revogado_em is not None
+                        and _instante(binding.revogado_em) <= agora)
                 ):
                     return False
                 policy_request = self._request(
