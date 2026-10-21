@@ -858,6 +858,38 @@
       "access": "PUBLIC_PAGINATED_READ_ONLY_NO_AUTH",
       "rights": "REVIEW",
       "notes": "API externa v1 oficial (27/08/2026); GET sem token; ROI FINALIZADO apenas de órgãos participantes. 10 req/s; termos e direitos de armazenamento/redistribuição ainda por homologar. Homologação/dev não são fonte operacional."
+    },
+    {
+      "id": "OPEN_METEO",
+      "provider": "Open-Meteo API - provedor de modelos e reanálises",
+      "official_url": "https://open-meteo.com/en/docs",
+      "access": "FREE_NONCOMMERCIAL_API_NO_KEY",
+      "rights": "ATTRIBUTION_REVIEW",
+      "notes": "CC BY 4.0; plano gratuito só não comercial, limites 10000/dia, 5000/h, 600/min; não usar como observação de estação."
+    },
+    {
+      "id": "INPE_QUEIMADAS",
+      "provider": "INPE Programa Queimadas / BDQueimadas",
+      "official_url": "https://data.inpe.br/queimadas/dados-abertos/",
+      "access": "PUBLIC_CSV_GPKG_TIFF",
+      "rights": "REVIEW",
+      "notes": "Focos quase-real-time e histórico; distinguir produto satélite, evento experimental e ROI SISFOGO; verificar licenças e URLs exatas antes de coleta."
+    },
+    {
+      "id": "INPE_TERRABRASILIS",
+      "provider": "INPE TerraBrasilis PRODES/DETER",
+      "official_url": "https://www.terrabrasilis.dpi.inpe.br/",
+      "access": "PUBLIC_GEOSPATIAL_WFS_DOWNLOAD",
+      "rights": "ATTRIBUTION_REVIEW",
+      "notes": "Dados oficiais e WFS público; credenciais DETER antecipado restritas a órgãos fiscalizadores, não requisitar acesso antecipado."
+    },
+    {
+      "id": "DADOS_GOV_BR",
+      "provider": "Portal Brasileiro de Dados Abertos / CGU",
+      "official_url": "https://dados.gov.br/swagger-ui/index.html",
+      "access": "PUBLIC_CATALOG_REST",
+      "rights": "REVIEW",
+      "notes": "API de metadados; recurso catalogado não comprova dataset válido ou redistribuível."
     }
   ],
   "datasets": [
@@ -5169,6 +5201,223 @@
       "mode": "API_PAGINADA_SOMENTE_LEITURA",
       "cadence": "WEEKLY",
       "existing_module": "nivon.sisfogo_roi.normalizar_pagina_roi",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "OPEN_METEO_PREVISAO_DIARIA",
+      "source_id": "OPEN_METEO",
+      "group": "CLIMA",
+      "stage": "CODE_PRESENT",
+      "priority": "P0",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "LOGISTICA"
+      ],
+      "topic": "previsoes_modeladas_diarias_16_dias_nao_observadas",
+      "mode": "API_JSON_ON_DEMAND",
+      "cadence": "DAILY",
+      "existing_module": "nivon.open_meteo_publico.normalizar_diario",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "OPEN_METEO_HISTORICO_REANALISE",
+      "source_id": "OPEN_METEO",
+      "group": "CLIMA",
+      "stage": "CODE_PRESENT",
+      "priority": "P1",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "PECUARIA"
+      ],
+      "topic": "historico_reanalise_modelada_era5_era5land_nao_estacao",
+      "mode": "API_JSON_ON_DEMAND",
+      "cadence": "IRREGULAR",
+      "existing_module": "nivon.open_meteo_publico.normalizar_diario",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "INPE_QUEIMADAS_FOCOS_CSV",
+      "source_id": "INPE_QUEIMADAS",
+      "group": "CLIMA",
+      "stage": "CANDIDATE",
+      "priority": "P0",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "PECUARIA",
+        "LOGISTICA"
+      ],
+      "topic": "focos_detectados_por_satelites_nao_equivalem_ROI_incendios_unicos",
+      "mode": "PUBLIC_CSV",
+      "cadence": "DAILY",
+      "existing_module": null,
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "INPE_QUEIMADAS_RISCO_FOGO",
+      "source_id": "INPE_QUEIMADAS",
+      "group": "CLIMA",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "PECUARIA",
+        "LOGISTICA"
+      ],
+      "topic": "risco_fogo_observado_vs_previsto_3_dias_nunca_misturar",
+      "mode": "PUBLIC_MAPS",
+      "cadence": "DAILY",
+      "existing_module": null,
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "INPE_TERRABRASILIS_PRODES_WFS",
+      "source_id": "INPE_TERRABRASILIS",
+      "group": "GEO",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "PECUARIA"
+      ],
+      "topic": "prodes_supressao_vegetacao_nativa_anual_nao_terreno_agricola",
+      "mode": "OFFICIAL_WFS",
+      "cadence": "ANNUAL",
+      "existing_module": null,
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "DADOS_GOV_BR_CATALOGO_API",
+      "source_id": "DADOS_GOV_BR",
+      "group": "RADAR",
+      "stage": "CANDIDATE",
+      "priority": "P2",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "DIESEL",
+        "LOGISTICA"
+      ],
+      "topic": "descoberta_de_metadados_de_datasets_sem_supor_integracao",
+      "mode": "PUBLIC_METADATA_API",
+      "cadence": "IRREGULAR",
+      "existing_module": null,
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "WB_INDICADORES_MACRO_BR",
+      "source_id": "WB",
+      "group": "MACRO",
+      "stage": "CANDIDATE",
+      "priority": "P2",
+      "products": [
+        "MACRO",
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "indicadores_macro_anuais_contexto_nao_preco_spot",
+      "mode": "PUBLIC_JSON",
+      "cadence": "ANNUAL",
+      "existing_module": null,
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BCB_SGS_TAXA_SELIC_DIARIA",
+      "source_id": "BCB",
+      "group": "MACRO",
+      "stage": "CANDIDATE",
+      "priority": "P0",
+      "products": [
+        "MACRO",
+        "SOJA",
+        "MILHO",
+        "FERTILIZANTES"
+      ],
+      "topic": "selic_diaria_serie_sgs_11_dados_datados_nao_taxa_atual_sem_ref",
+      "mode": "PUBLIC_JSON",
+      "cadence": "DAILY",
+      "existing_module": null,
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
