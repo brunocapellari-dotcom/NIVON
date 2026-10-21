@@ -50,7 +50,7 @@ def avaliar_holdout_temporal_purgado(
     horizonte_periodos: int, as_of_avaliacao: str,
     n_holdout: int = 30, minimo_historico_elegivel: int = 30,
     minimo_por_fase_disjunta: int = 5, embargo_periodos: int = 1,
-    nao_negativo: bool = True,
+    minimo_por_subjanela: int = 3, nao_negativo: bool = True,
 ) -> dict:
     """Avalia holdout retrospectivo com purga temporal e fases disjuntas.
 
@@ -68,6 +68,7 @@ def avaliar_holdout_temporal_purgado(
     mh = _inteiro(minimo_historico_elegivel, "minimo_historico_elegivel", 10, 20000)
     mf = _inteiro(minimo_por_fase_disjunta, "minimo_por_fase_disjunta", 5, 20000)
     embargo = _inteiro(embargo_periodos, "embargo_periodos", 1, 365)
+    minimo_metade = _inteiro(minimo_por_subjanela, "minimo_por_subjanela", 2, 20000)
     if nh < mf:
         raise ErroQuantitativo("holdout deve comportar a amostra minima por fase")
     dias, mapa = _calendario(calendario)
@@ -127,22 +128,55 @@ def avaliar_holdout_temporal_purgado(
     resultado_fases = [
         {"fase": k, **_desempenho(v)} for k, v in sorted(fases.items())
     ]
-    todos_disjuntos = all(x["n"] >= mf for x in resultado_fases)
+    # Para H sessões, não basta observar a fase que mais favoreceu o modelo.
+    # Exigir H fases representadas e tamanho mínimo em cada fase.
+    fases_ausentes = [
+        f for f in range(horizonte_periodos) if f not in fases
+    ]
+    todos_disjuntos = (
+        not fases_ausentes
+        and all(x["n"] >= mf for x in resultado_fases)
+    )
     conjunto_holdout = [f for _, f in futuro]
     geral = _desempenho(conjunto_holdout)
-    positivos = all(
-        x["ganho_mae_baseline"] is not None
-        and x["ganho_rmse_baseline"] is not None
-        and x["ganho_mae_baseline"] > 0
-        and x["ganho_rmse_baseline"] > 0
-        for x in resultado_fases
+    def ganhou(metrica: Mapping) -> bool:
+        return (
+            metrica["ganho_mae_baseline"] is not None
+            and metrica["ganho_rmse_baseline"] is not None
+            and metrica["ganho_mae_baseline"] > 0
+            and metrica["ganho_rmse_baseline"] > 0
+        )
+
+    positivos = all(ganhou(x) for x in resultado_fases)
+    # A degradação recente pode ficar escondida na média de uma fase.
+    # Metades temporais descritivas, sem interpretar como significância iid.
+    subjanelas = []
+    subjanelas_suficientes = todos_disjuntos
+    for fase, linhas in sorted(fases.items()):
+        corte_fase = len(linhas) // 2
+        antiga, recente = linhas[:corte_fase], linhas[corte_fase:]
+        if len(antiga) < minimo_metade or len(recente) < minimo_metade:
+            subjanelas_suficientes = False
+            continue
+        subjanelas.append({
+            "fase": fase,
+            "inicio": _desempenho(antiga),
+            "fim": _desempenho(recente),
+        })
+    estabilidade = (
+        subjanelas_suficientes
+        and len(subjanelas) == horizonte_periodos
+        and all(ganhou(x[metade])
+                for x in subjanelas for metade in ("inicio", "fim"))
     )
-    if not todos_disjuntos:
+    if not subjanelas_suficientes:
         status = "FASES_DISJUNTAS_INSUFICIENTES"
-    elif positivos:
-        status = "SINAL_DESCRITIVO_HOLDOUT_NAO_HOMOLOGADO"
-    else:
+    elif not positivos:
         status = "SEM_SUPERIORIDADE_ROBUSTA_AO_BASELINE"
+    elif not estabilidade:
+        status = "DEGRADACAO_TEMPORAL_NO_HOLDOUT"
+    else:
+        status = "SINAL_DESCRITIVO_HOLDOUT_NAO_HOMOLOGADO"
     return {
         "status": status,
         "serie_id": serie_id, "modelo_id": modelo_id, "unidade": unidade,
@@ -156,8 +190,15 @@ def avaliar_holdout_temporal_purgado(
         "metricas_holdout": geral,
         "metricas_fases_nao_sobrepostas": resultado_fases,
         "quantidade_fases": len(resultado_fases),
+        "fases_esperadas": horizonte_periodos,
+        "fases_ausentes": fases_ausentes,
         "minimo_por_fase": mf, "fases_suficientes": todos_disjuntos,
+        "minimo_por_subjanela": minimo_metade,
+        "metricas_subjanelas_temporais": subjanelas,
+        "subjanelas_suficientes": subjanelas_suficientes,
+        "ganho_consistente_inicio_fim": estabilidade,
         "superioridade_em_todas_as_fases": bool(todos_disjuntos and positivos),
+        "sinal_descritivo_sustentado": bool(todos_disjuntos and positivos and estabilidade),
         "percentis_ou_significancia_iid": None,
         "calibracao_probabilistica_verificada": False,
         "historico_externo_provado": False,
