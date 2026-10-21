@@ -92,6 +92,15 @@ class TestPacotesChuva(unittest.TestCase):
         self.assertFalse(result["qc_instrumental_validado_independentemente"])
         self.assertFalse(result["avaliacao"]["homologado"])
 
+    def test_cptec_merge_e_analise_nao_previsao_nwp(self):
+        fs, obs = data()
+        # MERGE é produto de análise/estimativa de precipitação, não
+        # forecast ensemble emitido antes da janela acumulada.
+        fs[0]["manifesto"]["dataset_id"] = "CPTEC_MERGE"
+        fs[0]["manifesto"]["fonte_id"] = "CPTEC"
+        with self.assertRaisesRegex(ErroPacoteChuva, "dataset inadequado"):
+            run(fs, obs)
+
     def test_tampering_hash_rejeitado(self):
         fs, obs = data()
         fs[1]["bytes_json"] += b" "
