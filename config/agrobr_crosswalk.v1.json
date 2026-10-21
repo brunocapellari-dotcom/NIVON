@@ -13,209 +13,303 @@
     {
       "slug": "cepea",
       "status": "MAPEADA",
-      "source_id": "CEPEA"
+      "source_id": "CEPEA",
+      "dataset_ids": [
+        "CEPEA_FISICO",
+        "CEPEA_BOI"
+      ]
     },
     {
       "slug": "conab",
       "status": "MAPEADA",
-      "source_id": "CONAB"
+      "source_id": "CONAB",
+      "dataset_ids": [
+        "CONAB_GRAOS_SERIES",
+        "CONAB_GRAOS_LEVANTAMENTOS",
+        "CONAB_BALANCOS",
+        "CONAB_CANA",
+        "CONAB_GRAOS_OUTRAS_CULTURAS",
+        "CONAB_GERGELIM_SERIES",
+        "CONAB_PROGRESSO_SEMANAL"
+      ]
     },
     {
       "slug": "ibge",
       "status": "MAPEADA",
-      "source_id": "IBGE"
+      "source_id": "IBGE",
+      "dataset_ids": [
+        "IBGE_PAM",
+        "IBGE_LSPA",
+        "IBGE_PPM",
+        "IBGE_ABATE",
+        "IBGE_ABATE_FRANGO_1094",
+        "IBGE_ABATE_SUINO_1093",
+        "IBGE_CODIGOS_MUNICIPIOS"
+      ]
     },
     {
       "slug": "nasa_power",
       "status": "MAPEADA",
-      "source_id": "NASA_POWER"
+      "source_id": "NASA_POWER",
+      "dataset_ids": [
+        "NASA_POWER_AG"
+      ]
     },
     {
       "slug": "bcb",
       "status": "MAPEADA",
-      "source_id": "BCB"
+      "source_id": "BCB",
+      "dataset_ids": [
+        "BCB_PTAX",
+        "BCB_SGS_FOCUS"
+      ]
     },
     {
       "slug": "comexstat",
       "status": "MAPEADA",
-      "source_id": "MDIC"
+      "source_id": "MDIC",
+      "dataset_ids": [
+        "MDIC_COMEX_NCM",
+        "MDIC_COMEX_MUNICIPIO_SH4",
+        "MDIC_COMEX_FERT"
+      ]
     },
     {
       "slug": "anda",
       "status": "MAPEADA",
-      "source_id": "ANDA"
+      "source_id": "ANDA",
+      "dataset_ids": [
+        "ANDA_ENTREGAS"
+      ]
     },
     {
       "slug": "abiove",
       "status": "MAPEADA",
-      "source_id": "ABIOVE"
+      "source_id": "ABIOVE",
+      "dataset_ids": []
     },
     {
       "slug": "anec",
       "status": "NAO_MAPEADA",
-      "source_id": null
+      "source_id": null,
+      "dataset_ids": []
     },
     {
       "slug": "usda",
       "status": "MAPEADA",
-      "source_id": "USDA"
+      "source_id": "USDA",
+      "dataset_ids": [
+        "USDA_PSD"
+      ]
     },
     {
       "slug": "imea",
       "status": "MAPEADA",
-      "source_id": "IMEA"
+      "source_id": "IMEA",
+      "dataset_ids": [
+        "IMEA_FISICO"
+      ]
     },
     {
       "slug": "deral",
       "status": "NAO_MAPEADA",
-      "source_id": null
+      "source_id": null,
+      "dataset_ids": []
     },
     {
       "slug": "inmet",
       "status": "MAPEADA",
-      "source_id": "INMET"
+      "source_id": "INMET",
+      "dataset_ids": [
+        "INMET_ESTACOES"
+      ]
     },
     {
       "slug": "noticias_agricolas",
       "status": "MAPEADA",
-      "source_id": "NOTAGRO"
+      "source_id": "NOTAGRO",
+      "dataset_ids": []
     },
     {
       "slug": "queimadas",
       "status": "NAO_MAPEADA",
-      "source_id": null
+      "source_id": null,
+      "dataset_ids": []
     },
     {
       "slug": "desmatamento",
       "status": "NAO_MAPEADA",
-      "source_id": null
+      "source_id": null,
+      "dataset_ids": []
     },
     {
       "slug": "mapbiomas",
       "status": "MAPEADA",
-      "source_id": "MAPBIOMAS"
+      "source_id": "MAPBIOMAS",
+      "dataset_ids": [
+        "MAPBIOMAS_USO_SOLO"
+      ]
     },
     {
       "slug": "b3",
       "status": "MAPEADA",
-      "source_id": "B3"
+      "source_id": "B3",
+      "dataset_ids": [
+        "B3_FUTUROS"
+      ]
     },
     {
       "slug": "comtrade",
       "status": "MAPEADA",
-      "source_id": "UNCOMTRADE"
+      "source_id": "UNCOMTRADE",
+      "dataset_ids": [
+        "UNCOMTRADE_GLOBAL"
+      ]
     },
     {
       "slug": "antaq",
       "status": "MAPEADA",
-      "source_id": "ANTAQ"
+      "source_id": "ANTAQ",
+      "dataset_ids": [
+        "ANTAQ_MOVIMENTACAO"
+      ]
     },
     {
       "slug": "anp_diesel",
       "status": "MAPEADA",
-      "source_id": "ANP"
+      "source_id": "ANP",
+      "dataset_ids": [
+        "ANP_PRECO_REVENDA_DIESEL",
+        "ANP_MOVIMENTACAO_DIESEL"
+      ]
     },
     {
       "slug": "antt_pedagio",
       "status": "MAPEADA",
-      "source_id": "ANTT"
+      "source_id": "ANTT",
+      "dataset_ids": []
     },
     {
       "slug": "mapa_psr",
       "status": "MAPEADA",
-      "source_id": "MAPA"
+      "source_id": "MAPA",
+      "dataset_ids": []
     },
     {
       "slug": "sicar",
       "status": "NAO_MAPEADA",
-      "source_id": null
+      "source_id": null,
+      "dataset_ids": []
     },
     {
       "slug": "zarc",
       "status": "MAPEADA",
-      "source_id": "ZARC"
+      "source_id": "ZARC",
+      "dataset_ids": [
+        "ZARC_JANELAS"
+      ]
     },
     {
       "slug": "defensivos",
       "status": "FORA_DO_ESCOPO",
       "source_id": null,
-      "motivo": "NIVON nao desenvolve receituario agronomico nem integra motores desse dominio"
+      "motivo": "NIVON nao desenvolve receituario agronomico nem integra motores desse dominio",
+      "dataset_ids": []
     },
     {
       "slug": "funai",
       "status": "NAO_MAPEADA",
-      "source_id": null
+      "source_id": null,
+      "dataset_ids": []
     },
     {
       "slug": "icmbio",
       "status": "NAO_MAPEADA",
-      "source_id": null
+      "source_id": null,
+      "dataset_ids": []
     },
     {
       "slug": "cnuc",
       "status": "NAO_MAPEADA",
-      "source_id": null
+      "source_id": null,
+      "dataset_ids": []
     },
     {
       "slug": "incra",
       "status": "NAO_MAPEADA",
-      "source_id": null
+      "source_id": null,
+      "dataset_ids": []
     },
     {
       "slug": "acervo_fundiario",
       "status": "NAO_MAPEADA",
-      "source_id": null
+      "source_id": null,
+      "dataset_ids": []
     },
     {
       "slug": "ibama",
       "status": "NAO_MAPEADA",
-      "source_id": null
+      "source_id": null,
+      "dataset_ids": []
     },
     {
       "slug": "mapbiomas_alerta",
       "status": "MAPEADA",
-      "source_id": "MAPBIOMAS"
+      "source_id": "MAPBIOMAS",
+      "dataset_ids": []
     },
     {
       "slug": "lista_suja",
       "status": "FORA_DO_ESCOPO",
       "source_id": null,
-      "motivo": "Inteligencia corporativa excluida do NIVON"
+      "motivo": "Inteligencia corporativa excluida do NIVON",
+      "dataset_ids": []
     },
     {
       "slug": "ana",
       "status": "MAPEADA",
-      "source_id": "ANA"
+      "source_id": "ANA",
+      "dataset_ids": []
     },
     {
       "slug": "sfb",
       "status": "NAO_MAPEADA",
-      "source_id": null
+      "source_id": null,
+      "dataset_ids": []
     },
     {
       "slug": "rnc",
       "status": "MAPEADA",
-      "source_id": "MAPA"
+      "source_id": "MAPA",
+      "dataset_ids": []
     },
     {
       "slug": "embrapa_solos",
       "status": "NAO_MAPEADA",
-      "source_id": null
+      "source_id": null,
+      "dataset_ids": []
     },
     {
       "slug": "rio_verde",
       "status": "NAO_MAPEADA",
-      "source_id": null
+      "source_id": null,
+      "dataset_ids": []
     },
     {
       "slug": "cftc",
       "status": "MAPEADA",
-      "source_id": "CFTC"
+      "source_id": "CFTC",
+      "dataset_ids": [
+        "CFTC_COT_WEEKLY"
+      ]
     },
     {
       "slug": "unica",
       "status": "MAPEADA",
-      "source_id": "UNICA"
+      "source_id": "UNICA",
+      "dataset_ids": [
+        "UNICA_ACUCAR_ETANOL"
+      ]
     }
   ]
 }
