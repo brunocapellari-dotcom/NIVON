@@ -5380,7 +5380,7 @@
       "id": "WB_INDICADORES_MACRO_BR",
       "source_id": "WB",
       "group": "MACRO",
-      "stage": "CANDIDATE",
+      "stage": "CODE_PRESENT",
       "priority": "P2",
       "products": [
         "MACRO",
@@ -5390,7 +5390,7 @@
       "topic": "indicadores_macro_anuais_contexto_nao_preco_spot",
       "mode": "PUBLIC_JSON",
       "cadence": "ANNUAL",
-      "existing_module": null,
+      "existing_module": "nivon.banco_mundial_indicadores.normalizar_indicador",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
