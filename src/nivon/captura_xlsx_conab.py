@@ -218,6 +218,105 @@ def capturar_xlsx_conab(reg: dict, *, destino: str | Path,
     }
 
 
+
+def verificar_pacote_captura_local(reg: dict, pasta: str | Path) -> dict:
+    """Read-only. Confere bytes contra manifesto; NÃO autentica HTTP pretérito.
+
+    Requer os dois arquivos produzidos por esta versão; recusa symlinks,
+    campos divergentes, JSON duplicado e alterações do código do parser.
+    Não acessa rede e nunca marca licença/publicação como liberadas.
+    """
+    meta=validar_publicacao_conab(reg)
+    root=Path(pasta)
+    if not root.is_absolute() or root.is_symlink() or not root.is_dir():
+        raise ErroCapturaConab("pasta de pacote precisa ser diretório absoluto existente")
+    if os.name=="posix" and stat.S_IMODE(root.stat().st_mode)&0o077:
+        raise ErroCapturaConab("pasta de pacote precisa continuar privada 0700")
+    names={p.name for p in root.iterdir()}
+    if names!={RAW_FILE,EVIDENCE_FILE}:
+        raise ErroCapturaConab("pacote precisa ter exatamente RAW e manifesto")
+    raw_file=root/RAW_FILE
+    metadata_file=root/EVIDENCE_FILE
+    for file in (raw_file,metadata_file):
+        if file.is_symlink() or not file.is_file():
+            raise ErroCapturaConab("arquivo do pacote não é regular ou é symlink")
+        if os.name=="posix" and stat.S_IMODE(file.stat().st_mode)&0o077:
+            raise ErroCapturaConab("arquivo do pacote exposto a terceiros")
+    if not 0<metadata_file.stat().st_size<=100_000:
+        raise ErroCapturaConab("manifesto fora do limite")
+    if not 0<raw_file.stat().st_size<=MAX_BYTES:
+        raise ErroCapturaConab("RAW fora do limite")
+    def pairs(values):
+        result={}
+        for key,value in values:
+            if key in result:
+                raise ErroCapturaConab("manifesto com chave duplicada")
+            result[key]=value
+        return result
+    try:
+        doc=json.loads(metadata_file.read_text(encoding="utf-8"),object_pairs_hook=pairs)
+    except (OSError,ValueError,UnicodeError) as exc:
+        raise ErroCapturaConab("manifesto local inválido") from exc
+    if not isinstance(doc,dict) or (
+            doc.get("schema")!=SCHEMA or doc.get("dataset_id")!="CONAB_PROGRESSO_SEMANAL"
+            or doc.get("id_edicao")!=meta["id_edicao"]
+            or doc.get("url_pagina")!=meta["url_pagina"]
+            or doc.get("url_anexo")!=meta["url_anexo"]
+            or doc.get("publicacao_data")!=meta["pagina_publicada_data"]
+            or doc.get("competencia")!=meta["semana_planilha"]
+            or doc.get("arquivo_local")!=RAW_FILE
+            or doc.get("direitos_coleta_declarados_pelo_operador") is not True
+            or doc.get("direitos_auditoria_independente_concluida") is not False
+            or doc.get("origem_publicada_arquivada_independentemente") is not False
+            or doc.get("direitos_redistribuicao_verificados") is not False
+            or doc.get("migracao_permitida") is not False
+            or doc.get("publicacao_permitida") is not False):
+        raise ErroCapturaConab("contrato de captura/gates não corresponde à edição")
+    net=doc.get("transport_evidencia")
+    if (not isinstance(net,dict) or net.get("url_solicitada")!=meta["url_anexo"]
+            or net.get("url_resposta")!=meta["url_anexo"]
+            or type(net.get("http_status")) is not int or net["http_status"]!=200
+            or net.get("content_type")!=MIME
+            or net.get("sem_redirecionamento") is not True
+            or net.get("tls_padrao_da_biblioteca") is not True
+            or net.get("sem_proxy_de_ambiente") is not True):
+        raise ErroCapturaConab("evidência de transporte incorreta")
+    try:
+        start=datetime.fromisoformat(net["iniciado_utc"])
+        finish=datetime.fromisoformat(net["finalizado_utc"])
+        if (start.utcoffset() is None or finish.utcoffset() is None
+                or start>finish):
+            raise ValueError("captura temporalmente impossível")
+    except (TypeError,ValueError,KeyError) as exc:
+        raise ErroCapturaConab("janela temporal do manifesto inválida") from exc
+    raw=raw_file.read_bytes()
+    if (type(doc.get("bytes_tamanho")) is not int or doc["bytes_tamanho"]!=len(raw)
+            or doc.get("bytes_sha256")!=hashlib.sha256(raw).hexdigest()
+            or (net.get("content_length_declarado") is not None
+                and (type(net["content_length_declarado"]) is not int
+                     or net["content_length_declarado"]!=len(raw)))):
+        raise ErroCapturaConab("RAW adulterado ou contagem divergente")
+    try:
+        audited=auditar_conab_local(reg,bytes_anexo=raw,
+                                   coletado_utc=net["finalizado_utc"])
+    except ErroProvenienciaConab as exc:
+        raise ErroCapturaConab("RAW local não passou auditoria de parser e competência") from exc
+    if (audited["parser_id"]!=doc.get("parser_id")
+            or audited["parser_codigo_sha256"]!=doc.get("parser_codigo_sha256")
+            or audited["quantidade_observacoes"]!=doc.get("quantidade_observacoes")):
+        raise ErroCapturaConab("parser/contagens divergiram do manifesto")
+    return {
+        "estado":"PACOTE_LOCAL_REVERIFICADO_SEM_ATESTACAO_EXTERNA",
+        "id_edicao":meta["id_edicao"],
+        "sha256":doc["bytes_sha256"],
+        "bytes":len(raw),
+        "observacoes":audited["quantidade_observacoes"],
+        "origem_http_independentemente_atestada":False,
+        "direitos_redistribuicao_verificados":False,
+        "migracao_permitida":False,
+        "publicacao_permitida":False,
+    }
+
 def main(argv=None):
     p=argparse.ArgumentParser(description="Captura CONAB pontual; desligada por padrão")
     p.add_argument("--manifesto",required=True)
