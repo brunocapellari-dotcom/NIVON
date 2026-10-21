@@ -68,3 +68,10 @@ Não foi encontrado executor NIVON existente nas conexões de infraestrutura con
 ## Escopo excluído
 
 O NIVON não executa receituário agronômico e não possui finalidade comercial.
+
+## Continuidade técnica de 21/10/2026 — validação estrita de respostas
+
+- USDA/FAS: a resposta HTTP 200 com JSON não implica sucesso; a consulta de catálogo de commodities deve ser lista não vazia de objetos com `commodityCode` de sete dígitos e `commodityName` textual preenchido, como nos dados oficiais documentados pelo agrobr. Um JSON de erro ou catálogo truncado/anômalo é `SCHEMA_INESPERADO`. HTTP 429 é `LIMITE_API_ATINGIDO`; 502/503/504 são `SERVICO_TEMPORARIAMENTE_INDISPONIVEL`. Esses estados não autorizam ingestão.
+- ANA: um token válido e uma consulta com **zero medições** agora produzem `AUTENTICACAO_OK_SEM_MEDICOES`, sem afirmar que houve leitura de dados ou homologação. Status de rede/arquivo continuam privados e sem segredos.
+- Verificação Vercel em 21/10/2026: projeto `nivon` existe, mas lista de sandboxes está vazia; tentativa prévia de criação v2 retornou **403 forbidden**. Não insistir em chamadas equivalentes sem mudança verificável de permissão/conta; manter bloqueio real.
+- Testes: incluídos casos positivos e adversariais para recusar JSONs de erros HTTP 200, ausência de campos USDA, serviço indisponível/429 e estação ANA sem medições. A CI valida a PR; **não atribuir operação live à execução da CI**.
