@@ -156,3 +156,24 @@ Reproduzir testes sinteticos: PYTHONPATH=src python -m unittest tests.test_pecua
 - A semântica dos símbolos foi verificada com referência técnica externa CRAN, não com uma amostra autenticada das tabelas 1092/1093/1094; a homologação oficial ainda precisa de resposta real e validação por tabela.
 - Nenhum coletor/cron, persistência, reclassificação editorial ou série real foi ativado. O estado dos motores continua CODE_TESTED_SYNTHETIC_ONLY.
 - Próximo gate P0: capturar um response real autorizado SIDRA ou Agregados v3 para cada espécie, conferir dimensões, códigos, unidade, sinais especiais, direitos e datas de publicação; registrar hash e validar as revisões por vintage.
+
+## Continuidade 21/10/2026 — arquivo local append-only de evidencias SIDRA
+
+### Decisão técnica
+- Documentação oficial de Agregados IBGE v3: https://servicodados.ibge.gov.br/api/docs/agregados?versao=3 distingue endpoints de metadados, periodos, localidades e valores. Esses quatro conjuntos sao provas independentes a registrar antes de homologar dados.
+- Tabelas SIDRA 1092 (bovinos), 1093 (suinos) e 1094 (frangos) e abrangencia formal de inspecao constam na documentacao do IBGE: https://www.ibge.gov.br/estatisticas/economicas/servicos/9203-pesquisas-trimestrais-do-abate-de-animais.html.
+- O IBGE comunicou em 05/05/2023 a revisao historica da 1094 referente a 2008-2022. Sem vintages coletados ANTES dessa revisao, nao se deve simular retrospectivamente a primeira edicao.
+
+### Código e isolamento
+- Novo src/nivon/pecuaria_sidra_arquivo.py: somente recebe bytes previamente obtidos; NAO realiza HTTP, downloads, cron, deploy ou distribuicao.
+- Arquivo SQLite LOCAL selecionado pelo operador; guarda payloads binarios de valores e metadata, URLs HTTPS estritamente vinculadas ao ID de tabela, datas declaradas, SHA-256 de cada payload e status ARQUIVADO_NAO_HOMOLOGADO.
+- O ID do objeto de metadados deve coincidir com a tabela no URL de metadados, na URL de valores e na especie selecionada. Um ID divergente falha fechado.
+- Duas triggers SQLite impedem UPDATE e DELETE pelas operacoes normais da aplicacao; INSERT OR IGNORE com UNIQUE fornece idempotencia. Administrador com acesso ao SQLite pode modificar banco e triggers: NAO qualificar como WORM ou armazenamento criptograficamente imutavel.
+- Recuperacao verifica novamente os hashes dos dois blobs e sinaliza corrompimento, mas SHA-256 e host declarado NAO comprovam origem HTTP real.
+- LEITURA e ARMAZENAMENTO requerem permissoes explicitas de status_fonte. Ausencia ou status pendente bloqueiam escrita. Nao criar banco sob o repositorio publico nem inserir respostas restritas em CI.
+- Testes sinteticos em tests/test_pecuaria_sidra_arquivo.py cobrem roundtrip, idempotencia, edicoes por coleta, 3 especies, triggers, alteracao maliciosa, direitos, URLs host/tabela, JSON, cronologia e limites. Dados e metadados sao MOCKS, nao capturas IBGE reais.
+
+### Contrato de maturidade
+- O arquivo nao faz prova de autenticidade de datas de publicacao nem coleta. Exibe dados_reais_verificados=false, timestamps_autenticados=false e previsao_homologada=false. O motor de vintages continua independente e nao recebe nenhum registro automaticamente.
+- Para passar a amostra real: obter HTTP 200 autentico via fonte oficial, guardar URL exata, response headers e timestamp de captura auditavel fora deste componente, validar metadados, categoria TOTAL, unidade, variavel e cobertura, obter licenca/proveniencia e executar os testes reais. Gravar apenas material permitido.
+- P0 ainda bloqueado: acesso a payload oficial 1092/1093/1094. P1 avancou somente no mecanismo LOCAL de armazenamento de evidencias; sem persistencia operacional, sem backfill historico e sem simulacao de vintages anteriores.
