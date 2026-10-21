@@ -99,6 +99,16 @@ class TestOptOutGlobal(unittest.TestCase):
                 chave_destinatario=b"outra_chave_extensa_que_nao_foi_migrada_2026",
             )
 
+    def test_base_com_envios_anteriores_e_sem_identidade_exige_migracao(self):
+        self.registrar(self.modelo(), "2026-10-20")
+        self.con.execute("DELETE FROM nivon_identidade_hmac")
+        self.con.commit()
+        with self.assertRaisesRegex(PermissionError, "base legada"):
+            self.registrar(self.modelo(dia="2026-10-21"), "2026-10-21")
+        self.assertEqual(
+            self.con.execute("SELECT count(*) FROM nivon_envios").fetchone()[0], 1
+        )
+
     def test_optout_isola_destinatarios_e_e_idempotente(self):
         self.revogar()
         self.revogar()
