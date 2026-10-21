@@ -1,0 +1,16 @@
+[
+  {
+    "id_widget": 199,
+    "instrumento": "soja disponivel - demonstracao sem valor comercial",
+    "praca": "Sorriso-MT",
+    "vencimento": null,
+    "valor": "120.25",
+    "unidade": "BRL/60kg",
+    "data_referencia": "2026-10-20",
+    "data_publicacao": "2026-10-20T18:00:00-04:00",
+    "data_coleta": "2026-10-21T09:00:00-04:00",
+    "competencia": "2026-10",
+    "classificacao": "SINTETICO",
+    "fonte_original": "FIXTURE_SINTETICA"
+  }
+]
