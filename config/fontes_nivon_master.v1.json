@@ -890,6 +890,22 @@
       "access": "PUBLIC_CATALOG_REST",
       "rights": "REVIEW",
       "notes": "API de metadados; recurso catalogado não comprova dataset válido ou redistribuível."
+    },
+    {
+      "id": "ISRIC_SOILGRIDS",
+      "provider": "ISRIC SoilGrids global soil mapping",
+      "official_url": "https://rest.isric.org/soilgrids/v2.0/properties/query",
+      "access": "PUBLIC_REST_BETA_WITH_WCS_FALLBACK",
+      "rights": "ATTRIBUTION_REVIEW",
+      "notes": "SoilGrids CC BY 4.0; REST beta 5 calls/min fair use, sem garantia de uptime; preferir WCS em massa. Estimativa de 250m não é análise de solo em laboratório."
+    },
+    {
+      "id": "EMBRAPA_GEOINFO",
+      "provider": "Embrapa GeoInfo — geodados de solos do Brasil",
+      "official_url": "https://geoinfo.dados.embrapa.br/",
+      "access": "PUBLIC_GEOJSON_SHAPEFILE_WMS_WFS",
+      "rights": "REVIEW",
+      "notes": "Mapas temáticos oficiais da Embrapa/GeoInfo, especialmente água disponível e mapa de solos Brasil; checar licença de cada camada e escala cartográfica."
     }
   ],
   "datasets": [
@@ -5446,6 +5462,62 @@
       "cadence": "IRREGULAR",
       "existing_module": "nivon.consultas_fontes_publicas.consultar_antt_trafego",
       "notes": "Metadados de tráfego ANTT são pistas para downloads, não fluxo comprovado; arquivos individuais ainda exigem validação.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ISRIC_SOILGRIDS_PONTO",
+      "source_id": "ISRIC_SOILGRIDS",
+      "group": "GEO",
+      "priority": "P1",
+      "stage": "CODE_PRESENT",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "PECUARIA"
+      ],
+      "topic": "textura_ph_carbono_nitrogenio_densidade_grade_estimativa_250m",
+      "mode": "PUBLIC_REST_POINT_QUERY",
+      "cadence": "IRREGULAR",
+      "existing_module": "nivon.isric_soilgrids.consultar_solo",
+      "notes": "Sem prescrições agronômicas; modelo espacial precisa de validação local.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "EMBRAPA_GEOINFO_SOLOS",
+      "source_id": "EMBRAPA_GEOINFO",
+      "group": "GEO",
+      "priority": "P1",
+      "stage": "CANDIDATE",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "PECUARIA"
+      ],
+      "topic": "mapas_solos_agua_disponivel_wfs_geojson_nao_lab_amostragem",
+      "mode": "WFS_GEOJSON_OR_DOWNLOAD",
+      "cadence": "IRREGULAR",
+      "existing_module": null,
+      "notes": "Escala 1:5.000.000 do mapa de solos nacional: não adequado para precisão em talhão.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,

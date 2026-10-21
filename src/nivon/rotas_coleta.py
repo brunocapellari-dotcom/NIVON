@@ -115,6 +115,7 @@ def validar_rotas(rotas: dict, catalogo: dict) -> dict:
                 "IBGE": {"servicodados.ibge.gov.br", "apisidra.ibge.gov.br"},
                 "ANTT": {"dados.antt.gov.br"},
                 "INPE_QUEIMADAS": {"dataserver-coids.inpe.br"},
+                "EMBRAPA_GEOINFO": {"geoinfo.dados.embrapa.br"},
                 "NOAA": {"www.cpc.ncep.noaa.gov"},
             }
             if parsed.hostname != fonte_host and parsed.hostname not in homologados.get(d["source_id"], set()):
