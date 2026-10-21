@@ -29,7 +29,9 @@ CAT = {"datasets":[{"id":"CONAB_PROGRESSO_SEMANAL","source_id":"CONAB",
 
 
 def registros(valor=.35, horario=STAMP, pub=PUB, uf="MT"):
-    rows = [{**RAW[0],"pct_semana_atual":valor,"uf":uf}]
+    rows = [{**RAW[0],"pct_semana_atual":valor,"uf":uf,
+             "n_estados": 12 if uf == "MEDIA_ESTADOS" else None,
+             "cobertura_area_pct": 0.8 if uf == "MEDIA_ESTADOS" else None}]
     return normalizar_progresso(rows,fonte_url=URL,
                                 coletado_em=datetime.fromisoformat(horario),
                                 publicado_em=pub)
