@@ -62,11 +62,12 @@ def ledger(events=None, anchors=None, resolver=None, head=None):
     events = [signed(payload())] if events is None else events
     anchors = ({event_digest(e): T+timedelta(days=-8+i)
                 for i, e in enumerate(events)} if anchors is None else anchors)
+    trusted_head = event_digest(events[-1]) if events else GENESIS
     return RegistroVintagesIVO(
         events,
         resolver_chave=(resolver or (lambda k: KEY if k == "key-v1" else None)),
         obter_ancora=lambda digest: anchors[digest],
-        obter_cabeca=lambda: (event_digest(events[-1]) if events else GENESIS) if head is None else head,
+        obter_cabeca=lambda: trusted_head if head is None else head,
     )
 
 
