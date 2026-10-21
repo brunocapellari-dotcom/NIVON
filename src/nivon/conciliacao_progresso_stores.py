@@ -7,6 +7,7 @@ chave, URL, horário da coleta e valores é comparável; nem isso prova o RAW.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import re
@@ -209,6 +210,63 @@ def _coletar(db: sqlite3.Connection, store: str, corte: datetime,
     return result, excluded, revisions, totals
 
 
+
+def _auditar_integridade_bancos(legado: sqlite3.Connection,
+                               canonico: sqlite3.Connection, limite: int) -> int:
+    """Valida integridade das edições legadas sem confundir hash JSON com RAW.
+
+    A checagem é histórica e read-only: todas as edições/linhas precisam
+    estar acessíveis dentro do limite para não gerar falsa confiança.
+    """
+    verificacoes = (
+        (legado, """SELECT COUNT(*) FROM progresso_edicoes e
+                    WHERE NOT EXISTS (SELECT 1 FROM progresso_coletas c WHERE c.edicao_id=e.id)"""),
+        (legado, """SELECT COUNT(*) FROM progresso_observacoes o
+                    LEFT JOIN progresso_edicoes e ON e.id=o.edicao_id
+                    WHERE e.id IS NULL"""),
+        (canonico, """SELECT COUNT(*) FROM nivon_snapshots s
+                     WHERE s.dataset_id='CONAB_PROGRESSO_SEMANAL'
+                       AND NOT EXISTS (SELECT 1 FROM nivon_coletas c WHERE c.snapshot_id=s.id)"""),
+        (canonico, """SELECT COUNT(*) FROM nivon_conab_progresso p
+                     LEFT JOIN nivon_snapshots s ON s.id=p.snapshot_id
+                     WHERE s.id IS NULL OR s.dataset_id!='CONAB_PROGRESSO_SEMANAL'"""),
+    )
+    for db, sql in verificacoes:
+        if db.execute(sql).fetchone()[0]:
+            raise ErroConciliacaoConab("edição, observação ou captura órfã no histórico")
+    rows = legado.execute("""SELECT e.id,e.sha256_json,e.numero_linhas,o.registro_json
+            FROM progresso_edicoes e
+            LEFT JOIN progresso_observacoes o ON o.edicao_id=e.id
+            ORDER BY e.id,o.cultura,o.safra,o.operacao,o.uf,o.semana LIMIT ?""",
+            (limite+1,)).fetchall()
+    if len(rows)>limite:
+        raise ErroConciliacaoConab("excesso de observações legadas: auditoria exige paginação")
+    groups = {}
+    for ed_id, sha, qtd, raw in rows:
+        if (not isinstance(sha,str) or not _SHA.fullmatch(sha)
+                or type(qtd) is not int or qtd <= 0 or raw is None):
+            raise ErroConciliacaoConab("edição legada inválida")
+        key, _, _ = _normalizar_registro(raw)
+        try:
+            original=json.loads(raw,object_pairs_hook=_json_pares_unicos)
+        except (TypeError, ValueError) as exc:
+            raise ErroConciliacaoConab("JSON legado inválido") from exc
+        item=groups.setdefault(ed_id,{"sha":sha,"qtd":qtd,"rows":[],"keys":set()})
+        if (item["sha"],item["qtd"]) != (sha,qtd) or key in item["keys"]:
+            raise ErroConciliacaoConab("chaves/conteúdo inconsistentes na edição legada")
+        item["keys"].add(key)
+        item["rows"].append(original)
+    for item in groups.values():
+        if len(item["rows"]) != item["qtd"]:
+            raise ErroConciliacaoConab("contagem de observações legadas não coincide com edição")
+        dados=sorted(item["rows"],key=lambda r:tuple(r[k] for k in _CHAVE))
+        digest=hashlib.sha256(json.dumps(dados,ensure_ascii=False,sort_keys=True,
+                   separators=(",",":"),allow_nan=False).encode("utf-8")).hexdigest()
+        if digest != item["sha"]:
+            raise ErroConciliacaoConab("SHA do JSON legado não confere com observações persistidas")
+    return len(groups)
+
+
 def conciliar_stores_conab(legado: sqlite3.Connection, canonico: sqlite3.Connection,
                            *, corte_coleta: str, corte_publicacao: str | None = None,
                            limite: int = _MAX) -> dict:
@@ -218,6 +276,7 @@ def conciliar_stores_conab(legado: sqlite3.Connection, canonico: sqlite3.Connect
     cutoff = _timestamp(corte_coleta)
     pubcut = _timestamp(corte_publicacao) if corte_publicacao is not None else None
     _verificar_esquemas(legado, canonico)
+    leg_edicoes_verificadas = _auditar_integridade_bancos(legado, canonico, limite)
     a, excl_a, keys_a, ct_a = _coletar(legado, "LEGADO", cutoff, pubcut, limite)
     b, excl_b, keys_b, ct_b = _coletar(canonico, "CANONICO", cutoff, pubcut, limite)
     tally = Counter()
@@ -256,6 +315,7 @@ def conciliar_stores_conab(legado: sqlite3.Connection, canonico: sqlite3.Connect
         "corte_coleta_utc": cutoff.isoformat(),
         "corte_publicacao_utc": pubcut.isoformat() if pubcut else None,
         "linhas_legado_comparadas": ct_a["LINHAS_COMPARADAS"],
+        "edicoes_legadas_hash_json_recalculado": leg_edicoes_verificadas,
         "linhas_canonico_comparadas": ct_b["LINHAS_COMPARADAS"],
         "excluidas_legado": dict(sorted(excl_a.items())),
         "excluidas_canonico": dict(sorted(excl_b.items())),
