@@ -13,6 +13,14 @@ on:
           - usda
           - ana
           - inmet
+      modo:
+        description: Iniciar sem rede (preflight) ou autenticar/baixar uma fonte
+        required: true
+        type: choice
+        default: preflight
+        options:
+          - preflight
+          - live
 
 permissions:
   contents: read
@@ -40,7 +48,16 @@ jobs:
         with:
           python-version: '3.11'
       - name: Consultar somente catalogo USDA/FAS
-        run: python -m nivon.acessos_smoke_privado --fonte usda --live
+        env:
+          NIVON_ACCESS_MODE: ${{ inputs.modo }}
+        run: |
+          if [ "$NIVON_ACCESS_MODE" = "preflight" ]; then
+            python -m nivon.acessos_smoke_privado --fonte usda --preflight
+          elif [ "$NIVON_ACCESS_MODE" = "live" ]; then
+            python -m nivon.acessos_smoke_privado --fonte usda --live
+          else
+            exit 2
+          fi
 
   validar-ana:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.fonte == 'ana'
@@ -65,7 +82,16 @@ jobs:
         with:
           python-version: '3.11'
       - name: Autenticar ANA e consultar dados apenas quando configurados
-        run: python -m nivon.acessos_smoke_privado --fonte ana --live
+        env:
+          NIVON_ACCESS_MODE: ${{ inputs.modo }}
+        run: |
+          if [ "$NIVON_ACCESS_MODE" = "preflight" ]; then
+            python -m nivon.acessos_smoke_privado --fonte ana --preflight
+          elif [ "$NIVON_ACCESS_MODE" = "live" ]; then
+            python -m nivon.acessos_smoke_privado --fonte ana --live
+          else
+            exit 2
+          fi
 
   validar-inmet:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.fonte == 'inmet'
@@ -88,4 +114,13 @@ jobs:
       - name: Preparar pasta privada temporaria
         run: mkdir -m 700 "$NIVON_INMET_DIRETORIO_PRIVADO"
       - name: Inspecionar um ZIP BDMEP sem publicar arquivos
-        run: python -m nivon.acessos_smoke_privado --fonte inmet --live
+        env:
+          NIVON_ACCESS_MODE: ${{ inputs.modo }}
+        run: |
+          if [ "$NIVON_ACCESS_MODE" = "preflight" ]; then
+            python -m nivon.acessos_smoke_privado --fonte inmet --preflight
+          elif [ "$NIVON_ACCESS_MODE" = "live" ]; then
+            python -m nivon.acessos_smoke_privado --fonte inmet --live
+          else
+            exit 2
+          fi
