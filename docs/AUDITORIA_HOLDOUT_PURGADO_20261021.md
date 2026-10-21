@@ -27,3 +27,19 @@ PYTHONPATH=src python -m unittest discover -s tests -v
 ```
 
 **Prioridade de integração:** comparar este resultado com o prequential da PR #21 mantendo a convenção Brier e proveniência de calendário; contratar dados point-in-time e registrar seleção prévia de modelo/holdout sem contaminar o teste. Não incorporar automaticamente ao relatório público.
+
+## Regressões adicionais — maturação atrasada e skill zero
+
+O CI testa que um forecast histórico emitido antes do holdout **não pode
+integrar a amostra elegível** quando seu resultado só foi coletado
+depois da primeira emissão do holdout. Também bloqueia a qualificação
+como ganho de um modelo idêntico à persistência (ganho relativo zero).
+A elegibilidade do histórico mede **disponibilidade de resultado**, não
+apenas a data da previsão ou sua ordem na série.
+
+O histórico elegível é exclusivamente um **diagnóstico da viabilidade
+temporal de treino/calibração**, não significa que o modelo avaliado foi
+efetivamente treinado nesses folds. Nenhum sinal de ganho serve como
+certificado de validação real enquanto o protocolo de seleção do modelo,
+o tratamento de revisões e a prova das emissões originais não forem
+auditados externamente.
