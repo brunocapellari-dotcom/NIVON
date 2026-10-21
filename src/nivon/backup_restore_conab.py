@@ -153,7 +153,7 @@ def _ler_manifesto(path: Path) -> dict:
     for store, data in files.items():
         if (not isinstance(data, dict) or set(data) != {
                 "arquivo","sha256","bytes","linhas_por_tabela","capturado_inicio_utc",
-                "capturado_fim_utc","integridade_sqlite"})
+                "capturado_fim_utc","integridade_sqlite"}):
             raise ErroBackupConab("campos da evidência do backup inválidos")
         if data["arquivo"] != _FILES[store] or data["integridade_sqlite"] != "ok":
             raise ErroBackupConab("arquivo ou integridade não correspondem ao contrato")
