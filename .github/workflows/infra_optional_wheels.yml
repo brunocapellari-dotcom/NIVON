@@ -1,5 +1,6 @@
 # Probe de compatibilidade de extras opcionais NIVON com musl sem install de sdist.
 # Pacotes obtidos SOMENTE como wheels PyPI para teste, nunca para release.
+# O módulo impõe pip download --only-binary=:all: e instalação --no-index em segunda fase.
 name: NIVON Alpine optional dependency wheels
 
 on:
