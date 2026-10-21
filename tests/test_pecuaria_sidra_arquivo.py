@@ -197,5 +197,25 @@ class TestArquivoAbateSIDRA(unittest.TestCase):
                   sha256_valores,sha256_metadados,bruto_valores,
                   bruto_metadados,status FROM capturas_sidra WHERE id=1""")
 
+
+    def test_schema_legado_nunca_migra_silenciosamente(self):
+        with sqlite3.connect(self.banco) as cx:
+            cx.execute("""CREATE TABLE capturas_sidra (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              especie TEXT, tabela_sidra TEXT,
+              url_valores TEXT, url_metadados TEXT,
+              publicacao_declarada TEXT, coleta_declarada TEXT,
+              sha256_valores TEXT, sha256_metadados TEXT,
+              bruto_valores BLOB, bruto_metadados BLOB, status TEXT,
+              UNIQUE(especie,tabela_sidra,url_valores,url_metadados,
+                     coleta_declarada,sha256_valores,sha256_metadados)
+            )""")
+        with self.assertRaisesRegex(DadoInvalido, "esquema SIDRA legado"):
+            self.arquivar()
+        with sqlite3.connect(self.banco) as cx:
+            schema = cx.execute("SELECT sql FROM sqlite_master WHERE name='capturas_sidra'").fetchone()[0]
+            self.assertIn("sha256_metadados)", schema)
+            self.assertEqual(cx.execute("SELECT COUNT(*) FROM capturas_sidra").fetchone()[0], 0)
+
 if __name__ == "__main__":
     unittest.main()
