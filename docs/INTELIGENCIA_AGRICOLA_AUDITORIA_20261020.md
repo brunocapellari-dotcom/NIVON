@@ -161,3 +161,29 @@ As páginas oficiais de série histórica de grãos da CONAB indicam que `SojaSe
 
 **Próximo gate P0:** primeiro RAW oficial autorizado (HTML+XLS em storage privado), parser em worker isolado, normalização de safra/MT e inspeção das células reais de cabeçalho; somente depois evidência documental de cada levantamento mensal vintage. Não habilitar modelo, backtest, publicação, cron, deploy, merge ou serviços pagos.
 
+
+## Continuidade de 21/10/2026 — registro real de páginas de edições CONAB sem falsa vintage
+
+**Descoberta verificada externamente:** além da planilha XLS consolidada corrente (que não reconstitui vintages), o portal `gov.br/conab` preserva páginas **individuais de levantamentos mensais**. As páginas acessíveis foram conferidas diretamente na leitura web nesta rodada, mas **não foi baixado o HTML original em bytes nem qualquer PDF/XLS**. O recurso oficial atual pode ter sido alterado desde sua publicação histórica.
+
+Inventário conservador versionado: `config/conab_levantamentos_candidatos.v1.json`, com 4 páginas oficiais e metadados **declarados pelo portal** consultado em 21/10/2026:
+
+| Safra | Levantamento | Publicado no portal | Última atualização exibida | Página oficial |
+|---|---:|---|---|---|
+| 2023/24 | 3º | 07/12/2023 09:00 | 24/01/2025 12:45 | https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/safra-de-graos/boletim-da-safra-de-graos/3o-levantamento-safra-2023-24 |
+| 2024/25 | 6º | 13/03/2025 09:00 | 22/04/2025 11:54 | https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/safra-de-graos/boletim-da-safra-de-graos/6o-levantamento-safra-2024-25 |
+| 2024/25 | 7º | 10/04/2025 09:00 | 13/05/2025 17:27 | https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/safra-de-graos/boletim-da-safra-de-graos/7o-levantamento-safra-2024-25 |
+| 2026/27 | 1º | 15/10/2026 09:00 | 15/10/2026 08:56 | https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/safra-de-graos/boletim-da-safra-de-graos/1o-levantamento-safra-2026-27 |
+
+Observe que **o portal pode apresentar atualização anterior ao horário de publicação** na mesma data (1º levantamento 2026/27); não confundir esta condição com erro, timestamp de aquisição ou prova do conteúdo original.
+
+**Implementação:** `src/nivon/conab_levantamentos_candidatos.py:auditar_candidatos_levantamentos_conab` produz inventário de **metadados de páginas**, exige domínio oficial, URL coerente com safra/número, fuso horário, datas até o dia de consulta declarado, unicidade e rejeição de campos extras. Compara corte da decisão a carimbos do portal para classificar `PUBLICACAO_PORTAL_POSTERIOR_AO_CORTE`, `PAGINA_PORTAL_MODIFICADA_APOS_CORTE` e `SOMENTE_METADADOS_ATUAIS_SEM_RAW_HISTORICO`. São estados de **triagem**, não classificação verdadeira de disponibilidade histórica.
+
+Exemplos: um modelo emitido em dezembro de 2023 não pode usar a página **atual** do 3º levantamento 2023/24 como RAW daquela data, pois há modificação posterior em janeiro de 2025. O 7º levantamento 2024/25 também apresenta modificação posterior ao corte imediatamente após divulgação. Mesmo páginas sem atualização posterior conhecida **não** comprovam os bytes do boletim publicados na época. Hash calculado do catálogo JSON curado `sha256_catalogo_curado_nao_raw` **não é o hash de página oficial ou documento**.
+
+**Gates SEMPRE OFF:** `disponibilidade_historica_verificada=false`, `pode_extrair_numero_historico=false`, `habilita_backtest=false`, `habilita_treino=false`, `habilita_publicacao=false`. Entradas expostas sob registro de motores SOJA e MILHO exclusivamente offline, sem varredura ou coleta automatizada.
+
+**Evidência de qualidade:** 15 testes novos em `tests/test_conab_levantamentos_candidatos.py`, cobrindo URLs hostis, safra/edição, duplicidade, fuso, corte temporal, histórico revisado, edição nova, página com horário alterado anterior à publicação e proibição de uso preditivo. [CI 39664124320](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39664124320): **1.245 testes, 0 falhas, 5 ignorados**. Nenhum dado de safra foi obtido por esse módulo.
+
+**Próximo P0 desbloqueável:** obter um exemplar do arquivo de boletim **de uma edição datada** e respectiva tabela, preservando RAW, SHA real, licença e evidência independente de disponibilidade na data; só então normalizar números com cultura/UF/unidade e gravar `historico_vintages` e produzir backtest. O XLS consolidado permanece fonte de contexto, jamais mecanismo de reprodução do passado por si só.
+
