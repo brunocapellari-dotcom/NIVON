@@ -220,6 +220,42 @@ class TestBackupRestoreConab(unittest.TestCase):
             for path in self.restored.iterdir():
                 self.assertEqual(path.stat().st_mode & 0o077,0)
 
+    def test_source_wal_mode_preserved_after_snapshot(self):
+        with sqlite3.connect(str(self.legacy)) as src:
+            original = src.execute("PRAGMA journal_mode").fetchone()[0]
+        self.create()
+        with sqlite3.connect(str(self.legacy)) as src:
+            after = src.execute("PRAGMA journal_mode").fetchone()[0]
+        self.assertEqual(original.lower(),"wal")
+        self.assertEqual(after.lower(),original.lower())
+        with sqlite3.connect(str(self.backup/"legado.sqlite")) as back:
+            self.assertEqual(back.execute("PRAGMA journal_mode").fetchone()[0].lower(),"delete")
+
+    @unittest.skipUnless(os.name=="posix","permissões POSIX")
+    def test_backup_perdeu_privacidade_recusa_restauracao(self):
+        self.create()
+        self.backup.chmod(0o755)
+        with self.assertRaisesRegex(ErroBackupConab,"0700"):
+            restaurar_em_diretorio_novo(self.backup,self.restored)
+        self.assertEqual(list(self.restored.iterdir()),[])
+
+    def test_manifesto_falsificado_nao_dispensa_integrity_check(self):
+        self.create()
+        damaged=self.backup/"legado.sqlite"
+        with damaged.open("r+b") as f:
+            f.seek(0)
+            f.write(b"NIVON_NOT_SQLITE!")
+            f.flush()
+            os.fsync(f.fileno())
+        info=self.manifest()
+        raw=damaged.read_bytes()
+        info["arquivos"]["LEGADO"]["sha256"]=hashlib.sha256(raw).hexdigest()
+        (self.backup/"backup_manifesto.json").write_text(
+            json.dumps(info),encoding="utf-8")
+        with self.assertRaises((ErroBackupConab,sqlite3.Error)):
+            restaurar_em_diretorio_novo(self.backup,self.restored)
+        self.assertEqual(list(self.restored.iterdir()),[])
+
     def test_cli_backup_e_restore(self):
         args_backup=["backup","--legado",str(self.legacy),"--canonico",
                      str(self.canonical),"--destino",str(self.backup)]
