@@ -226,6 +226,17 @@ class HomologationManifestTests(unittest.TestCase):
         record = source(licenses=[rights(status="PENDING")])
         self.assertIn("RIGHTS_NOT_VERIFIED_OR_EXPIRED", record.blockers)
 
+    def test_explicit_denial_blocks_even_with_separate_verified_grant(self):
+        record = source(licenses=[rights(status="VERIFIED"),
+                                  rights(status="DENIED", evidence_id="revocation-record")])
+        self.assertIn("RIGHTS_EXPLICITLY_DENIED", record.blockers)
+        self.assertEqual(record.status, "BLOCKED")
+
+    def test_denial_from_other_port_not_reused(self):
+        record = source(licenses=[rights(), rights(plan("ITAQUI"),
+                          status="DENIED", evidence_id="unrelated-denial")])
+        self.assertEqual(record.status, "READY_FOR_INDEPENDENT_REVIEW")
+
     def test_unlicensed_operation_is_blocked(self):
         record = source(licenses=[rights(operations=frozenset({"COLLECT", "STORE"}))])
         self.assertIn("RIGHTS_INTERNAL_ANALYSIS_MISSING", record.blockers)
