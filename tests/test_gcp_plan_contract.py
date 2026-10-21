@@ -20,7 +20,12 @@ class GcpPlanContractTests(unittest.TestCase):
     def test_no_unapproved_cloud_use(self):
         plan = self.plan
         self.assertEqual(plan["state"], "PLAN_ONLY_NO_CLOUD_RESOURCES_CREATED")
-        self.assertIsNone(plan["gcp_project_id"])
+        self.assertEqual(plan["gcp_project_id"], "nivon-data")
+        self.assertEqual(plan["gcp_organization_display_name"], "brunocapellari-org")
+        self.assertEqual(plan["gcp_project_id_source"], "USER_SUPPLIED_CLOUD_CONSOLE_SCREENSHOT_2026-10-21")
+        self.assertFalse(plan["gcp_project_api_verified"])
+        self.assertFalse(plan["gcp_org_api_verified"])
+        self.assertEqual(plan["billing"]["current_billing_status"], "UNKNOWN_NOT_VERIFIED")
         self.assertFalse(plan["billing"]["paid_use_approved"])
         self.assertTrue(plan["billing"]["zero_cost_required"])
         self.assertTrue(plan["billing"]["deploy_blocked_until_cost_controls_verified"])
