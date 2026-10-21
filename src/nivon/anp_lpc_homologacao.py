@@ -24,7 +24,8 @@ class ErroHomologacaoLPC(ValueError):
 def auditar_tres_edicoes_lpc(
     *, indice_html: bytes, indice_sha256_esperado: str,
     capturado_indice_em: str, edicoes: Sequence[Mapping],
-    ano: int, municipios_mt: frozenset[str] | None = None,
+    ano: int, as_of: str,
+    municipios_mt: frozenset[str] | None = None,
 ) -> dict:
     """Valida três semanas CONTÍGUAS somente para revisão independente.
 
@@ -38,6 +39,9 @@ def auditar_tres_edicoes_lpc(
     if sha256(indice_html).hexdigest() != indice_sha256_esperado:
         raise ErroHomologacaoLPC("SHA do índice não confere")
     coleta_indice = _tempo(capturado_indice_em, "capturado_indice_em")
+    corte = _tempo(as_of, "as_of")
+    if coleta_indice > corte:
+        raise ErroHomologacaoLPC("captura do índice posterior ao corte as_of")
     if not isinstance(edicoes, (list, tuple)) or len(edicoes) != 3:
         raise ErroHomologacaoLPC("homologação estrutural exige exatamente três edições")
     indice = descobrir_semanas_lpc(indice_html, ano=ano)
@@ -67,7 +71,7 @@ def auditar_tres_edicoes_lpc(
         shas.add(sha)
         pub = _tempo(e["publicado_em"], "publicado_em")
         coleta = _tempo(e["coletado_em"], "coletado_em")
-        if pub > coleta or pub > coleta_indice or coleta < coleta_indice:
+        if pub > coleta or pub > coleta_indice or coleta < coleta_indice or coleta > corte:
             raise ErroHomologacaoLPC("publicação/captura cronologicamente incompatíveis")
         info = mapa[url]
         inicio = date.fromisoformat(info["semana_inicio"])
@@ -126,6 +130,7 @@ def auditar_tres_edicoes_lpc(
         "indice_url": indice["indice_url"],
         "indice_sha256": indice_sha256_esperado,
         "captura_indice_declarada_em": coleta_indice.isoformat(),
+        "as_of": corte.isoformat(),
         "edicoes": sorted(auditorias, key=lambda x: x["semana_inicio"]),
         "lacunas_cobertura": ausentes,
         "semana_oficial": True,
