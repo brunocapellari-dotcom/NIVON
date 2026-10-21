@@ -1,0 +1,63 @@
+name: PTAX - verificacao diaria
+# Agendamento apenas apos entrar na branch principal.
+on:
+  schedule:
+    # 01:30 UTC de terca a sabado, ~22:30 horario de Brasilia do dia anterior.
+    - cron: '30 1 * * 2-6'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ptax:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validar codigo antes da consulta
+        run: python -m unittest discover -s tests -v
+      - name: Consultar USD e EUR e salvar janela temporaria
+        run: python -m nivon.ptax_bcb --banco "$RUNNER_TEMP/nivon-ptax.sqlite3" --moeda AMBAS
+      - name: Conferir dados e registrar freshness
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import sqlite3
+          from datetime import date
+          from pathlib import Path
+          db = Path(os.environ["RUNNER_TEMP"]) / "nivon-ptax.sqlite3"
+          resultado = {}
+          with sqlite3.connect(db) as con:
+              for moeda in ("USD", "EUR"):
+                  r = con.execute(
+                      "select count(*), max(data_referencia) from ptax_observacoes where moeda=?",
+                      (moeda,)).fetchone()
+                  if not r[0] or not r[1]:
+                      raise SystemExit(f"{moeda}: sem registros oficiais na janela")
+                  atraso = (date.today() - date.fromisoformat(r[1])).days
+                  resultado[moeda] = {
+                      "registros": r[0], "ultima_referencia": r[1],
+                      "dias_corridos_desde_referencia": atraso,
+                      "freshness": "SOURCE_LAG" if atraso > 5 else "NORMAL_OU_FERIADO_A_CONFIRMAR",
+                  }
+          destino = Path(os.environ["RUNNER_TEMP"]) / "resumo-ptax.json"
+          destino.write_text(json.dumps(resultado, indent=2), encoding="utf-8")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
+              f.write("## PTAX - verificacao oficial\n\n")
+              for moeda, linha in resultado.items():
+                  f.write(f"- {moeda}: {linha['registros']} registros; "
+                          f"referencia {linha['ultima_referencia']}; "
+                          f"{linha['dias_corridos_desde_referencia']} dias corridos; "
+                          f"{linha['freshness']}\n")
+              f.write("\nSQLite produzido no runner e temporario; nao e historico canonico.\n")
+          PY
+      - name: Guardar relatorio agregado por 30 dias
+        uses: actions/upload-artifact@v4
+        with:
+          name: ptax-resumo-${{ github.run_id }}
+          path: ${{ runner.temp }}/resumo-ptax.json
+          retention-days: 30
+          if-no-files-found: error
