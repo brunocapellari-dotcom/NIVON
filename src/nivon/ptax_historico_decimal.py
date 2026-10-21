@@ -60,9 +60,18 @@ def selecionar_ptax_decimal_asof(
             "FROM nivon_ptax_raw_capturas c "
             "JOIN nivon_ptax_raw_blobs b ON b.sha256=c.sha256 "
             "JOIN nivon_snapshots s ON s.id=c.snapshot_id "
+            "JOIN nivon_coletas v ON v.snapshot_id=s.id "
+            "AND v.coletado_utc=c.coletado_em "
             "WHERE c.coletado_em<=? AND c.moeda=? "
             "AND s.dataset_id='BCB_PTAX' AND s.sha256=c.sha256 "
-            "AND s.tipo=c.tipo AND (?=1 OR c.tipo='REAL_AUTORIZADO') "
+            "AND s.schema_versao='PTAX_ODATA_RAW_V1' "
+            "AND s.tipo=c.tipo "
+            "AND ((c.tipo='SINTETICO' "
+            "AND c.origem_execucao='TRANSPORTE_INJETADO_SINTETICO') "
+            "OR (c.tipo='REAL_AUTORIZADO' "
+            "AND c.origem_execucao='HTTP_HTTPS_BCB_REAL_NAO_HOMOLOGADO' "
+            "AND s.evidencia_direitos IS NOT NULL)) "
+            "AND (?=1 OR c.tipo='REAL_AUTORIZADO') "
             "ORDER BY c.coletado_em ASC, c.id ASC LIMIT 10001",
             (corte_dt.isoformat(), moeda, int(incluir_sinteticos)),
         ).fetchall()
