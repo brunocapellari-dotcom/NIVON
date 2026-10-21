@@ -125,3 +125,39 @@ com todas as PRs. P0-02 em diante continuam condicionados aos gates
 anteriores. A próxima tarefa de maior impacto será implementar o
 workflow de backup criptografado com Restic em ambiente exclusivamente
 sintético e restauração independente, sem ligar provedor remoto real.
+
+
+## Revisão de prioridades — 21/10/2026 (evidência atual)
+
+O Restic **local** já foi implementado e testado em CI com backup cifrado,
+checagem de integridade e restore de dados sintéticos em pasta isolada.
+Isto não cumpre o requisito P0-04 de **backup remoto independente**.
+
+O P0-07 foi implementado parcialmente com workflow Gitleaks (histórico)
+e Trivy + CycloneDX (imagem Linux AMD64). O próprio gate encontrou
+**2 CRITICAL + 63 HIGH** na antiga Bookworm, portanto sua reprovação
+foi tratada como bloqueio verdadeiro, sem exceções silenciosas.
+
+A nova rotina `infra_base_benchmark.py` e o job
+`infra_base_benchmark.yml` compararam Bookworm e Trixie sob mesmo
+Trivy v0.76.0 e banco de CVEs:
+- Bookworm: 2 CRITICAL + 63 HIGH = **65 bloqueantes**;
+- Trixie: 0 CRITICAL + 46 HIGH = **46 bloqueantes**;
+- diferença: **19 a menos**, não zero.
+
+`infra/docker/Dockerfile.worker` foi atualizado para Trixie com
+digest imutável e os testes de contêiner foram reexecutados.
+O scan independente do workflow canônico confirmou **46 HIGH**
+e mantém o status **BLOCKED_HIGH_CRITICAL**. Gitleaks está aprovado.
+O benchmark não libera produção ou fonte real.
+
+**Próxima ação executável P0-07:** investigar as 46 CVEs por pacote
+e status de correção sem publicar dados sensíveis, testar bases oficiais
+alternativas apenas com benchmark homogêneo, corrigir dependências
+quando houver versão segura e repetir escaneamento na imagem ARM64.
+Não adicionar allowlist genérica nem alterar `exit 3` do gate.
+
+Depois: auditoria das fontes licenciadas, backup remoto restaurado,
+execução nativa ARM64, quotas OCI verificadas, release integrada e
+segurança independentemente revisada. Todos os gates de produção
+permanecem OFF no inventário.
