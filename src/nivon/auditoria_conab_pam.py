@@ -83,15 +83,24 @@ def _prova_temporal(meta: dict, cutoff: datetime) -> bool:
         raise ErroConciliacaoSafra("raw_sha256 obrigatório")
     if type(meta["disponibilidade_verificada"]) is not bool:
         raise ErroConciliacaoSafra("disponibilidade_verificada exige booleano")
-    p = _instante(meta["publicado_em"], "publicado_em")
-    d = _instante(meta["disponivel_em"], "disponivel_em")
     c = _instante(meta["coletado_em"], "coletado_em")
-    if not p <= d <= c:
-        raise ErroConciliacaoSafra("ordem de publicação/disponibilidade/coleta inválida")
+    p_raw, d_raw = meta["publicado_em"], meta["disponivel_em"]
+    if (p_raw is None) != (d_raw is None):
+        raise ErroConciliacaoSafra("publicação e disponibilidade devem ser ambas conhecidas ou nulas")
     if meta["disponibilidade_verificada"] and not meta["prova_disponibilidade_sha256"]:
         raise ErroConciliacaoSafra("prova temporal marcada verificada sem hash")
     if not meta["disponibilidade_verificada"] and meta["prova_disponibilidade_sha256"] is not None:
         raise ErroConciliacaoSafra("hash de prova sem verificação declarada")
+    # A CAPTURA real de uma planilha atual não permite inventar o dia em
+    # que ela foi publicada. Preservar NULL e impedir comparabilidade PIT.
+    if p_raw is None:
+        if meta["disponibilidade_verificada"]:
+            raise ErroConciliacaoSafra("sem datas históricas não existe prova as-of")
+        return False
+    p = _instante(p_raw, "publicado_em")
+    d = _instante(d_raw, "disponivel_em")
+    if not p <= d <= c:
+        raise ErroConciliacaoSafra("ordem de publicação/disponibilidade/coleta inválida")
     return c <= cutoff and meta["disponibilidade_verificada"]
 
 
@@ -164,7 +173,8 @@ def preparar_tripla_conab(*, linhas: list[dict], uf: str, cultura: str,
         "arquivo": arquivo, "raw_sha256": snapshot_meta["raw_sha256"],
         "classificacao": classes.pop(), "cutoff": cutoff.isoformat(),
         "competencia": safra, "data_referencia": None,
-        "data_publicacao": _instante(snapshot_meta["publicado_em"], "publicado_em").isoformat(),
+        "data_publicacao": (None if snapshot_meta["publicado_em"] is None else
+                            _instante(snapshot_meta["publicado_em"], "publicado_em").isoformat()),
         "data_coleta": _instante(snapshot_meta["coletado_em"], "coletado_em").isoformat(),
         "edicao_id": snapshot_meta["edicao_id"],
         "prova_disponibilidade_sha256": snapshot_meta["prova_disponibilidade_sha256"],
