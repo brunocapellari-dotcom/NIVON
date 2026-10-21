@@ -1,0 +1,221 @@
+{
+  "schema_version": "1.0",
+  "project": "NIVON",
+  "use_case": "NON_COMMERCIAL_RESEARCH_USE",
+  "upstream": {
+    "repository": "bruno-portfolio/agrobr",
+    "commit": "9360f80f8aad7c6eaf946dce2f9ed61d4b1d2156",
+    "document": "docs/sources/index.md",
+    "documented_count": 41
+  },
+  "policy": "DOCUMENTARY_ONLY_NO_DATA_COLLECTION_NO_NEW_CANONICAL_SOURCES_NO_RIGHTS_GRANTED",
+  "entries": [
+    {
+      "slug": "cepea",
+      "status": "MAPEADA",
+      "source_id": "CEPEA"
+    },
+    {
+      "slug": "conab",
+      "status": "MAPEADA",
+      "source_id": "CONAB"
+    },
+    {
+      "slug": "ibge",
+      "status": "MAPEADA",
+      "source_id": "IBGE"
+    },
+    {
+      "slug": "nasa_power",
+      "status": "MAPEADA",
+      "source_id": "NASA_POWER"
+    },
+    {
+      "slug": "bcb",
+      "status": "MAPEADA",
+      "source_id": "BCB"
+    },
+    {
+      "slug": "comexstat",
+      "status": "MAPEADA",
+      "source_id": "MDIC"
+    },
+    {
+      "slug": "anda",
+      "status": "MAPEADA",
+      "source_id": "ANDA"
+    },
+    {
+      "slug": "abiove",
+      "status": "MAPEADA",
+      "source_id": "ABIOVE"
+    },
+    {
+      "slug": "anec",
+      "status": "NAO_MAPEADA",
+      "source_id": null
+    },
+    {
+      "slug": "usda",
+      "status": "MAPEADA",
+      "source_id": "USDA"
+    },
+    {
+      "slug": "imea",
+      "status": "MAPEADA",
+      "source_id": "IMEA"
+    },
+    {
+      "slug": "deral",
+      "status": "NAO_MAPEADA",
+      "source_id": null
+    },
+    {
+      "slug": "inmet",
+      "status": "MAPEADA",
+      "source_id": "INMET"
+    },
+    {
+      "slug": "noticias_agricolas",
+      "status": "MAPEADA",
+      "source_id": "NOTAGRO"
+    },
+    {
+      "slug": "queimadas",
+      "status": "NAO_MAPEADA",
+      "source_id": null
+    },
+    {
+      "slug": "desmatamento",
+      "status": "NAO_MAPEADA",
+      "source_id": null
+    },
+    {
+      "slug": "mapbiomas",
+      "status": "MAPEADA",
+      "source_id": "MAPBIOMAS"
+    },
+    {
+      "slug": "b3",
+      "status": "MAPEADA",
+      "source_id": "B3"
+    },
+    {
+      "slug": "comtrade",
+      "status": "MAPEADA",
+      "source_id": "UNCOMTRADE"
+    },
+    {
+      "slug": "antaq",
+      "status": "MAPEADA",
+      "source_id": "ANTAQ"
+    },
+    {
+      "slug": "anp_diesel",
+      "status": "MAPEADA",
+      "source_id": "ANP"
+    },
+    {
+      "slug": "antt_pedagio",
+      "status": "MAPEADA",
+      "source_id": "ANTT"
+    },
+    {
+      "slug": "mapa_psr",
+      "status": "MAPEADA",
+      "source_id": "MAPA"
+    },
+    {
+      "slug": "sicar",
+      "status": "NAO_MAPEADA",
+      "source_id": null
+    },
+    {
+      "slug": "zarc",
+      "status": "MAPEADA",
+      "source_id": "ZARC"
+    },
+    {
+      "slug": "defensivos",
+      "status": "FORA_DO_ESCOPO",
+      "source_id": null,
+      "motivo": "NIVON nao desenvolve receituario agronomico nem integra motores desse dominio"
+    },
+    {
+      "slug": "funai",
+      "status": "NAO_MAPEADA",
+      "source_id": null
+    },
+    {
+      "slug": "icmbio",
+      "status": "NAO_MAPEADA",
+      "source_id": null
+    },
+    {
+      "slug": "cnuc",
+      "status": "NAO_MAPEADA",
+      "source_id": null
+    },
+    {
+      "slug": "incra",
+      "status": "NAO_MAPEADA",
+      "source_id": null
+    },
+    {
+      "slug": "acervo_fundiario",
+      "status": "NAO_MAPEADA",
+      "source_id": null
+    },
+    {
+      "slug": "ibama",
+      "status": "NAO_MAPEADA",
+      "source_id": null
+    },
+    {
+      "slug": "mapbiomas_alerta",
+      "status": "MAPEADA",
+      "source_id": "MAPBIOMAS"
+    },
+    {
+      "slug": "lista_suja",
+      "status": "FORA_DO_ESCOPO",
+      "source_id": null,
+      "motivo": "Inteligencia corporativa excluida do NIVON"
+    },
+    {
+      "slug": "ana",
+      "status": "MAPEADA",
+      "source_id": "ANA"
+    },
+    {
+      "slug": "sfb",
+      "status": "NAO_MAPEADA",
+      "source_id": null
+    },
+    {
+      "slug": "rnc",
+      "status": "MAPEADA",
+      "source_id": "MAPA"
+    },
+    {
+      "slug": "embrapa_solos",
+      "status": "NAO_MAPEADA",
+      "source_id": null
+    },
+    {
+      "slug": "rio_verde",
+      "status": "NAO_MAPEADA",
+      "source_id": null
+    },
+    {
+      "slug": "cftc",
+      "status": "MAPEADA",
+      "source_id": "CFTC"
+    },
+    {
+      "slug": "unica",
+      "status": "MAPEADA",
+      "source_id": "UNICA"
+    }
+  ]
+}
