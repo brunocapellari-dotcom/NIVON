@@ -78,7 +78,7 @@ jobs:
           docker pull --platform "$PLATFORM" \
             "$IMAGE"
           sudo install -d -o 65532 -g 65532 -m 0700 "$RUNNER_TEMP/nivon-wheels"
-      - name: Resolver apenas wheels PyPI na Alpine de teste (rede limitada à etapa)
+      - name: Resolver apenas wheels PyPI na imagem de teste (rede limitada à etapa)
         shell: bash
         env:
           PLATFORM: ${{ matrix.platform }}
@@ -96,7 +96,7 @@ jobs:
             -e PYTHONPATH=/workspace/src -e PIP_NO_INPUT=1 \
             -e PIP_INDEX_URL=https://pypi.org/simple -e PIP_EXTRA_INDEX_URL= \
             --entrypoint python \
-            python:3.11.17-alpine3.23@sha256:924d53e01cee5204d35fbcfb71b6c1568c857d7c31141f960ff6a37e111ecc7f \
+            "$IMAGE" \
             -m nivon.infra_optional_wheels --group "$GROUP" --distro "$DISTRO" --phase download
           echo "Wheels baixadas da PyPI oficial, sem sdist/build e sem instalar fontes agro"
       - name: Instalar wheels da pasta privada e smoke de imports SEM REDE
@@ -116,6 +116,6 @@ jobs:
             --mount "type=bind,source=$RUNNER_TEMP/nivon-wheels,target=/var/nivon-wheels" \
             -e PYTHONPATH=/workspace/src -e PIP_NO_INPUT=1 -e PIP_NO_INDEX=1 \
             --entrypoint python \
-            python:3.11.17-alpine3.23@sha256:924d53e01cee5204d35fbcfb71b6c1568c857d7c31141f960ff6a37e111ecc7f \
+            "$IMAGE" \
             -m nivon.infra_optional_wheels --group "$GROUP" --distro "$DISTRO" --phase offline
           echo "MAX-WHEEL-DEPENDENCY-GATE: TESTE EXPERIMENTAL, SEM AUTORIZAÇÃO DE RELEASE"
