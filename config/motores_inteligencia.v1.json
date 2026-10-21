@@ -1,7 +1,7 @@
 {
   "project": "NIVON",
   "schema_version": "1.0",
-  "updated_on": "2026-10-20",
+  "updated_on": "2026-10-19",
   "default_policy": "ENGINES_OFFLINE_NO_SCHEDULE_OR_DEPLOY",
   "description": "Motor presente não implica fonte autorizada, histórico real, previsão validada ou produção. CLIMA_HIDRO é fachada legada, não série duplicada.",
   "engines": [
@@ -23,10 +23,12 @@
         "nivon.unidades_mercado:referencia_bolsa_cbot_usd_t",
         "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
         "nivon.agregacao_pam_ibge:agregar_municipios_pam",
+        "nivon.composicao_pam_sidra:montar_pam_municipal",
         "nivon.motor_tendencias:tendencia_observada",
         "nivon.motor_tendencias:tendencia_projetada",
         "nivon.tendencias_mercados:tendencia_cbot",
-        "nivon.tendencias_mercados:tendencia_preco_fisico"
+        "nivon.tendencias_mercados:tendencia_preco_fisico",
+        "nivon.dinamica_tendencias:comparar_forca_tendencia"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -69,10 +71,12 @@
         "nivon.unidades_mercado:referencia_bolsa_cbot_usd_t",
         "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
         "nivon.agregacao_pam_ibge:agregar_municipios_pam",
+        "nivon.composicao_pam_sidra:montar_pam_municipal",
         "nivon.motor_tendencias:tendencia_observada",
         "nivon.motor_tendencias:tendencia_projetada",
         "nivon.tendencias_mercados:tendencia_cbot",
-        "nivon.tendencias_mercados:tendencia_preco_fisico"
+        "nivon.tendencias_mercados:tendencia_preco_fisico",
+        "nivon.dinamica_tendencias:comparar_forca_tendencia"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -111,9 +115,11 @@
         "nivon.unidades_mercado:referencia_ice_centavos_libra_usd_t",
         "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
         "nivon.agregacao_pam_ibge:agregar_municipios_pam",
+        "nivon.composicao_pam_sidra:montar_pam_municipal",
         "nivon.motor_tendencias:tendencia_observada",
         "nivon.motor_tendencias:tendencia_projetada",
-        "nivon.tendencias_mercados:tendencia_preco_fisico"
+        "nivon.tendencias_mercados:tendencia_preco_fisico",
+        "nivon.dinamica_tendencias:comparar_forca_tendencia"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
@@ -141,7 +147,8 @@
         "nivon.modelos_fisicos:reconciliar_rebanho",
         "nivon.motor_tendencias:tendencia_observada",
         "nivon.motor_tendencias:tendencia_projetada",
-        "nivon.tendencias_mercados:tendencia_preco_fisico"
+        "nivon.tendencias_mercados:tendencia_preco_fisico",
+        "nivon.dinamica_tendencias:comparar_forca_tendencia"
       ],
       "data_dependencies": [
         "IBGE_PPM",
@@ -216,10 +223,12 @@
         "nivon.unidades_mercado:referencia_bolsa_cbot_usd_t",
         "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
         "nivon.agregacao_pam_ibge:agregar_municipios_pam",
+        "nivon.composicao_pam_sidra:montar_pam_municipal",
         "nivon.motor_tendencias:tendencia_observada",
         "nivon.motor_tendencias:tendencia_projetada",
         "nivon.tendencias_mercados:tendencia_cbot",
-        "nivon.tendencias_mercados:tendencia_preco_fisico"
+        "nivon.tendencias_mercados:tendencia_preco_fisico",
+        "nivon.dinamica_tendencias:comparar_forca_tendencia"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
@@ -247,6 +256,7 @@
         "nivon.inteligencia_temporal:decompor_mudanca_safra",
         "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
         "nivon.agregacao_pam_ibge:agregar_municipios_pam",
+        "nivon.composicao_pam_sidra:montar_pam_municipal",
         "nivon.motor_tendencias:tendencia_observada",
         "nivon.motor_tendencias:tendencia_projetada"
       ],
@@ -298,7 +308,8 @@
         "nivon.anp_ppi:comparar_ppi_com_produtor",
         "nivon.motor_tendencias:tendencia_observada",
         "nivon.motor_tendencias:tendencia_projetada",
-        "nivon.tendencias_mercados:tendencia_preco_fisico"
+        "nivon.tendencias_mercados:tendencia_preco_fisico",
+        "nivon.dinamica_tendencias:comparar_forca_tendencia"
       ],
       "data_dependencies": [
         "ANP_PRECO_REVENDA_DIESEL",
@@ -463,6 +474,7 @@
         "nivon.noaa_roni:classificar_episodios_roni",
         "nivon.meteorologia_probabilistica:avaliar_ensemble",
         "nivon.hidrograma_bacia:hidrograma_evento_cn",
+        "nivon.ensemble_hidrologico_bacia:cenario_ensemble_bacia",
         "nivon.motor_tendencias:tendencia_observada",
         "nivon.motor_tendencias:tendencia_projetada"
       ],
@@ -553,6 +565,7 @@
         "nivon.inteligencia_temporal:comparar_progresso_safra",
         "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
         "nivon.agregacao_pam_ibge:agregar_municipios_pam",
+        "nivon.composicao_pam_sidra:montar_pam_municipal",
         "nivon.motor_tendencias:tendencia_observada",
         "nivon.motor_tendencias:tendencia_projetada"
       ],
@@ -583,6 +596,7 @@
         "nivon.inteligencia_temporal:concentracao_fluxos",
         "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
         "nivon.agregacao_pam_ibge:agregar_municipios_pam",
+        "nivon.composicao_pam_sidra:montar_pam_municipal",
         "nivon.motor_tendencias:tendencia_observada",
         "nivon.motor_tendencias:tendencia_projetada"
       ],
@@ -748,6 +762,7 @@
         "nivon.hidrologia_chuva_vazao:propagar_muskingum",
         "nivon.hidrograma_bacia:hidrograma_evento_cn",
         "nivon.calibracao_cn_bacias:calibrar_cn_historico",
+        "nivon.ensemble_hidrologico_bacia:cenario_ensemble_bacia",
         "nivon.motor_tendencias:tendencia_observada",
         "nivon.motor_tendencias:tendencia_projetada"
       ],
@@ -762,7 +777,7 @@
         "ERA5_LAND_CDS",
         "NASA_GPM_IMERG"
       ],
-      "indicators_planned": 21,
+      "indicators_planned": 25,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
       "inputs_reais_homologados": false,
       "previsao_homologada": false,
@@ -858,7 +873,8 @@
         "nivon.inteligencia_temporal:custo_diesel_por_rota",
         "nivon.motor_tendencias:tendencia_observada",
         "nivon.motor_tendencias:tendencia_projetada",
-        "nivon.tendencias_mercados:tendencia_frete_anunciado"
+        "nivon.tendencias_mercados:tendencia_frete_anunciado",
+        "nivon.dinamica_tendencias:comparar_forca_tendencia"
       ],
       "data_dependencies": [
         "FRETES_WHATSAPP_AUTORIZADO",

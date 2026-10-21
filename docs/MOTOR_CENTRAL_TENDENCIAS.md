@@ -125,3 +125,17 @@ Chave: `produto + localidade_ibge(7 dígitos) + tipo(INDICADOR_FISICO/OFERTA/NEG
 5. Integrar no painel e em uma seção de tendências do briefing, somente após homologação editorial; WhatsApp AI mantém responsabilidade exclusiva pelo transporte de mensagens.
 
 O código nesta PR é **exclusivamente offline com fixtures sintéticas** e não executa coletas, envios, deploy ou publicação.
+
+
+## Dinâmica histórica do movimento: força e reversão (21/10/2026)
+
+O terceiro componente **offline** é `nivon.dinamica_tendencias:comparar_forca_tendencia`, com regressões em `tests/test_dinamica_tendencias.py`. Ele serve ao recorte prioritário de fretes, CBOT e preços físicos e **não produz previsão futura**.
+
+- Compara as **duas últimas janelas de mesmo tamanho e disjuntas** (padrão: 6 + 6 observações). As datas de ambas passam pela mesma validação; não é permitida lacuna na fronteira das duas janelas.
+- Classifica `AUMENTO_DE_FORCA`, `PERDA_DE_FORCA`, `FORCA_SEM_ALTERACAO_RELEVANTE`, `REVERSAO_OBSERVADA`, `SAIDA_DA_ESTABILIDADE`, `ENTRADA_EM_ESTABILIDADE`, `ESTABILIDADE_PERSISTENTE` ou `INDETERMINADA`.
+- Usa a distância histórica da inclinação robusta (Theil–Sen) dividida pela banda declarada para cada janela; compara **múltiplos de banda**, não variáveis de unidade diferente. Exige parâmetro explícito `mudanca_minima_forca_em_limiares` positivo. **Não é aceleração matemática, probabilidade, confiança, causalidade nem lucro futuro**.
+- A dinâmica é válida apenas depois de um adaptador que selecione a **mesma identidade econômica**: para fretes, comparar preços por estabelecimento/transportadora e condição de descarga (motor pareado, PR #18/integração #30), nunca série municipal agregada de anúncios sujeitos à mudança de composição; para CBOT, mesmo contrato/vencimento/ajuste e calendário de sessões validado (PR #21); para físico, praça/produto/condições de entrega, pagamento e qualidade invariáveis (PR #21).
+- As frentes quantitativas de mercado `SOJA`, `MILHO`, `TRIGO`, `ALGODAO`, `BOI`, `DIESEL` e `FRETE_RODOVIARIO` recebem o entrypoint descritivo. O manifesto continua com todos os gates operacionais **desligados**. Quando inexistir histórico suficiente, retornar `INDETERMINADA`, sem preenchimento de lacunas ou números inventados.
+- O validador prequential de probabilidades, backtesting e proveniência da PR #21, a auditoria quantitativa/holdout da PR #20 e o painel pareado de fretes da integração #30 são complementares. Nenhum deles comprova que o NIVON recebeu, licenciou ou homologou históricos reais neste momento.
+
+Exemplo interpretativo **ilustrativo, não preço real**: a série de frete anunciada com identidade constante sobe R$ 1/t por observação na primeira janela e R$ 3/t na segunda. O motor pode marcar `ALTA + AUMENTO_DE_FORCA`; não deduz que subirão outros R$ 3/t amanhã ou em 30 dias.

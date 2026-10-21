@@ -30,6 +30,7 @@ _CAPACIDADES = frozenset({
     "safra.progress.read",
     "portos.lineup.read",
     "briefing.preview",
+    "fertilizantes.importacao.read",
 })
 _MAX_NOTICIAS = 30
 _MAX_INDICADORES = 100
@@ -72,6 +73,7 @@ class NivonProjectAdapter:
         conab: sqlite3.Connection | None = None,
         portos: sqlite3.Connection | None = None,
         mercados: sqlite3.Connection | None = None,
+        mdic: sqlite3.Connection | None = None,
         diesel: sqlite3.Connection | None = None,
         licencas_mercado: Mapping[str, dict] | None = None,
         outbox: sqlite3.Connection | None = None,
@@ -86,6 +88,7 @@ class NivonProjectAdapter:
         self._conab = conab
         self._portos = portos
         self._mercados = mercados
+        self._mdic = mdic
         self._diesel = diesel
         if licencas_mercado is not None and not isinstance(licencas_mercado,Mapping):
             raise ErroIntegracaoHermes("licenças de mercado inválidas")
@@ -168,6 +171,21 @@ class NivonProjectAdapter:
             return indicador_porto(
                 self._portos, fontes=self._fontes, gerado_em=data,
                 porto=payload["porto"],
+            )
+        if capability == "fertilizantes.importacao.read":
+            campos = {"gerado_em","ncm","uf","ano","mes"}
+            if set(payload) != campos:
+                raise ErroIntegracaoHermes("seletores de importação MDIC inválidos")
+            if self._mdic is None:
+                return {"status":"SEM_HISTORICO","publicavel":False}
+            from .mdic_fertilizantes_asof import resumo_mdic_fertilizante_asof
+            direito=self._fontes.get("MDIC_COMEX_NCM",{})
+            habilitado=(direito.get("status_direitos")=="APROVADA"
+                        and "LEITURA" in direito.get("operacoes",[]))
+            return resumo_mdic_fertilizante_asof(
+                self._mdic,ncm=payload["ncm"],uf=payload["uf"],
+                ano=payload["ano"],mes=payload["mes"],gerado_em=data,
+                leitura_autorizada=habilitado,
             )
         # Preview: aceita apenas documentos/observações previamente adquiridos
         # e autorizados. Devolve texto somente se auditor determinístico aprovar.

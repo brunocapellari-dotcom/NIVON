@@ -1527,7 +1527,7 @@
         "url": "https://apisidra.ibge.gov.br/values/t/1612",
         "source_proof": "https://apisidra.ibge.gov.br/home/ajuda"
       },
-      "implementation_scope": "sidra_pam.py + pipeline_api_dados.py (schema real 1612 verificado, consultas planejadas, sem agendamento) + agregacao_pam_ibge.py (métricas municipais com Decimal, produto específico, comparação UF somente com comprovação de universo completo; testes offline)",
+      "implementation_scope": "sidra_pam.py + pipeline_api_dados.py (schema real 1612 verificado, consultas planejadas, sem agendamento) + agregacao_pam_ibge.py (métricas municipais com Decimal, produto específico, comparação UF somente com comprovação de universo completo; testes offline) + composicao_pam_sidra.py (combina três observações SIDRA 1612 em uma linha municipal sob comprovação externa)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -1542,11 +1542,13 @@
         "DURABLE_PERSISTENCE_AND_RESTORE",
         "LICENSED_PUBLICATION_GATE",
         "MUNICIPAL_COVERAGE_AND_EDITION_PROOF",
-        "COTTON_SEED_VS_LINT_AND_CROP_DEFINITIONS"
+        "COTTON_SEED_VS_LINT_AND_CROP_DEFINITIONS",
+        "VERIFY_VARIABLE_CODES_216_214_112_ON_REAL_SIDRA_SAMPLE",
+        "SAME_RELEASE_EVIDENCE_FOR_THREE_VARIABLES"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "API SIDRA 1612 verificada no formato municipal; URL base parametrizada, valores/total/vigencia/licenca ainda não homologados. IBGE PAM 2025 incluiu gergelim, sem série homóloga histórica pré-2025. Algodão herbáceo em caroço não é pluma, milho não discrimina safra; evitar soma de produtividade.",
+      "source_note": "API SIDRA 1612 verificada no formato municipal; URL base parametrizada, valores/total/vigencia/licenca ainda não homologados. IBGE PAM 2025 incluiu gergelim, sem série homóloga histórica pré-2025. Algodão herbáceo em caroço não é pluma, milho não discrimina safra; evitar soma de produtividade. SIDRA 839 identifica 1ª/2ª safras de milho; SIDRA 1612 é total do ano. Código de variável 216 área colhida, 214 quantidade, 112 rendimento requer verificação final de metadados reais e unidade da tabela.",
       "preliminary_evidence": "OFFICIAL_API_SCHEMA_OBSERVED_20261019_MUNICIPIO_C81_ANUAL"
     },
     {
