@@ -206,3 +206,25 @@ Uma execução coerente retorna `local_wheel_hashes_match_declared_lock=true`, *
 A frente IVO/PAM evoluiu em paralelo aos novos gates de licenciamento. A auditoria desta branch não reescreve os validadores SIDRA: a reconciliação incorporou os arquivos da frente IVO por commits de dois pais, após comparação explícita de caminhos modificados. A exceção `ErroSemanticaPAM` da nova whitelist de unidades precisa preservar o contrato externo `ErroPontePAM` da ponte; a versão mais recente da frente IVO foi adotada quando ambos os lados corrigiram a mesma divergência. As regressões de IVO e as da pesquisa passam na execução combinada conferida do commit `660924cec5dda00bcdf4cfe78dbeff2902e984ba` ([CI #39664546204](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39664546204)).
 
 As branches e a PR podem receber commits simultâneos: **o HEAD final só é validado quando uma nova CI verde aparece no SHA exato**. Caso a base avance novamente, repetir a comparação de arquivos antes da reconciliação, nunca sobrescrever trabalho da outra frente ou declarar integração completa sem evidência.
+
+## Continuidade — identidade do executor e digest de artefato GitHub (21/10/2026)
+
+**Entrega:** `src/nivon/proveniencia_github.py` acrescenta verificação pontual de ZIP local contra metadados de um artefato GitHub Actions, acessados **somente quando o usuário executar o CLI**, via TLS HTTPS no host fixo `api.github.com`. Consulta endpoints REST oficiais de execução e artefato, com `GET` read-only, requisições limitadas e sem redirecionamentos; token opcional `GITHUB_TOKEN` usado apenas nos headers e nunca exibido. Não baixa arquivos nem bibliotecas de terceiros.
+
+**Contrato de origem:** repositório exato `brunocapellari-dotcom/NIVON`, repositório do HEAD não-fork, commit SHA exigido pelo chamador, execução manual `workflow_dispatch` terminada em sucesso, caminho do workflow fixado no CLI (padrão `.github/workflows/auditoria_pacotes.yml`, **ainda não criado e não executado**), e artefato com nome fixo `nivon-evidencias-dependencias`. Confere `run.id`, `artifact.id`, vínculo execução/repositório/head, validade do artefato, tamanho e digest `sha256:...` oferecido pelo GitHub contra hash **calculado** sobre o ZIP local. Para a evidência ser utilizável, a consulta HTTPS precisa retornar 200 sem redirecionamento.
+
+```bash
+PYTHONPATH=src python -m nivon.proveniencia_github \
+  --archive /local/nivon-evidencias-dependencias.zip \
+  --run-id ID_DA_EXECUCAO_MANUAL \
+  --artifact-id ID_DO_ARTEFATO \
+  --source-sha SHA40_DO_COMMIT_VALIDADO
+```
+
+**Atenção:** este exemplo é **procedimento reservado**, não uma execução concluída. O workflow dedicado para gerar o ZIP de evidências ainda precisará ser criado, revisado e acionado manualmente. A CI da PR não usa a rede nem gera um pacote externo real; a cobertura em `tests/test_proveniencia_github.py` usa apenas fixtures e mocks de API.
+
+**Trust boundary:** o verificador demonstra que o arquivo local é idêntico ao digest anunciado pela API GitHub no contexto de uma execução declarada como bem-sucedida. Isso **não** equivale a verificar assinatura Sigstore, build provenance SLSA, origem dos wheels dentro do ZIP, resolução de dependências Python, validade de report de CVEs, identidade/segurança do runner ou legitimidade do lock. A função determinística de validação de dicionários deixa `live_api_query_done_by_this_function=false`; o CLI live só a marca como `true` após duas consultas HTTPS. Ambos permanecem com `approved_for_install=false` e `approved_for_production=false`.
+
+**Atestação criptográfica futura:** o GitHub disponibiliza artifact attestations para repositórios **públicos** no plano gratuito, segundo sua documentação; confirmar permissões e política no momento da ativação. A emissão poderia usar `actions/attest` em workflow revisado e uma verificação separada com `gh attestation verify ... --repo brunocapellari-dotcom/NIVON --signer-workflow ... --source-digest SHA40`. A criação de workflow com `id-token: write` e `attestations: write` **não foi realizada** por este PR e requer revisão de segurança antes de habilitar. Referências: https://docs.github.com/en/rest/actions/artifacts e https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations e https://cli.github.com/manual/gh_attestation_verify.
+
+**Próximo P0:** submeter à revisão independente um workflow `workflow_dispatch` que capture lock e wheels resolvidos num sandbox autorizado, hash de todos os arquivos e relatório CVE real; atestar o artefato gerado e comprovar a assinatura/verificador antes de avançar para smoke-tests instalados. Não declarar esse fluxo operacional até existirem logs, artefatos reais, digests e atestação verificável.
