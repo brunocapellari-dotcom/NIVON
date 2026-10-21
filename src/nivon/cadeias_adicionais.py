@@ -43,7 +43,7 @@ UNIDADES = {
 FORMATOS = {
     "ANO_CIVIL": r"20\d{2}",
     "SAFRA": r"20\d{2}/20\d{2}",
-    "TRIMESTRE": r"20\d{2}-T[1-4]",
+    "TRIMESTRE": r"(?:19|20)\d{2}-T[1-4]",
     "MES": r"20\d{2}-(?:0[1-9]|1[0-2])",
 }
 CLASSES = frozenset({"OBSERVADO", "INFORMADO", "ESTIMADO", "PROJETADO", "INFERIDO"})
