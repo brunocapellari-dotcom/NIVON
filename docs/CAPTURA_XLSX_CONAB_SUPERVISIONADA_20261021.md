@@ -51,3 +51,29 @@ PYTHONPATH=src python -m nivon.captura_xlsx_conab \
 Executar captura **apenas em ambiente com DNS/HTTPS e licença avaliada**, registrar SHA e metadados observados, testar XLSX real de 2026-10-16; confrontar diretamente com duas vintages independentes e revisão do parser antes de qualquer dado entrar no NIVON.
 
 Status atual: ferramenta implementada e testável offline, **RAW real ainda ausente**.
+
+## Revalidação posterior dos bytes e manifesto
+
+A função `verificar_pacote_captura_local(edicao, pasta)` acrescenta um
+segundo controle **somente leitura e sem rede**:
+
+1. exige dois arquivos privados no diretório, com nomes e esquema esperados;
+2. confere novamente SHA-256, tamanho, conteúdo RAW, janelas de captura
+   UTC e URLs original/final do transporte registradas;
+3. compara novamente o código do parser (SHA do módulo), o resultado
+   de extração e a competência com o manifesto e o catálogo da edição;
+4. rejeita XML/ZIP inválido, alteração do arquivo, adulteração de campos
+   de liberação, chave JSON repetida, links simbólicos ou arquivos
+   inesperados no mesmo diretório.
+
+O estado resultante é
+`PACOTE_LOCAL_REVERIFICADO_SEM_ATESTACAO_EXTERNA`, e **não**
+`ORIGEM_OFICIAL_COMPROVADA`. A revalidação não prova que alguém não
+tenha falsificado simultaneamente o XLSX e o JSON; para essa garantia
+será necessário armazenamento imutável e atestação independente de
+captura/assinatura, fora do escopo desta PR.
+
+**Cuidado:** revalidação pode falhar após modificar o código do parser,
+pois o SHA fixado no manifesto pertence à versão usada na captura;
+manter versão original disponível ou realizar reprocessamento
+versionado após auditoria.
