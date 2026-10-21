@@ -18,6 +18,8 @@ from .lineup_nacional import instante
 from .rss_radar import MAX_BYTES, ler_feed_xml
 from .ptax_briefing import normalizar_snapshot_ptax, construir_indicador_ptax
 from .anp_diesel_briefing import montar_indicadores_diesel
+from .editorial_evidencias_pipeline import montar_candidatos_evidencias
+from .editorial_preflight import avaliar_previa_editorial
 
 
 class ErroPipelineBriefing(ValueError):
@@ -153,7 +155,22 @@ def gerar_edicao_offline(*, gerado_em: str, feeds: list[dict],
         gerado_em=gerado_em,fretes=fretes,catalogo=catalogo,escopo=escopo,
     )
     indicadores_ausentes=not indicadores and not registros_portuarios
+    provas=montar_candidatos_evidencias(
+        gerado_em=gerado_em, sha256_edicao=briefing["sha256"],
+        noticias=noticias, fontes=fontes, feeds=feeds,
+        snapshots_xml=snapshots_xml, indicadores=indicadores,
+        fontes_indicadores=fontes, fretes=fretes,
+    )
+    previa=avaliar_previa_editorial(
+        edicao={"estado":"EDICAO_OFFLINE_PREPARADA_SEM_ENVIO",
+                "gerado_em":gerado_em,"texto":briefing["texto"],
+                "sha256":briefing["sha256"],"enviado":False},
+        gerado_em=gerado_em, noticias=provas["noticias"],
+        cotacoes=provas["cotacoes"],fretes=provas["fretes"],
+    )
     return {
+        "evidencias_editoriais":provas,
+        "preflight_editorial":previa,
         "estado":"EDICAO_OFFLINE_PREPARADA_SEM_ENVIO",
         "gerado_em":instante(gerado_em).isoformat(),
         "sha256":briefing["sha256"],"texto":briefing["texto"],

@@ -1,5 +1,9 @@
 import unittest
 import sqlite3
+import copy
+
+from nivon.editorial_preflight import avaliar_previa_editorial
+from nivon.editorial_evidencias_pipeline import conciliar_complementos
 
 from nivon.pipeline_briefing import gerar_edicao_offline, ErroPipelineBriefing
 
@@ -15,7 +19,7 @@ def amostra():
                         "semana_inicio_oficial":"2026-10-04",
                         "semana_fim_oficial":"2026-10-10",
                         "preco_medio_revenda_rs_l":6.20,"postos_pesquisados":7}]},
-       "publicado_em":"2026-10-09T15:00:00-03:00",
+       "publicado_em":"2026-10-11T15:00:00-03:00",
        "dataset":{"id":"ANP_PRECO_REVENDA_DIESEL","enabled":True,
                   "collection_authorized":True,
                   "commercial_redistribution_authorized":True},
@@ -45,6 +49,53 @@ class TestPipelineDieselANP(unittest.TestCase):
         self.assertIn("DIESEL S10",x["texto"])
         self.assertIn("6.200",x["texto"])
         self.assertFalse(x["enviado"])
+
+    def test_evidencia_anp_mantem_amostra_semana_raw_e_reconciliacao(self):
+        x=self.edicao()
+        self.assertEqual(len(x["evidencias_editoriais"]["cotacoes"]),1)
+        p=x["evidencias_editoriais"]["cotacoes"][0]
+        self.assertEqual(p["fonte_id"],"ANP")
+        self.assertEqual(p["grupo"],"ENERGIA")
+        self.assertEqual(p["valor"],"6.2")
+        self.assertEqual(p["unidade"],"R$/L")
+        self.assertEqual(p["natureza"],"INDICATIVO")
+        self.assertEqual(p["competencia"],"2026-10-10")
+        self.assertEqual(p["semana_inicio"],"2026-10-04")
+        self.assertEqual(p["semana_fim"],"2026-10-10")
+        self.assertEqual(p["postos_pesquisados"],7)
+        self.assertEqual(p["classe_estatistica"],"MEDIA_AMOSTRAL_MUNICIPAL_REVENDA")
+        self.assertEqual(p["sha256_origem"],SHA)
+        self.assertEqual(p["evidencia_direitos_id"],"TESTE_AUTORIZACAO_SINTETICA")
+        self.assertIn("R$/L",x["texto"])
+        self.assertFalse(any(err.startswith("COTACAO_")
+                             for err in x["preflight_editorial"]["bloqueios"]))
+        self.assertFalse(x["preflight_editorial"]["apto_revisao"])
+        self.assertEqual(x["preflight_editorial"]["modo"],"OFFLINE_SEM_ENVIO")
+
+    def test_semana_ou_numero_de_postos_adulterados_bloqueia(self):
+        resultado=self.edicao()
+        original=resultado["evidencias_editoriais"]["cotacoes"][0]
+        for campo, valor in (("semana_inicio","2026-10-03"),
+                             ("semana_fim","2026-10-09"),
+                             ("postos_pesquisados",12)):
+            with self.subTest(campo=campo):
+                adulterado=copy.deepcopy(original)
+                adulterado[campo]=valor
+                previa=avaliar_previa_editorial(
+                    edicao=resultado,gerado_em=resultado["gerado_em"],
+                    noticias=[],cotacoes=[adulterado],fretes=[])
+                self.assertTrue(any(x.startswith("COTACAO_0:ANP:")
+                                    for x in previa["bloqueios"]))
+
+    def test_complemento_nao_pode_reescrever_periodo_oficial_anp(self):
+        pacote=self.edicao()["evidencias_editoriais"]
+        with self.assertRaisesRegex(ValueError,"imutável"):
+            conciliar_complementos(pacote,{
+                "sha256_edicao":pacote["sha256_edicao"],
+                "noticias":[],
+                "cotacoes":[{"semana_fim":"2026-10-09"}],
+                "fretes":[],
+            })
 
     def test_sem_direito_externo_nao_gera_cotacao(self):
         a=amostra();a["dataset"]["enabled"]=False

@@ -53,6 +53,29 @@ class TestPipelinePTAX(unittest.TestCase):
         self.assertFalse(r["enviado"])
         self.assertIn("Nenhuma notícia elegível",r["texto"])
 
+    def test_ptax_nao_eleva_boletim_raw_a_ultima_sessao_homologada(self):
+        r=self.run_pipeline()
+        candidatos=r["evidencias_editoriais"]["cotacoes"]
+        self.assertEqual(len(candidatos),1)
+        p=candidatos[0]
+        self.assertEqual(p["fonte_id"],"BCB_PTAX")
+        self.assertEqual(p["grupo"],"CAMBIO")
+        self.assertEqual(p["valor"],"5.12")
+        self.assertEqual(p["unidade"],"R$/USD")
+        self.assertEqual(p["natureza"],"OBSERVADO")
+        self.assertEqual(p["competencia"],"2026-10-19")
+        self.assertEqual(p["coletado_em"],"2026-10-20T08:30:00-03:00")
+        self.assertEqual(p["sha256_origem"],configuracao()["snapshot"]["sha256"])
+        self.assertEqual(p["evidencia_direitos_id"],"DOCUMENTO_FICTICIO_TESTE_20261020")
+        self.assertEqual(p["sessao_fechamento"],"2026-10-19")
+        self.assertIsNone(p["ultima_sessao_concluida"])
+        self.assertFalse(p["fechamento_confirmado"])
+        self.assertIsNone(p["publicado_em"])
+        self.assertIn("R$/USD",r["texto"])
+        self.assertFalse(r["preflight_editorial"]["apto_revisao"])
+        self.assertTrue(any(x.startswith("COTACAO_0:")
+                            for x in r["preflight_editorial"]["bloqueios"]))
+
     def test_sem_fechamento_nao_publica_interbancario(self):
         with self.assertRaisesRegex(Exception,"Fechamento"):
             self.run_pipeline(ptax_snapshots=[configuracao(boletim="Fechamento Interbancário")])

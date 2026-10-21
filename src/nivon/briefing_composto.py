@@ -9,13 +9,12 @@ from hashlib import sha256
 from math import isfinite
 import re
 from .briefing_diario import gerar_texto, ErroBriefing
+from .frete_linhas_editoriais import formatar_linha_frete, linha_identificada, CORREDORES
+from .politica_frescor_briefing import LIMITES_FRESCURA, validar_frescor_indicador
 
-CORREDORES = {
-    ("SORRISO", "MT", "RONDONOPOLIS", "MT"),
-    ("SINOP", "MT", "MIRITITUBA", "PA"),
-}
 SECOES = ("BOLSAS", "CAMBIO", "PRECOS", "SAFRA", "PORTOS", "DIESEL",
            "FERTILIZANTES", "CLIMA", "LOGISTICA", "GEOPOLITICA")
+assert set(SECOES) == set(LIMITES_FRESCURA)
 
 
 def montar_briefing(*, noticias: list[dict], fontes: dict,
@@ -47,6 +46,10 @@ def montar_briefing(*, noticias: list[dict], fontes: dict,
             agora = datetime.fromisoformat(data.replace("Z", "+00:00"))
             if agora.tzinfo is None or d > agora:
                 raise ErroBriefing("referência futura ou geração sem fuso")
+            # Backstop da PR #13: nem preço fora de janela nem cotação velha,
+            # mesmo se origem/licença forem informadas como aprovadas.
+            # A vigência do último pregão é conferida SEPARADAMENTE no preflight.
+            validar_frescor_indicador(secao=secao, referencia=referencia, gerado_em=data)
             itens.append({
                 "secao": secao, "titulo": titulo[:100],
                 "valor": valor[:100], "referencia": referencia,
@@ -71,33 +74,27 @@ def montar_briefing(*, noticias: list[dict], fontes: dict,
                          " (ref. " + x["referencia"] + "; " + x["fonte"] + ")"
                          for x in grupo)
     fretes_aceitos = []
+    vistos = set()
+    agora = datetime.fromisoformat(data.replace("Z", "+00:00"))
     for f in fretes or []:
         try:
-            rota = tuple(str(f[k]).strip().upper() for k in
-                         ("origem", "uf_origem", "destino", "uf_destino"))
-            if rota not in CORREDORES:
-                raise ValueError("corredor não contratado")
-            if f.get("tipo") != "FRETE_ANUNCIADO":
-                raise ValueError("não confundir frete anunciado com negociado")
-            valor = f["valor_rs_t"]
-            if isinstance(valor, bool) or not isinstance(valor, (int, float)) or not isfinite(valor) or valor <= 0:
-                raise ValueError("frete inválido")
             fonte = fontes[f["fonte_id"]]
-            if fonte.get("status_direitos") != "APROVADA" or "PUBLICACAO_DERIVADA" not in fonte.get("operacoes", []):
+            if (fonte.get("status_direitos") != "APROVADA"
+                    or "PUBLICACAO_DERIVADA" not in fonte.get("operacoes", [])):
                 raise PermissionError("frete sem direito de publicação")
+            linha = formatar_linha_frete(f)
             referencia = datetime.fromisoformat(f["referencia"].replace("Z", "+00:00"))
-            if referencia.tzinfo is None:
-                raise ValueError("frete sem timestamp")
-            fretes_aceitos.append((rota, valor, referencia.isoformat()))
+            if referencia > agora:
+                raise ValueError("frete com referência futura")
+            if linha in vistos:
+                raise ValueError("republicação de registro individual duplicado")
+            vistos.add(linha)
+            fretes_aceitos.append(linha)
         except (KeyError, TypeError, ValueError, PermissionError) as exc:
             bloqueios.append({"tipo": "FRETE", "motivo": str(exc)})
     if fretes_aceitos:
         bloco.extend(["", "*FRETES ANUNCIADOS — CORREDORES*"])
-        for rota, valor, referencia in fretes_aceitos:
-            bloco.append("• " + rota[0] + "/" + rota[1] + " → " +
-                         rota[2] + "/" + rota[3] + ": R$ " +
-                         ("%.2f" % valor).replace(".", ",") +
-                         "/t (ref. " + referencia + ")")
+        bloco.extend(fretes_aceitos)
         bloco.append("Divulgações de transportadoras; não são viagens realizadas.")
     texto_final = texto + (("\n" + "\n".join(bloco)) if bloco else "")
     return {

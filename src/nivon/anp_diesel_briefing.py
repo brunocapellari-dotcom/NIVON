@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 from .lineup_nacional import instante
 
 
@@ -50,8 +51,12 @@ def montar_indicadores_diesel(
     if not isinstance(obs,list) or not obs:
         raise ErroDieselBriefing("arquivo sem observações semanais")
     atual=max(date.fromisoformat(r["semana_fim_oficial"]) for r in obs)
-    if atual>agora.date() or atual<agora.date()-timedelta(days=max_dias_defasagem):
+    calendario_br=ZoneInfo("America/Sao_Paulo")
+    hoje_br=agora.astimezone(calendario_br).date()
+    if atual>hoje_br or atual<hoje_br-timedelta(days=max_dias_defasagem):
         raise ErroDieselBriefing("série ANP defasada: não publicar como atual")
+    if pub.astimezone(calendario_br).date()<atual:
+        raise ErroDieselBriefing("publicação ANP anterior ao fim da semana pesquisada")
     linhas=[];vistos=set()
     for r in obs:
         if r["semana_fim_oficial"]!=atual.isoformat():
@@ -72,12 +77,21 @@ def montar_indicadores_diesel(
         start=date.fromisoformat(r["semana_inicio_oficial"])
         if (atual-start).days!=6:
             raise ErroDieselBriefing("semana com duração incorreta")
-        valor=f"R$ {preco:.3f}/L; semana {start:%d/%m}–{atual:%d/%m}; {n} postos"
+        valor=f"R$ {preco:.3f}/L (R$/L); semana {start:%d/%m}–{atual:%d/%m}; {n} postos"
         linhas.append({
-            "fonte_id":"ANP","secao":"DIESEL",
+            "fonte_id":"ANP","secao":"DIESEL","grupo":"ENERGIA",
             "titulo":f"{mun}/MT — {r['produto']} (revenda)",
-            "valor":valor,
+            "valor":valor,"valor_num":str(preco), "unidade":"R$/L",
+            "natureza":"INDICATIVO",
+            "classe_estatistica":"MEDIA_AMOSTRAL_MUNICIPAL_REVENDA",
+            "competencia":atual.isoformat(),
+            "semana_inicio":start.isoformat(),"semana_fim":atual.isoformat(),
+            "postos_pesquisados":n,
+            "periodo_identificado":True,
             "referencia":pub.isoformat(),
+            "publicado_em":pub.isoformat(),
+            "coletado_em":coleta.isoformat(),
+            "sha256_origem":resultado["sha256"],
             "fonte":"ANP — Levantamento de Preços (média municipal amostral)",
         })
     if not linhas:
@@ -85,7 +99,8 @@ def montar_indicadores_diesel(
     return {
         "indicadores":sorted(linhas,key=lambda x:x["titulo"]),
         "fontes":{"ANP":{"status_direitos":"APROVADA",
-                         "operacoes":["LEITURA","PUBLICACAO_DERIVADA"]}},
+                         "operacoes":["LEITURA","PUBLICACAO_DERIVADA"],
+                         "id_aprovacao":direitos["evidencia_id"]}},
         "evidencia":{
             "dataset_id":resultado["dataset_id"],"sha256":resultado["sha256"],
             "semana_inicio":(atual-timedelta(days=6)).isoformat(),
@@ -94,6 +109,7 @@ def montar_indicadores_diesel(
             "fonte_original":resultado.get("url_origem"),
             "tipo":"MEDIA_AMOSTRAL_MUNICIPAL_DIESEL_B_REVENDA",
             "documento_autorizacao":direitos["evidencia_id"],
+            "coletado_em":coleta.isoformat(),
             "preco_nunca_agregado_em_media_entre_municipios":True,
         }
     }
