@@ -55,9 +55,8 @@ def reconciliar(catalogo: dict, crosswalk: dict) -> dict:
         raise ErroCrosswalk("cobertura difere da declaracao documental upstream")
 
     fontes = {x["id"]: x for x in catalogo["sources"]}
-    por_fonte: dict[str, list] = {}
-    for d in catalogo["datasets"]:
-        por_fonte.setdefault(d["source_id"], []).append(d)
+    datasets_by_id = {d["id"]: d for d in catalogo["datasets"]}
+    datasets_seen: set[str] = set()
 
     vistos = set()
     out = []
@@ -65,6 +64,10 @@ def reconciliar(catalogo: dict, crosswalk: dict) -> dict:
         if not isinstance(entry, dict):
             raise ErroCrosswalk("entrada nao e objeto")
         slug, status, fid = entry.get("slug"), entry.get("status"), entry.get("source_id")
+        dataset_ids = entry.get("dataset_ids")
+        if (not isinstance(dataset_ids, list) or len(set(map(str, dataset_ids))) != len(dataset_ids)
+                or any(not isinstance(x, str) for x in dataset_ids)):
+            raise ErroCrosswalk("dataset_ids invalidos ou duplicados")
         if not isinstance(slug, str) or not re.fullmatch(r"[a-z][a-z0-9_]{1,60}", slug) or slug in vistos:
             raise ErroCrosswalk("slug duplicado ou invalido")
         vistos.add(slug)
@@ -82,7 +85,15 @@ def reconciliar(catalogo: dict, crosswalk: dict) -> dict:
                 raise ErroCrosswalk("fonte nao mapeada/excluida nao pode conter source_id")
             if status == "FORA_DO_ESCOPO" and (not isinstance(entry.get("motivo"), str) or not entry["motivo"].strip()):
                 raise ErroCrosswalk("exclusao requer motivo")
-        datasets = por_fonte.get(fid, []) if status == "MAPEADA" else []
+        if status != "MAPEADA" and dataset_ids:
+            raise ErroCrosswalk("sem fonte canonica nao pode mapear datasets")
+        if any(did not in datasets_by_id or datasets_by_id[did]["source_id"] != fid
+               for did in dataset_ids):
+            raise ErroCrosswalk("dataset inexistente ou de fonte diferente")
+        if any(did in datasets_seen for did in dataset_ids):
+            raise ErroCrosswalk("dataset canonico duplicado em diferentes fontes agrobr")
+        datasets_seen.update(dataset_ids)
+        datasets = [datasets_by_id[did] for did in dataset_ids]
         restricted = status == "MAPEADA" and (fontes[fid]["rights"] == "RESTRICTED"
                          or any(d["stage"] == "BLOCKED_RIGHTS" for d in datasets))
         if status == "FORA_DO_ESCOPO":
