@@ -40,3 +40,29 @@ O usuário autorizou uso interno dos dados recebidos. Isso não implica automati
 5. Não fazer merge, deploy ou contratação de serviço sem homologação.
 
 **Resultado:** credenciais encontradas, contratos implementados e teste offline; autenticação real ANA e dados brutos INMET continuam não verificados neste ambiente.
+
+## Revalidação dos três e-mails — 21/10/2026
+
+A consulta à conta Gmail conectada confirmou **três mensagens**, sem copiar conteúdo sensível para esta documentação:
+
+| Fonte | Mensagem/recebimento | Evidência de acesso | Estado operacional |
+|---|---|---|---|
+| USDA | `Fw: Your API key`; encaminhada em 19/08/2026, original de 17/07/2026, remetente `noreply@api.data.gov` | Chave da infraestrutura API.Data.gov recebida | Serviço e escopo USDA ainda não testados; não confundir uma chave genérica da plataforma com uma API USDA homologada |
+| ANA | `Fw: Cadastramento de Usuário`; encaminhada em 19/08/2026, original de 17/07/2026, remetente `nao-responda@ana.gov.br` | Identificador e senha foram emitidos | Login real e token HidroWebService ainda não testados |
+| INMET | `Fwd: Processamento Concluído - BDMEP - INMET`; recebida em 25/08/2026, original de 25/08/2026, remetente `bdmep@inmet.gov.br` | Requisição BDMEP concluída; link privado para baixar dados | Link e ZIP ainda não verificados; reemissão pode ser necessária se expirou |
+
+O NIVON utiliza **exclusivamente finalidade não comercial**; isso não implica licença irrestrita de armazenamento ou redistribuição. Não se alteraram automaticamente os estados de `collection_authorized`, `runtime_enabled` ou `scheduled_enabled`.
+
+### Contrato de transferência segura ao executor
+
+- ANA: o adaptador já espera `NIVON_ANA_IDENTIFICADOR` e `NIVON_ANA_SENHA` fornecidos por secret vault/ambiente privado.
+- INMET: o adaptador já espera `NIVON_INMET_BDMEP_URL` fornecida exclusivamente por secret vault/ambiente privado; a URL individual deve ser tratada como segredo.
+- USDA: antes de definir uma variável/integração, identificar o **serviço exato** compatível com a chave API.Data.gov e validar autenticação, resposta, limite e termos de acesso sem registrar a chave. Não usar a chave em logs, PR, URLs públicas ou arquivos de teste.
+- Não extrair senhas ou chaves do Gmail para o GitHub público, CI, variáveis de pull request, comentários, mensagens ou qualquer artefato versionado.
+
+### Próximos testes de acesso (ainda não realizados)
+
+1. Testar o serviço USDA específico por executor autorizado com segredo protegido e resposta sanitizada, registrando somente status, schema e proveniência.
+2. Autenticar a ANA uma vez em executor privado, com headers conforme manual; validar permissão para uma estação, timestamps e qualidade das medições.
+3. Verificar se o link BDMEP está válido; se sim, arquivar ZIP original em storage privado, calcular SHA-256 e homologar layout. Se expirou, renovar pela via oficial.
+4. Executar ingestão histórica incremental e verificar direitos de coleta, armazenamento, processamento e exibição por dataset, sempre com fonte, publicação, referência e coleta.
