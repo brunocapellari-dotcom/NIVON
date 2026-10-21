@@ -65,6 +65,22 @@ def _fingerprint(payload: dict) -> str:
                                     ensure_ascii=False).encode("utf-8")).hexdigest()
 
 
+def _evidencia_optout(evidencia: str) -> str:
+    if (not isinstance(evidencia, str)
+            or not re.fullmatch(r"[A-Za-z0-9._:-]{12,128}", evidencia)):
+        raise ErroOutbox("opt-out requer evidência identificável")
+    return hashlib.sha256(evidencia.encode("utf-8")).hexdigest()
+
+
+def _bloquear_se_optout(con: sqlite3.Connection, destinatario_hmac: str) -> None:
+    # Exige ser chamado dentro de BEGIN IMMEDIATE antes de registrar/aprovar
+    # ou reservar tentativa. Não confundir com cancelamento do POST já feito.
+    if con.execute(
+            "SELECT 1 FROM nivon_optouts_destinatario WHERE destinatario_hmac=?",
+            (destinatario_hmac,)).fetchone() is not None:
+        raise PermissionError("opt-out ativo para destinatário: nenhum novo envio")
+
+
 def _esquema(con: sqlite3.Connection) -> None:
     if con.in_transaction:
         raise ErroOutbox("conexão deve estar sem transação antes de iniciar a outbox")
@@ -93,6 +109,10 @@ def _esquema(con: sqlite3.Connection) -> None:
         idempotency_key TEXT PRIMARY KEY REFERENCES nivon_envios(idempotency_key),
         evidencia_sha256 TEXT NOT NULL,
         revogado_em TEXT NOT NULL)""")
+    con.execute("""CREATE TABLE IF NOT EXISTS nivon_optouts_destinatario (
+        destinatario_hmac TEXT PRIMARY KEY,
+        evidencia_sha256 TEXT NOT NULL,
+        revogado_em TEXT NOT NULL)""")
 
 
 def registrar_edicao(con: sqlite3.Connection, preparado: dict, *,
@@ -112,6 +132,7 @@ def registrar_edicao(con: sqlite3.Connection, preparado: dict, *,
     _esquema(con)
     con.execute("BEGIN IMMEDIATE")
     try:
+        _bloquear_se_optout(con, digest)
         existe=con.execute("""SELECT idempotency_key, payload_sha256, estado
             FROM nivon_envios WHERE edicao=? AND destinatario_hmac=? AND template=?""",
             (edicao,digest,template)).fetchone()
@@ -181,6 +202,7 @@ def registrar_autorizacao(con: sqlite3.Connection, preparado: dict, *,
                             FROM nivon_envios WHERE idempotency_key=?""", (chave,)).fetchone()
         if row is None or row[3] != "PREPARADO":
             raise ErroOutbox("reserva editorial requer registro PREPARADO sem tentativas")
+        _bloquear_se_optout(con, row[1])
         if (documento["idempotency_key"] != chave
                 or documento["edicao"] != row[0]
                 or documento["destinatario_hmac"] != row[1]
@@ -206,16 +228,47 @@ def registrar_autorizacao(con: sqlite3.Connection, preparado: dict, *,
             "documento_sha256": digest_doc}
 
 
-def revogar_autorizacao(con: sqlite3.Connection, *, chave: str,
-                       evidencia_revogacao: str) -> dict:
-    """Bloqueia novas reservas; não desfaz POST eventualmente já efetuado."""
-    if (not isinstance(evidencia_revogacao, str)
-            or not re.fullmatch(r"[A-Za-z0-9._:-]{12,128}", evidencia_revogacao)):
-        raise ErroOutbox("revogação exige registro identificável")
+def revogar_destinatario(con: sqlite3.Connection, *, destino: str,
+                        chave_destinatario: bytes, evidencia_revogacao: str) -> dict:
+    """Aplica opt-out permanente por identidade pseudonimizada de destinatário.
+
+    Pode anteceder qualquer edição. A reativação exige procedimento EXTERNO
+    auditado de novo opt-in; esta API nunca desfaz a revogação.
+    """
+    _secret(chave_destinatario)
+    if not isinstance(destino, str) or not re.fullmatch(r"[0-9]{10,15}", destino):
+        raise ErroOutbox("destinatário do opt-out inválido")
+    prova = _evidencia_optout(evidencia_revogacao)
+    digest = hmac.new(chave_destinatario, destino.encode(), hashlib.sha256).hexdigest()
     _esquema(con)
     con.execute("BEGIN IMMEDIATE")
     try:
-        r = con.execute("""SELECT e.estado,a.revogado_em
+        now = _hora()
+        con.execute("""INSERT OR IGNORE INTO nivon_optouts_destinatario
+                       (destinatario_hmac,evidencia_sha256,revogado_em)
+                       VALUES (?,?,?)""", (digest, prova, now))
+        # Revogar aprovações ainda não executadas; status posterior à reserva
+        # não pode ser cancelado por supressão local.
+        con.execute("""UPDATE nivon_autorizacoes SET revogado_em=?
+                       WHERE revogado_em IS NULL AND idempotency_key IN
+                       (SELECT idempotency_key FROM nivon_envios
+                        WHERE destinatario_hmac=?)""", (now, digest))
+        con.commit()
+    except Exception:
+        con.rollback()
+        raise
+    return {"destinatario_hmac": digest, "estado": "OPT_OUT_DESTINATARIO_ATIVO",
+            "envio_realizado": False}
+
+
+def revogar_autorizacao(con: sqlite3.Connection, *, chave: str,
+                       evidencia_revogacao: str) -> dict:
+    """Bloqueia novas reservas; não desfaz POST eventualmente já efetuado."""
+    prova = _evidencia_optout(evidencia_revogacao)
+    _esquema(con)
+    con.execute("BEGIN IMMEDIATE")
+    try:
+        r = con.execute("""SELECT e.estado,a.revogado_em,e.destinatario_hmac
                            FROM nivon_envios e JOIN nivon_autorizacoes a
                            ON e.idempotency_key=a.idempotency_key
                            WHERE e.idempotency_key=?""", (chave,)).fetchone()
@@ -230,8 +283,17 @@ def revogar_autorizacao(con: sqlite3.Connection, *, chave: str,
             con.execute("""INSERT INTO nivon_revogacoes
                            (idempotency_key,evidencia_sha256,revogado_em)
                            VALUES (?,?,?)""",
-                        (chave, hashlib.sha256(evidencia_revogacao.encode("utf-8")).hexdigest(),
-                         instante))
+                        (chave, prova, instante))
+        # Um opt-out registrado para uma edição protege o destinatário em
+        # todas as edições subsequentes, inclusive após restart.
+        instante = _hora()
+        con.execute("""INSERT OR IGNORE INTO nivon_optouts_destinatario
+                       (destinatario_hmac,evidencia_sha256,revogado_em)
+                       VALUES (?,?,?)""", (r[2], prova, instante))
+        con.execute("""UPDATE nivon_autorizacoes SET revogado_em=?
+                       WHERE revogado_em IS NULL AND idempotency_key IN
+                       (SELECT idempotency_key FROM nivon_envios
+                        WHERE destinatario_hmac=?)""", (instante, r[2]))
         con.commit()
     except Exception:
         con.rollback()
@@ -278,6 +340,7 @@ def despachar_registrado(con: sqlite3.Connection, preparado: dict, *,
             raise ErroOutbox("envio já reservado/realizado: sem retry automático")
         if d[1]!=_fingerprint(preparado["payload"]):
             raise ErroOutbox("conteúdo divergente do registrado")
+        _bloquear_se_optout(con, d[3])
         if (d[4] != digest_doc or d[5] != documento.get("sha256_editorial")
                 or d[6] is not None or d[2] != documento.get("edicao")
                 or d[3] != documento.get("destinatario_hmac")
