@@ -72,6 +72,38 @@ def _evidencia_optout(evidencia: str) -> str:
     return hashlib.sha256(evidencia.encode("utf-8")).hexdigest()
 
 
+def _vincular_chave_destinatario(con: sqlite3.Connection, segredo: bytes) -> None:
+    """Evita bypass de opt-out por rotação silenciosa da chave HMAC.
+
+    Para bases legadas com envios já gravados e sem âncora, exige migração
+    manual supervisionada. Nunca presume que a nova chave é equivalente.
+    O fingerprint não substitui armazenamento seguro e versionamento de chave.
+    """
+    _secret(segredo)
+    if not con.in_transaction:
+        raise ErroOutbox("verificação de chave HMAC exige transação exclusiva")
+    fingerprint = hashlib.sha256(b"nivon:destinatario-hmac:v1:" + segredo).hexdigest()
+    atual = con.execute(
+        "SELECT fingerprint_sha256 FROM nivon_identidade_hmac WHERE id=1"
+    ).fetchone()
+    if atual:
+        if not hmac.compare_digest(atual[0], fingerprint):
+            raise PermissionError("chave HMAC do destinatário alterada sem migração auditada")
+        return
+    # No legado, um registro já existente pode ter sido produzido por outra
+    # chave. É inseguro estabelecer âncora retrospectivamente por suposição.
+    usado = con.execute("SELECT 1 FROM nivon_envios LIMIT 1").fetchone()
+    revogado = con.execute(
+        "SELECT 1 FROM nivon_optouts_destinatario LIMIT 1"
+    ).fetchone()
+    if usado or revogado:
+        raise PermissionError("chave HMAC de base legada exige migração auditada")
+    con.execute(
+        "INSERT INTO nivon_identidade_hmac (id,fingerprint_sha256,criado_em) "
+        "VALUES (1,?,?)", (fingerprint, _hora())
+    )
+
+
 def _bloquear_se_optout(con: sqlite3.Connection, destinatario_hmac: str) -> None:
     # Exige ser chamado dentro de BEGIN IMMEDIATE antes de registrar/aprovar
     # ou reservar tentativa. Não confundir com cancelamento do POST já feito.
@@ -113,6 +145,10 @@ def _esquema(con: sqlite3.Connection) -> None:
         destinatario_hmac TEXT PRIMARY KEY,
         evidencia_sha256 TEXT NOT NULL,
         revogado_em TEXT NOT NULL)""")
+    con.execute("""CREATE TABLE IF NOT EXISTS nivon_identidade_hmac (
+        id INTEGER PRIMARY KEY CHECK (id=1),
+        fingerprint_sha256 TEXT NOT NULL,
+        criado_em TEXT NOT NULL)""")
 
 
 def registrar_edicao(con: sqlite3.Connection, preparado: dict, *,
@@ -132,6 +168,7 @@ def registrar_edicao(con: sqlite3.Connection, preparado: dict, *,
     _esquema(con)
     con.execute("BEGIN IMMEDIATE")
     try:
+        _vincular_chave_destinatario(con, chave_destinatario)
         _bloquear_se_optout(con, digest)
         existe=con.execute("""SELECT idempotency_key, payload_sha256, estado
             FROM nivon_envios WHERE edicao=? AND destinatario_hmac=? AND template=?""",
@@ -243,6 +280,7 @@ def revogar_destinatario(con: sqlite3.Connection, *, destino: str,
     _esquema(con)
     con.execute("BEGIN IMMEDIATE")
     try:
+        _vincular_chave_destinatario(con, chave_destinatario)
         now = _hora()
         con.execute("""INSERT OR IGNORE INTO nivon_optouts_destinatario
                        (destinatario_hmac,evidencia_sha256,revogado_em)
