@@ -118,3 +118,19 @@ O parser `inmet_horario_qc.py` da PR #9 recebe CSV horário e retorna `BRUTO_HOR
 `tests/test_pacotes_chuva_asof.py` cobre hash adulterado, identidade e versão, intervalos, captura tardia, não pareamento, faltantes, duplicações, fonte incorreta, JSON malformado, direitos e bloqueio de dados reais. A CI da branch determina a aceitação do HEAD final; resultados anteriores de testes sintéticos não são evidência de precisão real.
 
 **Próxima tarefa executável:** coordenar a reconciliação dos parsers/QC da PR #9 e MJO da PR #11 pela integração central; preparar conjuntos reais permitidos com snapshots originais de NWP, QC de estações e comprovantes históricos point-in-time. Sem evidência externa, apenas classificação `CODE_TESTED_SYNTHETIC_ONLY`, sem ativar fonte nem previsão.
+
+
+## 8. Continuação — adaptador físico de chuva horária INMET (21/10/2026)
+
+O parser horário real `src/nivon/inmet_horario_qc.py` permanece na PR #9 e **não foi copiado** para a PR #19. O novo `src/nivon/adaptador_inmet_chuva.py` aceita apenas o **contrato de saída** de `agregar_dias_inmet`, com entrada declarada `DIARIO_PRELIMINAR_NAO_HOMOLOGADO` e `qc_sensor=NAO_HOMOLOGADO`. Uma série de 24 valores não prova, isoladamente, qual janela física esses valores integram.
+
+- Somente converte dia UTC que contenha **24/24 horas de chuva válidas**, convenção intervalar documentada e `comparacao_grade_permitida` explícita. Não interpola ausência nem aceita chuva negativa, não numérica ou evento extremo acima de 1000 mm sem auditoria.
+- Exige `convencao_hora=FIM_INTERVALO` ou `INICIO_INTERVALO`. Para grupo rotulado no dia `D` (registros 00h a 23h UTC): **FIM** gera início `D-1 às 23h UTC` e fim `D às 23h UTC`; **INÍCIO** gera início `D às 00h UTC` e fim `D+1 às 00h UTC`. Isso impede assumir incorretamente que agrupar por data UTC equivale a intervalo civil de meia-noite a meia-noite em ambos os casos.
+- Exige relatório JSON QC separado, limitado em tamanho, sem chaves duplicadas e com vínculo estrito a estação, data rotulada, SHA-256 do CSV fonte, convenção horária, referência documental, auditor e data de validação. Relatório e medição só entram quando publicados e coletados, respeitando `validado_em <= publicado_em <= coletado_em`. A publicação efetiva da observação aprovada é a maior entre publicação do dado e publicação do relatório QC.
+- Retém cadeia entre SHA do CSV original, SHA do relatório QC e SHA do **pacote JSON normalizado** que entra em `pacotes_chuva_asof.py`. O último é um **payload normalizado**, não bytes do arquivo bruto original: o hash do CSV original não é substituído.
+- O código **não autentica a identidade do auditor, nem comprova a procedência ou a qualidade do relatório QC**. Flags de comprovação externa, homologação e disponibilidade real continuam `false` mesmo quando o relatório autodeclarado diz `APROVADO`. Datas, direitos e relatórios precisam ser auditados externamente antes de aceitar série real.
+- `tests/test_adaptador_inmet_chuva.py` inclui regressões de relógio, 24h, SHA, QC incompleto/divergente, publicação/coleta, faltantes e ligação ponta a ponta do adaptador com o verificador probabilístico em 30 intervalos sintéticos consecutivos.
+
+**Integração restante:** trazer a PR #9 para o conjunto de build unificado, testar o próprio `extrair_horarios_inmet -> agregar_dias_inmet -> converter_dia_inmet_para_snapshot` com fixtures reais autorizadas, reconciliação da convenção física, UTC e auditoria do QC. O teste atual cobre o contrato, não simula que PR #9 está integrada. PR #11 (MJO) também continua independente.
+
+**Estado:** melhoria offline testável sem uso de rede, produção e coleta desligadas, métricas estritamente sintéticas. Não houve merge ou deployment.
