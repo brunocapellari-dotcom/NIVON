@@ -269,8 +269,12 @@ def parse_itaqui_tables(tables: Iterable[PdfTable], *, reference_date: date) -> 
                 None,
             )
         berth_i = _index_for(headers, "berco", "berth", before=status_i)
-        duv_i = _index_exact_or_contains(
-            headers, ("duv", "numero_unico_de_viagem"), ()
+        # Exact headers only. A substring such as "duvida"/"observacao_duv"
+        # does not establish an authority-issued DUV column.
+        duv_i = next(
+            (i for i, header in enumerate(headers)
+             if header in {"duv", "numero_unico_de_viagem", "numero_unico_da_viagem"}),
+            None,
         )
         if None in (status_i, vessel_i, product_i, qty_i, eta_i):
             continue
@@ -361,7 +365,11 @@ def parse_paranagua_tables(
         arrival_i = _index_for(headers, "chegada")
         product_i = _index_for(headers, "produto")
         berth_i = _index_for(headers, "berco")
-        duv_i = _index_exact_or_contains(headers, ("duv", "numero_unico_de_viagem"), ())
+        duv_i = next(
+            (i for i, header in enumerate(headers)
+             if header in {"duv", "numero_unico_de_viagem", "numero_unico_da_viagem"}),
+            None,
+        )
         if None in (vessel_i, arrival_i, berth_i):
             continue
 
