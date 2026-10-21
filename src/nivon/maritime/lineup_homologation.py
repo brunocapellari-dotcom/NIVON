@@ -221,6 +221,15 @@ def _rights_gaps(
     matched = [r for r in rights if r.port_id == plan.port_id and r.source_id == plan.source_id]
     if not matched:
         return {"RIGHTS_RECORD_MISSING"}
+    # An explicit denial is a hard conflict. Do not let another record
+    # silently union permissions over a still-effective rejection.
+    if any(
+        r.status == "DENIED"
+        and _aware_utc(r.checked_at, "checked_at") <= cutoff
+        and (r.expires_at is None or _aware_utc(r.expires_at, "expires_at") >= cutoff)
+        for r in matched
+    ):
+        return {"RIGHTS_EXPLICITLY_DENIED"}
     verified = [
         r for r in matched
         if r.status == "VERIFIED"
