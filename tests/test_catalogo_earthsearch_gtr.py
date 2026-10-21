@@ -44,7 +44,7 @@ class TestDatasetsDescobertos(unittest.TestCase):
     def test_worldcover_snapshot_2021_nao_2026(self):
         r = next(x for x in self.rot["entries"] if x["dataset_id"] == "ESA_WORLDCOVER_2021_10M")
         self.assertIn("2021_STATIC_NOT_2026", r["gates_missing"])
-        self.assertEqual(r["locator"]["kind"], "OFFICIAL_INDEX")
+        self.assertEqual(r["locator"]["kind"], "DIRECT_PUBLIC_FILE")
 
     def test_jrc_versions_and_water_not_discharge(self):
         r = next(x for x in self.rot["entries"] if x["dataset_id"] == "JRC_GSW_AGUA_SUPERFICIAL")
