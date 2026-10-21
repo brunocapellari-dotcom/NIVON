@@ -42,7 +42,7 @@ def ausente(item):
     """pandas pode materializar campo nullable (area_colhida) como float NaN."""
     if item is None:
         return True
-    if isinstance(item,str) and item.strip() in ("", "<NA>", "NaN", "nan"):
+    if isinstance(item,str) and item.strip() in ("", "<NA>"):
         return True
     if isinstance(item,float) and item != item:
         return True
