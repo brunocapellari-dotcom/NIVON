@@ -84,15 +84,11 @@ def _abrir(path):
     if p.exists() and not p.is_file():
         raise DadoInvalido("SQLite deve ser arquivo regular")
     cx = sqlite3.connect(str(p), timeout=5)
-    try:
-        cx.executescript(_SCHEMA)
-        # Versoes anteriores usavam indice UNIQUE com hashes; tal indice
-        # permite duas capturas distintas sob o mesmo instante declarado.
-        # Falhar fechado, sem reconstruir automaticamente um arquivo existente.
-        esperado = ("especie", "tabela_sidra", "url_valores",
-                    "url_metadados", "coleta_declarada")
+    esperado = ("especie", "tabela_sidra", "url_valores",
+                "url_metadados", "coleta_declarada")
+
+    def indice_canonico():
         indices = cx.execute("PRAGMA index_list(capturas_sidra)").fetchall()
-        seguro = False
         for indice in indices:
             if not indice[2]:
                 continue
@@ -100,10 +96,20 @@ def _abrir(path):
             colunas = tuple(row[2] for row in
                 cx.execute('PRAGMA index_info("' + nome + '")').fetchall())
             if colunas == esperado:
-                seguro = True
-                break
-        if not seguro:
-            raise DadoInvalido("esquema SIDRA legado sem unicidade de captura; migracao auditada necessaria")
+                return True
+        return False
+
+    try:
+        # IMPORTANTE: validar schema legado ANTES de executescript, pois
+        # CREATE TRIGGER alteraria o banco mesmo quando a migracao e negada.
+        existe = cx.execute("""SELECT 1 FROM sqlite_master
+            WHERE type='table' AND name='capturas_sidra'""").fetchone()
+        if existe and not indice_canonico():
+            raise DadoInvalido(
+                "esquema SIDRA legado sem unicidade de captura; migracao auditada necessaria")
+        cx.executescript(_SCHEMA)
+        if not indice_canonico():
+            raise DadoInvalido("esquema SIDRA nao possui indice canonico")
         return cx
     except Exception:
         cx.close()
@@ -177,21 +183,38 @@ def arquivar_pacote_sidra_offline(
 
 
 def recuperar_pacote_sidra_offline(*, banco, id_captura: int):
-    """Recuperacao verificada byte-a-byte; nunca publicar como serie oficial."""
+    """Recuperacao byte-a-byte, conferindo metadados e origem DECLARADA."""
     if type(id_captura) is not int or id_captura < 1:
         raise DadoInvalido("id de captura invalido")
     with closing(_abrir(banco)) as cx:
-        row = cx.execute("""SELECT especie,tabela_sidra,sha256_valores,
-            sha256_metadados,bruto_valores,bruto_metadados,status
+        row = cx.execute("""SELECT especie, tabela_sidra,
+            url_valores, url_metadados,
+            publicacao_declarada, coleta_declarada,
+            sha256_valores, sha256_metadados,
+            bruto_valores, bruto_metadados, status
             FROM capturas_sidra WHERE id=?""", (id_captura,)).fetchone()
     if row is None:
         raise DadoInvalido("captura nao encontrada")
-    especie, tabela, hv, hm, bruto_v, bruto_m, estado = row
-    if (estado != "ARQUIVADO_NAO_HOMOLOGADO" or
-        sha256(bruto_v).hexdigest() != hv or
-        sha256(bruto_m).hexdigest() != hm):
+    (especie, tabela, url_v, url_m, publicacao, coleta,
+     hash_v, hash_m, bruto_v, bruto_m, estado) = row
+    if TABELAS_SIDRA.get(especie) != tabela or estado != "ARQUIVADO_NAO_HOMOLOGADO":
+        raise DadoInvalido("identidade/status do arquivo corrompidos")
+    _validar_url(url_v, tabela=tabela, metadados=False)
+    _validar_url(url_m, tabela=tabela, metadados=True)
+    pub, col = _instante(publicacao, "publicacao"), _instante(coleta, "coleta")
+    if pub > col:
+        raise DadoInvalido("cronologia de arquivo corrompida")
+    if (_conteudo(bruto_v, tipo="valores", max_bytes=4_000_000, tabela=tabela) != hash_v
+        or _conteudo(bruto_m, tipo="metadados",
+                    max_bytes=1_000_000, tabela=tabela) != hash_m):
         raise DadoInvalido("integridade de evidencia corrompida")
-    return {"especie": especie, "tabela_sidra": tabela,
-            "bruto_valores": bruto_v, "bruto_metadados": bruto_m,
-            "sha256_valores": hv, "sha256_metadados": hm,
-            "status": estado, "dados_reais_verificados": False}
+    return {
+        "id_captura": id_captura,
+        "especie": especie, "tabela_sidra": tabela,
+        "url_valores": url_v, "url_metadados": url_m,
+        "publicacao_declarada": publicacao, "coleta_declarada": coleta,
+        "bruto_valores": bruto_v, "bruto_metadados": bruto_m,
+        "sha256_valores": hash_v, "sha256_metadados": hash_m,
+        "status": estado, "dados_reais_verificados": False,
+        "timestamps_autenticados": False,
+    }
