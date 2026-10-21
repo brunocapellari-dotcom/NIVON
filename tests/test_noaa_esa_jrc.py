@@ -41,7 +41,7 @@ class TestNOAAMEI(unittest.TestCase):
         r = normalizar_mei_csv(CSV, coletado_em="2026-10-21T12:00:00-04:00")
         self.assertEqual(r["quantidade"], 12)
         self.assertEqual(r["observacoes"][0]["bimestre_movel"], "DJ")
-        self.assertIsNone(r["observacoes"][0]["competencia"])
+        self.assertEqual(r["observacoes"][0]["competencia"], "2024-01")
         self.assertIsNone(r["publicacao"])
         self.assertFalse(r["apto_backtest_asof"])
 
