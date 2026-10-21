@@ -169,10 +169,10 @@ class PdfProgrammeRevisionTests(unittest.TestCase):
     def test_cannot_compare_across_reference_date_even_same_number(self):
         with self.assertRaisesRegex(ValueError, "not proven stable"):
             compare_pdf_programme_editions(edition(), updated(
-                reference="2026-10-21", rows=[row()]))
+                reference="2026-10-19", rows=[row()]))
         with self.assertRaisesRegex(ValueError, "not proven stable"):
             compare_pdf_programme_editions(edition(), updated(
-                reference="2026-10-19", rows=[row()]))
+                reference="2026-10-18", rows=[row()]))
 
     def test_collection_order_is_strict(self):
         with self.assertRaisesRegex(ValueError, "strictly later"):
@@ -281,7 +281,7 @@ class PdfProgrammeRevisionTests(unittest.TestCase):
         with MaritimeStore() as store:
             db = PdfProgrammeLedger(store)
             db.save(edition(), storage_authorized=True)
-            db.save(updated(reference="2026-10-21"), storage_authorized=True)
+            db.save(updated(reference="2026-10-19"), storage_authorized=True)
             with self.assertRaisesRegex(ValueError, "not proven stable"):
                 compare_db(db)
 
