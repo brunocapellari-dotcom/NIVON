@@ -50,8 +50,23 @@ class TestAuditoriaAtualEditorialIndependente(unittest.TestCase):
             "competencia": "2026-07-20",
         })
         texto_atualizar(p, "19/10/2026", "20/07/2026")
-        self.assertFalse(validar(p)["apto_revisao"],
-                         "NC006: preço de três meses não é fechamento atual")
+        resultado = validar(p)
+        self.assertTrue(
+            any(
+                b.startswith("COTACAO_0:")
+                and any(termo in b.lower() for termo in (
+                    "sessão", "sessao", "fechamento", "venc",
+                    "atualidade", "janela", "publica", "antig"))
+                for b in resultado["bloqueios"]
+            ),
+            "NC006: rejeição sem prova de validade temporal. "
+            f"Bloqueios registrados: {resultado['bloqueios']}",
+        )
+        self.assertFalse(
+            any(not b.startswith("COTACAO_0:") for b in resultado["bloqueios"]),
+            f"NC006: outra falha da fixture mascarou a verificação: "
+            f"{resultado['bloqueios']}",
+        )
 
     def test_nc007_frete_antigo_republicado_com_linha_correta_bloqueado(self):
         p = dados()
