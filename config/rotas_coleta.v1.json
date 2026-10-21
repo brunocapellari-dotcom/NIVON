@@ -4080,16 +4080,16 @@
       "dataset_id": "CFTC_COT_WEEKLY",
       "collector_class": "OFFICIAL_API",
       "locator": {
-        "kind": "PUBLISHED_API_DOC",
-        "url": "https://publicreporting.cftc.gov/stories/s/Disaggregated-Futures-Only/ubmb-6exi/",
-        "source_proof": "https://publicreporting.cftc.gov/stories/s/Public-Reporting-FAQ/inwp-fmhz/"
+        "kind": "DIRECT_OFFICIAL_API",
+        "url": "https://publicreporting.cftc.gov/resource/72hh-3qpy.json",
+        "source_proof": "https://publicreporting.cftc.gov/Commitments-of-Traders/Disaggregated-Futures-Only/72hh-3qpy"
       },
-      "implementation_scope": "CFTC_SOCRATA_API_DOCUMENTED; exact resource and schema not homologated",
+      "implementation_scope": "ONE_SHOT_HTTPS_CLIENT_AND_NORMALIZER_PRESENT; REAL_SOURCE_SMOKE_NOT_CONFIRMED; SCHEDULE_OFF",
       "authentication": "PUBLIC_SOCRATA_RIGHTS_REVIEW",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "SOURCE_RIGHTS_AND_REAL_SAMPLE_VALIDATION",
+      "primary_blocker": "LIVE_RESPONSE_RIGHTS_STORAGE",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -4099,11 +4099,13 @@
         "DURABLE_PERSISTENCE_AND_RESTORE",
         "LICENSED_PUBLICATION_GATE",
         "POINT_IN_TIME_VINTAGE_AUDIT",
-        "MODEL_BENCHMARK_AND_PHYSICAL_IDENTITY"
+        "MODEL_BENCHMARK_AND_PHYSICAL_IDENTITY",
+        "REAL_PRODUCTION_SAMPLE",
+        "DURABLE_STORAGE_AND_VINTAGES"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "CFTC COT: posições semanais terça com publicação sexta; não cotação CBOT. API Socrata documentada oficialmente.",
+      "source_note": "CFTC COT: posições semanais terça com publicação sexta; não cotação CBOT. API Socrata documentada oficialmente. Cliente executável, sob demanda; não é evidência de coleta contínua.",
       "preliminary_evidence": "CFTC_PUBLIC_REPORTING_OFFICIAL_FAQ_2026_10_21"
     },
     {
@@ -4351,16 +4353,16 @@
       "dataset_id": "INPE_QUEIMADAS_FOCOS_CSV",
       "collector_class": "STRUCTURED_FILE",
       "locator": {
-        "kind": "OFFICIAL_INDEX",
-        "url": "https://data.inpe.br/queimadas/dados-abertos/",
-        "source_proof": "https://data.inpe.br/queimadas/dados-abertos/"
+        "kind": "DIRECT_PUBLIC_FILE",
+        "url": "https://dataserver-coids.inpe.br/queimadas/queimadas/focos/csv/diario/Brasil/focos_diario_br_20261020.csv",
+        "source_proof": "https://dataserver-coids.inpe.br/queimadas/queimadas/focos/csv/diario/Brasil/"
       },
-      "implementation_scope": "IDENTIFIED_CSV_DOWNLOAD_PORTAL_EXACT_FILE_PENDING",
+      "implementation_scope": "ONE_SHOT_HTTPS_CLIENT_AND_NORMALIZER_PRESENT; REAL_SOURCE_SMOKE_NOT_CONFIRMED; SCHEDULE_OFF",
       "authentication": "NONE_EXPECTED_VERIFY",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "RIGHTS_REAL_SAMPLE_AND_PERSISTENCE",
+      "primary_blocker": "LIVE_RESPONSE_RIGHTS_STORAGE",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -4369,11 +4371,13 @@
         "DURABLE_PERSISTENCE_AND_RESTORE",
         "LICENSED_PUBLICATION_GATE",
         "DISCOVER_EXACT_CSV_RESOURCE",
-        "SATELLITE_DEDUP_AND_COVERAGE"
+        "SATELLITE_DEDUP_AND_COVERAGE",
+        "REAL_PRODUCTION_SAMPLE",
+        "DURABLE_STORAGE_AND_VINTAGES"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "INPE focos satélite CSV; 10 min/diário/mensal/anual; sensor e viés de nuvens/resolução; não é ROI.",
+      "source_note": "INPE focos satélite CSV; 10 min/diário/mensal/anual; sensor e viés de nuvens/resolução; não é ROI. Cliente executável, sob demanda; não é evidência de coleta contínua.",
       "preliminary_evidence": "PUBLIC_DOCUMENTATION_VERIFIED_2026_10_21_NO_OPERATIONAL_FETCH"
     },
     {
@@ -4526,6 +4530,35 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "SGS 11 taxa diária (não meta anual) com campo data. Validar escala e calendários antes de série. Cliente de teste HTTP de uma requisição disponível em nivon.apis_gratuitas_execucao; runtime operacional continua desativado.",
       "preliminary_evidence": "PUBLIC_DOCUMENTATION_VERIFIED_2026_10_21_NO_OPERATIONAL_FETCH"
+    },
+    {
+      "dataset_id": "ANTT_TRAFEGO_CONCESSOES_METADATA",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "DIRECT_OFFICIAL_API",
+        "url": "https://dados.antt.gov.br/api/3/action/package_search?q=tr%C3%A1fego&rows=5&start=0",
+        "source_proof": "https://dados.antt.gov.br/dataset"
+      },
+      "implementation_scope": "ONE_SHOT_CKAN_PACKAGE_SEARCH_PARSER; RESOURCE_DOWNLOAD_NOT_HOMOLOGATED",
+      "authentication": "NONE_EXPECTED_VERIFY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SCHEMA_AND_DOWNLOAD_RESOURCE_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "RESOLVE_TRAFFIC_RESOURCE_DOWNLOAD",
+        "VALIDATE_COUNTS_PERIOD_AND_CONCESSION"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Consulta somente metadados CKAN de tráfego de pedágio; NÃO afirmar frete efetivo, cargas rodoviárias por origem-destino ou fluxo de soja sem cruzamento.",
+      "preliminary_evidence": "ANTT_CKAN_PUBLIC_PORTAL_DOCUMENTED_NO_LIVE_RESPONSE_VALIDATED"
     }
   ]
 }
