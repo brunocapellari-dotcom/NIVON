@@ -185,7 +185,7 @@ def contextualizar_nwp_com_mjo_asof(
     diagnóstico sem modificar série prevista, pesos ou escores.
     """
     from datetime import timedelta
-    from .pacotes_chuva_asof import _parse_snapshot, ErroPacoteChuva
+    from .pacotes_chuva_asof import _parse_snapshot, _numero, ErroPacoteChuva
 
     if (type(acumulacao_horas) not in (float, int) or
         not 1 / 60 <= acumulacao_horas <= 720):
@@ -206,6 +206,18 @@ def contextualizar_nwp_com_mjo_asof(
         published = _instant(row["previsao_publicada_em"], "publicação NWP")
         features = _instant(row["features_publicadas_ate"], "features NWP")
         valid = _instant(row["valido_em"], "validade NWP")
+        climate = _instant(row["climatologia_publicada_em"], "baseline NWP")
+        if climate > issued:
+            raise ErroContextoMJO("baseline NWP publicado após emissão")
+        members = row["membros_mm"]
+        if not isinstance(members, list) or not 3 <= len(members) <= 100:
+            raise ErroContextoMJO("ensemble NWP requer 3 a 100 membros")
+        try:
+            for member in members:
+                _numero(member, "chuva prevista por membro")
+            _numero(row["prob_climatologica"], "probabilidade climatológica", 0, 1)
+        except ErroPacoteChuva as exc:
+            raise ErroContextoMJO("membros ou climatologia NWP inválidos") from exc
         if not (features <= issued <= published <= capture
                 <= valid - timedelta(hours=acumulacao_horas)):
             raise ErroContextoMJO("fuga temporal no snapshot NWP acumulado")
