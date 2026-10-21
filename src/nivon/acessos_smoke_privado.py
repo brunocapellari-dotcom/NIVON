@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, build_opener, HTTPRedirectHandler
 
@@ -43,8 +44,18 @@ def _usda(*, opener=None) -> dict:
         if not 0 < len(raw) <= 262144:
             return _status("usda", "JSON_FORA_DO_LIMITE")
         doc = json.loads(raw.decode("utf-8-sig"))
-        if not isinstance(doc, list) or not doc or not isinstance(doc[0], dict):
+        # HTTP 200 pode ser JSON de erro/proxy. Validar os campos do catálogo
+        # oficial FAS; não classificar qualquer lista de objetos como sucesso.
+        if not isinstance(doc, list) or not doc or len(doc) > 1000:
             return _status("usda", "SCHEMA_INESPERADO")
+        for item in doc:
+            if not isinstance(item, dict):
+                return _status("usda", "SCHEMA_INESPERADO")
+            codigo = item.get("commodityCode")
+            nome = item.get("commodityName")
+            if (not isinstance(codigo, str) or not re.fullmatch(r"[0-9]{7}", codigo)
+                    or not isinstance(nome, str) or not nome.strip() or len(nome) > 200):
+                return _status("usda", "SCHEMA_INESPERADO")
         return _status("usda", "AUTENTICACAO_E_SCHEMA_OK",
                        evidencias={"endpoint": "/api/psd/commodities",
                                    "estrutura": "LISTA_DE_OBJETOS",
@@ -52,6 +63,10 @@ def _usda(*, opener=None) -> dict:
     except HTTPError as exc:
         if exc.code in (401, 403):
             return _status("usda", "CHAVE_RECUSADA")
+        if exc.code == 429:
+            return _status("usda", "LIMITE_API_ATINGIDO")
+        if exc.code in (502, 503, 504):
+            return _status("usda", "SERVICO_TEMPORARIAMENTE_INDISPONIVEL")
         return _status("usda", "STATUS_HTTP_NAO_VALIDADO")
     except (URLError, OSError, ValueError, UnicodeError, TypeError):
         return _status("usda", "FALHA_REDE_OU_PARSER")
@@ -91,6 +106,9 @@ def _ana(*, transport=None) -> dict:
             raw, estacao=estacao, zona_estacao=zona,
             coletado_em=datetime.now(timezone.utc).isoformat(),
             origem_sha256=hashlib.sha256(raw).hexdigest())
+        if not rows:
+            return _status("ana", "AUTENTICACAO_OK_SEM_MEDICOES",
+                           evidencias={"medicoes_normalizadas": 0})
         return _status("ana", "AUTENTICACAO_E_LEITURA_OK",
                        evidencias={"medicoes_normalizadas": len(rows),
                                    "medicoes_aprovadas_qc": sum(bool(x["utilizar_para_modelo"]) for x in rows)})
