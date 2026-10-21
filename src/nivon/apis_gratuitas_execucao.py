@@ -14,6 +14,7 @@ from urllib.request import Request, build_opener, HTTPRedirectHandler
 
 from .open_meteo_publico import planejar_consulta, normalizar_diario
 from .bcb_sgs_selic import URL_PONTUAL, normalizar_selic_diaria
+from .bcb_focus_odata import planejar_focus, normalizar_focus
 from .ibge_municipios import ENDPOINT as IBGE_URL, normalizar_municipios_ibge
 from .nasa_power_diario import planejar_power, normalizar_power_diario
 from .banco_mundial_indicadores import planejar_indicador, normalizar_indicador
@@ -33,6 +34,7 @@ _DESTINOS = {
     "open_forecast": ("api.open-meteo.com", "/v1/forecast", 2_000_000),
     "open_archive": ("archive-api.open-meteo.com", "/v1/archive", 2_000_000),
     "bcb_selic": ("api.bcb.gov.br", "/dados/serie/bcdata.sgs.11/dados/ultimos/1", 250_000),
+    "bcb_focus": ("olinda.bcb.gov.br", "/olinda/servico/Expectativas/versao/v1/odata/ExpectativasMercadoAnuais", 1_000_000),
     "worldbank": ("api.worldbank.org", "/v2/country/BR/indicator/", 500_000),
     "ibge": ("servicodados.ibge.gov.br", "/api/v1/localidades/municipios", 8_000_000),
     "nasa_power": ("power.larc.nasa.gov", "/api/temporal/daily/point", 2_000_000),
@@ -132,3 +134,16 @@ def consultar_nasa_power(*, latitude: float, longitude: float,
     resultado = normalizar_power_diario(bytes_json=raw["bytes"], plano=plano,
                                        sha256=raw["sha256"], coletado_em=raw["coleta"])
     return {"aquisição": {k: v for k, v in raw.items() if k != "bytes"}, "dados": resultado}
+
+
+def consultar_focus(*, indicador: str, inicio: str, fim: str,
+                    max_itens: int = 200, executar: bool = False,
+                    abridor=None, instante: datetime | None = None) -> dict:
+    """Consulta 31 dias de expectativas anuais de mercado, sem credenciais."""
+    url = planejar_focus(indicador=indicador, inicio=inicio, fim=fim,
+                         max_itens=max_itens)
+    raw = _obter_json(url, recurso="bcb_focus", executar=executar,
+                      abridor=abridor, instante=instante)
+    out = normalizar_focus(raw["bytes"], indicador=indicador, inicio=inicio,
+                          fim=fim, max_itens=max_itens, coletado_em=raw["coleta"])
+    return {"aquisição": {k: v for k, v in raw.items() if k != "bytes"}, "dados": out}
