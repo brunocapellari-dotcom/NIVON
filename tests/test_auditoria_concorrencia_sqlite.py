@@ -92,7 +92,8 @@ class TestAuditoriaConcorrenciaSQLite(unittest.TestCase):
                     len(observados), 16,
                     f"processos sem resultado: {16 - len(observados)}; erros={erros}",
                 )
-                self.assertFalse(erros, f"R03: writes falharam: {erros}")
+                # Inspecionar integridade e contagens MESMO quando ocorrer SQLITE_BUSY.
+                # Assim um fracasso de concorrência não esconde dano no arquivo.
                 with sqlite3.connect(db_path) as conferencia:
                     n_snapshots = conferencia.execute(
                         "SELECT COUNT(*) FROM nivon_snapshots"
@@ -104,9 +105,14 @@ class TestAuditoriaConcorrenciaSQLite(unittest.TestCase):
                     integridade = conferencia.execute(
                         "PRAGMA integrity_check"
                     ).fetchone()[0]
+                self.assertFalse(fk, "R03: referências SQLite inconsistentes")
+                self.assertEqual(integridade, "ok", "R03: arquivo SQLite corrompido")
+                self.assertFalse(
+                    erros,
+                    f"R03: falhas de escrita={erros}; versões persistidas="
+                    f"{n_snapshots}/48; coletas persistidas={n_coletas}/48",
+                )
                 self.assertEqual((n_snapshots, n_coletas), (48, 48))
-                self.assertFalse(fk)
-                self.assertEqual(integridade, "ok")
             finally:
                 resultados.close()
                 resultados.join_thread()
