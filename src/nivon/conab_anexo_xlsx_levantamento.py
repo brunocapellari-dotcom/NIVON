@@ -69,7 +69,7 @@ def _links(raw, origem):
     doc = _Anchors()
     doc.feed(html)
     doc.close()
-    return {urljoin(origem, href) for href in doc.urls}
+    return {urljoin(origem.rstrip("/") + "/", href) for href in doc.urls}
 
 
 def _estrutura_zip_xlsx(raw):
