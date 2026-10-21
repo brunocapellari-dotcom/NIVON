@@ -74,8 +74,10 @@ def _verificar_zip(blob: bytes):
         nomes.add(nome)
     if total > 35_000_000 or not {"xl/workbook.xml", "[Content_Types].xml"} <= nomes:
         raise ErroPlanilhaPublica("OOXML ausente ou risco de descompressão")
-    if any("vbaProject" in x or x.startswith("xl/externalLinks/") for x in nomes):
-        raise ErroPlanilhaPublica("macros/conexões externas não permitidas")
+    if any("vbaProject" in x for x in nomes):
+        raise ErroPlanilhaPublica("macros não permitidas")
+    # XLSX oficiais podem conter rels externos. Nunca são carregados,
+    # avaliados, baixados ou seguidos. Apenas preserva a indicação.
     return z
 
 
@@ -150,8 +152,8 @@ def _aba(z, path, shared):
         celulas = []
         for c in row.findall(N + "c"):
             idx = _indice_coluna(c.get("r"))
-            if idx > 79:
-                raise ErroPlanilhaPublica("mais de 80 colunas na aba")
+            if idx > 255:
+                raise ErroPlanilhaPublica("mais de 256 colunas na aba")
             if idx < len(celulas):
                 raise ErroPlanilhaPublica("coluna fora de ordem/duplicada")
             celulas.extend([None] * (idx-len(celulas)))
@@ -195,6 +197,7 @@ def normalizar_planilha(blob: bytes, *, dataset_id: str, coletado_em: str) -> di
         raise ErroPlanilhaPublica("dataset XLSX não cadastrado")
     coleta = _data_coleta(coletado_em)
     z = _verificar_zip(blob)
+    ha_links_externos = any(x.startswith("xl/externalLinks/") for x in z.namelist())
     try:
         shared = _compartilhadas(z)
         abas = []
@@ -214,6 +217,7 @@ def normalizar_planilha(blob: bytes, *, dataset_id: str, coletado_em: str) -> di
         "valores_monetarios_publicaveis": False,
         "unidades_e_vigencia_homologadas": False,
         "formulas_ignoradas": True,
+        "links_externos_presentes_mas_nao_seguidos": ha_links_externos,
         "estado": "ESTRUTURA_XLSX_EXTRAIDA_AGUARDANDO_MAPEAMENTO_SEMANTICO",
     }
 

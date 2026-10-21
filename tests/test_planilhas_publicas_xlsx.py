@@ -88,11 +88,17 @@ class TestPublicXLSX(unittest.TestCase):
         self.assertEqual(d["dados"]["dataset_id"], "WB_PINK_SHEET_COMMODITIES")
 
     def test_zip_inseguro_e_conexoes_externas_recusados(self):
-        for blob in (arquivo_zip(unsafe=True), arquivo_zip(extlinks=True),
+        for blob in (arquivo_zip(unsafe=True),
                      b"xxx", b"", b"PK\x03\x04"):
             with self.subTest(length=len(blob)), self.assertRaises(ErroPlanilhaPublica):
                 normalizar_planilha(blob, dataset_id="WB_PINK_SHEET_COMMODITIES",
                                    coletado_em="2026-10-21T16:00:00Z")
+
+    def test_arquivo_com_referencia_externa_e_lido_sem_seguir_links(self):
+        dados = normalizar_planilha(arquivo_zip(extlinks=True), dataset_id="USDA_AMS_GTR_FRETE_MULTIMODAL",
+                                    coletado_em="2026-10-21T16:00:00Z")
+        self.assertTrue(dados["links_externos_presentes_mas_nao_seguidos"])
+        self.assertFalse(dados["valores_monetarios_publicaveis"])
 
     def test_schema_invalido_ou_dataset_desconhecido(self):
         with self.assertRaises(ErroPlanilhaPublica):

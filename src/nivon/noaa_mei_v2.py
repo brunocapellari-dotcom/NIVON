@@ -48,41 +48,75 @@ def normalizar_mei_csv(blob: bytes, *, coletado_em: str) -> dict:
     except UnicodeError as e:
         raise ErroMEI("CSV NOAA não UTF-8") from e
     linhas = list(csv.reader(io.StringIO(texto), skipinitialspace=True))
-    if not 2 <= len(linhas) <= 300:
+    if not 2 <= len(linhas) <= 2_000:
         raise ErroMEI("CSV vazio ou excessivo")
     header = [h.strip().upper() for h in linhas[0]]
-    if header != ["YEAR", *PERIODOS]:
-        raise ErroMEI("schema MEI CSV divergente de YEAR + 12 bimestres")
     obs = []
-    anos = set()
-    for row in linhas[1:]:
-        if len(row) != 13:
-            raise ErroMEI("linha MEI desalinhada")
-        ano = row[0].strip()
-        if not re.fullmatch(r"(19[7-9]\d|20\d\d|21\d\d)", ano) or ano in anos:
-            raise ErroMEI("ano MEI inválido ou duplicado")
-        anos.add(ano)
-        for i, periodo in enumerate(PERIODOS, 1):
-            txt = row[i].strip()
-            if not txt:
-                continue
+    chaves = set()
+
+    def _valor(texto_indice):
+        try:
+            v = float(texto_indice.strip())
+        except ValueError as e:
+            raise ErroMEI("MEI não numérico") from e
+        if not math.isfinite(v):
+            raise ErroMEI("MEI não finito")
+        if v in (-999.0, -99.9):
+            return None
+        if not -10 <= v <= 10:
+            raise ErroMEI("MEI fora da faixa operacional")
+        return v
+
+    def _adicionar(dt, periodo, valor):
+        if valor is None:
+            return
+        chave = dt.isoformat()
+        if chave in chaves:
+            raise ErroMEI("data MEI repetida")
+        chaves.add(chave)
+        obs.append({
+            "data_referencia": chave,
+            "competencia": chave[:7],
+            "bimestre_movel": periodo,
+            "valor_padronizado_mei_v2": valor, "unidade": "DESVIOS_PADRAO",
+            "referencia": f"{dt.year}-{periodo}",
+            "publicacao": None, "coleta": coleta,
+            "natureza": "INDICE_ENSO_MEI_V2_BIMESTRAL_DESLIZANTE_OBSERVADO",
+        })
+
+    # CSV oficial 2026 do PSL: cabeçalho descritivo "Date, Multivariate ..."
+    # seguido de 1979-01-01,0.460 (mês-âncora e índice bimestral DJ).
+    if len(header) == 2 and header[0] == "DATE" and "MULTIVARIATE ENSO INDEX" in header[1]:
+        for row in linhas[1:]:
+            if len(row) != 2:
+                raise ErroMEI("linha NOAA de mês e MEI desalinhada")
             try:
-                valor = float(txt)
-            except ValueError as e:
-                raise ErroMEI("MEI não numérico") from e
-            if not math.isfinite(valor):
-                raise ErroMEI("MEI não finito")
-            if valor in (-999, -999.0, -99.9):
-                continue
-            if not -10 <= valor <= 10:
-                raise ErroMEI("MEI fora da faixa operacional")
-            obs.append({
-                "ano_inicio_periodo": int(ano), "bimestre_movel": periodo,
-                "valor_padronizado_mei_v2": valor, "unidade": "DESVIOS_PADRAO",
-                "referencia": f"{ano}-{periodo}", "competencia": None,
-                "publicacao": None, "coleta": coleta,
-                "natureza": "INDICE_ENSO_MEI_V2_BIMESTRAL_DESLIZANTE_OBSERVADO",
-            })
+                from datetime import date
+                dt = date.fromisoformat(row[0].strip())
+            except ValueError as exc:
+                raise ErroMEI("data NOAA inválida") from exc
+            if dt.day != 1 or dt.year < 1979:
+                raise ErroMEI("período NOAA inválido")
+            _adicionar(dt, PERIODOS[dt.month-1], _valor(row[1]))
+
+    # Formato tabular alternativo YEAR, DJ, JF...ND, mantido em testes.
+    elif header == ["YEAR", *PERIODOS]:
+        from datetime import date
+        years = set()
+        for row in linhas[1:]:
+            if len(row) != 13:
+                raise ErroMEI("linha NOAA tabular desalinhada")
+            ano = row[0].strip()
+            if not re.fullmatch(r"(19[7-9]\d|20\d\d|21\d\d)", ano) or ano in years:
+                raise ErroMEI("ano NOAA inválido ou repetido")
+            years.add(ano)
+            for m, periodo in enumerate(PERIODOS, 1):
+                if row[m].strip():
+                    _adicionar(date(int(ano), m, 1), periodo, _valor(row[m]))
+    else:
+        raise ErroMEI("schema NOAA MEI desconhecido")
+    if len(obs) > 1 and any(obs[i]["data_referencia"] <= obs[i-1]["data_referencia"] for i in range(1,len(obs))):
+        raise ErroMEI("datas NOAA fora de ordem")
     if not obs:
         raise ErroMEI("sem MEI válido")
     return {

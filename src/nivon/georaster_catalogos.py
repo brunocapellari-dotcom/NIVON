@@ -64,7 +64,7 @@ def consultar_esa_tile(*, latitude: float, longitude: float,
         if int(response.status) != 200 or response.geturl() != plano["url"]:
             raise ErroRasterCatalogo("ESA tile ausente, HTTP inválido ou redirect")
         mime = str(response.headers.get("Content-Type", "")).split(";", 1)[0].lower().strip()
-        if mime not in ("image/tiff", "image/geotiff", "application/octet-stream"):
+        if mime not in ("image/tiff", "image/geotiff", "application/octet-stream", "binary/octet-stream", "image/x-tiff"):
             raise ErroRasterCatalogo("ESA tile MIME inesperado")
         raw_size = response.headers.get("Content-Length")
         if not raw_size or not raw_size.isdecimal() or int(raw_size) <= 0:
