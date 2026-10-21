@@ -31,7 +31,7 @@ class TestBackfill(unittest.TestCase):
         self.addCleanup(d.cleanup)
         self.banco = Path(d.name) / "historico.sqlite3"
         self.inicio = date(2026, 1, 1)
-        self.fim = date(2026, 3, 3)
+        self.fim = date(2026, 3, 4)
         self.hoje = date(2026, 10, 21)
         self.kw = dict(
             banco=self.banco, moeda="USD", inicio=self.inicio, fim=self.fim,
