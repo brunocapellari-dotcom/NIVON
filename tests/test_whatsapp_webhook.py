@@ -7,6 +7,8 @@ import json
 import unittest
 from datetime import datetime, timezone
 
+from nivon.outbox_unificada import registrar_decisao_consentimento, mensagem_de_prova
+
 from nivon.outbox_briefing import (
     abrir_outbox, agendar_briefing, reservar_para_entrega,
     registrar_aceite,
@@ -31,10 +33,26 @@ def body(status="delivered", mid="wamid.123", timestamp="1792425600"):
 def signature(raw):
     return "sha256="+hmac.new(SECRET.encode(),raw,hashlib.sha256).hexdigest()
 
+CHAVE_CONSENTIMENTO_FIXTURE = b"NIVON-CONSENT-FIXTURE-ASSINATURA-NAO-PRODUCAO-000"
+
+def consentir_teste(db, destinatario_hmac, em):
+    evidencia = "OPTIN_FIXTURE_SINTETICO_20261021"
+    assinatura=hmac.new(
+        CHAVE_CONSENTIMENTO_FIXTURE,
+        mensagem_de_prova(acao="CONCEDER", destinatario_hmac=destinatario_hmac,
+                         evidencia_id=evidencia, em=em),
+        hashlib.sha256,
+    ).hexdigest()
+    return registrar_decisao_consentimento(
+        db,acao="CONCEDER",destinatario_hmac=destinatario_hmac,
+        evidencia_id=evidencia, em=em,
+        assinatura=assinatura, chave_verificacao=CHAVE_CONSENTIMENTO_FIXTURE)
+
 
 class TestWebhookWhatsapp(unittest.TestCase):
     def setUp(self):
         self.db=abrir_outbox()
+        consentir_teste(self.db,"a"*64,DATE)
         texto="brieﬁng sintético sem dados pessoais"
         briefing={
             "status":"PREPARADO_SEM_ENVIO",

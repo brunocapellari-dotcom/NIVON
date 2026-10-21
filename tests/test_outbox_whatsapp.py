@@ -7,6 +7,8 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from nivon.outbox_unificada import registrar_decisao_consentimento, mensagem_de_prova
+
 from nivon.entrega_whatsapp import preparar_template
 from nivon.outbox_whatsapp import (
     ErroOutbox, registrar_edicao, consultar_envio, despachar_registrado,
@@ -16,6 +18,21 @@ from nivon.outbox_whatsapp import (
 
 SEGREDO=b"segredo-unicamente-sintetico-para-testes-de-outbox-000000"
 APP_SECRET=b"app-secret-ficticio-de-teste-para-webhook-123456"
+
+CHAVE_CONSENTIMENTO_FIXTURE = b"NIVON-CONSENT-FIXTURE-ASSINATURA-NAO-PRODUCAO-000"
+
+def consentir_teste(db, destinatario_hmac, em):
+    evidencia = "OPTIN_FIXTURE_SINTETICO_20261021"
+    assinatura=hmac.new(
+        CHAVE_CONSENTIMENTO_FIXTURE,
+        mensagem_de_prova(acao="CONCEDER", destinatario_hmac=destinatario_hmac,
+                         evidencia_id=evidencia, em=em),
+        hashlib.sha256,
+    ).hexdigest()
+    return registrar_decisao_consentimento(
+        db,acao="CONCEDER",destinatario_hmac=destinatario_hmac,
+        evidencia_id=evidencia, em=em,
+        assinatura=assinatura, chave_verificacao=CHAVE_CONSENTIMENTO_FIXTURE)
 
 
 class TestOutboxWhatsApp(unittest.TestCase):
@@ -30,6 +47,8 @@ class TestOutboxWhatsApp(unittest.TestCase):
             gerado_em="2026-10-20T07:00:00-03:00",
             opt_in_registrado=True,template_aprovado=True,
         )
+        recipient=hmac.new(SEGREDO,b"5566999999999",hashlib.sha256).hexdigest()
+        consentir_teste(self.con,recipient,"2026-10-20T10:00:00+00:00")
 
     def tearDown(self):
         self.con.close()

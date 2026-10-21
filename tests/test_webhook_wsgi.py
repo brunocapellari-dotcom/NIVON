@@ -9,6 +9,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from nivon.outbox_unificada import registrar_decisao_consentimento, mensagem_de_prova
+
 from nivon.outbox_briefing import (
     abrir_outbox,agendar_briefing,reservar_para_entrega,registrar_aceite
 )
@@ -32,6 +34,21 @@ def emitir(raw: bytes, *, signed: bool=True, path="/webhooks/whatsapp",
     body=b"".join(app(env,start_response))
     return headers[0][0],body
 
+CHAVE_CONSENTIMENTO_FIXTURE = b"NIVON-CONSENT-FIXTURE-ASSINATURA-NAO-PRODUCAO-000"
+
+def consentir_teste(db, destinatario_hmac, em):
+    evidencia = "OPTIN_FIXTURE_SINTETICO_20261021"
+    assinatura=hmac.new(
+        CHAVE_CONSENTIMENTO_FIXTURE,
+        mensagem_de_prova(acao="CONCEDER", destinatario_hmac=destinatario_hmac,
+                         evidencia_id=evidencia, em=em),
+        hashlib.sha256,
+    ).hexdigest()
+    return registrar_decisao_consentimento(
+        db,acao="CONCEDER",destinatario_hmac=destinatario_hmac,
+        evidencia_id=evidencia, em=em,
+        assinatura=assinatura, chave_verificacao=CHAVE_CONSENTIMENTO_FIXTURE)
+
 
 class TestWebhookWSGI(unittest.TestCase):
     def setUp(self):
@@ -44,6 +61,7 @@ class TestWebhookWSGI(unittest.TestCase):
         })
         self.env.start()
         db=abrir_outbox(self.dbpath)
+        consentir_teste(db,"b"*64,"2026-10-19T12:00:00+00:00")
         texto="conteudo de teste"
         b={"status":"PREPARADO_SEM_ENVIO","texto":texto,
            "sha256":hashlib.sha256(texto.encode()).hexdigest()}
