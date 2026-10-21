@@ -35,6 +35,18 @@ class TestCanalWhatsApp(unittest.TestCase):
             enviar_cloud_api(self.preparar(),phone_number_id="1234567890",
                              abridor=forbidden)
 
+    def test_gateway_direto_bloqueado_mesmo_com_flag_e_opener(self):
+        chamado=[]
+        def rede_proibida(*args, **kwargs):
+            chamado.append(True)
+            raise AssertionError("nenhum POST sem reserva central")
+        with self.assertRaisesRegex(PermissionError, "OUTBOX_UNICA_OBRIGATORIA"):
+            enviar_cloud_api(
+                self.preparar(),phone_number_id="1234567890",
+                permitir_cobranca_e_envio=True,abridor=rede_proibida,
+            )
+        self.assertEqual(chamado,[])
+
     def test_url_http_nao_aceita(self):
         with self.assertRaises(ErroEnvio):
             self.preparar(link="http://localhost/briefing")
