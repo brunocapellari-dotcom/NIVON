@@ -204,10 +204,14 @@ def recuperar_pacote_sidra_offline(*, banco, id_captura: int):
     pub, col = _instante(publicacao, "publicacao"), _instante(coleta, "coleta")
     if pub > col:
         raise DadoInvalido("cronologia de arquivo corrompida")
-    if (_conteudo(bruto_v, tipo="valores", max_bytes=4_000_000, tabela=tabela) != hash_v
-        or _conteudo(bruto_m, tipo="metadados",
-                    max_bytes=1_000_000, tabela=tabela) != hash_m):
+    # Checar bytes ANTES de interpretar JSON. Mudanca de bytes e sempre
+    # corrupcao de evidencia, mesmo quando o JSON adulterado e ilegivel.
+    if (not isinstance(bruto_v, bytes) or not isinstance(bruto_m, bytes)
+        or sha256(bruto_v).hexdigest() != hash_v
+        or sha256(bruto_m).hexdigest() != hash_m):
         raise DadoInvalido("integridade de evidencia corrompida")
+    _conteudo(bruto_v, tipo="valores", max_bytes=4_000_000, tabela=tabela)
+    _conteudo(bruto_m, tipo="metadados", max_bytes=1_000_000, tabela=tabela)
     return {
         "id_captura": id_captura,
         "especie": especie, "tabela_sidra": tabela,
