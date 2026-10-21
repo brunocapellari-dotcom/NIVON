@@ -61,6 +61,10 @@ class TestHoldoutPurgado(unittest.TestCase):
         self.assertAlmostEqual(r["metricas_holdout"]["mae_baseline"], 5)
         self.assertAlmostEqual(r["metricas_holdout"]["mae"], 0)
         self.assertTrue(r["superioridade_em_todas_as_fases"])
+        self.assertTrue(r["ganho_consistente_inicio_fim"])
+        self.assertTrue(r["sinal_descritivo_sustentado"])
+        self.assertEqual(r["fases_ausentes"], [])
+        self.assertEqual(len(r["metricas_subjanelas_temporais"]), 5)
         self.assertFalse(r["publicavel"])
         self.assertFalse(r["habilitado_para_producao"])
         self.assertIsNone(r["percentis_ou_significancia_iid"])
@@ -82,6 +86,43 @@ class TestHoldoutPurgado(unittest.TestCase):
         self.assertFalse(x["superioridade_em_todas_as_fases"])
         self.assertEqual(len([g for g in x["metricas_fases_nao_sobrepostas"]
                               if g["ganho_mae_baseline"] < 0]), 1)
+
+    def test_amostra_concentrada_uma_fase_nao_parece_ganho_robusto(self):
+        # Dados somente a cada H sessões: sem sobreposição temporal, mas
+        # as fases ausentes tornariam "todas as fases" um vacuous truth.
+        rows = registros(n=160)[::5]
+        r = auditar(rows, n_holdout=10, minimo_historico_elegivel=10)
+        self.assertEqual(r["quantidade_fases"], 1)
+        self.assertEqual(len(r["fases_ausentes"]), 4)
+        self.assertEqual(r["status"], "FASES_DISJUNTAS_INSUFICIENTES")
+        self.assertFalse(r["fases_suficientes"])
+        self.assertFalse(r["superioridade_em_todas_as_fases"])
+        self.assertFalse(r["sinal_descritivo_sustentado"])
+        self.assertFalse(r["publicavel"])
+
+    def test_deterioracao_recente_oculta_pela_media_da_fase(self):
+        rows = registros()
+        # Na fase, 6 previsões exatas e 2 recentes ruins: MAE total
+        # 2.75 < persistência 5, mas MAE recente 5.5 > 5.
+        for r in rows:
+            if DIAS.index(r["periodo_origem"]) >= 130:
+                r["previsto"] = r["real"] + 11
+        x = auditar(rows)
+        self.assertEqual(x["status"], "DEGRADACAO_TEMPORAL_NO_HOLDOUT")
+        self.assertTrue(x["superioridade_em_todas_as_fases"])
+        self.assertFalse(x["ganho_consistente_inicio_fim"])
+        self.assertFalse(x["sinal_descritivo_sustentado"])
+        self.assertTrue(all(
+            fase["fim"]["ganho_mae_baseline"] < 0
+            for fase in x["metricas_subjanelas_temporais"]
+        ))
+
+    def test_minimo_subjanela_maior_que_metas_bloqueia_sinal(self):
+        r = auditar(registros(), minimo_por_subjanela=5)
+        self.assertEqual(r["status"], "FASES_DISJUNTAS_INSUFICIENTES")
+        self.assertTrue(r["fases_suficientes"])
+        self.assertFalse(r["subjanelas_suficientes"])
+        self.assertFalse(r["sinal_descritivo_sustentado"])
 
     def test_amostra_holdout_insuficiente_nao_vira_metricas(self):
         r = auditar(registros(n=50))
@@ -166,6 +207,8 @@ class TestHoldoutPurgado(unittest.TestCase):
             {"minimo_historico_elegivel": 1},
             {"minimo_por_fase_disjunta": 4},
             {"embargo_periodos": 0},
+            {"minimo_por_subjanela": True},
+            {"minimo_por_subjanela": 1},
             {"n_holdout": 20, "minimo_por_fase_disjunta": 25},
         ):
             with self.subTest(cfg=cfg), self.assertRaises(ErroQuantitativo):
