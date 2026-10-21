@@ -10,9 +10,11 @@ from math import isfinite
 import re
 from .briefing_diario import gerar_texto, ErroBriefing
 from .frete_linhas_editoriais import formatar_linha_frete, linha_identificada, CORREDORES
+from .politica_frescor_briefing import LIMITES_FRESCURA, validar_frescor_indicador
 
 SECOES = ("BOLSAS", "CAMBIO", "PRECOS", "SAFRA", "PORTOS", "DIESEL",
            "FERTILIZANTES", "CLIMA", "LOGISTICA", "GEOPOLITICA")
+assert set(SECOES) == set(LIMITES_FRESCURA)
 
 
 def montar_briefing(*, noticias: list[dict], fontes: dict,
@@ -44,6 +46,10 @@ def montar_briefing(*, noticias: list[dict], fontes: dict,
             agora = datetime.fromisoformat(data.replace("Z", "+00:00"))
             if agora.tzinfo is None or d > agora:
                 raise ErroBriefing("referência futura ou geração sem fuso")
+            # Backstop da PR #13: nem preço fora de janela nem cotação velha,
+            # mesmo se origem/licença forem informadas como aprovadas.
+            # A vigência do último pregão é conferida SEPARADAMENTE no preflight.
+            validar_frescor_indicador(secao=secao, referencia=referencia, gerado_em=data)
             itens.append({
                 "secao": secao, "titulo": titulo[:100],
                 "valor": valor[:100], "referencia": referencia,
