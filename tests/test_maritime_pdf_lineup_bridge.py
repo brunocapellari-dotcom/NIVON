@@ -124,6 +124,24 @@ class MaritimePdfBridgeTests(unittest.TestCase):
         self.assertFalse(result.candidates)
         self.assertEqual(result.excluded[0]["reason"], "explicit_duv_missing_or_invalid")
 
+    def test_itaqui_duvida_column_must_not_be_mistaken_for_duv(self):
+        raw = tables_itaqui(itaqui())
+        bad = (PdfTable(page_number=1, rows=(
+            tuple("Dúvida" if cell == "DUV" else cell for cell in raw[0].rows[0]),
+            *raw[0].rows[1:],
+        )),)
+        result = bridge("ITAQUI", bad)
+        self.assertFalse(result.candidates)
+        self.assertEqual(result.excluded[0]["reason"], "explicit_duv_missing_or_invalid")
+
+    def test_paranagua_unverified_similar_duv_column_rejected(self):
+        raw = tables_paranagua(paranagua())
+        headers = tuple("Observação DUV" if c == "DUV" else c for c in raw[0].rows[1])
+        bad = (PdfTable(page_number=1, rows=(raw[0].rows[0], headers, *raw[0].rows[2:])),)
+        result = bridge("PARANAGUA", bad)
+        self.assertFalse(result.candidates)
+        self.assertEqual(result.excluded[0]["reason"], "explicit_duv_missing_or_invalid")
+
     def test_paranagua_explicit_duv_can_become_programmed_port_call(self):
         result = bridge("PARANAGUA", tables_paranagua(paranagua()))
         self.assertEqual(len(result.candidates), 1)
