@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from math import fsum
 from statistics import median
-from sqlite3 import Connection
+from sqlite3 import Connection, Error as SQLiteError
 
 from .ivo_pam_publicacoes import EventoPAM, historico_edicoes_pam_asof
 
@@ -104,7 +104,7 @@ def benchmark_pam_anual_sintetico(
                     tipos=registro_db.execute(
                         "SELECT tipo FROM nivon_snapshots WHERE dataset_id='IBGE_PAM' AND sha256=?",
                         (digest,)).fetchall()
-                except Exception as exc:
+                except SQLiteError as exc:
                     raise ErroBenchmarkAnual("não foi possível auditar o ledger PAM") from exc
                 if len(tipos)!=1 or tipos[0][0]!="SINTETICO":
                     raise PermissionError("artefato ausente ou classe real não admitida no benchmark")
