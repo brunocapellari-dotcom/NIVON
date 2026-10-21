@@ -113,8 +113,8 @@ def verificar_chuva_ensemble_asof(
         start = valid - timedelta(hours=window)
         if not (features <= issue <= published <= captured <= start <= valid <= obs_pub <= obs_col):
             raise ErroVerificacaoChuva("fuga temporal, ausência de vintage ou previsão intraintervalo")
-        if clim_pub > captured or clim_pub > start:
-            raise ErroVerificacaoChuva("climatologia indisponível antes da janela")
+        if clim_pub > issue:
+            raise ErroVerificacaoChuva("climatologia indisponível na emissão da previsão")
         if abs((valid - issue).total_seconds() / 3600 - lead) > 1e-6:
             raise ErroVerificacaoChuva("mistura de horizontes de emissão")
         if previous_valid is not None and abs((valid - previous_valid).total_seconds() / 3600 - step) > 1e-6:
