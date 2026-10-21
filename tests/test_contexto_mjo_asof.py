@@ -212,6 +212,27 @@ class TestContextoMJOAsOf(unittest.TestCase):
             contextualizar_nwp_com_mjo_asof(
                 snapshots_previsao=[p], snapshots_rmm=[snapshot()])
 
+    def test_nwp_baseline_apos_emissao_bloqueia(self):
+        p = nwp_snapshot()
+        model = json.loads(p["bytes_json"])
+        model["registro"]["climatologia_publicada_em"] = "2026-10-20T15:20:00Z"
+        p["bytes_json"] = json.dumps(model, sort_keys=True).encode()
+        p["manifesto"]["sha256"] = hashlib.sha256(p["bytes_json"]).hexdigest()
+        with self.assertRaisesRegex(ErroContextoMJO, "baseline"):
+            contextualizar_nwp_com_mjo_asof(
+                snapshots_previsao=[p], snapshots_rmm=[snapshot()])
+
+    def test_membro_nwp_sem_valor_fisico_bloqueia(self):
+        for members in ([0, None, 2], [0, -1, 2], [0, 1], [0, "2", 3]):
+            p = nwp_snapshot()
+            model = json.loads(p["bytes_json"])
+            model["registro"]["membros_mm"] = members
+            p["bytes_json"] = json.dumps(model, sort_keys=True).encode()
+            p["manifesto"]["sha256"] = hashlib.sha256(p["bytes_json"]).hexdigest()
+            with self.subTest(members=members), self.assertRaises(ErroContextoMJO):
+                contextualizar_nwp_com_mjo_asof(
+                    snapshots_previsao=[p], snapshots_rmm=[snapshot()])
+
     def test_nwp_real_nao_homologado_tambem_e_bloqueado(self):
         p = nwp_snapshot()
         p["manifesto"]["classe"] = "REAL_AUTORIZADO"
