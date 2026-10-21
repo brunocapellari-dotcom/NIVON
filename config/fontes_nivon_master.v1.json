@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "project": "NIVON",
-  "updated_on": "2026-10-19",
+  "updated_on": "2026-10-21",
   "default_policy": "DENY_ALL_SCHEDULED_FETCHES_UNTIL_RIGHTS_AND_PARSER_HOMOLOGATED",
   "go_live_status": "NOT_READY",
   "dates_required": [
@@ -4304,6 +4304,38 @@
       "priority": "P1",
       "existing_module": null,
       "notes": "Grade diária; não estação",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "NOAA_ENSO_RONI",
+      "source_id": "NOAA",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "SORGO",
+        "CANA",
+        "GERGELIM",
+        "LOGISTICA"
+      ],
+      "topic": "enso_roni_retrospectivo_ersstv6_3meses_sobrepostos",
+      "mode": "DIRECT_PUBLIC_FILE_OFFLINE_PARSER",
+      "cadence": "MONTHLY",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "existing_module": "nivon.noaa_roni:importar_roni_ascii",
+      "notes": "NOAA CPC RONI ERSSTv6 mensal: temporadas móveis de 3 meses; valor recente revisável (até 2 meses). Arquivo atual não prova vintage point-in-time; classificação retrospectiva não prevê chuva municipal. Direitos, atribuição e redistribuição a revisar.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
