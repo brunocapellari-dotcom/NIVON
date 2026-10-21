@@ -171,3 +171,52 @@ def indexar_contexto_mjo_asof(*, previsoes, snapshots_rmm, max_defasagem_dias=7)
             "municipal, vazão, perdas agrícolas ou impactos comerciais."
         ),
     }
+
+
+def contextualizar_nwp_com_mjo_asof(
+    *, snapshots_previsao, snapshots_rmm, acumulacao_horas=24,
+    max_defasagem_dias=7,
+):
+    """Vincula SHA de um forecast NWP a um índice RMM já conhecido na EMISSÃO.
+
+    Não extrai previsão de chuva a partir de MJO. A previsão é o snapshot
+    normalizado e hash-verificado usado pelo motor de precipitação; a emissão
+    não é inferida do horário de captura do arquivo. O resultado é sidecar
+    diagnóstico sem modificar série prevista, pesos ou escores.
+    """
+    from datetime import timedelta
+    from .pacotes_chuva_asof import _parse_snapshot, ErroPacoteChuva
+
+    if (type(acumulacao_horas) not in (float, int) or
+        not 1 / 60 <= acumulacao_horas <= 720):
+        raise ErroContextoMJO("janela de acumulação inválida")
+    if (not isinstance(snapshots_previsao, (list, tuple)) or
+        not 1 <= len(snapshots_previsao) <= 5000):
+        raise ErroContextoMJO("snapshots NWP ausentes ou excessivos")
+    issues = []
+    for pack in snapshots_previsao:
+        try:
+            row, capture, raw_sha, _, _ = _parse_snapshot(
+                pack, kind="PREVISAO", catalogo=None,
+                autorizacoes=frozenset(), direitos_ref=None,
+            )
+        except (ErroPacoteChuva, PermissionError) as exc:
+            raise ErroContextoMJO("snapshot de previsão NWP inválido ou não autorizado") from exc
+        issued = _instant(row["emitido_em"], "emissão NWP")
+        published = _instant(row["previsao_publicada_em"], "publicação NWP")
+        features = _instant(row["features_publicadas_ate"], "features NWP")
+        valid = _instant(row["valido_em"], "validade NWP")
+        if not (features <= issued <= published <= capture
+                <= valid - timedelta(hours=acumulacao_horas)):
+            raise ErroContextoMJO("fuga temporal no snapshot NWP acumulado")
+        issues.append({"previsao_id": raw_sha, "emitido_em": issued.isoformat()})
+    result = indexar_contexto_mjo_asof(
+        previsoes=issues, snapshots_rmm=snapshots_rmm,
+        max_defasagem_dias=max_defasagem_dias,
+    )
+    return {
+        **result, "natureza_vinculo": "SIDECAR_SHA_NWP_RMM_OBSERVADO",
+        "nwp_hashes_raw_conferidos": len(issues),
+        "estatisticas_nwp_alteradas": False,
+        "homologado": False,
+    }
