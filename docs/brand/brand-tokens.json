@@ -1,61 +1,60 @@
 {
   "name": "NIVON",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "updated_at": "2026-10-21",
-  "status": "direcao_visual_aprovada__ativos_vetoriais_em_revisao",
-  "provenance": "Reconstrucao vetorial original inspirada no painel visual do chat; nao e extracao automatica dos pixels.",
+  "status": "direcao_criativa_aprovada__ativos_tecnicos_preliminares",
+  "source": "Reconstrucao vetorial inspirada no conceito visual aprovado em conversa; nao e vetorizacao identica da imagem gerada.",
   "palette": {
     "green_deep": {
       "hex": "#0B3D2E",
-      "role": "fundo_institucional"
+      "purpose": "marca e fundos institucionais"
     },
     "green_agro": {
       "hex": "#497142",
-      "role": "crescimento_e_apoio"
+      "purpose": "destaques secundários"
     },
     "gold_harvest": {
       "hex": "#DAA574",
-      "role": "destaques_nao_semanticos"
+      "purpose": "acento editorial sobre fundos escuros"
     },
     "sand": {
       "hex": "#EDE6DB",
-      "role": "fundo_claro"
+      "purpose": "fundo claro"
     },
     "earth": {
       "hex": "#3E2F20",
-      "role": "texto_de_apoio"
+      "purpose": "textos auxiliares"
     },
     "white": {
       "hex": "#FFFFFF",
-      "role": "contraste"
+      "purpose": "texto e superficies brancas"
     }
   },
   "type": {
-    "family": "Inter",
-    "fallback": "Arial, Helvetica, sans-serif",
-    "weights": [
-      400,
-      500,
-      600,
-      700,
-      800
-    ]
+    "ui": "Inter, Arial, sans-serif",
+    "display": "NIVON em formas vetoriais originais, sem dependencia de fonte externa"
   },
-  "typography": {
-    "wordmark": "NIVON (caixa alta)",
-    "tagline": "Inteligência para mover o agro.",
-    "tagline_status": "proposta editorial"
+  "tagline": {
+    "text": "Inteligência para mover o agro.",
+    "status": "proposta editorial"
   },
-  "asset_paths": [
-    "symbol.svg",
-    "logo-horizontal.svg",
-    "logo-reverse.svg",
-    "app-icon.svg",
-    "identity-preview.svg"
-  ],
-  "restrictions": [
-    "nao usar simbolo de marca registrada",
-    "nao representar endereco ou telefone ficticio",
-    "rever contraste e semelhanca de marca antes do uso publico"
-  ]
+  "artwork": {
+    "symbol": "symbol.svg",
+    "wordmark": "logo-horizontal.svg",
+    "reverse": "logo-reverse.svg",
+    "monochrome": "logo-monochrome.svg",
+    "app": "app-icon.svg",
+    "favicon": "favicon.svg",
+    "presentation": "identity-preview.svg"
+  },
+  "usage": {
+    "min_width_px": {
+      "wordmark": 160,
+      "icon": 32,
+      "favicon": 16
+    },
+    "safe_area": "minimo de 0.25x a altura do simbolo",
+    "gold_text": "usar em fundos verde profundo; evitar texto pequeno sobre areia/branco"
+  },
+  "legal_status": "sem verificação de registro ou de conflito marcario; marca nao pronta para lancamento"
 }
