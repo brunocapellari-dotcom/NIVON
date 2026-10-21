@@ -30,6 +30,32 @@ Após obter export JSONL por canal autorizado e PRIVADO, fora do GitHub público
 
 O arquivo local precisa ter cada linha em JSON compatível com SELECT * FROM public.nivon_ptax_quotes. O conversor exige saída nova e privada (0600), fora do repositório; falhas apagam a saída parcial. O relatório público de stdout contém só total, contagem por moeda, datas extremas e SHA-256 do arquivo exportado. Não compartilhar DATABASE_URL, credenciais ou cotações em issues/PRs.
 
+## Reconciliação registro a registro (somente leitura, sem nuvem)
+
+Arquivo `scripts/reconcile_ptax_neon_bigquery.py` compara uma exportação JSONL **bruta da tabela Neon** com uma exportação JSONL da tabela BigQuery, ambas de acesso privado, fora do GitHub. Nenhum SQL/HTTP/API é executado pelo comparador. Para executar:
+
+```sh
+python3 scripts/reconcile_ptax_neon_bigquery.py \
+  --source-neon /tmp/ptax-neon-private.jsonl \
+  --target-bigquery /tmp/ptax-bigquery-private.jsonl
+```
+
+Contrato: a exportação Neon precisa conter todos os campos de `public.nivon_ptax_quotes`. A exportação BigQuery precisa conter **todas** as colunas descritas em `database/bigquery/nivon_ptax_schema.sql` (sem extras) com tipos compatíveis. O JSONL BigQuery aceita campos `NUMERIC` como strings/JSON decimal; campos `TIMESTAMP` exigem offset, `Z` ou sufixo explícito `UTC`. Campo `source_neon_row_id` aceita inteiro ou string inteira positiva.
+
+O reconciliador analisa: contagens por moeda, chaves/cotações ausentes, registros inesperados, versões com metadados divergentes, duplicações, `quote_id`, `record_sha256`, `vintage_id`, preço exato, compra/venda, boletim, horário de origem, datas, natureza, atributos de licença. Para adulteração ou contrato inconsistente, **bloqueia a verificação** sem publicar nenhuma cotação ou caminho privado.
+
+Saída JSON: apenas números agregados, SHA-256 dos **arquivos completos**, status de conciliação e decisões que permanecem bloqueadas. Nenhum preço, amostra de registro, URL interna ou credencial aparece no relatório. Códigos de saída:
+
+- `0`: os **dois snapshots locais não vazios** são consistentes. Isso **não** comprova carga em GCP, backup/restore, completude temporal ou autorização de migração.
+- `3`: arquivo ausente, malformado, dados de destino adulterados ou violação do contrato.
+- `4`: snapshots válidos, mas com registros ausentes, extras, alterados, duplicados ou ambos vazios.
+
+Há limite de 500.000 linhas por arquivo; separar períodos maiores em janelas auditáveis sem descartar nenhuma. Dois arquivos vazios nunca são considerados êxito.
+
+**Snapshot em movimento:** o Neon mantém o backfill e `last_verified_at` pode mudar. Duas extrações em momentos diferentes podem produzir divergência legítima. Exportar a origem sob snapshot transacional consistente e registrar início/fim, contagens, hashes, cobertura e corte. No BigQuery, registrar versão do load e job id, manter a mesma janela, reexportar, verificar diferenças e repetir a reconciliação após o backfill. **Não aceitar diferença "quase zero", deduplicação silenciosa ou truncamento de arquivos como aprovação.** O BigQuery não garante unicidade de chaves automaticamente.
+
+O script nunca muda `quality_status`, nunca gera SQL `MERGE`, nunca altera a programação Neon e **sempre** retorna `cutover_approved:false`, mesmo no resultado consistente. Autorização de mudança requer restore testado, auditoria de direitos e aprovação independente dos dados.
+
 ## Gates
 
 1. Verificar resultado sanitizado da auditoria do projeto nivon-data: billing, IAM e APIs. O Cloud Shell não devolve essa saída automaticamente à conversa.
