@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import patch
 from urllib.error import HTTPError
 
-from nivon.acessos_smoke_privado import executar, main
+from nivon.acessos_smoke_privado import executar, main, preflight
 
 
 class Response:
@@ -175,6 +175,50 @@ class TestAcessosPrivados(unittest.TestCase):
         self.assertEqual(r["estado"],"ZIP_RECEBIDO_E_INSPECIONADO")
         self.assertNotIn("segredo", json.dumps(r).lower())
         self.assertEqual(r["evidencias"]["csv_no_zip"],1)
+
+    def test_preflight_usda_sem_rede_e_sem_segredo_no_relatorio(self):
+        segredo = "V" * 40
+        with patch.dict(os.environ, {"AGROBR_USDA_API_KEY": segredo}):
+            result = preflight("usda")
+        self.assertEqual(result["estado"], "CREDENCIAL_FORMATO_OK_NAO_AUTENTICADA")
+        self.assertFalse(result["homologado"])
+        self.assertNotIn(segredo, json.dumps(result))
+
+    def test_preflight_usda_recusa_ausente_ou_campo_invalido(self):
+        for value in ("", "curta", "a"*40+"\\n"):
+            with self.subTest(value_len=len(value)):
+                with patch.dict(os.environ, {"AGROBR_USDA_API_KEY": value}):
+                    result=preflight("usda")
+                self.assertEqual(result["estado"], "SEGREDO_INDISPONIVEL")
+
+    def test_preflight_ana_nao_imprime_identificador_ou_senha(self):
+        from nivon import ana_hidrowebservice as ana
+        with patch.object(ana, "credenciais_ambiente",
+                          return_value=("12345678901", "SECRET_PRIVADO")):
+            result=preflight("ana")
+        self.assertEqual(result["estado"], "CREDENCIAL_FORMATO_OK_NAO_AUTENTICADA")
+        self.assertNotIn("SECRET_PRIVADO",json.dumps(result))
+        self.assertNotIn("12345678901",json.dumps(result))
+
+    def test_preflight_inmet_nao_entrega_url_do_bdmeP(self):
+        from nivon import inmet_bdmep as im
+        private_link = "https://bdmep.inmet.gov.br/$2b$10$TOKEN_PRIVADO_EXEMPLO.zip"
+        with patch.object(im, "link_privado_do_ambiente", return_value=private_link):
+            result=preflight("inmet")
+        self.assertEqual(result["estado"], "CREDENCIAL_FORMATO_OK_NAO_AUTENTICADA")
+        self.assertNotIn(private_link,json.dumps(result))
+
+    def test_cli_preflight_nao_dispara_live(self):
+        import contextlib
+        buf=io.StringIO()
+        with (patch.dict(os.environ, {"AGROBR_USDA_API_KEY": "A"*40}),
+              patch("nivon.acessos_smoke_privado.executar",
+                    side_effect=AssertionError("tentou acessar rede")),
+              contextlib.redirect_stdout(buf)):
+            exitcode=main(["--fonte", "usda", "--preflight"])
+        self.assertEqual(exitcode,0)
+        self.assertEqual(json.loads(buf.getvalue())["estado"],
+                         "CREDENCIAL_FORMATO_OK_NAO_AUTENTICADA")
 
     def test_fonte_inexistente_rejeitada(self):
         with self.assertRaises(ValueError):
