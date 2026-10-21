@@ -7,7 +7,7 @@ Sem escrita, rede, cron, promocao de modelo ou direitos presumidos.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from datetime import datetime
+from datetime import datetime, timezone, timedelta, date
 import re
 
 from .cadeias_adicionais import ObservacaoCadeia, TABELAS_SIDRA, _instante
@@ -27,6 +27,23 @@ def _chave(uf, competencia, indicador):
     if indicador not in _INDICADORES:
         raise DadoInvalido("indicador de abate desconhecido")
     return uf, competencia, indicador
+
+
+
+def _fim_trimestre(competencia):
+    """Valida inicio da pesquisa e determina data canonica de referencia."""
+    if not isinstance(competencia, str) or not re.fullmatch(
+            r"(?:19|20)[0-9]{2}-T[1-4]", competencia):
+        raise DadoInvalido("competencia trimestral invalida")
+    ano, tri = int(competencia[:4]), int(competencia[-1])
+    if ano < 1997:
+        raise DadoInvalido("competencia anterior ao inicio do SIDRA 1092-1094")
+    mes = tri * 3
+    if mes == 12:
+        fim = date(ano, 12, 31)
+    else:
+        fim = date(ano, mes + 1, 1) - timedelta(days=1)
+    return fim
 
 
 def _ler(snapshot, especie, tabela):
@@ -49,6 +66,15 @@ def _ler(snapshot, especie, tabela):
     if len(observacoes)+len(censuras) > 15000:
         raise DadoInvalido("limite de linhas do parser ultrapassado")
     entradas = {}
+    def validar_periodo(chave, referencia=None):
+        fim = _fim_trimestre(chave[1])
+        if referencia is not None and referencia != fim.isoformat():
+            raise DadoInvalido("referencia difere do fim da competencia trimestral")
+        # Nao aceitar data publicada antes de encerrar a competencia.
+        fim_publicavel = datetime.combine(fim + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc)
+        if pub < fim_publicavel:
+            raise DadoInvalido("vintage publicavel antes do encerramento do trimestre")
+
     for obs in observacoes:
         if not isinstance(obs, ObservacaoCadeia) or (
             obs.produto != especie or obs.fonte_id != "IBGE"
@@ -59,6 +85,7 @@ def _ler(snapshot, especie, tabela):
         ):
             raise DadoInvalido("observacao nao pertence ao snapshot")
         key = _chave(obs.uf, obs.competencia, obs.indicador)
+        validar_periodo(key, obs.referencia)
         if key in entradas:
             raise DadoInvalido("registro duplicado no vintage")
         entradas[key] = ("VALOR", obs)
@@ -68,6 +95,7 @@ def _ler(snapshot, especie, tabela):
         } or row.get("situacao") != _CENSURA:
             raise DadoInvalido("censura sem proveniencia de parser")
         key = _chave(row["uf"], row["competencia"], row["indicador"])
+        validar_periodo(key)
         if key in entradas:
             raise DadoInvalido("registro e censura simultaneos")
         entradas[key] = ("CENSURADO", None)
