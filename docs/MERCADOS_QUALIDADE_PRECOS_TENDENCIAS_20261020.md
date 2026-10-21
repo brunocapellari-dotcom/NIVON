@@ -509,3 +509,101 @@ O contrato é intencionalmente **fail-closed**. Antes de classificar perda de fo
 A dinâmica histórica não deve alimentar `probabilidades_calibradas` nem ser publicada como previsão futura. O backtesting probabilístico em `validacao_tendencias_mercado.py`, ledger/auditoria E2E e a auditoria de holdout quantitativo são mecanismos complementares, que só terão poder de homologação após evidências reais verificáveis e validação independente.
 
 **Frete rodoviário:** o painel de valores por lotes/município não é estatisticamente equivalente à variação pareada por estabelecimento e transportadora. A frente de fretes deve consumir o motor pareado e o contrato de coleta da integração logística específica, sem usar preços não comparáveis como média de mercado. Este adaptador é exclusivo de cotações CME/ICE e indicadores físicos.
+
+
+## 13. Continuação 21/10/2026 — cliente HTTPS PTAX opt-in + RAW em SQLite
+
+**Contexto prévio encontrado:** `ptax_plano.py` planejava os endpoints
+`CotacaoDolarPeriodo` e `CotacaoMoedaPeriodo`; `bcb_ptax.py` e
+`pipeline_api_dados.py` normalizavam respostas OData para `float` e
+salvavam apenas hash de snapshot e linhas normalizadas, sem preservar
+o corpo HTTP. O ledger canônico de proveniência
+`registro_snapshots.py` já possuía datas de coleta/versionamento,
+controles de direito e a função `savepoint_atomico`. Esses módulos
+foram **reutilizados**, não substituídos.
+
+### 13.1. Coletor `captura_ptax_http.py`
+
+`capturar_ptax_odata` valida um plano produzido integralmente pelo
+planejador oficial interno, antes de realizar qualquer I/O:
+
+- **Rede desabilitada por padrão.** O usuário da biblioteca precisa passar
+  `permitir_rede=True`, catálogo com dataset `BCB_PTAX`
+  explicitamente `enabled=True, collection_authorized=True`,
+  autorizações `COLETA` e `ARMAZENAMENTO`, e referência de evidência
+  de direitos para executar **um único** GET HTTPS.
+- Host/operação/parâmetros/intervalo validados; context TLS padrão
+  da biblioteca SSL, proxies de ambiente desabilitados, sem seguir
+  redirecionamentos, sem retries, timeout 10 segundos, resposta
+  HTTP 200, conteúdo `application/json`, `Content-Encoding` identity
+  e limite de 2 MB. HTML/WAF, paginação inesperada e JSON inválido
+  são rejeitados pelo verificador `ptax_odata_bruta_mercados.py`.
+- Registra os **bytes originais exatos**, SHA-256, conteúdo e cabeçalhos
+  HTTP selecionados, data de coleta com timezone posterior à leitura,
+  URL canônica, valores em `Decimal`, posição `/value/N`, tipos de
+  boletim e condição point-in-time. `Date` do servidor é armazenado
+  apenas como cabeçalho, **não** como hora de publicação certificada.
+- Para testes, permite função `transporte` injetada, mas a resposta
+  sempre recebe `tipo=SINTETICO` e
+  `origem_execucao=TRANSPORTE_INJETADO_SINTETICO`. Não permite
+  mistura de `permitir_rede=True` com transporte injetado.
+  Não há chave/API premium, navegador, login, scheduler ou deploy.
+
+**LIMITAÇÃO:** o novo coletor não foi executado contra o BCB em rede
+nesta rodada. A documentação e o catálogo públicos confirmam o
+conceito e a ODbL (https://dadosabertos.bcb.gov.br/pt_BR/dataset/dolar-americano-usd-todos-os-boletins-diarios),
+mas o endpoint OData não pôde ser obtido/validado como payload vivo
+pelo ambiente de pesquisa. A existência do código não implica
+ativação das flags do catálogo.
+
+### 13.2. Persistência `ptax_raw_sqlite.py`
+
+- `guardar_raw_ptax`: reconfere SHA e conteúdo antes de salvar os
+  bytes integrais na tabela `nivon_ptax_raw_blobs` e os metadados de
+  cada captura na tabela `nivon_ptax_raw_capturas`. Associa ao ledger
+  preexistente de `nivon_snapshots`/`nivon_coletas`, sob
+  `savepoint_atomico`, com deduplicação por SHA e preservação de
+  múltiplas datas de coleta do mesmo corpo, sem reescrever histórico.
+- A função recusa mudança de classificação `SINTETICO`/
+  `REAL_AUTORIZADO` sem origem e direitos compatíveis; autorização
+  real também é conferida novamente pelo ledger canônico.
+  **É o catálogo oficial do projeto** que deve autorizar coleta.
+- `consultar_raw_ptax_asof`: retorna somente versões disponíveis até
+  `corte`; ignora fixtures sintéticas por padrão, recalcula SHA
+  dos bytes persistidos e refaz o parse direto do JSON bruto para
+  retornar preços Decimal. Não atribui arbitrariamente data de
+  publicação à taxa de câmbio.
+- DDL `CREATE TABLE` usa `execute`, não `executescript`,
+  para não confirmar transações abertas pelo chamador.
+  Regressões comprovam rollback de dados **e da criação das tabelas**
+  quando ambas estão dentro do mesmo savepoint externo.
+
+**LIMITAÇÕES:** SQLite é persistência local, não WORM; metadados de
+captura são declarados pelo chamador, e o relógio não é assinável.
+Um chamador privilegiado pode forjar dicionários/mudar o banco:
+isolamento do serviço, autenticação do transporte, IAM, prova de
+tempo e ancoragem remota ficam em Infraestrutura. O ledger de
+snapshots antigo usa `(dataset_id, sha256)` como unicidade;
+se o **mesmo raw SHA** já houver sido classificado com outro
+`schema_versao` ou `tipo`, a operação falhará por conflito
+de metadados, sem migração/reescrita silenciosa. Esse caso exige
+plano de migração versionada, não bypass do gate.
+
+### 13.3. Testes e próximos controles
+
+`tests/test_captura_ptax_http.py` e
+`tests/test_ptax_raw_sqlite.py` cobrem rede off,
+catálogo/direitos, endereço HTTP, bloqueio de HTML/WAF,
+redirecionamento, MIME/codificação, tamanho e Content-Length,
+revisão de clock, mock sempre sintético, consistência do raw,
+idempotência, duas coletas do mesmo SHA, corte histórico,
+alteração indevida do arquivo, rollback e transações externas.
+
+**Próxima P0:** revisar as flags reais do Source Registry e as condições
+ODbL, executar teste manual de uma janela pequena com o Banco Central
+em ambiente permitido, manter amostras de headers e bytes capturados,
+testar corte histórico; depois planejar migração controlada do adaptador
+`float` para o caminho Decimal, sem quebrar consumidores do briefing
+ou promover nenhuma taxa com data de publicação não comprovada.
+Nunca ligar fetch em CI de PR nem automatizar até segurança/licença e
+custos homologados. Toda saída segue `publicavel=false`.
