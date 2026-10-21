@@ -4621,6 +4621,182 @@
       ],
       "source_note": "GeoInfo disponibiliza GeoJSON/SHP e WFS/WMS; verificar camada e escala. Estimativa de água disponível mapeada, não exame físico-químico laboratorial.",
       "preliminary_evidence": "EMBRAPA_GEOINFO_GOV_BR_OPEN_GEO_2026"
+    },
+    {
+      "dataset_id": "NASA_USDA_GLAM_NDVI",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "DIRECT_OFFICIAL_API",
+        "url": "https://glam1.gsfc.nasa.gov/api/gettbl/v4",
+        "source_proof": "https://glam1.gsfc.nasa.gov/api/doc/gettbl"
+      },
+      "implementation_scope": "ONE_SHOT_HTTPS_CSV_GLAM_PLANNER_AND_DEFENSIVE_UNTYPED_PARSER; real CSV schema unverified",
+      "authentication": "NONE_DOCUMENTED",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "LIVE_SCHEMA_RIGHTS_PERSISTENCE_NOT_HOMOLOGATED",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "VERIFY_GLAM_ADM_IDS_AND_CROP_MASK",
+        "VERIFY_LIVE_CSV_SCHEMA_AND_UNITS",
+        "HISTORICAL_BACKFILL"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Não inferir NDVI válido até validar máscara agrícola/ID GLAM e esquema CSV; não é produtividade observada.",
+      "preliminary_evidence": "OFFICIAL_DOCUMENTATION_2026_10_21_NO_NEW_RUNTIME_DATA"
+    },
+    {
+      "dataset_id": "FAO_WAPOR3_EVAPOTRANSPIRACAO",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://www.fao.org/in-action/remote-sensing-for-water-productivity/wapor-data-access/en",
+        "source_proof": "https://data.apps.fao.org/gismgr/shared/docs/api-reference/index.html"
+      },
+      "implementation_scope": "FAO WAPOR v3 DOCUMENTED GLOBAL 300M ACCESS NO_TOKEN; exact layer/time/bbox API pending",
+      "authentication": "NONE_OFFICIAL_WAPOR_V3",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "LIVE_SCHEMA_RIGHTS_PERSISTENCE_NOT_HOMOLOGATED",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "SELECT_LAYER_AND_TIME_RANGE",
+        "L1_GLOBAL_ONLY_FOR_BRAZIL",
+        "VERIFY_API_PATH_AND_GEOTIFF",
+        "HISTORICAL_BACKFILL"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "WaPOR global L1 300m ETA e NPP; grades/modelo não medições de solo nem perdas causais de produtividade.",
+      "preliminary_evidence": "OFFICIAL_DOCUMENTATION_2026_10_21_NO_NEW_RUNTIME_DATA"
+    },
+    {
+      "dataset_id": "IMF_PORTWATCH_PORT_ACTIVITY",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://portwatch.imf.org/api/search/definition/",
+        "source_proof": "https://portwatch.imf.org/"
+      },
+      "implementation_scope": "OGC_RECORDS_DISCOVERY_DOC_VERIFIED; historical ArcGIS service broken; current data resource pending",
+      "authentication": "PUBLIC_SEARCH_API_UNVERIFIED_REAL_FETCH",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "LIVE_SCHEMA_RIGHTS_PERSISTENCE_NOT_HOMOLOGATED",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "DISCOVER_CURRENT_WORKING_FEATURE_SERVICE",
+        "MARK_OLD_ARCGIS_LINK_DEPRECATED",
+        "VERIFY_PRODUCT_VESSEL_CLASS_AND_REVISIONS",
+        "HISTORICAL_BACKFILL"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Port calls/vessel tonnage from AIS, estimado e revisável; descontinuado ArcGIS legado. Não linha-up, não dado ANTAQ realizado.",
+      "preliminary_evidence": "OFFICIAL_DOCUMENTATION_2026_10_21_NO_NEW_RUNTIME_DATA"
+    },
+    {
+      "dataset_id": "GEOGLAM_CONDICAO_LAVOURAS",
+      "collector_class": "STRUCTURED_FILE",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://www.cropmonitor.org/archive",
+        "source_proof": "https://www.cropmonitor.org/archive"
+      },
+      "implementation_scope": "MONTHLY_SHAPEFILE_AND_REPORT_DISCOVERED; precise download and attributes pending",
+      "authentication": "NONE_EXPECTED_VERIFY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "LIVE_SCHEMA_RIGHTS_PERSISTENCE_NOT_HOMOLOGATED",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "DISCOVER_MONTHLY_GEOJSON_OR_SHP_RESOURCE",
+        "CONFIRM_GEOGRAPHIC_COVERAGE",
+        "HISTORICAL_BACKFILL"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Comparar condição subjetiva de safra e anomalias separadamente de previsão quantitativa oficial; preservar mês e edição.",
+      "preliminary_evidence": "OFFICIAL_DOCUMENTATION_2026_10_21_NO_NEW_RUNTIME_DATA"
+    },
+    {
+      "dataset_id": "COPERNICUS_C3S_SAZONAL_ENS",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://cds.climate.copernicus.eu/datasets/seasonal-monthly-single-levels",
+        "source_proof": "https://climate.copernicus.eu/climate-data-store"
+      },
+      "implementation_scope": "CDS SEASONAL ENSEMBLE DATASET DOCUMENTED; API key/account and extraction pending",
+      "authentication": "FREE_CDS_ACCOUNT_API_TOKEN_REQUIRED",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "LIVE_SCHEMA_RIGHTS_PERSISTENCE_NOT_HOMOLOGATED",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "FREE_CDS_ACCOUNT_API_TOKEN",
+        "SEASONAL_MODEL_VERSION_AND_BIAS_CORRECTION",
+        "HISTORICAL_BACKFILL"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Modelos probabilísticos e vieses por tempo de previsão. Não classificar como chuva observada; usar calibração.",
+      "preliminary_evidence": "OFFICIAL_DOCUMENTATION_2026_10_21_NO_NEW_RUNTIME_DATA"
+    },
+    {
+      "dataset_id": "ANTT_PISO_MINIMO_FRETE",
+      "collector_class": "STRUCTURED_FILE",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://www.gov.br/antt/pt-br/assuntos/cargas/politica-nacional-de-pisos-minimos-de-frete",
+        "source_proof": "https://www.gov.br/antt/pt-br/assuntos/cargas/politica-nacional-de-pisos-minimos-de-frete"
+      },
+      "implementation_scope": "OFFICIAL_REGULATORY_COEFFICIENT_DISCOVERY; legal formula and effective dates need ingestion",
+      "authentication": "PUBLIC_WEB",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "LIVE_SCHEMA_RIGHTS_PERSISTENCE_NOT_HOMOLOGATED",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXTRACT_CURRENT_CCD_CC_WITH_EFFECTIVE_DATE",
+        "DISTINGUISH_A_B_C_D_TABLES",
+        "HISTORICAL_BACKFILL"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Piso legal = d*CCD + CC conforme regime e vigência; NÃO preço spot do frete, lucro e pedágio fora do piso salvo regras vigentes.",
+      "preliminary_evidence": "OFFICIAL_DOCUMENTATION_2026_10_21_NO_NEW_RUNTIME_DATA"
     }
   ]
 }
