@@ -136,7 +136,8 @@
         "nivon.pecuaria_mercados:backtest_sazonal_pecuaria",
         "nivon.cadeias_adicionais:normalizar_abate_sidra_offline",
         "nivon.pecuaria_sidra_abate:normalizar_snapshot_sidra_abate",
-        "nivon.pecuaria_sidra_vintages:historico_sidra_asof"
+        "nivon.pecuaria_sidra_vintages:historico_sidra_asof",
+        "nivon.pecuaria_sidra_pacote:normalizar_captura_arquivada_sidra"
       ],
       "data_dependencies": [
         "IBGE_PPM",
@@ -587,7 +588,8 @@
         "nivon.pecuaria_mercados:tendencia_observada_pecuaria",
         "nivon.pecuaria_mercados:backtest_sazonal_pecuaria",
         "nivon.pecuaria_sidra_abate:normalizar_snapshot_sidra_abate",
-        "nivon.pecuaria_sidra_vintages:historico_sidra_asof"
+        "nivon.pecuaria_sidra_vintages:historico_sidra_asof",
+        "nivon.pecuaria_sidra_pacote:normalizar_captura_arquivada_sidra"
       ],
       "data_dependencies": [
         "IBGE_ABATE_FRANGO_1094",
@@ -622,7 +624,8 @@
         "nivon.pecuaria_mercados:tendencia_observada_pecuaria",
         "nivon.pecuaria_mercados:backtest_sazonal_pecuaria",
         "nivon.pecuaria_sidra_abate:normalizar_snapshot_sidra_abate",
-        "nivon.pecuaria_sidra_vintages:historico_sidra_asof"
+        "nivon.pecuaria_sidra_vintages:historico_sidra_asof",
+        "nivon.pecuaria_sidra_pacote:normalizar_captura_arquivada_sidra"
       ],
       "data_dependencies": [
         "IBGE_ABATE_SUINO_1093",
