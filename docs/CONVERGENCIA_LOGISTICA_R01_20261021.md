@@ -42,3 +42,25 @@ Incluídos os módulos `anp_semanal_store.py` (vintages oficiais LPC, separado d
 6. **P1 ciência e modelos:** criar backtests point-in-time em múltiplos corredores e janelas, medir estabilidade de painel e viés de seleção de fontes, sem afirmar probabilidade de alta/baixa até calibração empírica.
 
 **Operação:** 100% offline, sem deploy, sem merge em main, sem redes sociais reais, sem integração paga, sem ativação de cron ou coleta. O aumento de testes sintéticos não equivale a homologação de dados reais.
+
+
+## Continuidade 21/10/2026 — cadeia ANP/LPC semanal oficial indexada
+
+**Recuperação do estado:** PR #42 em `c4c0acede9c58554bb0bf6bbc97b278cd0f1fa61`; PR #8 em `79423add99a5b92186839d969f52d1eadf2f7501`, ambas draft sem merge no início da rodada.
+
+**Código importado seletivamente da PR #8 sem mudar as outras frentes:**
+- `src/nivon/anp_indice_lpc.py`, blob SHA `ccd20d71ec0b05cdb36f1e1011e9f7bd72492e62`; `tests/test_anp_indice_lpc.py`.
+- `src/nivon/anp_resumo_lpc.py`, blob SHA `fd20c4f81d6cd46b3c9c23f7ef41678ee3b3b76d`; `tests/test_anp_resumo_lpc.py`.
+- O parser lê aba `MUNICIPIOS`, layout candidato linha 7, colunas explícitas de revenda, média simples amostral por município, semana de 7 dias e DIESEL separado de DIESEL S10. Não coleta HTML nem XLSX na internet; `openpyxl` é dependência opcional.
+
+**Pipeline integrado e proteção contra edição sem fonte:**
+- `src/nivon/anp_lpc_pipeline.py::integrar_lpc_semanal_offline` exige HTML de índice e bytes XLSX já recebidos, SHA-256 esperado de cada artefato e URL **realmente listada naquele índice**. Nunca forma URL pelo número da semana. Confere ano, semana de início/fim no nome versus linha da planilha, semana única por edição, data final antes da data de publicação e cronologia `publicado_em <= coletado_indice_em <= coletado_arquivo_em`.
+- A operação chama `anp_semanal_store.gravar_edicao_semanal` com edição, hash e cronologia. Novo armazenamento `anp_semanal_indices` relaciona arquivo SHA, índice SHA, data da captura do índice, URL do índice e URL do arquivo, **na mesma transação** que dados municipais/edição/captura. Novas capturas de um índice podem ser rastreadas sem duplicar preços ou semanas. Rollback de falha no vínculo também desfaz o armazenamento parcial.
+- `classe=REAL_AUTORIZADO` é **explicitamente rejeitada por este pipeline**, mesmo se o chamador alegar licença. Somente `SINTETICO` permitido, até verificação independente de arquivo XLSX real, schema, horário real de publicação, licença, autorização de tratamento/comercialização e procedência. Um hash não prova autorização/autenticidade.
+- Arquivos e dados de revenda do diesel B **não** são diesel A/refinaria, custo efetivo de caminhão, frete negociado/contratado nem preços correntes sem data. **Média de diesel da pesquisa ANP não é média municipal de frete**; não cruzar as políticas.
+
+**Testes novos e cobertura efetiva:** `tests/test_anp_lpc_integracao.py` verifica 3 semanas XLSX completamente artificiais, URL ausente do índice, períodos incompatíveis, arquivo ou índice adulterado, índice WAF, duplicidade/edição, separação S10/comum, ausência de município, data futura ou inversa, proveniência arquivada e transação com erro injetado no índice. `tests/test_anp_semanal_store.py` continua validando PIT, reedição conflitante, não publicação e direito de armazenamento.
+
+**CI ampliada:** `.github/workflows/testes.yml` adicionou job obrigatório de `validar-anp-lpc-fixtures` com `openpyxl==3.1.5` pinado. Ele executa `test_anp_indice_lpc.py`, `test_anp_resumo_lpc.py`, `test_anp_lpc_integracao.py` e `test_anp_semanal_store.py` após instalar a biblioteca, para não produzir falso verde por `skipIf(openpyxl is None)`. Download de pacote Python **não significa coleta de dados ANP**. Os testes nucleares não instalam a biblioteca e, por isso, relatam ignorados adicionais. O job específico é a evidência de teste real do parser **com fixtures sintéticas**.
+
+**Gates ainda não atendidos:** obter, com autorização, três arquivos XLSX oficiais reais e index HTML verificáveis, conferir manualmente amostras contra painel público ANP e registrador de vintages; documentar licença e eventual uso comercial, agendar coleta sob autorização, ativar storage durável e monitorar reedições. Nenhum dado ANP real foi baixado/ingestado, nenhum preço foi publicado, nenhum serviço foi ativado.
