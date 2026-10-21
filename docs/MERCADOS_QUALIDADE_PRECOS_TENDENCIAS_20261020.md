@@ -261,3 +261,38 @@ com raw verificável e vintages, e homologar calendário por exchange,
 especificação de contrato e licenças. Depois: E2E de múltiplas previsões,
 walk-forward com dados reais, benchmarks e auditoria de calibração.
 Nenhum processo em produção foi habilitado.
+
+
+## 9. Ledger SQLite de emissão — continuidade 21/10/2026
+
+Foi incorporado `nivon.ledger_previsoes_mercado` e sua suíte de
+regressões isoladas, com dependência exclusiva da biblioteca padrão Python.
+
+- `inicializar_ledger(con)`: tabela local com chave de previsão única,
+  sequência autoincremental, registro serializado canonicamente, hash da
+  versão e hash anterior. Triggers locais impedem UPDATE e DELETE via SQL.
+- `anexar_previsao(con, previsao, cabeca_atual_esperada_sha256=...)`:
+  `BEGIN IMMEDIATE`, leitura e validação de toda a cadeia contra a
+  **cabeça anterior declarada de fonte externa**, validação temporal,
+  INSERT único e COMMIT. Falha provoca ROLLBACK, inclusive no caso de
+  IDs duplicados ou cabeça defasada.
+- `consultar_ledger(con, cabeca_esperada_sha256=...)`:
+  reabre registros, confere colunas com JSON, ordem, conteúdo SHA,
+  vínculos da cadeia e âncora fornecida pelo operador.
+
+**Segurança real ainda não comprovada:** SQLite não é armazenamento WORM;
+um administrador pode remover trigger/tabela, alterar diretamente o arquivo,
+substituir timestamps e reescrever a cadeia. Sem âncora de SHA emitida e
+armazenada independentemente do SQLite, sem timestamps assinados e sem
+snapshot bruto verificável, não existe prova de emissão histórica.
+Uma âncora obtida do próprio banco não vale como evidência independente.
+O ledger não liga serviços nem provisiona cloud, só opera na conexão
+SQLite explicitamente fornecida.
+
+**Gate operacional seguinte:** atribuir ao subsistema Infraestrutura/
+Segurança o desenho de exportação de cabeças para armazenamento WORM/
+assinatura e relógio confiável com replay/restore ensaiado. Integrar
+o ledger ao gerador real de previsões apenas após contrato e coleta
+licenciados, idempotência de entrega/retry e testes de múltiplos processos
+com falhas de energia e condições de corrida. Não afirmar `COMPLETED`
+operacional nem `calibrado` com testes sintéticos.
