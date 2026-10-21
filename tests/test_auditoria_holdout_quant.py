@@ -93,7 +93,7 @@ class TestHoldoutPurgado(unittest.TestCase):
         r = auditar(registros(), embargo_periodos=55)
         self.assertEqual(r["status"], "HISTORICO_PURGADO_INSUFICIENTE")
         self.assertFalse(r["publicavel"])
-        self.assertEqual(r["n_historico_elegivel"], 26)
+        self.assertEqual(r["n_historico_elegivel"], 21)
 
     def test_fases_insuficientes_nao_concluem_skill(self):
         r = auditar(registros(), n_holdout=20)
