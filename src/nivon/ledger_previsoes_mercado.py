@@ -60,9 +60,9 @@ def _carregar(con: sqlite3.Connection) -> list[dict]:
             obj = json.loads(raw)
         except (TypeError, ValueError) as exc:
             raise ErroLedgerPrevisao("JSON do ledger corrompido") from exc
-        if not isinstance(obj, dict) or (
+        if not isinstance(obj, dict) or not isinstance(obj.get("previsao"), dict) or (
             _canonico(obj).decode("utf-8") != raw or
-            obj.get("previsao", {}).get("previsao_id") != pid or
+            obj["previsao"].get("previsao_id") != pid or
             obj.get("previsao", {}).get("registrado_em") != instante or
             obj.get("anterior_sha256") != anterior or
             obj.get("registro_sha256") != digest
@@ -135,6 +135,8 @@ def anexar_previsao(
                 "ancora_externa_autenticada": False, "publicavel": False}
     except (sqlite3.Error, ValueError, TypeError, KeyError) as exc:
         con.rollback()
-        if isinstance(exc, ErroRegistroPrevisao):
+        if isinstance(exc, ErroLedgerPrevisao):
             raise
-        raise ErroLedgerPrevisao("falha transacional no ledger") from exc
+        # Não vazar conteúdo de payloads ou SQLite em exceção pública.
+        # A causa original permanece encadeada para diagnóstico local.
+        raise ErroLedgerPrevisao("falha transacional/âncora no ledger") from exc
