@@ -125,12 +125,12 @@ class TestIVOBenchmarkPAMAnual(unittest.TestCase):
         x=self.serie()
         r=self.rodar(x,corte_avaliacao=instante(2024,7,1),
                      inicio=2021,fim=2025)
-        self.assertEqual([f["ano"] for f in r["folds"]],[2021,2022])
+        self.assertEqual([f["ano"] for f in r["folds"]],[2021,2022,2023])
         self.assertTrue(any(p["ano"]==2024 for p in r["folds_ignorados"]))
 
     def test_treino_com_lacuna_anual_nao_interpolado(self):
         x=self.serie()
-        del x[2019]
+        del x[2018]
         r=self.rodar(x,inicio=2021,fim=2021)
         self.assertEqual(r["folds_validos"],0)
         self.assertEqual(r["folds_ignorados"][0]["motivo"],
