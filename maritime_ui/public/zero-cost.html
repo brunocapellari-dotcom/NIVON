@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AgroLog Intelligence — ZERO_COST</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; }
+    body { margin:0; background:#0d1117; color:#e6edf3; }
+    main { max-width:1120px; margin:auto; padding:24px; }
+    header { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; flex-wrap:wrap; }
+    .badge { border:1px solid #3fb950; color:#3fb950; border-radius:999px; padding:6px 10px; font-size:12px; font-weight:700; }
+    .muted { color:#8b949e; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; margin-top:20px; }
+    article { border:1px solid #30363d; border-radius:12px; padding:14px; background:#161b22; }
+    article strong { display:block; margin-top:6px; }
+    .ok { color:#3fb950; } .warn { color:#d29922; } .fail { color:#f85149; }
+    pre { white-space:pre-wrap; overflow-wrap:anywhere; background:#010409; padding:12px; border-radius:10px; border:1px solid #30363d; }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>AgroLog Intelligence</h1>
+      <div class="muted">Entrega estática auditável</div>
+    </div>
+    <span class="badge">ZERO_COST · R$ 0 obrigatório</span>
+  </header>
+  <p id="status" class="muted">Carregando commercial-snapshot.json…</p>
+  <section id="summary" class="grid"></section>
+  <section>
+    <h2>Componentes</h2>
+    <div id="components" class="grid"></div>
+  </section>
+  <details>
+    <summary>Metadados</summary>
+    <pre id="meta"></pre>
+  </details>
+</main>
+<script>
+(async function () {
+  const status = document.getElementById('status');
+  const summary = document.getElementById('summary');
+  const components = document.getElementById('components');
+  const meta = document.getElementById('meta');
+  function esc(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char];
+    });
+  }
+  try {
+    const response = await fetch('./data/commercial-snapshot.json', {cache:'no-store'});
+    if (!response.ok) throw new Error('snapshot ausente: HTTP ' + response.status);
+    const data = await response.json();
+    const rows = Array.isArray(data.components) ? data.components : [];
+    const failed = rows.filter(function (row) { return row.status === 'FAILED'; }).length;
+    const stale = rows.filter(function (row) { return row.status === 'STALE'; }).length;
+    status.textContent = 'Snapshot carregado · ' + (data.generated_at || 'sem timestamp');
+    summary.innerHTML =
+      '<article><span class="muted">Modo</span><strong class="ok">' + esc(data.delivery_mode || 'ZERO_COST') + '</strong></article>' +
+      '<article><span class="muted">Status</span><strong>' + esc(data.status || '—') + '</strong></article>' +
+      '<article><span class="muted">Componentes</span><strong>' + rows.length + '</strong></article>' +
+      '<article><span class="muted">Gaps</span><strong class="' + (failed ? 'fail' : stale ? 'warn' : 'ok') + '">' + failed + ' falha(s) · ' + stale + ' stale</strong></article>';
+    components.innerHTML = rows.map(function (row) {
+      const count = Array.isArray(row.data) ? row.data.length : (row.data ? 1 : 0);
+      const cls = row.status === 'FAILED' ? 'fail' : row.status === 'STALE' ? 'warn' : 'ok';
+      return '<article><span class="muted">' + esc(row.source_id || '') + '</span><strong>' +
+        esc(row.component || 'componente') + '</strong><div class="' + cls + '">' +
+        esc(row.status || 'UNKNOWN') + ' · ' + count + ' registro(s)</div></article>';
+    }).join('');
+    meta.textContent = JSON.stringify({
+      product:data.product,
+      uf:data.uf,
+      generated_at:data.generated_at,
+      delivery_mode:data.delivery_mode,
+      freshness:data.freshness || {}
+    }, null, 2);
+  } catch (error) {
+    status.textContent = 'Sem snapshot publicado. Gere o bundle ZERO_COST antes da entrega.';
+    status.className = 'fail';
+    components.innerHTML = '<article><strong class="fail">DATA_BUNDLE_MISSING</strong><span class="muted">' + esc(error.message) + '</span></article>';
+    meta.textContent = '{}';
+  }
+}());
+</script>
+</body>
+</html>
