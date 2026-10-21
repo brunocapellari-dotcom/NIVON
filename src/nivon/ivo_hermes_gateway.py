@@ -88,12 +88,8 @@ class GatewayHermesIVO:
         self._issuers = issuers
         self._clock = clock
 
-    def consultar(
-        self, *, token: str, pergunta: str, claims: list[ClaimCurado],
-        corte: datetime, limite: int = 5,
-        planejador: Callable[[str], dict] | None = None,
-    ) -> dict:
-        """Token vem da camada de transporte autenticada; jamais da LLM."""
+    def _autenticar(self, *, token: str, corte: datetime) -> tuple[ContextoAcessoIVO, datetime]:
+        """Identidade e tenant SOMENTE via componentes autenticados do servidor."""
         if (
             not isinstance(token, str) or not 8 <= len(token) <= 8192
             or any(c.isspace() or ord(c) < 33 for c in token)
@@ -116,13 +112,19 @@ class GatewayHermesIVO:
             asof = _instante(corte)
             if asof > now:
                 raise ValueError("corte no futuro")
+            context = ContextoAcessoIVO(
+                tenant=scope.tenant, projeto=scope.projeto, ator=subject, corte=asof,
+            )
+            return context, now
         except Exception:
             raise AcessoNegadoIVO("acesso negado") from None
 
-        context = ContextoAcessoIVO(
-            tenant=scope.tenant, projeto=scope.projeto, ator=subject, corte=asof,
-        )
-
+    def _consultar_autorizado(
+        self, *, pergunta: str, claims: list[ClaimCurado],
+        context: ContextoAcessoIVO, agora: datetime,
+        limite: int, planejador: Callable[[str], dict] | None,
+    ) -> dict:
+        """O corte controla dados historicos; ACL atual usa o instante atual."""
         def authorize(ctx: ContextoAcessoIVO, claim: ClaimCurado, action: str) -> bool:
             try:
                 if ctx != context or action != "CONSULTAR_EVIDENCIA":
@@ -131,17 +133,17 @@ class GatewayHermesIVO:
                 if type(binding) is not VinculoRecursoIVO or binding.direito_consulta is not True:
                     return False
                 if (
-                    binding.tenant != scope.tenant or binding.projeto != "NIVON"
+                    binding.tenant != context.tenant or binding.projeto != "NIVON"
                     or binding.claim_id != claim.claim_id or binding.fonte_id != claim.fonte_id
                     or binding.documento_sha256 != claim.documento_sha256
                     or binding.auditoria_id != claim.auditoria_id
                     or binding.texto_sha256 != sha256(claim.texto.encode("utf-8")).hexdigest()
-                    or _instante(binding.verificado_em) > asof
+                    or _instante(binding.verificado_em) > agora
                 ):
                     return False
                 policy_request = self._request(
-                    actor=subject, subject=subject, action="evidence:read",
-                    resource=f"nivon:evidence:{scope.tenant}:{claim.documento_sha256}:{claim.claim_id}",
+                    actor=context.ator, subject=context.ator, action="evidence:read",
+                    resource=f"nivon:evidence:{context.tenant}:{claim.documento_sha256}:{claim.claim_id}",
                     relation="can_read", risk="low", trust="untrusted",
                     external_write=False, money=False, production_admin=False,
                     requests_scope_increase=False,
@@ -161,3 +163,65 @@ class GatewayHermesIVO:
         result["fronteira_acesso"] = "HERMES_CONTRATO_SERVER_SIDE; E2E_REAL_PENDENTE"
         result["escrita_habilitada"] = False
         return result
+
+    def consultar(
+        self, *, token: str, pergunta: str, claims: list[ClaimCurado],
+        corte: datetime, limite: int = 5,
+        planejador: Callable[[str], dict] | None = None,
+    ) -> dict:
+        """Consulta de claims cuja origem ja foi auditada por backend confiavel."""
+        context, agora = self._autenticar(token=token, corte=corte)
+        return self._consultar_autorizado(
+            pergunta=pergunta, claims=claims, context=context,
+            agora=agora, limite=limite, planejador=planejador,
+        )
+
+    def consultar_canonicas(
+        self, *, token: str, pergunta: str, exportacoes: list,
+        historico: object, corte: datetime, limite: int = 5,
+        planejador: Callable[[str], dict] | None = None,
+    ) -> dict:
+        """Acesso em duas dimensoes: vintage historica + direito vigente hoje.
+
+        Exige RegistroVintagesIVO injetado no servidor com key/anchor/head
+        independentes e ExportacaoSegundoCerebro autorizada. Nao expor como
+        endpoint nem aceitar componentes arbitrarios do usuario ou do LLM.
+        """
+        from .ivo_second_brain_bridge import normalizar_exportacoes_canonicas
+        from .ivo_vintages_assinadas import RegistroVintagesIVO
+
+        context, agora = self._autenticar(token=token, corte=corte)
+        if type(historico) is not RegistroVintagesIVO:
+            raise AcessoNegadoIVO("acesso negado")
+        try:
+            normalized = normalizar_exportacoes_canonicas(
+                exportacoes=exportacoes, tenant=context.tenant,
+                corte=context.corte,
+                verificador=historico.autorizador(
+                    tenant=context.tenant, consumidor="NIVON",
+                    operacao="CONSULTAR_EVIDENCIA",
+                ),
+            )
+        except Exception:
+            # Nao divulgar se havia informacao, rights, chaves ou datas.
+            raise AcessoNegadoIVO("acesso negado") from None
+        response = self._consultar_autorizado(
+            pergunta=pergunta, claims=normalized["claims"], context=context,
+            agora=agora, limite=limite, planejador=planejador,
+        )
+        visible = {e["claim_id"] for e in response["evidencias"]}
+        response["proveniencia_canonica"] = [
+            {
+                "claim_id": m["claim_id"], "evidence_id": m["evidence_id"],
+                "decision_id": m["decision_id"],
+                "registro_sha256": m["registro_sha256"],
+                "evidencia_sha256": m["evidencia_sha256"],
+                "referencia_granularidade": m["referencia_granularidade"],
+            }
+            for m in normalized["metadados"] if m["claim_id"] in visible
+        ]
+        response["duplo_gate"] = (
+            "REPLAY_HISTORICO_ASOF_E_ACL_ATUAL_EM_CONTRATOS_OFFLINE;"
+            "INFRAESTRUTURA_EXTERNA_NAO_HOMOLOGADA"
+        )
+        return response
