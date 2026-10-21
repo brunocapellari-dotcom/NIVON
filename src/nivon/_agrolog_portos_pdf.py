@@ -218,13 +218,14 @@ def _format_number(value: float | None) -> str:
 
 def _normalize_partial_eta(value: str, reference_date: date) -> str:
     text = _cell(value)
+    # A PDF that only prints a calendar date has NOT provided an ETA clock.
+    # datetime.strptime would otherwise invent 00:00 and a false precise ETA.
+    if not re.search(r"\\b\\d{1,2}:\\d{2}\\b", text):
+        raise ValueError("eta_clock_missing")
     formats = (
         "%d/%m/%Y %H:%M",
         "%d/%m/%y %H:%M",
-        "%d/%m/%Y",
-        "%d/%m/%y",
         "%d/%m %H:%M",
-        "%d/%m",
     )
     for fmt in formats:
         try:
@@ -268,6 +269,9 @@ def parse_itaqui_tables(tables: Iterable[PdfTable], *, reference_date: date) -> 
                 None,
             )
         berth_i = _index_for(headers, "berco", "berth", before=status_i)
+        duv_i = _index_exact_or_contains(
+            headers, ("duv", "numero_unico_de_viagem"), ()
+        )
         if None in (status_i, vessel_i, product_i, qty_i, eta_i):
             continue
 
@@ -296,6 +300,9 @@ def parse_itaqui_tables(tables: Iterable[PdfTable], *, reference_date: date) -> 
                 "quantidade_t": _format_number(_br_number(_value(row, qty_i))),
                 "status": status,
                 "source_status": status,
+                # Only an explicit voyage ID column counts as a DUV. Never
+                # derive a port-call ID from IMO, vessel name or row number.
+                "duv": _value(row, duv_i),
             })
     return output
 
@@ -346,6 +353,7 @@ def parse_paranagua_tables(
         arrival_i = _index_for(headers, "chegada")
         product_i = _index_for(headers, "produto")
         berth_i = _index_for(headers, "berco")
+        duv_i = _index_exact_or_contains(headers, ("duv", "numero_unico_de_viagem"), ())
         if None in (vessel_i, arrival_i, berth_i):
             continue
 
@@ -371,6 +379,7 @@ def parse_paranagua_tables(
                 "quantidade_t": _format_number(volume),
                 "status": "PROGRAMMED",
                 "source_series": series,
+                "duv": _value(row, duv_i),
             }
             program = _value(row, prog_i)
             if program:
