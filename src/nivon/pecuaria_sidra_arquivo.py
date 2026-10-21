@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS capturas_sidra (
  bruto_valores BLOB NOT NULL, bruto_metadados BLOB NOT NULL,
  status TEXT NOT NULL CHECK(status='ARQUIVADO_NAO_HOMOLOGADO'),
  UNIQUE(especie, tabela_sidra, url_valores, url_metadados,
-        coleta_declarada, sha256_valores, sha256_metadados)
+        coleta_declarada)
 );
 CREATE TRIGGER IF NOT EXISTS sidra_sem_update
  BEFORE UPDATE ON capturas_sidra BEGIN
@@ -122,16 +122,29 @@ def arquivar_pacote_sidra_offline(
         bruto_valores, bruto_metadados, "ARQUIVADO_NAO_HOMOLOGADO"
     )
     with closing(_abrir(banco)) as cx, cx:
+        # Uma captura possui identidade (origem+instante da coleta). Nunca
+        # mascarar alteracao de publicacao, hash ou payload como idempotencia.
+        identidade = (especie, tabela_sidra, url_valores, url_metadados,
+                      col.isoformat())
+        consulta = """SELECT id, publicacao_declarada, sha256_valores,
+                             sha256_metadados FROM capturas_sidra
+                      WHERE especie=? AND tabela_sidra=? AND url_valores=?
+                        AND url_metadados=? AND coleta_declarada=?"""
+        anterior = cx.execute(consulta, identidade).fetchone()
+        if anterior is not None and (
+                anterior[1] != pub.isoformat() or anterior[2] != hash_v
+                or anterior[3] != hash_m):
+            raise DadoInvalido("captura conflitante com mesmo instante de coleta")
         cx.execute("""INSERT OR IGNORE INTO capturas_sidra
            (especie, tabela_sidra, url_valores, url_metadados,
             publicacao_declarada, coleta_declarada, sha256_valores,
             sha256_metadados, bruto_valores, bruto_metadados, status)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", parametros)
-        registro = cx.execute("""SELECT id FROM capturas_sidra WHERE
-          especie=? AND tabela_sidra=? AND url_valores=? AND url_metadados=?
-          AND coleta_declarada=? AND sha256_valores=? AND sha256_metadados=?""",
-          (especie, tabela_sidra, url_valores, url_metadados,
-           col.isoformat(), hash_v, hash_m)).fetchone()
+        registro = cx.execute(consulta, identidade).fetchone()
+        if registro is not None and (
+                registro[1] != pub.isoformat() or registro[2] != hash_v
+                or registro[3] != hash_m):
+            raise DadoInvalido("captura concorrente com metadados conflitantes")
     if not registro:
         raise DadoInvalido("captura nao registrada")
     return {"id": registro[0], "especie": especie, "tabela_sidra": tabela_sidra,
