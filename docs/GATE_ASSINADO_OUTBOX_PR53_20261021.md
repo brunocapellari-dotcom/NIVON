@@ -95,3 +95,58 @@ Isso demonstra propriedades **offline em SQLite no ambiente CI**,
 mas não substitui teste de recuperação por falha abrupta real do
 sistema operacional, armazenamento persistente em produção, sistema
 de backups corporativo, exclusão de PII ou auditoria do provedor.
+
+## Opt-out global e integridade da identidade HMAC — 21/10/2026
+
+A outbox agora distingue duas operações **sem equivalência implícita**:
+
+- `revogar_autorizacao` cancela **somente uma edição** já aprovada.
+  Isso pode ocorrer por correção editorial e não constitui automaticamente
+  desistência do recebimento futuro de mensagens.
+- `revogar_destinatario` registra um **opt-out de destinatário**, mesmo
+  que não exista edição anterior. O identificador HMAC do telefone e o SHA
+  da evidência ficam gravados na tabela
+  `nivon_optouts_destinatario`, sem persistir o número ou a evidência bruta.
+  A operação é idempotente, persiste após reinício e só afeta aquele
+  destinatário pseudonimizado. Não existe reativação automática.
+
+O opt-out é testado dentro do `BEGIN IMMEDIATE` nas três fronteiras:
+registro de nova edição, registro da autorização assinada e reserva da
+tentativa de envio. Assim, uma edição já preparada e aprovada antes do
+opt-out também é bloqueada caso ainda não tenha sido reservada. Não
+existe garantia de cancelamento remoto depois que o POST tenha sido
+reservado/aceito.
+
+**Rotação de chave**: o HMAC do destinatário depende de uma chave
+secreta estável. Trocar essa chave silenciosamente mudaria todos os IDs e
+poderia ocultar opt-outs existentes. A tabela `nivon_identidade_hmac`
+ancora apenas um fingerprint SHA-256 da chave (não a chave). Uma chave
+diferente é rejeitada na transação de cadastro/opt-out; uma base legada
+com registros ou opt-outs, mas sem fingerprint, também é bloqueada até
+uma migração manual auditada. Não implementar re-hash de telefone sem
+fonte original autorizada: os dados antigos foram pseudonimizados e
+não permitem recuperar o número.
+
+Os testes `tests/test_optout_global_outbox.py` cobrem:
+- revogação anterior à primeira edição e posterior ao cadastro;
+- autorização antiga sem efeito depois do opt-out;
+- persistência após reinício, segregação de destinatários e idempotência;
+- troca de chave e tentativa de novo cadastro/opt-out com outra chave;
+- impossibilidade de assumir automaticamente a identidade de base legada;
+- revogação **somente editorial** permitindo preparar nova edição, ainda
+  sujeita a uma nova autorização de envio.
+
+### Limites ainda abertos
+
+Documentos de consentimento são representados por IDs/flags declarados
+em fixtures. O projeto ainda NÃO acessou nem verificou independentemente
+o registro canônico de consentimentos, as licenças ou a autoridade real
+do aprovador; HMAC válido comprova integridade, não veracidade. É
+necessário definir a identidade/segregação do serviço emissor das
+evidências, a chave estável em cofre de segredos, o protocolo documentado
+de eventual novo opt-in e migração de chave, e a governança de opt-out
+entre outros sistemas/canais. Nenhum callback de teste autoriza
+publicação ou mensagem real.
+
+Status: implementação **offline e não comercial** sob PR em draft;
+sem deploy, agendamento ou conexão com o provedor Meta.
