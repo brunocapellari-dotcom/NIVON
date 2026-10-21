@@ -105,7 +105,8 @@ class TestIVOEdicoesPAM(unittest.TestCase):
         for url in ("https://ibge.gov.br.evil.test/pam.pdf",
                     "http://www.ibge.gov.br/pam.pdf",
                     "https://www.ibge.gov.br@evil.test/pam.pdf",
-                    "https://www.ibge.gov.br:444/pam.pdf"):
+                    "https://www.ibge.gov.br:444/pam.pdf",
+                    "https://www.ibge.gov.br:abc/pam.pdf"):
             with self.subTest(url=url),self.assertRaises(ErroPublicacaoPAM):
                 self.consultar([replace(e,documento_url=url)])
 
@@ -123,6 +124,18 @@ class TestIVOEdicoesPAM(unittest.TestCase):
                                  codigo_produto_c81="2692",codigo_variavel="109")
         with self.assertRaises(ErroPublicacaoPAM):
             self.consultar([a,replace(b,plano=outro)])
+
+    def test_plano_adulterado_e_rejeitado_antes_da_consulta(self):
+        e=self.evento("edicao_2025","DIVULGACAO","1500","2026-09-01","2026-09-02")
+        p=dict(e.plano)
+        p["url"]="https://www.ibge.gov.br/falso"
+        with self.assertRaises(ErroPublicacaoPAM):
+            self.consultar([replace(e,plano=p)])
+
+    def test_indica_origem_do_snapshot_no_historico(self):
+        e=self.evento("edicao_2025","DIVULGACAO","1500","2026-09-01","2026-09-02")
+        r=self.consultar([e])
+        self.assertEqual(r["historico"][0]["classe_snapshot"],"SINTETICO")
 
     def test_dois_ids_iguais_proibidos(self):
         a=self.evento("edicao_2025","DIVULGACAO","1500","2026-09-01","2026-09-02")
