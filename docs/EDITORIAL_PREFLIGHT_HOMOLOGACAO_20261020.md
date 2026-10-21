@@ -271,3 +271,74 @@ um valor de outra linha não satisfaça indevidamente a validação. Em seguida,
 planejar reconciliação entre PR #26, PR #8 e PR #13 sem merge automático.
 A distribuição Meta/WhatsApp, cron, novos serviços e operações pagas
 continuam bloqueadas.
+
+
+## Continuação 21/10/2026 — fretes por registro comercial individual
+
+O renderer anterior emitia somente corredor, R$/t, volume e data. Isso
+permitia falsa conciliação entre duas transportadoras da mesma rota
+(preço de A satisfeito pela linha B). A revisão acrescentou
+\`src/nivon/frete_linhas_editoriais.py\` como contrato textual canônico,
+compartilhado pelo renderer e pelo gate editorial, preservando:
+\`origem\`, \`uf_origem\`, \`destino\`, \`uf_destino\`,
+\`ponto_embarque\`, \`pickup_entity_id\`, \`transportadora\`,
+\`produto\`, \`equipamento\`, \`regime_pf_pj\`,
+\`condicao_pedagio\`, \`valor_rs_t\` e \`referencia_em\`,
+mais \`local_descarga\`, \`volume_t_dia\` e classe quando fornecidos.
+
+- **Não agrega, estima nem calcula média municipal de frete.**
+  Unidade: anúncio de uma transportadora em uma origem/destino e condições.
+- Dados comerciais identificadores são obrigatórios para exibir uma
+  linha; registros incompletos vão a \`rejeicoes\`, não ao briefing.
+- \`briefing_composto.montar_briefing\` só inclui linhas totalmente
+  formatadas e com fonte de publicação declarada, ref. temporal passada,
+  volume qualificado e sem anúncio exatamente repetido.
+- \`editorial_preflight._verificar_frete\` reconstrói a linha individual a
+  partir da evidência, exige igualdade **exata da linha** e rejeita
+  multiplicidade ou linha extra sem correspondente, mesmo quando o
+  corredor, a data ou o R$/t aparecem em outro anúncio.
+- O pacote de evidências mantém ponto de embarque, transportadora,
+  condição comercial, preço, volume, data, hashes e origem como
+  **imutáveis** diante de complementos externos; não se pode corrigir
+  a evidência do RAW trocando o texto do briefing.
+- \`tests/test_editorial_fretes.py\` cobre duas transportadoras/pontos
+  na mesma rota, preço individual, ausência de média, falta de campos,
+  referência futura, volume classificado, valores impossíveis e
+  anúncios repetidos.
+- \`tests/test_editorial_preflight.py\` cobre adulteração de preço,
+  embarque, transportadora, produto, equipamento, PF/PJ e pedágio
+  quando outro anúncio no mesmo corredor poderia mascarar o erro;
+  rejeição de linhas extras e de linhas duplicadas.
+- Fixture antiga no teste de integração com agentes foi adequada à
+  exigência de campos comerciais; permanece **offline/sintética**.
+
+### Interdependências verificadas em 21/10/2026
+- PR #26 permanece com base no SHA \`8f3ff501...\` da PR #8.
+  A PR #8 avançou a \`79423add...\` por 7 commits; a comparação
+  \`8f3...794...\` mostrou adições do módulo de monitoramento semanal
+  de publicações ANP, scripts e teste, mais edição de
+  \`config/rotas_coleta.v1.json\`. Esses arquivos novos não são alterados
+  nesta PR; a dependência precisa ser atualizada pela integração central.
+- PR #13 altera **\`src/nivon/briefing_composto.py\`**, o mesmo
+  arquivo desta PR. Há conflito semântico: #13 impõe limites máximos
+  por seção (BOLSAS/CÂMBIO 96h; DIESEL 16 dias etc.), enquanto #26
+  adotou gate por fonte, calendário, contrato e referência, sem
+  incorporar o limite temporal global. O revisor de integração
+  deve conciliar políticas por indicador, evitar regressão de
+  última sessão e testar o código mesclado em SHA único.
+- As alterações de \`src/nivon/anp_diesel_briefing.py\`,
+  \`pipeline_briefing.py\`, \`ptax_briefing.py\` desta PR derivam
+  de arquivos existentes na #8 original; não somar branches por
+  concatenação de arquivos.
+
+### Estado
+Teste final e comentários de CI devem vincular-se ao **HEAD final da PR**.
+A suíte unitária avalia dados sintéticos e lógica de segurança; não
+substitui proveniência externa, direitos de redistribuição, dados
+negociados, idempotência/ACK durável ou opt-in de canal.
+
+**Próxima ação executável:** coordenar reconciliação do renderer com
+limites de frescor da PR #13, por classe de indicador e calendário;
+executar suíte de CI no SHA integrado, então obter e validar
+exemplos reais de anúncios com direito de uso e IDs canônicos, sem
+ativar WhatsApp nem coletor.
