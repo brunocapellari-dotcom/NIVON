@@ -170,5 +170,39 @@ class TestPecuariaSidraSnapshot(unittest.TestCase):
                         coleta="2026-07-01T12:00:00+00:00")
         self.assertEqual(len(atual["observacoes"]), 2)
 
+
+    def test_traco_e_zero_absoluto_nao_missing(self):
+        result = analisar(json_bytes(linha("9999", "-"), linha("8888", "0")))
+        self.assertEqual(len(result["observacoes"]), 2)
+        self.assertEqual([o.valor for o in result["observacoes"]], [0.0, 0.0])
+        self.assertEqual(result["linhas_indisponiveis"], [])
+        self.assertEqual(result["pares_incompletos"], [])
+        self.assertEqual(result["marcadores_sidra"], [{
+            "uf": "BR", "competencia": "2026-T2", "indicador": "ABATE_CABECAS",
+            "simbolo": "-", "significado": "ZERO_ABSOLUTO",
+        }])
+
+    def test_inibido_nao_aplicavel_e_indisponivel_distintos(self):
+        for token, rotulo in (("X", "INIBIDO"),
+                              ("..", "NAO_APLICAVEL"),
+                              ("...", "NAO_DISPONIVEL")):
+            result = analisar(json_bytes(linha("9999", token),
+                                        linha("8888", "400")))
+            self.assertEqual(len(result["observacoes"]), 1)
+            self.assertEqual(result["observacoes"][0].valor, 400)
+            self.assertEqual(len(result["linhas_indisponiveis"]), 1)
+            self.assertEqual(result["marcadores_sidra"][0]["simbolo"], token)
+            self.assertEqual(result["marcadores_sidra"][0]["significado"], rotulo)
+            self.assertEqual(len(result["pares_incompletos"]), 1)
+
+    def test_sinal_traco_zero_nao_imputa_valor_x(self):
+        result = analisar(json_bytes(linha("9999", "-"),
+                                    linha("8888", "X")))
+        self.assertEqual(len(result["observacoes"]), 1)
+        self.assertEqual(result["observacoes"][0].valor, 0)
+        self.assertEqual({r["significado"] for r in result["marcadores_sidra"]},
+                         {"ZERO_ABSOLUTO", "INIBIDO"})
+        self.assertEqual(len(result["linhas_indisponiveis"]), 1)
+
 if __name__ == "__main__":
     unittest.main()
