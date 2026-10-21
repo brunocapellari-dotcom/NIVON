@@ -115,7 +115,10 @@ def _metadata_zip(fh, expected_name: str, expected_version: str) -> dict:
                     raise ErroEvidencia("Name/Version em METADATA divergentes")
                 if not str(wheel_versions[0]).startswith("1."):
                     raise ErroEvidencia("versão WHEEL incompatível")
-            except (UnicodeError, ValueError, RuntimeError, EOFError, zipfile.BadZipFile) as exc:
+            except ErroEvidencia:
+                raise
+            except (UnicodeError, ValueError, RuntimeError, EOFError,
+                    NotImplementedError, zipfile.BadZipFile) as exc:
                 raise ErroEvidencia("metadados wheel inválidos ou corrompidos") from exc
             return {"zip_members": len(members), "dist_info_verified": True}
     except (OSError, zipfile.BadZipFile, zipfile.LargeZipFile) as exc:
