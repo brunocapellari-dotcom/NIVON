@@ -66,13 +66,13 @@
       ],
       "canal_visual": "boletins e paineis oficiais",
       "canal_analitico": "planilhas e bases oficiais via agrobr.conab (sem fallback nao declarado)",
-      "estado": "EM_IMPLANTACAO_DIAGNOSTICA",
+      "estado": "CONSULTA_REAL_SOJA_MT_2026_27_VALIDADA_SEM_PERSISTENCIA",
       "acesso_aos_dados": "estatisticas publicas; verificar atribuição e diferenca entre licença do conteúdo do site e dados tabulares",
       "historico_no_neon": false,
       "submodulos": [
         {
           "nome": "Safras por cultura/UF/levantamento",
-          "estado": "TESTE_PENDENTE",
+          "estado": "SOJA_MT_2026_27_1_LEV_VALIDADO_11_TESTES",
           "prioridade": 1
         },
         {
@@ -97,9 +97,9 @@
         }
       ],
       "aguarda": [
-        "teste E2E de consulta oficial",
-        "proveniencia dados versus licenca portal",
-        "schema analitico separado de cotacoes"
+        "teste de milho/soja historical e balanco",
+        "esquema canonico e gravação idempotente no PostgreSQL",
+        "automação condicionada a revisão e lançamento da fonte"
       ]
     }
   ],
@@ -117,5 +117,12 @@
     "https://www.gov.br/conab/pt-br/atuacao/armazenagem/saiba-mais-sobre-o-cadastro",
     "https://github.com/bruno-portfolio/agrobr/blob/main/docs/api/conab.md",
     "https://agrobr.dev/docs/licenses/"
-  ]
+  ],
+  "evidencias": {
+    "conab_safra_soja_mt_2026_27": "https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39672116827",
+    "conab_testes_unitarios": 11,
+    "conab_linhas_validas_em_memoria": 1,
+    "conab_linhas_no_neon": 0,
+    "cepea_teste_fallback": "https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39653115616"
+  }
 }
