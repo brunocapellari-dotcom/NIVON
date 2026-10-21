@@ -19,7 +19,7 @@ SEVERITIES = {"UNKNOWN", "LOW", "MEDIUM", "HIGH", "CRITICAL"}
 PACKAGE = re.compile(r"[A-Za-z0-9][A-Za-z0-9.+:_-]{0,119}\Z")
 MAX_ISSUES = 100_000
 MAX_PACKAGES = 5_000
-VULNERABILITY_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{1,127}\\Z")
+VULNERABILITY_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{1,127}\Z")
 
 
 def triar_vulnerabilidades(scan: dict) -> dict:
