@@ -930,6 +930,30 @@
       "access": "PUBLIC_REPORTS_AND_GEODATA",
       "rights": "REVIEW",
       "notes": "Boletins sazonais e datasets mensais de condição de soja/milho/trigo, evitando tratar avaliação qualitativa como produção observada."
+    },
+    {
+      "id": "EARTH_SEARCH",
+      "provider": "Element 84 Earth Search STAC (AWS Open Data)",
+      "official_url": "https://earth-search.aws.element84.com/v1",
+      "access": "PUBLIC_STAC_API_NO_KEY_NO_SLA",
+      "rights": "REVIEW",
+      "notes": "Índice público de metadados Sentinel-2, Sentinel-1, Landsat e Copernicus DEM; assets orbitam em outros hosts e suas licenças devem ser verificadas por coleção."
+    },
+    {
+      "id": "ESA_WORLDCOVER",
+      "provider": "ESA WorldCover global landcover 10m",
+      "official_url": "https://esa-worldcover.org/en/data-access",
+      "access": "PUBLIC_COG_AWS_S3_NO_KEY",
+      "rights": "ATTRIBUTION_REVIEW",
+      "notes": "Mapas estáticos 2020 v100 e 2021 v200 ~10m, CC BY 4.0. Não são mapas recentes de 2026. A página original pode estar em manutenção; distribuição oficial AWS/Zenodo permanece documentada."
+    },
+    {
+      "id": "JRC_GSW",
+      "provider": "European Commission JRC Global Surface Water",
+      "official_url": "https://global-surface-water.appspot.com/download",
+      "access": "PUBLIC_COG_OR_TIFF_TILE_DATA",
+      "rights": "ATTRIBUTION_REVIEW",
+      "notes": "Água superficial histórica 1984-2024. Atualização em 15/10/2026 V1.5: camadas anuais/mensais recentes não compõem isoladamente todo o histórico; conciliação com V1.4, mudanças Landsat C1/C2 e potenciais erros de recorrência mensal."
     }
   ],
   "datasets": [
@@ -5706,6 +5730,196 @@
       "topic": "coeficientes_antt_piso_minimo_frete_por_categoria_e_vigencia_piso_legal_nao_frete_mercado",
       "mode": "OFFICIAL_COEFFICIENTS_FILE_OR_LEGISLATION",
       "cadence": "IRREGULAR",
+      "existing_module": null,
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "EARTH_SEARCH_STAC_CENAS",
+      "source_id": "EARTH_SEARCH",
+      "group": "GEO",
+      "stage": "CODE_PRESENT",
+      "priority": "P0",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "PECUARIA",
+        "LOGISTICA"
+      ],
+      "topic": "catalogo_de_cenas_sentinel1_sentinel2_landsat_por_area_data_nuvens_sem_download_de_rasters",
+      "mode": "STAC_PUBLIC_GET_METADATA",
+      "cadence": "DAILY",
+      "existing_module": "nivon.earth_search_stac.consultar_cenas",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ESA_WORLDCOVER_2021_10M",
+      "source_id": "ESA_WORLDCOVER",
+      "group": "GEO",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "PECUARIA"
+      ],
+      "topic": "mapa_estatico_cobertura_terra_2021_10m_uso_do_solo_nao_cadastro_atual_de_lavouras",
+      "mode": "PUBLIC_COG_GEOTIFF_TILE",
+      "cadence": "IRREGULAR",
+      "existing_module": null,
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "JRC_GSW_AGUA_SUPERFICIAL",
+      "source_id": "JRC_GSW",
+      "group": "HIDRO",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "PECUARIA",
+        "LOGISTICA"
+      ],
+      "topic": "serie_agua_superficial_ocorrencia_sazonalidade_1984_2024_30m_com_quebra_versao",
+      "mode": "PUBLIC_GEOTIFF_TILE",
+      "cadence": "ANNUAL",
+      "existing_module": null,
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "USDA_AMS_GTR_FRETE_MULTIMODAL",
+      "source_id": "USDA",
+      "group": "LOGISTICA",
+      "stage": "CANDIDATE",
+      "priority": "P0",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO",
+        "LOGISTICA"
+      ],
+      "topic": "indices_frete_rodoviario_ferroviario_hidroviario_maritimo_usado_como_proxy_EUA",
+      "mode": "PUBLIC_XLSX_OFFICIAL",
+      "cadence": "WEEKLY",
+      "existing_module": null,
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "USDA_AMS_GTR_PRECO_BASIS_EXPORT",
+      "source_id": "USDA",
+      "group": "PRECOS",
+      "stage": "CANDIDATE",
+      "priority": "P0",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "preco_fisico_eua_por_origem_spread_export_bases_sem_substituir_CBOT_licensed",
+      "mode": "PUBLIC_XLSX_OFFICIAL",
+      "cadence": "WEEKLY",
+      "existing_module": null,
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "NOAA_ENSO_INDICES_HISTORICOS",
+      "source_id": "NOAA",
+      "group": "CLIMA",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "PECUARIA",
+        "LOGISTICA"
+      ],
+      "topic": "serie_indice_enso_mei_v2_oni_roni_riscos_climaticos_historicos",
+      "mode": "PUBLIC_TXT_OR_CSV",
+      "cadence": "MONTHLY",
+      "existing_module": null,
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "WB_PINK_SHEET_COMMODITIES",
+      "source_id": "WB",
+      "group": "MACRO",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "FERTILIZANTES",
+        "DIESEL"
+      ],
+      "topic": "serie_mensal_preco_internacional_commodities_energia_fertilizantes_pink_sheet_nao_preco_fisico_brasil",
+      "mode": "PUBLIC_XLSX_OR_CSV",
+      "cadence": "MONTHLY",
       "existing_module": null,
       "enabled": false,
       "collection_authorized": false,
