@@ -69,6 +69,7 @@ def montar_candidatos_evidencias(
         provas_cotacoes.append({
             "fonte_id": reg.get("fonte_id"), "titulo": reg.get("titulo"),
             "grupo": reg.get("grupo"),  # BOLSAS não prova que é CME ou ICE
+            "secao": reg.get("secao"),  # Política de frescor por seção real
             "valor": reg.get("valor_num"),  # nunca extrair numeral de string formatada
             "unidade": reg.get("unidade"), "competencia": reg.get("competencia"),
             "natureza": reg.get("natureza"),
@@ -135,7 +136,7 @@ CHAVES_IMUTAVEIS = {
         "fonte_id", "titulo", "url", "publicado_em", "coletado_em",
         "sha256_origem", "direitos_publicacao", "evidencia_direitos_id",
     }),
-    "cotacoes": frozenset({"fonte_id", "titulo", "direitos_publicacao",
+    "cotacoes": frozenset({"fonte_id", "titulo", "secao", "direitos_publicacao",
                            "evidencia_direitos_id", "classe_estatistica",
                            "semana_inicio", "semana_fim", "postos_pesquisados"}),
     "fretes": frozenset({
