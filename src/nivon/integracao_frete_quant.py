@@ -148,6 +148,9 @@ def preparar_serie_frete_anunciado(
             "status":"BLOQUEADO_SHA_EDICAO_AUSENTE","serie_id":sid,
             "natureza":NATUREZA,"registros":len(registros_normalizados),
             "edicoes_sem_sha":hashes_ausentes,"asof_pronto":False,
+            "preparacao_offline_possivel":False,
+            "edicao_raw_externamente_verificada":False,
+            "uso_preditivo_real_autorizado":False,
             "observacoes_asof":[],"publicavel":False,
             "motivo":"edicao_sha256 original nao consta do contrato consolidado; nao sintetizar vintage",
         }
@@ -155,10 +158,14 @@ def preparar_serie_frete_anunciado(
         r.update(serie_id=sid,unidade="BRL/T",fonte_id=fonte)
     registros_normalizados.sort(key=lambda r:(r["periodo"],r["coletado_em"]))
     return {
-        "status":"SERIE_ECONOMICA_INDIVIDUAL_NAO_HOMOLOGADA",
+        "status":"SERIE_ECONOMICA_INDIVIDUAL_PARA_TESTES_OFFLINE",
         "serie_id":sid,"natureza":NATUREZA,"tipo_valor":tipo_valor,
         "chave_economica":identidade,"registros":len(registros_normalizados),
-        "observacoes_asof":registros_normalizados,"asof_pronto":True,
+        "observacoes_asof":registros_normalizados,
+        "asof_pronto":False,
+        "preparacao_offline_possivel":True,
+        "edicao_raw_externamente_verificada":False,
+        "uso_preditivo_real_autorizado":False,
         "publicavel":False,
         "limite":"SHA informado ainda exige verificacao do bruto; sem dados reais autorizados e backtest."
     }
