@@ -15,7 +15,7 @@
 `municipio_ibge + pickup_entity_id + transportadora_id + destino_ibge + descarga_entity_id + produto + equipamento + regime + fonte_id + tipo_valor(BASE|CHEIO) + condição de pedágio homogênea`.
 
 - Lotes com identidades divergentes são rejeitados; **município jamais é unidade de agregação de preço**.
-- Usa Decimal para validar `base`, `pedagio`, `cheio`, datas e fonte antes de converter para entrada quantitativa. `CHEIO` precisa reconciliar `base + pedagio`. Não inventar pedágio ou frete cheio.
+- Usa Decimal para validar `base`, `pedagio`, `cheio`, datas e fonte antes de converter para entrada quantitativa, **rejeitando conversões float que percam precisão decimal**. `CHEIO` precisa reconciliar `base + pedagio`. Não inventar pedágio ou frete cheio.
 - Reutilização de `registro_id` para edições conflitantes é rejeitada, assim como números de frete irrepresentáveis em ponto flutuante; dados homogêneos com SHA declarado foram exercitados em um teste E2E sintético com `rolling_origin`.
 - Correções de preço no mesmo dia são vintages distintas, com publicação/coleta e SHA próprios, quando disponíveis; seleção retrospectiva só ocorre por `preparar_folds_asof`.
 - O formato atual da PR #18 **não tem `edicao_sha256` no registro consolidado**. Nesse caso, **`BLOQUEADO_SHA_EDICAO_AUSENTE`** e **nenhuma série quantitativa gerada**. Não fabricar SHA usando preço/município ou deduzir prova de vintage por data do WhatsApp.
