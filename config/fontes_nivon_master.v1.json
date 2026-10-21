@@ -850,6 +850,14 @@
       "access": "PUBLIC_API",
       "rights": "REVIEW",
       "notes": "Servicos em beta; sem crawling/full scan; consultar direitos por operacao; conferir referencias no Siscomex, BCB e IBGE."
+    },
+    {
+      "id": "IBAMA_SISFOGO",
+      "provider": "IBAMA / Prevfogo — Sistema Nacional de Informações sobre Fogo (SISFOGO)",
+      "official_url": "https://sisfogo.sistema.gov.br/api/v1/roi/publico",
+      "access": "PUBLIC_PAGINATED_READ_ONLY_NO_AUTH",
+      "rights": "REVIEW",
+      "notes": "API externa v1 oficial (27/08/2026); GET sem token; ROI FINALIZADO apenas de órgãos participantes. 10 req/s; termos e direitos de armazenamento/redistribuição ainda por homologar. Homologação/dev não são fonte operacional."
     }
   ],
   "datasets": [
@@ -5133,6 +5141,34 @@
       "mode": "API_JSON_ON_DEMAND",
       "cadence": "IRREGULAR",
       "existing_module": "nivon.brasilapi_referencias.normalizar_taxas_sem_data",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "IBAMA_SISFOGO_ROI_FINALIZADOS",
+      "source_id": "IBAMA_SISFOGO",
+      "group": "CLIMA",
+      "stage": "CODE_PRESENT",
+      "priority": "P1",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "PECUARIA",
+        "LOGISTICA"
+      ],
+      "topic": "ocorrencias_fogo_finalizadas_ambiente_geografia_area_queimada_estimada_nao_focos_satellite",
+      "mode": "API_PAGINADA_SOMENTE_LEITURA",
+      "cadence": "WEEKLY",
+      "existing_module": "nivon.sisfogo_roi.normalizar_pagina_roi",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
