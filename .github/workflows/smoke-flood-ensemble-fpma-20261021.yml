@@ -1,0 +1,62 @@
+name: NIVON Smoke Flood Ensemble FAO Pontual
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches:
+      - integration/nivon-acessos-core-convergencia-20261021
+    paths:
+      - .github/workflows/smoke-flood-ensemble-fpma-20261021.yml
+permissions:
+  contents: read
+jobs:
+  smoke-externo:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'test/smoke-flood-ensemble-fpma-20261021' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Open-Meteo GloFAS
+        id: flood
+        continue-on-error: true
+        run: PYTHONPATH=src python scripts/smoke_hidro_ensemble_fao.py --fonte flood --executar
+      - name: Open-Meteo Ensemble
+        id: ensemble
+        continue-on-error: true
+        run: PYTHONPATH=src python scripts/smoke_hidro_ensemble_fao.py --fonte ensemble --executar
+      - name: FAO FPMA Catalogo Brasil
+        id: faocatalog
+        continue-on-error: true
+        run: PYTHONPATH=src python scripts/smoke_hidro_ensemble_fao.py --fonte fao_catalogo --executar
+      - name: FAO FPMA Precos 1 serie do catalogo, se existir
+        id: faoprice
+        continue-on-error: true
+        run: |
+          PYTHONPATH=src python - <<'PY'
+          from nivon.fao_fpma_publica import consultar_catalogo, consultar_precos
+          try:
+              c=consultar_catalogo(pais="BRA",executar=True)["dados"]
+              if not c["series"]:
+                  print("SEM_SERIES_BRASIL; nenhum preço consultado")
+              else:
+                  i=c["series"][0]["uuid"]
+                  r=consultar_precos(serie_uuid=i,periodicidade="monthly",executar=True)["dados"]
+                  print("FAO_PRECO_PONTUAL",r["quantidade"],"paginacao_completa",r["paginacao_completa"])
+          except Exception as exc:
+              print("FAO_PRECO_FALHOU",type(exc).__name__)
+              raise SystemExit(1)
+          PY
+      - name: Resumo sem valores de séries
+        if: always()
+        env:
+          FLOOD: ${{ steps.flood.outcome }}
+          ENSEMBLE: ${{ steps.ensemble.outcome }}
+          FAO_CATALOG: ${{ steps.faocatalog.outcome }}
+          FAO_PRICE: ${{ steps.faoprice.outcome }}
+        run: |
+          printf '%s\n' "GloFAS=$FLOOD" "Ensemble=$ENSEMBLE" "FAO catalog=$FAO_CATALOG" "FAO price=$FAO_PRICE"
+          echo 'Somente teste pontual, sem database, sem cron ou publicacao.'
