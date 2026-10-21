@@ -6,7 +6,7 @@ Banco SQLite local explicito; nao empacotar bancos em repositório publico.
 """
 from __future__ import annotations
 
-from datetime import timezone
+from contextlib import closing
 from hashlib import sha256
 import json
 from pathlib import Path
@@ -120,7 +120,7 @@ def arquivar_pacote_sidra_offline(
         pub.isoformat(), col.isoformat(), hash_v, hash_m,
         bruto_valores, bruto_metadados, "ARQUIVADO_NAO_HOMOLOGADO"
     )
-    with _abrir(banco) as cx:
+    with closing(_abrir(banco)) as cx, cx:
         cx.execute("""INSERT OR IGNORE INTO capturas_sidra
            (especie, tabela_sidra, url_valores, url_metadados,
             publicacao_declarada, coleta_declarada, sha256_valores,
@@ -144,7 +144,7 @@ def recuperar_pacote_sidra_offline(*, banco, id_captura: int):
     """Recuperacao verificada byte-a-byte; nunca publicar como serie oficial."""
     if type(id_captura) is not int or id_captura < 1:
         raise DadoInvalido("id de captura invalido")
-    with _abrir(banco) as cx:
+    with closing(_abrir(banco)) as cx:
         row = cx.execute("""SELECT especie,tabela_sidra,sha256_valores,
             sha256_metadados,bruto_valores,bruto_metadados,status
             FROM capturas_sidra WHERE id=?""", (id_captura,)).fetchone()
