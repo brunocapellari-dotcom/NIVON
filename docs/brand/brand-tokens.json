@@ -1,0 +1,60 @@
+{
+  "name": "NIVON",
+  "version": "0.3.0",
+  "updated_at": "2026-10-21",
+  "status": "direcao_criativa_aprovada__ativos_tecnicos_preliminares",
+  "source": "Reconstrucao vetorial inspirada no conceito visual aprovado em conversa; nao e vetorizacao identica da imagem gerada.",
+  "palette": {
+    "green_deep": {
+      "hex": "#0B3D2E",
+      "purpose": "marca e fundos institucionais"
+    },
+    "green_agro": {
+      "hex": "#497142",
+      "purpose": "destaques secundários"
+    },
+    "gold_harvest": {
+      "hex": "#DAA574",
+      "purpose": "acento editorial sobre fundos escuros"
+    },
+    "sand": {
+      "hex": "#EDE6DB",
+      "purpose": "fundo claro"
+    },
+    "earth": {
+      "hex": "#3E2F20",
+      "purpose": "textos auxiliares"
+    },
+    "white": {
+      "hex": "#FFFFFF",
+      "purpose": "texto e superficies brancas"
+    }
+  },
+  "type": {
+    "ui": "Inter, Arial, sans-serif",
+    "display": "NIVON em formas vetoriais originais, sem dependencia de fonte externa"
+  },
+  "tagline": {
+    "text": "Inteligência para mover o agro.",
+    "status": "proposta editorial"
+  },
+  "artwork": {
+    "symbol": "symbol.svg",
+    "wordmark": "logo-horizontal.svg",
+    "reverse": "logo-reverse.svg",
+    "monochrome": "logo-monochrome.svg",
+    "app": "app-icon.svg",
+    "favicon": "favicon.svg",
+    "presentation": "identity-preview.svg"
+  },
+  "usage": {
+    "min_width_px": {
+      "wordmark": 160,
+      "icon": 32,
+      "favicon": 16
+    },
+    "safe_area": "minimo de 0.25x a altura do simbolo",
+    "gold_text": "usar em fundos verde profundo; evitar texto pequeno sobre areia/branco"
+  },
+  "legal_status": "sem verificação de registro ou de conflito marcario; marca nao pronta para lancamento"
+}

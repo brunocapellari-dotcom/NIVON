@@ -1,0 +1,15 @@
+/* NIVON — tokens cromáticos v0.3. Não implica marca registrada. */
+:root {
+  --nivon-verde-profundo: #0B3D2E;
+  --nivon-verde-agro: #497142;
+  --nivon-dourado-safra: #DAA574;
+  --nivon-areia: #EDE6DB;
+  --nivon-terra: #3E2F20;
+  --nivon-branco: #FFFFFF;
+  --nivon-fonte: Inter, Arial, Helvetica, sans-serif;
+}
+/* Exemplos de superfícies acessíveis; os pares de texto foram auditados. */
+.nivon-superficie-clara { color: var(--nivon-verde-profundo); background: var(--nivon-areia); }
+.nivon-superficie-escura { color: var(--nivon-branco); background: var(--nivon-verde-profundo); }
+.nivon-destaque-agro { color: var(--nivon-verde-agro); }
+.nivon-destaque-safra { color: var(--nivon-dourado-safra); }
