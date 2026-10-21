@@ -15,7 +15,7 @@ def amostra():
                         "semana_inicio_oficial":"2026-10-04",
                         "semana_fim_oficial":"2026-10-10",
                         "preco_medio_revenda_rs_l":6.20,"postos_pesquisados":7}]},
-       "publicado_em":"2026-10-09T15:00:00-03:00",
+       "publicado_em":"2026-10-11T15:00:00-03:00",
        "dataset":{"id":"ANP_PRECO_REVENDA_DIESEL","enabled":True,
                   "collection_authorized":True,
                   "commercial_redistribution_authorized":True},
