@@ -89,7 +89,7 @@ def _resumir_falha(stderr: str) -> str:
             or "no matching distribution" in stderr.lower()):
         return "versão de wheel ausente ou restrições conflitantes"
     native_lib = re.findall(
-        r"([A-Za-z0-9_+.-]+\\.so(?:\\.[0-9]+)*)[: ]+cannot open shared object",
+        r"([A-Za-z0-9_+.-]+\.so(?:\.[0-9]+)*)[: ]+cannot open shared object",
         stderr, flags=re.IGNORECASE,
     )
     if native_lib:
