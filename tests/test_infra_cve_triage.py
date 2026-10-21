@@ -51,6 +51,55 @@ class TestCveTriage(unittest.TestCase):
         self.assertFalse(x["production_authorized"])
         self.assertNotIn("CVE-TEST", json.dumps(x))
 
+    def test_repeticao_da_mesma_cve_em_pacotes_diferentes(self):
+        s = scan()
+        s["Results"][0]["Vulnerabilities"].append({
+            "Severity": "HIGH", "PkgName": "libcrypto3",
+            "VulnerabilityID": "CVE-TEST-ONE"
+        })
+        x = triar_vulnerabilidades(s)
+        self.assertEqual(x["blocking_findings"], 4)
+        self.assertEqual(x["distinct_vulnerability_ids"], 3)
+        self.assertEqual(x["repeated_findings_vs_distinct_ids"], 1)
+        self.assertEqual(x["ids_affecting_multiple_packages"], 1)
+        self.assertEqual(x["blocking_by_package_class"], {
+            "os-pkgs": 4, "lang-pkgs": 0
+        })
+        self.assertEqual(x["largest_shared_vulnerability_groups"][0]["affected_packages"], 2)
+        self.assertEqual(x["largest_shared_vulnerability_groups"][0]["findings"], 2)
+        self.assertNotIn("CVE-TEST", json.dumps(x))
+        self.assertFalse(x["production_authorized"])
+        self.assertTrue(x["release_gate_unchanged"])
+
+    def test_mesma_cve_no_mesmo_pacote_conta_achado_mas_nao_novo_grupo(self):
+        s = scan()
+        s["Results"][0]["Vulnerabilities"].append({
+            "Severity": "HIGH", "PkgName": "libssl3t64",
+            "VulnerabilityID": "CVE-TEST-ONE"
+        })
+        x = triar_vulnerabilidades(s)
+        self.assertEqual(x["blocking_findings"], 4)
+        self.assertEqual(x["distinct_vulnerability_ids"], 3)
+        self.assertEqual(x["ids_affecting_multiple_packages"], 0)
+
+    def test_separacao_de_pacotes_sistema_linguagem(self):
+        s = scan()
+        s["Results"][1]["Vulnerabilities"] = [{
+            "Severity": "HIGH", "PkgName": "wheel",
+            "VulnerabilityID": "GHSA-EXEMPLO-123"
+        }]
+        x = triar_vulnerabilidades(s)
+        self.assertEqual(x["blocking_by_package_class"], {
+            "os-pkgs": 3, "lang-pkgs": 1
+        })
+        self.assertEqual(x["distinct_vulnerability_ids"], 4)
+
+    def test_identificador_com_quebra_de_linha_recusado(self):
+        s = scan()
+        s["Results"][0]["Vulnerabilities"][0]["VulnerabilityID"] = "CVE-TEST\\n::warning::"
+        with self.assertRaises(ErroSupplyChain):
+            triar_vulnerabilidades(s)
+
     def test_sem_cves_nao_autoriza_release(self):
         s = scan()
         s["Results"][0]["Vulnerabilities"] = []
