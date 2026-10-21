@@ -93,3 +93,22 @@ SBOM/lock no ambiente isolado, quando houver revisão de transitivas e rede
 autorizada; em paralelo, avaliar se um piloto de fonte oficial autorizada
 justifica dlt frente ao orquestrador nativo. Nenhuma aquisição de dados,
 instalação ou deploy foi feito nesta rodada.
+
+
+## Continuidade de 21/10/2026 — evidências externas de CVE (P0)
+
+**Implementação:** `src/nivon/auditoria_evidencias_pacotes.py` + `tests/test_auditoria_evidencias_pacotes.py`. O componente não instala pacotes, não chama APIs e não alega inventariar transitivas. Consome três artefatos **fornecidos manualmente**: (i) lock textual simplificado com `nome==versão --hash=sha256:...` por linha; (ii) relatório original JSON `pip-audit --format json`; (iii) metadados locais com hashes SHA-256 exatos dos três arquivos (incluindo o `pyproject.toml`), instante UTC, serviço, exit code e lista de extras auditados.
+
+**Contratos:** valida hashes das *declarações* dos arquivos, correspondência 1:1 do lock e relatório (inclusive entradas transitivas presentes), atendimento das faixas diretas do NIVON, pacotes ignorados, vulnerabilidades declaradas, divergência de versões, duplicatas, data futura e relatório com mais de 24 horas. A presença de hash SHA-256 no lock não comprova que o arquivo da distribuição foi baixado/verificado; correspondência 1:1 do relatório não prova que todas as transitivas foram resolvidas. Os metadados podem ter sido forjados: nenhum mecanismo de assinatura/autenticidade externa foi implementado. Resultados positivos significam **apenas coerência estrutural de evidências não autenticadas**. Release permanece BLOQUEADA invariavelmente.
+
+**Execução offline após recebimento autorizado de evidências reais:**
+```bash
+PYTHONPATH=src python -m nivon.auditoria_evidencias_pacotes \
+  --lock /caminho/local/requirements-com-hashes.txt \
+  --report /caminho/local/pip-audit.json \
+  --metadata /caminho/local/metadata.json
+```
+
+Para produzir evidências futuramente será necessário um lock verdadeiro gerado e revisado em sandbox seguro, execução do `pip-audit` com serviço oficial, registro verificável de código de saída e de versão do auditor, e armazenamento privado com controle de acesso. **Nenhum dos comandos acima executa scanner CVE real.** A especificação do formato do relatório foi conferida no código oficial de `pypa/pip-audit` (`pip_audit/_format/json.py`). Não incorporar um JSON de auditoria sintético como prova de ausência de vulnerabilidades.
+
+**Revisão pendente:** transformar hashes declarados em prova de pacotes reais e dependências transitivas completas, atestar o executor e integrar um SBOM CycloneDX assinado ou evidência equivalente. Os dois auditores estáticos atuais têm funções parcialmente sobrepostas e precisam de consolidação para evitar duplicidade; o novo validador não altera seus contratos.
