@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from hashlib import sha256
+from decimal import Decimal
 from unittest import TestCase, mock
 
 from nivon.inspecao_xls_conab_agricola import (
@@ -57,9 +58,10 @@ class TestInspecaoXLSConab(TestCase):
         self.assertEqual(result["observacoes_total_normalizadas"], 126)
         self.assertEqual(result["status"],
                          "XLS_DECODIFICADO_E_NORMALIZADO_SEM_VINTAGE_ASOF")
-        self.assertEqual(result["tripla_fisica"]["producao_calculada_t"],
-                         "10000.0")
-        self.assertEqual(result["tripla_fisica"]["residuo_fisico_t"], "0.0")
+        self.assertEqual(Decimal(result["tripla_fisica"]["producao_calculada_t"]),
+                         Decimal("10000"))
+        self.assertEqual(Decimal(result["tripla_fisica"]["residuo_fisico_t"]),
+                         Decimal("0"))
         self.assertIsNone(result["tripla_fisica"]["data_publicacao"])
         self.assertIsNone(result["tripla_fisica"]["area_colhida_ha"])
         self.assertFalse(result["vintage_asof_comprovada"])
