@@ -296,3 +296,79 @@ o ledger ao gerador real de previsões apenas após contrato e coleta
 licenciados, idempotência de entrega/retry e testes de múltiplos processos
 com falhas de energia e condições de corrida. Não afirmar `COMPLETED`
 operacional nem `calibrado` com testes sintéticos.
+
+
+## 10. Integridade de âncoras e artefatos — continuidade 21/10/2026
+
+### Recibo HMAC offline — `ancora_previsoes_mercado.py`
+
+`verificar_recibo_ancora` verifica um recibo `NIVON_LEDGER_ANCHOR_V1`
+com identificação de ledger/emissor, localização externa **declarada**,
+sequência, cabeça SHA-256, instante com timezone, nonce hexadecimal de
+128 bits e MAC HMAC-SHA256 contra chave de verificação de 32+ bytes
+fornecida pelo operador. Envelopes com campos extras, reutilização em
+outro ledger, MAC alterado, chave errada ou corte temporal inválido são
+recusados. `auditar_ledger_com_recibo` compara MAC, cabeça, comprimento
+do ledger e cronologia do último evento.
+
+**Controle de fronteiras:** o emissor da assinatura não é implementado
+neste módulo. O produtor do recibo e o detentor da chave **devem** ser
+separados da instância SQLite; testes geram um MAC fictício.
+HMAC usa segredo compartilhado (não equivale a assinatura assimétrica).
+A função NÃO verifica existência/retentividade do objeto remoto, data
+certificada, fonte de relógio independente, política WORM, IAM, rotação
+de chave ou prova de autoridade do signer. Status de teste:
+`MAC_RECIBO_VALIDADO_OFFLINE`, **não** `ÂNCORA_WORM_COMPROVADA`.
+
+### Prova de bytes — `evidencia_bruta_mercados.py`
+
+`preparar_precos_com_artefatos` recebe:
+1. bytes originais `arquivo_original`;
+2. bytes do `snapshot_jsonl` de **observações normalizadas**;
+3. manifesto com os dois SHA-256, fonte, parser, versão, instante de
+   captura e status `NAO_HOMOLOGADO`;
+4. corte temporal as-of.
+
+Confere ambos os SHA-256 calculados dos bytes recebidos; rejeita dados
+após a captura, JSONL malformado, duplicação de chaves, valores não finitos,
+fonte divergente, sobrecarga e preços float. Passa **somente as linhas
+verificadas** ao contrato original `preparar_serie_precos`.
+Não há download, integração de terceiros, autenticação do fornecedor ou
+autorização de redistribuição.
+
+**Limite metodológico decisivo:** o vínculo semântico entre os bytes
+originais e sua conversão pelo parser NÃO é auditado por hashes dos dois
+arquivos. Um parser que invente dados ainda consegue produzir um JSONL
+com hash íntegro. Por isso, mantém
+`fidelidade_parser_independente_verificada=false`,
+`origem_remota_autenticada=false` e
+`direitos_publicacao_verificados=false`.
+
+### Auditoria E2E offline — `auditoria_e2e_mercados.py`
+
+`auditar_previsao_ponta_a_ponta` confere, na mesma chamada:
+- ledger SQLite íntegro com recibo HMAC e cabeça/quantidade correspondentes;
+- previsão existente no ledger, originalmente encadeada;
+- arquivo original e JSONL do **preço-base** capturados até
+  `emitido_em`; do **alvo** capturados até `as_of`;
+- identidade econômica integral, preço-base, SHA da edição, distância
+  entre sessões e preço-alvo; cálculo do rótulo `ALTA/BAIXA/ESTABILIDADE`.
+
+Produz um `item_backtest` como candidato a insumo do avaliador
+probabilístico, nunca uma previsão nova nem calibração certificada.
+Responde com `publicavel=false`, sem garantias fictícias de WORM,
+licença, autenticação do mercado ou fidelidade do parser.
+As regressões simulam adulteração do raw, do JSONL, do recibo HMAC,
+troca de preço-base e capturas fora do tempo.
+
+### Próximo gate de maior impacto
+
+**P0:** autenticar origem real permitida e implementar a verificação do
+parser contra amostras independentes de material de fonte autorizado,
+incluindo catálogo de instrumentos/grades CME e ICE, e linhas RAW
+rastreáveis com SHA/arquivo/posição por observação. Conectar assinatura
+assimétrica/âncora WORM e recibos de timestamp independente em ambiente
+separado, após validação do arquiteto de segurança. Em seguida,
+executar E2E com vintages genuínos e avaliação walk-forward em janela
+não usada no treinamento. Nenhuma dessas etapas foi simulada como
+homologada.
