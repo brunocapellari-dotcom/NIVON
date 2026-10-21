@@ -7,6 +7,7 @@ são admitidos neste experimento; nenhum download ou promoção operacional.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from hashlib import sha256
 from math import fsum
 from statistics import median
 from sqlite3 import Connection
@@ -92,10 +93,21 @@ def benchmark_pam_anual_sintetico(
                 geo = p["municipio_ibge"]
             elif geo != p["municipio_ibge"]:
                 raise ErroBenchmarkAnual("não misturar municípios ou culturas no benchmark")
-    if any(ano > corte.year for ano in series):
-        # As edições futuras podem existir na fixture, mas não são lidas
-        # antes do instante de sua divulgação.
-        pass
+    # Classificação SINTETICO comprovada para TODOS os artefatos do
+    # pacote, inclusive edições futuras (que não podem participar do
+    # resultado retrospectivo). Isso impede anexar dados reais escondidos.
+    for eventos in series.values():
+        for e in eventos:
+            docs=(e.documento_sha256, sha256(e.json_original).hexdigest())
+            for digest in docs:
+                try:
+                    tipos=registro_db.execute(
+                        "SELECT tipo FROM nivon_snapshots WHERE dataset_id='IBGE_PAM' AND sha256=?",
+                        (digest,)).fetchall()
+                except Exception as exc:
+                    raise ErroBenchmarkAnual("não foi possível auditar o ledger PAM") from exc
+                if len(tipos)!=1 or tipos[0][0]!="SINTETICO":
+                    raise PermissionError("artefato ausente ou classe real não admitida no benchmark")
 
     cache = {}
     def consultar(ano, instante):
