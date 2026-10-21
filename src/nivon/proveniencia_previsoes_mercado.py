@@ -248,8 +248,14 @@ def reconciliar_previsao(
     banda = Decimal(p["banda_relativa"])
     variacao = (Decimal(a["valor_decimal"]) - Decimal(b["valor_decimal"])) / Decimal(b["valor_decimal"])
     classe = "ALTA" if variacao > banda else ("BAIXA" if variacao < -banda else "ESTABILIDADE")
+    # O agregador de backtests não pode confiar em um apelido de série
+    # informado manualmente. Usa a identidade econômica COMPLETA de 12 campos.
+    fingerprint = sha256(_canonico({
+        "identidade_economica": identidade,
+    })).hexdigest()
     item = {
-        "serie_id": p["serie_id"], "modelo_versao": p["modelo_versao"],
+        "serie_id": "IDENTIDADE_SHA256:" + fingerprint,
+        "modelo_versao": p["modelo_versao"],
         "regra_rotulagem": p["regra_rotulagem"],
         "horizonte_sessoes": p["horizonte_sessoes"],
         "banda_relativa": p["banda_relativa"],
@@ -267,6 +273,8 @@ def reconciliar_previsao(
     return {
         "status": "RECONCILIADO_OFFLINE_NAO_HOMOLOGADO",
         "previsao_id": p["previsao_id"],
+        "serie_rotulo_declarado": p["serie_id"],
+        "serie_fingerprint_sha256": fingerprint,
         "registro_sha256": registro["registro_sha256"],
         "evidencia_registro_sha256": p["evidencia_registro_sha256"],
         "cabeca_sha256": prova["cabeca_sha256"],
