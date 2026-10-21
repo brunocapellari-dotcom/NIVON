@@ -149,8 +149,13 @@ def normalizar_ensemble(payload,*,latitude,longitude,dias,modelo,coletado_em):
     keys=[k for k in h if k.startswith("precipitation_member")]
     if not 1<=len(keys)<=100:
         raise ErroAgroClimaAberto("nenhum membro ensemble na resposta")
-    if len(h)!=(len(keys)+1):
+    # Modelo GFS: serie precipitation de controle, alem de membros perturbados.
+    if set(h)-set(keys)-{"time","precipitation"}:
         raise ErroAgroClimaAberto("campos horários inesperados")
+    if "precipitation" in h:
+        if units.get("precipitation")!="mm":
+            raise ErroAgroClimaAberto("unidade controle divergente")
+        _serie_num(h["precipitation"],len(t),label="precipitation_control")
     for k in keys:
         if units.get(k)!="mm":
             raise ErroAgroClimaAberto("unidade precipitação diferente de mm")
