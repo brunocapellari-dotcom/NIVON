@@ -40,6 +40,15 @@ def relatorio():
         "logloss_media":0.4,"ece_confianca":0.1,
         "bins_calibracao":[{"faixa":[.75,1],"n":30,"confianca_media":.8,"acerto":.7}],
         "probabilidades_calibradas":None,"publicavel":False,
+        "cobertura_calendario":{
+            "status":"COBERTURA_DECLARADA_NAO_HOMOLOGADA",
+            "mercado":"CME","fonte_id":"TESTE-CAL",
+            "edicao_sha256":"b"*64,
+            "publicacao_em":"2025-12-01T09:00:00Z",
+            "coleta_em":"2025-12-01T10:00:00Z",
+            "sessoes_conferidas":75,
+            "publicavel":False,"calendario_oficial_comprovado":False,
+        },
     }
 
 
@@ -51,6 +60,9 @@ class PonteMercados(unittest.TestCase):
         self.assertAlmostEqual(v["skill_brier_vs_benchmark"],.75)
         self.assertEqual(v["convencao_brier"],"SOMA_ERROS_QUADRATICOS_DIVIDIDA_POR_3")
         self.assertFalse(v["publicavel"])
+        self.assertEqual(v["cobertura_calendario_declarada"]["fonte_id"],"TESTE-CAL")
+        self.assertEqual(v["cobertura_calendario_declarada"]["edicao_sha256"],"b"*64)
+        self.assertFalse(v["cobertura_calendario_declarada"]["calendario_oficial_comprovado"])
 
     def test_bloqueia_relatorio_incompleto_publicavel_ou_calibrado(self):
         for k,v in (
@@ -63,6 +75,29 @@ class PonteMercados(unittest.TestCase):
             r=relatorio();r[k]=v
             with self.subTest(k=k),self.assertRaises(ErroQuantitativo):
                 normalizar_relatorio_brier_mercados(r)
+
+    def test_recusa_calendario_ausente_invalido_ou_sem_prova(self):
+        for alteracao in (
+            {"cobertura_calendario":None},
+            {"cobertura_calendario":{"status":"HOMOLOGADO","mercado":"CME"}},
+        ):
+            with self.subTest(alteracao=alteracao):
+                r=relatorio();r.update(alteracao)
+                with self.assertRaises(ErroQuantitativo):
+                    normalizar_relatorio_brier_mercados(r)
+        for campo,valor in (
+            ("mercado","ICE"),
+            ("edicao_sha256","0"),
+            ("calendario_oficial_comprovado",True),
+            ("publicavel",True),
+            ("sessoes_conferidas",1),
+            ("publicacao_em","2026-01-01T09:00:00Z"),
+        ):
+            with self.subTest(campo=campo):
+                r=relatorio()
+                r["cobertura_calendario"][campo]=valor
+                with self.assertRaises(ErroQuantitativo):
+                    normalizar_relatorio_brier_mercados(r)
 
     def test_ece_indevido_e_bins_sobrepostos_bloqueiam(self):
         r=relatorio();r["ece_confianca"]=.4
