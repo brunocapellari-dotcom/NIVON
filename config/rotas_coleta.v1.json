@@ -4277,6 +4277,238 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Fonte IBAMA de registros FINALIZADOS reportados por órgãos participantes; sem geocódigo municipal IBGE no payload, distinguir área estimada em ha, foco INPE e ocorrência. Ambiente HOM/DEV não é produção.",
       "preliminary_evidence": "OFFICIAL_GOV_BR_CATALOG_2026_08_27; OPERATIONAL_ENDPOINT_UNTESTED_FROM_THIS_ENV"
+    },
+    {
+      "dataset_id": "OPEN_METEO_PREVISAO_DIARIA",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "DIRECT_OFFICIAL_API",
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "source_proof": "https://open-meteo.com/en/docs"
+      },
+      "implementation_scope": "OFFLINE_PLANNER_NORMALIZER_NO_FETCH",
+      "authentication": "NONE_EXPECTED_VERIFY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "RIGHTS_REAL_SAMPLE_AND_PERSISTENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "CHECK_FORECAST_ISSUE_TIME",
+        "CC_BY_ATTRIBUTION"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Modelo de previsão, não observação; não inventar emissão para publicação ou backtest.",
+      "preliminary_evidence": "PUBLIC_DOCUMENTATION_VERIFIED_2026_10_21_NO_OPERATIONAL_FETCH"
+    },
+    {
+      "dataset_id": "OPEN_METEO_HISTORICO_REANALISE",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "DIRECT_OFFICIAL_API",
+        "url": "https://archive-api.open-meteo.com/v1/archive",
+        "source_proof": "https://open-meteo.com/en/docs/historical-weather-api"
+      },
+      "implementation_scope": "OFFLINE_PLANNER_NORMALIZER_NO_FETCH",
+      "authentication": "NONE_EXPECTED_VERIFY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "RIGHTS_REAL_SAMPLE_AND_PERSISTENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "REANALYSIS_NOT_OBSERVED",
+        "CC_BY_ATTRIBUTION"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "ERA5/ERA5-Land é reanálise e deve ser marcada estimada, não estação.",
+      "preliminary_evidence": "PUBLIC_DOCUMENTATION_VERIFIED_2026_10_21_NO_OPERATIONAL_FETCH"
+    },
+    {
+      "dataset_id": "INPE_QUEIMADAS_FOCOS_CSV",
+      "collector_class": "STRUCTURED_FILE",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://data.inpe.br/queimadas/dados-abertos/",
+        "source_proof": "https://data.inpe.br/queimadas/dados-abertos/"
+      },
+      "implementation_scope": "IDENTIFIED_CSV_DOWNLOAD_PORTAL_EXACT_FILE_PENDING",
+      "authentication": "NONE_EXPECTED_VERIFY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "RIGHTS_REAL_SAMPLE_AND_PERSISTENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "DISCOVER_EXACT_CSV_RESOURCE",
+        "SATELLITE_DEDUP_AND_COVERAGE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "INPE focos satélite CSV; 10 min/diário/mensal/anual; sensor e viés de nuvens/resolução; não é ROI.",
+      "preliminary_evidence": "PUBLIC_DOCUMENTATION_VERIFIED_2026_10_21_NO_OPERATIONAL_FETCH"
+    },
+    {
+      "dataset_id": "INPE_QUEIMADAS_RISCO_FOGO",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://data.inpe.br/queimadas/dados-abertos/",
+        "source_proof": "https://data.inpe.br/queimadas/dados-abertos/"
+      },
+      "implementation_scope": "IDENTIFIED_MAP_LAYERS_EXACT_RESOURCE_PENDING",
+      "authentication": "NONE_EXPECTED_VERIFY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "RIGHTS_REAL_SAMPLE_AND_PERSISTENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "DISCOVER_EXACT_RASTER_RESOURCE",
+        "SEPARATE_RISK_OBSERVED_FORECAST"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Índices diários observados e previstos 3 dias; distinta de ocorrência observada.",
+      "preliminary_evidence": "PUBLIC_DOCUMENTATION_VERIFIED_2026_10_21_NO_OPERATIONAL_FETCH"
+    },
+    {
+      "dataset_id": "INPE_TERRABRASILIS_PRODES_WFS",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PUBLISHED_API_DOC",
+        "url": "https://terrabrasilis.dpi.inpe.br/geoserver/ows",
+        "source_proof": "https://www.terrabrasilis.dpi.inpe.br/faq/"
+      },
+      "implementation_scope": "PUBLIC_WFS_DOCUMENTED_CAPABILITIES_LAYER_PENDING",
+      "authentication": "NONE_EXPECTED_VERIFY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "RIGHTS_REAL_SAMPLE_AND_PERSISTENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "VERIFY_WFS_LAYER_AND_CRS",
+        "DO_NOT_USE_RESTRICTED_EARLY_DETER"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "WFS do TerraBrasilis: consultar capacidades, layer e CRS antes de usar. PRODES anual; restrito DETER antecipado.",
+      "preliminary_evidence": "PUBLIC_DOCUMENTATION_VERIFIED_2026_10_21_NO_OPERATIONAL_FETCH"
+    },
+    {
+      "dataset_id": "DADOS_GOV_BR_CATALOGO_API",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PUBLISHED_API_DOC",
+        "url": "https://dados.gov.br/dados/api/publico/conjuntos-dados",
+        "source_proof": "https://dados.gov.br/swagger-ui/index.html"
+      },
+      "implementation_scope": "CATALOG_METADATA_ONLY_NO_CONTENT_SCAN",
+      "authentication": "NONE_EXPECTED_VERIFY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "RIGHTS_REAL_SAMPLE_AND_PERSISTENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "VERIFY_PAGINATION_AND_METADATA",
+        "DISCOVER_RESOURCE_LICENSE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Metadados de datasets, não valores; cada origem deve passar por direitos e layout.",
+      "preliminary_evidence": "PUBLIC_DOCUMENTATION_VERIFIED_2026_10_21_NO_OPERATIONAL_FETCH"
+    },
+    {
+      "dataset_id": "WB_INDICADORES_MACRO_BR",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PUBLISHED_API_DOC",
+        "url": "https://api.worldbank.org/v2/country/BR/indicator/SP.POP.TOTL?format=json",
+        "source_proof": "https://datahelpdesk.worldbank.org/knowledgebase/articles/889392"
+      },
+      "implementation_scope": "DOCUMENTED_WORLD_BANK_V2_API_NO_FETCH",
+      "authentication": "NONE_EXPECTED_VERIFY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "RIGHTS_REAL_SAMPLE_AND_PERSISTENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "VERIFY_INDICATORS_ID_AND_UNITS",
+        "ANNUAL_NOT_PRICE_SIGNAL"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "World Bank v2 gratuito e sem chave; usar somente macro estrutural, não preços de soja.",
+      "preliminary_evidence": "PUBLIC_DOCUMENTATION_VERIFIED_2026_10_21_NO_OPERATIONAL_FETCH"
+    },
+    {
+      "dataset_id": "BCB_SGS_TAXA_SELIC_DIARIA",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PUBLISHED_API_DOC",
+        "url": "https://api.bcb.gov.br/dados/serie/bcdata.sgs.11/dados/ultimos/1?formato=json",
+        "source_proof": "https://dadosabertos.bcb.gov.br/"
+      },
+      "implementation_scope": "DOCUMENTED_SGS_DATED_RATE_NOT_FETCHED",
+      "authentication": "NONE_EXPECTED_VERIFY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "RIGHTS_REAL_SAMPLE_AND_PERSISTENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "VALIDATE_SGS_UNIT_AND_DAY",
+        "OFFICIAL_DATED_RATE_ONLY"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "SGS 11 taxa diária (não meta anual) com campo data. Validar escala e calendários antes de série.",
+      "preliminary_evidence": "PUBLIC_DOCUMENTATION_VERIFIED_2026_10_21_NO_OPERATIONAL_FETCH"
     }
   ]
 }
