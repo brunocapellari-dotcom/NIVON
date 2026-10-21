@@ -9,7 +9,7 @@ import json
 import mimetypes
 import re
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import parse_qs
 from wsgiref.simple_server import make_server
@@ -205,6 +205,21 @@ class MaritimeReadAPI:
         except ValueError as exc:
             return 400, {"error": "invalid_query", "detail": str(exc)}
 
+    def _lineup_window(self, rows: list[dict], *, past_hours: int,
+                       future_hours: int) -> list[dict]:
+        """Filter credible ETA to the requested window; no phantom freshness.
+
+        Synthetic fixtures without timestamps keep their explicit TEST_ONLY
+        presentation so the old UI tests remain purely diagnostic.
+        """
+        if self.fixture is not None:
+            return rows
+        now = datetime.now(timezone.utc).timestamp()
+        low = now - timedelta(hours=past_hours).total_seconds()
+        high = now + timedelta(hours=future_hours).total_seconds()
+        return [row for row in rows
+                if low <= self._timestamp(row.get("eta")) <= high]
+
     def _read(self, path: str, p: dict[str, list[str]], replay) -> dict:
         meta = {
             "status": self.mode,
@@ -249,19 +264,23 @@ class MaritimeReadAPI:
                     newest[key] = x
             return {**meta, "data": list(newest.values())[:limit]}
         if path.endswith("/lineup"):
-            _parameter(p, "past_hours", default=24, minimum=0, maximum=168)
-            _parameter(p, "future_hours", default=336, minimum=1, maximum=1080)
+            past_hours = _parameter(p, "past_hours", default=24, minimum=0, maximum=168)
+            future_hours = _parameter(p, "future_hours", default=336, minimum=1, maximum=1080)
             limit = _parameter(p, "limit", default=500, minimum=1, maximum=2000)
             rows = [x for x in self._rows("lineup_rows") if port is None or x.get("port_id") == port]
+            rows = self._lineup_window(rows, past_hours=past_hours, future_hours=future_hours)
             return {**meta, "data": rows[:limit]}
-        _parameter(p, "hours", default=24, minimum=1, maximum=168)
-        _parameter(p, "future_hours", default=336, minimum=1, maximum=1080)
+        past_hours = _parameter(p, "hours", default=24, minimum=1, maximum=168)
+        future_hours = _parameter(p, "future_hours", default=336, minimum=1, maximum=1080)
+        lineup_rows = self._lineup_window(
+            [r for r in self._rows("lineup_rows") if port is None or r.get("port_id") == port],
+            past_hours=past_hours, future_hours=future_hours,
+        )
         if self.programmed is not None:
             return {**meta, "data": {
                 "vessels_live": None, "vessels_approaching": None,
                 "vessels_waiting": None, "vessels_berthed": None,
-                "lineup_calls": sum(1 for r in self._rows("lineup_rows")
-                                    if port is None or r.get("port_id") == port),
+                "lineup_calls": len(lineup_rows),
                 "waiting_p50_hours": None, "waiting_p90_hours": None,
                 "eta_mae_hours": None, "berth_avg_hours": None,
             }}
@@ -280,7 +299,7 @@ class MaritimeReadAPI:
             "vessels_live": len(by_mmsi), "vessels_approaching": zones.count("APPROACH"),
             "vessels_waiting": zones.count("ANCHORAGE"),
             "vessels_berthed": zones.count("BERTH"),
-            "lineup_calls": sum(1 for r in self._rows("lineup_rows") if port is None or r.get("port_id") == port),
+            "lineup_calls": len(lineup_rows),
             "waiting_p50_hours": None, "waiting_p90_hours": None,
             "eta_mae_hours": None, "berth_avg_hours": None,
         }}
