@@ -32,7 +32,7 @@ def url_ptax(moeda: str, inicio: date, fim: date) -> str:
     if moeda not in MOEDAS or inicio > fim:
         raise ValueError("Moeda ou intervalo inválido")
     args = {"@dataInicial": f"'{inicio:%m-%d-%Y}'",
-            "@dataFinalCotacao": f"'{fim:%m-%d-%Y}'", "$format": "json"}
+            "@dataFinalCotacao": f"'{fim:%m-%d-%Y}'", "$format": "json", "$top": "5000"}
     if moeda == "USD":
         recurso = "CotacaoDolarPeriodo(dataInicial=@dataInicial,dataFinalCotacao=@dataFinalCotacao)"
     else:
@@ -123,7 +123,9 @@ def normalizar(registro: dict, moeda: str, inicio: date, fim: date, coleta_em: s
         raise ValueError("Registro PTAX não é objeto")
     try:
         data_hora = registro["dataHoraCotacao"]
-        tipo = registro["tipoBoletim"]
+        # O endpoint oficial CotacaoDolarPeriodo NÃO publica tipoBoletim.
+        # A distinção precisa estar explícita: não inventar rótulo Fechamento.
+        tipo = registro.get("tipoBoletim", "COTACAO_DOLAR_DIARIA" if moeda == "USD" else None)
         compra = decimal_positivo(registro["cotacaoCompra"])
         venda = decimal_positivo(registro["cotacaoVenda"])
     except KeyError as e:
@@ -185,6 +187,8 @@ def sincronizar(banco: Path | str, moeda: str = "USD", *,
             resposta = consultar(url_ptax(moeda, a, b))
             if not isinstance(resposta, dict) or not isinstance(resposta.get("value"), list):
                 raise ValueError("Formato de resposta OData inesperado")
+            if any(k in resposta for k in ("@odata.nextLink", "odata.nextLink")) or len(resposta["value"]) >= 5000:
+                raise ValueError("Paginação OData pendente: não aceitar histórico truncado")
             dados.extend(normalizar(item, moeda, a, b, agora) for item in resposta["value"])
         novos = 0
         campos = ("moeda", "data_referencia", "data_hora_cotacao_origem",
