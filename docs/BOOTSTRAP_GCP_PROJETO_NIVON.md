@@ -1,63 +1,47 @@
-# NIVON — Criar projeto Google Cloud novo, do zero (21/10/2026)
+# NIVON — projeto `nivon-data` criado: auditoria inicial (21/10/2026)
 
-Estado deste documento: **manual/bootstrap; nao executado na conta GCP**. O projeto ainda nao foi criado por esta PR. Nenhuma despesa autorizada.
+**Evidência:** captura do Console Google Cloud enviada pelo usuário mostra projeto **NIVON**, ID **`nivon-data`**, e nome de organização exibido **`brunocapellari-org`**. O ID numérico da organização, a vinculação de faturamento, os papéis IAM e os serviços efetivamente provisionados **ainda não foram confirmados por API**.
 
-## Caminho mais simples: console
+**Atenção:** este documento e a PR #84 não criaram recursos no GCP nem habilitaram cobrança. O projeto foi criado externamente pelo usuário. **Não criar outro projeto.** Descartar o ID sugerido anteriormente `nivon-data-2026`.
 
-1. Fazer login com a conta do proprietario em https://console.cloud.google.com/projectcreate .
-2. Nome: **NIVON - Plataforma de Dados**.
-3. ID sugerido: `nivon-data-2026` **somente se disponivel**. IDs sao globais e imutaveis; se ocupado escolher outra variacao e guardar o ID verdadeiro.
-4. Organizacao: **Nenhuma organizacao**, se a conta permitir e nao houver uma estrutura institucional. Se aparecer organizacao obrigatoria, verificar com o titular da conta.
-5. **Nao vincular faturamento.** Se o console obrigar criar/ativar Billing para a operacao seguinte, parar; nao adicionar cartao e nao ativar servicos por tentativa.
-6. Criar apenas o projeto. Depois abrir https://console.cloud.google.com/home/dashboard , seleciona-lo e anotar o **ID** (nao numero, nome, e-mail nem token).
-7. Abrir https://console.cloud.google.com/billing e verificar se o projeto esta **sem conta de faturamento vinculada**.
-8. A regiao operacional planejada e `us-central1`; ela sera configurada **nos datasets/buckets futuros**, nao durante a criacao do projeto.
+## 1. Verificação simples pelo celular
 
-Atencao: projeto criado nao significa BigQuery operacional definitivo, storage criado, Cloud Run ativo, migracao de dados ou custo zero garantido.
+1. Abra https://console.cloud.google.com/home/dashboard?project=nivon-data e selecione **NIVON** com ID `nivon-data` no seletor superior.
+2. Abra https://console.cloud.google.com/billing?project=nivon-data (ou Menu ☰ → **Faturamento**).
+3. Verifique se o projeto está **sem conta de faturamento vinculada**, **com conta vinculada** ou se o console informa **falta de permissão**. Caso não seja possível verificar, a situação continua **INDETERMINADA**.
+4. **Não cadastrar cartão, não vincular faturamento e não ativar APIs** para concluir esta etapa.
+5. Após verificar billing, inventariar APIs em https://console.cloud.google.com/apis/dashboard?project=nivon-data e permissões em https://console.cloud.google.com/iam-admin/iam?project=nivon-data; apenas leitura.
+6. Informar somente o estado de faturamento, por texto ou captura sem dados de pagamento. Nunca compartilhar chaves, senhas ou tokens.
 
-## Caminho reproduzivel: Cloud Shell + script revisavel
+## 2. Cloud Shell / CLI — verificação somente leitura
 
-Usar no Cloud Shell de uma conta Google Cloud autorizada:
+O script existente `scripts/bootstrap_gcp_project.sh` também aceita `--create`, mas **não usar esse modo no projeto existente**. Executar apenas:
 
 ```sh
 git clone --branch plan/gcp-data-platform-20261021 \
   https://github.com/brunocapellari-dotcom/NIVON.git
 cd NIVON
 bash -n scripts/bootstrap_gcp_project.sh
-bash scripts/bootstrap_gcp_project.sh --create nivon-data-2026
+bash scripts/bootstrap_gcp_project.sh --check nivon-data
 ```
 
-A criacao exige repetir o ID exato, consulta credenciais locais do CLI sem exporta-las, cria **somente o projeto vazio** e faz leitura da situacao de billing. Usa a opcao `--no-enable-cloud-apis`; **nao** faz `gcloud billing projects link`, `gcloud services enable`, `gcloud storage buckets create` ou `bq mk`.
+O modo `--check` lê projeto e situação de billing via `gcloud`, sem criar projeto, API, banco, bucket ou rotina. Se não tiver permissão para verificar billing, falha bloqueada; **falta de permissão não significa ausência de cobrança**.
 
-Se o ID escolhido for outro, substituir `nivon-data-2026` no comando por ele. Nao usar `sudo`, conta de servico, chaves ou secrets do GitHub para este passo.
-
-Para apenas conferir um projeto existente:
+Consultas adicionais apenas de leitura:
 
 ```sh
-bash scripts/bootstrap_gcp_project.sh --check ID_REAL_DO_PROJETO
+gcloud projects describe nivon-data --format='yaml(projectId,name,parent)'
+gcloud billing projects describe nivon-data --format='json'
+gcloud services list --enabled --project=nivon-data --format='value(config.name)'
 ```
 
-Se `gcloud billing projects describe` nao puder ser lido, o script falha fechado com estado indeterminado, sem presumir desativacao.
+## 3. Próximos gates da plataforma
 
-## Proximos gates apos criacao
+- Configuração canônica em `config/gcp_data_platform.v1.json`: ID identificado por captura, sem comprovação por API, status de faturamento desconhecido e serviços desativados.
+- Região planejada para datasets/buckets futuros: `us-central1`, sujeita à auditoria de licença, região e custo. Projetos GCP não recebem essa região na criação.
+- Sandbox BigQuery sem billing é **descartável**, com expiração de tabelas (60 dias) e limites próprios; não é arquivo histórico durável. https://docs.cloud.google.com/bigquery/docs/sandbox
+- A franquia gratuita com billing não é trava de gastos. Orçamentos são alertas, não hard cap universal. https://docs.cloud.google.com/billing/docs/how-to/budgets
+- Não implantar BigQuery definitivo, Cloud Storage ou Cloud Run antes de confirmar faturamento, IAM, direitos sobre datasets, orçamento e limites técnicos de consumo.
+- Preservar PTAX no Neon (PR #58) e código SQLite (PR #61) até backup/restauração, reconciliação de contagens, vintages, datas e corte reversível.
 
-- Obter e registrar **somente** o ID do projeto GCP; nenhuma credencial ou informacao de pagamento.
-- Validar estado de Billing desativado, IAM do proprietario e se existem projetos/recursos ja vinculados por engano.
-- Avaliar sandbox BigQuery usando apenas dados **descartaveis** de teste: tabelas do sandbox expiram em 60 dias, armazenamento total de vida limitado a 10 GiB e DML/streaming nao sao suportados (https://docs.cloud.google.com/bigquery/docs/sandbox).
-- Para historico permanente, aceitar somente plano com custos, regiao, quotas e limites claramente acordados. O Free Tier de BigQuery (10 GiB armazenamento/mes e 1 TiB consulta/mes) com billing **nao elimina cobranca por excedentes**.
-- Orçamentos Google Cloud **nao sao travas universais de gasto**. Quota BigQuery limita consultas, mas nao o custo de Cloud Storage ou outros servicos. Sem autorizacao expressa, nao vincular billing.
-- Nenhum bucket/dataset/servico/agendamento ativado sem primeiro validar custo, termos de uso e direitos por operacao de cada fonte.
-- Nao importar nem desligar dados PTAX no Neon ate reconciliacao de contagens, chaves, vintages, SHA, backup privado e restore.
-
-## Estado no GitHub
-
-- PR #84: planejamento e esquema BigQuery, **draft**, sem merge.
-- PR #58: PTAX Neon atual; preservar cron e observacoes.
-- PR #61: pipelines SQLite em integracao; reconciliar sem duplicar tabelas.
-- Testes offline: `tests/test_gcp_plan_contract.py` e `tests/test_gcp_bootstrap.py`.
-
-Referencias:
-- https://docs.cloud.google.com/resource-manager/docs/creating-managing-projects
-- https://docs.cloud.google.com/sdk/gcloud/reference/projects/create
-- https://docs.cloud.google.com/sdk/gcloud/reference/billing/projects/describe
-- https://docs.cloud.google.com/billing/docs/how-to/budgets
+**Estado:** imagem confirma identificação do projeto, mas não prova ambiente provisionado nem billing desligado. A PR #84 continua rascunho, sem merge e sem implantação real.
