@@ -41,6 +41,8 @@ class TestConciliacaoStores(unittest.TestCase):
     def setUp(self):
         self.legacy = abrir_progresso()
         self.canonical = abrir_registro()
+        from nivon.progresso_conab_historico import preparar_esquema
+        preparar_esquema(self.canonical)
         self.addCleanup(self.legacy.close)
         self.addCleanup(self.canonical.close)
 
