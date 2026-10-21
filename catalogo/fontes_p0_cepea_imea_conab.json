@@ -1,0 +1,121 @@
+{
+  "versao": "1.0.0",
+  "atualizado_em": "2026-10-21",
+  "projeto": "NIVON",
+  "natureza": "nao_comercial",
+  "prioridade_estrategica": "P0",
+  "fontes": [
+    {
+      "nome": "CEPEA/ESALQ",
+      "prioridade": "P0",
+      "tipo": "indicadores_precos_fisicos",
+      "cadeias": [
+        "soja",
+        "milho",
+        "boi_gordo",
+        "cafe",
+        "algodao",
+        "acucar",
+        "etanol"
+      ],
+      "canal_visual": "Noticias Agricolas - widgets catalogados",
+      "canal_analitico": "fonte CEPEA original via acesso oficial ou agrobr (com verificacao de proveniencia)",
+      "estado": "TESTE_REAL_FALLBACK_NA_BLOQUEADO",
+      "acesso_aos_dados": "CC BY-NC 4.0 indicado por agrobr; escopo e canal original sujeitos a conferencia",
+      "historico_no_neon": false,
+      "aguarda": [
+        "acesso primario efetivo",
+        "contrato de series/unidades/praças",
+        "homologacao de armazenamento"
+      ]
+    },
+    {
+      "nome": "IMEA",
+      "prioridade": "P0",
+      "tipo": "precos_regionais_mato_grosso",
+      "cadeias": [
+        "soja",
+        "milho",
+        "algodao",
+        "pecuaria",
+        "fretes"
+      ],
+      "canal_visual": "Noticias Agricolas - widgets catalogados",
+      "canal_analitico": "dados IMEA com autorizacao especifica ou interface contratada",
+      "estado": "AUTOMACAO_BLOQUEADA_SEM_LICENCA_VERIFICADA",
+      "acesso_aos_dados": "termo de uso original: requer analise e autorizacao para armazenamento/automacao",
+      "historico_no_neon": false,
+      "aguarda": [
+        "confirmacao de direitos",
+        "data de referencia por indicador",
+        "catalogo original de identificadores e unidades"
+      ]
+    },
+    {
+      "nome": "CONAB",
+      "prioridade": "P0",
+      "tipo": "safra_balanco_armazenagem",
+      "cadeias": [
+        "soja",
+        "milho",
+        "algodao",
+        "cafe",
+        "cana",
+        "armazenagem",
+        "oferta_demanda"
+      ],
+      "canal_visual": "boletins e paineis oficiais",
+      "canal_analitico": "planilhas e bases oficiais via agrobr.conab (sem fallback nao declarado)",
+      "estado": "EM_IMPLANTACAO_DIAGNOSTICA",
+      "acesso_aos_dados": "estatisticas publicas; verificar atribuição e diferenca entre licença do conteúdo do site e dados tabulares",
+      "historico_no_neon": false,
+      "submodulos": [
+        {
+          "nome": "Safras por cultura/UF/levantamento",
+          "estado": "TESTE_PENDENTE",
+          "prioridade": 1
+        },
+        {
+          "nome": "Series historicas area produtividade producao",
+          "estado": "TESTE_PENDENTE",
+          "prioridade": 2
+        },
+        {
+          "nome": "Oferta e demanda",
+          "estado": "TESTE_PENDENTE",
+          "prioridade": 3
+        },
+        {
+          "nome": "Cadastro Sicarm armazens",
+          "estado": "CATALOGO_PUBLICO_IDENTIFICADO_SEM_API_HOMOLOGADA",
+          "prioridade": 4
+        },
+        {
+          "nome": "Custos de producao e progresso de safra",
+          "estado": "TESTE_PENDENTE",
+          "prioridade": 5
+        }
+      ],
+      "aguarda": [
+        "teste E2E de consulta oficial",
+        "proveniencia dados versus licenca portal",
+        "schema analitico separado de cotacoes"
+      ]
+    }
+  ],
+  "regras": [
+    "Nunca equiparar widget a API estruturada com licença para armazenamento",
+    "Não atribuir valores de fallback do Notícias Agrícolas à fonte CEPEA",
+    "CONAB: preservar safra, número de levantamento, data da publicação e revisão, sem forçar data de cotação diária",
+    "IMEA: não automatizar captura ou armazenamento sem direitos verificados",
+    "Só integrar dados com fonte, original, unidade, referência, coleta, revisão e qualidade"
+  ],
+  "referencias": [
+    "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras",
+    "https://www.gov.br/conab/pt-br/acesso-a-informacao/dados-abertos",
+    "https://portaldeinformacoes.conab.gov.br/",
+    "https://www.gov.br/conab/pt-br/atuacao/armazenagem/saiba-mais-sobre-o-cadastro",
+    "https://github.com/bruno-portfolio/agrobr/blob/main/docs/api/conab.md",
+    "https://agrobr.dev/docs/licenses/"
+  ]
+}
