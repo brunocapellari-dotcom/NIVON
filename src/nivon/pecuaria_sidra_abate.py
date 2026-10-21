@@ -61,9 +61,11 @@ def _exigir_mapa(*, especie, tabela, dimensoes, totais, variaveis):
 
 
 def _competencia(codigo):
-    if not isinstance(codigo, str) or not re.fullmatch(r"20[0-9]{2}0[1-4]", codigo):
+    if not isinstance(codigo, str) or not re.fullmatch(r"(?:19|20)[0-9]{2}0[1-4]", codigo):
         raise DadoInvalido("periodo trimestral deve ser AAAA0T (ex: 202602)")
     ano, tri = int(codigo[:4]), int(codigo[-1])
+    if ano < 1997:
+        raise DadoInvalido("SIDRA abate inicia em 1997")
     mes_fim, dia_fim = {1: (3, 31), 2: (6, 30), 3: (9, 30), 4: (12, 31)}[tri]
     return f"{ano}-T{tri}", f"{ano}-{mes_fim:02d}-{dia_fim:02d}"
 
