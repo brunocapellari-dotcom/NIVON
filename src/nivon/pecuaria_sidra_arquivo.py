@@ -57,7 +57,7 @@ def _validar_url(url, *, tabela, metadados):
     return url
 
 
-def _conteudo(bruto, *, tipo, max_bytes):
+def _conteudo(bruto, *, tipo, max_bytes, tabela):
     if not isinstance(bruto, bytes) or not 2 <= len(bruto) <= max_bytes:
         raise DadoInvalido("conteudo vazio, nao binario ou maior que limite")
     try:
@@ -69,8 +69,9 @@ def _conteudo(bruto, *, tipo, max_bytes):
                                or not isinstance(obj[0], dict)
                                or not isinstance(obj[1], dict)):
         raise DadoInvalido("estrutura de valores nao e lista SIDRA h/y")
-    if tipo == "metadados" and not isinstance(obj, dict):
-        raise DadoInvalido("metadata de agregado deve ser objeto JSON")
+    if tipo == "metadados" and (not isinstance(obj, dict)
+                                or str(obj.get("id", "")) != tabela):
+        raise DadoInvalido("metadata de agregado sem ID coincidente com tabela")
     return sha256(bruto).hexdigest()
 
 
@@ -113,8 +114,8 @@ def arquivar_pacote_sidra_offline(
     col = _instante(coleta_declarada, "coleta")
     if pub > col:
         raise DadoInvalido("publicacao declarada depois da coleta")
-    hash_v = _conteudo(bruto_valores, tipo="valores", max_bytes=max_valores_bytes)
-    hash_m = _conteudo(bruto_metadados, tipo="metadados", max_bytes=max_metadados_bytes)
+    hash_v = _conteudo(bruto_valores, tipo="valores", max_bytes=max_valores_bytes, tabela=tabela_sidra)
+    hash_m = _conteudo(bruto_metadados, tipo="metadados", max_bytes=max_metadados_bytes, tabela=tabela_sidra)
     parametros = (
         especie, tabela_sidra, url_valores, url_metadados,
         pub.isoformat(), col.isoformat(), hash_v, hash_m,
