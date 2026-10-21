@@ -98,6 +98,10 @@ class TestSeriesConab(unittest.TestCase):
         livro=LivroFalso()
         for aba in livro.abas.values():
             aba.celulas[5][2]=""
+            # A coluna sem cabeçalho é realmente vazia, inclusive nas
+            # células de MT e Brasil, e não deve ocultar números de safra.
+            aba.celulas[6][2]=""
+            aba.celulas[7][2]=""
         # Mantém 20 temporadas válidas (1980 e 1982..2000).
         livro.abas["Produtividade"].celulas[5][3]="200.9"
         out=self.ler(livro=livro)
@@ -106,6 +110,14 @@ class TestSeriesConab(unittest.TestCase):
         self.assertEqual(len(rend),1)
         self.assertTrue(rend[0]["rotulo_coluna_inferido"])
         self.assertEqual(rend[0]["celula"]["coluna"],4)
+
+    def test_nao_ignora_dado_existente_sob_cabecalho_vazio(self):
+        livro=LivroFalso()
+        for aba in livro.abas.values():
+            aba.celulas[5][2]=""
+        # O dado sob a coluna sem ano NÃO deve desaparecer silenciosamente.
+        with self.assertRaisesRegex(ErroConab,"dado sem safra"):
+            self.ler(livro=livro)
 
     def test_aba_com_coluna_ausente_nao_ganha_inferencia_espuria(self):
         livro=LivroFalso()
