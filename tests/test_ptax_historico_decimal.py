@@ -44,9 +44,9 @@ class TestPTAXHistoricoDecimal(unittest.TestCase):
         return guardar_raw_ptax(self.db,CAT,captura(raw,at))
 
     def consultar(self,**kw):
+        opcoes={"incluir_sinteticos":True,**kw}
         return selecionar_ptax_decimal_asof(
-            self.db,corte=(T+timedelta(hours=2)).isoformat(),
-            incluir_sinteticos=True,**kw)
+            self.db,corte=(T+timedelta(hours=2)).isoformat(),**opcoes)
 
     def test_decimal_exato_no_historico(self):
         self.add(body())
