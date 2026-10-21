@@ -67,6 +67,11 @@ class TestConabSafra(unittest.TestCase):
         out=validar_linhas([row],**self.kw)
         self.assertIsNone(out["validas"][0]["area_plantada_mil_ha"])
         self.assertEqual(numero_nao_negativo(0,"producao"),"0")
+        nan=validar_linhas([safra(area_colhida=float("nan"),
+                                  area_plantada=float("nan"))],**self.kw)
+        self.assertEqual(nan["quantidade_validas"],1)
+        self.assertIsNone(nan["validas"][0]["area_plantada_mil_ha"])
+        self.assertIsNone(nan["validas"][0]["area_colhida_mil_ha"])
 
     def test_rejeita_negativo_nan_inf_e_booleano(self):
         for val in (-1,"NaN","Infinity",float("inf"),True,"erro"):
