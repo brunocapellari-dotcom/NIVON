@@ -96,6 +96,12 @@ def integrar_lpc_semanal_offline(
     gravacao = gravar_edicao_semanal(
         db, resumo=resumo, data_publicacao=publicado.isoformat(),
         prova_publicacao_sha=prova, classe="SINTETICO",
+        indice_evidencia={
+            "sha256": indice_sha256_esperado,
+            "coletado_em": coletado_indice.isoformat(),
+            "indice_url": indice["indice_url"],
+            "url_no_indice": info["url_pagina"],
+        },
     )
     return {
         **gravacao,
