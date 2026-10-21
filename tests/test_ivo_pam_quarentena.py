@@ -120,6 +120,12 @@ class TestIVOQuarentenaPAM(unittest.TestCase):
 
     def test_quota_local_rejeita_candidato_que_excede_limite(self):
         a=candidato()
+        # Fixture pequena original tem menos de 1 KiB. O JSON continua
+        # válido com whitespace após o fechamento, mas ocupa > 1 KiB.
+        raw=a["conteudo_original"]+b" "*1500
+        a["conteudo_original"]=raw
+        a["sha256"]=hashlib.sha256(raw).hexdigest()
+        a["bytes"]=len(raw)
         with self.assertRaises(ErroQuarentenaPAM):
             self.stage(a,limite_total_bytes=1024)
         self.assertFalse((self.root/"objetos_sha256"/(a["sha256"]+".bin")).exists())
