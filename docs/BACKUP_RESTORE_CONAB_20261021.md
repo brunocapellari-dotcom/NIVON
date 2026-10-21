@@ -89,3 +89,27 @@ são eliminados; nunca apagar conteúdo anterior do usuário.
 Critério de aceitação: CI integral, testes de integridade, SHA
 original/restaurado, diretório privado, no-overwrite, e
 `migracao_permitida=false` em todas as saídas.
+
+
+## Verificações de endurecimento após CI inicial
+
+A CI inicial encontrou arquivos auxiliares WAL/SHM persistentes na
+pasta de backup. A correção fecha explicitamente conexões e **converte
+somente a cópia** para journal mode \`DELETE\` ainda com conexão escritora
+ativa; o banco original permanece em \`WAL\`. Isso gera arquivo
+restaurável independente dos sidecars, cuja presença residual é uma
+falha de regressão.
+
+Também foram endurecidos:
+- criação exclusiva \`O_EXCL\` com permissão \`0600\` para arquivos de
+  restauração desde o primeiro instante, sem janela inicial \`0644\`;
+- recusa de diretório de backup que tenha perdido o modo privado
+  \`0700\` desde a captura;
+- recusa de SQLite corrompido mesmo se o hash e o manifesto tiverem
+  sido ambos reescritos (integrity/schema não dependem só do hash);
+- limpeza apenas dos arquivos gerados pelo ciclo, inclusive possíveis
+  sidecars \`-wal\`/\`-shm\` em falhas.
+
+A confiança na cópia permanece **local e técnica**: não há
+assinatura do manifesto, suporte a snapshots atômicos entre os dois
+bancos ou prova de licenciamento/RAW CONAB.
