@@ -75,7 +75,8 @@ def _lock(texto: str) -> dict[str, dict]:
             raise ErroEvidencia("hash ausente ou duplicado no lock")
         if nome in result or len(result) >= MAX_PACKAGES:
             raise ErroEvidencia("distribuição duplicada ou excesso de pacotes no lock")
-        result[nome] = {"version": match.group(2), "hashes_count": len(hashes)}
+        result[nome] = {"version": match.group(2), "hashes_count": len(hashes),
+                        "sha256_hashes": tuple(sorted(h.lower() for h in hashes))}
     if not result:
         raise ErroEvidencia("lock vazio")
     return result
