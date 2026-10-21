@@ -17,7 +17,7 @@ DEFAULT=ROOT/"config"/"motores_inteligencia.v1.json"
 MODULOS=frozenset({
     "motores_agro_estrategicos","motores_meteo_hidro",
     "motores_integracao_estrategica","motores_cadeias","cadeias_adicionais",
-    "inteligencia_temporal","motor_tendencias","tendencias_mercados",
+    "inteligencia_temporal",
     "balancos","motores","anp_diesel","destinos","portos",
     "bcb_ptax","briefing_diario","mdic_exportacao","mdic_importacao",
     "conab_agrobr","previsoes_bibliotecas","lineup_nacional","portos_automaticos",
@@ -31,7 +31,8 @@ MODULOS=frozenset({
     "hidrologia_chuva_vazao",
     "grade_meteorologica_store","chirps_v3_conservacao",
     "meteorologia_probabilistica","hidrograma_bacia","calibracao_cn_bacias",
-    "modelos_fisicos","verificacao_probabilistica","analogos_historicos","unidades_mercado","inmet_horario_qc","confronto_climatico_qc","noaa_roni","auditoria_safra_preditiva","agregacao_pam_ibge",
+    "modelos_fisicos","verificacao_probabilistica","analogos_historicos","unidades_mercado","inmet_horario_qc","confronto_climatico_qc","noaa_roni","auditoria_safra_preditiva","agregacao_pam_ibge","composicao_pam_sidra","ensemble_hidrologico_bacia",
+    "motor_tendencias","tendencias_mercados"
 })
 
 
