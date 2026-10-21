@@ -25,6 +25,15 @@
 - GitHub Actions [39598697614](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39598697614): Vite 8.2.2, `npm ci --ignore-scripts`, build concluído com artefato `dist/index.html` não vazio. **Não houve deploy**.
 - **Alerta de supply chain**: npm emitiu avisos de conflito de peer dependencies entre `@loaders.gl/tiles@4.5.1` e `@loaders.gl/core@4.4.5` (`~4.5.0-alpha.2` esperado). Compilação bem-sucedida NÃO elimina conflito/runtime ou vulnerabilidades; resolver com teste real de renderização e análise de licença/lockfile, sem upgrades cegos.
 
+## Correção P0 de janela temporal após integração
+
+- Auditoria de `src/nivon/maritime/maritime_gateway.py`: o endpoint de line-up validava `past_hours` e `future_hours`, mas não filtrava `eta`; a contagem do resumo também não respeitava a janela. Isso poderia apresentar programação antiga/fora da janela na interface shadow.
+- Na branch de integração, `MaritimeReadAPI._lineup_window` passa a filtrar as linhas com ETA válido dentro dos limites especificados. O endpoint `/v1/maritime/lineup` e a contagem `lineup_calls` de `/v1/maritime/summary` usam o mesmo recorte; ETAs ausentes ou malformados são excluídos das visões de fontes programadas/internas.
+- As fixtures sintéticas continuam explicitamente marcadas como `SYNTHETIC_TEST_ONLY`, sem se passarem por observações reais. Testes com calendário dinâmico evitam que fixtures fixas envelheçam artificialmente.
+- Evidência [CI Python 39599571951](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39599571951) no HEAD `3035c76870057f7e598cb1030b73b12ecf59c466`: **1.727 testes, 0 falhas, OK**. Novo teste adversarial `test_filtro_eta_por_janela_e_contagem_resumo_coerente` aprovado.
+- Evidência [CI cockpit 39599572076](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39599572076): build Vite de staging OK, sem deploy.
+- **Limitação:** este filtro não certifica frescor da fonte, direitos de publicação, cumprimento das janelas de operação real, atraso AIS, timezone cadastrado em cada autoridade ou calibração de ETA. Esses gates seguem bloqueados.
+
 ## Bloqueios antes de homologação
 1. **AIS**: autorização comercial e de armazenamento confirmada por contrato, auditoria da conexão real e histórico autorizado, idempotência e limites de custo.
 2. **Portos piloto**: homologar geofences/berços e origem/identidade dos navios, validar ao menos 95% das chegadas/atracações/saídas contra dados independentes.
