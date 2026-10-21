@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title"><title id="title">NIVON — símbolo N com linhas de plantio</title><defs>
+ <linearGradient id="symbol-green" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#497142"/><stop offset="0.58" stop-color="#0B3D2E"/><stop offset="1" stop-color="#0B3D2E"/></linearGradient>
+ <clipPath id="symbol-crop"><path d="M34 222V34H84C100 34 107 39 116 52L187 147V34H222V222H185C170 222 161 215 152 203L70 97V222Z"/></clipPath>
+ </defs><path fill="url(#symbol-green)" d="M34 222V34H84C100 34 107 39 116 52L187 147V34H222V222H185C170 222 161 215 152 203L70 97V222Z"/>
+ <g clip-path="url(#symbol-crop)" fill="none" stroke-linecap="round">
+ <path d="M17 108C68 96 94 115 136 163S204 204 245 183" stroke="#EDE6DB" stroke-width="9"/>
+ <path d="M16 132C71 118 98 139 140 183S207 225 248 199" stroke="#DAA574" stroke-width="14"/>
+ <path d="M11 158C72 144 98 164 143 206S206 241 245 221" stroke="#FFFFFF" stroke-width="5"/>
+ </g></svg>

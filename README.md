@@ -28,3 +28,7 @@ O trabalho de implementação inicial ficará em uma branch e em PR para revisã
 ## Licenciamento do código
 
 **Ainda não foi concedida uma licença aberta para este código.** A visibilidade pública do repositório não deve ser interpretada como permissão genérica de cópia ou sublicenciamento. Componentes de terceiros só serão incorporados após exame das respectivas licenças.
+
+## Identidade visual
+
+A direção agro aprovada e os ativos vetoriais preliminares estão em [`docs/brand`](./docs/brand/README.md). Status: proposta criativa, sem registro de marca ou homologação comercial.

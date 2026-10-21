@@ -1,0 +1,61 @@
+{
+  "name": "NIVON",
+  "version": "0.2.0",
+  "updated_at": "2026-10-21",
+  "status": "direcao_visual_aprovada__ativos_vetoriais_em_revisao",
+  "provenance": "Reconstrucao vetorial original inspirada no painel visual do chat; nao e extracao automatica dos pixels.",
+  "palette": {
+    "green_deep": {
+      "hex": "#0B3D2E",
+      "role": "fundo_institucional"
+    },
+    "green_agro": {
+      "hex": "#497142",
+      "role": "crescimento_e_apoio"
+    },
+    "gold_harvest": {
+      "hex": "#DAA574",
+      "role": "destaques_nao_semanticos"
+    },
+    "sand": {
+      "hex": "#EDE6DB",
+      "role": "fundo_claro"
+    },
+    "earth": {
+      "hex": "#3E2F20",
+      "role": "texto_de_apoio"
+    },
+    "white": {
+      "hex": "#FFFFFF",
+      "role": "contraste"
+    }
+  },
+  "type": {
+    "family": "Inter",
+    "fallback": "Arial, Helvetica, sans-serif",
+    "weights": [
+      400,
+      500,
+      600,
+      700,
+      800
+    ]
+  },
+  "typography": {
+    "wordmark": "NIVON (caixa alta)",
+    "tagline": "Inteligência para mover o agro.",
+    "tagline_status": "proposta editorial"
+  },
+  "asset_paths": [
+    "symbol.svg",
+    "logo-horizontal.svg",
+    "logo-reverse.svg",
+    "app-icon.svg",
+    "identity-preview.svg"
+  ],
+  "restrictions": [
+    "nao usar simbolo de marca registrada",
+    "nao representar endereco ou telefone ficticio",
+    "rever contraste e semelhanca de marca antes do uso publico"
+  ]
+}

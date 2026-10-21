@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1300 920" role="img" aria-labelledby="title"><title id="title">NIVON — apresentação da identidade visual agro</title>
+ <defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#0B3D2E"/><stop offset="1" stop-color="#0A2C23"/></linearGradient></defs>
+ <rect width="1300" height="920" fill="#F8F6F2"/>
+ <rect x="35" y="35" width="1230" height="470" rx="22" fill="url(#bg)"/>
+ <g transform="translate(62 75) scale(1.3)"><defs>
+ <linearGradient id="board-green" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6FA765"/><stop offset="0.58" stop-color="#0B3D2E"/><stop offset="1" stop-color="#0B4F38"/></linearGradient>
+ <clipPath id="board-crop"><path d="M34 222V34H84C100 34 107 39 116 52L187 147V34H222V222H185C170 222 161 215 152 203L70 97V222Z"/></clipPath>
+ </defs><path fill="url(#board-green)" d="M34 222V34H84C100 34 107 39 116 52L187 147V34H222V222H185C170 222 161 215 152 203L70 97V222Z"/>
+ <g clip-path="url(#board-crop)" fill="none" stroke-linecap="round">
+ <path d="M17 108C68 96 94 115 136 163S204 204 245 183" stroke="#EDE6DB" stroke-width="9"/>
+ <path d="M16 132C71 118 98 139 140 183S207 225 248 199" stroke="#DAA574" stroke-width="14"/>
+ <path d="M11 158C72 144 98 164 143 206S206 241 245 221" stroke="#C5DFC0" stroke-width="5"/>
+ </g></g>
+ <text x="400" y="284" fill="#FFFFFF" font-family="Inter,Arial,sans-serif" font-size="120" font-weight="800" letter-spacing="-5">NIVON</text>
+ <text x="402" y="349" fill="#EDE6DB" font-family="Inter,Arial,sans-serif" font-size="35" font-weight="600">Inteligência para mover o agro.</text>
+ <text x="405" y="400" fill="#B4C6B8" font-family="Inter,Arial,sans-serif" font-size="24">Dados • Mercado • Logística • Tecnologia</text>
+ <g fill="none" stroke-linecap="round"><path d="M-80 495Q300 270 680 512T1390 360" stroke="#DAA574" stroke-width="5" opacity=".8"/><path d="M-90 515Q300 290 670 531T1410 380" stroke="#EDE6DB" stroke-width="3" opacity=".7"/><path d="M-95 535Q280 318 660 548T1420 400" stroke="#497142" stroke-width="6" opacity=".9"/></g>
+ <text x="70" y="597" fill="#0B3D2E" font-family="Inter,Arial,sans-serif" font-weight="800" font-size="33">PALETA OFICIAL — PROPOSTA V0.2</text>
+ <g transform="translate(70 648)"><rect width="206" height="80" rx="10" fill="#0B3D2E"/><text y="112" font-family="Inter,Arial,sans-serif" fill="#3E2F20" font-weight="700" font-size="20">Verde profundo</text><text y="141" font-family="Inter,Arial,sans-serif" fill="#3E2F20" font-size="18">#0B3D2E</text></g>
+<g transform="translate(304 648)"><rect width="206" height="80" rx="10" fill="#497142"/><text y="112" font-family="Inter,Arial,sans-serif" fill="#3E2F20" font-weight="700" font-size="20">Verde agro</text><text y="141" font-family="Inter,Arial,sans-serif" fill="#3E2F20" font-size="18">#497142</text></g>
+<g transform="translate(538 648)"><rect width="206" height="80" rx="10" fill="#DAA574"/><text y="112" font-family="Inter,Arial,sans-serif" fill="#3E2F20" font-weight="700" font-size="20">Dourado safra</text><text y="141" font-family="Inter,Arial,sans-serif" fill="#3E2F20" font-size="18">#DAA574</text></g>
+<g transform="translate(772 648)"><rect width="206" height="80" rx="10" fill="#EDE6DB"/><text y="112" font-family="Inter,Arial,sans-serif" fill="#3E2F20" font-weight="700" font-size="20">Areia</text><text y="141" font-family="Inter,Arial,sans-serif" fill="#3E2F20" font-size="18">#EDE6DB</text></g>
+<g transform="translate(1006 648)"><rect width="206" height="80" rx="10" fill="#3E2F20"/><text y="112" font-family="Inter,Arial,sans-serif" fill="#3E2F20" font-weight="700" font-size="20">Terra</text><text y="141" font-family="Inter,Arial,sans-serif" fill="#3E2F20" font-size="18">#3E2F20</text></g>
+ <path d="M70 850H1230" stroke="#D9D3C9" stroke-width="2"/>
+ <text x="70" y="880" fill="#3E2F20" font-family="Inter,Arial,sans-serif" font-size="20">Conceito criativo aprovado • arquivos técnicos em revisão • sem registro de marca</text>
+ </svg>
