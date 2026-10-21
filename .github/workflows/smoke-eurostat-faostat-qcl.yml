@@ -1,0 +1,38 @@
+name: NIVON Smoke Eurostat FAOSTAT Pontual
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches:
+      - integration/nivon-acessos-core-convergencia-20261021
+    paths:
+      - .github/workflows/smoke-eurostat-faostat-qcl.yml
+permissions:
+  contents: read
+jobs:
+  test-api:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'test/smoke-eurostat-faostat-qcl-20261021' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Eurostat area oleaginosas 2024 Franca
+        id: eurostat
+        continue-on-error: true
+        run: PYTHONPATH=src python scripts/smoke_eurostat_faostat.py --fonte eurostat --executar
+      - name: FAOSTAT Brasil soja producao 2023
+        id: faostat
+        continue-on-error: true
+        run: PYTHONPATH=src python scripts/smoke_eurostat_faostat.py --fonte faostat --executar
+      - name: Resumo sem dados de producao
+        if: always()
+        env:
+          EU: ${{ steps.eurostat.outcome }}
+          FAO: ${{ steps.faostat.outcome }}
+        run: |
+          printf '%s\n' "EUROSTAT=$EU" "FAOSTAT=$FAO"
+          echo "Somente consulta pontual. Sem dados persistidos, sem agendamento."
