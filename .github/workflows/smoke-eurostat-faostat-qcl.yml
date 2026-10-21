@@ -28,11 +28,25 @@ jobs:
         id: faostat
         continue-on-error: true
         run: PYTHONPATH=src python scripts/smoke_eurostat_faostat.py --fonte faostat --executar
+      - name: FAOSTAT manifest bulk oficial
+        id: manifest
+        continue-on-error: true
+        run: |
+          PYTHONPATH=src python - <<'PY'
+          from nivon.faostat_bulk_manifest import consultar_manifest
+          try:
+              d=consultar_manifest(executar=True)
+              print("FAOSTAT_BULK_OK",d["total_dominios_manifest"],d["total_prioritarios"],d["sha256_original"])
+          except Exception as exc:
+              print("FAOSTAT_BULK_FALHA",type(exc).__name__)
+              raise SystemExit(1)
+          PY
       - name: Resumo sem dados de producao
         if: always()
         env:
           EU: ${{ steps.eurostat.outcome }}
           FAO: ${{ steps.faostat.outcome }}
+          BULK: ${{ steps.manifest.outcome }}
         run: |
-          printf '%s\n' "EUROSTAT=$EU" "FAOSTAT=$FAO"
+          printf '%s\n' "EUROSTAT=$EU" "FAOSTAT=$FAO" "FAOSTAT_BULK=$BULK"
           echo "Somente consulta pontual. Sem dados persistidos, sem agendamento."
