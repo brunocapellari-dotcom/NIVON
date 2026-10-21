@@ -906,6 +906,30 @@
       "access": "PUBLIC_GEOJSON_SHAPEFILE_WMS_WFS",
       "rights": "REVIEW",
       "notes": "Mapas temáticos oficiais da Embrapa/GeoInfo, especialmente água disponível e mapa de solos Brasil; checar licença de cada camada e escala cartográfica."
+    },
+    {
+      "id": "NASA_GLAM",
+      "provider": "NASA/USDA FAS GIMMS Global Agricultural Monitoring (GLAM)",
+      "official_url": "https://glam1.gsfc.nasa.gov/api/doc/gettbl",
+      "access": "PUBLIC_CSV_API_WITHOUT_KEY",
+      "rights": "VERIFY_PRODUCT_ATTRIBUTION",
+      "notes": "VIIRS 500m e OLCI 300m NDVI. Identificadores de área GLAM/ADM não equivalem a IBGE, máscara agrícola varia por versão; API versão 4, dados por sensor."
+    },
+    {
+      "id": "IMF_PORTWATCH",
+      "provider": "IMF PortWatch (monitoramento marítimo via AIS agregado)",
+      "official_url": "https://portwatch.imf.org/",
+      "access": "PUBLIC_PORTAL_OGC_CATALOG",
+      "rights": "VERIFY_DATA_EXPORT_RIGHTS",
+      "notes": "Séries diárias agregadas de escalas/toneladas estimadas e gargalos; não line-up navio/terminal. URL antiga de ArcGIS Daily_Trade_Data retorna erro 400: não homologar endpoint antigo."
+    },
+    {
+      "id": "GEOGLAM_CROPMONITOR",
+      "provider": "GEOGLAM Crop Monitor for AMIS/Global",
+      "official_url": "https://www.cropmonitor.org/archive",
+      "access": "PUBLIC_REPORTS_AND_GEODATA",
+      "rights": "VERIFY_DATASET_ATTRIBUTION",
+      "notes": "Boletins sazonais e datasets mensais de condição de soja/milho/trigo, evitando tratar avaliação qualitativa como produção observada."
     }
   ],
   "datasets": [
@@ -5518,6 +5542,170 @@
       "cadence": "IRREGULAR",
       "existing_module": null,
       "notes": "Escala 1:5.000.000 do mapa de solos nacional: não adequado para precisão em talhão.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "NASA_USDA_GLAM_NDVI",
+      "source_id": "NASA_GLAM",
+      "group": "CLIMA",
+      "stage": "CODE_PRESENT",
+      "priority": "P0",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO",
+        "PECUARIA"
+      ],
+      "topic": "serie_ndvi_viirs_olci_safra_por_id_administrativo_glam_nao_produtividade_observada",
+      "mode": "PUBLIC_CSV_API_PONTUAL",
+      "cadence": "WEEKLY",
+      "existing_module": "nivon.nasa_glam_ndvi.consultar_ndvi",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "FAO_WAPOR3_EVAPOTRANSPIRACAO",
+      "source_id": "FAO",
+      "group": "CLIMA",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "PECUARIA"
+      ],
+      "topic": "evapotranspiracao_real_e_biomassa_modeladas_300m_global_wapor3",
+      "mode": "FAO_GISMGR2_API_OR_GEOTIFF",
+      "cadence": "DEKADAL",
+      "existing_module": null,
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "IMF_PORTWATCH_PORT_ACTIVITY",
+      "source_id": "IMF_PORTWATCH",
+      "group": "PORTOS",
+      "stage": "CANDIDATE",
+      "priority": "P0",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "FERTILIZANTES",
+        "DIESEL",
+        "LOGISTICA"
+      ],
+      "topic": "chamadas_portuarias_e_volumes_maritimos_estimados_ais_por_porto_e_tipo_embarcacao",
+      "mode": "OGC_RECORDS_DISCOVERY_THEN_FEATURES",
+      "cadence": "WEEKLY",
+      "existing_module": null,
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "GEOGLAM_CONDICAO_LAVOURAS",
+      "source_id": "GEOGLAM_CROPMONITOR",
+      "group": "SAFRA",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "boletins_e_datasets_geoespaciais_mensais_da_condicao_das_lavouras_por_cultura",
+      "mode": "PUBLIC_SHAPEFILE_REPORT",
+      "cadence": "MONTHLY",
+      "existing_module": null,
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "COPERNICUS_C3S_SAZONAL_ENS",
+      "source_id": "COPERNICUS_CDS",
+      "group": "CLIMA",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "LOGISTICA"
+      ],
+      "topic": "previsao_sazonal_probabilistica_multi_modelos_temperatura_precipitacao_ensemble",
+      "mode": "CDS_API_LOGIN_FREE",
+      "cadence": "MONTHLY",
+      "existing_module": null,
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ANTT_PISO_MINIMO_FRETE",
+      "source_id": "ANTT",
+      "group": "LOGISTICA",
+      "stage": "CANDIDATE",
+      "priority": "P1",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "FERTILIZANTES",
+        "DIESEL",
+        "LOGISTICA"
+      ],
+      "topic": "coeficientes_antt_piso_minimo_frete_por_categoria_e_vigencia_piso_legal_nao_frete_mercado",
+      "mode": "OFFICIAL_COEFFICIENTS_FILE_OR_LEGISLATION",
+      "cadence": "IRREGULAR",
+      "existing_module": null,
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
