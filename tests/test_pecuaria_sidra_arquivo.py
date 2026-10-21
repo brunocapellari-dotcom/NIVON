@@ -72,7 +72,8 @@ class TestArquivoAbateSIDRA(unittest.TestCase):
             p = self.arquivar(
                 especie=especie, tabela_sidra=table,
                 url_valores=f"https://apisidra.ibge.gov.br/values/t/{table}/n1/1/p/202602/v/allxp/h/y",
-                url_metadados=f"https://servicodados.ibge.gov.br/api/v3/agregados/{table}/metadados")
+                url_metadados=f"https://servicodados.ibge.gov.br/api/v3/agregados/{table}/metadados",
+                bruto_metadados=json.dumps({"id": table, "mock": True}).encode())
             self.assertEqual(p["id"], i)
 
     def test_nao_permite_mutar_ou_excluir(self):
@@ -143,6 +144,14 @@ class TestArquivoAbateSIDRA(unittest.TestCase):
         self.assertFalse(a["dados_reais_verificados"])
         self.assertFalse(a["timestamps_autenticados"])
 
+
+
+    def test_metadados_de_outro_agregado_rejeitados(self):
+        with self.assertRaisesRegex(DadoInvalido, "ID coincidente"):
+            self.arquivar(bruto_metadados=b'{"id":1093,"nome":"suino"}')
+        with self.assertRaisesRegex(DadoInvalido, "ID coincidente"):
+            self.arquivar(bruto_metadados=b'{"variaveis":[]}')
+        self.assertFalse(self.banco.exists())
 
 if __name__ == "__main__":
     unittest.main()
