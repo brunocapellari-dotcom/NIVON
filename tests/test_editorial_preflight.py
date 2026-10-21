@@ -4,6 +4,7 @@ import hashlib
 import unittest
 
 from nivon.editorial_preflight import avaliar_previa_editorial
+from nivon.frete_linhas_editoriais import formatar_linha_frete
 
 AGORA = "2026-10-20T15:00:00-03:00"
 HASH = "a" * 64
@@ -23,8 +24,7 @@ def dados():
         "*RESUMO ESTRATÉGICO DO AGRONEGÓCIO — NIVON*\n"
         "Chicago Soja: 1050 USc/bu, fechamento anterior 19/10/2026\n"
         "Plantio de soja avança em Mato Grosso — resumo verificado\n"
-        "Sorriso/MT → Dom Aquino/MT: R$ 130/t, 800 t/dia "
-        "(volume REFERENCIA, não realizado), ref. 20/10/2026\n"
+
     )
     edicao = {"estado": "EDICAO_OFFLINE_PREPARADA_SEM_ENVIO",
               "gerado_em": AGORA, "texto": texto,
@@ -51,12 +51,18 @@ def dados():
              "destino": "Dom Aquino", "uf_destino": "MT",
              "tipo": "FRETE_ANUNCIADO", "valor_rs_t": "130",
              "pickup_entity_id": "ARMAZEM_SINTETICO_10",
+             "ponto_embarque": "Armazém Sintético 10",
              "transportadora": "TRANSP_SINTETICA",
              "produto": "SOJA", "equipamento": "BITREM",
              "regime_pf_pj": "PJ", "condicao_pedagio": "INCLUSO",
              "referencia_em": "2026-10-20T11:00:00-03:00",
              "volume_t_dia": 800, "classificacao_volume": "REFERENCIA",
              "volume_realizado": False}
+    texto += ("*FRETES ANUNCIADOS — CORREDORES*\n" +
+              formatar_linha_frete({**frete, "referencia": frete["referencia_em"]}) +
+              "\nDivulgações de transportadoras; não são viagens realizadas.\n")
+    edicao["texto"] = texto
+    edicao["sha256"] = hashlib.sha256(texto.encode()).hexdigest()
     return {"edicao": edicao, "gerado_em": AGORA,
             "noticias": [noticia], "cotacoes": [cotacao], "fretes": [frete]}
 
@@ -166,7 +172,7 @@ class TestPreflightEditorial(unittest.TestCase):
     def test_valor_frete_diferente_do_publicado_bloqueia(self):
         d = dados()
         d["fretes"][0]["valor_rs_t"] = "140"
-        self.assertTrue(any("valor/data de frete" in b
+        self.assertTrue(any("registro individual" in b
                             for b in avaliar(d)["bloqueios"]))
 
     def test_volume_referencia_nao_virar_realizado(self):
@@ -179,7 +185,7 @@ class TestPreflightEditorial(unittest.TestCase):
         d["edicao"]["texto"] = d["edicao"]["texto"].replace(
             "volume REFERENCIA", "produção diária")
         d["edicao"]["sha256"] = hashlib.sha256(d["edicao"]["texto"].encode()).hexdigest()
-        self.assertTrue(any("rótulo" in b for b in avaliar(d)["bloqueios"]))
+        self.assertTrue(any("registro individual" in b for b in avaliar(d)["bloqueios"]))
 
     def test_noticia_auditada_nao_esta_no_texto(self):
         d = dados()
