@@ -93,3 +93,28 @@ Referências oficiais:
 **Gate CI:** vincular a execução GitHub Actions ao HEAD final deste PR; nunca reutilizar aprovação de commit anterior para declarar aprovação de alteração posterior.
 
 **Próxima tarefa executável:** ingestão e verificação offline de um conjunto real autorizado de previsões arquivadas (emitidas antes do intervalo) + pluviômetros INMET na mesma janela, com snapshot SHA, calendário de disponibilidade e prova de independência. Enquanto isso não existir, métricas são somente testes sintéticos, sem precisão operacional.
+
+
+## 7. Continuação — pareamento de previsões e observações com hash RAW (21/10/2026)
+
+### Código implementado
+
+`src/nivon/pacotes_chuva_asof.py:montar_e_verificar_pares_chuva` recebe snapshots **offline** de uma previsão NWP e de uma observação de chuva para cada período, sem baixar nada. É uma ponte entre parsers/coletores e o verificador `verificacao_chuva_ensemble_asof`; NÃO substitui os parsers INMET/ANA existentes.
+
+- Exige bytes JSON limitados (até 250 kB por snapshot) + manifesto explícito com SHA-256 coincidente, dataset/source ID canônicos, horário de coleta com fuso, classe de aquisição e hash de prova externa de disponibilidade.
+- Os datasets previstos são `NOAA_GFS`, `ECMWF_MODELOS` e `CPTEC_MERGE`; observações normalizadas `INMET_ESTACOES` ou `ANA_HIDRO`. Isso é contrato de entrada, NÃO prova disponibilidade de produtos ensemble reais nestes datasets. Na ausência de forecast ensemble genuíno com 3+ membros, o verificador recusa o dado em vez de fabricar membros.
+- Recusa metadados incompletos, JSON com chaves duplicadas/NaN, fontes com identificadores incompatíveis, observação sem QC declarado aprovado, unidades implícitas, intervalos observados de duração diferente, captura de forecast intraintervalo, previsão publicada depois da captura e observação coletada antes da publicação.
+- Alinha exatamente um snapshot de previsão com um de observação por `estacao_id` e fim do intervalo UTC; não faz interpolação nem ignora lacunas, duplicatas, edições ou diferenças de versão.
+- Preserva lista de SHAs das duas séries e produz métricas delegadas ao motor existente com `homologado=false`, `prova_externa_vintages_validada=false`, `qc_instrumental_validado_independentemente=false` e `holdout_validado_independentemente=false`. O campo `modo_validacao=FORA_AMOSTRA` enviado ao verificador é **contratual** e não prova independência da amostra.
+- Para `REAL_AUTORIZADO`, bloqueia o processamento se catálogo canônico não aprovar cada dataset (`enabled` + `collection_authorized`), sem `COLETA/ARMAZENAMENTO/PESQUISA` e referência de direitos. Atualmente esses datasets estão **desativados**, portanto nenhum dado real foi promovido.
+- Não registra dados RAW reais no GitHub nem armazena segredo; operação continua offline e sem alteração em ambiente de produção.
+
+### Fronteira científica importante
+
+O parser `inmet_horario_qc.py` da PR #9 recebe CSV horário e retorna `BRUTO_HORARIO_SEM_QC`. Mesmo quando 24 valores estão presentes, isso **não basta** para colocar `qc=APROVADO` nem para confirmar o início/fim físico do acumulado. A ligação com essa PR só pode ocorrer após convenção temporal documentada, QC instrumental atestado e testes com amostras reais autorizadas; **nenhum atestado foi criado automaticamente nesta etapa**.
+
+### Testes e próximo gate
+
+`tests/test_pacotes_chuva_asof.py` cobre hash adulterado, identidade e versão, intervalos, captura tardia, não pareamento, faltantes, duplicações, fonte incorreta, JSON malformado, direitos e bloqueio de dados reais. A CI da branch determina a aceitação do HEAD final; resultados anteriores de testes sintéticos não são evidência de precisão real.
+
+**Próxima tarefa executável:** coordenar a reconciliação dos parsers/QC da PR #9 e MJO da PR #11 pela integração central; preparar conjuntos reais permitidos com snapshots originais de NWP, QC de estações e comprovantes históricos point-in-time. Sem evidência externa, apenas classificação `CODE_TESTED_SYNTHETIC_ONLY`, sem ativar fonte nem previsão.
