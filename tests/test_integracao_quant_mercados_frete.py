@@ -138,6 +138,39 @@ class PonteFretes(unittest.TestCase):
             with self.subTest(change=change),self.assertRaises(ErroQuantitativo):
                 preparar([frete(edicao_sha256="a"*64,**change)])
 
+    def test_anuncio_antigo_republicado_com_hash_nao_vira_preco_atual(self):
+        antigo=frete(
+            edicao_sha256="a"*64,
+            data_referencia="2024-10-19",
+            data_publicacao="2026-10-19T10:00:00-04:00",
+            data_coleta="2026-10-19T11:00:00-04:00")
+        with self.assertRaisesRegex(ErroQuantitativo,"republicacao antiga"):
+            preparar([antigo])
+
+    def test_referencia_comercial_e_dia_local_na_virada_utc(self):
+        # 2026-10-20 02:30 UTC ainda e 19/10, 22:30 em Mato Grosso.
+        row=frete(
+            edicao_sha256="a"*64,
+            data_referencia="2026-10-19",
+            data_publicacao="2026-10-20T02:30:00Z",
+            data_coleta="2026-10-20T03:00:00Z")
+        out=preparar([row])
+        self.assertTrue(out["asof_pronto"])
+        self.assertEqual(out["observacoes_asof"][0]["periodo"],"2026-10-19")
+        # Mesmo instante, se classificado como dia seguinte, seria falso.
+        row["data_referencia"]="2026-10-20"
+        with self.assertRaisesRegex(ErroQuantitativo,"dia local"):
+            preparar([row])
+
+    def test_fuso_explicitamente_diferente_mantem_instante_e_data_local(self):
+        # UTC+5 vira 07:00 em Cuiaba; dia correto ainda 19/10.
+        row=frete(edicao_sha256="a"*64,
+                  data_referencia="2026-10-19",
+                  data_publicacao="2026-10-19T16:00:00+05:00",
+                  data_coleta="2026-10-19T16:05:00+05:00")
+        out=preparar([row])
+        self.assertTrue(out["asof_pronto"])
+
     def test_temporalidade_falha_e_hash_conflict(self):
         a=frete(edicao_sha256="a"*64)
         for bad in (
