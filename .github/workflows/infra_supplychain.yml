@@ -1,0 +1,119 @@
+# NIVON: varredura em PR/dispatch sem segredos, release ou deploy.
+# Binários oficiais fixados por versão e SHA-256 da release.
+# Relatórios brutos permanecem apenas no runner efêmero, não são publicados.
+name: NIVON supply chain guard
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/infra_supplychain.yml'
+      - 'infra/docker/Dockerfile.worker'
+      - '.dockerignore'
+      - 'src/**'
+      - 'config/**'
+      - 'pyproject.toml'
+      - 'tests/test_infra_supplychain.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-security-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect-secrets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout completo sem persistir token
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Baixar e verificar Gitleaks oficial
+        shell: bash
+        env:
+          GITLEAKS_SHA: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+        run: |
+          set -euo pipefail
+          umask 077
+          tool_dir="$RUNNER_TEMP/nivon-security-bin"
+          mkdir -p "$tool_dir"
+          archive="$RUNNER_TEMP/gitleaks_8.30.1_linux_x64.tar.gz"
+          curl -fsSL --retry 2 --connect-timeout 10 --max-time 180 \
+            "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz" \
+            -o "$archive"
+          printf '%s  %s\n' "$GITLEAKS_SHA" "$archive" | sha256sum -c
+          tar -xzf "$archive" -C "$tool_dir" gitleaks
+          chmod 0700 "$tool_dir/gitleaks"
+          printf '%s\n' "$tool_dir" >> "$GITHUB_PATH"
+      - name: Bloquear segredos em todo histórico git
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          # Nem os achados, nem fragmentos secretos entram nos logs ou artifacts.
+          if ! gitleaks git --no-banner --redact --report-format json \
+            --report-path "$RUNNER_TEMP/nivon-gitleaks.json" . \
+            > "$RUNNER_TEMP/nivon-gitleaks-stdout.txt" 2>&1; then
+            echo "::error::Gitleaks encontrou achados ou falha de scanner. Inspecionar localmente; não publicar segredos."
+            exit 1
+          fi
+          echo "Gitleaks: finalizado sem achados na revisão inspecionada."
+
+  sbom-and-vulnerabilities:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout sem credenciais persistentes
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Baixar e verificar Trivy oficial
+        shell: bash
+        env:
+          TRIVY_SHA: e24b1c51293c1b15e4ba8d45bbc7891ba053f90278ec2698f3562c993e145fe7
+        run: |
+          set -euo pipefail
+          umask 077
+          tool_dir="$RUNNER_TEMP/nivon-security-bin"
+          mkdir -p "$tool_dir"
+          archive="$RUNNER_TEMP/trivy_0.76.0_Linux-64bit.tar.gz"
+          curl -fsSL --retry 2 --connect-timeout 10 --max-time 180 \
+            "https://github.com/aquasecurity/trivy/releases/download/v0.76.0/trivy_0.76.0_Linux-64bit.tar.gz" \
+            -o "$archive"
+          printf '%s  %s\n' "$TRIVY_SHA" "$archive" | sha256sum -c
+          tar -xzf "$archive" -C "$tool_dir" trivy
+          chmod 0700 "$tool_dir/trivy"
+          printf '%s\n' "$tool_dir" >> "$GITHUB_PATH"
+      - name: Validar testes e recusa de evidência falsa
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -p test_infra_supplychain.py -v
+      - name: Build imagem OFFLINE de homologação sem publicá-la
+        run: docker build --pull -f infra/docker/Dockerfile.worker -t nivon-worker-supply:ci .
+      - name: Gerar SBOM CycloneDX e varredura Trivy da imagem
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          trivy image --quiet --scanners vuln --format json \
+            --output "$RUNNER_TEMP/nivon-trivy.json" nivon-worker-supply:ci
+          trivy image --quiet --format cyclonedx \
+            --output "$RUNNER_TEMP/nivon-cyclonedx.json" nivon-worker-supply:ci
+      - name: Aplicar bloqueio HIGH/CRITICAL sem imprimir detalhes sensíveis
+        shell: bash
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python -m nivon.infra_supplychain \
+            --trivy-json "$RUNNER_TEMP/nivon-trivy.json" \
+            --cyclonedx-json "$RUNNER_TEMP/nivon-cyclonedx.json" \
+            --image nivon-worker-supply:ci
