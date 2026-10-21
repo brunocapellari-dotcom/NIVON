@@ -139,6 +139,33 @@ def _inmet(*, transport=None) -> dict:
         return _status("inmet", "LINK_OU_DOWNLOAD_NAO_VALIDADO")
 
 
+def preflight(fonte: str) -> dict:
+    """Valida formato/disponibilidade de secrets SEM rede e SEM revelar valores."""
+    if fonte not in _FONTES:
+        raise ValueError("fonte não permitida")
+    try:
+        if fonte == "usda":
+            key = os.environ.get("AGROBR_USDA_API_KEY", "")
+            if not 20 <= len(key) <= 256 or any(c.isspace() for c in key):
+                return _status(fonte, "SEGREDO_INDISPONIVEL")
+        elif fonte == "ana":
+            from .ana_hidrowebservice import credenciais_ambiente, ErroANAAPI
+            try:
+                credenciais_ambiente()
+            except ErroANAAPI:
+                return _status(fonte, "SEGREDO_INDISPONIVEL")
+        else:
+            from .inmet_bdmep import link_privado_do_ambiente, ErroBDMEP
+            try:
+                link_privado_do_ambiente()
+            except ErroBDMEP:
+                return _status(fonte, "LINK_PRIVADO_AUSENTE_OU_INVALIDO")
+    except (OSError, UnicodeError, ValueError):
+        # Nunca serializar os valores capturados em exceções.
+        return _status(fonte, "PREFLIGHT_NAO_VALIDADO")
+    return _status(fonte, "CREDENCIAL_FORMATO_OK_NAO_AUTENTICADA")
+
+
 def executar(fonte: str, *, habilitar_rede: bool = False, transporte=None) -> dict:
     if fonte not in _FONTES:
         raise ValueError("fonte não permitida")
@@ -154,13 +181,19 @@ def executar(fonte: str, *, habilitar_rede: bool = False, transporte=None) -> di
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="NIVON: verificacao privada controlada, sem publicacao")
     parser.add_argument("--fonte", required=True, choices=_FONTES)
-    parser.add_argument("--live", action="store_true",
-                        help="habilita UMA verificação real, somente em executor privado")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--preflight", action="store_true",
+                      help="verifica presença/formato de credenciais sem rede")
+    mode.add_argument("--live", action="store_true",
+                      help="habilita UMA verificação real, somente em executor privado")
     args = parser.parse_args(argv)
-    result = executar(args.fonte, habilitar_rede=args.live)
+    result = preflight(args.fonte) if args.preflight else executar(
+        args.fonte, habilitar_rede=args.live
+    )
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0 if result["estado"] in (
-        "REDE_DESATIVADA", "AUTENTICACAO_E_SCHEMA_OK",
+        "REDE_DESATIVADA", "CREDENCIAL_FORMATO_OK_NAO_AUTENTICADA",
+        "AUTENTICACAO_E_SCHEMA_OK",
         "AUTENTICACAO_OK_CONSULTA_PENDENTE", "AUTENTICACAO_E_LEITURA_OK",
         "ZIP_RECEBIDO_E_INSPECIONADO",
     ) else 2
