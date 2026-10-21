@@ -228,7 +228,7 @@ class WheelhouseTests(unittest.TestCase):
 
     def test_record_digest_mismatch_even_when_outer_hash_recomputed(self):
         self._replace_bytes(gerar_wheel(after_record={
-            "example/__init__.py": b"# malicious replacement after RECORD\n"}))
+            "example/__init__.py": b"!" * len(b"# fixture only, not executed\n")}))
         with self.assertRaisesRegex(ErroEvidencia, "digest.*RECORD"):
             self.result()
 
