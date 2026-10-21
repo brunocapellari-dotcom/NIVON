@@ -191,8 +191,8 @@ def montar_e_verificar_pares_chuva(
                 valid = _t(row["valido_em"], "validade")
                 if not features <= issued <= published <= captured <= valid - timedelta(hours=w):
                     raise ErroPacoteChuva("previsão não estava capturada antes do intervalo")
-                if climate > captured:
-                    raise ErroPacoteChuva("baseline climatológico publicado depois da captura")
+                if climate > issued:
+                    raise ErroPacoteChuva("baseline climatológico publicado depois da emissão")
                 if not isinstance(row["membros_mm"], list) or not 3 <= len(row["membros_mm"]) <= 100:
                     raise ErroPacoteChuva("membros ausentes ou excessivos")
                 for member in row["membros_mm"]:
