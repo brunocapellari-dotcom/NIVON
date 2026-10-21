@@ -12,21 +12,31 @@ from decimal import Decimal, InvalidOperation, localcontext
 import re
 
 from .conab_series import ARQUIVOS
+from .agregacao_pam_ibge import C81_PAM_POR_CULTURA, _PRODUTOS, _UFS
 
 
 class ErroConciliacaoSafra(ValueError):
     pass
 
 
-UF_IBGE = {"MT": "51", "GO": "52", "MS": "50", "PR": "41", "RS": "43",
-           "SC": "42", "SP": "35", "MG": "31", "BA": "29", "PA": "15"}
+# Codificação oficial de todas as UFs brasileiras; comparar contra o dicionário
+# municipal da PAM impede que um mapeamento parcial produza falsa equivalência.
+UF_IBGE = {
+    "RO": "11", "AC": "12", "AM": "13", "RR": "14", "PA": "15",
+    "AP": "16", "TO": "17", "MA": "21", "PI": "22", "CE": "23",
+    "RN": "24", "PB": "25", "PE": "26", "AL": "27", "SE": "28",
+    "BA": "29", "MG": "31", "ES": "32", "RJ": "33", "SP": "35",
+    "PR": "41", "SC": "42", "RS": "43", "MS": "50", "MT": "51",
+    "GO": "52", "DF": "53",
+}
+if {int(x) for x in UF_IBGE.values()} != _UFS or len(UF_IBGE) != len(_UFS):
+    raise RuntimeError("mapa de UFs da CONAB diverge do contrato IBGE PAM")
 _HASH = re.compile(r"[0-9a-f]{64}\Z")
 _SAFRA = re.compile(r"((?:19|20)[0-9]{2})/((?:19|20)[0-9]{2})\Z")
 _CONAB_CLASSES = {"PROJETADO_CONAB", "INFORMADO_CONAB_NAO_CERTIFICA_REALIZADO"}
-_PAM_MAP = {
-    "SOJA": ("SOJA_GRAO", "SOJA"),
-    "MILHO": ("MILHO_GRAO_TOTAL", "MILHO"),
-}
+# Nomes de produtos e códigos C81 sempre vêm do adaptador canônico SIDRA,
+# nunca de mapeamentos mantidos em paralelo.
+_PAM_MAP = {cultura: _PRODUTOS[cultura] for cultura in ("SOJA", "MILHO")}
 _IDENTIDADES = {("SOJA", "TOTAL"), ("MILHO", "TOTAL"),
                 ("MILHO", "PRIMEIRA"), ("MILHO", "SEGUNDA"), ("MILHO", "TERCEIRA")}
 
@@ -193,7 +203,7 @@ def confrontar_conab_pam(*, pacote_conab: dict, agregado_pam: dict,
     cultura = pacote_conab["cultura"]
     if cultura not in _PAM_MAP or agregado_pam.get("cultura") != cultura:
         raise ErroConciliacaoSafra("cultura PAM divergente")
-    if agregado_pam.get("produto_ibge") != _PAM_MAP[cultura][0]:
+    if agregado_pam.get("produto_ibge") != _PAM_MAP[cultura]:
         raise ErroConciliacaoSafra("produto PAM/CONAB fisicamente incompatível")
     if cultura == "MILHO" and pacote_conab.get("subdivisao") != "TOTAL":
         raise ErroConciliacaoSafra("PAM 1612 milho total não corresponde à safrinha isolada")
@@ -209,7 +219,7 @@ def confrontar_conab_pam(*, pacote_conab: dict, agregado_pam: dict,
         raise ErroConciliacaoSafra("RAW PAM e snapshot de origem incompatíveis")
     if agregado_pam.get("edicao_id") != meta_pam.get("edicao_id"):
         raise ErroConciliacaoSafra("edição PAM agregada diverge do snapshot")
-    esperada_c81 = "2713" if cultura == "SOJA" else "2711"
+    esperada_c81 = C81_PAM_POR_CULTURA[cultura]
     if agregado_pam.get("codigo_categoria_c81") != esperada_c81:
         raise ErroConciliacaoSafra("identidade C81 PAM incompatível com cultura")
     if not isinstance(conversao_temporal, dict) or set(conversao_temporal) != {
