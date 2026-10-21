@@ -32,7 +32,11 @@ MODULOS=frozenset({
     "grade_meteorologica_store","chirps_v3_conservacao",
     "meteorologia_probabilistica","hidrograma_bacia","calibracao_cn_bacias",
     "ensemble_hidrologico_bacia",
-    "chuva_areal_ensemble",
+    "chuva_areal_ensemble","verificacao_vazao_asof",
+    "verificacao_chuva_ensemble_asof",
+    "pacotes_chuva_asof",
+    "adaptador_inmet_chuva",
+    "mjo_rmm", "contexto_mjo_asof",
 })
 
 

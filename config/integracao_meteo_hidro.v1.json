@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.0",
+  "project": "NIVON",
+  "status": "CONSOLIDACAO_CODIGO_TESTADO_SINTETICO_NAO_HOMOLOGADO",
+  "base_integration_pr": 13,
+  "stack_prs": [
+    19,
+    46,
+    55
+  ],
+  "upstream_refs": [
+    {
+      "pr": 9,
+      "path": "src/nivon/inmet_horario_qc.py",
+      "git_blob_sha1": "64badd163aecd919720ea772e9caf7a278b970f3"
+    },
+    {
+      "pr": 9,
+      "path": "tests/test_inmet_horario_qc.py",
+      "git_blob_sha1": "cd6e0fdc9459bd8a990debc0e66a7a77ba9f519a"
+    },
+    {
+      "pr": 11,
+      "path": "src/nivon/mjo_rmm.py",
+      "git_blob_sha1": "3286dc525eff1092c32cd9ee781f9ff567f7ea14"
+    },
+    {
+      "pr": 11,
+      "path": "tests/test_mjo_rmm.py",
+      "git_blob_sha1": "3ee7f60edee0432393ec7f170e9edd55bfaa627e"
+    },
+    {
+      "pr": 11,
+      "path": "docs/METEOROLOGIA_CAMADAS_MJO_20261020.md",
+      "git_blob_sha1": "d0239e11f127053fe61ddcf7679e7389c9c89706"
+    },
+    {
+      "pr": 11,
+      "path": "docs/CATALOGO_GITHUB_METEOROLOGIA_20261020.md",
+      "git_blob_sha1": "e1bb821bc7fd18050fe57ad41b8b4677951694fa"
+    }
+  ],
+  "modules_required": [
+    "inmet_horario_qc",
+    "mjo_rmm",
+    "verificacao_vazao_asof",
+    "verificacao_chuva_ensemble_asof",
+    "pacotes_chuva_asof",
+    "adaptador_inmet_chuva",
+    "contexto_mjo_asof"
+  ],
+  "entrypoints_required": {
+    "CLIMA_HIDRO": [
+      "nivon.verificacao_vazao_asof:avaliar_hidrograma_asof",
+      "nivon.verificacao_chuva_ensemble_asof:verificar_chuva_ensemble_asof",
+      "nivon.pacotes_chuva_asof:montar_e_verificar_pares_chuva",
+      "nivon.adaptador_inmet_chuva:converter_dia_inmet_para_snapshot"
+    ],
+    "METEOROLOGIA": [
+      "nivon.verificacao_chuva_ensemble_asof:verificar_chuva_ensemble_asof",
+      "nivon.pacotes_chuva_asof:montar_e_verificar_pares_chuva",
+      "nivon.adaptador_inmet_chuva:converter_dia_inmet_para_snapshot",
+      "nivon.mjo_rmm:normalizar_rmm_bom",
+      "nivon.mjo_rmm:ultimo_rmm_ate",
+      "nivon.contexto_mjo_asof:indexar_contexto_mjo_asof",
+      "nivon.contexto_mjo_asof:contextualizar_nwp_com_mjo_asof"
+    ]
+  },
+  "data_sources_held_off": [
+    "ANA_HIDRO",
+    "INMET_ESTACOES",
+    "NOAA_GFS",
+    "ECMWF_MODELOS",
+    "CPTEC_MERGE"
+  ],
+  "prohibited_forecast_dataset_ids": [
+    "CPTEC_MERGE"
+  ],
+  "all_production_gates_must_remain_off": true,
+  "data_independence_proven": false,
+  "forecast_skill_homologated": false,
+  "external_vintages_audited": false,
+  "source_rights_reviewed": false,
+  "deployment_permitted": false,
+  "merge_approved": false
+}
