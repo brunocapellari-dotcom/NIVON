@@ -139,6 +139,54 @@ class TestANPSemanalStore(unittest.TestCase):
                        aprovacoes_assinadas=assinatura)
         self.assertEqual(self.consulta()["status"],"SEM_EDICAO_REAL_ASOF")
 
+    def test_registro_falso_de_assinaturas_sem_chaves_confiaveis_bloqueia(self):
+        entrada=resumo()
+        falso=assinar_autorizacao(entrada,"2026-10-19T12:00:00+00:00")
+        falso["HOMOLOGACAO_LAYOUT"]["assinatura_hmac_sha256"]="f"*64
+        with self.assertRaisesRegex(ErroAtestacaoANP,"assinatura"):
+            self.grava(classe="REAL_AUTORIZADO",direitos_confirmados=True,
+                       aprovacoes_assinadas=falso)
+        self.assertEqual(self.consulta()["status"],"SEM_EDICAO_REAL_ASOF")
+
+    def test_assinatura_tem_escopo_apenas_analise_nao_comercial(self):
+        entrada=resumo()
+        for campo, valor in (("operacao","PUBLICACAO_EXTERNA"),
+                              ("publicavel",True), ("indice_sha256","f"*64),
+                              ("prova_publicacao_sha256","f"*64)):
+            docs=assinar_autorizacao(entrada,"2026-10-19T12:00:00+00:00")
+            docs["DIREITOS_USO"][campo]=valor
+            with self.subTest(campo=campo), self.assertRaisesRegex(
+                    ErroAtestacaoANP,"vinculada"):
+                self.grava(classe="REAL_AUTORIZADO",
+                           direitos_confirmados=True,
+                           aprovacoes_assinadas=docs)
+        self.assertEqual(self.db.execute(
+            "SELECT COUNT(*) FROM anp_semanal_edicoes").fetchone()[0],0)
+
+    def test_mesmo_id_aprovacao_nao_e_reutilizavel_em_edicao_diferente(self):
+        primeira=resumo()
+        segunda=resumo(sha="d"*64,preco=5.91)
+        self.grava(r=primeira,classe="REAL_AUTORIZADO",
+                   direitos_confirmados=True)
+        docs=assinar_autorizacao(segunda,"2026-10-19T12:00:00+00:00")
+        for dominio in docs:
+            docs[dominio]["aprovacao_id"] = f"test-{dominio}-"+primeira["sha256"][:16]
+            unsigned={k:v for k,v in docs[dominio].items()
+                      if k!="assinatura_hmac_sha256"}
+            serializado=json.dumps(unsigned,sort_keys=True,ensure_ascii=True,
+                                   separators=(",",":")).encode()
+            docs[dominio]["assinatura_hmac_sha256"]=hmac.new(
+                KEYS[dominio]["chave"],DOMAIN_PREFIX+dominio.encode()
+                +b"\\x00"+serializado,sha256
+            ).hexdigest()
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.grava(r=segunda,classe="REAL_AUTORIZADO",
+                       direitos_confirmados=True,aprovacoes_assinadas=docs)
+        self.assertEqual(self.db.execute(
+            "SELECT COUNT(*) FROM anp_semanal_edicoes").fetchone()[0],1)
+        self.assertEqual(self.db.execute(
+            "SELECT COUNT(*) FROM anp_semanal_atestacoes").fetchone()[0],2)
+
     def test_mutacao_de_preco_sha_ou_direitos_falha(self):
         for mudança in ("preco","sha","direitos"):
             entrada=resumo()
