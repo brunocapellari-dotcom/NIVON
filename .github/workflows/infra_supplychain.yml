@@ -107,6 +107,14 @@ jobs:
             --output "$RUNNER_TEMP/nivon-trivy.json" nivon-worker-supply:ci
           trivy image --quiet --format cyclonedx \
             --output "$RUNNER_TEMP/nivon-cyclonedx.json" nivon-worker-supply:ci
+      - name: Triar pacotes afetados sem expor CVEs ou suprimir achados
+        shell: bash
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python -m nivon.infra_cve_triage \
+            --trivy-json "$RUNNER_TEMP/nivon-trivy.json"
       - name: Aplicar bloqueio HIGH/CRITICAL sem imprimir detalhes sensíveis
         shell: bash
         env:
