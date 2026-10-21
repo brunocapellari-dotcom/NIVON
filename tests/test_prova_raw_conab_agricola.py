@@ -48,6 +48,8 @@ class TestProvaRawConabAgricola(unittest.TestCase):
         self.assertEqual(data["snapshot_meta"]["edicao_id"], "DESCONHECIDA")
         self.assertIsNone(data["snapshot_meta"]["publicado_em"])
         self.assertIsNone(data["snapshot_meta"]["disponivel_em"])
+        self.assertFalse(data["estrutura_xls_validada"])
+        self.assertFalse(data["abas_xls_lidas"])
         self.assertFalse(data["vintage_asof_comprovada"])
         self.assertFalse(data["habilita_backtest"])
         self.assertFalse(data["habilita_publicacao"])
@@ -83,6 +85,22 @@ class TestProvaRawConabAgricola(unittest.TestCase):
             inputs["pagina_html_raw"] = html
             with self.assertRaises(ErroProvaRawConab):
                 verificar_raw_conab(**inputs)
+
+    def test_portal_view_e_link_de_download_sao_distintos(self):
+        view = "https://www.gov.br/conab/graos/soja/sojaseriehist.xls/view"
+        download = "https://www.gov.br/conab/graos/soja/sojaseriehist.xls/@@download/file"
+        inputs = kwargs(url=download)
+        inputs["pagina_html_raw"] = html_document(origem=view)
+        result = verificar_raw_conab(**inputs)
+        self.assertEqual(result["url_link_catalogo"], view)
+        self.assertEqual(result["url_documento"], download)
+        self.assertFalse(result["estrutura_xls_validada"])
+        inputs["url_documento"] = view
+        with self.assertRaisesRegex(ErroProvaRawConab, "URL XLS"):
+            verificar_raw_conab(**inputs)
+        inputs["url_documento"] = view + "/@@download/file"
+        with self.assertRaisesRegex(ErroProvaRawConab, "URL XLS"):
+            verificar_raw_conab(**inputs)
 
     def test_url_do_xls_deve_corresponder_a_pagina_capturada(self):
         inputs = kwargs()
