@@ -11,6 +11,8 @@ import re
 import unicodedata
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
+from collections import Counter
+from .frete_linhas_editoriais import formatar_linha_frete, linha_identificada
 from urllib.parse import urlsplit, parse_qsl, urlencode, urlunsplit
 
 TITULO = "RESUMO ESTRATÉGICO DO AGRONEGÓCIO"
@@ -200,48 +202,20 @@ def _verificar_cotacao(item: dict, agora: datetime, texto: str) -> str:
     return grupo
 
 
-def _verificar_frete(item: dict, agora: datetime, texto: str) -> tuple:
+def _verificar_frete(item: dict, agora: datetime, texto: str) -> tuple[tuple, str]:
     _origem(item, agora)
     rota = tuple(_normal(item.get(k)) for k in
                  ("origem", "uf_origem", "destino", "uf_destino"))
-    if rota not in CORREDORES:
-        raise ValueError("corredor fora do escopo")
-    if item.get("tipo") != "FRETE_ANUNCIADO":
-        raise ValueError("frete não é anúncio individual")
-    if not all(isinstance(item.get(k), str) and item[k].strip() for k in
-               ("pickup_entity_id", "transportadora", "produto", "equipamento",
-                "regime_pf_pj", "condicao_pedagio")):
-        raise ValueError("ponto, transportadora ou condição comercial ausente")
-    valor_frete = _numero(item.get("valor_rs_t"), positivo=True)
+    linha = formatar_linha_frete({
+        **item,
+        "referencia": item.get("referencia_em"),
+    })
     ref_frete = _instante(item.get("referencia_em"))
     if ref_frete > agora:
-        raise ValueError("frete futuro")
-    volume = item.get("volume_t_dia")
-    if volume is not None:
-        _numero(volume, positivo=True)
-        if item.get("classificacao_volume") not in {"OBSERVADO", "REFERENCIA", "ESTIMADO"}:
-            raise ValueError("volume sem classificação")
-        if (item.get("classificacao_volume") != "OBSERVADO"
-                and item.get("volume_realizado") is True):
-            raise ValueError("volume de referência apresentado como realizado")
-    linhas = [linha for linha in texto.splitlines()
-              if _normal(item["origem"]) in _normal(linha)
-              and _normal(item["destino"]) in _normal(linha)]
-    if not any(_numero_presente(linha, valor_frete)
-               and (ref_frete.date().isoformat() in linha
-                    or ref_frete.strftime("%d/%m/%Y") in linha)
-               for linha in linhas):
-        raise ValueError("corredor/valor/data de frete não reconciliam com texto")
-    if volume is not None and not any(
-            _numero_presente(linha, _numero(volume, positivo=True))
-            for linha in linhas):
-        raise ValueError("volume auditado ausente do corredor")
-    if volume is not None and item["classificacao_volume"] != "OBSERVADO":
-        if not any((f"VOLUME {item['classificacao_volume']}" in _normal(linha)
-                    or f"VOLUME DE {item['classificacao_volume']}" in _normal(linha))
-                   for linha in linhas):
-            raise ValueError("volume de referência/estimado sem rótulo editorial")
-    return rota
+        raise ValueError("frete com referência futura")
+    if linha not in texto.splitlines():
+        raise ValueError("registro individual de frete diverge do texto (ponto/transportadora/produto/condições/valor/data)")
+    return rota, linha
 
 
 def avaliar_previa_editorial(*, edicao: dict, gerado_em: str,
@@ -326,15 +300,32 @@ def avaliar_previa_editorial(*, edicao: dict, gerado_em: str,
         bloqueios.append("FRETES_INVALIDOS")
         fretes = []
     rotas = set()
+    linhas_esperadas = []
     for i, item in enumerate(fretes):
         try:
             if not isinstance(item, dict):
                 raise ValueError("frete não estruturado")
-            rotas.add(_verificar_frete(item, agora, texto))
+            rota, linha = _verificar_frete(item, agora, texto)
+            rotas.add(rota)
+            linhas_esperadas.append(linha)
         except (ValueError, KeyError, TypeError) as exc:
             bloqueios.append(f"FRETE_{i}:{exc}")
     if not fretes:
         bloqueios.append("SEM_FRETES_AUDITADOS")
+    if fretes and "FRETES ANUNCIADOS — CORREDORES" not in texto:
+        bloqueios.append("BLOCO_FRETES_AUSENTE")
+    if Counter(linhas_esperadas) != Counter(set(linhas_esperadas)):
+        bloqueios.append("FRETE_REGISTRO_DUPLICADO")
+    # O marcador de fretes delimita a parte do briefing passível de auditoria.
+    # Não aceitar divulgação extra sem registro auditado, mesmo no mesmo corredor.
+    if "FRETES ANUNCIADOS — CORREDORES" in texto:
+        bloco = texto.split("FRETES ANUNCIADOS — CORREDORES", 1)[1]
+        bloco = bloco.split("Divulgações de transportadoras; não são viagens realizadas.", 1)[0]
+        linhas_bloco = [l.strip() for l in bloco.splitlines() if l.strip().startswith("• ")]
+        if Counter(linhas_bloco) != Counter(linhas_esperadas):
+            bloqueios.append("FRETE_LINHA_NAO_AUDITADA_OU_AUSENTE")
+        if any(not linha_identificada(l) for l in linhas_bloco):
+            bloqueios.append("FRETE_LINHA_COMERCIAL_INCOMPLETA")
     for rota in sorted(ROTAS_PRIORITARIAS - rotas):
         lacunas.append("CORREDOR_SEM_DADO_VALIDO:" + "/".join(rota))
     return {"apto_revisao": not bloqueios,
