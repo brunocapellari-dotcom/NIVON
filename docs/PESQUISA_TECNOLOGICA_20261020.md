@@ -125,3 +125,22 @@ A sobreposição dos dois auditores estáticos registrada nas seções históric
 - **Limites do gate:** continua sendo somente revisão de declarações. Nunca valida wheel baixado, fechamento transitivo, escaneamento real de vulnerabilidades, licença de transitivas, assinaturas, ambiente instalado ou aptidão de produção.
 
 Próxima prioridade P0 continua a obtenção de evidências independentes autenticadas de uma resolução real de extras opcionais, com hashes conferidos e relatório CVE rastreável. Piloto dlt contra o coletor nativo permanece condicionado à fonte oficial autorizada. Sem alteração em `main`, deploy, instalação ou custo.
+
+
+## Continuidade de 21/10/2026 — integridade de wheelhouse offline (P0)
+
+**Entregue:** \`src/nivon/auditoria_wheelhouse.py\` e \`tests/test_auditoria_wheelhouse.py\`. A verificação aceita um diretório local **pré-existente** de arquivos \`.whl\` e um lock textual de requisitos \`nome==versão --hash=sha256:...\`, usando o mesmo parser de lock da auditoria de relatórios JSON. Não baixa, instala, importa nem executa dependências de terceiros. Exige exatamente um wheel por distribuição esperada e rejeita arquivos extras, ausência de pacote, symlinks, diretórios e sdists.
+
+**Evidência que este gate efetivamente demonstra:** o SHA-256 calculado **sobre os bytes presentes no diretório local** pertence ao conjunto de hashes declarado no lock. Também confere a identidade da distribuição/versão no filename, no \`.dist-info\` e nos cabeçalhos \`METADATA\`/\`WHEEL\`, sem extrair arquivos. Rejeita caminhos ZIP inseguros, duplicação de membros, symlinks dentro do ZIP, arquivos criptografados, metadados excessivos, arquivos grandes e expansão desproporcional. Testes usam wheels gerados sinteticamente na memória. A mesma descrição não deve ser usada como prova de que o lock foi produzido por resolvedor confiável.
+
+**Uso futuro com artefatos locais autorizados:**
+
+\`\`\`bash
+PYTHONPATH=src python -m nivon.auditoria_wheelhouse \
+  --lock /local/requirements-com-hashes.txt \
+  --wheelhouse /local/wheelhouse
+\`\`\`
+
+**Limites obrigatórios:** não há prova de origem/autenticidade dos hashes publicados ou do executor; a ferramenta não verifica assinatura de wheel, \`RECORD\` interno, compatibilidade ABI/plataforma, marker de dependência, fechamento transitivo, licença, advisories/CVEs ou ambiente instalado. Ela suporta um subconjunto numérico restrito de versões para falhar fechada; wheels fora dele não são homologados automaticamente. Mesmo um wheelhouse 100% consistente produz \`approved_for_install=false\` e \`approved_for_production=false\`.
+
+**Próximo gate executável:** correlacionar bytes/hashes verificados com o relatório \`pip-audit\`, adicionar comprovação verificável da origem dos artefatos e resolução completa das dependências, e depois executar auditoria CVE real + teste de importação em ambiente sandbox homologado. Não publicar resultados de fixtures como scan CVE real. Sem instalações, rede operacional, merge, deploy ou custos nesta rodada.
