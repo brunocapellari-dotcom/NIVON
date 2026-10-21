@@ -178,7 +178,20 @@ class MaritimeStore:
                     raise RuntimeError("restauracao falhou")
                 ais_rows = restored.execute("SELECT COUNT(*) FROM maritime_ais").fetchone()[0]
                 lineup_rows = restored.execute("SELECT COUNT(*) FROM maritime_lineup").fetchone()[0]
-                return {"integrity": "ok", "ais_rows": ais_rows, "lineup_rows": lineup_rows}
+                # Optional versioned-lineup schema, created when the new ledger
+                # is used. Legacy databases remain backward compatible.
+                has_vintages = restored.execute("""
+                    SELECT 1 FROM sqlite_master
+                    WHERE type='table' AND name='maritime_lineup_vintages'
+                """).fetchone() is not None
+                vintage_rows = (
+                    restored.execute("SELECT COUNT(*) FROM maritime_lineup_vintages").fetchone()[0]
+                    if has_vintages else 0
+                )
+                return {
+                    "integrity": "ok", "ais_rows": ais_rows,
+                    "lineup_rows": lineup_rows, "lineup_vintage_rows": vintage_rows,
+                }
             finally:
                 restored.close()
         finally:
