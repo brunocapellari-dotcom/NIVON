@@ -122,6 +122,30 @@ class TestIVOPAMBridge(unittest.TestCase):
                 self.assertIsNone(r["observacao"])
                 self.assertEqual(r["motivo"],estado)
 
+    def test_area_plantada_109_hectares_e_aceita_com_identidade_correta(self):
+        # Mesma cultura e município, mas grandeza DISTINTA da produção.
+        original=json.loads(payload("250").decode("utf-8"))
+        original[1]["D2C"]="109"
+        original[1]["MN"]="Hectares"
+        bruto=json.dumps(original,ensure_ascii=False).encode("utf-8")
+        self.registrar(bruto)
+        p=planejar_pam_1612(municipio_ibge="5107925",ano=2025,
+            codigo_produto_c81="2713",codigo_variavel="109")
+        r=self.preparar(bruto,plano=p,
+                        variavel_autorizada="109",unidade_autorizada="Hectares")
+        self.assertEqual(r["semantica_sidra"]["indicador"],"AREA_PLANTADA")
+        self.assertEqual(r["semantica_sidra"]["familia"],"AREA")
+        self.assertEqual(r["observacao"].unidade,"Hectares")
+        self.assertFalse(r["treino_real_autorizado"])
+
+    def test_quantidade_214_toneladas_nao_e_hectare(self):
+        self.registrar()
+        r=self.preparar()
+        self.assertEqual(r["semantica_sidra"]["indicador"],"QUANTIDADE_PRODUZIDA")
+        self.assertEqual(r["semantica_sidra"]["familia"],"MASSA")
+        self.assertEqual(r["semantica_sidra"]["produto"],"SOJA_EM_GRAO")
+        self.assertEqual(r["observacao"].unidade,"Toneladas")
+
     def test_unidade_incorreta_bloqueada(self):
         self.registrar()
         with self.assertRaises(ErroPontePAM):
