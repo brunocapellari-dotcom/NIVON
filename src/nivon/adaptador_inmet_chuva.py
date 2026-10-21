@@ -42,6 +42,8 @@ def _json_relatorio(raw):
         data = json.loads(raw.decode("utf-8-sig"), object_pairs_hook=unique,
                           parse_constant=lambda x: (_ for _ in ()).throw(
                               ErroAdaptadorINMET("NaN/Infinity em QC")))
+    except ErroAdaptadorINMET:
+        raise
     except (UnicodeError, ValueError) as exc:
         raise ErroAdaptadorINMET("relatório QC JSON inválido") from exc
     if not isinstance(data, dict) or set(data) != _QC_FIELDS:
