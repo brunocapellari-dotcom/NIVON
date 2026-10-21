@@ -172,7 +172,7 @@ class PdfProgrammeRevisionTests(unittest.TestCase):
                 reference="2026-10-21", rows=[row()]))
         with self.assertRaisesRegex(ValueError, "not proven stable"):
             compare_pdf_programme_editions(edition(), updated(
-                reference="2026-11-01", rows=[row()]))
+                reference="2026-10-19", rows=[row()]))
 
     def test_collection_order_is_strict(self):
         with self.assertRaisesRegex(ValueError, "strictly later"):
