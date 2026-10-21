@@ -13,10 +13,49 @@ import tempfile
 import zipfile
 from pathlib import Path
 from urllib.parse import urlsplit
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, build_opener, HTTPRedirectHandler
 
 class ErroBDMEP(ValueError):
     pass
+
+
+class ErroBDMEPDiagnostico(ErroBDMEP):
+    """Código estático seguro: NÃO reter URL, exception upstream ou corpo HTTP."""
+    CODIGOS = frozenset({
+        "ACESSO_BDMEP_RECUSADO",
+        "RECURSO_BDMEP_NAO_ENCONTRADO",
+        "LIMITE_BDMEP_ATINGIDO",
+        "SERVICO_BDMEP_INDISPONIVEL",
+        "REDIRECIONAMENTO_BDMEP_BLOQUEADO",
+        "RESPOSTA_HTTP_BDMEP_INESPERADA",
+        "TRANSPORTE_BDMEP_NAO_VALIDADO",
+        "ZIP_BDMEP_REJEITADO",
+        "LIMITE_DOWNLOAD_BDMEP_ATINGIDO",
+        "FALHA_IO_BDMEP_NAO_VALIDADA",
+    })
+
+    def __init__(self, codigo: str):
+        if codigo not in self.CODIGOS:
+            raise ValueError("código de diagnóstico não autorizado")
+        super().__init__("BDMEP: diagnóstico classificado sem detalhes privados")
+        self.codigo = codigo
+
+
+def _classificar_http_bdmep(codigo: int) -> str:
+    # HTTP 403/404/410 pode significar expiração, autorização ou remoção.
+    # O status HTTP isolado NÃO permite afirmar que o URL expirou.
+    if codigo in (301, 302, 303, 307, 308):
+        return "REDIRECIONAMENTO_BDMEP_BLOQUEADO"
+    if codigo in (401, 403):
+        return "ACESSO_BDMEP_RECUSADO"
+    if codigo in (404, 410):
+        return "RECURSO_BDMEP_NAO_ENCONTRADO"
+    if codigo == 429:
+        return "LIMITE_BDMEP_ATINGIDO"
+    if 500 <= codigo < 600:
+        return "SERVICO_BDMEP_INDISPONIVEL"
+    return "RESPOSTA_HTTP_BDMEP_INESPERADA"
 
 _MAX_BYTES=80_000_000
 _HOST="bdmep.inmet.gov.br"
@@ -78,7 +117,7 @@ def receber_bdmep(*,pasta_privada,habilitar_rede=False,url=None,transporte=None,
         req=Request(privado,headers={"Accept":"application/zip"},method="GET")
         with opener.open(req,timeout=20) as resposta:
             if getattr(resposta,"status",None)!=200:
-                raise ErroBDMEP("BDMEP não forneceu arquivo 200")
+                raise ErroBDMEPDiagnostico("RESPOSTA_HTTP_BDMEP_INESPERADA")
             with os.fdopen(fd,"wb") as arq:
                 fd=-1
                 while True:
@@ -86,22 +125,29 @@ def receber_bdmep(*,pasta_privada,habilitar_rede=False,url=None,transporte=None,
                     if not chunk:break
                     total+=len(chunk)
                     if total>max_bytes:
-                        raise ErroBDMEP("tamanho do download excedeu limite")
+                        raise ErroBDMEPDiagnostico("LIMITE_DOWNLOAD_BDMEP_ATINGIDO")
                     arq.write(chunk)
                     sha.update(chunk)
                 arq.flush()
                 os.fsync(arq.fileno())
         if total==0:
             raise ErroBDMEP("BDMEP retornou arquivo vazio")
-        schema=conferir_zip_bdmep(caminho)
+        try:
+            schema=conferir_zip_bdmep(caminho)
+        except ErroBDMEP:
+            raise ErroBDMEPDiagnostico("ZIP_BDMEP_REJEITADO") from None
         destino=pasta/("bdmep_"+sha.hexdigest()+".zip")
         if destino.exists() or destino.is_symlink():
             raise ErroBDMEP("arquivo existente: sem sobrescrita automática")
         os.link(caminho,destino)
         return {"caminho_privado":str(destino),"sha256":sha.hexdigest(),
                 "bytes":total,"inventario":schema,"conteudo_publicado":False}
-    except (OSError,RuntimeError,zipfile.BadZipFile) as exc:
-        raise ErroBDMEP("falha ao receber ou validar arquivo BDMEP") from None
+    except HTTPError as exc:
+        raise ErroBDMEPDiagnostico(_classificar_http_bdmep(exc.code)) from None
+    except URLError:
+        raise ErroBDMEPDiagnostico("TRANSPORTE_BDMEP_NAO_VALIDADO") from None
+    except (OSError, RuntimeError, zipfile.BadZipFile):
+        raise ErroBDMEPDiagnostico("FALHA_IO_BDMEP_NAO_VALIDADA") from None
     finally:
         if fd>=0:os.close(fd)
         caminho.unlink(missing_ok=True)
