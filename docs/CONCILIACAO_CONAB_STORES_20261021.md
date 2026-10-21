@@ -91,3 +91,23 @@ status e até 30 exemplos, sem valores de percentuais ou conteúdo bruto.
 
 **Escopo executado nesta rodada: código offline e testes com fixtures
 sintéticas. Coletas reais executadas: zero. Migrações: zero.**
+
+## Auditoria de integridade reforçada
+
+Antes de comparar as capturas, o reconciliador também:
+- verifica a existência de capturas para cada edição legada ou snapshot
+  CONAB canônico, sem fabricar registros faltantes;
+- identifica observações órfãs ou vinculadas ao dataset incorreto;
+- confronta a contagem de observações de cada edição legada com
+  `numero_linhas`;
+- **recalcula o SHA-256 do JSON normalizado legado** a partir de todas
+  as observações persistidas e recusa divergências, inclusive adulterações
+  de valores e ausência de linhas;
+- preserva a distinção fundamental: esse SHA do JSON **não**
+  verifica o arquivo bruto, e a coluna canônica `sha256` segue sem
+  confirmação externa dos bytes no presente relatório.
+
+A verificação processa integralmente as edições até o limite configurado;
+limite excedido resulta em erro, não amostragem silenciosa. O número de
+edições com hash JSON recalculado é apresentado separadamente de
+capturas e observações.
