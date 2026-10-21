@@ -55,6 +55,7 @@ def fretes(valores=None):
                 "unidade": "BRL/T", "lote_id": f"FAZENDA-{i}",
                 "pickup_entity_id": f"PONTO-{i}",
                 "transportadora_id": f"TRANSPORTADORA-{i}",
+                "descarga_entity_id": "terminal:001", "regime": "PJ",
                 "preco_rs_t": str(preco+i),
             })
     return registros
@@ -64,6 +65,7 @@ def analisar_frete(linhas, **extras):
     return tendencia_frete_anunciado(
         linhas, origem_ibge=ORIGEM, destino_ibge=DESTINO,
         produto="MILHO", veiculo="RODOTREM", pedagio="ADICIONAL",
+        descarga_entity_id="terminal:001", regime="PJ",
         as_of="2026-10-20", janela=6, tolerancia_absoluta=2,
         **extras,
     )
@@ -174,6 +176,7 @@ class TestTendenciasPrioritarias(unittest.TestCase):
                     "lote_id": "LOTE-" + fazenda,
                     "pickup_entity_id": fazenda,
                     "transportadora_id": "TRANSP-" + fazenda,
+                    "descarga_entity_id": "terminal:001", "regime": "PJ",
                     "preco_rs_t": str(preco),
                 })
         r = analisar_frete(lines)
@@ -207,6 +210,13 @@ class TestTendenciasPrioritarias(unittest.TestCase):
         # sobre mediana dessas diferenças produziria limiar indefensável.
         with self.assertRaisesRegex(ErroTendencia, "limiar relativo"):
             analisar_frete(fretes(), tolerancia_relativa=0.05)
+
+    def test_r01_rejeita_descarga_ou_regime_divergente(self):
+        for campo, valor in (("descarga_entity_id", "terminal:2"), ("regime", "PF")):
+            linhas = fretes()
+            linhas[0][campo] = valor
+            with self.subTest(campo=campo), self.assertRaisesRegex(ErroTendencia, "mistura"):
+                analisar_frete(linhas)
 
     def test_r01_exige_ponto_embarque_e_transportadora(self):
         for campo in ("pickup_entity_id", "transportadora_id"):
