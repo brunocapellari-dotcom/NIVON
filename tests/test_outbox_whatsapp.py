@@ -282,13 +282,34 @@ class TestOutboxWhatsApp(unittest.TestCase):
             b"OPT_OUT_DOCUMENTADO_20261020").hexdigest())
         self.assertNotIn(b"OPT_OUT_DOCUMENTADO_20261020", self.path.read_bytes())
         chamadas = []
-        with self.assertRaisesRegex(PermissionError, "opt-out"):
+        with self.assertRaisesRegex(PermissionError, "revogada"):
             self.despachar(lambda *_: chamadas.append(True))
         self.assertEqual(chamadas, [])
         self.assertEqual(consultar_envio(
             self.con, self.modelo["idempotency_key"])["tentativas"], 0)
-        with self.assertRaises(PermissionError):
-            self.aprovar()  # opt-out protege inclusive a reaprovação idêntica
+        with self.assertRaises(ErroOutbox):
+            self.aprovar()  # revogação desta edição não é substituída
+
+    def test_revogacao_editorial_nao_equivale_a_optout_global(self):
+        self.registrar()
+        self.aprovar()
+        revogar_autorizacao(
+            self.con, chave=self.modelo["idempotency_key"],
+            evidencia_revogacao="REVISAO_CORRIGIDA_20261020")
+        self.assertEqual(
+            self.con.execute("SELECT count(*) FROM nivon_optouts_destinatario").fetchone()[0],
+            0,
+        )
+        segundo = preparar_template(
+            destino="5566999999999", template="nivon_briefing_diario",
+            resumo="Outra edição sintética sem opt-out registrado.",
+            link="https://nivon.example/briefings/2026-10-21",
+            gerado_em="2026-10-21T07:00:00-03:00",
+            opt_in_registrado=True, template_aprovado=True)
+        r = registrar_edicao(
+            self.con, segundo, edicao="2026-10-21", chave_destinatario=SEGREDO)
+        self.assertEqual(r["estado"], "PREPARADO")
+        # A nova edição ainda precisa de autorização independente própria.
 
     def test_revogacao_preservada_apos_reabrir_sqlite(self):
         self.registrar()
