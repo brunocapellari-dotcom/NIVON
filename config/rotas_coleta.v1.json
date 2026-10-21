@@ -662,30 +662,32 @@
       "dataset_id": "BCB_SGS_FOCUS",
       "collector_class": "OFFICIAL_API",
       "locator": {
-        "kind": "OFFICIAL_INDEX",
-        "url": "https://dadosabertos.bcb.gov.br/",
-        "source_proof": null
+        "kind": "DIRECT_OFFICIAL_API",
+        "url": "https://olinda.bcb.gov.br/olinda/servico/Expectativas/versao/v1/odata/ExpectativasMercadoAnuais",
+        "source_proof": "https://dadosabertos.bcb.gov.br/dataset/expectativas-mercado"
       },
-      "implementation_scope": "NO_PARSER (código citado não implica coletor ativo)",
-      "authentication": "VERIFY_PER_SOURCE",
+      "implementation_scope": "ONE_SHOT_HTTPS_FOCUS_ANUAIS_CLIENT_AND_NORMALIZER; weekly publication as-of not yet homologated",
+      "authentication": "NONE_DOCUMENTED_PUBLIC_ODATA",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "REAL_RESPONSE_PUBLICATION_ASOF_AND_PERSISTENCE",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
-        "DISCOVER_OFFICIAL_DATA_RESOURCE",
         "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
         "HISTORICAL_BACKFILL",
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
-        "LICENSED_PUBLICATION_GATE"
+        "LICENSED_PUBLICATION_GATE",
+        "REAL_PRODUCTION_RESPONSE_SMOKE",
+        "PUBLICATION_VINTAGE_POINT_IN_TIME",
+        "DURABLE_STORAGE_AND_BACKUP"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "SGS e Focus exigem serviços e séries identificados separadamente.",
-      "preliminary_evidence": "API_ENDPOINT_PER_SERIES_PENDING"
+      "source_note": "Focus anuais: expectativas de mercado observadas na pesquisa, PROJEÇÕES futuras, não valores de Selic/inflação/câmbio realizados. Data pesquisa != data publicação. Proibido usar em backtest point-in-time sem disponibilidade pública confirmada.",
+      "preliminary_evidence": "OFFICIAL_BCB_EXPECTATIVAS_DATASET_NO_LIVE_CLIENT_VALIDATED"
     },
     {
       "dataset_id": "CEPEA_BOI",
