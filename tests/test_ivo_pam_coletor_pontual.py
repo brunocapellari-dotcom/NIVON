@@ -56,7 +56,7 @@ class TestIVOColetorPontualPAM(unittest.TestCase):
         self.assertFalse(r["publicacao_oficial_verificada"])
         self.assertFalse(r["treinamento_autorizado"])
         self.assertFalse(r["gravado_em_snapshot_ledger"])
-        self.assertFalse(r["fonte_de_transportes_reais_verificada"])
+        self.assertFalse(r["http_real_executado"])
 
     def test_catalogo_desativado_bloqueia_antes_de_rede(self):
         fonte={"datasets":[dict(CAT["datasets"][0],enabled=False)]}
@@ -159,6 +159,12 @@ class TestIVOColetorPontualPAM(unittest.TestCase):
             transporte=lambda u,l,t:(b"ExcelFixture","application/vnd.ms-excel"))
         self.assertEqual(r["estado_valor"],"LEGADO_SEM_PARSER_HOMOLOGADO")
         self.assertFalse(r["treinamento_autorizado"])
+
+    def test_http_real_nao_pode_ser_retrodatado(self):
+        # Rejeita antes de abrir qualquer conexão. Não há acesso à rede.
+        with self.assertRaises(ErroColetaPAM):
+            self.coletar(transporte=None,
+                coletado_em=datetime(2020,1,1,tzinfo=timezone.utc))
 
     def test_timeout_timezone_e_resposta_invalidos(self):
         with self.assertRaises(ErroColetaPAM):
