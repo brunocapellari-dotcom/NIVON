@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import re
 import unicodedata
+import ipaddress
+from urllib.parse import urlsplit
 from dataclasses import dataclass
 from datetime import date,datetime,timezone
 from hashlib import sha256
@@ -66,8 +68,26 @@ class ClaimCurado:
             value=getattr(self,campo)
             if not isinstance(value,str) or not value.strip() or len(value)>8000:
                 raise ErroConhecimento(f"{campo} obrigatório")
-        if not self.fonte_url.startswith("https://"):
-            raise ErroConhecimento("link de fonte deve ser HTTPS")
+        try:
+            url = urlsplit(self.fonte_url)
+            hostname = url.hostname
+            porta = url.port
+        except ValueError as exc:
+            raise ErroConhecimento("link de fonte malformado") from exc
+        if (url.scheme != "https" or not hostname
+                or url.username is not None or url.password is not None
+                or porta not in (None, 443) or url.fragment
+                or any(ord(c) < 33 for c in self.fonte_url)
+                or hostname == "localhost" or hostname.endswith(
+                    (".localhost", ".local", ".internal", ".test"))
+                or "." not in hostname):
+            raise ErroConhecimento("fonte exige URL HTTPS publica sem credenciais")
+        try:
+            ipaddress.ip_address(hostname)
+        except ValueError:
+            pass
+        else:
+            raise ErroConhecimento("IP literal nao e URL de fonte publica")
         if not isinstance(self.documento_sha256,str) or not re.fullmatch(r"[a-f0-9]{64}",self.documento_sha256):
             raise ErroConhecimento("documento sem SHA-256")
         if self.tipo not in TIPOS:
