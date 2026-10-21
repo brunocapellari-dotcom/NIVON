@@ -177,7 +177,7 @@ class TestANPSemanalStore(unittest.TestCase):
                                    separators=(",",":")).encode()
             docs[dominio]["assinatura_hmac_sha256"]=hmac.new(
                 KEYS[dominio]["chave"],DOMAIN_PREFIX+dominio.encode()
-                +b"\\x00"+serializado,sha256
+                +bytes([0])+serializado,sha256
             ).hexdigest()
         with self.assertRaises(sqlite3.IntegrityError):
             self.grava(r=segunda,classe="REAL_AUTORIZADO",
