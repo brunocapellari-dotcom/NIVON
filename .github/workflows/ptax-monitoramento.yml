@@ -5,6 +5,9 @@ on:
     # 01:30 UTC de terca a sabado, ~22:30 horario de Brasilia do dia anterior.
     - cron: '30 1 * * 2-6'
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/ptax-monitoramento.yml'
 permissions:
   contents: read
 jobs:
