@@ -11,3 +11,7 @@
 - O workflow é experimental, não cria release, não faz upload de imagens, não consome credenciais cloud e não muda gate `infra_supplychain.yml`. Não classificar CI verde como deploy ou armazenamento real validado.
 
 **Próximo passo:** inspecionar evidências e eventual redução real de CVEs; se houver risco crítico Alpine, descartar candidato. Se a comparação for favorável, ainda exigir auditoria de pacotes de runtime completos e segurança independente antes de nova decisão.
+
+## Verificação de compatibilidade ampliada
+
+Como a imagem Alpine usa musl, a simples aprovação do worker stdlib é insuficiente. Um novo passo do workflow executa **toda a suíte `unittest discover -s tests -v`** diretamente dentro da imagem Alpine nativa de cada arquitetura, com o repositório montado somente leitura, sem rede, UID 65532, capacidades retiradas e `/tmp` efêmero com limite. Uma falha ou omissão de biblioteca é evidência de incompatibilidade a investigar, não motivo para relaxar testes. O resultado não comprova compatibilidade com os extras futuros `agrobr`, `statsforecast`, `pdfplumber` e `openpyxl`; a instalação e os wheels devem ser avaliados separadamente.

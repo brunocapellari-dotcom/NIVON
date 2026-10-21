@@ -83,6 +83,12 @@ class TestAlpineComparison(unittest.TestCase):
                   "--format cyclonedx", "NIVON_RUNTIME_ENABLED",
                   "--mode synthetic-once", "docker image inspect"):
             self.assertIn(s, wf)
+        self.assertIn("Executar suíte Python NIVON na Alpine", wf)
+        self.assertIn("--mount \"type=bind,source=$PWD,target=/workspace,readonly\"", wf)
+        self.assertIn("--entrypoint python nivon-worker-distro:alpine", wf)
+        self.assertIn("-m unittest discover -s tests -v", wf)
+        self.assertIn("--tmpfs /tmp:rw,nosuid,nodev,size=64m", wf)
+        self.assertIn("--network none --read-only", wf)
         for bad in ("docker push", "docker login", "secrets.", "upload-artifact@",
                     "pull_request_target:", "continue-on-error: true"):
             self.assertNotIn(bad, wf)

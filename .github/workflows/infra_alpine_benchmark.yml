@@ -139,6 +139,20 @@ jobs:
               --instante 2026-10-20T16:30:00-03:00
           done
           sudo test -s "$state/jobs.sqlite"
+      - name: Executar suíte Python NIVON na Alpine com workspace somente leitura
+        shell: bash
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -euo pipefail
+          docker run --rm --platform "$PLATFORM" --network none --read-only \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            --user 65532:65532 --pids-limit 64 --memory 512m --cpus 1.0 \
+            --tmpfs /tmp:rw,nosuid,nodev,size=64m \
+            --mount "type=bind,source=$PWD,target=/workspace,readonly" \
+            --workdir /workspace -e PYTHONPATH=/workspace/src \
+            --entrypoint python nivon-worker-distro:alpine \
+            -m unittest discover -s tests -v
       - name: Escanear ambas as imagens com MESMO banco Trivy e criar SBOM
         shell: bash
         run: |
