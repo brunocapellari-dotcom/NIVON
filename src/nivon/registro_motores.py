@@ -39,7 +39,7 @@ MODULOS=frozenset({
     "ensemble_hidrologico_bacia",
     "entrega_whatsapp",
     "dinamica_tendencias",
-    "fretes_dinamica_r01",
+    "fretes_dinamica_r01", "fretes_cobertura_horizontes",
     "eventos_editoriais",
     "fertilizantes",
     "grade_meteorologica_store",
