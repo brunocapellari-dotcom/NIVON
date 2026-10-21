@@ -1,6 +1,6 @@
 """Official programacao-only cockpit: date and event types cannot imply ship state."""
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from nivon.maritime.official_lineup_bridge import LineupBridgeResult
 from nivon.maritime.maritime_gateway import (
@@ -10,18 +10,21 @@ from nivon.maritime.shipping_reconciliation import LineupCall
 
 
 def result():
+    now = datetime.now(timezone.utc)
+    eta = (now + timedelta(hours=5)).isoformat()
+    captured = (now - timedelta(hours=1)).isoformat()
     call = LineupCall(
         call_id="SANTOS:APS_PROGRAMACAO:DUV123",
         port_id="SANTOS", vessel_name="CARGUEIRO TESTE",
-        eta="2026-10-21T12:30:00+00:00",
-        collected_at="2026-10-20T12:00:00+00:00",
+        eta=eta,
+        collected_at=captured,
         product="SOJA", planned_volume_t=15000.0,
         lineup_status="PROGRAMMED", source_id="APS_PROGRAMACAO",
     )
     return LineupBridgeResult(
         port_id="SANTOS", source_id="APS_PROGRAMACAO",
         source_url="https://www.portodesantos.com.br/oficial/",
-        document_sha256="a"*64, collected_at="2026-10-20T12:00:00Z",
+        document_sha256="a"*64, collected_at=captured,
         candidates=(call,), excluded=(), source_rows=1,
     )
 
