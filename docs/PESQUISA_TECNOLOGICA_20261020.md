@@ -200,3 +200,9 @@ Uma execução coerente retorna `local_wheel_hashes_match_declared_lock=true`, *
 **Testes:** `tests/test_auditoria_licencas_pacotes.py` contém 16 cenários sintéticos de metadados modernos e legados, arquivos ausentes, conteúdo não UTF-8, caminhos inseguros, declarações duplicadas e metadados conflitantes. A auditoria composta também verifica que a revisão jurídica continua pendente. Não foram homologados pacotes reais de MLForecast, River, DuckDB nem suas licenças.
 
 **Próxima prioridade:** capturar, a partir de executor e fontes de distribuição autenticamente verificados, o conjunto resolvido completo de pacotes e suas evidências SPDX/legais, advisories/CVEs, versões, hashes e compatibilidade; exigir revisão independente antes de instalações de bibliotecas externas. A PR permanece em draft e sem deploy/merge.
+
+### Reconciliação com IVO/PAM e preservação das validações (21/10/2026)
+
+A frente IVO/PAM evoluiu em paralelo aos novos gates de licenciamento. A auditoria desta branch não reescreve os validadores SIDRA: a reconciliação incorporou os arquivos da frente IVO por commits de dois pais, após comparação explícita de caminhos modificados. A exceção `ErroSemanticaPAM` da nova whitelist de unidades precisa preservar o contrato externo `ErroPontePAM` da ponte; a versão mais recente da frente IVO foi adotada quando ambos os lados corrigiram a mesma divergência. As regressões de IVO e as da pesquisa passam na execução combinada conferida do commit `660924cec5dda00bcdf4cfe78dbeff2902e984ba` ([CI #39664546204](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39664546204)).
+
+As branches e a PR podem receber commits simultâneos: **o HEAD final só é validado quando uma nova CI verde aparece no SHA exato**. Caso a base avance novamente, repetir a comparação de arquivos antes da reconciliação, nunca sobrescrever trabalho da outra frente ou declarar integração completa sem evidência.
