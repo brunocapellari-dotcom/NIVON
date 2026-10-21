@@ -113,6 +113,35 @@ class TestPainelPR30(unittest.TestCase):
         with self.assertRaisesRegex(ErroPainelFrete, "registro_id duplicado"):
             preparar([oferta(), oferta()])
 
+    def test_hash_derivado_registra_todas_as_republicacoes(self):
+        primeira=oferta()
+        segunda=replace(primeira, registro_id="wa:rec2",
+                       publicacao_id="wa:pub2", oferta_id="wa:offer2")
+        hash_original=preparar([primeira])["observacoes"][0]["edicao_sha256"]
+        hash_repetido=preparar([primeira,segunda])["observacoes"][0]["edicao_sha256"]
+        self.assertNotEqual(hash_original,hash_repetido)
+        self.assertEqual(preparar([primeira,segunda])["identidades_dia"],1)
+
+    def test_anuncio_antigo_republicado_hoje_nao_gera_serie_historica(self):
+        velho=oferta(data_referencia=date(2024,1,1))
+        with self.assertRaisesRegex(ErroPainelFrete,"referência defasada"):
+            preparar([velho])
+
+    def test_decimal_com_precisao_perdida_nao_entra_no_motor(self):
+        preco=Decimal("123.12345678912345678")
+        anuncio=oferta(frete_base_brl_t=preco,
+                       frete_cheio_brl_t=preco+Decimal("10"))
+        with self.assertRaisesRegex(ErroPainelFrete,"precisão monetária"):
+            preparar([anuncio])
+
+    def test_mudar_pedagio_mantendo_base_bloqueia_em_vez_de_ocultar_reajuste(self):
+        primeira=oferta()
+        segundo=replace(primeira, registro_id="wa:rec2", oferta_id="wa:offer2",
+                       publicacao_id="wa:pub2", pedagio_brl_t=Decimal("25"),
+                       frete_cheio_brl_t=Decimal("175"))
+        with self.assertRaisesRegex(ErroPainelFrete,"pedágios conflitantes"):
+            preparar([primeira,segundo])
+
     def test_unidade_proibida_e_ausencia_prova_nao_autorizam_publicacao(self):
         p = preparar([oferta()])
         self.assertFalse(p["publicavel"])
