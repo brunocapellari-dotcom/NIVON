@@ -74,3 +74,24 @@ constitui autorização de distribuição.
 
 Status: implementação local/offline preparada para revisão técnica;
 não chamar de `OPERACIONAL` até evidências E2E independentes.
+
+## Ensaio de transação em processos separados
+
+`tests/test_outbox_multiprocesso_backup.py` testa a mesma base SQLite em disco
+com dois processos POSIX competindo pela mesma edição e uma barreira
+sincronizada. O teste exige **exatamente um callback** e uma única tentativa
+gravada; a outra chamada deve ser bloqueada pela reserva transacional.
+
+O teste de falha após a reserva simula timeout, copia a base através da API
+`sqlite3.Connection.backup`, restaura a cópia em uma conexão independente
+e verifica que o envio continua `ENVIO_INDETERMINADO` com
+`tentativas=1`, sem executar um segundo callback.
+
+A verificação de expiração da autorização é repetida sob
+`BEGIN IMMEDIATE` após aquisição do lock, para não aproveitar uma
+autorização que expirou enquanto a conexão aguardava.
+
+Isso demonstra propriedades **offline em SQLite no ambiente CI**,
+mas não substitui teste de recuperação por falha abrupta real do
+sistema operacional, armazenamento persistente em produção, sistema
+de backups corporativo, exclusão de PII ou auditoria do provedor.
