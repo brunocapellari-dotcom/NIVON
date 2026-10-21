@@ -1,6 +1,8 @@
 """Testes de contrato de interop Mercados/Quant e fretes individuais."""
 import unittest
 from copy import deepcopy
+from datetime import date, timedelta
+from nivon.rolling_origin import executar_rolling_origin_asof
 from nivon.quant_core import ErroQuantitativo
 from nivon.integracao_contratos_quant import normalizar_relatorio_brier_mercados
 from nivon.integracao_frete_quant import preparar_serie_frete_anunciado
@@ -134,6 +136,51 @@ class PonteFretes(unittest.TestCase):
         b=frete(edicao_sha256="b"*64,registro_id="REG_2",frete_base_brl_t="180",
                 frete_cheio_brl_t="190")
         with self.assertRaisesRegex(ErroQuantitativo,"conflitantes"):
+            preparar([a,b])
+
+    def test_sha_fornecido_alimenta_rolling_origin_sem_media_municipal(self):
+        dias=[(date(2026,10,1)+timedelta(days=i)).isoformat() for i in range(15)]
+        eventos=[]
+        for i,d in enumerate(dias):
+            eventos.append(frete(
+                registro_id=f"REG_{i}",oferta_id=f"OFERTA_{i}",
+                edicao_sha256=("%064x" % (i+1)),
+                frete_base_brl_t=str(150+i)+".00",
+                frete_cheio_brl_t=str(160+i)+".00",
+                data_referencia=d,data_publicacao=d+"T10:00:00-04:00",
+                data_coleta=d+"T11:00:00-04:00"))
+        norm=preparar(eventos)
+        self.assertTrue(norm["asof_pronto"])
+        self.assertEqual(len(norm["observacoes_asof"]),15)
+        origens={dias[i]:dias[i]+"T18:00:00Z" for i in (6,7,8,9,10)}
+        result=executar_rolling_origin_asof(
+            norm["observacoes_asof"],calendario=dias,origens_em=origens,
+            as_of_avaliacao="2026-10-21T20:00:00Z",
+            serie_id=norm["serie_id"],unidade="BRL/T",
+            fonte_id="TRANSPORTADORA_TESTE",modelo_id="PERSISTENCIA_MAIS_UM_TESTE",
+            horizonte_periodos=1,tamanho_treino=5,
+            modelo=lambda treino,ctx:treino[-1]["valor"]+1,
+            min_folds=5,tolerancia_absoluta=0.5)
+        self.assertEqual(result["n_folds"],5)
+        self.assertEqual(result["metricas"]["mae"],0.0)
+        self.assertEqual(result["metricas"]["mae_baseline"],1.0)
+        self.assertFalse(result["publicavel"])
+
+    def test_overflow_e_subfluxo_decimal_bloqueados(self):
+        for valor in ("1e9999","1e-9999"):
+            with self.subTest(valor=valor),self.assertRaises(ErroQuantitativo):
+                preparar([frete(edicao_sha256="a"*64,
+                               frete_base_brl_t=valor,
+                               frete_cheio_brl_t=valor,
+                               pedagio_brl_t="0")])
+
+    def test_reutilizacao_de_registro_id_com_preco_alterado_bloqueada(self):
+        a=frete(edicao_sha256="a"*64)
+        b=frete(edicao_sha256="b"*64,
+                data_publicacao="2026-10-19T12:00:00-04:00",
+                data_coleta="2026-10-19T13:00:00-04:00",
+                frete_base_brl_t="151",frete_cheio_brl_t="161")
+        with self.assertRaisesRegex(ErroQuantitativo,"registro_id reutilizado"):
             preparar([a,b])
 
     def test_repeticao_mesma_coleta_identica_nao_pesa_duas_vezes(self):
