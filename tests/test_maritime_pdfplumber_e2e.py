@@ -19,6 +19,10 @@ from nivon.coleta_web import FonteWeb
 from nivon.portos_automaticos import ContratoPorto, ErroPorto, processar_documento_porto
 from nivon.maritime.official_lineup_bridge import bridge_official_pdf_document
 from nivon.maritime.lineup_history import vintage_from_official_bridge
+from nivon.maritime.maritime_store import MaritimeStore
+from nivon.maritime.pdf_programme_ledger import (
+    PdfProgrammeLedger, edition_from_pdf_bridge,
+)
 
 try:
     import pdfplumber
@@ -172,6 +176,49 @@ class PdfPlumberE2ETests(unittest.TestCase):
             vintage_from_official_bridge(result, reference_date="2026-10-20",
                 competence="2026-10", published_at="2026-10-20T11:00:00+00:00",
                 publication_evidence_id="SYNTHETIC_ONLY")
+
+    def test_paranagua_pdf_without_duv_replays_as_programming_only(self):
+        payload = paranagua_pdf(duv="", prog="PRG-500")
+        checked = bridge_official_pdf_document(
+            contract=contract("PARANAGUA"), document=document("PARANAGUA", payload))
+        self.assertEqual(checked.candidates, ())
+        self.assertEqual(checked.pdf_program_rows[0].programme_number, "EXPORT_OESTE:PRG-500")
+        version = edition_from_pdf_bridge(
+            checked, reference_date="2026-10-20", competence="2026-10",
+            published_at="2026-10-20T11:00:00+00:00",
+            publication_evidence_id="SYNTHETIC_PUBLICATION_PROOF",
+        )
+        with MaritimeStore() as store:
+            ledger = PdfProgrammeLedger(store)
+            self.assertTrue(ledger.save(version, storage_authorized=True))
+            found = ledger.select_asof(
+                port_id="PARANAGUA", source_id="FIXTURE_PARANAGUA",
+                series="EXPORT_OESTE", as_of="2026-10-20T12:30:00+00:00",
+                read_authorized=True)
+            self.assertEqual(found.summary()["programme_numbers_declared"], 1)
+            self.assertEqual(found.summary()["rows_not_mappable_to_duv"], 1)
+            self.assertIsNone(found.summary()["verified_port_call_count"])
+            self.assertFalse(found.summary()["publication_allowed"])
+
+    def test_itaqui_pdf_without_duv_replays_without_programme_number(self):
+        payload = itaqui_pdf(duv="")
+        checked = bridge_official_pdf_document(
+            contract=contract("ITAQUI"), document=document("ITAQUI", payload))
+        self.assertEqual(checked.candidates, ())
+        version = edition_from_pdf_bridge(
+            checked, reference_date="2026-10-20", competence="2026-10",
+            published_at="2026-10-20T11:00:00+00:00",
+            publication_evidence_id="SYNTHETIC_PUBLICATION_PROOF",
+        )
+        with MaritimeStore() as store:
+            ledger = PdfProgrammeLedger(store)
+            ledger.save(version, storage_authorized=True)
+            result = ledger.select_asof(
+                port_id="ITAQUI", source_id="FIXTURE_ITAQUI", series=None,
+                as_of="2026-10-20T12:30:00+00:00", read_authorized=True)
+            self.assertEqual(result.summary()["programme_pdf_rows"], 1)
+            self.assertEqual(result.summary()["programme_numbers_declared"], 0)
+            self.assertIsNone(result.summary()["verified_port_call_count"])
 
     def test_itaqui_physical_status_never_promoted_to_schedule(self):
         payload = itaqui_pdf(status="ATRACADO")
