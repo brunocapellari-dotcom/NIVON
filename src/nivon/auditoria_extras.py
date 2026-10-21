@@ -80,6 +80,18 @@ def analisar_requisito(texto: str) -> dict:
             "direct_range_bounded": bounded}
 
 
+def chave_requisito(requisito: dict) -> tuple[tuple[str, tuple[int, ...]], ...]:
+    """Identidade semântica de versões numéricas: 2, 2.0 e 2.0.0 equivalem.
+
+    Preserva a distinção dos operadores (< versus <=); não resolve PEP 440.
+    """
+    def canonizar(v: str) -> tuple[int, ...]:
+        valores = tuple(int(n) for n in v.split("."))
+        return valores + (0,) * (4 - len(valores))
+
+    return tuple(sorted((op, canonizar(v)) for op, v in requisito["constraints"]))
+
+
 def _parse_lists(pyproject: dict) -> dict:
     try:
         build = pyproject["build-system"]["requires"]
@@ -127,7 +139,7 @@ def inspecionar(pyproject_texto: str, ivo: dict) -> dict:
             seen.add(name)
             by_package[name].append((group, entry))
     for package, entries in by_package.items():
-        all_specs = {tuple(map(tuple, item["constraints"])) for _, item in entries}
+        all_specs = {chave_requisito(item) for _, item in entries}
         if len(all_specs) > 1:
             # Uma divergência em extras não é resolvida silenciosamente pelo pip.
             raise ErroDependencias(f"restrições diretas divergentes entre grupos: {package}")
