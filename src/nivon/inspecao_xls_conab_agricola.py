@@ -95,6 +95,14 @@ def inspecionar_xls_conab_capturado(
         # O executor deve isolar parsing de arquivos não confiáveis. Este
         # método não oferece nem simula sandbox ou limites de processo.
         livro = _abrir_livro(planilha_raw)
+        # Inspecionar limites antes de multiplicar regiões x safras em memória.
+        if set(livro.sheet_names()) != {"Área", "Produtividade", "Produção"}:
+            raise ErroLeituraXLSConab("abas XLS inesperadas")
+        for nome in livro.sheet_names():
+            aba = livro.sheet_by_name(nome)
+            if (type(aba.nrows) is not int or aba.nrows > 1000 or
+                    type(aba.ncols) is not int or aba.ncols > 130):
+                raise ErroLeituraXLSConab("limites estruturais do XLS excedidos")
         observacoes = normalizar_livro(
             livro, arquivo, sha256=digest, capturado_em=meta["coletado_em"],
         )
