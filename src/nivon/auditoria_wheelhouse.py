@@ -1,7 +1,7 @@
 """Verifica arquivos wheel reais contra hashes DECLARADOS em lock, sem instalar.
 
 Inspeciona somente ZIP e metadados locais sob limites. Não executa código,
-não baixa dependências, não valida assinatura/origem, RECORD, licença, ABI,
+não baixa dependências, não valida assinatura/origem, licença ou ABI,
 compatibilidade com plataforma nem fechamento transitivo (PEP 508).
 """
 from __future__ import annotations
@@ -19,6 +19,7 @@ from pathlib import Path
 
 from .auditoria_evidencias_pacotes import ErroEvidencia, _arquivo, _lock
 from .auditoria_extras import ErroDependencias, analisar_requisito
+from .verificacao_record import verificar_record
 
 MAX_WHEEL_BYTES = 128 * 1024 * 1024
 MAX_ENTRIES = 10000
@@ -120,7 +121,8 @@ def _metadata_zip(fh, expected_name: str, expected_version: str) -> dict:
             except (UnicodeError, ValueError, RuntimeError, EOFError,
                     NotImplementedError, zipfile.BadZipFile) as exc:
                 raise ErroEvidencia("metadados wheel inválidos ou corrompidos") from exc
-            return {"zip_members": len(members), "dist_info_verified": True}
+            record = verificar_record(zf, members, dist_dir)
+            return {"zip_members": len(members), "dist_info_verified": True, **record}
     except (OSError, zipfile.BadZipFile, zipfile.LargeZipFile) as exc:
         raise ErroEvidencia("wheel ZIP ilegível/corrompido") from exc
 
@@ -192,7 +194,7 @@ def verificar(wheelhouse: Path, lock_text: str) -> dict:
         "package_files_sha256_verified_against_declarations": True,
         "wheel_identity_headers_checked": True,
         "verified_wheels": [results[name] for name in sorted(results)],
-        "wheel_record_integrity_verified": False,
+        "wheel_record_integrity_verified": True,
         "wheel_tags_platform_compatible": False,
         "dependency_closure_verified": False,
         "provenance_authenticated": False,
