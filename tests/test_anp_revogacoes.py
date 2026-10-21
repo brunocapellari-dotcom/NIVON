@@ -4,7 +4,9 @@ import json
 import sqlite3
 import unittest
 from hashlib import sha256
-from copy import deepcopy
+from datetime import timedelta
+
+from nivon.anp_semanal_store import _tempo
 
 from nivon.anp_revogacoes import ErroRevogacaoANP, registrar_revogacao_anp
 from nivon.anp_semanal_store import (
@@ -57,7 +59,9 @@ class TestRevogacaoANPLPC(unittest.TestCase):
             aprovacoes_assinadas=assinar_autorizacao(
                 r,"2026-10-19T12:00:00+00:00"),
             autoridades_confiaveis=KEYS, ids_revogados=frozenset(),
-            verificado_em_confiavel="2026-10-20T15:30:00+00:00",
+            verificado_em_confiavel=(
+                _tempo(r["coletado_em"], "coletado_em")+timedelta(minutes=30)
+            ).isoformat(),
         )
 
     def consultar(self, as_of="2026-10-20T19:00:00+00:00"):
@@ -154,7 +158,7 @@ class TestRevogacaoANPLPC(unittest.TestCase):
             emitido="2026-10-20T14:58:00+00:00",
             revogacao_id="rev-antes-captura")
         with self.assertRaisesRegex(ErroRevogacaoANP,"antes da primeira captura"):
-            self.revogar(old, received="2026-10-20T15:00:00+00:00")
+            self.revogar(old, received="2026-10-20T14:59:00+00:00")
         self.assertEqual(self.consultar()["status"],"AMOSTRA_HISTORICA_PIT")
 
     def test_revogacao_de_uma_revisao_nao_faz_fallback_silencioso(self):
