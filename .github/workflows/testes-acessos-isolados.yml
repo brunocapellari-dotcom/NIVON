@@ -16,6 +16,10 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.11"
+      - name: Validar sintaxe, contextos e expressoes dos workflows
+        uses: docker://rhysd/actionlint:1.7.12
+        with:
+          args: .github/workflows/acessos-privados.yml .github/workflows/testes-acessos-isolados.yml
       - name: Compilar modulos sem dependencias externas
         run: python -m compileall -q src tests
       - name: Validar apenas fixtures sinteticas, SEM secrets ou chamadas a API
