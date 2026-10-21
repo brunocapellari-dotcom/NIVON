@@ -92,6 +92,13 @@ class TestChuvaEnsembleAsOf(unittest.TestCase):
         with self.assertRaisesRegex(ErroVerificacaoChuva, "fuga temporal"):
             evaluate(rows)
 
+    def test_climatologia_tardia_para_emissao_mesmo_antes_da_captura_bloqueada(self):
+        rows = fixture()
+        issue = datetime.fromisoformat(rows[2]["emitido_em"])
+        rows[2]["climatologia_publicada_em"] = (issue + timedelta(minutes=30)).isoformat()
+        with self.assertRaisesRegex(ErroVerificacaoChuva, "indisponível na emissão"):
+            evaluate(rows)
+
     def test_bloqueia_acumulacao_maior_que_horizonte(self):
         with self.assertRaises(ErroVerificacaoChuva):
             evaluate(fixture(), horizonte_horas=12)
