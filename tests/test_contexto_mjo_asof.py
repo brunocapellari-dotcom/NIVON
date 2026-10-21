@@ -1,10 +1,12 @@
 """Testes point-in-time da integração MJO/RMM da PR #11."""
 import copy
 import hashlib
+import json
 import unittest
 from datetime import datetime, timedelta, timezone
 
-from nivon.contexto_mjo_asof import ErroContextoMJO, indexar_contexto_mjo_asof
+from nivon.contexto_mjo_asof import (ErroContextoMJO, indexar_contexto_mjo_asof,
+                                      contextualizar_nwp_com_mjo_asof)
 
 
 RMM1 = ("year month day RMM1 RMM2 phase amplitude source\n"
@@ -35,6 +37,34 @@ def run(issues=None, snaps=None, **extra):
             issue("NWP2", "2026-10-20T13:30:00Z"),
             issue("NWP3", "2026-10-20T15:00:00Z"),
         ], snapshots_rmm=snaps or [snapshot()], **extra)
+
+
+def nwp_snapshot(*, issued="2026-10-20T15:00:00Z", captured=None):
+    origin = datetime.fromisoformat(issued.replace("Z", "+00:00"))
+    published = origin + timedelta(minutes=10)
+    capture = captured or (origin + timedelta(minutes=30)).isoformat()
+    valid = origin + timedelta(hours=48)
+    row = {
+        "estacao_id": "INMET_A904", "produto_id": "GEFS_FIXTURE",
+        "versao_produto": "synthetic_v1",
+        "emitido_em": issued,
+        "previsao_publicada_em": published.isoformat(),
+        "features_publicadas_ate": (origin - timedelta(hours=1)).isoformat(),
+        "climatologia_publicada_em": (origin - timedelta(days=1)).isoformat(),
+        "valido_em": valid.isoformat(),
+        "membros_mm": [0, 1, 2, 3, 4],
+        "prob_climatologica": 0.3,
+    }
+    raw = json.dumps({"registro": row}, sort_keys=True).encode("utf-8")
+    return {
+        "manifesto": {
+            "dataset_id": "NOAA_GFS", "fonte_id": "NOAA",
+            "sha256": hashlib.sha256(raw).hexdigest(),
+            "capturado_em": capture, "classe": "SINTETICO",
+            "prova_disponibilidade_sha256": hashlib.sha256(b"proof-placeholder").hexdigest(),
+        },
+        "bytes_json": raw,
+    }
 
 
 class TestContextoMJOAsOf(unittest.TestCase):
@@ -150,6 +180,44 @@ class TestContextoMJOAsOf(unittest.TestCase):
     def test_registro_de_emissao_sem_timezone_bloqueado(self):
         with self.assertRaisesRegex(ErroContextoMJO, "fuso"):
             run(issues=[issue("NWP1", "2026-10-20T16:00:00")])
+
+    def test_sidecar_hash_nwp_consulta_rmm_na_emissao_nao_na_captura(self):
+        before = nwp_snapshot(
+            issued="2026-10-20T13:30:00Z",
+            captured="2026-10-20T14:30:00Z",
+        )
+        after = nwp_snapshot(issued="2026-10-20T15:00:00Z")
+        out = contextualizar_nwp_com_mjo_asof(
+            snapshots_previsao=[before, after],
+            snapshots_rmm=[snapshot()], acumulacao_horas=24)
+        first, second = out["contextos"]
+        self.assertEqual(first["status"], "SEM_VINTAGE_DISPONIVEL")
+        self.assertEqual(second["status"], "RMM_OBSERVADO_ATIVO")
+        self.assertEqual(first["previsao_id"], before["manifesto"]["sha256"])
+        self.assertEqual(second["previsao_id"], after["manifesto"]["sha256"])
+        self.assertEqual(out["nwp_hashes_raw_conferidos"], 2)
+        self.assertFalse(out["estatisticas_nwp_alteradas"])
+        self.assertFalse(out["homologado"])
+
+    def test_nwp_raw_hash_invalido_bloqueia_contexto(self):
+        p = nwp_snapshot()
+        p["bytes_json"] += b" "
+        with self.assertRaisesRegex(ErroContextoMJO, "inválido"):
+            contextualizar_nwp_com_mjo_asof(
+                snapshots_previsao=[p], snapshots_rmm=[snapshot()])
+
+    def test_nwp_capturado_apos_inicio_do_intervalo_bloqueia(self):
+        p = nwp_snapshot(captured="2026-10-22T14:00:00Z")
+        with self.assertRaisesRegex(ErroContextoMJO, "fuga temporal"):
+            contextualizar_nwp_com_mjo_asof(
+                snapshots_previsao=[p], snapshots_rmm=[snapshot()])
+
+    def test_nwp_real_nao_homologado_tambem_e_bloqueado(self):
+        p = nwp_snapshot()
+        p["manifesto"]["classe"] = "REAL_AUTORIZADO"
+        with self.assertRaisesRegex(ErroContextoMJO, "não autorizado"):
+            contextualizar_nwp_com_mjo_asof(
+                snapshots_previsao=[p], snapshots_rmm=[snapshot()])
 
     def test_nao_aceita_limite_de_idade_booleano(self):
         for n in [0, 15, True, None, 3.2]:
