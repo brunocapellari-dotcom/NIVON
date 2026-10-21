@@ -5,6 +5,7 @@ Os documentos, navios e autorizações usados aqui são inteiramente sintéticos
 import hashlib
 import json
 import unittest
+from datetime import datetime, timedelta, timezone
 
 from nivon.catalogo_fontes import carregar_catalogo
 from nivon.coleta_web import FonteWeb
@@ -72,13 +73,18 @@ class TestIntegracaoMaritimaPR6PR40(unittest.TestCase):
                 operacoes_permitidas=frozenset({"COLETA"}),
             ),
         )
+        now = datetime.now(timezone.utc)
+        eta_local = (now + timedelta(hours=6)).astimezone(
+            timezone(timedelta(hours=-3))
+        ).strftime("%d/%m/%Y %H:%M")
+        captured_at = (now - timedelta(hours=1)).isoformat()
         html = (
             "<html><body><table><thead><tr>"
             "<th>Navio</th><th>IMO</th><th>ETA</th>"
             "<th>DUV</th><th>Local</th><th>Carga</th>"
             "</tr></thead><tbody><tr>"
             "<td>NAVIO TESTE</td><td>9074729</td>"
-            "<td>21/10/2026 09:30</td><td>12345</td>"
+            f"<td>{eta_local}</td><td>12345</td>"
             "<td>T1</td><td>SOJA</td>"
             "</tr></tbody></table></body></html>"
         ).encode("utf-8")
@@ -86,7 +92,7 @@ class TestIntegracaoMaritimaPR6PR40(unittest.TestCase):
             "conteudo": html, "sha256": hashlib.sha256(html).hexdigest(),
             "url": SANTOS_URL, "fonte_id": "TEST_SANTOS_AUTHORITY",
             "mime": "text/html", "bytes": len(html),
-            "capturado_em": "2026-10-20T12:00:00Z",
+            "capturado_em": captured_at,
         }
         bridge = bridge_official_html_document(contract=contract, document=document)
         self.assertEqual(len(bridge.candidates), 1)
@@ -113,6 +119,41 @@ class TestIntegracaoMaritimaPR6PR40(unittest.TestCase):
         self.assertIsNone(summary["data"]["waiting_p50_hours"])
         self.assertIsNone(summary["data"]["eta_mae_hours"])
         self.assertFalse(summary["publication_allowed"])
+
+    def test_filtro_eta_por_janela_e_contagem_resumo_coerente(self):
+        now = datetime.now(timezone.utc)
+        entries = (
+            {"port_id": "SANTOS", "eta": (now-timedelta(hours=10)).isoformat(),
+             "call_id": "PASSADO"},
+            {"port_id": "SANTOS", "eta": (now+timedelta(hours=2)).isoformat(),
+             "call_id": "DENTRO"},
+            {"port_id": "SANTOS", "eta": (now+timedelta(hours=30)).isoformat(),
+             "call_id": "FUTURO"},
+            {"port_id": "SANTOS", "eta": "sem timestamp", "call_id": "INVALIDO"},
+        )
+        snapshot = MaritimeProgrammedSnapshot(
+            lineup_rows=entries, source_hash="a"*64, port_id="SANTOS",
+        )
+        api = MaritimeReadAPI(programmed=snapshot)
+        status, result = api.resolve(
+            "/v1/maritime/lineup", "port_id=SANTOS&past_hours=0&future_hours=6",
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual([x["call_id"] for x in result["data"]], ["DENTRO"])
+        status, summary = api.resolve(
+            "/v1/maritime/summary", "port_id=SANTOS&hours=1&future_hours=6",
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(summary["data"]["lineup_calls"], 1)
+        self.assertIsNone(summary["data"]["vessels_live"])
+        status, longer = api.resolve(
+            "/v1/maritime/lineup", "port_id=SANTOS&past_hours=12&future_hours=36",
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(
+            {x["call_id"] for x in longer["data"]}, {"PASSADO", "DENTRO", "FUTURO"},
+        )
+        self.assertFalse(longer["publication_allowed"])
 
     def test_default_gateway_e_aprovacao_final_sempre_bloqueados(self):
         api = MaritimeReadAPI()
