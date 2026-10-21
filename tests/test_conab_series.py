@@ -78,6 +78,41 @@ class TestSeriesConab(unittest.TestCase):
         dados[-1]["valor"]=4
         self.assertEqual(conferir_total_milho(dados)[0]["status"],"DIVERGENTE")
 
+    def test_deslocamento_fisico_de_colunas_bloqueado_mesmo_com_anos_iguais(self):
+        livro=LivroFalso()
+        aba=livro.abas["Produtividade"]
+        for row in aba.celulas:
+            row.append("")
+        aba.ncols=23
+        originais=[aba.celulas[5][col] for col in range(1,22)]
+        aba.celulas[5][1]=""
+        for col,ano in enumerate(originais,2):
+            aba.celulas[5][col]=ano
+        # A lista de anos é IGUAL à da aba Área, mas 1 coluna deslocada.
+        # O normalizador anterior aceitava o arquivo e associava células
+        # de rendimento a uma posição física não homologada.
+        with self.assertRaisesRegex(ErroConab,"colunas físicas"):
+            self.ler(livro=livro)
+
+    def test_inferencia_usa_mesma_coluna_ainda_com_lacuna_na_area(self):
+        livro=LivroFalso()
+        for aba in livro.abas.values():
+            aba.celulas[5][2]=""
+        # Mantém 20 temporadas válidas (1980 e 1982..2000).
+        livro.abas["Produtividade"].celulas[5][3]="200.9"
+        out=self.ler(livro=livro)
+        rend=[r for r in out if r["regiao_uf"]=="MT" and
+              r["indicador"]=="PRODUTIVIDADE" and r["safra"]=="1982/1983"]
+        self.assertEqual(len(rend),1)
+        self.assertTrue(rend[0]["rotulo_coluna_inferido"])
+        self.assertEqual(rend[0]["celula"]["coluna"],4)
+
+    def test_aba_com_coluna_ausente_nao_ganha_inferencia_espuria(self):
+        livro=LivroFalso()
+        livro.abas["Produtividade"].celulas[5][1]=""
+        with self.assertRaisesRegex(ErroConab,"colunas físicas"):
+            self.ler(livro=livro)
+
     def test_cabecalho_corrompido_recuperado_com_inferencia_documentada(self):
         livro=LivroFalso()
         livro.abas["Produtividade"].celulas[5][1]="200.9"
