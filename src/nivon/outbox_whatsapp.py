@@ -263,12 +263,16 @@ def revogar_destinatario(con: sqlite3.Connection, *, destino: str,
 
 def revogar_autorizacao(con: sqlite3.Connection, *, chave: str,
                        evidencia_revogacao: str) -> dict:
-    """Bloqueia novas reservas; não desfaz POST eventualmente já efetuado."""
+    """Revoga somente a aprovação desta edição; não presume opt-out.
+
+    O cancelamento do consentimento em TODAS as edições deve usar
+    revogar_destinatario com prova específica e chave HMAC estável.
+    """
     prova = _evidencia_optout(evidencia_revogacao)
     _esquema(con)
     con.execute("BEGIN IMMEDIATE")
     try:
-        r = con.execute("""SELECT e.estado,a.revogado_em,e.destinatario_hmac
+        r = con.execute("""SELECT e.estado,a.revogado_em
                            FROM nivon_envios e JOIN nivon_autorizacoes a
                            ON e.idempotency_key=a.idempotency_key
                            WHERE e.idempotency_key=?""", (chave,)).fetchone()
@@ -284,16 +288,6 @@ def revogar_autorizacao(con: sqlite3.Connection, *, chave: str,
                            (idempotency_key,evidencia_sha256,revogado_em)
                            VALUES (?,?,?)""",
                         (chave, prova, instante))
-        # Um opt-out registrado para uma edição protege o destinatário em
-        # todas as edições subsequentes, inclusive após restart.
-        instante = _hora()
-        con.execute("""INSERT OR IGNORE INTO nivon_optouts_destinatario
-                       (destinatario_hmac,evidencia_sha256,revogado_em)
-                       VALUES (?,?,?)""", (r[2], prova, instante))
-        con.execute("""UPDATE nivon_autorizacoes SET revogado_em=?
-                       WHERE revogado_em IS NULL AND idempotency_key IN
-                       (SELECT idempotency_key FROM nivon_envios
-                        WHERE destinatario_hmac=?)""", (instante, r[2]))
         con.commit()
     except Exception:
         con.rollback()
