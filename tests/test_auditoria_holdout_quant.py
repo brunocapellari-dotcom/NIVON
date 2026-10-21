@@ -89,6 +89,24 @@ class TestHoldoutPurgado(unittest.TestCase):
         self.assertNotIn("metricas_holdout", r)
         self.assertFalse(r["publicavel"])
 
+    def test_coleta_tardia_de_resultado_historico_nao_contamina_holdout(self):
+        rows = registros()
+        # Forecast antigo, mas o resultado atrasou ate depois da primeira
+        # emissao do holdout; nao pode entrar no historico elegivel.
+        rows[2]["observado_coletado_em"] = ts(DIAS[111], 19)
+        r = auditar(rows)
+        self.assertEqual(r["status"], "SINAL_DESCRITIVO_HOLDOUT_NAO_HOMOLOGADO")
+        self.assertEqual(r["n_historico_elegivel"], 74)
+        self.assertEqual(r["n_excluidos_pela_purga"], 6)
+        self.assertFalse(r["publicavel"])
+
+    def test_sem_ganho_real_baseline_igual_nao_sinaliza_superioridade(self):
+        # Previsao igual a persistencia: ganho MAE/RMSE rigorosamente zero.
+        r = auditar(registros(erro_modelo=-5))
+        self.assertEqual(r["status"], "SEM_SUPERIORIDADE_ROBUSTA_AO_BASELINE")
+        self.assertFalse(r["superioridade_em_todas_as_fases"])
+        self.assertAlmostEqual(r["metricas_holdout"]["ganho_mae_baseline"], 0.0)
+
     def test_purga_mais_longa_invalida_treino(self):
         r = auditar(registros(), embargo_periodos=55)
         self.assertEqual(r["status"], "HISTORICO_PURGADO_INSUFICIENTE")
