@@ -23,6 +23,7 @@ from nivon.maritime.maritime_store import MaritimeStore
 from nivon.maritime.pdf_programme_ledger import (
     PdfProgrammeLedger, edition_from_pdf_bridge,
 )
+from nivon.maritime.pdf_programme_revisions import compare_pdf_programme_asof
 
 try:
     import pdfplumber
@@ -105,13 +106,13 @@ def contract(port, *, approved=True):
     )
 
 
-def document(port, payload):
+def document(port, payload, *, stamp=STAMP):
     return {
         "conteudo": payload,
         "sha256": hashlib.sha256(payload).hexdigest(),
         "bytes": len(payload), "mime": "application/pdf",
         "fonte_id": "FIXTURE_" + port, "url": URLS[port],
-        "capturado_em": STAMP,
+        "capturado_em": stamp,
     }
 
 
@@ -219,6 +220,72 @@ class PdfPlumberE2ETests(unittest.TestCase):
             self.assertEqual(result.summary()["programme_pdf_rows"], 1)
             self.assertEqual(result.summary()["programme_numbers_declared"], 0)
             self.assertIsNone(result.summary()["verified_port_call_count"])
+
+    def test_two_real_synthetic_paranagua_pdfs_compare_eta_asof_without_visit(self):
+        first = paranagua_pdf(duv="", arrival="21/10/2026",
+                              clock="09:00", prog="PRG-500")
+        second = paranagua_pdf(duv="", arrival="21/10/2026",
+                               clock="11:00", prog="PRG-500")
+        with MaritimeStore() as store:
+            ledger = PdfProgrammeLedger(store)
+            for payload, collected, published, evidence in (
+                (first, STAMP, "2026-10-20T11:00:00+00:00", "SYNTHETIC_P1"),
+                (second, "2026-10-20T16:00:00+00:00",
+                 "2026-10-20T15:00:00+00:00", "SYNTHETIC_P2"),
+            ):
+                parsed = bridge_official_pdf_document(
+                    contract=contract("PARANAGUA"),
+                    document=document("PARANAGUA", payload, stamp=collected))
+                self.assertEqual(parsed.candidates, ())
+                version = edition_from_pdf_bridge(
+                    parsed, reference_date="2026-10-20", competence="2026-10",
+                    published_at=published, publication_evidence_id=evidence)
+                ledger.save(version, storage_authorized=True)
+
+            revision = compare_pdf_programme_asof(
+                ledger, port_id="PARANAGUA", source_id="FIXTURE_PARANAGUA",
+                series="EXPORT_OESTE",
+                earlier_as_of="2026-10-20T12:30:00+00:00",
+                later_as_of="2026-10-20T16:30:00+00:00",
+                read_authorized=True,
+            ).summary()
+            self.assertEqual(revision["status"], "PROGRAMME_REVISION_ONLY_NOT_PHYSICAL_OPERATION")
+            self.assertEqual(revision["change_count"], 1)
+            self.assertEqual(revision["changes"][0]["field"], "eta_text_declared")
+            self.assertEqual(revision["changes"][0]["before"], "21/10/2026 09:00")
+            self.assertEqual(revision["changes"][0]["after"], "21/10/2026 11:00")
+            self.assertIsNone(revision["confirmed_port_calls"])
+            self.assertIsNone(revision["realized_tonnage_t"])
+            self.assertFalse(revision["publication_allowed"])
+
+    def test_two_real_synthetic_itaqui_pdfs_without_programme_id_not_paired(self):
+        first = itaqui_pdf(duv="", eta="21/10/2026 09:00")
+        second = itaqui_pdf(duv="", eta="21/10/2026 11:00")
+        with MaritimeStore() as store:
+            ledger = PdfProgrammeLedger(store)
+            for payload, collected, published, evidence in (
+                (first, STAMP, "2026-10-20T11:00:00+00:00", "SYNTHETIC_P1"),
+                (second, "2026-10-20T16:00:00+00:00",
+                 "2026-10-20T15:00:00+00:00", "SYNTHETIC_P2"),
+            ):
+                parsed = bridge_official_pdf_document(
+                    contract=contract("ITAQUI"),
+                    document=document("ITAQUI", payload, stamp=collected))
+                self.assertEqual(parsed.candidates, ())
+                ledger.save(edition_from_pdf_bridge(
+                    parsed, reference_date="2026-10-20", competence="2026-10",
+                    published_at=published, publication_evidence_id=evidence
+                ), storage_authorized=True)
+            revision = compare_pdf_programme_asof(
+                ledger, port_id="ITAQUI", source_id="FIXTURE_ITAQUI", series=None,
+                earlier_as_of="2026-10-20T12:30:00+00:00",
+                later_as_of="2026-10-20T16:30:00+00:00",
+                read_authorized=True,
+            ).summary()
+            self.assertEqual(revision["change_count"], 1)
+            self.assertEqual(revision["changes"][0]["field"], "unidentified_rows_not_reconciled")
+            self.assertIsNone(revision["confirmed_port_calls"])
+            self.assertIsNone(revision["confirmed_departures"])
 
     def test_itaqui_physical_status_never_promoted_to_schedule(self):
         payload = itaqui_pdf(status="ATRACADO")
