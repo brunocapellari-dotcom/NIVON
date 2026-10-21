@@ -4797,6 +4797,214 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Piso legal = d*CCD + CC conforme regime e vigência; NÃO preço spot do frete, lucro e pedágio fora do piso salvo regras vigentes.",
       "preliminary_evidence": "OFFICIAL_DOCUMENTATION_2026_10_21_NO_NEW_RUNTIME_DATA"
+    },
+    {
+      "dataset_id": "EARTH_SEARCH_STAC_CENAS",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "DIRECT_OFFICIAL_API",
+        "url": "https://earth-search.aws.element84.com/v1/search",
+        "source_proof": "https://element84.com/earth-search/examples/"
+      },
+      "implementation_scope": "ONE_SHOT_STAC_GET_NORMALIZER_NO_RASTER_ACCESS",
+      "authentication": "NONE_EXPECTED_VERIFY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_RIGHTS_AND_PERSISTENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "VALIDATE_LIVE_STAC_RESPONSE",
+        "COLLECTION_LICENSE_PER_ASSET",
+        "STAC_PAGINATION_VERSION"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Metadados de cena, não NDVI ou imagem baixada; API gratuita sem SLA, lista de asset URLs não é segura para downloads automáticos.",
+      "preliminary_evidence": "PUBLIC_OFFICIAL_DOCUMENTATION_2026_10_21_NO_PERSISTENCE"
+    },
+    {
+      "dataset_id": "ESA_WORLDCOVER_2021_10M",
+      "collector_class": "STRUCTURED_FILE",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://registry.opendata.aws/esa-worldcover/",
+        "source_proof": "https://esa-worldcover.org/en/data-access"
+      },
+      "implementation_scope": "PUBLIC_AWS_GEOTIFF_DISTRIBUTION; selective_2021_tile_fetch_pending",
+      "authentication": "NONE_EXPECTED_VERIFY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_RIGHTS_AND_PERSISTENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "VERIFY_TILE_GRID_BRAZIL_ONLY",
+        "ATTRIBUTION_CC_BY_4",
+        "2021_STATIC_NOT_2026"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "ESA WorldCover 2021 v200 vigiada, não 2026; COG 10m aberto AWS S3 e Zenodo. Preservar tile, res e taxonomia.",
+      "preliminary_evidence": "PUBLIC_OFFICIAL_DOCUMENTATION_2026_10_21_NO_PERSISTENCE"
+    },
+    {
+      "dataset_id": "JRC_GSW_AGUA_SUPERFICIAL",
+      "collector_class": "STRUCTURED_FILE",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://global-surface-water.appspot.com/download",
+        "source_proof": "https://global-surface-water.appspot.com/download"
+      },
+      "implementation_scope": "OFFICIAL_JRC_RASTER_DOWNLOAD_INDEX; precise tile selection pending",
+      "authentication": "NONE_EXPECTED_VERIFY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_RIGHTS_AND_PERSISTENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "DIFFERENT_LANDSAT_COLLECTIONS",
+        "BACKFILL_V14_PLUS_V15_MERGE",
+        "MONTHLY_RECURRENCE_BUG_KNOWN"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "JRC 1984-2024; transição Landsat C1/C2 pode gerar desalinhamento, V1.5 recente não cobre histórico mensal integral. Não interpretar área superficial como vazão/navegabilidade.",
+      "preliminary_evidence": "PUBLIC_OFFICIAL_DOCUMENTATION_2026_10_21_NO_PERSISTENCE"
+    },
+    {
+      "dataset_id": "USDA_AMS_GTR_FRETE_MULTIMODAL",
+      "collector_class": "STRUCTURED_FILE",
+      "locator": {
+        "kind": "DIRECT_PUBLIC_FILE",
+        "url": "https://www.ams.usda.gov/sites/default/files/media/GTRTable1.xlsx",
+        "source_proof": "https://www.ams.usda.gov/services/transportation-analysis/gtr-datasets"
+      },
+      "implementation_scope": "OFFICIAL_XLSX_IDENTIFIED; full workbook schema and refresh still unverified",
+      "authentication": "NONE_EXPECTED_VERIFY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_RIGHTS_AND_PERSISTENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "VERIFY_XLSX_SHEET_SCHEMA",
+        "SEPARATE_FREIGHT_MODE_UNITS",
+        "US_PROXY_NOT_BRAZIL_FREIGHT"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "USDA AMS GTR Tabela 1: indicadores de diesel, barcaça, frete ferroviário e oceânico como proxies, não fretes contratados reais brasileiros.",
+      "preliminary_evidence": "PUBLIC_OFFICIAL_DOCUMENTATION_2026_10_21_NO_PERSISTENCE"
+    },
+    {
+      "dataset_id": "USDA_AMS_GTR_PRECO_BASIS_EXPORT",
+      "collector_class": "STRUCTURED_FILE",
+      "locator": {
+        "kind": "DIRECT_PUBLIC_FILE",
+        "url": "https://www.ams.usda.gov/sites/default/files/media/GTRTable2A_B.xlsx",
+        "source_proof": "https://www.ams.usda.gov/services/transportation-analysis/gtr-datasets"
+      },
+      "implementation_scope": "OFFICIAL_XLSX_IDENTIFIED; column mapping and version pending",
+      "authentication": "NONE_EXPECTED_VERIFY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_RIGHTS_AND_PERSISTENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "VERIFY_XLSX_SHEET_SCHEMA",
+        "UNIT_USD_PER_BUSHEL_AND_ORIGIN",
+        "BASIS_NOT_BRAZIL_SPOT_PRICE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "USDA AMS GTR Tabelas 2A/2B: preços interior/exportação e spreads; inclui comparações futuros. Não usar como CBOT contínua licenciada.",
+      "preliminary_evidence": "PUBLIC_OFFICIAL_DOCUMENTATION_2026_10_21_NO_PERSISTENCE"
+    },
+    {
+      "dataset_id": "NOAA_ENSO_INDICES_HISTORICOS",
+      "collector_class": "STRUCTURED_FILE",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://psl.noaa.gov/data/timeseries/month/",
+        "source_proof": "https://psl.noaa.gov/data/timeseries/month/"
+      },
+      "implementation_scope": "MONTHLY_ENSO_INDEX_RESEARCH_NO_EXACT_SERIES_ASSET_RESOLVED",
+      "authentication": "NONE_EXPECTED_VERIFY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_RIGHTS_AND_PERSISTENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "SELECT_ONI_VS_RONI_VS_MEI_V2",
+        "VERIFY_BASE_PERIOD_AND_REVISIONS"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "MEI v2, ONI e RONI têm metodologias/janelas diferentes. Usar valor observado mensal; não confundir índice atual com previsão do ENSO.",
+      "preliminary_evidence": "PUBLIC_OFFICIAL_DOCUMENTATION_2026_10_21_NO_PERSISTENCE"
+    },
+    {
+      "dataset_id": "WB_PINK_SHEET_COMMODITIES",
+      "collector_class": "STRUCTURED_FILE",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://www.worldbank.org/en/research/commodity-markets",
+        "source_proof": "https://www.worldbank.org/en/research/commodity-markets"
+      },
+      "implementation_scope": "PINK_SHEET_HISTORICAL_XLSX_CSV_DOWNLOAD_RESEARCH_PENDING",
+      "authentication": "NONE_EXPECTED_VERIFY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_RIGHTS_AND_PERSISTENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "RESOLVE_ACTUAL_XLSX_CSV_RESOURCE",
+        "VERIFY_PRICE_UNITS_AND_BASE_PERIOD"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Banco Mundial mensal energia, fertilizantes e commodities globais; proxy internacional, não preço físico regional negociado no Brasil.",
+      "preliminary_evidence": "PUBLIC_OFFICIAL_DOCUMENTATION_2026_10_21_NO_PERSISTENCE"
     }
   ]
 }
