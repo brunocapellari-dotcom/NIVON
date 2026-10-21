@@ -102,18 +102,19 @@ class TestHoldoutPurgado(unittest.TestCase):
 
     def test_deterioracao_recente_oculta_pela_media_da_fase(self):
         rows = registros()
-        # Na fase, 6 previsões exatas e 2 recentes ruins: MAE total
-        # 2.75 < persistência 5, mas MAE recente 5.5 > 5.
+        # Na fase, 6 previsões exatas e 2 recentes ruins: MAE global
+        # 2.25 < persistência 5 e RMSE global 4.5 < 5,
+        # mas RMSE do trecho recente 6.36 > 5.
         for r in rows:
             if DIAS.index(r["periodo_origem"]) >= 130:
-                r["previsto"] = r["real"] + 11
+                r["previsto"] = r["real"] + 9
         x = auditar(rows)
         self.assertEqual(x["status"], "DEGRADACAO_TEMPORAL_NO_HOLDOUT")
         self.assertTrue(x["superioridade_em_todas_as_fases"])
         self.assertFalse(x["ganho_consistente_inicio_fim"])
         self.assertFalse(x["sinal_descritivo_sustentado"])
         self.assertTrue(all(
-            fase["fim"]["ganho_mae_baseline"] < 0
+            fase["fim"]["ganho_rmse_baseline"] < 0
             for fase in x["metricas_subjanelas_temporais"]
         ))
 
