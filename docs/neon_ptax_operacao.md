@@ -2,7 +2,7 @@
 
 ## Estado verificável — 21/10/2026
 
-**Coleta diária e armazenamento persistente ATIVOS apenas para PTAX USD/EUR**, na plataforma Neon Free. Isso **não** homologa os 42 widgets do Notícias Agrícolas e **não** significa que os motores de soja, milho, fretes e tendências estão conectados.
+**Coleta diária, recuperação histórica horária e armazenamento persistente ATIVOS apenas para PTAX USD/EUR**, na plataforma Neon Free. Isso **não** homologa os 42 widgets do Notícias Agrícolas e **não** significa que os motores de soja, milho, fretes e tendências estão conectados.
 
 | Item | Estado |
 |---|---|
@@ -10,11 +10,12 @@
 | Região | AWS Virginia (\`aws-us-east-1\`), pois Neon Functions não está disponível em São Paulo nesta data |
 | Banco | \`nivon\`, Postgres 17, schema público com prefixo \`nivon_ptax_\` |
 | Neon Function | \`ptaxcollector\` no branch \`br-twilight-cell-b77ukd6x\` |
-| Agendamento | Trigger \`trigger-55ead26a-f29f-4622-845a-6e24e5ac845e\`, cron \`30 1 * * 2-6\` UTC |
+| Agendamento diário | Trigger principal: 30 1 * * 2-6 UTC |
+| Backfill horário | Trigger /backfill: 5 * * * * UTC; uma janela de 31 dias por moeda |
 | Horário esperado | 01:30 UTC terça–sábado (~22:30 Brasília segunda–sexta) |
-| Primeira execução nativa real | 21/10/2026 17:19 UTC; sucesso, quatro janelas e 174 registros |
-| Registros em Postgres | 29 USD + 145 EUR, das janelas 11–21/10/2026 e 01–31/01/2020 |
-| Histórico integral 2020–2026 | **Ainda não carregado**. Uma janela de 31 dias por moeda é incorporada em cada execução normal |
+| Primeira execução nativa real | 21/10/2026 17:19 UTC; sucesso, quatro janelas e 174 registros na primeira execução |
+| Registros em Postgres | **48 USD + 238 EUR = 286**, de seis janelas confirmadas no banco em 21/10/2026 |
+| Histórico integral 2020–2026 | **Ainda incompleto**. Rotina horária de backfill ativo (uma janela por moeda por hora), além de backfill na rotina diária |
 | Retenção | Persiste além do ciclo do GitHub Actions; limites Free de Neon se aplicam |
 | Custos | Organização Neon no plano Free; nenhuma contratação ou upgrade |
 
@@ -27,14 +28,14 @@ Consulta após trigger real:
 \`\`\`sql
 SELECT currency, count(*), min(reference_date), max(reference_date)
 FROM public.nivon_ptax_quotes GROUP BY currency ORDER BY currency;
--- EUR 145; USD 29
+-- EUR 238; USD 48
 
 SELECT job_type,currency,window_start,window_end,status,fetched,inserted
 FROM public.nivon_ptax_runs ORDER BY id;
--- DAILY USD 7; DAILY EUR 35; BACKFILL USD 22; BACKFILL EUR 110
+-- DAILY USD 7; DAILY EUR 35; BACKFILL USD 22+19; BACKFILL EUR 110+93
 
 SELECT count(*) FROM public.nivon_ptax_checkpoints;
--- 4
+-- 6
 \`\`\`
 
 O Neon Trigger executou a função sem credencial fornecida ao GitHub. A URL pública **rejeitou** chamada de teste com cabeçalho falsificado \`x-neon-trigger-invocation-id\` (HTTP 403): não utilizar calls diretas com esse cabeçalho como se fossem invocações autênticas da plataforma.
@@ -64,7 +65,7 @@ O Neon Trigger executou a função sem credencial fornecida ao GitHub. A URL pú
 1. Confirmar execução de 22/10 e em dias seguintes, com incremento de checkpoints e idade correta da referência.
 2. Planejar backup e restauração em armazenamento privado permitido, sem contratação, para proteção além do recurso de restauração temporária do Neon.
 3. Projetar indicadores de freshness e alertas de atraso com calendário do Banco Central e revisão de dados.
-4. Melhorar aceleração do histórico, mantendo limites de API e custo gratuito. Atualmente histórico 2020–2026 avança de maneira incremental em janelas de 31 dias.
+4. Verificar a conclusão progressiva de todas as janelas de 2020–2026 sem ultrapassar cotas, limites de API e sem declarar cobertura completa antes de auditoria.
 5. Validar termos e APIs primárias de CEPEA/IMEA; nenhuma coleta desses dados foi habilitada.
 6. Integrar as séries validadas de PTAX à camada do motor de tendências/briefing, nunca confundir dados de referência antigos com atualizados.
 
