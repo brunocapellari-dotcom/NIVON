@@ -126,9 +126,13 @@ def radar_erratas_pam(*, catalogo:dict, municipio_ibge:str,
             continue
         if ano not in e["years"] or variavel not in e["known_variable_codes"]:
             continue
+        # Consultas as-of nao podem revelar a existencia, identidade ou URL
+        # de uma errata que so seria publicada DEPOIS do corte.
+        if _dia(e["notice_date"],"notice_date") > corte:
+            continue
         relev.append({
             "id":e["id"],"aviso_em":e["notice_date"],
-            "aviso_ja_publicado_no_corte":_dia(e["notice_date"],"notice_date")<=corte,
+            "aviso_ja_publicado_no_corte":True,
             "fonte_url":e["source_url"],"tipo_correcao":e["correction_type"],
             "arquivo_original_arquivado":False,
             "arquivo_corrigido_arquivado":False,
