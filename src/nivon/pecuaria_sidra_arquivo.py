@@ -84,8 +84,30 @@ def _abrir(path):
     if p.exists() and not p.is_file():
         raise DadoInvalido("SQLite deve ser arquivo regular")
     cx = sqlite3.connect(str(p), timeout=5)
-    cx.executescript(_SCHEMA)
-    return cx
+    try:
+        cx.executescript(_SCHEMA)
+        # Versoes anteriores usavam indice UNIQUE com hashes; tal indice
+        # permite duas capturas distintas sob o mesmo instante declarado.
+        # Falhar fechado, sem reconstruir automaticamente um arquivo existente.
+        esperado = ("especie", "tabela_sidra", "url_valores",
+                    "url_metadados", "coleta_declarada")
+        indices = cx.execute("PRAGMA index_list(capturas_sidra)").fetchall()
+        seguro = False
+        for indice in indices:
+            if not indice[2]:
+                continue
+            nome = indice[1].replace('"', '""')
+            colunas = tuple(row[2] for row in
+                cx.execute('PRAGMA index_info("' + nome + '")').fetchall())
+            if colunas == esperado:
+                seguro = True
+                break
+        if not seguro:
+            raise DadoInvalido("esquema SIDRA legado sem unicidade de captura; migracao auditada necessaria")
+        return cx
+    except Exception:
+        cx.close()
+        raise
 
 
 def arquivar_pacote_sidra_offline(
