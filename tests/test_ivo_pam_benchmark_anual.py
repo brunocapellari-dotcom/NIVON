@@ -28,8 +28,8 @@ def json_sidra(ano,valor):
          "D3C":"Ano (Código)",
          "D4C":"Produto das lavouras temporárias (Código)",
          "V":"Valor","MN":"Unidade de Medida"},
-        {"D1C":"5107925","D2C":"109","D3C":str(ano),
-         "D4C":"2692","V":str(valor),"MN":"Toneladas"},
+        {"D1C":"5107925","D2C":"214","D3C":str(ano),
+         "D4C":"2713","V":str(valor),"MN":"Toneladas"},
     ],ensure_ascii=False).encode()
 
 
@@ -46,7 +46,7 @@ class TestIVOBenchmarkPAMAnual(unittest.TestCase):
         eid=f"PAM_{ano}_{tipo}_{pub.isoformat()}"
         pdf=("%PDF-1.4\n"+eid+" Documento sintetico rastreavel 000000000000").encode()
         p=planejar_pam_1612(municipio_ibge="5107925",ano=ano,
-                              codigo_produto_c81="2692",codigo_variavel="109")
+                              codigo_produto_c81="2713",codigo_variavel="214")
         for blob,mime,schema in ((raw,"application/json","sidra_pam_1612_v1"),
                                  (pdf,"application/pdf","ivo_pam_release_doc_v1")):
             registrar_snapshot(
@@ -72,7 +72,7 @@ class TestIVOBenchmarkPAMAnual(unittest.TestCase):
     def rodar(self,series,**extra):
         opts=dict(registro_db=self.db,inicio=2021,fim=2025,
                   corte_avaliacao=instante(2026,12,20),
-                  variavel="109",produto="2692",
+                  variavel="214",produto="2713",
                   autoriza_experimento=True)
         opts.update(extra)
         return benchmark_pam_anual_sintetico(series,**opts)
@@ -151,7 +151,7 @@ class TestIVOBenchmarkPAMAnual(unittest.TestCase):
     def test_fonte_municipio_diferente_bloqueado(self):
         x=self.serie()
         p=planejar_pam_1612(municipio_ibge="5105259",ano=2025,
-                           codigo_produto_c81="2692",codigo_variavel="109")
+                           codigo_produto_c81="2713",codigo_variavel="214")
         x[2025]=(replace(x[2025][0],plano=p),)
         with self.assertRaises(ErroBenchmarkAnual):
             self.rodar(x)
@@ -159,7 +159,7 @@ class TestIVOBenchmarkPAMAnual(unittest.TestCase):
     def test_fonte_cultura_diferente_bloqueada(self):
         x=self.serie()
         p=planejar_pam_1612(municipio_ibge="5107925",ano=2024,
-                           codigo_produto_c81="100",codigo_variavel="109")
+                           codigo_produto_c81="100",codigo_variavel="214")
         x[2024]=(replace(x[2024][0],plano=p),)
         with self.assertRaises(ErroBenchmarkAnual):
             self.rodar(x)
@@ -167,7 +167,7 @@ class TestIVOBenchmarkPAMAnual(unittest.TestCase):
     def test_ano_reclassificado_bloqueado(self):
         x=self.serie()
         outra=planejar_pam_1612(municipio_ibge="5107925",ano=2021,
-                                 codigo_produto_c81="2692",codigo_variavel="109")
+                                 codigo_produto_c81="2713",codigo_variavel="214")
         x[2020]=(replace(x[2020][0],plano=outra),)
         with self.assertRaises(ErroBenchmarkAnual):
             self.rodar(x)
