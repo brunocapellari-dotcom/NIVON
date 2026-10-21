@@ -63,3 +63,5 @@ jobs:
         run: |
           printf '%s\n' "NOAA MEI: $MEI" "USDA GTR frete: $GTR_FRETE" "USDA GTR precos: $GTR_PRECOS" "World Bank Pink Sheet: $PINKSHEET" "ESA HEAD: $ESA" "JRC WMTS: $JRC"
           printf '%s\n' 'Somente HTTP pontual; nao grava series nem promove datasets para operacao'
+
+# Reexecução pontual após correções de formato: PR #99 integrada.
