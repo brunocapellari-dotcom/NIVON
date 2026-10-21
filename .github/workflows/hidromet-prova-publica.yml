@@ -2,9 +2,6 @@ name: NIVON - Prova pontual APIs hidrometeorologicas publicas
 # Sem secrets, sem agendamento e sem publicacao de dados.
 # Executar no PR de integracao somente quando este workflow for criado/alterado.
 on:
-  pull_request:
-    paths:
-      - .github/workflows/hidromet-prova-publica.yml
   workflow_dispatch:
 
 permissions:
