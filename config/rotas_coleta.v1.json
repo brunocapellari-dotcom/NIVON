@@ -4561,6 +4561,66 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Consulta somente metadados CKAN de tráfego de pedágio; NÃO afirmar frete efetivo, cargas rodoviárias por origem-destino ou fluxo de soja sem cruzamento.",
       "preliminary_evidence": "ANTT_CKAN_PUBLIC_PORTAL_DOCUMENTED_NO_LIVE_RESPONSE_VALIDATED"
+    },
+    {
+      "dataset_id": "ISRIC_SOILGRIDS_PONTO",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "DIRECT_OFFICIAL_API",
+        "url": "https://rest.isric.org/soilgrids/v2.0/properties/query",
+        "source_proof": "https://rest.isric.org/soilgrids/v2.0/docs"
+      },
+      "implementation_scope": "ONE_SHOT_REST_SOIL_PROPERTY_QUERY_WITH_UNIT_CONVERSION; no network smoke yet",
+      "authentication": "NONE_EXPECTED_VERIFY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_LICENSE_PERSISTENCE",
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "CHECK_SPATIAL_ACCURACY_AND_SCALE",
+        "RATE_LIMIT_MAX_5_CALLS_PER_MINUTE",
+        "BETA_AVAILABILITY_CHECK"
+      ],
+      "source_note": "Grade/modelo 250m e incerteza; não apresentar como medição de solo do produtor ou construir motor de receituário.",
+      "preliminary_evidence": "ISRIC_DOCUMENTATION_AND_SOILGRIDS_CC_BY_4_2026"
+    },
+    {
+      "dataset_id": "EMBRAPA_GEOINFO_SOLOS",
+      "collector_class": "STRUCTURED_FILE",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://geoinfo.dados.embrapa.br/datasets/geonode%3Aadbrasil/metadata_detail",
+        "source_proof": "https://www.gov.br/pt-br/servicos/consultar-informacoes-geoespaciais-na-plataforma-geoinfo"
+      },
+      "implementation_scope": "PUBLISHED_GEOINFO_LAYER_METADATA_EXACT_DOWNLOAD_OR_WFS_CAPABILITIES_PENDING",
+      "authentication": "NONE_EXPECTED_VERIFY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_LICENSE_PERSISTENCE",
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "CHECK_SPATIAL_ACCURACY_AND_SCALE",
+        "EXACT_WFS_LAYER_OR_DOWNLOAD",
+        "LAYER_SPECIFIC_LICENSE"
+      ],
+      "source_note": "GeoInfo disponibiliza GeoJSON/SHP e WFS/WMS; verificar camada e escala. Estimativa de água disponível mapeada, não exame físico-químico laboratorial.",
+      "preliminary_evidence": "EMBRAPA_GEOINFO_GOV_BR_OPEN_GEO_2026"
     }
   ]
 }
