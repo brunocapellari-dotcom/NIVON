@@ -607,3 +607,71 @@ testar corte histórico; depois planejar migração controlada do adaptador
 ou promover nenhuma taxa com data de publicação não comprovada.
 Nunca ligar fetch em CI de PR nem automatizar até segurança/licença e
 custos homologados. Toda saída segue `publicavel=false`.
+
+
+## 14. Continuidade 21/10/2026 — histórico Decimal PTAX multi-captura (PR #21)
+
+**Problema corrigido nesta etapa:** `consultar_raw_ptax_asof` retorna
+uma captura RAW mais recente, não necessariamente o **boletim econômico
+mais recente**. Uma resposta coletada por último pode conter uma
+cotação de referência mais antiga que respostas anteriores. A seleção
+de mercado e o cross-check devem, portanto, reconstruir os boletins
+de **todas as capturas visíveis no corte**. A API legada de
+`indicador_ptax.py`, baseada em floats, **não foi alterada**.
+
+**Novo módulo:** `src/nivon/ptax_historico_decimal.py`.
+
+- `selecionar_ptax_decimal_asof(db, corte, moeda, ...)`: somente
+  leitura, sem criação de tabela, sem rede e sem side effects.
+  Usa o ledger existente `nivon_ptax_raw_capturas`,
+  `nivon_ptax_raw_blobs`, `nivon_snapshots` e
+  `nivon_coletas`, conferindo IDs, SHA, referência, versão
+  `PTAX_ODATA_RAW_V1`, tipo de origem e classificação de direitos.
+  Bloqueia conjuntos excessivos (10 mil capturas / 100 mil boletins).
+- Revalida cada body OData **nos bytes originais** com SHA-256 e
+  parser `verificar_ptax_odata_bruta`, preservando decimais textuais
+  (inclusive zeros e escala), data/hora da cotação, `/value/N`,
+  data da primeira coleta conhecida e edição RAW.
+- Identidade de observação `(referencia_em, tipo_boletim)`.
+  Recapturas idênticas são deduplicadas preservando a primeira
+  evidência de coleta; **taxas diferentes para a mesma identidade**
+  retornam `VINTAGES_CONFLITANTES` até existir contrato formal
+  de revisão, sem substituir valores retroativamente.
+- `Fechamento` somente se explicitamente reconhecido no raw;
+  `somente_fechamento=True` retorna
+  `SEM_FECHAMENTO_EXPLICITO` quando ausente.
+  Para seleção geral o fechamento explícito tem precedência,
+  seguido da última referência temporal dos boletins elegíveis.
+  Controle de idade (1 a 336 horas), sessões e timestamps
+  evita vazamento de coletas posteriores ao corte.
+- `indicador_ptax_decimal_raw` é uma **prévia isolada** do
+  indicador de câmbio: bloqueia por direitos `LEITURA`/
+  `PUBLICACAO_DERIVADA` quando ausentes; não utiliza registros
+  SINTETICO; formata valores com `Decimal`, sem arredondar antes da
+  seleção nem regravar o adaptador antigo. Para manter governança
+  retorna `INDICADOR_RAW_PTAX_PREVIA_NAO_HOMOLOGADA`,
+  `publicavel=false`, `apto_backtest_por_publicacao=false`
+  e `publicacao=None`.
+
+**Testes:** `tests/test_ptax_historico_decimal.py` cria snapshots
+sintéticos no ledger real de teste e confere Decimal textual,
+recapturas repetidas, documentos de coleta mais recente contendo
+boletins econômicos antigos, conflitos de vintage, idade/corte,
+alteração de bytes originais, fechamento explícito, tentativa de
+promover fixture para `REAL_AUTORIZADO`, banco vazio e ausência
+de direitos. O teste de parâmetros foi corrigido após a primeira
+CI acusar duplicação de argumento na própria fixture.
+
+**Evidência:** commit testado `ec13183b67dfcf0249a3f8c5e0d444bafbe9dad0`,
+GitHub Actions [#39663550521](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39663550521):
+`success`, **1.417 testes, 5 skipped, zero falhas**.
+
+**Limites/gates abertos:** o pipeline `bcb_ptax.py` e
+`pipeline_api_dados.py` continua baseado em float; a prévia
+Decimal ainda não substitui nem alimenta por padrão o briefing.
+Não há coleta real verificada nem histórico com publicação independente;
+um relógio de captura não prova quando a taxa ficou pública.
+O catálogo operacional, licenciamento ODbL/reutilização, assinatura
+de tempo externa, integração ao workflow do IVO/editor e migração
+controlada do legado permanecem pendentes. Sem merges/deploys/
+automação/compartilhamento WhatsApp.
