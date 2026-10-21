@@ -36,7 +36,9 @@ async function authenticate(req){
   const header=req.headers.get('authorization')||'';
   if(!header.startsWith('Bearer ')||header.length>12000)throw new Error('MISSING_TOKEN');
   const {payload}=await jwtVerify(header.slice(7),KEYS,{issuer:'https://token.actions.githubusercontent.com',audience:'urn:nivon:conab:ingest',clockTolerance:15});
-  if(payload.repository!==REPO||payload.ref!==REF||payload.workflow_ref!==WF||!['push','workflow_dispatch'].includes(payload.event_name))throw new Error('BAD_WORKFLOW');
+  const whitelisted=new Set([REF,'refs/heads/main']);
+  const expected=REPO+'/.github/workflows/conab-neon-ingest.yml@'+payload.ref;
+  if(payload.repository!==REPO||!whitelisted.has(payload.ref)||payload.workflow_ref!==expected||!['push','workflow_dispatch','schedule'].includes(payload.event_name))throw new Error('BAD_WORKFLOW');
   return payload;
 }
 async function store(rows,claims){
