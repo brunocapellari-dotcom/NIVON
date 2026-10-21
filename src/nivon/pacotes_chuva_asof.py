@@ -25,6 +25,9 @@ _HASH = re.compile(r"[0-9a-f]{64}\Z")
 _FONTE = re.compile(r"[A-Z][A-Z0-9_]{2,90}\Z")
 _PREVISOES = frozenset({"NOAA_GFS", "ECMWF_MODELOS", "CPTEC_MERGE"})
 _OBSERVACOES = frozenset({"INMET_ESTACOES", "ANA_HIDRO"})
+_FONTE_OFICIAL = {"NOAA_GFS": "NOAA", "ECMWF_MODELOS": "ECMWF",
+                  "CPTEC_MERGE": "CPTEC", "INMET_ESTACOES": "INMET",
+                  "ANA_HIDRO": "ANA"}
 _MANIFESTO = frozenset({
     "dataset_id", "fonte_id", "sha256", "capturado_em",
     "classe", "prova_disponibilidade_sha256",
@@ -84,7 +87,7 @@ def _parse_snapshot(item, *, kind, catalogo, direitos_ref, autorizacoes):
     if ds not in (_PREVISOES if kind == "PREVISAO" else _OBSERVACOES):
         raise ErroPacoteChuva("dataset inadequado à natureza dos dados")
     source = meta["fonte_id"]
-    if not isinstance(source, str) or not _FONTE.fullmatch(source):
+    if not isinstance(source, str) or not _FONTE.fullmatch(source) or source != _FONTE_OFICIAL[ds]:
         raise ErroPacoteChuva("fonte não canônica")
     sha = _sha(meta["sha256"], "arquivo bruto")
     if hashlib.sha256(raw).hexdigest() != sha:
@@ -119,6 +122,8 @@ def _parse_snapshot(item, *, kind, catalogo, direitos_ref, autorizacoes):
                           parse_constant=lambda _: (_ for _ in ()).throw(
                               ErroPacoteChuva("NaN/Infinity JSON proibidos")),
                           object_pairs_hook=no_duplicate_keys)
+    except ErroPacoteChuva:
+        raise
     except (UnicodeError, ValueError) as exc:
         raise ErroPacoteChuva("JSON RAW inválido") from exc
     if not isinstance(data, dict) or set(data) != {"registro"} or not isinstance(data["registro"], dict):
