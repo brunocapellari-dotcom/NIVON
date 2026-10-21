@@ -46,11 +46,12 @@ class GcpBootstrapTests(unittest.TestCase):
         self.assertIn("--check", run.stdout)
 
     def test_guards_and_instructions(self):
-        self.assertIn("Nenhuma organizacao", self.guide)
-        self.assertIn("Nao vincular faturamento", self.guide)
-        self.assertIn("expiram em 60 dias", self.guide)
-        self.assertIn("ID_REAL_DO_PROJETO", self.guide)
+        self.assertIn("brunocapellari-org", self.guide)
+        self.assertIn("não vincular faturamento", self.guide)
+        self.assertIn("60 dias", self.guide)
+        self.assertIn("bash scripts/bootstrap_gcp_project.sh --check nivon-data", self.guide)
         self.assertIn("Neon", self.guide)
+        self.assertIn("não usar esse modo no projeto existente", self.guide)
 
 
 if __name__ == "__main__":
