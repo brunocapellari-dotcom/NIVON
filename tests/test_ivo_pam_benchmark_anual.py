@@ -202,8 +202,8 @@ class TestIVOBenchmarkPAMAnual(unittest.TestCase):
                            coletado=instante(2027,1,2))
         x[2024]+=(futura,)
         self.db.execute(
-            "DELETE FROM nivon_snapshots WHERE sha256=?",
-            (futura.documento_sha256,))
+            "UPDATE nivon_snapshots SET sha256=? WHERE sha256=?",
+            ("f"*64,futura.documento_sha256))
         with self.assertRaises(PermissionError):
             self.rodar(x)
 
