@@ -80,3 +80,13 @@ class TestWorkflowPrivateSourceSafety(unittest.TestCase):
             self.assertNotIn(forbidden, self.workflow)
         self.assertIn('run: mkdir -m 700 "$NIVON_INMET_DIRETORIO_PRIVADO"', self.workflow)
         self.assertIn("timeout-minutes: 4", self.workflow)
+
+    def test_default_preflight_nunca_dispara_live_automaticamente(self):
+        self.assertIn("default: preflight", self.workflow)
+        self.assertIn("          - preflight", self.workflow)
+        self.assertIn("          - live", self.workflow)
+        self.assertEqual(self.workflow.count('if [ "$NIVON_ACCESS_MODE" = "preflight" ]; then'), 3)
+        self.assertEqual(self.workflow.count('elif [ "$NIVON_ACCESS_MODE" = "live" ]; then'), 3)
+        self.assertEqual(self.workflow.count("--preflight"), 3)
+        self.assertEqual(self.workflow.count("--live"), 3)
+
