@@ -1,0 +1,157 @@
+{
+  "project": "NIVON",
+  "schema_version": "1.0",
+  "reference_date": "2026-10-19",
+  "policy": "PESQUISA_TECNOLOGICA_SEM_INSTALACAO_COPIA_OU_EXECUCAO",
+  "reuse_first": "AgroLogMT (mesmo titular) sob verificação de titularidade, dependências e compatibilidade com custo zero",
+  "items": [
+    {
+      "repo": "brunocapellari-dotcom/AgroLogMT",
+      "license": "TITULARIDADE_E_TERCEIROS_A_AUDITAR",
+      "purpose": [
+        "conab_history",
+        "nasa_power",
+        "ana_client",
+        "wasede_vintage",
+        "inmet",
+        "weather_consensus",
+        "hydrology",
+        "backtest",
+        "point_in_time",
+        "model_promotion"
+      ],
+      "paths": [
+        "collector/ana_hidrowebservice.py",
+        "collector/nasa_power.py",
+        "collector/conab_safra_history.py",
+        "collector/usda_wasde.py",
+        "collector/inmet_daily.py",
+        "models/hydrology.py",
+        "models/weather_multimodel.py",
+        "models/analog_years.py",
+        "models/backtest.py",
+        "models/point_in_time.py",
+        "models/promotion.py",
+        "models/agroclimate.py"
+      ],
+      "decision": "PREFERIR_REUSO_COM_TESTES_E_AUDITORIA_SEM_DEPLOY"
+    },
+    {
+      "repo": "bruno-portfolio/agrobr",
+      "license": "MIT",
+      "purpose": [
+        "conab_api_adapters"
+      ],
+      "decision": "JA_ADAPTADO_COM_GATES"
+    },
+    {
+      "repo": "Nixtla/statsforecast",
+      "license": "Apache-2.0",
+      "purpose": [
+        "baselines",
+        "autoets",
+        "seasonal_forecast",
+        "walk_forward"
+      ],
+      "decision": "JA_ADAPTADO_COM_TESTES_SINTETICOS"
+    },
+    {
+      "repo": "Nixtla/neuralforecast",
+      "license": "Apache-2.0",
+      "purpose": [
+        "probabilistic_forecast",
+        "neural_models"
+      ],
+      "decision": "SOMENTE_DEPOIS_DE_DADOS_E_BASELINES"
+    },
+    {
+      "repo": "unit8co/darts",
+      "license": "Apache-2.0",
+      "purpose": [
+        "forecast_backtesting",
+        "covariates",
+        "probabilistic_intervals"
+      ],
+      "decision": "EVALUATE_AVOID_OVERLAP_STATSFORECAST"
+    },
+    {
+      "repo": "pydata/xarray",
+      "license": "Apache-2.0",
+      "purpose": [
+        "gridded_climate",
+        "era5_chirps",
+        "multidimensional_datasets"
+      ],
+      "decision": "EVALUATE_FOR_SPATIAL_HISTORY"
+    },
+    {
+      "repo": "deltares/hydromt",
+      "license": "MIT",
+      "purpose": [
+        "hydrologic_geospatial_processing",
+        "model_inputs"
+      ],
+      "decision": "EVALUATE_WITHOUT_ASSUME_NAVIGABILITY"
+    },
+    {
+      "repo": "martinvonk/pyet",
+      "license": "MIT",
+      "purpose": [
+        "fao56_reference_evapotranspiration"
+      ],
+      "decision": "EVALUATE_BENCHMARK_TO_FAO56"
+    },
+    {
+      "repo": "pySTEPS/pysteps",
+      "license": "BSD-3-Clause",
+      "purpose": [
+        "rainfall_nowcast",
+        "probabilistic_ensembles"
+      ],
+      "decision": "ONLY_IF_RADAR_INPUT_AND_CALIBRATION"
+    },
+    {
+      "repo": "DSSAT/dssat-csm-os",
+      "license": "BSD-3-Clause",
+      "purpose": [
+        "biophysical_crop_simulation",
+        "soil_weather_management"
+      ],
+      "decision": "SCIENTIFIC_REFERENCE_AND_EVALUATE_INTEGRATION"
+    },
+    {
+      "repo": "Open-Meteo/open-meteo",
+      "license": "AGPL-3.0",
+      "purpose": [
+        "weather_api_software"
+      ],
+      "decision": "NOT_DEFAULT_COMMERCIAL_STACK_LICENSE_REVIEW_REQUIRED"
+    },
+    {
+      "repo": "microsoft/LightGBM",
+      "license": "MIT",
+      "purpose": [
+        "tabular_forecast",
+        "yield",
+        "feature_importance"
+      ],
+      "decision": "EVALUATE_AFTER_POINT_IN_TIME_DATASET_AND_BASELINES"
+    },
+    {
+      "repo": "pydata/pandas-datareader",
+      "license": "NOASSERTION",
+      "purpose": [
+        "finance_data_adapters"
+      ],
+      "decision": "NO_DEPENDENCY_UNTIL_LICENSE_AND_EXCHANGE_RIGHTS_AUDITED"
+    },
+    {
+      "repo": "meteostat/meteostat-python",
+      "license": "UNKNOWN_UNVERIFIED",
+      "purpose": [
+        "meteorological_station_access"
+      ],
+      "decision": "NO_USE_UNTIL_DATA_LICENSE_QUALITY_CHECK"
+    }
+  ]
+}

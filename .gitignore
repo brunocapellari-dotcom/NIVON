@@ -1,0 +1,37 @@
+# Nunca versionar dados locais, credenciais ou artefatos de terceiros
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.sqlite*
+*.db
+data/
+dados/
+private/
+privado/
+secrets/
+segredos/
+.raw/
+*.parquet
+*.arrow
+*.csv
+*.xlsx
+*.zip
+*.env.backup
+*.sqlite-shm
+*.sqlite-wal
+*.pdf
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+dist/
+build/
+
+# Única exceção: fixtures explicitamente sintéticas da suíte de testes
+!tests/fixtures/
+!tests/fixtures/*_sintetico.csv
