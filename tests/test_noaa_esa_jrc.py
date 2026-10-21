@@ -45,6 +45,15 @@ class TestNOAAMEI(unittest.TestCase):
         self.assertIsNone(r["publicacao"])
         self.assertFalse(r["apto_backtest_asof"])
 
+    def test_csv_oficial_real_com_data_mensal_e_indice_bimestral(self):
+        raw = (b"Date, Multivariate ENSO Index Version 2 (MEI.v2) missing value -999\n"
+               b"1979-01-01, 0.460\n1979-02-01, 0.290\n1979-03-01, -999\n")
+        r = normalizar_mei_csv(raw, coletado_em="2026-10-21T16:00:00Z")
+        self.assertEqual(r["quantidade"], 2)
+        self.assertEqual(r["observacoes"][0]["data_referencia"], "1979-01-01")
+        self.assertEqual(r["observacoes"][0]["bimestre_movel"], "DJ")
+        self.assertEqual(r["observacoes"][1]["bimestre_movel"], "JF")
+
     def test_rede_bloqueada_sem_execute_e_pontual_quando_liberada(self):
         a = Abridor(CSV, "text/csv")
         with self.assertRaises(PermissionError):
@@ -71,7 +80,7 @@ class TestGeoMetadata(unittest.TestCase):
         for lat, lon in ((-91, -56), (-13, 190), (float("nan"), -56)):
             with self.assertRaises(ErroRasterCatalogo):
                 planejar_esa(latitude=lat, longitude=lon)
-        a = Abridor(b"", "image/tiff", "8790032")
+        a = Abridor(b"", "binary/octet-stream", "8790032")
         with self.assertRaises(PermissionError):
             consultar_esa_tile(latitude=-13, longitude=-56, abridor=a)
         self.assertEqual(a.calls, [])
