@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone, date
 from hashlib import sha256
-from math import isfinite
 import re
 
 from .mjo_rmm import normalizar_rmm_bom, ultimo_rmm_ate, RMMInvalido
@@ -59,6 +58,7 @@ def indexar_contexto_mjo_asof(*, previsoes, snapshots_rmm, max_defasagem_dias=7)
         raise ErroContextoMJO("emissões ou snapshots fora do limite")
     prepared = []
     sha_known = set()
+    snapshot_temporal = {}
     for item in snapshots_rmm:
         if not isinstance(item, dict) or set(item) != {
             "texto", "fonte_id", "publicado_em", "coletado_em", "raw_sha256",
@@ -88,6 +88,11 @@ def indexar_contexto_mjo_asof(*, previsoes, snapshots_rmm, max_defasagem_dias=7)
         if unique in sha_known:
             raise ErroContextoMJO("snapshot bruto e captura duplicados")
         sha_known.add(unique)
+        same_instant = (published, captured)
+        former = snapshot_temporal.get(same_instant)
+        if former is not None and former != real_sha:
+            raise ErroContextoMJO("edições conflitantes no mesmo horário de publicação e captura")
+        snapshot_temporal[same_instant] = real_sha
         try:
             normalized = normalizar_rmm_bom(
                 texto=text, publicado_em=published.isoformat(),
@@ -98,6 +103,9 @@ def indexar_contexto_mjo_asof(*, previsoes, snapshots_rmm, max_defasagem_dias=7)
             raise ErroContextoMJO("RMM bruto rejeitado pelo parser canônico") from exc
         if normalized["hash_sha256"] != real_sha:
             raise ErroContextoMJO("hash canônico divergente")
+        if any(date.fromisoformat(row["data"]) > published.date()
+               for row in normalized["observacoes"]):
+            raise ErroContextoMJO("snapshot declara publicação anterior à observação contida")
         prepared.append((captured, published, real_sha, normalized))
     prepared.sort(key=lambda x: (x[0], x[1], x[2]))
 
