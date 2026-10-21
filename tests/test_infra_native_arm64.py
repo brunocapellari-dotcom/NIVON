@@ -53,6 +53,7 @@ class TestNativeARM64(unittest.TestCase):
         self.assertIn("--format cyclonedx", self.raw)
         self.assertIn("nivon-arm64-sbom.json", self.raw)
         self.assertIn("nivon.infra_trim_compare", self.raw)
+        self.assertIn("--architecture arm64", self.raw)
         self.assertIn("SEM AUTORIZACAO DE RELEASE", self.raw)
 
     def test_actions_pinned_permissions_read_and_no_deploy(self):

@@ -147,5 +147,6 @@ jobs:
           PY
           python -m nivon.infra_trim_compare \
             --baseline "$RUNNER_TEMP/nivon-arm64-base.json" \
-            --candidate "$RUNNER_TEMP/nivon-arm64-trim.json"
+            --candidate "$RUNNER_TEMP/nivon-arm64-trim.json" \
+            --architecture arm64
           echo "Experimento ARM64: SEM AUTORIZACAO DE RELEASE"

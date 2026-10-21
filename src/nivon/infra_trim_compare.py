@@ -1,6 +1,6 @@
 """Compara imagens idênticas antes/depois de remover packaging Python.
 
-Somente ensaio AMD64 de CI, sem liberação de produção e sem supressão de CVEs.
+Ensaios AMD64/ARM64 de CI. Comparar CVEs não comprova execução de runtime.
 """
 from __future__ import annotations
 
@@ -43,7 +43,9 @@ def contar(scan: dict, *, name: str) -> dict:
     return dict(counts)
 
 
-def comparar(baseline: dict, trimmed: dict) -> dict:
+def comparar(baseline: dict, trimmed: dict, *, architecture: str = "amd64") -> dict:
+    if architecture not in ("amd64", "arm64"):
+        raise ErroSupplyChain("arquitetura do scanner não permitida")
     before = contar(baseline, name=NAMES["base"])
     after = contar(trimmed, name=NAMES["trim"])
     initial = before["HIGH"] + before["CRITICAL"]
@@ -56,7 +58,9 @@ def comparar(baseline: dict, trimmed: dict) -> dict:
         "blockers_after": remaining,
         "delta_blockers": remaining - initial,
         "candidate_reduces_blockers": remaining < initial,
-        "candidate_amd64_only": True,
+        "scan_architecture": architecture,
+        "candidate_amd64_only": architecture == "amd64",
+        # O parser dos JSONs não atesta execução nativa; isso é prova separada do CI.
         "arm64_runtime_validated": False,
         "candidate_adopted": False,
         "production_allowed": False,
@@ -67,9 +71,10 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Experimento de remoção do pip; sem release")
     p.add_argument("--baseline", required=True)
     p.add_argument("--candidate", required=True)
+    p.add_argument("--architecture", choices=("amd64", "arm64"), default="amd64")
     a = p.parse_args(argv)
     try:
-        r = comparar(_carregar_json(a.baseline), _carregar_json(a.candidate))
+        r = comparar(_carregar_json(a.baseline), _carregar_json(a.candidate), architecture=a.architecture)
     except (OSError, ValueError) as exc:
         print(json.dumps({"status": "INVALID_TRIM_EXPERIMENT", "reason": str(exc),
                           "production_allowed": False}, sort_keys=True))

@@ -38,6 +38,19 @@ class TestTrimCompare(unittest.TestCase):
         self.assertFalse(result["candidate_adopted"])
         self.assertFalse(result["arm64_runtime_validated"])
 
+    def test_arm64_rotulo_do_scan_nao_simula_execucao_nativa(self):
+        result = comparar(scan("base", ["HIGH"]), scan("trim", []),
+                          architecture="arm64")
+        self.assertEqual(result["scan_architecture"], "arm64")
+        self.assertFalse(result["candidate_amd64_only"])
+        # Execução real e segurança do runner são observadas no workflow, não no JSON.
+        self.assertFalse(result["arm64_runtime_validated"])
+        self.assertFalse(result["production_allowed"])
+
+    def test_arquitetura_que_nao_foi_homologada_e_recusada(self):
+        with self.assertRaises(ErroSupplyChain):
+            comparar(scan("base", []), scan("trim", []), architecture="s390x")
+
     def test_candidato_pior_nao_escondido(self):
         result = comparar(scan("base", []), scan("trim", ["CRITICAL"]))
         self.assertEqual(result["delta_blockers"], 1)
