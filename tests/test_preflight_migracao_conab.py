@@ -14,6 +14,7 @@ from nivon.conab_agrobr import normalizar_progresso
 from nivon.progresso_store import abrir_progresso,gravar_progresso
 from nivon.registro_snapshots import abrir_registro
 from nivon.progresso_conab_historico import registrar_progresso_local,preparar_esquema
+from nivon.conciliacao_progresso_stores import ErroConciliacaoConab
 from nivon.preflight_migracao_conab import (
     ErroPreflightConab,planejar_preflight_conab,main,
 )
