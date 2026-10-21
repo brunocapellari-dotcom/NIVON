@@ -13,7 +13,10 @@ from .quant_core import ErroQuantitativo, _identidade
 def _num(v: object, nome: str, *, minimo: float = 0, maximo: float | None = None) -> float:
     if type(v) not in (float, int) or not isfinite(v):
         raise ErroQuantitativo(f"{nome}: numero finito obrigatorio")
-    f=float(v)
+    try:
+        f=float(v)
+    except OverflowError as exc:
+        raise ErroQuantitativo(f"{nome}: overflow numerico") from exc
     if f < minimo or (maximo is not None and f > maximo):
         raise ErroQuantitativo(f"{nome}: fora dos limites")
     return f
@@ -55,6 +58,8 @@ def normalizar_relatorio_brier_mercados(relatorio: Mapping) -> dict:
     if not isinstance(bins,list) or not bins:
         raise ErroQuantitativo("faltam bins de confianca")
     qtd=0
+    soma_ece=0.0
+    anterior_fim=-1.0
     for x in bins:
         if not isinstance(x,Mapping) or type(x.get("n")) is not int or x["n"] < 1:
             raise ErroQuantitativo("bin de confianca invalido")
@@ -65,11 +70,15 @@ def normalizar_relatorio_brier_mercados(relatorio: Mapping) -> dict:
             raise ErroQuantitativo("faixa do bin ausente")
         a=_num(faixa[0],"limite_inferior",maximo=1)
         b=_num(faixa[1],"limite_superior",maximo=1)
-        if not a < b or not a-1e-9 <= conf <= b+1e-9:
-            raise ErroQuantitativo("bin fora do dominio")
+        if not a < b or a < anterior_fim-1e-10 or not a-1e-9 <= conf <= b+1e-9:
+            raise ErroQuantitativo("bin fora do dominio ou sobreposto")
+        anterior_fim=b
         qtd+=x["n"]
+        soma_ece+=x["n"]*abs(conf-acerto)
     if qtd != n:
         raise ErroQuantitativo("bins nao cobrem todas as avaliacoes")
+    if abs(ece-soma_ece/n)>1e-9:
+        raise ErroQuantitativo("ECE nao reconcilia com bins informados")
     return {
         "status":"RELATORIO_MERCADOS_NORMALIZADO_NAO_HOMOLOGADO",
         "serie_id":relatorio["serie_id"],"modelo_versao":relatorio["modelo_versao"],
