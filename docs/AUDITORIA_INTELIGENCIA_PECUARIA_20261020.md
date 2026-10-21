@@ -84,3 +84,24 @@ Reproduzir testes sinteticos: PYTHONPATH=src python -m unittest tests.test_pecua
 - A assinatura \`status_fonte\`/\`operacoes_autorizadas\` é um gate explícito, não atestado de licença. PENDENTE e falta de direito bloqueiam leitura/armazenamento. Nenhuma fonte, cron ou publicação habilitada.
 
 **Próxima tarefa executável:** verificar resposta de metadados/valores oficiais SIDRA e direitos aplicáveis, mapeando IDs e categorias por tabela/edição; usar arquivo autêntico autorizado para teste e guardar hash/vintage. Depois ligar observações verificadas a séries revisáveis com corte de publicação e modelos por espécie. Sem essa prova, o parser fica CODE_TESTED_SYNTHETIC_ONLY.
+
+## Continuidade 21/10/2026 — correção crítica de cobertura territorial SIDRA
+
+### Evidência pública e limite de confiança
+- Fontes oficiais: https://sidra.ibge.gov.br/pesquisa/abate/tabelas/ e https://www.ibge.gov.br/estatisticas/economicas/servicos/9203-pesquisas-trimestrais-do-abate-de-animais.html — 1092 bovino, 1093 suíno, 1094 frango e resultados do 2º trimestre de 2026.
+- Catálogo independente, não oficial: https://quantilica.com/fish/tabelas/1092/numero-informantes-quantidade-peso-total-carcacas-bovinos-abatidos-mes-trimestre-tipo-rebanho-tipo-i — mostra 27 localidades UF para 1092.
+- Catálogo independente, não oficial: https://quantilica.com/fish/tabelas/1093/numero-informantes-quantidade-peso-total-carcacas-suinos-abatidos-mes-trimestre-tipo-inspecao — mostra 26 localidades UF para 1093.
+- Catálogo independente, não oficial: https://quantilica.com/fish/tabelas/1094/numero-informantes-quantidade-peso-total-carcacas-frangos-abatidos-mes-trimestre-tipo-inspecao — mostra 26 localidades UF para 1094.
+- Não foi identificada oficialmente a UF ausente em 1093 e 1094, nem sua cobertura ao longo do histórico. Não interpretar ausência como zero ou tratar contagem do catálogo como lista homologada.
+
+### Correção executada
+- Auditar por 27 UFs invariáveis era incorreto. O algoritmo de auditoria BR x UF agora exige contrato explícito por competência com especie, tabela, lista nominal de UFs, fonte de evidência e SHA256 de metadados.
+- Sem cobertura explícita, retornar COBERTURA_NAO_VERIFICADA, sem soma e sem resíduo.
+- Com lista válida, comparar apenas cobertura exatamente coincidente; nenhuma ausência ou excedente é ajustada; inconsistência retorna INCOMPLETO_SEM_IMPUTACAO ou COBERTURA_DIVERGENTE_SEM_IMPUTACAO.
+- Cobertura declarada pode ser diferente a cada competência; comparação não garante homologação, que permanece falsa. As fixtures 25/26/27 UFs são artificiais, sem supor qual UF real faltaria.
+
+### Bloqueio técnico
+- Tentativas diretas de acessar os serviços oficiais servicodados.ibge.gov.br/api/v3/agregados/{id}/metadados e apisidra.ibge.gov.br/values/t/1092/n1/1/p/202602/v/allxp/h/y não conseguiram recuperar JSON. O ambiente de execução local também não resolveu os hosts oficiais via DNS.
+- Não foram confirmados IDs oficiais de variáveis/categorias nem a estrutura exata DnC dos resultados de API, tampouco direitos para coleta operacional. Não declarar histórico real ou previsão homologada.
+
+**Próxima ação:** obter uma amostra oficial autêntica e permitida por espécie, validar metadados e listas de localidades por referência, executar parser, reconciliar totais e arquivar SHA e datas antes de backfill/agendamento.
