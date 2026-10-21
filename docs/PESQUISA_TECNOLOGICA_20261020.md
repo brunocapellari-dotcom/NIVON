@@ -112,3 +112,16 @@ PYTHONPATH=src python -m nivon.auditoria_evidencias_pacotes \
 Para produzir evidências futuramente será necessário um lock verdadeiro gerado e revisado em sandbox seguro, execução do `pip-audit` com serviço oficial, registro verificável de código de saída e de versão do auditor, e armazenamento privado com controle de acesso. **Nenhum dos comandos acima executa scanner CVE real.** A especificação do formato do relatório foi conferida no código oficial de `pypa/pip-audit` (`pip_audit/_format/json.py`). Não incorporar um JSON de auditoria sintético como prova de ausência de vulnerabilidades.
 
 **Revisão pendente:** transformar hashes declarados em prova de pacotes reais e dependências transitivas completas, atestar o executor e integrar um SBOM CycloneDX assinado ou evidência equivalente. Os dois auditores estáticos atuais têm funções parcialmente sobrepostas e precisam de consolidação para evitar duplicidade; o novo validador não altera seus contratos.
+
+
+## Continuidade de 21/10/2026 — consolidação de parsing de dependências
+
+A sobreposição dos dois auditores estáticos registrada nas seções históricas acima foi **tratada no nível do parser** (as notas anteriores permanecem como histórico):
+
+- **Única interpretação de sintaxe e versões:** `auditoria_extras.analisar_requisito` é o parser compartilhado por `pesquisa_dependencias` e `auditoria_evidencias_pacotes`. Nenhum `pip install` ou serviço externo é invocado.
+- **Identidade semântica:** `auditoria_extras.chave_requisito` iguala faixas idênticas com ordem diferente ou zeros finais (por exemplo `>=2.2,<3` e `<3.0,>=2.2.0`) e distingue operadores inclusivos/exclusivos. Não equivale a resolver completo PEP 440, análise de pre-release ou prova de transitivas.
+- **Políticas complementares preservadas:** `auditoria_extras` verifica o vínculo de StatsForecast, MLForecast, River e DuckDB ao catálogo IVO e classifica limites de build sem bloqueá-los; `pesquisa_dependencias` exige faixa estritamente crescente ou pin exato para dependência do projeto, trata `setuptools>=68` como risco explícito e produz inventário com hash do `pyproject`. Assim, **não existem mais duas implementações independentes do parser de versões**, embora permaneçam duas saídas para consumidores com responsabilidades distintas.
+- **Nova regressão:** `tests/test_consistencia_parsers_dependencias.py` verifica equivalência semântica, conflitos reais entre extras, políticas intencionalmente diferentes e rejeição de URL/marker/extra não autorizado.
+- **Limites do gate:** continua sendo somente revisão de declarações. Nunca valida wheel baixado, fechamento transitivo, escaneamento real de vulnerabilidades, licença de transitivas, assinaturas, ambiente instalado ou aptidão de produção.
+
+Próxima prioridade P0 continua a obtenção de evidências independentes autenticadas de uma resolução real de extras opcionais, com hashes conferidos e relatório CVE rastreável. Piloto dlt contra o coletor nativo permanece condicionado à fonte oficial autorizada. Sem alteração em `main`, deploy, instalação ou custo.
