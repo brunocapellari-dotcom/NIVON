@@ -1,0 +1,309 @@
+{
+  "versao": "1.0.0",
+  "origem_catalogacao": "Capturas de tela fornecidas em 21/10/2026; IDs de incorporação identificados visualmente",
+  "agregador": "Notícias Agrícolas",
+  "pagina_widgets": "https://www.noticiasagricolas.com.br/widgets/",
+  "estado": "CATALOGADO_NAO_HOMOLOGADO",
+  "permissoes": {
+    "incorporacao_visual": "CONFERIR_TERMOS",
+    "coleta_automatizada": "NAO_COMPROVADA",
+    "armazenamento_historico": "NAO_COMPROVADO",
+    "redistribuicao": "NAO_COMPROVADA"
+  },
+  "indicadores": [
+    {
+      "id": 131,
+      "categoria": "algodao",
+      "nome": "Algodão — IMEA",
+      "tipo": "fisico",
+      "fonte_original": "IMEA"
+    },
+    {
+      "id": 84,
+      "categoria": "algodao",
+      "nome": "Algodão — Indicador CEPEA/ESALQ",
+      "tipo": "fisico",
+      "fonte_original": "CEPEA"
+    },
+    {
+      "id": 168,
+      "categoria": "algodao",
+      "nome": "Algodão em pluma",
+      "tipo": "fisico",
+      "fonte_original": "A_CONFIRMAR"
+    },
+    {
+      "id": 169,
+      "categoria": "algodao",
+      "nome": "Caroço de algodão",
+      "tipo": "fisico",
+      "fonte_original": "A_CONFIRMAR"
+    },
+    {
+      "id": 55,
+      "categoria": "algodao",
+      "nome": "Algodão — Nova York",
+      "tipo": "futuro",
+      "fonte_original": "ICE US"
+    },
+    {
+      "id": 222,
+      "categoria": "algodao",
+      "nome": "Índice Cotlook A",
+      "tipo": "indice_fisico",
+      "fonte_original": "Cotlook"
+    },
+    {
+      "id": 302,
+      "categoria": "bovinos",
+      "nome": "Reposição Nelore — Macho",
+      "tipo": "reposicao",
+      "fonte_original": "A_CONFIRMAR"
+    },
+    {
+      "id": 303,
+      "categoria": "bovinos",
+      "nome": "Reposição Nelore — Fêmea",
+      "tipo": "reposicao",
+      "fonte_original": "A_CONFIRMAR"
+    },
+    {
+      "id": 299,
+      "categoria": "bovinos",
+      "nome": "Média de boi gordo — AgroBrazil",
+      "tipo": "fisico",
+      "fonte_original": "AgroBrazil"
+    },
+    {
+      "id": 128,
+      "categoria": "bovinos",
+      "nome": "Indicador boi gordo ESALQ/B3",
+      "tipo": "fisico",
+      "fonte_original": "CEPEA"
+    },
+    {
+      "id": 298,
+      "categoria": "bovinos",
+      "nome": "Indicador do boi",
+      "tipo": "fisico",
+      "fonte_original": "A_CONFIRMAR"
+    },
+    {
+      "id": 300,
+      "categoria": "bovinos",
+      "nome": "Indicador da vaca",
+      "tipo": "fisico",
+      "fonte_original": "A_CONFIRMAR"
+    },
+    {
+      "id": 301,
+      "categoria": "bovinos",
+      "nome": "Indicador da novilha",
+      "tipo": "fisico",
+      "fonte_original": "A_CONFIRMAR"
+    },
+    {
+      "id": 248,
+      "categoria": "bovinos",
+      "nome": "Boi gordo — B3 pregão regular",
+      "tipo": "futuro",
+      "fonte_original": "B3"
+    },
+    {
+      "id": 122,
+      "categoria": "bovinos",
+      "nome": "Boi à vista — IMEA",
+      "tipo": "fisico",
+      "fonte_original": "IMEA"
+    },
+    {
+      "id": 200,
+      "categoria": "bovinos",
+      "nome": "Bezerro ESALQ/BM&F — MS",
+      "tipo": "reposicao",
+      "fonte_original": "CEPEA"
+    },
+    {
+      "id": 28,
+      "categoria": "cafe",
+      "nome": "Café arábica — CEPEA/ESALQ",
+      "tipo": "fisico",
+      "fonte_original": "CEPEA"
+    },
+    {
+      "id": 250,
+      "categoria": "cafe",
+      "nome": "Café arábica 4/5 — B3",
+      "tipo": "futuro",
+      "fonte_original": "B3"
+    },
+    {
+      "id": 4,
+      "categoria": "cafe",
+      "nome": "Café — Nova York",
+      "tipo": "futuro",
+      "fonte_original": "ICE US"
+    },
+    {
+      "id": 5,
+      "categoria": "cafe",
+      "nome": "Café — Londres",
+      "tipo": "futuro",
+      "fonte_original": "ICE Europe"
+    },
+    {
+      "id": 104,
+      "categoria": "financeiro",
+      "nome": "Euro futuro",
+      "tipo": "futuro",
+      "fonte_original": "B3"
+    },
+    {
+      "id": 17,
+      "categoria": "financeiro",
+      "nome": "Dólar comercial futuro",
+      "tipo": "futuro",
+      "fonte_original": "B3"
+    },
+    {
+      "id": 232,
+      "categoria": "financeiro",
+      "nome": "Câmbio PTAX — dólar e euro",
+      "tipo": "cambio",
+      "fonte_original": "BCB"
+    },
+    {
+      "id": 198,
+      "categoria": "milho",
+      "nome": "Milho disponível — IMEA",
+      "tipo": "fisico",
+      "fonte_original": "IMEA"
+    },
+    {
+      "id": 130,
+      "categoria": "milho",
+      "nome": "Milho — mercado físico por praça",
+      "tipo": "fisico",
+      "fonte_original": "A_CONFIRMAR"
+    },
+    {
+      "id": 10,
+      "categoria": "milho",
+      "nome": "Milho — Chicago",
+      "tipo": "futuro",
+      "fonte_original": "CME/CBOT"
+    },
+    {
+      "id": 251,
+      "categoria": "milho",
+      "nome": "Milho — B3 pregão regular",
+      "tipo": "futuro",
+      "fonte_original": "B3"
+    },
+    {
+      "id": 91,
+      "categoria": "milho",
+      "nome": "Indicador milho ESALQ/B3",
+      "tipo": "fisico",
+      "fonte_original": "CEPEA"
+    },
+    {
+      "id": 199,
+      "categoria": "soja",
+      "nome": "Soja disponível — IMEA",
+      "tipo": "fisico",
+      "fonte_original": "IMEA"
+    },
+    {
+      "id": 127,
+      "categoria": "soja",
+      "nome": "Soja — mercado físico por praça",
+      "tipo": "fisico",
+      "fonte_original": "A_CONFIRMAR"
+    },
+    {
+      "id": 23,
+      "categoria": "soja",
+      "nome": "Soja — Chicago",
+      "tipo": "futuro",
+      "fonte_original": "CME/CBOT"
+    },
+    {
+      "id": 22,
+      "categoria": "soja",
+      "nome": "Soja CME — B3 pregão regular",
+      "tipo": "futuro",
+      "fonte_original": "B3"
+    },
+    {
+      "id": 82,
+      "categoria": "soja",
+      "nome": "Prêmio soja — Paranaguá",
+      "tipo": "premio",
+      "fonte_original": "A_CONFIRMAR"
+    },
+    {
+      "id": 121,
+      "categoria": "soja",
+      "nome": "Indicador soja ESALQ/B3 — Paranaguá",
+      "tipo": "fisico",
+      "fonte_original": "CEPEA"
+    },
+    {
+      "id": 26,
+      "categoria": "soja",
+      "nome": "Indicador soja CEPEA/ESALQ — Paraná",
+      "tipo": "fisico",
+      "fonte_original": "CEPEA"
+    },
+    {
+      "id": 140,
+      "categoria": "soja",
+      "nome": "Óleo de soja — Chicago",
+      "tipo": "futuro",
+      "fonte_original": "CME/CBOT"
+    },
+    {
+      "id": 139,
+      "categoria": "soja",
+      "nome": "Farelo de soja — Chicago",
+      "tipo": "futuro",
+      "fonte_original": "CME/CBOT"
+    },
+    {
+      "id": 79,
+      "categoria": "soja",
+      "nome": "Farelo de soja — mercado físico",
+      "tipo": "fisico",
+      "fonte_original": "A_CONFIRMAR"
+    },
+    {
+      "id": 36,
+      "categoria": "sucroenergetico",
+      "nome": "Açúcar cristal CEPEA/ESALQ — SP",
+      "tipo": "fisico",
+      "fonte_original": "CEPEA"
+    },
+    {
+      "id": 223,
+      "categoria": "sucroenergetico",
+      "nome": "Etanol — Chicago",
+      "tipo": "futuro",
+      "fonte_original": "CME"
+    },
+    {
+      "id": 249,
+      "categoria": "sucroenergetico",
+      "nome": "Etanol — B3 pregão regular",
+      "tipo": "futuro",
+      "fonte_original": "B3"
+    },
+    {
+      "id": 35,
+      "categoria": "sucroenergetico",
+      "nome": "Açúcar — Nova York",
+      "tipo": "futuro",
+      "fonte_original": "ICE US"
+    }
+  ]
+}
