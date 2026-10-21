@@ -49,10 +49,10 @@ def _requisito(declaracao: str) -> tuple[str, str, tuple]:
     chave = chave_requisito(parsed)
     if parsed["exact_pin"]:
         return nome, "==" + parsed["constraints"][0][1], chave
-    # Os valores são canônicos independentemente da ordem informada.
-    bounds = [(op, val, canonical) for op, val in parsed["constraints"]
-              for cop, canonical in chave if cop == op and canonical ==
-              tuple(int(n) for n in val.split(".")) + (0,) * (4 - len(val.split(".")))]
+    # A comparação usa a mesma chave semântica que o pré-voo IVO.
+    # Faixas estritas têm um operador inferior e um superior distintos.
+    versoes_canonicas = {op: versao for op, versao in chave}
+    bounds = [(op, val, versoes_canonicas[op]) for op, val in parsed["constraints"]]
     lows = [(op, val, canonical) for op, val, canonical in bounds if op in (">", ">=")]
     ups = [(op, val, canonical) for op, val, canonical in bounds if op in ("<", "<=")]
     if len(parsed["constraints"]) != 2 or len(lows) != 1 or len(ups) != 1:
