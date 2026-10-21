@@ -64,6 +64,18 @@ class PonteMercados(unittest.TestCase):
             with self.subTest(k=k),self.assertRaises(ErroQuantitativo):
                 normalizar_relatorio_brier_mercados(r)
 
+    def test_ece_indevido_e_bins_sobrepostos_bloqueiam(self):
+        r=relatorio();r["ece_confianca"]=.4
+        with self.assertRaisesRegex(ErroQuantitativo,"ECE"):
+            normalizar_relatorio_brier_mercados(r)
+        r=relatorio()
+        r["bins_calibracao"]=[
+            {"faixa":[.50,.9],"n":15,"confianca_media":.8,"acerto":.7},
+            {"faixa":[.75,1.0],"n":15,"confianca_media":.8,"acerto":.7},
+        ]
+        with self.assertRaisesRegex(ErroQuantitativo,"sobreposto"):
+            normalizar_relatorio_brier_mercados(r)
+
     def test_bins_incompletos_e_ganho_indefinido(self):
         r=relatorio();r["bins_calibracao"][0]["n"]=29
         with self.assertRaises(ErroQuantitativo):
