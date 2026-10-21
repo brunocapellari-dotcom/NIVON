@@ -86,3 +86,27 @@ A CLI aceita somente arquivos relativos à pasta do manifesto (rejeita symlinks 
 ## Próximo bloqueio real
 
 A homologação dos três arquivos reais exige acesso autorizado aos bytes e suas edições/metadados verdadeiros, além da confirmação independente da cronologia e das condições de utilização. Uma vez fornecida essa evidência, o verificador agora já está implementado para analisar os insumos locais sem download ou deploy.
+
+
+## Reforço P0 — controle de identidade das autorizações (21/10/2026)
+
+A rota `anp_semanal_store.gravar_edicao_semanal` foi endurecida para eliminar a situação em que um chamador classificava dado como `REAL_AUTORIZADO` apenas por enviar `direitos_confirmados=true` e SHA-256 de uma suposta prova. Hash é apenas **referência de conteúdo**, não autenticação de aprovação.
+
+### Contrato implementado
+
+- `src/nivon/anp_atestacoes.py` valida duas aprovações independentes com HMAC-SHA256, domínio separado `DIREITOS_USO` e `HOMOLOGACAO_LAYOUT`, emissores diferentes, **segredos diferentes com 32 bytes ou mais**, identificadores únicos, janela temporal limitada e lista confiável de revogações.
+- Cada assinatura inclui, sem campos omitidos, SHA do XLSX, SHA derivado do resumo validado, URL original ANP, data de publicação, prova de publicação, prova de direitos, SHA do índice, operação permitida `ARMAZENAMENTO_ANALITICO_NAO_COMERCIAL` e `publicavel=false`. Alterar qualquer campo invalida a assinatura.
+- O armazenamento requer, além das assinaturas, a habilitação operacional externa `habilitacao_real=true`, o índice validado e `direitos_confirmados=true`. A configuração é **desativada por padrão**; a rota de ingestão `anp_lpc_pipeline.py` continua a recusar classe real independentemente das flags.
+- Tabela `anp_semanal_atestacoes` guarda emissor, domínio, identificador, hash da assinatura e validade por edição, na mesma transação que a observação. `aprovacao_id` é único para evitar reuso em outra edição; falta de qualquer um dos dois domínios bloqueia consulta. Registros históricos anteriores, mesmo classificados erroneamente como reais, permanecem **invisíveis** sem atestações.
+- Chaves ficam no **registro confiável do controlador**, nunca são baixadas do arquivo ANP ou do payload do coletor. Não há chave de produção no repositório. Fixtures de teste usam chaves publicamente falsas e não demonstram legitimidade legal ou posse de chaves confiáveis.
+- A expiração e lista de revogação são conferidas **no momento da ingestão**. Não há sistema real de KMS, emissão/assinatura, rotação, revogação após ingestão, consulta de CRL, prova de autenticidade da origem, relógio confiável distribuído nem política de atualização pós-aprovação. Esses itens permanecem pendências reais e **impedem alegar homologação operacional**.
+
+### Critérios antes de habilitar dados reais
+
+1. Obter e auditar bytes e os termos de uso da ANP e trilha das três edições verdadeiras. Garantir atribuição ANP e finalidade não comercial.
+2. Implantar separação de identidade e custódia das duas autoridades externas (credenciais isoladas, revogação e rotação monitoradas), relógio do operador e trilha de aprovação imutável.
+3. Vincular uma decisão de direitos e uma decisão de layout independentes por edição, sob política de finalidade não comercial e preservação de dados.
+4. Exigir uma alteração revisada do pipeline atual para aceitar a classe real somente depois dos gates; manter revisão independente, testes com dados autorizados e trilha PIT.
+5. Implementar invalidação pós-ingestão em caso de revogação de qualquer autoridade e bloqueio de consultas de edições revogadas — a verificação atual na ingestão **não** cobre revogações futuras.
+
+Nenhuma destas alterações autoriza execução de coleta automática, publicação, dump da base, deploy, agendamento, compra ou mudança de finalidade.
