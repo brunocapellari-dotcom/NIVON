@@ -6,15 +6,43 @@ Testes adversariais intencionais: o contrato deve falhar fechado até correção
 from __future__ import annotations
 
 import unittest
+import json
+import hmac
+from hashlib import sha256
 from dataclasses import replace
 from datetime import date, datetime, timezone
 from decimal import Decimal
 
 from nivon.fretes_registros import OfertaFrete, consolidar_ofertas
 from nivon.fretes_adapter_whatsapp import adaptar_evento_whatsapp
+from nivon.fretes_atestacoes import hash_evento
 
 
 HMAC_TESTE = b"chave-exclusivamente-sintetica-com-mais-de-32-bytes"
+CHAVES_ASSINATURA = {
+    "DIREITOS": b"testes-rights-assinatura-20261021-ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    "RESOLUCAO": b"testes-resolucao-assinatura-20261021-ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+}
+EMISSORES = {"DIREITOS": "autoridade-direitos-sintetica",
+            "RESOLUCAO": "autoridade-resolucao-sintetica"}
+
+
+def atestar(documento, dominio):
+    body = dict(documento)
+    body.update({
+        "versao_atestacao": 1, "emissor_id": EMISSORES[dominio],
+        "emitido_em": "2026-10-19T00:00:00+00:00",
+        "valido_ate": "2026-10-24T00:00:00+00:00",
+    })
+    raw = json.dumps(body, sort_keys=True, ensure_ascii=True,
+                     separators=(",", ":"), allow_nan=False).encode("utf-8")
+    body["assinatura_hmac_sha256"] = hmac.new(
+        CHAVES_ASSINATURA[dominio],
+        b"NIVON_ATTESTATION_V1\x00" + dominio.encode("utf-8") + b"\x00" + raw,
+        sha256,
+    ).hexdigest()
+    return body
+
 
 
 def oferta(**modificacoes):
@@ -74,9 +102,13 @@ def adaptar(provider="PROVEDOR-A", *, tenant="TENANT-001",
             momento="2026-10-20T12:00:00+00:00",
             coletado=datetime(2026, 10, 20, 13, tzinfo=timezone.utc)):
     e, r, a = evento(provider, tenant=tenant, momento=momento)
+    r["evento_sha256"] = hash_evento(e)
     return adaptar_evento_whatsapp(
-        e, resolucao=r, autorizacao=a,
+        e, resolucao=atestar(r, "RESOLUCAO"),
+        autorizacao=atestar(a, "DIREITOS"),
         data_coleta=coletado, chave_hmac=HMAC_TESTE,
+        chaves_atestacao=CHAVES_ASSINATURA,
+        emissores_atestacao=EMISSORES,
     )
 
 
