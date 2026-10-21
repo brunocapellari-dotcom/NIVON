@@ -180,6 +180,33 @@ class TestIVOBenchmarkPAMAnual(unittest.TestCase):
         with self.assertRaises(PermissionError):
             self.rodar(x)
 
+    def test_artefato_real_futuro_nao_pode_ficar_oculto_no_pacote(self):
+        x=self.serie()
+        # Errata posterior ao corte: mesmo sem entrar em fold, a presença
+        # de artefato REAL deve invalidar o experimento sintético inteiro.
+        futura=self.edicao(2024,999.,tipo="ERRATA",
+                          publicado=date(2027,1,1),
+                          coletado=instante(2027,1,2))
+        x[2024]+=(futura,)
+        self.db.execute(
+            "UPDATE nivon_snapshots SET tipo='REAL_AUTORIZADO', "
+            "evidencia_direitos='NAO_HOMOLOGADO' WHERE sha256=?",
+            (futura.documento_sha256,))
+        with self.assertRaises(PermissionError):
+            self.rodar(x)
+
+    def test_snapshot_futuro_ausente_bloqueia_pacote(self):
+        x=self.serie()
+        futura=self.edicao(2024,999.,tipo="ERRATA",
+                           publicado=date(2027,1,1),
+                           coletado=instante(2027,1,2))
+        x[2024]+=(futura,)
+        self.db.execute(
+            "DELETE FROM nivon_snapshots WHERE sha256=?",
+            (futura.documento_sha256,))
+        with self.assertRaises(PermissionError):
+            self.rodar(x)
+
     def test_rejeita_corte_sem_timezone(self):
         x=self.serie()
         with self.assertRaises(ErroBenchmarkAnual):
