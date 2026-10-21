@@ -154,6 +154,8 @@ def _verificar_cotacao(item: dict, agora: datetime, texto: str) -> str:
     # O mesmo backstop temporal do renderer deve se aplicar ao pacote
     # auditado; ANP usa seção DIESEL e não preço intradiário de energia.
     secao = secao_do_grupo(grupo=grupo, secao_declarada=item.get("secao"))
+    if item.get("classe_estatistica") == "MEDIA_AMOSTRAL_MUNICIPAL_REVENDA" and secao != "DIESEL":
+        raise ValueError("ANP: seção de média amostral municipal deve ser DIESEL")
     validar_frescor_indicador(secao=secao, referencia=item["referencia_em"],
                               gerado_em=agora.isoformat())
     if not all(isinstance(item.get(x), str) and item[x].strip()
