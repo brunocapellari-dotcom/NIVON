@@ -113,8 +113,9 @@ class ArmazemVintages:
         linhas=self.conn.execute(
             "SELECT * FROM edicoes WHERE dataset_id=? AND serie_id=? AND competencia=? AND edicao_id=?",pk
         ).fetchone()
-        # Coletas subsequentes da mesma edição podem ter outro horário, mas
-        # nenhum atributo de conteúdo/versão pode ser substituído.
+        # A primeira coleta arquivada constitui a prova operacional local;
+        # repetir a mesma edição não permite antecipar esse instante.
+        # Nenhum atributo de conteúdo/versão pode ser substituído.
         if linhas:
             fields=set(_CAMPOS)-{"coletado_em"}
             if any(linhas[k]!=d[k] for k in fields):
@@ -132,11 +133,16 @@ class ArmazemVintages:
         corte=_utc(instante_decisao,"instante_decisao")
         if not all(isinstance(x,str) and x for x in (dataset_id,serie_id,competencia)):
             raise ErroCientifico("identidade da série incompleta")
+        # O histórico só é reconstruível as-of com coleta capturada até a
+        # decisão. Disponibilidade histórica autodeclarada jamais autoriza
+        # retroagir um download obtido depois daquela decisão.
         row=self.conn.execute(
             """SELECT * FROM edicoes WHERE dataset_id=? AND serie_id=? AND competencia=?
                AND disponibilidade_verificada=1 AND disponivel_em IS NOT NULL AND disponivel_em<=?
+               AND publicado_em IS NOT NULL AND publicado_em<=?
+               AND coletado_em<=?
                ORDER BY disponivel_em DESC, publicado_em DESC, edicao_id DESC LIMIT 1""",
-            (dataset_id,serie_id,competencia,corte)
+            (dataset_id,serie_id,competencia,corte,corte,corte)
         ).fetchone()
         if row is None:return None
         return {**dict(row),"valor_decimal":Decimal(row["valor"]),
