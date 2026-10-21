@@ -195,40 +195,99 @@ def normalizar_snapshot_sidra_abate(
 
 
 
-def auditar_agregados_sidra_abate(*, resultado: Mapping[str, object]) -> list[dict]:
-    """Comparar BR e 27 UFs apenas quando ambos cobrem a mesma medida/periodo.
+def auditar_agregados_sidra_abate(
+    *, resultado: Mapping[str, object],
+    cobertura_por_competencia: Mapping[str, Mapping[str, object]] | None = None,
+) -> list[dict]:
+    """Audita BR x UF somente com cobertura territorial EXPLICITA por competencia.
 
-    Sem imputar UFs suprimidas, sem assumir que uma divergencia prove erro.
-    Resultado nao promove serie, cotacao ou previsao.
+    A presenca de uma UF no cadastro IBGE nao implica sua presenca no agregado
+    SIDRA. E proibido presumir 27 UFs para suinos/frangos ou que UF ausente = 0.
+    A comparacao permanece diagnostica, nao homologa metadados, fontes ou series.
+
+    cobertura_por_competencia = {
+      "2026-T2": {
+        "especie": "BOVINO", "tabela_sidra": "1092",
+        "ufs": ["AC", ...], "fonte_evidencia": "url/ou descricao verificavel",
+        "origem_sha256": "64 caracteres hexa"
+      }
+    }
+    A evidencia precisa ser verificada EXTERNAMENTE antes de uso operacional.
     """
-    if not isinstance(resultado, Mapping) or resultado.get("classificacao") != "NORMALIZACAO_OFFLINE_NAO_HOMOLOGADA":
-        raise DadoInvalido("auditoria exige snapshot normalizado sem homologacao")
+    if (not isinstance(resultado, Mapping)
+            or resultado.get("classificacao") != "NORMALIZACAO_OFFLINE_NAO_HOMOLOGADA"
+            or resultado.get("especie") not in TABELAS_SIDRA):
+        raise DadoInvalido("auditoria exige snapshot pecuario nao homologado")
+    if resultado.get("tabela_sidra") != TABELAS_SIDRA[resultado["especie"]]:
+        raise DadoInvalido("tabela SIDRA e especie divergentes")
     obs = resultado.get("observacoes")
     if not isinstance(obs, list) or any(not isinstance(o, ObservacaoCadeia) for o in obs):
         raise DadoInvalido("observacoes invalidas na auditoria")
-    if any(o.produto != resultado.get("especie") or o.fonte_id != "IBGE" for o in obs):
+    if any(o.produto != resultado["especie"] or o.fonte_id != "IBGE" for o in obs):
         raise DadoInvalido("fontes ou especies misturadas")
+    if cobertura_por_competencia is not None and not isinstance(cobertura_por_competencia, Mapping):
+        raise DadoInvalido("cobertura deve ser mapa por competencia")
     periodos = defaultdict(dict)
     for o in obs:
+        if o.indicador not in INDICADORES or o.uf not in set(UF_IBGE.values()) | {"BR"}:
+            raise DadoInvalido("indicador/territorio invalido")
         chave = (o.competencia, o.indicador)
         if o.uf in periodos[chave]:
             raise DadoInvalido("observacao duplicada na auditoria")
         periodos[chave][o.uf] = o.valor
+
     relatorio = []
     for (competencia, indicador), valores in sorted(periodos.items()):
-        ufs = [u for u in valores if u != "BR"]
-        esperado = len(UF_IBGE)
-        item = {"especie": resultado["especie"], "competencia": competencia,
-                "indicador": indicador, "unidade": UNIDADE_CANONICA[indicador],
-                "ufs_presentes": len(ufs), "ufs_esperadas": esperado,
-                "valor_brasil": valores.get("BR"), "soma_ufs": None,
-                "residuo_brasil_menos_ufs": None,
-                "status": "INCOMPLETO_SEM_IMPUTACAO"}
-        if "BR" in valores and len(ufs) == esperado:
-            soma = sum(valores[u] for u in UF_IBGE.values())
-            item["soma_ufs"] = soma
-            item["residuo_brasil_menos_ufs"] = valores["BR"] - soma
-            item["status"] = ("CONSISTENTE" if valores["BR"] == soma
-                              else "DIVERGENCIA_A_INVESTIGAR")
+        presentes = set(valores) - {"BR"}
+        cobertura = ((cobertura_por_competencia or {}).get(competencia))
+        esperado = None
+        sha_cobertura = None
+        if cobertura is not None:
+            if not isinstance(cobertura, Mapping) or set(cobertura) != {
+                "especie", "tabela_sidra", "ufs", "fonte_evidencia", "origem_sha256"
+            }:
+                raise DadoInvalido("contrato de cobertura incompleto")
+            if (cobertura["especie"] != resultado["especie"]
+                    or cobertura["tabela_sidra"] != resultado["tabela_sidra"]):
+                raise DadoInvalido("cobertura de outra especie ou tabela")
+            seq = cobertura["ufs"]
+            if (not isinstance(seq, (list, tuple)) or not seq or len(seq) > 27
+                    or any(not isinstance(u, str) or u not in UF_IBGE.values() for u in seq)
+                    or len(seq) != len(set(seq))):
+                raise DadoInvalido("UFs esperadas invalidas ou repetidas")
+            fonte = cobertura["fonte_evidencia"]
+            sha_cobertura = cobertura["origem_sha256"]
+            if (not isinstance(fonte, str) or not fonte.strip()
+                    or not isinstance(sha_cobertura, str)
+                    or not re.fullmatch(r"[a-f0-9]{64}", sha_cobertura)):
+                raise DadoInvalido("cobertura sem evidencias rastreaveis")
+            esperado = set(seq)
+
+        item = {
+            "especie": resultado["especie"], "competencia": competencia,
+            "indicador": indicador, "unidade": UNIDADE_CANONICA[indicador],
+            "ufs_presentes": len(presentes),
+            "ufs_esperadas": len(esperado) if esperado is not None else None,
+            "ufs_faltantes": sorted(esperado - presentes) if esperado is not None else None,
+            "ufs_excedentes": sorted(presentes - esperado) if esperado is not None else None,
+            "valor_brasil": valores.get("BR"), "soma_ufs": None,
+            "residuo_brasil_menos_ufs": None,
+            "sha256_metadados_cobertura": sha_cobertura,
+            "status": "COBERTURA_NAO_VERIFICADA",
+            "homologado": False,
+        }
+        if esperado is not None:
+            if not presentes.issubset(esperado):
+                item["status"] = "COBERTURA_DIVERGENTE_SEM_IMPUTACAO"
+            elif "BR" not in valores or presentes != esperado:
+                item["status"] = "INCOMPLETO_SEM_IMPUTACAO"
+            else:
+                soma = sum(valores[uf] for uf in esperado)
+                item["soma_ufs"] = soma
+                item["residuo_brasil_menos_ufs"] = valores["BR"] - soma
+                item["status"] = (
+                    "CONSISTENTE_COM_COBERTURA_DECLARADA"
+                    if valores["BR"] == soma else "DIVERGENCIA_A_INVESTIGAR"
+                )
         relatorio.append(item)
     return relatorio
