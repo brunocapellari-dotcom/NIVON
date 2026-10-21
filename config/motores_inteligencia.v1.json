@@ -871,7 +871,8 @@
         "nivon.motor_tendencias:tendencia_observada",
         "nivon.motor_tendencias:tendencia_projetada",
         "nivon.tendencias_mercados:tendencia_frete_anunciado",
-        "nivon.fretes_dinamica_r01:dinamica_ofertas_pareadas"
+        "nivon.fretes_dinamica_r01:dinamica_ofertas_pareadas",
+        "nivon.fretes_cobertura_horizontes:auditar_cobertura_horizontes_frete"
       ],
       "data_dependencies": [
         "FRETES_WHATSAPP_AUTORIZADO",
