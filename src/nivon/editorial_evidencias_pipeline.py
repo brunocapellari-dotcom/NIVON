@@ -105,7 +105,8 @@ def montar_candidatos_evidencias(
                       and "PUBLICACAO_DERIVADA" in operacoes)
         candidato = {campo: reg.get(campo) for campo in (
             "fonte_id", "tipo", "origem", "uf_origem", "destino", "uf_destino",
-            "pickup_entity_id", "transportadora", "produto", "equipamento",
+            "pickup_entity_id", "ponto_embarque", "local_descarga",
+            "transportadora", "produto", "equipamento",
             "regime_pf_pj", "condicao_pedagio", "valor_rs_t",
             "volume_t_dia", "classificacao_volume", "volume_realizado",
             "publicado_em", "coletado_em", "sha256_origem",
@@ -139,8 +140,12 @@ CHAVES_IMUTAVEIS = {
                            "semana_inicio", "semana_fim", "postos_pesquisados"}),
     "fretes": frozenset({
         "fonte_id", "tipo", "origem", "uf_origem", "destino", "uf_destino",
-        "valor_rs_t", "referencia_em", "direitos_publicacao",
-        "evidencia_direitos_id",
+        "pickup_entity_id", "ponto_embarque", "local_descarga",
+        "transportadora", "produto", "equipamento", "regime_pf_pj",
+        "condicao_pedagio", "valor_rs_t", "referencia_em",
+        "volume_t_dia", "classificacao_volume", "volume_realizado",
+        "publicado_em", "coletado_em", "sha256_origem",
+        "direitos_publicacao", "evidencia_direitos_id",
     }),
 }
 # Chaves explicitamente editáveis pelo operador apenas com declaração externa.
