@@ -116,13 +116,23 @@ def _metadata_zip(fh, expected_name: str, expected_version: str) -> dict:
                     raise ErroEvidencia("Name/Version em METADATA divergentes")
                 if not str(wheel_versions[0]).startswith("1."):
                     raise ErroEvidencia("versão WHEEL incompatível")
+                # Somente cabeçalhos de dependências; a interpretação do
+                # grafo fica em auditoria_fechamento_pacotes, sem imports.
+                req_headers = meta.get_all("Requires-Dist", [])
+                if len(req_headers) > 512:
+                    raise ErroEvidencia("METADATA contém excesso de dependências")
+                requirements = [str(value) for value in req_headers]
+                if any(not item.strip() or len(item) > 512 or
+                       "\\n" in item or "\\r" in item for item in requirements):
+                    raise ErroEvidencia("Requires-Dist inválido ou extenso")
             except ErroEvidencia:
                 raise
             except (UnicodeError, ValueError, RuntimeError, EOFError,
                     NotImplementedError, zipfile.BadZipFile) as exc:
                 raise ErroEvidencia("metadados wheel inválidos ou corrompidos") from exc
             record = verificar_record(zf, members, dist_dir)
-            return {"zip_members": len(members), "dist_info_verified": True, **record}
+            return {"zip_members": len(members), "dist_info_verified": True,
+                    "requires_dist": requirements, **record}
     except (OSError, zipfile.BadZipFile, zipfile.LargeZipFile) as exc:
         raise ErroEvidencia("wheel ZIP ilegível/corrompido") from exc
 
