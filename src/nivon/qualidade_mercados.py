@@ -278,3 +278,67 @@ def tendencia_preco_auditada(
             "duplicatas_identicas": preparado["duplicatas_identicas"],
             "cobertura_calendario": cobertura,
             "publicavel": False}
+
+
+def dinamica_preco_auditada(
+    registros: Sequence[Mapping], *, as_of: str, janela: int = 6,
+    tolerancia_absoluta: float = 0.0, tolerancia_relativa: float = 0.0,
+    mudanca_minima_forca_em_limiares: float = 1.0,
+    calendario_sessoes: Mapping | None = None,
+) -> dict:
+    """Integra vintages e identidade econômica à força histórica dos preços.
+
+    Obrigatório manter mesmo contrato CBOT/ICE ou mesmas condições do indicador
+    físico, fonte, unidade e calendário explícito. Não extrapola movimento,
+    não gera probabilidade e não atesta validade da licença/cotação original.
+    """
+    from .dinamica_tendencias import comparar_forca_tendencia
+
+    if type(janela) is not int or not 4 <= janela <= 48:
+        raise ErroQualidadeMercado("janela deve ter 4 a 48 observações")
+    preparado = preparar_serie_precos(registros, as_of=as_of)
+    # Valida integralmente revisões/identidade no preparador, mas entrega apenas
+    # duas janelas para não atingir o teto de 240 pontos do núcleo descritivo.
+    serie = preparado["serie"][-(2*janela):]
+    if calendario_sessoes is None:
+        return {
+            "status": "CALENDARIO_AUSENTE", "orientacao": "OBSERVADA",
+            "tendencia": "INDETERMINADA", "tendencia_atual": "INDETERMINADA",
+            "dinamica": "INDETERMINADA", "periodos": preparado["periodos"],
+            "motivo": "calendário de sessões obrigatório para força histórica",
+            "probabilidades_calibradas": None, "publicavel": False,
+        }
+    cobertura = validar_cobertura_calendario(
+        calendario_sessoes, mercado=preparado["identidade_economica"][0],
+        periodos=[x["periodo"] for x in serie], as_of=as_of,
+    )
+    # Falha fechada se a ponte float perder valor monetário significativo.
+    if any(abs(Decimal(x["valor_decimal"]) - Decimal(str(x["valor"]))) >
+           Decimal("0.000000001") for x in serie):
+        raise ErroQualidadeMercado("perda de precisão na ponte descritiva")
+    resultado = comparar_forca_tendencia(
+        serie, as_of=_momento(as_of, "as_of").date().isoformat(),
+        fonte_id=preparado["fonte_id"],
+        unidade=preparado["identidade_economica"][4],
+        frequencia="SESSOES", janela=janela,
+        tolerancia_absoluta=tolerancia_absoluta,
+        tolerancia_relativa=tolerancia_relativa,
+        mudanca_minima_forca_em_limiares=mudanca_minima_forca_em_limiares,
+    )
+    return {
+        **resultado,
+        "tendencia": resultado["tendencia_atual"],
+        "contrato_qualidade": preparado["status"],
+        "identidade_economica": preparado["identidade_economica"],
+        "revisoes_resolvidas": preparado["revisoes_resolvidas"],
+        "duplicatas_identicas": preparado["duplicatas_identicas"],
+        "cobertura_calendario": cobertura,
+        "direitos_publicacao_verificados": False,
+        "precos_homologados": False,
+        "publicavel": False,
+        "limitacao": (
+            resultado.get("limitacao", "Histórico insuficiente; sem previsão.")
+            + " Calendário declarado e SHA não comprovam autenticidade de fonte, "
+              "integridade do RAW nem direito de distribuição."
+        ),
+    }
