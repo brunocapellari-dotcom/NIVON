@@ -15,6 +15,7 @@ from .auditoria_evidencias_pacotes import (
     ErroEvidencia, _arquivo, _json_seguro, avaliar,
 )
 from .auditoria_wheelhouse import verificar
+from .auditoria_fechamento_pacotes import analisar_fechamento
 
 
 def verificar_cadeia(
@@ -28,6 +29,8 @@ def verificar_cadeia(
     """
     report_gate = avaliar(pyproject, lock, report, metadata, agora=agora)
     wheel_gate = verificar(wheelhouse, lock)
+    graph_gate = analisar_fechamento(pyproject, lock, wheel_gate,
+                                    report_gate["selected_extras"])
     if report_gate["locked_packages"] != wheel_gate["wheel_count"]:
         raise ErroEvidencia("gates não concordam sobre quantidade de distribuições")
     if not all(
@@ -53,6 +56,11 @@ def verificar_cadeia(
         "lock_report_coherent": True,
         "local_wheel_hashes_match_declared_lock": True,
         "wheel_metadata_identity_checked": True,
+        "supported_wheel_dependencies_checked": graph_gate["declared_edges_checked"],
+        "supported_wheel_dependencies_consistent": graph_gate[
+            "unconditional_supported_requirements_consistent"],
+        "all_pep508_requirements_supported": False,
+        "resolver_transitive_closure_attested": False,
         "wheel_record_integrity_verified": wheel_gate["wheel_record_integrity_verified"],
         "transitive_closure_proven": False,
         "audit_executor_authenticated": False,
