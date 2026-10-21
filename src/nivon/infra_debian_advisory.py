@@ -74,7 +74,9 @@ def confrontar(scan: dict, tracker: dict) -> dict:
     os_findings = 0
     lang_findings = 0
     pairs: set[tuple[str, str]] = set()
-    missing_source: set[str] = set()
+    source_mapped_ids: set[str] = set()
+    findings_without_source = 0
+    fallback_name_findings = 0
     missing_tracker: set[tuple[str, str]] = set()
     status_by_pair: Counter[str] = Counter()
     matched_with_fix = 0
@@ -107,10 +109,15 @@ def confrontar(scan: dict, tracker: dict) -> dict:
             source = v.get("SrcName")
             if not isinstance(source, str) or not SOURCE.fullmatch(source):
                 binary_name = v.get("PkgName")
-                source = binary_name if isinstance(binary_name, str) and binary_name in tracker else None
+                if isinstance(binary_name, str) and binary_name in tracker:
+                    source = binary_name
+                    fallback_name_findings += 1
+                else:
+                    source = None
             if source is None:
-                missing_source.add(identity)
+                findings_without_source += 1
                 continue
+            source_mapped_ids.add(identity)
             pair = (source, identity)
             if pair in pairs:
                 continue
@@ -139,7 +146,10 @@ def confrontar(scan: dict, tracker: dict) -> dict:
         "distinct_os_cves": len(all_os_cves),
         "distinct_source_cve_pairs": len(pairs),
         "matched_source_cve_pairs": matched,
-        "no_source_mapping_cves": len(missing_source),
+        "no_source_mapping_cves": len(all_os_cves - source_mapped_ids),
+        "source_mapped_distinct_os_cves": len(source_mapped_ids),
+        "os_findings_without_source_mapping": findings_without_source,
+        "os_findings_fallback_binary_as_source": fallback_name_findings,
         "no_tracker_entry_pairs": len(missing_tracker),
         "vendor_status_by_pair": {s: status_by_pair[s] for s in OS_STATUSES},
         "fixed_version_declared_pairs": matched_with_fix,

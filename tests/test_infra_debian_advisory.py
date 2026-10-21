@@ -52,6 +52,8 @@ class TestDebianAdvisory(unittest.TestCase):
         self.assertEqual(x["distinct_source_cve_pairs"], 3)
         self.assertEqual(x["matched_source_cve_pairs"], 3)
         self.assertEqual(x["no_source_mapping_cves"], 1)
+        self.assertEqual(x["source_mapped_distinct_os_cves"], 3)
+        self.assertEqual(x["os_findings_without_source_mapping"], 1)
         self.assertEqual(x["vendor_status_by_pair"]["open"], 1)
         self.assertEqual(x["vendor_status_by_pair"]["resolved"], 2)
         self.assertEqual(x["fixed_version_declared_pairs"], 1)
@@ -107,7 +109,17 @@ class TestDebianAdvisory(unittest.TestCase):
         scan, tracker = dados()
         scan["Results"][0]["Vulnerabilities"][0]["SrcName"] = "../bad"
         x = confrontar(scan, tracker)
-        self.assertEqual(x["no_source_mapping_cves"], 2)
+        # Outra linha do mesmo CVE possui SrcName válido: não é CVE inteiramente sem origem.
+        self.assertEqual(x["no_source_mapping_cves"], 1)
+        self.assertEqual(x["os_findings_without_source_mapping"], 2)
+
+    def test_falta_de_origem_em_uma_linha_mas_mapeamento_em_outra(self):
+        scan, tracker = dados()
+        scan["Results"][0]["Vulnerabilities"][1].pop("SrcName")
+        x = confrontar(scan, tracker)
+        self.assertEqual(x["no_source_mapping_cves"], 1)
+        self.assertEqual(x["source_mapped_distinct_os_cves"], 3)
+        self.assertEqual(x["os_findings_without_source_mapping"], 2)
 
     def test_snapshot_json_duplicado_ou_link_recusado(self):
         with tempfile.TemporaryDirectory() as tmp:
