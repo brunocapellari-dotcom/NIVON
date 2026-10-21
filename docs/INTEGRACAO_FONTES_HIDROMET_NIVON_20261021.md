@@ -54,3 +54,17 @@ O CLI informa somente resultado de validação técnica, contagem de registros e
 ## Próxima ação específica que depende do titular
 
 Para **CEMADEN**, providenciar acesso legítimo e configurar `NIVON_CEMADEN_TOKEN` no ambiente privado autorizado; não registrar JWT no repositório nem em respostas. Para **ANA**, escolher estação canônica, data e timezone para primeira leitura real, após validar mapeamento HIDRO/IBGE. Os conectores públicos não exigem credenciais do titular, apenas teste de rede controlado.
+
+
+## Provas de rede executadas em 21/10/2026 (GitHub Actions)
+
+Execuções pontuais com saída sanitizada, sem download persistente, secrets ou agendamento:
+
+- [Run #39673211755](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39673211755): NASA POWER (2 dias), Open-Meteo previsão (3 dias), Open-Meteo reanálise (2 dias) e GloFAS (3 dias) retornaram JSON normalizado pelo conector. Estado `RESPOSTA_RECEBIDA_SEM_HOMOLOGACAO`; não equivale a aprovação de licença, qualidade/frescor ou ingestão de dados.
+- No mesmo run, INMET catálogo e CPTEC via BrasilAPI foram `CONSULTA_NAO_VALIDADA`, sem indicar causa.
+- [Run #39673500223](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39673500223): diagnóstico público sanitizado restrito a dois endpoints. **INMET = TRANSPORTE_NAO_VALIDADO** no GitHub runner; não há prova de indisponibilidade global, visto que o endpoint de estações respondeu em consulta pública externa. **BrasilAPI CPTEC = HTTP 403**. Não repetir/contornar bloqueio por scraping; investigar acesso oficial e alternativas autorizadas.
+- [Run #39673211660](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39673211660): 88 testes offline passaram na branch consolidada antes do workflow diagnóstico. O estado final da branch deve ser validado novamente antes do merge.
+- **CEMADEN:** apenas simulação, exige JWT e autorização via SGAA. Sem consulta live.
+- **ANA:** a autenticação já havia sido confirmada, mas série hidrológica real por estação e data ainda não foi coletada.
+
+Não publicar relatórios meteorológicos ou hidrológicos a partir de séries sem QC, sem revisão da licença e sem registro de competência/vintages. As duas respostas não validadas não afetam a leitura real das outras fontes.
