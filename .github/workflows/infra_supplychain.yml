@@ -123,7 +123,7 @@ jobs:
           docker run --rm --platform linux/amd64 --network none --read-only \
             --cap-drop ALL --security-opt no-new-privileges:true \
             --user 65532:65532 --entrypoint dpkg-query \
-            nivon-worker-supply:ci -W -f='${binary:Package}\\t${source:Package}\\n' \
+            nivon-worker-supply:ci -W -f='${binary:Package}\t${source:Package}\n' \
             > "$RUNNER_TEMP/nivon-dpkg-source.tsv"
           test -s "$RUNNER_TEMP/nivon-dpkg-source.tsv"
       - name: Obter snapshot público Debian Security Tracker de origem fixa
