@@ -8,6 +8,7 @@ estabelecimento de descarga, regime, pedágio, produto ou valores conflitantes.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from hashlib import sha256
 import json
 from typing import Sequence
@@ -48,6 +49,7 @@ def preparar_painel_pr30(
         raise ErroPainelFrete("condições econômicas da rota obrigatórias")
 
     pontos: dict[tuple, OfertaFrete] = {}
+    evidencias_por_par: dict[tuple, set[tuple[str, str, str]]] = {}
     registros_contabilizados: set[str] = set()
     repetidos = 0
     for x in ofertas:
@@ -56,6 +58,8 @@ def preparar_painel_pr30(
         if (x.data_publicacao.astimezone(timezone.utc) > corte
                 or x.data_coleta.astimezone(timezone.utc) > corte):
             raise ErroPainelFrete("publicação/coleta futura ao corte temporal")
+        if x.data_referencia != x.data_publicacao.astimezone(ZoneInfo("America/Cuiaba")).date():
+            raise ErroPainelFrete("referência defasada da publicação original; validar nova oferta no dia")
         if any((x.municipio_ibge != origem_ibge,
                 x.destino_ibge != destino_ibge,
                 x.descarga_entity_id != descarga_entity_id,
@@ -69,10 +73,15 @@ def preparar_painel_pr30(
             raise ErroPainelFrete("registro_id duplicado; deduplicar por evento/versão antes do painel")
         registros_contabilizados.add(x.registro_id)
         identidade = (x.data_referencia, x.pickup_entity_id, x.transportadora_id)
+        evidencias_por_par.setdefault(identidade, set()).add((
+            x.registro_id, x.oferta_id, x.publicacao_id,
+        ))
         old = pontos.get(identidade)
         if old is not None:
-            if old.frete_base_brl_t != x.frete_base_brl_t:
-                raise ErroPainelFrete("preços conflitantes do mesmo ponto/transportadora/dia")
+            if (old.frete_base_brl_t != x.frete_base_brl_t
+                    or old.pedagio_brl_t != x.pedagio_brl_t
+                    or old.frete_cheio_brl_t != x.frete_cheio_brl_t):
+                raise ErroPainelFrete("preços ou pedágios conflitantes do mesmo ponto/transportadora/dia")
             repetidos += 1
             if x.registro_id < old.registro_id:
                 pontos[identidade] = x
@@ -86,6 +95,7 @@ def preparar_painel_pr30(
             "publicacao_id": x.publicacao_id, "fonte_id": x.fonte_id,
             "periodo": dia.isoformat(), "pickup_entity_id": pickup,
             "transportadora_id": transp, "preco_base_brl_t": str(x.frete_base_brl_t),
+            "evidencias_mesmo_par": sorted(evidencias_por_par[(dia, pickup, transp)]),
         }
         digest = sha256(json.dumps(evidencia_derivada, sort_keys=True,
                                    separators=(",", ":"), ensure_ascii=True).encode()).hexdigest()
