@@ -475,7 +475,7 @@
         "url": "https://www.gov.br/antaq/pt-br/central-de-conteudos/publicacoes-da-antaq/estatisticos-aquaviarios",
         "source_proof": null
       },
-      "implementation_scope": "antaq_zip_autorizado.py + antaq_historico_offline.py (ZIPs locais 2010+, relacionamento atracação-carga-mercadoria)",
+      "implementation_scope": "antaq_zip_autorizado.py + antaq_historico_offline.py (ZIPs locais 2010+, relacionamento atracação-carga-mercadoria); maritime.antaq_archive:analyze_antaq_archive (somente ZIP oficial previamente autorizado e validado, offline)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -493,7 +493,7 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Histórico mensal observado, não line-up em tempo real. ZIPs anuais ainda não testados em acesso real. WAF/retirada da fonte não podem ser contornados.",
+      "source_note": "Histórico mensal observado, não line-up em tempo real. ZIPs anuais ainda não testados em acesso real. WAF/retirada da fonte não podem ser contornados. Migração marítima PR #6: parser complementar de histórico de Atracação/Carga/Mercadoria e comparação entre vintages; não transformar dados históricos em posição AIS ou escala realizada. Antes da ingestão: SHA-256, direitos, versão, competência e disponibilidade real devem ser verificados.",
       "preliminary_evidence": "OFFICIAL_OPEN_DATA_DESCRIPTION_AND_UNVERIFIED_ZIP_URL_CANDIDATES",
       "candidate_source_files": [
         "https://estatistica.antaq.gov.br/ea/txt/{ANO}.zip",

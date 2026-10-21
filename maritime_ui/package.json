@@ -1,0 +1,24 @@
+{
+  "name": "agrolog-maritime-ui",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0"
+  },
+  "dependencies": {
+    "@deck.gl/core": "9.4.0",
+    "@deck.gl/geo-layers": "9.4.0",
+    "@deck.gl/layers": "9.4.0",
+    "@deck.gl/maplibre": "9.4.0",
+    "maplibre-gl": "6.6.0"
+  },
+  "devDependencies": {
+    "vite": "8.2.2"
+  },
+  "overrides": {
+    "image-size": "npm:image-size-next@2.1.0"
+  }
+}

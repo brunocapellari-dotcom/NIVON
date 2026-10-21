@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#07121f" />
+    <title>Nivon Maritime Intelligence</title>
+  </head>
+  <body>
+    <div id="app">
+      <header class="topbar">
+        <div>
+          <div class="eyebrow">NIVON · MARITIME INTELLIGENCE</div>
+          <h1>Nivon Maritime Intelligence</h1>
+        </div>
+        <div class="toolbar">
+          <label>
+            Porto
+            <select id="port-select">
+              <option value="">Todos do piloto</option>
+            </select>
+          </label>
+          <button id="refresh-button" type="button">Atualizar</button>
+          <span id="connection-status" class="status status-idle">iniciando</span>
+        </div>
+      </header>
+
+
+      <nav class="product-nav" aria-label="Navegação Nivon Maritime Intelligence">
+        <a href="/overview">Visão geral</a>
+        <a href="/market">Mercado</a>
+        <a href="/soybean">Soja</a>
+        <a href="/crops">Safra</a>
+        <a href="/weather">Meteorologia</a>
+        <a href="/agroclimate">Agroclima</a>
+        <a href="/freight">Fretes</a>
+        <a href="/logistics">Logística</a>
+        <a href="/history">Histórico</a>
+        <a href="/reports">Relatórios</a>
+        <a href="/sources">Fontes</a>
+      </nav>
+
+      <section id="commercial-overview" class="commercial-shell card" aria-label="Nivon Maritime Intelligence status">
+        <div class="card-title-row">
+          <div>
+            <h2>Vertical comercial integrada</h2>
+            <p>Mercado + safra + clima + fretes + logística. Uma fonte indisponível permanece visível sem derrubar o conjunto.</p>
+          </div>
+          <span id="commercial-status" class="count-pill">carregando</span>
+        </div>
+        <div id="commercial-components" class="commercial-components"></div>
+      </section>
+
+      <section id="overview" class="card intelligence-overview" aria-label="Resumo Nivon 360">
+        <div class="card-title-row">
+          <div>
+            <h2>Visão geral</h2>
+            <p>Produção, armazenagem e agroclima derivados das fontes canônicas. Campos indisponíveis permanecem explícitos.</p>
+          </div>
+          <span id="agro-overview-status" class="count-pill">carregando</span>
+        </div>
+        <section class="metrics" aria-label="Indicadores Nivon 360">
+          <article><span>Produção</span><strong id="agro-production">—</strong></article>
+          <article><span>Capacidade estática</span><strong id="agro-storage">—</strong></article>
+          <article><span>Produção / capacidade</span><strong id="agro-storage-ratio">—</strong></article>
+          <article><span>Gap armazenagem</span><strong id="agro-storage-gap">—</strong></article>
+          <article><span>Chuva 7d</span><strong id="agro-rain-7">—</strong></article>
+          <article><span>Chuva 30d</span><strong id="agro-rain-30">—</strong></article>
+          <article><span>Chuva 90d</span><strong id="agro-rain-90">—</strong></article>
+          <article><span>PTAX USD venda</span><strong id="agro-ptax">—</strong></article>
+          <article><span>Estações hídricas</span><strong id="agro-hydro-stations">—</strong></article>
+        </section>
+      </section>
+
+
+      <section class="commercial-domain-grid" aria-label="Domínios Nivon Maritime Intelligence">
+        <article id="market" class="domain-card"><span>MERCADO</span><strong>Preços + câmbio</strong><p>PTAX e referências autorizadas. Gaps permanecem explícitos.</p></article>
+        <article id="soybean" class="domain-card"><span>SOJA</span><strong>Mercado + safra + clima</strong><p>Chicago/prêmio/basis entram somente quando fonte autorizada estiver fresca.</p></article>
+        <article id="crops" class="domain-card"><span>SAFRA</span><strong>Área · produtividade · produção</strong><p>Vintages CONAB preservados e comparáveis; IBGE/IMEA entram conforme disponibilidade.</p></article>
+        <article id="weather" class="domain-card"><span>METEOROLOGIA</span><strong>Observado · previsão · ensemble</strong><p>Runs não são sobrescritos; mudanças entre rodadas são tratadas separadamente.</p></article>
+        <article id="agroclimate" class="domain-card"><span>AGROCLIMA</span><strong>Cultura × fase × clima</strong><p>Impacto potencial, sem converter correlação em causalidade.</p></article>
+        <article id="freight" class="domain-card"><span>FRETES</span><strong>R$/t · R$/km · R$/t.km</strong><p>Ofertas observadas são distintas de fretes efetivamente negociados.</p></article>
+        <article id="logistics" class="domain-card"><span>LOGÍSTICA</span><strong>Corredores · portos · armazenagem</strong><p>Programado, observado e realizado permanecem separados.</p></article>
+        <article id="history" class="domain-card"><span>HISTÓRICO</span><strong>Sazonalidade · percentis · anomalias</strong><p>Backfill e vintages point-in-time preservam a informação conhecida em cada data.</p></article>
+        <article id="reports" class="domain-card"><span>RELATÓRIOS</span><strong>Relatório Integrado Nivon</strong><p>30 seções com gate comercial e limitações explícitas.</p></article>
+        <article id="sources" class="domain-card"><span>FONTES</span><strong>Freshness · provenance</strong><p>FRESH, STALE e FAILED; uma falha isolada não mascara as demais fontes.</p></article>
+      </section>
+
+      <section class="metrics" aria-label="Resumo marítimo operacional">
+        <article><span>Navios recentes</span><strong id="metric-live">—</strong></article>
+        <article><span>Aproximando</span><strong id="metric-approach">—</strong></article>
+        <article><span>Aguardando</span><strong id="metric-waiting">—</strong></article>
+        <article><span>Atracados</span><strong id="metric-berthed">—</strong></article>
+        <article><span>Line-up</span><strong id="metric-lineup">—</strong></article>
+        <article><span>Match AIS × line-up</span><strong id="metric-match">—</strong></article>
+        <article><span>Espera P50</span><strong id="metric-p50">—</strong></article>
+        <article><span>Espera P90</span><strong id="metric-p90">—</strong></article>
+        <article><span>Erro ETA médio</span><strong id="metric-eta">—</strong></article>
+        <article><span>Berço médio</span><strong id="metric-berth">—</strong></article>
+      </section>
+
+      <main id="logistics-maritime" class="workspace">
+        <section class="map-panel">
+          <div id="map"></div>
+          <div class="map-legend">
+            <span><i class="dot approach"></i>Aproximação</span>
+            <span><i class="dot anchorage"></i>Fundeio</span>
+            <span><i class="dot berth"></i>Berço</span>
+            <span><i class="dot sea"></i>Mar/sem zona</span>
+          </div>
+          <div id="map-empty" class="map-empty hidden">Sem posições AIS recentes para o filtro atual.</div>
+        </section>
+
+        <aside class="side-panel">
+          <section class="card vessel-card">
+            <div class="card-title-row">
+              <h2>Navio selecionado</h2>
+              <button id="replay-button" type="button" disabled>Replay 24h</button>
+            </div>
+            <div id="vessel-detail" class="vessel-detail muted">Clique em um navio no mapa.</div>
+            <div id="replay-controls" class="replay-controls hidden">
+              <button id="replay-toggle" type="button">Pausar</button>
+              <input id="replay-slider" type="range" min="0" max="100" value="0" />
+              <span id="replay-time">—</span>
+            </div>
+          </section>
+
+          <section class="card source-health-card">
+            <div class="card-title-row">
+              <div>
+                <h2>Source Health / Freshness</h2>
+                <p>Idade do dado disponível no Gateway; limiares são operacionais da UI, não SLA da fonte.</p>
+              </div>
+            </div>
+            <div id="source-health-list" class="source-health-list"></div>
+          </section>
+
+          <section class="card brief-card">
+            <div class="card-title-row">
+              <div>
+                <h2>Relatório confrontado</h2>
+                <p>AIS físico × line-up informado, sem promover programação a realizado.</p>
+              </div>
+              <span id="brief-generated" class="count-pill">—</span>
+            </div>
+            <div id="brief-body" class="brief-body"></div>
+          </section>
+
+          <section class="card lineup-card">
+            <div class="card-title-row">
+              <div>
+                <h2>Line-up × AIS</h2>
+                <p>Programação não é tratada como realizado.</p>
+              </div>
+              <span id="lineup-count" class="count-pill">0</span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Navio</th>
+                    <th>ETA</th>
+                    <th>Produto</th>
+                    <th>Programado</th>
+                    <th>Estado operacional</th>
+                    <th>Confronto</th>
+                    <th>Match</th>
+                  </tr>
+                </thead>
+                <tbody id="lineup-body"></tbody>
+              </table>
+            </div>
+          </section>
+        </aside>
+      </main>
+
+      <footer>
+        <span id="last-update">Sem atualização</span>
+        <span>AIS observado · line-up programado/informado · realizado somente com evidência operacional</span>
+      </footer>
+    </div>
+    <script type="module" src="/src/bootstrap.js"></script>
+  </body>
+</html>

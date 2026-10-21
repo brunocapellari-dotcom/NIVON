@@ -1,0 +1,144 @@
+"""Bridge from NIVON officially acquired line-up document to Maritime engines.
+
+Offline, no I/O. Never infer a precise ETA from a date-only publication.
+An authority's scheduled maneuver never becomes a performed port operation.
+"""
+from __future__ import annotations
+
+import hashlib
+import re
+from dataclasses import dataclass, asdict
+from datetime import datetime, timezone, timedelta
+from typing import Any
+
+from nivon.portos_automaticos import ContratoPorto, processar_documento_porto, ErroPorto
+from nivon._agrolog_portos_html import parse_official_lineup_html
+from nivon.maritime.shipping_reconciliation import LineupCall
+
+# The pilot authorities publish local operational timestamps. Time zones must be
+# versioned per source; a fixed BR offset is explicitly a pilot-only contract.
+_PORT_ZONE = {
+    "SANTOS": timezone(timedelta(hours=-3)),
+    "SANTAREM": timezone(timedelta(hours=-3)),
+    "BARCARENA_VILA_DO_CONDE": timezone(timedelta(hours=-3)),
+}
+
+
+@dataclass(frozen=True)
+class LineupBridgeResult:
+    port_id: str
+    source_id: str
+    source_url: str
+    document_sha256: str
+    collected_at: str
+    candidates: tuple[LineupCall, ...]
+    excluded: tuple[dict[str, str], ...]
+    source_rows: int
+    state: str = "SHADOW_NOT_HOMOLOGATED"
+    publication_allowed: bool = False
+    realized_cargo_claimed: bool = False
+
+    def summary(self) -> dict[str, Any]:
+        return {
+            "port_id": self.port_id,
+            "source_id": self.source_id,
+            "source_sha256": self.document_sha256,
+            "collected_at": self.collected_at,
+            "total_programmed_rows": self.source_rows,
+            "usable_eta_calls": len(self.candidates),
+            "excluded_without_safe_eta_or_call_id": len(self.excluded),
+            "state": self.state,
+            "publication_allowed": False,
+            "excluded": self.excluded,
+        }
+
+
+def _instant_utc(raw: str, local_tz: timezone, *, collected_at: datetime) -> datetime:
+    """Only full date + clock time, with explicit source-local zone where absent."""
+    value = str(raw).strip()
+    # A date-only ETA does not establish hour/minutes: fail closed.
+    if re.fullmatch(r"\d{2}/\d{2}/\d{4}", value) or re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+        raise ValueError("eta_date_only")
+    try:
+        if re.fullmatch(r"\d{2}/\d{2}/\d{4} \d{2}:\d{2}(?::\d{2})?", value):
+            parsed = datetime.strptime(value, "%d/%m/%Y %H:%M:%S" if value.count(":") == 2 else "%d/%m/%Y %H:%M")
+        else:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError("eta_format_unsupported") from exc
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=local_tz)
+    result = parsed.astimezone(timezone.utc)
+    # Outliers/future years may signal layout or date parsing problems. Short
+    # historical delay is allowed, but implausible distant ETA requires review.
+    if result < collected_at - timedelta(days=90) or result > collected_at + timedelta(days=180):
+        raise ValueError("eta_outside_authority_window")
+    return result
+
+
+def bridge_official_html_document(*, contract: ContratoPorto, document: dict,
+                                  captured_before: str | datetime | None = None) -> LineupBridgeResult:
+    """Use the existing validated collector instead of building a competing scraper.
+
+    Only preacquired bytes with a verified official source hash are accepted.
+    A raw source row and official call ID must exist before making LineupCall.
+    Missing ETA or DUV creates an explicit excluded row, not a fabricated event.
+    """
+    if not contract.modo.startswith("HTML"):
+        raise ErroPorto("bridge HTML exige contrato HTML da autoridade")
+    parsed = processar_documento_porto(contract, document)
+    stamp = datetime.fromisoformat(parsed["capturado_em"].replace("Z", "+00:00"))
+    if stamp.tzinfo is None:
+        raise ErroPorto("timestamp sem timezone")
+    stamp = stamp.astimezone(timezone.utc)
+    if captured_before is not None:
+        cutoff = captured_before if isinstance(captured_before, datetime) else datetime.fromisoformat(str(captured_before).replace("Z", "+00:00"))
+        if cutoff.tzinfo is None or cutoff.utcoffset() is None:
+            raise ErroPorto("cutoff sem timezone")
+        if stamp > cutoff.astimezone(timezone.utc):
+            raise ErroPorto("coleta posterior ao corte temporal")
+    source_rows = parse_official_lineup_html(document["conteudo"].decode("utf-8-sig"), contract.modo)
+    if len(source_rows) != len(parsed["registros"]):
+        raise ErroPorto("parser divergente do coletor canônico")
+    zone = _PORT_ZONE.get(contract.porto)
+    if zone is None:
+        raise ErroPorto("fuso do porto sem contrato")
+    excluded: list[dict[str, str]] = []
+    calls: list[LineupCall] = []
+    seen: set[str] = set()
+    for index, row in enumerate(source_rows, start=1):
+        if row.get("status") not in {"PROGRAMMED", "ESPERADO"}:
+            raise ErroPorto("evento físico não pode virar line-up")
+        # APS uses DUV as individual call identifier. CDP may publish a WDT row id.
+        # Ship name, IMO, date or line ordinal are not valid call identifiers.
+        official_id = str(row.get("duv") or row.get("call_id") or "").strip()
+        if not official_id or len(official_id) > 128:
+            excluded.append({"row": str(index), "reason": "official_call_id_missing"})
+            continue
+        call_id = f"{contract.porto}:{contract.fonte.fonte_id}:{official_id}"
+        if call_id in seen:
+            excluded.append({"row": str(index), "reason": "duplicate_call_id"})
+            continue
+        seen.add(call_id)
+        try:
+            eta = _instant_utc(row.get("eta", ""), zone, collected_at=stamp)
+        except ValueError as exc:
+            excluded.append({"row": str(index), "reason": str(exc)})
+            continue
+        program = parsed["registros"][index - 1]
+        if program.navio != row["navio"] or program.status != "PROGRAMADO":
+            raise ErroPorto("discordância com programação normalizada")
+        calls.append(LineupCall(
+            call_id=call_id, port_id=contract.porto, vessel_name=program.navio,
+            eta=eta.isoformat(), collected_at=stamp.isoformat(),
+            terminal_id=row.get("terminal") or None,
+            imo=program.imo, product=program.produto,
+            planned_volume_t=program.toneladas_programadas,
+            source_id=contract.fonte.fonte_id, lineup_status="PROGRAMMED",
+        ))
+    return LineupBridgeResult(
+        port_id=contract.porto, source_id=contract.fonte.fonte_id,
+        source_url=contract.fonte.url, document_sha256=parsed["documento_sha256"],
+        collected_at=stamp.isoformat(), candidates=tuple(calls),
+        excluded=tuple(excluded), source_rows=len(source_rows),
+    )

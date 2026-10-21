@@ -1,0 +1,38 @@
+name: Maritime cockpit build (staging only)
+
+on:
+  pull_request:
+    paths:
+      - "maritime_ui/**"
+      - "src/nivon/maritime/**"
+      - "tests/test_maritime*.py"
+      - ".github/workflows/maritime-build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  maritime-ui-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Read code without persisting credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Install pinned Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: maritime_ui/package-lock.json
+      - name: Reproduce dependencies without install scripts
+        working-directory: maritime_ui
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Build cockpit without deployment
+        working-directory: maritime_ui
+        run: npm run build
+      - name: Confirm nonempty distribution
+        working-directory: maritime_ui
+        run: test -s dist/index.html
