@@ -43,6 +43,8 @@ def _json_seguro(texto: str) -> dict:
         return obj
     try:
         resultado = json.loads(texto, object_pairs_hook=pares)
+    except ErroEvidencia:
+        raise
     except (ValueError, TypeError) as exc:
         raise ErroEvidencia("relatório JSON inválido") from exc
     if not isinstance(resultado, dict):
