@@ -429,3 +429,66 @@ Para CME/ICE/CEPEA, bloquear redistribuição/WhatsApp até
 validar expressamente os direitos e condições contratuais.
 O assinador HMAC e a localização declarada também ainda
 não constituem prova externa de WORM ou timestamp independente.
+
+
+## 12. Continuidade de 21/10/2026 — PTAX OData no formato público BCB
+
+**Auditoria de fonte oficial realizada:**
+- Catálogo BCB: https://dadosabertos.bcb.gov.br/pt_BR/dataset/dolar-americano-usd-todos-os-boletins-diarios
+- Documentação/serviço: https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/documentacao
+- O catálogo declara licença Open Database License **ODbL** para
+  o dataset de cotações diárias e descreve a PTAX de fechamento;
+  verificar formalmente as obrigações de atribuição e
+  compartilhamento da base derivada antes de redistribuir valores.
+- O NIVON já possuía `ptax_plano.py` para construir consultas oficiais
+  e `bcb_ptax.py` para normalizar JSON recebido; a resposta bruta
+  desses endpoints era processada em `float` no adaptador preexistente.
+
+**Novo componente offline:** `nivon.ptax_odata_bruta_mercados`.
+`verificar_ptax_odata_bruta` aceita bytes JSON OData originais,
+URL da consulta planejada, moeda USD/EUR, data de coleta, corte as-of
+e SHA-256 esperado. Verifica:
+
+1. Serviço HTTPS `olinda.bcb.gov.br`, endpoint OData de **período**
+   adequado a USD ou EUR, argumentos de período obrigatórios,
+   datas canônicas, `$format=json`, `$top=500`, janela <=20 dias,
+   ausência de parâmetros duplicados/extras e de trocas de domínio.
+2. SHA-256 dos bytes recebido versus digest **declarado** pelo coletor;
+   limite de 2MB por corpo, UTF-8, JSON sem chaves duplicadas,
+   `NaN`, `Infinity`, valores estranhos ou paginação implícita
+   `@odata.nextLink`; nenhum lote de 500 linhas é considerado completo.
+3. `value` do OData e cada cotação com `cotacaoCompra`,
+   `cotacaoVenda`, `dataHoraCotacao`; `tipoBoletim` e paridades
+   somente quando retornados. Valores JSON são convertidos
+   **diretamente a Decimal**, mantendo escala textual original
+   (`5.10000` não vira `5.1`). Valida compra <= venda,
+   positividade, finitude, intervalo, duplicação e tipologia.
+4. Hora da cotação sem offset explicitamente interpretada sob
+   `America/Sao_Paulo` (regra operacional da ingestão),
+   sem confundi-la com horário de publicação; coleta precisa ser
+   posterior à referência e anterior ao corte. Boletim sem campo
+   `tipoBoletim` **não recebe o rótulo de fechamento**.
+5. Cada linha carrega sua posição exata no JSON original
+   `/value/<index>` e SHA-256 do raw. O output diferencia PTAX
+   `BRL/USD` ou `BRL/EUR` de cotação CME, ICE ou preço físico.
+
+**Observação metodológica:** exemplos dos testes são estritamente
+*fixtures sintéticas reproduzindo a estrutura documentada*. A API
+live/HTTP não foi acessada nem resposta real coletada. Uma URL oficial,
+um hash correto e uma licença aberta no catálogo não constituem
+autenticidade independente da captura, conferência de publicação
+point-in-time, nem liberação automática de redistribuição em WhatsApp.
+Por isso o retorno permanece `publicavel=false`,
+`origem_http_autenticada=false`,
+`publicacao_independente_comprovada=false`,
+`direitos_redistribuicao_homologados=false` e
+`apto_backtest_por_publicacao=false`.
+
+**Dependências/P0 para avançar:** capturar e guardar respostas HTTP
+reais com cabeçalhos, TLS e data/hora confiável sob autorização do
+coletor, verificar a interpretação do horário BCB contra amostras
+oficiais e versão da documentação, provar o cronograma de
+disponibilização histórica e as vintages relevantes; comparar
+valores contra documentação original sem usar dados posteriores em
+backtests. Integrar à base transacional e ao briefing somente após
+normalização testada e revisão de licença/uso.
