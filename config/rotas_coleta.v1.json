@@ -5018,6 +5018,122 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Banco Mundial mensal energia, fertilizantes e commodities globais; proxy internacional, não preço físico regional negociado no Brasil. Um cliente de consulta individual foi implementado com testes sintéticos, ainda sem provas de execução HTTP real no runtime, sem custos ou agendamentos.",
       "preliminary_evidence": "PUBLIC_OFFICIAL_DOCUMENTATION_2026_10_21_NO_PERSISTENCE"
+    },
+    {
+      "dataset_id": "OPEN_METEO_GLOFAS_VAZAO",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "DIRECT_OFFICIAL_API",
+        "url": "https://flood-api.open-meteo.com/v1/flood",
+        "source_proof": "https://open-meteo.com/en/docs/flood-api"
+      },
+      "implementation_scope": "API_GLOFAS_7_DIAS_SOB_DEMANDA_NAO_NAVEGABILIDADE",
+      "authentication": "NONE_EXPECTED_VERIFY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_HTTP_SCHEMA_LICENSE_PERSISTENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "REAL_PRODUCTION_RESPONSE_SMOKE",
+        "CROSSWALK_INDICATOR_UNITS"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Previsão/simulação de modelo: não observação local ANA/INMET nem garantia de navegabilidade, incerteza a calibrar.",
+      "preliminary_evidence": "SOURCE_OFFICIAL_DOCS_2026_10_21_NOT_YET_RUNTIME_VALIDATED"
+    },
+    {
+      "dataset_id": "OPEN_METEO_ENSEMBLE_PRECIP_MEMBROS",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "DIRECT_OFFICIAL_API",
+        "url": "https://ensemble-api.open-meteo.com/v1/ensemble",
+        "source_proof": "https://open-meteo.com/en/docs/ensemble-api"
+      },
+      "implementation_scope": "API_GFS_PRECIP_ENSEMBLE_3_DIAS_SOB_DEMANDA",
+      "authentication": "NONE_EXPECTED_VERIFY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_HTTP_SCHEMA_LICENSE_PERSISTENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "REAL_PRODUCTION_RESPONSE_SMOKE",
+        "CROSSWALK_INDICATOR_UNITS"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Previsão/simulação de modelo: não observação local ANA/INMET nem garantia de navegabilidade, incerteza a calibrar.",
+      "preliminary_evidence": "SOURCE_OFFICIAL_DOCS_2026_10_21_NOT_YET_RUNTIME_VALIDATED"
+    },
+    {
+      "dataset_id": "FAO_FPMA_SERIES_CATALOGO",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "DIRECT_OFFICIAL_API",
+        "url": "https://fpma.fao.org/giews/v4/global/price_module/api/v1/FpmaSerie/",
+        "source_proof": "https://fpma-documentation.web.app/docs/api-docs/time-series/"
+      },
+      "implementation_scope": "FAO_FPMA_LISTA_FILTRADA_POR_PAIS_PAGINA_SEM_SERIE_MEDIDA",
+      "authentication": "NONE_EXPECTED_VERIFY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_HTTP_SCHEMA_LICENSE_PERSISTENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "REAL_PRODUCTION_RESPONSE_SMOKE",
+        "CROSSWALK_INDICATOR_UNITS"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Preços e catálogo FAO são séries heterogêneas com moeda, medida, vintage por origem, não CEPEA, IMEA ou CME.",
+      "preliminary_evidence": "SOURCE_OFFICIAL_DOCS_2026_10_21_NOT_YET_RUNTIME_VALIDATED"
+    },
+    {
+      "dataset_id": "FAO_FPMA_PRECOS_SERIES",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "DIRECT_OFFICIAL_API",
+        "url": "https://fpma.fao.org/giews/v4/global/price_module/api/v1/FpmaSeriePrice/",
+        "source_proof": "https://fpma-documentation.web.app/docs/api-docs/series-price/"
+      },
+      "implementation_scope": "FAO_FPMA_PRECOS_UUID_VALIDADO_COM_METADADOS_SEPARADOS",
+      "authentication": "NONE_EXPECTED_VERIFY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_HTTP_SCHEMA_LICENSE_PERSISTENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "REAL_PRODUCTION_RESPONSE_SMOKE",
+        "CROSSWALK_INDICATOR_UNITS"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Preços e catálogo FAO são séries heterogêneas com moeda, medida, vintage por origem, não CEPEA, IMEA ou CME.",
+      "preliminary_evidence": "SOURCE_OFFICIAL_DOCS_2026_10_21_NOT_YET_RUNTIME_VALIDATED"
     }
   ]
 }

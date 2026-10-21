@@ -38,6 +38,10 @@ _DESTINOS = {
     "worldbank": ("api.worldbank.org", "/v2/country/BR/indicator/", 500_000),
     "ibge": ("servicodados.ibge.gov.br", "/api/v1/localidades/municipios", 8_000_000),
     "nasa_power": ("power.larc.nasa.gov", "/api/temporal/daily/point", 2_000_000),
+    "open_flood": ("flood-api.open-meteo.com", "/v1/flood", 750_000),
+    "open_ensemble": ("ensemble-api.open-meteo.com", "/v1/ensemble", 1_500_000),
+    "fao_fpma_catalog": ("fpma.fao.org", "/giews/v4/global/price_module/api/v1/FpmaSerie/", 800_000),
+    "fao_fpma_prices": ("fpma.fao.org", "/giews/v4/global/price_module/api/v1/FpmaSeriePrice/", 800_000),
 }
 
 

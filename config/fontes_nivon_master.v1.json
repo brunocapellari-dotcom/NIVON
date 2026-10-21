@@ -5931,6 +5931,116 @@
         "coleta"
       ],
       "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "OPEN_METEO_GLOFAS_VAZAO",
+      "source_id": "OPEN_METEO",
+      "group": "HIDRO",
+      "priority": "P0",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "LOGISTICA"
+      ],
+      "topic": "vazao_hidrologica_modelada_glofas_v4_grade_5km_nao_observada_ANA",
+      "mode": "PUBLIC_API_JSON",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "existing_module": "nivon.open_meteo_hidro_ensemble.consultar_vazao",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1",
+      "notes": "Dados gratuitos para pesquisa não comercial; acesso pontual, publicação, backfill e persistência aguardam direitos e homologação real."
+    },
+    {
+      "id": "OPEN_METEO_ENSEMBLE_PRECIP_MEMBROS",
+      "source_id": "OPEN_METEO",
+      "group": "CLIMA",
+      "priority": "P0",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "LOGISTICA"
+      ],
+      "topic": "previsao_precipitacao_ensemble_probabilistica_membros_sem_calibracao",
+      "mode": "PUBLIC_API_JSON",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "existing_module": "nivon.open_meteo_hidro_ensemble.consultar_ensemble",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1",
+      "notes": "Dados gratuitos para pesquisa não comercial; acesso pontual, publicação, backfill e persistência aguardam direitos e homologação real."
+    },
+    {
+      "id": "FAO_FPMA_SERIES_CATALOGO",
+      "source_id": "FAO",
+      "group": "PRECOS",
+      "priority": "P1",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO",
+        "LOGISTICA"
+      ],
+      "topic": "catalogo_series_precos_agricolas_domesticos_e_internacionais_por_mercado_produto",
+      "mode": "PUBLIC_API_JSON",
+      "cadence": "MONTHLY",
+      "stage": "CODE_PRESENT",
+      "existing_module": "nivon.fao_fpma_publica.consultar_catalogo",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1",
+      "notes": "Dados gratuitos para pesquisa não comercial; acesso pontual, publicação, backfill e persistência aguardam direitos e homologação real."
+    },
+    {
+      "id": "FAO_FPMA_PRECOS_SERIES",
+      "source_id": "FAO",
+      "group": "PRECOS",
+      "priority": "P1",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "serie_historica_preco_agricola_internacional_domestico_uuid_moeda_unidade_original",
+      "mode": "PUBLIC_API_JSON",
+      "cadence": "MONTHLY",
+      "stage": "CODE_PRESENT",
+      "existing_module": "nivon.fao_fpma_publica.consultar_precos",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1",
+      "notes": "Dados gratuitos para pesquisa não comercial; acesso pontual, publicação, backfill e persistência aguardam direitos e homologação real."
     }
   ]
 }
