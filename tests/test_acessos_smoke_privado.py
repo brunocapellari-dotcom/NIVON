@@ -185,7 +185,7 @@ class TestAcessosPrivados(unittest.TestCase):
         self.assertNotIn(segredo, json.dumps(result))
 
     def test_preflight_usda_recusa_ausente_ou_campo_invalido(self):
-        for value in ("", "curta", "a"*40+"\\n"):
+        for value in ("", "curta", "a"*40+chr(10)):
             with self.subTest(value_len=len(value)):
                 with patch.dict(os.environ, {"AGROBR_USDA_API_KEY": value}):
                     result=preflight("usda")
