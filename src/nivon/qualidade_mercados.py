@@ -212,6 +212,11 @@ def preparar_serie_precos(
             "coleta": o["_coleta"].date().isoformat(),
             "valor": float(o["_preco"]),
             "valor_decimal": str(o["_preco"]),
+            # Manter offset original para trade date da bolsa, inclusive
+            # sessões cuja data local difere da data UTC.
+            "referencia_em": o["referencia_em"],
+            "publicacao_em": o["publicacao_em"],
+            "coleta_em": o["coleta_em"],
             "fonte_id": o["_fonte"],
             "edicao_sha256": o["_hash"],
             "mercado": o["_identidade"][0],
