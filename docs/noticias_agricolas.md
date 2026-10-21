@@ -16,7 +16,7 @@
 
 `python -m unittest discover -s tests -v` executa testes sintéticos sem acesso externo.
 
-A importação de arquivo JSON sintético é possível com `python -m nivon.cotacoes importar --arquivo EXEMPLO.json --banco /tmp/nivon_cotacoes.sqlite3 --sintetico`.
+A importação de arquivo JSON sintético é possível com `python -m nivon.cotacoes importar --arquivo exemplos/cotacoes_sinteticas.json --banco /tmp/nivon_cotacoes.sqlite3 --sintetico`.
 
 ## Contrato de observação
 
