@@ -16,7 +16,7 @@ from pathlib import Path
 from contextlib import redirect_stderr
 
 from nivon.captura_xlsx_conab import (
-    ErroCapturaConab,capturar_xlsx_conab,main,MIME,
+    ErroCapturaConab,capturar_xlsx_conab,verificar_pacote_captura_local,main,MIME,
     RAW_FILE,EVIDENCE_FILE,
 )
 
@@ -188,6 +188,79 @@ class TestCapturaControladaConab(unittest.TestCase):
             self.capture(clock=lambda:datetime(2026,2,24,10))
         self.assertEqual(self.calls,[])
         self.assertEqual(list(self.dir.iterdir()),[])
+
+
+    def test_pacote_salvo_reverificado_sem_rede(self):
+        self.capture()
+        before=(self.dir/RAW_FILE).read_bytes()
+        n=len(self.calls)
+        result=verificar_pacote_captura_local(REC,self.dir)
+        self.assertEqual(result["estado"],"PACOTE_LOCAL_REVERIFICADO_SEM_ATESTACAO_EXTERNA")
+        self.assertEqual(result["observacoes"],11)
+        self.assertFalse(result["origem_http_independentemente_atestada"])
+        self.assertFalse(result["migracao_permitida"])
+        self.assertEqual(len(self.calls),n)
+        self.assertEqual((self.dir/RAW_FILE).read_bytes(),before)
+
+    def test_reverificacao_detecta_raw_alterado(self):
+        self.capture()
+        with (self.dir/RAW_FILE).open("ab") as out:
+            out.write(b"adulteracao")
+        with self.assertRaisesRegex(ErroCapturaConab,"adulterado"):
+            verificar_pacote_captura_local(REC,self.dir)
+
+    def test_reverificacao_detecta_hash_e_metadados_modificados(self):
+        self.capture()
+        f=self.dir/EVIDENCE_FILE
+        value=json.loads(f.read_text())
+        value["parser_codigo_sha256"]="0"*64
+        f.write_text(json.dumps(value))
+        with self.assertRaisesRegex(ErroCapturaConab,"parser/contagens"):
+            verificar_pacote_captura_local(REC,self.dir)
+
+    def test_reverificacao_recusa_gates_manipulados(self):
+        self.capture()
+        f=self.dir/EVIDENCE_FILE
+        value=json.loads(f.read_text())
+        value["publicacao_permitida"]=True
+        f.write_text(json.dumps(value))
+        with self.assertRaisesRegex(ErroCapturaConab,"gates"):
+            verificar_pacote_captura_local(REC,self.dir)
+
+    def test_reverificacao_recusa_transporte_manipulado(self):
+        self.capture()
+        f=self.dir/EVIDENCE_FILE
+        value=json.loads(f.read_text())
+        value["transport_evidencia"]["url_resposta"]="https://evil.example/teste"
+        f.write_text(json.dumps(value))
+        with self.assertRaisesRegex(ErroCapturaConab,"transporte"):
+            verificar_pacote_captura_local(REC,self.dir)
+
+    def test_reverificacao_recusa_json_chaves_duplicadas(self):
+        self.capture()
+        f=self.dir/EVIDENCE_FILE
+        obj=f.read_text()
+        f.write_text(obj.replace('"schema": "NIVON_CONAB_CAPTURA_SUPERVISIONADA_V1",',
+                            '"schema": "NIVON_CONAB_CAPTURA_SUPERVISIONADA_V1", "schema": "x",'))
+        with self.assertRaises(ErroCapturaConab):
+            verificar_pacote_captura_local(REC,self.dir)
+
+    def test_reverificacao_recusa_arquivo_extra(self):
+        self.capture()
+        (self.dir/"intruso.txt").write_text("intruso")
+        with self.assertRaisesRegex(ErroCapturaConab,"exatamente RAW"):
+            verificar_pacote_captura_local(REC,self.dir)
+
+    def test_reverificacao_recusa_link_simbolico(self):
+        self.capture()
+        p=self.dir/RAW_FILE
+        fake=Path(self.tmp.name)/"outro.xlsx"
+        fake.write_bytes(p.read_bytes())
+        p.unlink()
+        try:p.symlink_to(fake)
+        except (OSError,NotImplementedError):self.skipTest("sem symlink")
+        with self.assertRaises(ErroCapturaConab):
+            verificar_pacote_captura_local(REC,self.dir)
 
     def test_json_cli_sem_autorizacao_nao_cria_raw(self):
         cat=Path(self.tmp.name)/"manifesto.json"
