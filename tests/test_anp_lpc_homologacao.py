@@ -35,11 +35,11 @@ def lote():
 
 @unittest.skipIf(Workbook is None, "leitor XLSX opcional ausente")
 class TestPreHomologacaoANP(unittest.TestCase):
-    def testar(self, source=None, **changes):
+    def executar(self, source=None, **changes):
         return auditar_tres_edicoes_lpc(**{**(source or lote()), **changes})
 
     def test_tres_semanas_distintas_sem_promover_para_real(self):
-        r = self.testar()
+        r = self.executar()
         self.assertEqual(r["numero_edicoes"], 3)
         self.assertEqual(r["semana_inicial"], "2026-09-27")
         self.assertEqual(r["semana_final"], "2026-10-17")
@@ -60,7 +60,7 @@ class TestPreHomologacaoANP(unittest.TestCase):
         for count in (0, 2, 4):
             with self.subTest(count=count), self.assertRaisesRegex(
                     ErroHomologacaoLPC, "exatamente três"):
-                self.testar(edicoes=(lote()["edicoes"]*2)[:count])
+                self.executar(edicoes=(lote()["edicoes"]*2)[:count])
 
     def test_nao_considerar_periodos_saltados_tres_semanas_validas(self):
         f = fixture(start=date(2026, 9, 20))
@@ -76,40 +76,40 @@ class TestPreHomologacaoANP(unittest.TestCase):
         src["indice_html"] = html.encode()
         src["indice_sha256_esperado"] = sha256(src["indice_html"]).hexdigest()
         with self.assertRaisesRegex(ErroHomologacaoLPC, "consecutivas"):
-            self.testar(src)
+            self.executar(src)
 
     def test_regra_de_indice_e_hashes_de_lote(self):
         r = lote()
         with self.assertRaisesRegex(ErroHomologacaoLPC, "SHA do índice"):
-            self.testar(r, indice_sha256_esperado="0"*64)
+            self.executar(r, indice_sha256_esperado="0"*64)
         r = lote()
         r["edicoes"][0]["sha256"] = "1"*64
         with self.assertRaisesRegex(ErroHomologacaoLPC, "SHA divergente"):
-            self.testar(r)
+            self.executar(r)
         r = lote()
         r["edicoes"][0]["url"] = "https://fake.example/semana.xlsx"
         with self.assertRaisesRegex(ErroHomologacaoLPC, "não listado"):
-            self.testar(r)
+            self.executar(r)
 
     def test_corte_point_in_time_bloqueia_datas_futuras(self):
         r = lote()
         with self.assertRaisesRegex(ErroHomologacaoLPC, "corte as_of"):
-            self.testar(r, as_of="2026-10-19T10:00:00+00:00")
+            self.executar(r, as_of="2026-10-19T10:00:00+00:00")
         with self.assertRaisesRegex(ErroHomologacaoLPC, "cronologicamente"):
-            self.testar(r, as_of="2026-10-20T13:15:00+00:00")
+            self.executar(r, as_of="2026-10-20T13:15:00+00:00")
 
     def test_inconsistencia_de_data_publicacao_declarada(self):
         r = lote()
         r["edicoes"][1]["publicado_em"] = "2026-10-22T09:00:00+00:00"
         with self.assertRaisesRegex(ErroHomologacaoLPC, "cronologicamente"):
-            self.testar(r)
+            self.executar(r)
 
     def test_reutilizacao_mesmos_bytes_como_outra_semana_bloqueia(self):
         r = lote()
         r["edicoes"][1]["xlsx"] = r["edicoes"][0]["xlsx"]
         r["edicoes"][1]["sha256"] = r["edicoes"][0]["sha256"]
         with self.assertRaisesRegex(ErroHomologacaoLPC, "reapresentado"):
-            self.testar(r)
+            self.executar(r)
 
     def test_status_de_lacuna_municipal_nao_inventa_zero(self):
         # Segunda edição: SINOP muda produto observado; não inferir que
@@ -118,19 +118,19 @@ class TestPreHomologacaoANP(unittest.TestCase):
         r = lote()
         r["edicoes"][1]["xlsx"] = f["xlsx"]
         r["edicoes"][1]["sha256"] = sha256(f["xlsx"]).hexdigest()
-        out = self.testar(r)
+        out = self.executar(r)
         self.assertTrue(out["lacunas_cobertura"])
         self.assertEqual(out["lacunas_cobertura"][0]["municipio"], "SINOP")
         self.assertFalse(out["publicavel"])
 
     def test_rejeita_semana_xlsx_diferente_de_url(self):
         f = fixture(start=date(2026, 10, 11),
-                    periodo_xlsx=date(2026, 10, 4))
+                    periodo_xlsx=date(2026, 10, 4), preco="6,11")
         r = lote()
         r["edicoes"][2]["xlsx"] = f["xlsx"]
         r["edicoes"][2]["sha256"] = sha256(f["xlsx"]).hexdigest()
         with self.assertRaisesRegex(ErroHomologacaoLPC, "difere do índice"):
-            self.testar(r)
+            self.executar(r)
 
 
 if __name__ == "__main__":
