@@ -57,6 +57,7 @@ class LineupBridgeResult:
     publication_allowed: bool = False
     realized_cargo_claimed: bool = False
     pdf_program_rows: tuple[PdfProgramReference, ...] = ()
+    pdf_series: str | None = None
 
     def summary(self) -> dict[str, Any]:
         return {
@@ -282,5 +283,5 @@ def bridge_official_pdf_document(
         source_url=validated["fonte"], document_sha256=validated["documento_sha256"],
         collected_at=stamp.isoformat(), candidates=tuple(candidates),
         excluded=tuple(excluded), source_rows=len(source_rows),
-        pdf_program_rows=tuple(programme_rows),
+        pdf_program_rows=tuple(programme_rows), pdf_series=contract.serie,
     )

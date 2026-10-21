@@ -188,9 +188,22 @@ class MaritimeStore:
                     restored.execute("SELECT COUNT(*) FROM maritime_lineup_vintages").fetchone()[0]
                     if has_vintages else 0
                 )
+                # Keep this separate from DUV/port-call snapshots: these
+                # rows are only PDF programme references and may lack DUV.
+                has_pdf_programme = restored.execute("""
+                    SELECT 1 FROM sqlite_master
+                    WHERE type='table' AND name='maritime_pdf_programme_editions'
+                """).fetchone() is not None
+                pdf_programme_rows = (
+                    restored.execute(
+                        "SELECT COUNT(*) FROM maritime_pdf_programme_editions"
+                    ).fetchone()[0]
+                    if has_pdf_programme else 0
+                )
                 return {
                     "integrity": "ok", "ais_rows": ais_rows,
                     "lineup_rows": lineup_rows, "lineup_vintage_rows": vintage_rows,
+                    "pdf_programme_edition_rows": pdf_programme_rows,
                 }
             finally:
                 restored.close()
