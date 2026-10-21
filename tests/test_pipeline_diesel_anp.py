@@ -1,5 +1,9 @@
 import unittest
 import sqlite3
+import copy
+
+from nivon.editorial_preflight import avaliar_previa_editorial
+from nivon.editorial_evidencias_pipeline import conciliar_complementos
 
 from nivon.pipeline_briefing import gerar_edicao_offline, ErroPipelineBriefing
 
@@ -67,6 +71,31 @@ class TestPipelineDieselANP(unittest.TestCase):
                              for err in x["preflight_editorial"]["bloqueios"]))
         self.assertFalse(x["preflight_editorial"]["apto_revisao"])
         self.assertEqual(x["preflight_editorial"]["modo"],"OFFLINE_SEM_ENVIO")
+
+    def test_semana_ou_numero_de_postos_adulterados_bloqueia(self):
+        resultado=self.edicao()
+        original=resultado["evidencias_editoriais"]["cotacoes"][0]
+        for campo, valor in (("semana_inicio","2026-10-03"),
+                             ("semana_fim","2026-10-09"),
+                             ("postos_pesquisados",12)):
+            with self.subTest(campo=campo):
+                adulterado=copy.deepcopy(original)
+                adulterado[campo]=valor
+                previa=avaliar_previa_editorial(
+                    edicao=resultado,gerado_em=resultado["gerado_em"],
+                    noticias=[],cotacoes=[adulterado],fretes=[])
+                self.assertTrue(any(x.startswith("COTACAO_0:ANP:")
+                                    for x in previa["bloqueios"]))
+
+    def test_complemento_nao_pode_reescrever_periodo_oficial_anp(self):
+        pacote=self.edicao()["evidencias_editoriais"]
+        with self.assertRaisesRegex(ValueError,"imutável"):
+            conciliar_complementos(pacote,{
+                "sha256_edicao":pacote["sha256_edicao"],
+                "noticias":[],
+                "cotacoes":[{"semana_fim":"2026-10-09"}],
+                "fretes":[],
+            })
 
     def test_sem_direito_externo_nao_gera_cotacao(self):
         a=amostra();a["dataset"]["enabled"]=False
