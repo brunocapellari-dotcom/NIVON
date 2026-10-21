@@ -197,6 +197,22 @@ class TestProvenienciaPrevisoes(unittest.TestCase):
         with self.assertRaisesRegex(ErroRegistroPrevisao, "horizonte"):
             executar(p=p)
 
+    def test_apelido_igual_instrumento_diferente_nao_agrega_series(self):
+        original = executar()
+        outro = previsao()
+        outro["identidade_economica"][6] = "ZS-ALTERNATIVO"
+        base = cotacao("2026-10-13", "1000", SHA_A)
+        alvo = cotacao("2026-10-15", "1020", SHA_C)
+        base["instrumento_id"] = "ZS-ALTERNATIVO"
+        alvo["instrumento_id"] = "ZS-ALTERNATIVO"
+        segundo = executar(p=outro, base=[base], alvo=[alvo])
+        self.assertEqual(original["serie_rotulo_declarado"],
+                         segundo["serie_rotulo_declarado"])
+        self.assertNotEqual(original["item_backtest"]["serie_id"],
+                            segundo["item_backtest"]["serie_id"])
+        self.assertNotEqual(original["serie_fingerprint_sha256"],
+                            segundo["serie_fingerprint_sha256"])
+
     def test_mercado_identidade_divergente_bloqueia(self):
         p = previsao()
         p["identidade_economica"][6] = "OUTRO"
