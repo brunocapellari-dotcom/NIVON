@@ -115,6 +115,17 @@ jobs:
           set -euo pipefail
           python -m nivon.infra_cve_triage \
             --trivy-json "$RUNNER_TEMP/nivon-trivy.json"
+      - name: Extrair relação binário-pacote-fonte do dpkg da mesma imagem
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          docker run --rm --platform linux/amd64 --network none --read-only \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            --user 65532:65532 --entrypoint dpkg-query \
+            nivon-worker-supply:ci -W -f='${binary:Package}\\t${source:Package}\\n' \
+            > "$RUNNER_TEMP/nivon-dpkg-source.tsv"
+          test -s "$RUNNER_TEMP/nivon-dpkg-source.tsv"
       - name: Obter snapshot público Debian Security Tracker de origem fixa
         shell: bash
         run: |
@@ -135,7 +146,8 @@ jobs:
           set -euo pipefail
           python -m nivon.infra_debian_advisory \
             --trivy-json "$RUNNER_TEMP/nivon-trivy.json" \
-            --debian-tracker-json "$RUNNER_TEMP/nivon-debian-tracker.json"
+            --debian-tracker-json "$RUNNER_TEMP/nivon-debian-tracker.json" \
+            --dpkg-source-map "$RUNNER_TEMP/nivon-dpkg-source.tsv"
       - name: Aplicar bloqueio HIGH/CRITICAL sem imprimir detalhes sensíveis
         if: ${{ !cancelled() }}
         shell: bash

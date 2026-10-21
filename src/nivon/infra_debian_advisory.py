@@ -21,6 +21,8 @@ CVE = re.compile(r"CVE-[0-9]{4}-[0-9]{4,9}\Z")
 SOURCE = re.compile(r"[a-z0-9][a-z0-9+._-]{0,99}\Z")
 RELEASE = "trixie"
 MAX_TRACKER_BYTES = 90_000_000
+MAX_SOURCE_MAP_BYTES = 2_000_000
+BINARY = re.compile(r"[a-z0-9][a-z0-9+._-]{0,99}(?::[a-z0-9]+)?\Z")
 OS_STATUSES = ("open", "resolved", "undetermined", "not-affected", "other")
 SEVERITIES = ("HIGH", "CRITICAL")
 
@@ -42,6 +44,32 @@ def _tracker_file(path: str | Path) -> dict:
     return result
 
 
+def ler_mapa_dpkg(path: str | Path) -> dict[str, str]:
+    """Mapa binário→fonte extraído do dpkg-query da MESMA imagem, offline."""
+    f = Path(path)
+    if f.is_symlink() or not f.is_file() or not 0 < f.stat().st_size <= MAX_SOURCE_MAP_BYTES:
+        raise ErroSupplyChain("inventário dpkg ausente/inválido")
+    try:
+        linhas = f.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeError) as exc:
+        raise ErroSupplyChain("inventário dpkg ilegível") from exc
+    if not linhas or len(linhas) > 20000:
+        raise ErroSupplyChain("inventário dpkg vazio/excessivo")
+    out = {}
+    for linha in linhas:
+        campos = linha.split("\t")
+        if len(campos) != 2:
+            raise ErroSupplyChain("linha dpkg malformada")
+        binary, source = campos
+        if not BINARY.fullmatch(binary) or not SOURCE.fullmatch(source):
+            raise ErroSupplyChain("nome de pacote binário/fonte inválido no dpkg")
+        binary = binary.split(":", 1)[0]
+        if binary in out and out[binary] != source:
+            raise ErroSupplyChain("pacote dpkg com fontes conflitantes")
+        out[binary] = source
+    return out
+
+
 def _tracker_release(entry: object) -> tuple[str, bool, bool]:
     if not isinstance(entry, dict):
         return ("other", False, False)
@@ -60,7 +88,7 @@ def _tracker_release(entry: object) -> tuple[str, bool, bool]:
     return status, available, bool(nodsa)
 
 
-def confrontar(scan: dict, tracker: dict) -> dict:
+def confrontar(scan: dict, tracker: dict, *, source_map: dict[str, str] | None = None) -> dict:
     """Conta pares (ID CVE, pacote-fonte), nunca confunde 9 binários com 9 CVEs."""
     if not isinstance(scan, dict) or scan.get("SchemaVersion") != 2:
         raise ErroSupplyChain("Trivy com schema ausente")
@@ -71,12 +99,17 @@ def confrontar(scan: dict, tracker: dict) -> dict:
     if not isinstance(tracker, dict) or not isinstance(tracker.get("util-linux"), dict):
         raise ErroSupplyChain("snapshot do Debian não contém pacote-fonte de controle")
 
+    if source_map is None:
+        source_map = {}
+    if not isinstance(source_map, dict):
+        raise ErroSupplyChain("mapa binário-fonte inválido")
     os_findings = 0
     lang_findings = 0
     pairs: set[tuple[str, str]] = set()
     source_mapped_ids: set[str] = set()
     findings_without_source = 0
     fallback_name_findings = 0
+    mapped_via_dpkg = 0
     missing_tracker: set[tuple[str, str]] = set()
     status_by_pair: Counter[str] = Counter()
     matched_with_fix = 0
@@ -104,16 +137,22 @@ def confrontar(scan: dict, tracker: dict) -> dict:
             if not isinstance(identity, str) or not CVE.fullmatch(identity):
                 raise ErroSupplyChain("ID CVE do SO ausente/inesperado")
             all_os_cves.add(identity)
-            # Trivy informa SrcName para Debian; PkgName só pode ser usado
-            # quando ele próprio é uma entrada fonte do tracker.
+            # Fonte de maior precisão: SrcName nativo, ou inventário dpkg
+            # da mesma imagem. PkgName só vale como fonte se houver no tracker.
+            binary_name = v.get("PkgName")
             source = v.get("SrcName")
-            if not isinstance(source, str) or not SOURCE.fullmatch(source):
-                binary_name = v.get("PkgName")
-                if isinstance(binary_name, str) and binary_name in tracker:
-                    source = binary_name
-                    fallback_name_findings += 1
-                else:
-                    source = None
+            mapped_source = source_map.get(binary_name) if isinstance(binary_name, str) else None
+            if isinstance(source, str) and SOURCE.fullmatch(source):
+                if mapped_source is not None and source != mapped_source:
+                    raise ErroSupplyChain("Trivy e dpkg divergem sobre pacote fonte")
+            elif isinstance(mapped_source, str) and SOURCE.fullmatch(mapped_source):
+                source = mapped_source
+                mapped_via_dpkg += 1
+            elif isinstance(binary_name, str) and binary_name in tracker:
+                source = binary_name
+                fallback_name_findings += 1
+            else:
+                source = None
             if source is None:
                 findings_without_source += 1
                 continue
@@ -150,6 +189,9 @@ def confrontar(scan: dict, tracker: dict) -> dict:
         "source_mapped_distinct_os_cves": len(source_mapped_ids),
         "os_findings_without_source_mapping": findings_without_source,
         "os_findings_fallback_binary_as_source": fallback_name_findings,
+        "os_findings_mapped_via_dpkg": mapped_via_dpkg,
+        "dpkg_source_map_entries": len(source_map),
+        "source_map_from_same_image": bool(source_map),
         "no_tracker_entry_pairs": len(missing_tracker),
         "vendor_status_by_pair": {s: status_by_pair[s] for s in OS_STATUSES},
         "fixed_version_declared_pairs": matched_with_fix,
@@ -165,10 +207,12 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Reconciliar Trivy/Debian Trixie sem liberar release")
     ap.add_argument("--trivy-json", required=True)
     ap.add_argument("--debian-tracker-json", required=True)
+    ap.add_argument("--dpkg-source-map", required=True)
     args = ap.parse_args(argv)
     try:
         out = confrontar(_carregar_json(args.trivy_json),
-                         _tracker_file(args.debian_tracker_json))
+                         _tracker_file(args.debian_tracker_json),
+                         source_map=ler_mapa_dpkg(args.dpkg_source_map))
     except (OSError, ValueError) as exc:
         print(json.dumps({"status": "INVALID_OFFICIAL_CROSSCHECK", "reason": str(exc),
                           "release_authorized": False}, sort_keys=True))

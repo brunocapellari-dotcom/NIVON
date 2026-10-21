@@ -6,7 +6,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from nivon.infra_debian_advisory import confrontar, main, _tracker_file
+from nivon.infra_debian_advisory import confrontar, main, _tracker_file, ler_mapa_dpkg
 from nivon.infra_supplychain import ErroSupplyChain
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -121,6 +121,34 @@ class TestDebianAdvisory(unittest.TestCase):
         self.assertEqual(x["source_mapped_distinct_os_cves"], 3)
         self.assertEqual(x["os_findings_without_source_mapping"], 2)
 
+    def test_dpkg_query_restaura_origem_de_binarios_sem_srcname(self):
+        scan, tracker = dados()
+        mapa = {"mount": "util-linux", "libmount1": "util-linux",
+                "libfoo": "foo", "unknown-binary": "foo"}
+        out = confrontar(scan, tracker, source_map=mapa)
+        self.assertEqual(out["no_source_mapping_cves"], 0)
+        self.assertEqual(out["os_findings_mapped_via_dpkg"], 1)
+        self.assertEqual(out["source_map_from_same_image"], True)
+        self.assertEqual(out["no_tracker_entry_pairs"], 1)
+        self.assertEqual(out["os_findings_without_source_mapping"], 0)
+
+    def test_inventario_dpkg_realista_e_conflitos(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Path(tmp) / "dpkg.tsv"
+            f.write_text("libc6:amd64\tglibc\nmount\tutil-linux\n", encoding="utf-8")
+            self.assertEqual(ler_mapa_dpkg(f), {"libc6": "glibc", "mount": "util-linux"})
+            f.write_text("libc6:amd64\tglibc\nlibc6:arm64\twrong\n", encoding="utf-8")
+            with self.assertRaises(ErroSupplyChain):
+                ler_mapa_dpkg(f)
+            f.write_text("x\t../unsafe\n", encoding="utf-8")
+            with self.assertRaises(ErroSupplyChain):
+                ler_mapa_dpkg(f)
+
+    def test_divergencia_trivy_dpkg_bloqueada(self):
+        scan, tracker = dados()
+        with self.assertRaises(ErroSupplyChain):
+            confrontar(scan, tracker, source_map={"mount": "foo"})
+
     def test_snapshot_json_duplicado_ou_link_recusado(self):
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
@@ -142,9 +170,11 @@ class TestDebianAdvisory(unittest.TestCase):
             b = Path(tmp) / "debian.json"
             a.write_text(json.dumps(scan), encoding="utf-8")
             b.write_text(json.dumps(tracker), encoding="utf-8")
+            m = Path(tmp) / "dpkg.tsv"
+            m.write_text("mount\tutil-linux\nlibmount1\tutil-linux\nlibfoo\tfoo\nunknown-binary\tfoo\n", encoding="utf-8")
             f = io.StringIO()
             with redirect_stdout(f):
-                rc = main(["--trivy-json", str(a), "--debian-tracker-json", str(b)])
+                rc = main(["--trivy-json", str(a), "--debian-tracker-json", str(b), "--dpkg-source-map", str(m)])
             self.assertEqual(rc, 0)
             out = json.loads(f.getvalue())
             self.assertFalse(out["release_authorized"])
@@ -155,6 +185,9 @@ class TestDebianAdvisory(unittest.TestCase):
         w = WF.read_text(encoding="utf-8")
         self.assertIn("security-tracker.debian.org/tracker/data/json", w)
         self.assertIn("python -m nivon.infra_debian_advisory", w)
+        self.assertIn("source:Package", w)
+        self.assertIn("--entrypoint dpkg-query", w)
+        self.assertIn("--dpkg-source-map", w)
         self.assertIn("--max-filesize 90000000", w)
         self.assertIn("if: ${{ !cancelled() }}", w)
         self.assertLess(w.index("python -m nivon.infra_debian_advisory"),
