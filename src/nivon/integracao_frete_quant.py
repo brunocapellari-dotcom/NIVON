@@ -31,6 +31,10 @@ def _valor_decimal(valor: object, campo: str, *, nao_negativo: bool=False) -> De
         raise ErroQuantitativo(f"{campo}: overflow ao representar BRL/T") from exc
     if not isfinite(aproximado) or (n != 0 and aproximado == 0):
         raise ErroQuantitativo(f"{campo}: numero irrepresentavel")
+    # O contrato do motor armazena float: proibir perda silenciosa de
+    # centavos/digitos ao converter valores Decimais comercialmente exatos.
+    if Decimal(str(aproximado)) != n:
+        raise ErroQuantitativo(f"{campo}: precisao decimal perdida na conversao")
     return n
 
 
