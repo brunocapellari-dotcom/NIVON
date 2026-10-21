@@ -143,6 +143,7 @@ def tendencia_frete_anunciado(
     descarga_entity_id: str, regime: str,
     janela: int = 6, minimo_lotes_dia: int = 2,
     tolerancia_absoluta: float = 0, tolerancia_relativa: float = 0,
+    incluir_serie_pareada: bool = False,
 ) -> dict:
     """Motor R01 canônico #30 + controles comerciais #18; variações PAREADAS.
 
@@ -164,6 +165,8 @@ def tendencia_frete_anunciado(
         raise ErroTendencia("condição de pedágio precisa ser informada")
     if tolerancia_relativa != 0:
         raise ErroTendencia("limiar relativo de frete exige normalização pareada própria; usar tolerância absoluta em BRL/T")
+    if type(incluir_serie_pareada) is not bool:
+        raise ErroTendencia("incluir_serie_pareada deve ser booleano explícito")
     if type(minimo_lotes_dia) is not int or not 2 <= minimo_lotes_dia <= 100:
         raise ErroTendencia("minimo_lotes_dia fora do intervalo")
     if not isinstance(ofertas, (tuple, list)) or len(ofertas) > 10000:
@@ -284,6 +287,8 @@ def tendencia_frete_anunciado(
         ],
         "observacoes_brutas": len(ofertas), "reenvios_deduplicados": repetidos,
         "lotes_distintos_total_por_dia": sum(x["identidades_observadas"] for x in coverage),
-        "cobertura_amostral": coverage, "direitos_publicacao_verificados": False,
+        "cobertura_amostral": coverage,
+        **({"serie_pareada": samples} if incluir_serie_pareada else {}),
+        "direitos_publicacao_verificados": False,
         "alerta": "Variação pareada de FRETES ANUNCIADOS; não é média municipal, preço de mercado, contrato, embarque ou volume realizado.",
     }
