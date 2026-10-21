@@ -36,7 +36,8 @@ def criar_wheel(*, versao_meta="2.4", expression="MIT", legacy=None,
         "example/__init__.py": b"# no third party code is executed\n",
     }
     for path in declared:
-        if path not in missing and not path.startswith(("../", "/")):
+        if (path not in missing and not path.startswith(("../", "/")) and
+                "\\" not in path):
             members[prefix + "/licenses/" + path] = (
                 binary if binary is not None else b"Test license fixture\n"
             )
