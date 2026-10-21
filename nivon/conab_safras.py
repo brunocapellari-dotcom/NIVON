@@ -38,8 +38,19 @@ def parametros(produto: str, safra: str, uf: str, levantamento: int):
         raise ValueError("Levantamento da própria safra é obrigatório (1..12)")
 
 
+def ausente(item):
+    """pandas pode materializar campo nullable (area_colhida) como float NaN."""
+    if item is None:
+        return True
+    if isinstance(item,str) and item.strip() in ("", "<NA>", "NaN", "nan"):
+        return True
+    if isinstance(item,float) and item != item:
+        return True
+    return False
+
+
 def numero_nao_negativo(item, metrica):
-    if item is None or item == "":
+    if ausente(item):
         return None
     if isinstance(item,bool):
         raise DadosConabNaoHomologados(f"{metrica}: booleano inválido")
@@ -106,7 +117,7 @@ def validar_linhas(linhas: list[dict], produto: str, safra: str, uf: str,
             met={k:numero_nao_negativo(row.get(k),k) for k in METRICAS}
             if all(v is None for v in met.values()):
                 raise DadosConabNaoHomologados("Métricas da safra ausentes")
-            if row.get("area_colhida") is not None:
+            if not ausente(row.get("area_colhida")):
                 raise DadosConabNaoHomologados("CONAB safra não publica área colhida distinta")
             validas.append({
                 "fonte":"CONAB", "produto":produto,"uf":uf,"safra":safra,
