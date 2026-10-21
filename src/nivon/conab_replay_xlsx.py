@@ -9,9 +9,11 @@ from __future__ import annotations
 
 import hashlib
 import io
+import json
 import math
 import re
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from xml.etree import ElementTree as ET
 from zipfile import ZipFile, BadZipFile
 
@@ -69,6 +71,8 @@ def _celulas_xlsx(payload: bytes):
             members=z.infolist()
             if (not 3 <= len(members) <= 4000 or len({m.filename for m in members}) != len(members)):
                 raise ErroXlsxProgresso("membros XLSX vazios, repetidos ou excessivos")
+            if sum(m.file_size for m in members) > 40_000_000:
+                raise ErroXlsxProgresso("pacote XLSX com expansão total acima do limite")
             for m in members:
                 if (m.flag_bits & 1 or m.file_size>15_000_000
                     or m.file_size>max(m.compress_size,1)*200
@@ -78,6 +82,9 @@ def _celulas_xlsx(payload: bytes):
             if "xl/vbaProject.bin" in z.namelist():
                 raise ErroXlsxProgresso("XLSX com macro não permitido")
             wb=_xml(z,"xl/workbook.xml")
+            props=wb.find(NS+"workbookPr")
+            if props is not None and props.get("date1904","0").lower() in ("1","true"):
+                raise ErroXlsxProgresso("calendário Excel 1904 requer parser específico")
             rels=_xml(z,"xl/_rels/workbook.xml.rels")
             sheets=wb.find(NS+"sheets")
             if sheets is None:
@@ -317,11 +324,13 @@ def reexecutar_xlsx_conab(payload: bytes, *, sha256_origem: str,
         for item in normalized:
             row=dict(item)
             row.pop("coleta")
-            key,content,_=_normalizar_registro(__import__("json").dumps(row,ensure_ascii=False,allow_nan=False))
+            key,content,_=_normalizar_registro(json.dumps(row,ensure_ascii=False,allow_nan=False))
             semantic[key]=content
     except (ErroProgresso,ErroConciliacaoConab) as exc:
         raise ErroXlsxProgresso("normalização do XLSX falhou") from exc
-    return {"parser_id":PARSER_ID,"raw_sha256":sha256_origem,
+    return {"parser_id":PARSER_ID,
+            "parser_codigo_sha256":hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            "raw_sha256":sha256_origem,
             "observacoes":len(semantic),"mapa_semantico":semantic,
             "arquivo_de_terceiro_sem_prova_de_origem":True,
             "direitos_de_uso_verificados":False,
