@@ -1,0 +1,23 @@
+# EXPERIMENTO AMD64, SEM RELEASE/PRODUÇÃO. Não substituir Dockerfile.worker.
+# Testar remoção de ferramentas de packaging herdadas da imagem Python.
+# Etapa RUN é específica de arquitetura e requer validação ARM64 separada.
+# Worker mínimo para validação ARM64/amd64 — NÃO É RELEASE DE PRODUÇÃO.
+# Base Trixie fixada por digest observado em benchmark OCI/Docker; ARM64 CI pendente.
+# Scanner Trixie: 0 CRITICAL, 46 HIGH (ainda BLOQUEADO para produção).
+# Não instala pacotes de fontes, chaves, rede, schedulers nem clientes externos.
+FROM python:3.11-slim-trixie@sha256:cce12316475d7d56d605f76e1d811d0dc4e7227f2d4afd29951521264f504ff8
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app/src
+WORKDIR /app
+# O worker atual executa apenas stdlib; nenhum pip necessário no runtime.
+# As remoções ocorrem sem baixar pacotes ou acessar índices externos.
+RUN python -m pip uninstall --yes wheel jaraco.context setuptools && \
+    python -m pip uninstall --yes pip
+COPY src/ /app/src/
+COPY config/ /app/config/
+COPY infra/inventory.v1.json /app/infra/inventory.v1.json
+USER 65532:65532
+ENTRYPOINT ["python", "-m", "nivon.infra_worker"]
+CMD ["--mode", "self-check"]
