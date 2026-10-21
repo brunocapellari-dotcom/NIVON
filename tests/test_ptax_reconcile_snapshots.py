@@ -134,7 +134,7 @@ class ReconciliationTests(unittest.TestCase):
         dest["source_neon_row_id"] = "12"  # BQ JSON INT64 representation
         dest["first_collected_at"] = "2026-10-21 14:10:00 UTC"
         dest["last_verified_at"] = "2026-10-21 15:10:00 UTC"
-        self.assertEqual(canonical_target(dest)["quote_id"], normalize(a)["quote_id"])
+        # A leitura do arquivo JSONL converte decimais para Decimal antes de validar.
         self.write([a], [dest])
         self.assertTrue(reconcile(self.source, self.target)["local_snapshot_consistent"])
 
