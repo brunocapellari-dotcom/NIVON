@@ -12,6 +12,8 @@ import sqlite3
 from datetime import date, datetime, timezone
 from pathlib import Path
 
+from .outbox_unificada import _schema as _controle_esquema, reservar_na_transacao
+
 
 class ErroOutbox(ValueError):
     pass
@@ -98,16 +100,36 @@ def agendar_briefing(db: sqlite3.Connection, *, dia_local: str,
 
 
 def reservar_para_entrega(db: sqlite3.Connection, *, id: int) -> dict:
-    """Reserva única, sem retry automático de estado ambíguo."""
+    """Reserva atomicamente a edição no ledger comum e no legado.
+
+    Falha fechado se não houver consentimento assinado ou se o outro canal
+    reservou o dia/destinatário. Sem POST nem retry automático.
+    """
     token=secrets.token_hex(24)
-    with db:
-        result=db.execute("""UPDATE briefing_outbox
-          SET status='RESERVED',reservacao=?
-          WHERE id=? AND status='PENDING'""",(token,id))
-        if result.rowcount!=1:
+    _controle_esquema(db)
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        row=db.execute("""SELECT dia_local,destinatario_hmac,texto_sha256,status
+            FROM briefing_outbox WHERE id=?""",(id,)).fetchone()
+        if row is None or row["status"]!="PENDING":
             raise ErroOutbox("reserva duplicada ou briefing não elegível")
-        row=db.execute("""SELECT texto_sha256 FROM briefing_outbox WHERE id=?""",(id,)).fetchone()
-    return {"id":id,"token":token,"sha256":row["texto_sha256"],
+        reservar_na_transacao(
+            db,dia_local=row["dia_local"],
+            destinatario_hmac=row["destinatario_hmac"],
+            canal="BRIEFING",intencao_id=str(id),
+            agora=datetime.now(timezone.utc).isoformat(),
+        )
+        result=db.execute("""UPDATE briefing_outbox
+            SET status='RESERVED',reservacao=?
+            WHERE id=? AND status='PENDING'""",(token,id))
+        if result.rowcount!=1:
+            raise ErroOutbox("reserva simultânea ou briefing alterado")
+        digest=row["texto_sha256"]
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    return {"id":id,"token":token,"sha256":digest,
             "status":"RESERVED_SEM_ENVIO"}
 
 
