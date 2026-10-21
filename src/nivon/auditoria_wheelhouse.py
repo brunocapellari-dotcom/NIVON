@@ -123,7 +123,7 @@ def _metadata_zip(fh, expected_name: str, expected_version: str) -> dict:
                     raise ErroEvidencia("METADATA contém excesso de dependências")
                 requirements = [str(value) for value in req_headers]
                 if any(not item.strip() or len(item) > 512 or
-                       "\\n" in item or "\\r" in item for item in requirements):
+                       "\n" in item or "\r" in item for item in requirements):
                     raise ErroEvidencia("Requires-Dist inválido ou extenso")
             except ErroEvidencia:
                 raise
