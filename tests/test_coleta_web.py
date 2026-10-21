@@ -91,6 +91,17 @@ class TestColetaWeb(unittest.TestCase):
                     adquirir_fonte(fonte, abridor=abertura)
                 self.assertEqual(abertura.chamadas, 0)
 
+    def test_direitos_aprovados_nao_habilitam_urllib_sem_egress_auditado(self):
+        # Mesmo uma FonteWeb declarada APROVADA não dá acesso a DNS/rede.
+        f = self.fonte()
+        with self.assertRaisesRegex(PermissionError, "EGRESS_NAO_HOMOLOGADO"):
+            adquirir_fonte(f)
+        # Uma resposta sintética explicitamente injetada ainda é testável.
+        mock = AbridorFalso(RespostaFalsa(f.url))
+        arquivo = adquirir_fonte(f, abridor=mock)
+        self.assertEqual(mock.chamadas, 1)
+        self.assertEqual(arquivo["fonte_id"], "PORTO_SINTETICO")
+
     def test_recebe_payload_com_hash_e_metadados(self):
         f = self.fonte()
         r = adquirir_fonte(f, abridor=AbridorFalso(RespostaFalsa(f.url)))
