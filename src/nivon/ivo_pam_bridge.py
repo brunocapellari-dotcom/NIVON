@@ -15,7 +15,7 @@ from math import isfinite
 
 from .historico import Observacao
 from .sidra_pam import normalizar_pam_1612, planejar_pam_1612
-from .ivo_pam_semantica import ErroSemanticaPAM, conferir_semantica_pam_1612
+from .ivo_pam_semantica import conferir_semantica_pam_1612, ErroSemanticaPAM
 
 
 class ErroPontePAM(ValueError):
@@ -115,9 +115,7 @@ def preparar_pam_anual_asof(*, payload: bytes, plano: dict,
             categoria_c81=produto_autorizado,
             unidade=unidade_autorizada)
     except ErroSemanticaPAM as exc:
-        # A ponte publica o contrato ErroPontePAM, inclusive quando a
-        # semântica rejeita grandeza, variável, produto ou unidade.
-        raise ErroPontePAM("mapeamento PAM/SIDRA incompatível") from exc
+        raise ErroPontePAM("semântica PAM/C81/unidade não verificada") from exc
     # Contrato oficial do planejador SIDRA; não reconstitui endpoint externo.
     expected = planejar_pam_1612(
         municipio_ibge=plano.get("municipio_ibge"),
