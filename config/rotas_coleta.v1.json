@@ -4247,6 +4247,36 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Resposta sem competência/referência por taxa; não publicar como atual nem alimentar tendências sem BCB e data.",
       "preliminary_evidence": "DOCUMENTED_ENDPOINT_OFFLINE_PARSER_NO_LIVE_COLLECTION"
+    },
+    {
+      "dataset_id": "IBAMA_SISFOGO_ROI_FINALIZADOS",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "DIRECT_OFFICIAL_API",
+        "url": "https://sisfogo.sistema.gov.br/api/v1/roi/publico?page=1&size=10",
+        "source_proof": "https://www.gov.br/conecta/catalogo/apis/registro-de-ocorrencia-de-incendio-florestal-roi"
+      },
+      "implementation_scope": "OFFLINE_SCHEMA_NORMALIZER_AND_PAGINATION_AUDIT_ONLY; no network collector, no persistence",
+      "authentication": "NONE_DOCUMENTED_OFFICIAL",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "LIVE_SAMPLE_AND_OPERATION_RIGHTS_NOT_VALIDATED",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "REAL_PRODUCTION_HTTP_SMOKE",
+        "PAGINATION_STABILITY_AND_RETIFICATION_AUDIT",
+        "SNAPSHOT_VERSIONING_AND_INCIDENT_DEDUP"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Fonte IBAMA de registros FINALIZADOS reportados por órgãos participantes; sem geocódigo municipal IBGE no payload, distinguir área estimada em ha, foco INPE e ocorrência. Ambiente HOM/DEV não é produção.",
+      "preliminary_evidence": "OFFICIAL_GOV_BR_CATALOG_2026_08_27; OPERATIONAL_ENDPOINT_UNTESTED_FROM_THIS_ENV"
     }
   ]
 }
