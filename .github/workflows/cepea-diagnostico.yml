@@ -22,12 +22,21 @@ jobs:
           python - <<'PY'
           import asyncio
           import json
-          from nivon.fontes_agrobr import consultar_cepea_para_validacao
+          from nivon.fontes_agrobr import DadosNaoHomologados, consultar_cepea_para_validacao
 
           async def main():
-              result = await consultar_cepea_para_validacao(
-                  'soja', aceite_nc=True,
-                  inicio='2026-10-01', fim='2026-10-20')
+              try:
+                  result = await consultar_cepea_para_validacao(
+                      'soja', aceite_nc=True,
+                      inicio='2026-10-01', fim='2026-10-20')
+              except DadosNaoHomologados:
+                  print(json.dumps({
+                      'status': 'PRIMARIA_INDISPONIVEL_FALLBACK_BLOQUEADO',
+                      'fonte': 'CEPEA',
+                      'armazenado': False,
+                      'sucesso_de_ingestao': False
+                  }, ensure_ascii=False))
+                  return
               print(json.dumps(result, ensure_ascii=False, default=str))
               if result['linhas_aprovadas_em_memoria'] < 1:
                   raise SystemExit('CEPEA: nenhuma observacao primaria aprovada')
