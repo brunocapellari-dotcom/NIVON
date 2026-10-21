@@ -186,6 +186,15 @@ class PonteFretes(unittest.TestCase):
                                frete_cheio_brl_t=valor,
                                pedagio_brl_t="0")])
 
+    def test_conversao_precisoes_decimal_nao_perde_centavos(self):
+        # Montante de estresse puramente sintetico: float nao conserva 0.01.
+        row=frete(edicao_sha256="a"*64,
+                  frete_base_brl_t="1000000000000000.01",
+                  frete_cheio_brl_t="1000000000000000.01",
+                  pedagio_brl_t="0")
+        with self.assertRaisesRegex(ErroQuantitativo,"precisao decimal"):
+            preparar([row])
+
     def test_reutilizacao_de_registro_id_com_preco_alterado_bloqueada(self):
         a=frete(edicao_sha256="a"*64)
         b=frete(edicao_sha256="b"*64,
