@@ -7,7 +7,7 @@ Não conecta rede, banco de dados, grupos ou serviço de mensageria.
 """
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, date
 from decimal import Decimal, InvalidOperation
 from hashlib import sha256
 import hmac
@@ -168,6 +168,20 @@ def adaptar_evento_whatsapp(
         raise ErroAdaptadorFrete("atestado externo inválido: " + str(exc)) from exc
     if resolucao.get("evento_sha256") != digest:
         raise ErroAdaptadorFrete("resolução não cobre exatamente a edição do evento")
+    # Recebimento hoje NÃO transforma republicação antiga em nova oferta.
+    # Exigir data COMERCIAL atestada a partir do conteúdo original (RAW),
+    # pelo resolvedor independente que assinou o objeto de resolução.
+    if resolucao.get("atualidade_comercial") != "VERIFICADA_NO_CONTEUDO_ORIGINAL":
+        raise ErroAdaptadorFrete("oferta sem atualidade comercial comprovada no RAW")
+    referencia_comercial = resolucao.get("data_referencia_comercial")
+    if not isinstance(referencia_comercial, str):
+        raise ErroAdaptadorFrete("data comercial original ausente")
+    try:
+        referencia_confirmada = date.fromisoformat(referencia_comercial)
+    except ValueError as exc:
+        raise ErroAdaptadorFrete("data comercial original inválida") from exc
+    if referencia_confirmada != pub.astimezone(_MT).date():
+        raise ErroAdaptadorFrete("republicação de anúncio antigo: requer revisão de atualidade")
 
     if (autorizacao.get("status") != "APROVADA"
             or autorizacao.get("tenant_id") != tenant
