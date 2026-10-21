@@ -389,7 +389,11 @@
         "nivon.meteorologia_probabilistica:avaliar_ensemble",
         "nivon.hidrograma_bacia:hidrograma_evento_cn",
         "nivon.ensemble_hidrologico_bacia:cenario_ensemble_bacia",
-        "nivon.chuva_areal_ensemble:agregar_ensemble_chuva_areal"
+        "nivon.chuva_areal_ensemble:agregar_ensemble_chuva_areal",
+        "nivon.verificacao_vazao_asof:avaliar_hidrograma_asof",
+        "nivon.verificacao_chuva_ensemble_asof:verificar_chuva_ensemble_asof",
+        "nivon.pacotes_chuva_asof:montar_e_verificar_pares_chuva",
+        "nivon.adaptador_inmet_chuva:converter_dia_inmet_para_snapshot"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -594,7 +598,10 @@
         "nivon.chirps_v3_conservacao:reconciliar_chirps_pentada",
         "nivon.meteorologia_probabilistica:crps_ensemble",
         "nivon.meteorologia_probabilistica:avaliar_ensemble",
-        "nivon.chuva_areal_ensemble:agregar_ensemble_chuva_areal"
+        "nivon.chuva_areal_ensemble:agregar_ensemble_chuva_areal",
+        "nivon.verificacao_chuva_ensemble_asof:verificar_chuva_ensemble_asof",
+        "nivon.pacotes_chuva_asof:montar_e_verificar_pares_chuva",
+        "nivon.adaptador_inmet_chuva:converter_dia_inmet_para_snapshot"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -636,7 +643,8 @@
         "nivon.hidrograma_bacia:hidrograma_evento_cn",
         "nivon.calibracao_cn_bacias:calibrar_cn_historico",
         "nivon.ensemble_hidrologico_bacia:cenario_ensemble_bacia",
-        "nivon.chuva_areal_ensemble:agregar_ensemble_chuva_areal"
+        "nivon.chuva_areal_ensemble:agregar_ensemble_chuva_areal",
+        "nivon.verificacao_vazao_asof:avaliar_hidrograma_asof"
       ],
       "data_dependencies": [
         "ANA_HIDRO",
