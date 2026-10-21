@@ -256,7 +256,7 @@ class TestVintagesAssinadas(unittest.TestCase):
         with self.assertRaises(ErroProvenienciaIVO):
             check(ledger(), T.replace(tzinfo=None))
         with self.assertRaises(ErroProvenienciaIVO):
-            ledger().autorizador()("SOY-001", "not-a-hash", RAW_HASH, T)
+            ledger().autorizador(tenant="TENANT_A")("SOY-001", "not-a-hash", RAW_HASH, T)
 
     def test_revogacao_nao_vira_promocao_so_por_trust_no_texto(self):
         e1 = signed(payload())
