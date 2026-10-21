@@ -15,7 +15,7 @@ from math import isfinite
 
 from .historico import Observacao
 from .sidra_pam import normalizar_pam_1612, planejar_pam_1612
-from .ivo_pam_semantica import conferir_semantica_pam_1612
+from .ivo_pam_semantica import conferir_semantica_pam_1612, ErroSemanticaPAM
 
 
 class ErroPontePAM(ValueError):
@@ -109,10 +109,13 @@ def preparar_pam_anual_asof(*, payload: bytes, plano: dict,
     # O coletor base aceita códigos genéricos; o IVO só pode fazer
     # inferência quando a grandeza, a unidade e a cultura foram
     # identificadas SEM heurística ou mistura de hectares/toneladas.
-    semantica=conferir_semantica_pam_1612(
-        variavel=variavel_autorizada,
-        categoria_c81=produto_autorizado,
-        unidade=unidade_autorizada)
+    try:
+        semantica=conferir_semantica_pam_1612(
+            variavel=variavel_autorizada,
+            categoria_c81=produto_autorizado,
+            unidade=unidade_autorizada)
+    except ErroSemanticaPAM as exc:
+        raise ErroPontePAM("semântica PAM/C81/unidade não verificada") from exc
     # Contrato oficial do planejador SIDRA; não reconstitui endpoint externo.
     expected = planejar_pam_1612(
         municipio_ibge=plano.get("municipio_ibge"),
