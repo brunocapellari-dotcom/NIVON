@@ -1,8 +1,8 @@
 # Worker mínimo para validação ARM64/amd64 — NÃO É RELEASE DE PRODUÇÃO.
-# Base fixada pelo digest multiarch observado nos builds amd64/arm64 do CI.
-# Digest não substitui SBOM, scan de CVEs ou revisão de release.
+# Base Trixie fixada por digest observado em benchmark OCI/Docker; ARM64 CI pendente.
+# Scanner Trixie: 0 CRITICAL, 46 HIGH (ainda BLOQUEADO para produção).
 # Não instala pacotes de fontes, chaves, rede, schedulers nem clientes externos.
-FROM python:3.11-slim-bookworm@sha256:0a310eeecf4e1f5a0743f9a6520c90c88d089c903ca5fd283f501e3a805f5f89
+FROM python:3.11-slim-trixie@sha256:cce12316475d7d56d605f76e1d811d0dc4e7227f2d4afd29951521264f504ff8
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
