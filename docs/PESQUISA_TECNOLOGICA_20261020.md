@@ -144,3 +144,19 @@ PYTHONPATH=src python -m nivon.auditoria_wheelhouse \
 **Limites obrigatórios:** não há prova de origem/autenticidade dos hashes publicados ou do executor; a ferramenta não verifica assinatura de wheel, `RECORD` interno, compatibilidade ABI/plataforma, marker de dependência, fechamento transitivo, licença, advisories/CVEs ou ambiente instalado. Ela suporta um subconjunto numérico restrito de versões para falhar fechada; wheels fora dele não são homologados automaticamente. Mesmo um wheelhouse 100% consistente produz `approved_for_install=false` e `approved_for_production=false`.
 
 **Próximo gate executável:** correlacionar bytes/hashes verificados com o relatório `pip-audit`, adicionar comprovação verificável da origem dos artefatos e resolução completa das dependências, e depois executar auditoria CVE real + teste de importação em ambiente sandbox homologado. Não publicar resultados de fixtures como scan CVE real. Sem instalações, rede operacional, merge, deploy ou custos nesta rodada.
+
+### Gate composto: relatório de CVE + wheelhouse local
+
+Adicionado `src/nivon/auditoria_artefatos_pacotes.py`, com testes sintéticos em `tests/test_auditoria_artefatos_pacotes.py`. A execução offline une duas verificações sobre **o mesmo lock**: (1) coerência estrutural do JSON `pip-audit` contra dependências diretas, lock e metadados não autenticados; (2) verificação do SHA-256 dos bytes de cada wheel local e identidade dos seus cabeçalhos.
+
+```bash
+PYTHONPATH=src python -m nivon.auditoria_artefatos_pacotes \
+  --lock /local/requirements-com-hashes.txt \
+  --report /local/pip-audit.json \
+  --metadata /local/metadata.json \
+  --wheelhouse /local/wheelhouse
+```
+
+Uma execução coerente retorna `local_wheel_hashes_match_declared_lock=true`, **não** `approved_for_install=true`: um lock e um relatório podem ser adulterados em conjunto, pois metadados não têm assinatura confiável. Tampouco verifica `RECORD`, execução real do scanner CVE, origem do wheel, fechamento transitivo, licenças ou plataforma. Todos os campos de aprovação continuam `false` e o gate de release permanece bloqueado. Não usar fixtures de teste como evidência de pacotes reais.
+
+**P0 seguinte:** integração do executor autorizado e atestado de proveniência que ligue versões resolvidas, digests de arquivos baixados e saída real de serviço de vulnerabilidades. Revisar licenças e executar testes de importação somente em sandbox aprovado. Nenhuma instalação ou varredura CVE real foi feita por esta implementação.
