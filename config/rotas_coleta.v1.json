@@ -3864,12 +3864,12 @@
       "dataset_id": "USDA_EXPORT_SALES",
       "collector_class": "API_OR_FILE",
       "locator": {
-        "kind": "NOT_VERIFIED_PER_DATASET",
-        "url": null,
-        "source_proof": null
+        "kind": "PUBLISHED_API_DOC",
+        "url": "https://apps.fas.usda.gov/opendatawebv2/",
+        "source_proof": "https://apps.fas.usda.gov/opendatawebv2/"
       },
-      "implementation_scope": "NO_PARSER (código citado não implica coletor ativo)",
-      "authentication": "VERIFY_PER_SOURCE",
+      "implementation_scope": "OPEN_DATA_SWAGGER_DOCUMENTED; exact requested dataset operation, key and real sample pending",
+      "authentication": "FREE_API_DATA_GOV_KEY_REQUIRED",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
@@ -3877,18 +3877,17 @@
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
-        "EXACT_ENDPOINT_UNKNOWN",
-        "DISCOVER_OFFICIAL_DATA_RESOURCE",
         "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
         "HISTORICAL_BACKFILL",
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
-        "LICENSED_PUBLICATION_GATE"
+        "LICENSED_PUBLICATION_GATE",
+        "FREE_API_KEY_PRIVATE_STORAGE"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
-      "preliminary_evidence": "CATALOG_ONLY"
+      "source_note": "Não presumir que a página de referência ofereça endpoint de coleta. FAS ESR/GATS/PSD expõe APIs via API.Data.Gov com chave gratuita; proteger chave fora de GitHub.",
+      "preliminary_evidence": "FAS_OPEN_DATA_OFFICIAL_SWAGGER_2026_10_21"
     },
     {
       "dataset_id": "USDA_NASS",
@@ -3924,12 +3923,12 @@
       "dataset_id": "USDA_PSD",
       "collector_class": "OFFICIAL_API",
       "locator": {
-        "kind": "OFFICIAL_INDEX",
-        "url": "https://apps.fas.usda.gov/psdonline/",
-        "source_proof": null
+        "kind": "PUBLISHED_API_DOC",
+        "url": "https://apps.fas.usda.gov/opendatawebv2/",
+        "source_proof": "https://apps.fas.usda.gov/opendatawebv2/"
       },
-      "implementation_scope": "NO_PARSER (código citado não implica coletor ativo)",
-      "authentication": "VERIFY_PER_SOURCE",
+      "implementation_scope": "OPEN_DATA_SWAGGER_DOCUMENTED; exact requested dataset operation, key and real sample pending",
+      "authentication": "FREE_API_DATA_GOV_KEY_REQUIRED",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
@@ -3937,17 +3936,17 @@
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
-        "DISCOVER_OFFICIAL_DATA_RESOURCE",
         "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
         "HISTORICAL_BACKFILL",
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
-        "LICENSED_PUBLICATION_GATE"
+        "LICENSED_PUBLICATION_GATE",
+        "FREE_API_KEY_PRIVATE_STORAGE"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "PSD/WASDE versões/vintages e autorização de API antes do histórico.",
-      "preliminary_evidence": "API_ACCESS_PENDING"
+      "source_note": "PSD/WASDE versões/vintages e autorização de API antes do histórico. FAS ESR/GATS/PSD expõe APIs via API.Data.Gov com chave gratuita; proteger chave fora de GitHub.",
+      "preliminary_evidence": "FAS_OPEN_DATA_OFFICIAL_SWAGGER_2026_10_21"
     },
     {
       "dataset_id": "WOAH_ALERTAS_PROTEINAS",
@@ -4075,11 +4074,11 @@
       "dataset_id": "CFTC_COT_WEEKLY",
       "collector_class": "OFFICIAL_API",
       "locator": {
-        "kind": "PROVIDER_PORTAL",
-        "url": "https://publicreporting.cftc.gov/",
-        "source_proof": "https://publicreporting.cftc.gov/"
+        "kind": "PUBLISHED_API_DOC",
+        "url": "https://publicreporting.cftc.gov/stories/s/Disaggregated-Futures-Only/ubmb-6exi/",
+        "source_proof": "https://publicreporting.cftc.gov/stories/s/Public-Reporting-FAQ/inwp-fmhz/"
       },
-      "implementation_scope": "NO_PARSER; reuso AgroLog sujeito a auditoria de dependência e teste com snapshot real",
+      "implementation_scope": "CFTC_SOCRATA_API_DOCUMENTED; exact resource and schema not homologated",
       "authentication": "PUBLIC_SOCRATA_RIGHTS_REVIEW",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -4098,8 +4097,8 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Selecionar datasets Socrata  por versão/tipo de relatório, mapear contrato e família.",
-      "preliminary_evidence": "OFFICIAL_DOCUMENTATION_RESEARCH_ONLY"
+      "source_note": "CFTC COT: posições semanais terça com publicação sexta; não cotação CBOT. API Socrata documentada oficialmente.",
+      "preliminary_evidence": "CFTC_PUBLIC_REPORTING_OFFICIAL_FAQ_2026_10_21"
     },
     {
       "dataset_id": "USDA_WASDE_RELEASE_VINTAGES",
