@@ -275,6 +275,12 @@ class TestOutboxWhatsApp(unittest.TestCase):
             evidencia_revogacao="OPT_OUT_DOCUMENTADO_20261020",
         )
         self.assertEqual(resultado["estado"], "AUTORIZACAO_REVOGADA")
+        prova = self.con.execute(
+            "SELECT evidencia_sha256 FROM nivon_revogacoes WHERE idempotency_key=?",
+            (self.modelo["idempotency_key"],)).fetchone()
+        self.assertEqual(prova[0], hashlib.sha256(
+            b"OPT_OUT_DOCUMENTADO_20261020").hexdigest())
+        self.assertNotIn(b"OPT_OUT_DOCUMENTADO_20261020", self.path.read_bytes())
         chamadas = []
         with self.assertRaisesRegex(PermissionError, "revogada"):
             self.despachar(lambda *_: chamadas.append(True))
@@ -283,6 +289,21 @@ class TestOutboxWhatsApp(unittest.TestCase):
             self.con, self.modelo["idempotency_key"])["tentativas"], 0)
         with self.assertRaises(ErroOutbox):
             self.aprovar()  # revogação não se apaga por nova assinatura idêntica
+
+    def test_revogacao_preservada_apos_reabrir_sqlite(self):
+        self.registrar()
+        self.aprovar()
+        chave = self.modelo["idempotency_key"]
+        revogar_autorizacao(self.con, chave=chave,
+                            evidencia_revogacao="OPT_OUT_MUNICIPAL_20261020")
+        self.con.close()
+        self.con = sqlite3.connect(self.path)
+        self.assertEqual(self.con.execute(
+            "SELECT count(*) FROM nivon_revogacoes WHERE idempotency_key=?",
+            (chave,)).fetchone()[0], 1)
+        with self.assertRaises(PermissionError):
+            self.despachar(lambda *_: self.fail("não chamar envio após restart e revogação"))
+        self.assertEqual(consultar_envio(self.con, chave)["tentativas"], 0)
 
     def test_consentimento_desativado_reprova_mesmo_assinado(self):
         self.registrar()
