@@ -37,6 +37,8 @@ MODULOS=frozenset({
     "pacotes_chuva_asof",
     "adaptador_inmet_chuva",
     "mjo_rmm", "contexto_mjo_asof",
+    "noaa_roni", "qualidade_cientifica", "historico_vintages",
+    "confronto_climatico_qc", "analogos_historicos",
 })
 
 
