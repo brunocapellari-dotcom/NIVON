@@ -1,14 +1,17 @@
 """R08: idempotência cruzada de briefing e WhatsApp, inteiramente offline."""
 import hashlib
 import hmac
+import json
+import os
 import sqlite3
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
-from nivon.entrega_whatsapp import preparar_template
+from nivon.entrega_whatsapp import preparar_template, enviar_cloud_api
 from nivon.outbox_briefing import (
     abrir_outbox, agendar_briefing, reservar_para_entrega,
 )
@@ -189,6 +192,63 @@ class TestOutboxUnificada(unittest.TestCase):
         raw=self.path.read_bytes()
         self.assertNotIn(PHONE.encode(),raw)
         self.assertNotIn(b"Resumo inteiramente sintetico",raw)
+
+    def test_cloud_api_usa_mesmo_banco_e_post_unico_sem_rede_real(self):
+        evento_consentimento(self.con)
+        registrar_edicao(self.con,self.item,edicao=DATE,chave_destinatario=RECIPIENT_SECRET)
+        requests=[]
+        class FakeResponse:
+            status=200
+            def __init__(self,url):
+                self.url=url
+            def __enter__(self):
+                return self
+            def __exit__(self,*args):
+                return False
+            def geturl(self):
+                return self.url
+            def read(self,n):
+                return json.dumps({"messages":[{"id":"wamid.MOCK_001"}]}).encode()
+        def abridor(req,timeout):
+            self.assertEqual(req.get_method(),"POST")
+            requests.append(req.full_url)
+            return FakeResponse(req.full_url)
+        with patch.dict(os.environ, {
+            "NIVON_OUTBOX_PATH":str(self.path),
+            "NIVON_WHATSAPP_ACCESS_TOKEN":"TOKEN_NUNCA_ENVIADO_PELO_MOCK",
+        }):
+            def mock_sender(preparado):
+                return enviar_cloud_api(
+                    preparado,phone_number_id="1234567890",
+                    permitir_cobranca_e_envio=True,abridor=abridor,
+                    outbox_db=self.con,chave_destinatario=RECIPIENT_SECRET,
+                    edicao=DATE,
+                )
+            result=despachar_registrado(
+                self.con,self.item,autorizar_envio=True,
+                custos_aprovados=True,remetente=mock_sender,
+            )
+            self.assertEqual(result["estado"],"ACEITO_PROVEDOR")
+            self.assertEqual(len(requests),1)
+            self.assertEqual(self.con.execute(
+                "SELECT COUNT(*) FROM nivon_api_dispatch").fetchone()[0],1)
+            with self.assertRaises(PermissionError):
+                mock_sender(self.item)
+            self.assertEqual(len(requests),1)
+
+    def test_cloud_api_falha_com_banco_divergente_antes_da_rede(self):
+        evento_consentimento(self.con)
+        registrar_edicao(self.con,self.item,edicao=DATE,chave_destinatario=RECIPIENT_SECRET)
+        with patch.dict(os.environ, {
+            "NIVON_OUTBOX_PATH":str(self.path)+"-outro-banco",
+        }):
+            with self.assertRaisesRegex(PermissionError,"OUTBOX_UNICA_OBRIGATORIA"):
+                enviar_cloud_api(
+                    self.item,phone_number_id="1234567890",
+                    permitir_cobranca_e_envio=True,
+                    abridor=lambda *a,**kw:self.fail("POST não autorizado"),
+                    outbox_db=self.con,chave_destinatario=RECIPIENT_SECRET,edicao=DATE,
+                )
 
     def test_duas_conexoes_concorrentes_reservam_so_uma(self):
         evento_consentimento(self.con)
