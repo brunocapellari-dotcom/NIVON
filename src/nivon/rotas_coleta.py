@@ -106,7 +106,7 @@ def validar_rotas(rotas: dict, catalogo: dict) -> dict:
             homologados = {
                 "MAPA": {"dados.agricultura.gov.br"},
                 "BCB": {"olinda.bcb.gov.br", "dadosabertos.bcb.gov.br", "api.bcb.gov.br"},
-                "OPEN_METEO": {"api.open-meteo.com", "archive-api.open-meteo.com"},
+                "OPEN_METEO": {"api.open-meteo.com", "archive-api.open-meteo.com", "flood-api.open-meteo.com", "ensemble-api.open-meteo.com"},
                 "INPE_TERRABRASILIS": {"terrabrasilis.dpi.inpe.br"},
                 "WB": {"api.worldbank.org", "thedocs.worldbank.org"},
                 "CONAB": {"www.gov.br", "gov.br", "conab.gov.br", "www.conab.gov.br", "portaldeinformacoes.conab.gov.br"},
@@ -124,6 +124,7 @@ def validar_rotas(rotas: dict, catalogo: dict) -> dict:
                 "IMF_PORTWATCH": {"portwatch.imf.org"},
                 "GEOGLAM_CROPMONITOR": {"www.cropmonitor.org"},
                 "EMBRAPA_GEOINFO": {"geoinfo.dados.embrapa.br"},
+                "FAO": {"fpma.fao.org"},
             }
             if parsed.hostname != fonte_host and parsed.hostname not in homologados.get(d["source_id"], set()):
                 raise ErroRota(f"{id_}: host não demonstrado como domínio oficial da fonte")
