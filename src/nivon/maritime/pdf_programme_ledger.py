@@ -15,6 +15,9 @@ import sqlite3
 from dataclasses import asdict, dataclass
 from datetime import date, datetime
 from typing import Any
+from urllib.parse import urlsplit
+
+from nivon.portos_automaticos import PORTO_HOSTS
 
 from .lineup_history import _aware_utc
 from .maritime_store import MaritimeStore
@@ -55,8 +58,20 @@ class PdfProgrammeEdition:
             raise ValueError("Paranagua source requires canonical series")
         if self.port_id == "ITAQUI" and self.series is not None:
             raise ValueError("Itaqui does not use Paranagua series")
-        if not self.source_url or not self.source_url.startswith("https://"):
-            raise ValueError("source URL required")
+        try:
+            parsed_url = urlsplit(self.source_url)
+            invalid_url = (
+                parsed_url.scheme != "https"
+                or parsed_url.hostname not in PORTO_HOSTS[self.port_id]
+                or parsed_url.username is not None or parsed_url.password is not None
+                or parsed_url.port is not None
+                or bool(parsed_url.fragment)
+                or not parsed_url.path.startswith("/")
+            )
+        except ValueError as exc:
+            raise ValueError("invalid authority document URL") from exc
+        if invalid_url:
+            raise ValueError("unregistered authority document URL")
         if not re.fullmatch(r"[0-9a-fA-F]{64}", self.source_sha256):
             raise ValueError("document SHA-256 required")
         acquired = _aware_utc(self.collected_at, "collected_at")
@@ -93,7 +108,10 @@ class PdfProgrammeEdition:
                 raise ValueError("vessel descriptor missing")
             if row.programme_number is not None and self.port_id != "PARANAGUA":
                 raise ValueError("unscoped programme number for Itaqui")
-            if row.programme_number is not None and not row.programme_number.startswith(self.series + ":"):
+            if row.programme_number is not None and (
+                not row.programme_number.startswith(self.series + ":")
+                or not row.programme_number.split(":", 1)[1].strip()
+            ):
                 raise ValueError("Paranagua programme number outside series")
             if row.planned_volume_t is not None and (
                 not math.isfinite(row.planned_volume_t) or row.planned_volume_t < 0
