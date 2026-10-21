@@ -82,6 +82,25 @@ class TestIVOConhecimento(unittest.TestCase):
         with self.assertRaises(ErroConhecimento):
             buscar([claim(coletado_em=T-timedelta(days=5))])
 
+    def test_urls_de_fontes_nao_aceitam_ssrf_credenciais_ou_portas(self):
+        exemplos = (
+            "https://usuario:senha@portal.inmet.gov.br/documento",
+            "https://localhost/secret",
+            "https://127.0.0.1/admin",
+            "https://[::1]/admin",
+            "https://metadata.internal/data",
+            "https://portal.inmet.gov.br:8443/arquivo",
+            "https://portal.inmet.gov.br/documento#fragmento",
+            "https://portal.inmet.gov.br\\n@localhost",
+            "https://porta_sem_dominio",
+            "http://portal.inmet.gov.br/dados",
+        )
+        for url in exemplos:
+            with self.subTest(url=url):
+                with self.assertRaises(ErroConhecimento):
+                    buscar([claim(fonte_url=url)])
+        self.assertEqual(buscar([claim(fonte_url="https://portal.inmet.gov.br/dados")])["total"], 1)
+
     def test_documento_sem_hash_bloqueado(self):
         with self.assertRaises(ErroConhecimento):
             buscar([claim(documento_sha256="sem-hash")])
