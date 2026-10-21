@@ -1,4 +1,4 @@
-name: Neon PTAX - teste ponta a ponta no banco persistente
+name: Neon PTAX - bloqueio de invocacao HTTP externa
 on:
   push:
     paths:
@@ -7,30 +7,20 @@ on:
 permissions:
   contents: read
 jobs:
-  smoke:
+  security-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 4
     steps:
-      - name: Invoke deployed collector without database credentials
+      - name: Public client cannot spoof a Neon trigger
         env:
-          PTAX_FUNCTION_URL: https://br-twilight-cell-b77ukd6x-ptaxcollector.compute.c-13.us-east-1.aws.neon.tech/
+          URL: https://br-twilight-cell-b77ukd6x-ptaxcollector.compute.c-13.us-east-1.aws.neon.tech/
         run: |
-          set -euo pipefail
-          curl --fail-with-body --silent --show-error \
-            --retry 2 --max-time 95 --connect-timeout 20 \
-            --request POST \
-            --header "x-neon-trigger-invocation-id: github-smoke-${GITHUB_RUN_ID}" \
+          code=$(curl --silent --show-error --max-time 35 \
+            --output "$RUNNER_TEMP/response.json" \
+            --write-out "%{http_code}" --request POST \
+            --header "x-neon-trigger-invocation-id: spoofed" \
             --header "Content-Type: application/json" \
-            --data '{"data":{"source":"github-smoke"}}' \
-            "$PTAX_FUNCTION_URL" | tee "$RUNNER_TEMP/ptax_neon_result.json"
-          python - <<'PY'
-          import json, os
-          from pathlib import Path
-          data=json.loads((Path(os.environ['RUNNER_TEMP'])/'ptax_neon_result.json').read_text())
-          if data.get('status') not in ('OK','ALREADY_CHECKED_RECENTLY'):
-              raise SystemExit('Neon function failed: '+str(data.get('status')))
-          if data.get('status') == 'OK':
-              assert len(data['windows']) == 4, data
-              assert all(x['received']>0 for x in data['windows']), data
-          print('Neon PTAX live smoke: '+data['status'])
-          PY
+            --data '{}' "$URL")
+          test "$code" = 403 || { echo "Expected 403, received $code"; exit 1; }
+          grep -q 'FORBIDDEN' "$RUNNER_TEMP/response.json"
+          echo "Public invocation blocked as expected (403)."
