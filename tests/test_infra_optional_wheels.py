@@ -105,6 +105,33 @@ class TestOptionalWheels(unittest.TestCase):
             with self.assertRaises(ErroSupplyChain):
                 _subprocess(["python", "-m", "pip"], timeout=10)
 
+    def test_matriz_de_evidencias_nao_promove_imagens(self):
+        manifest = json.loads((ROOT / "infra/compatibility_observed.v1.json").read_text(encoding="utf-8"))
+        self.assertEqual(manifest["schema"], "nivon.infrastructure.compatibility_observed.v1")
+        self.assertEqual(manifest["images"]["alpine"]["reference"], IMAGE)
+        self.assertEqual(manifest["images"]["debian"]["reference"], DEBIAN_IMAGE)
+        self.assertEqual(set(manifest["groups"]), set(EXPECTED))
+        self.assertEqual(manifest["evidence"]["head_sha"],
+                         "790b17f473a2be75a78e63bff27421aeaa91f10f")
+        states = {"BLOCKED_WHEEL_DOWNLOAD", "WHEELS_AND_OFFLINE_SMOKE_PASS",
+                  "NOT_CHECKED_IN_THIS_RUN"}
+        for group, details in manifest["groups"].items():
+            self.assertEqual(tuple(details["requirement"]), EXPECTED[group])
+            for distro in ("alpine", "debian"):
+                for arch in ("amd64", "arm64"):
+                    self.assertIn(details[distro][arch], states)
+        self.assertEqual(manifest["groups"]["agro"]["alpine"]["missing_wheel"], "duckdb")
+        self.assertEqual(manifest["groups"]["forecast"]["alpine"]["missing_wheel"], "statsforecast")
+        for group in ("agro", "forecast"):
+            for arch in ("amd64", "arm64"):
+                self.assertEqual(manifest["groups"][group]["debian"][arch],
+                                 "WHEELS_AND_OFFLINE_SMOKE_PASS")
+        self.assertTrue(manifest["evidence"]["snapshot_only"])
+        self.assertFalse(manifest["release_policy"]["production_release_authorized"])
+        self.assertFalse(manifest["release_policy"]["split_runtime_implemented"])
+        self.assertFalse(manifest["release_policy"]["allowed_runtime_activation"])
+        self.assertFalse(manifest["release_policy"]["zero_critical_high_optional_runtime_proven"])
+
     def test_workflow_nao_usa_imagem_nao_pinnada_ou_sdist(self):
         wf = (ROOT / ".github/workflows/infra_optional_wheels.yml").read_text(encoding="utf-8")
         self.assertIn(IMAGE, wf)

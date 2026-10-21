@@ -1,0 +1,95 @@
+{
+  "schema": "nivon.infrastructure.compatibility_observed.v1",
+  "reference_date": "2026-10-21",
+  "evidence": {
+    "repo": "brunocapellari-dotcom/NIVON",
+    "workflow_run_id": 39673348590,
+    "head_sha": "790b17f473a2be75a78e63bff27421aeaa91f10f",
+    "url": "https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39673348590",
+    "method": "native runner + pinned official Python 3.11 image; PyPI wheel-only resolve; offline import smoke",
+    "snapshot_only": true,
+    "all_package_versions_locked": false,
+    "full_sbom_with_extras_audited": false,
+    "third_party_license_review_complete": false
+  },
+  "images": {
+    "alpine": {
+      "reference": "python:3.11.17-alpine3.23@sha256:924d53e01cee5204d35fbcfb71b6c1568c857d7c31141f960ff6a37e111ecc7f",
+      "libc": "musl",
+      "minimal_stdlib_image_blockers_high_critical": 0
+    },
+    "debian": {
+      "reference": "python:3.11-slim-trixie@sha256:cce12316475d7d56d605f76e1d811d0dc4e7227f2d4afd29951521264f504ff8",
+      "libc": "glibc",
+      "canonical_worker_image_blockers_high_critical": 46
+    }
+  },
+  "groups": {
+    "agro": {
+      "requirement": [
+        "agrobr==2.0.0"
+      ],
+      "alpine": {
+        "amd64": "BLOCKED_WHEEL_DOWNLOAD",
+        "arm64": "BLOCKED_WHEEL_DOWNLOAD",
+        "missing_wheel": "duckdb"
+      },
+      "debian": {
+        "amd64": "WHEELS_AND_OFFLINE_SMOKE_PASS",
+        "arm64": "WHEELS_AND_OFFLINE_SMOKE_PASS"
+      }
+    },
+    "forecast": {
+      "requirement": [
+        "pandas>=2.2,<3",
+        "statsforecast>=2,<3"
+      ],
+      "alpine": {
+        "amd64": "BLOCKED_WHEEL_DOWNLOAD",
+        "arm64": "BLOCKED_WHEEL_DOWNLOAD",
+        "missing_wheel": "statsforecast"
+      },
+      "debian": {
+        "amd64": "WHEELS_AND_OFFLINE_SMOKE_PASS",
+        "arm64": "WHEELS_AND_OFFLINE_SMOKE_PASS"
+      }
+    },
+    "ports": {
+      "requirement": [
+        "pdfplumber>=0.11,<1"
+      ],
+      "alpine": {
+        "amd64": "WHEELS_AND_OFFLINE_SMOKE_PASS",
+        "arm64": "WHEELS_AND_OFFLINE_SMOKE_PASS"
+      },
+      "debian": {
+        "amd64": "NOT_CHECKED_IN_THIS_RUN",
+        "arm64": "NOT_CHECKED_IN_THIS_RUN"
+      }
+    },
+    "excel": {
+      "requirement": [
+        "openpyxl>=3.1,<4"
+      ],
+      "alpine": {
+        "amd64": "WHEELS_AND_OFFLINE_SMOKE_PASS",
+        "arm64": "WHEELS_AND_OFFLINE_SMOKE_PASS"
+      },
+      "debian": {
+        "amd64": "NOT_CHECKED_IN_THIS_RUN",
+        "arm64": "NOT_CHECKED_IN_THIS_RUN"
+      }
+    }
+  },
+  "release_policy": {
+    "alpine_adopted": false,
+    "debian_analytics_adopted": false,
+    "split_runtime_implemented": false,
+    "allowed_runtime_activation": false,
+    "production_release_authorized": false,
+    "zero_critical_high_optional_runtime_proven": false,
+    "safety_review_required": true,
+    "external_oci_quota_cost_iam_verified": false,
+    "remote_backup_restore_verified": false
+  }
+}
