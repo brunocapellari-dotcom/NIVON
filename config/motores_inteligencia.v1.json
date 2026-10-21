@@ -29,7 +29,8 @@
         "nivon.auditoria_conab_pam:confrontar_conab_pam",
         "nivon.prova_raw_conab_agricola:verificar_raw_conab",
         "nivon.inspecao_xls_conab_agricola:inspecionar_xls_conab_capturado",
-        "nivon.conab_levantamentos_candidatos:auditar_candidatos_levantamentos_conab"
+        "nivon.conab_levantamentos_candidatos:auditar_candidatos_levantamentos_conab",
+        "nivon.conab_anexo_xlsx_levantamento:conferir_anexo_xlsx_levantamento"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -78,7 +79,8 @@
         "nivon.auditoria_conab_pam:confrontar_conab_pam",
         "nivon.prova_raw_conab_agricola:verificar_raw_conab",
         "nivon.inspecao_xls_conab_agricola:inspecionar_xls_conab_capturado",
-        "nivon.conab_levantamentos_candidatos:auditar_candidatos_levantamentos_conab"
+        "nivon.conab_levantamentos_candidatos:auditar_candidatos_levantamentos_conab",
+        "nivon.conab_anexo_xlsx_levantamento:conferir_anexo_xlsx_levantamento"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
