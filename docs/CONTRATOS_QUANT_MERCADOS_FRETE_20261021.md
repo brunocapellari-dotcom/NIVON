@@ -75,3 +75,20 @@ esses metadados descrevem o que foi fornecido pelo produtor, não comprovam
 que as sessões correspondem a pregões oficiais da CME/ICE. A transformação
 não deve apagar a proveniência, mesmo que os scores matemáticos permaneçam
 numericamente idênticos.
+
+## Gate fail-closed de prontidão operacional
+
+Foi corrigido um sinal ambíguo no contrato: **SHA textual presente não implica
+vintage autenticado**, nem liberação para previsões reais. Mesmo com hash em
+formato correto, a série fica como
+`SERIE_ECONOMICA_INDIVIDUAL_PARA_TESTES_OFFLINE`, com
+`preparacao_offline_possivel=True` e **`asof_pronto=False`**,
+`edicao_raw_externamente_verificada=False`,
+`uso_preditivo_real_autorizado=False`, `publicavel=False`.
+
+Isso permite testar o algoritmo com fixtures sintéticas sem autorizar
+automaticamente o uso de fretes de WhatsApp como preços comprovados.
+Habilitação real só será possível por mecanismo de atestação independente,
+depois de validação do RAW, direitos, origem e linha de processamento.
+O adaptador atual **não possui uma operação de liberação**; não contornar
+o bloqueio por alteração manual dos flags.
