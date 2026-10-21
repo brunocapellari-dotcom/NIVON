@@ -6,6 +6,7 @@ on:
       - integration/nivon-acessos-core-convergencia-20261021
     paths:
       - .github/workflows/smoke-flood-ensemble-fpma-20261021.yml
+      - scripts/smoke_hidro_ensemble_fao.py
 permissions:
   contents: read
 jobs:
@@ -60,3 +61,5 @@ jobs:
         run: |
           printf '%s\n' "GloFAS=$FLOOD" "Ensemble=$ENSEMBLE" "FAO catalog=$FAO_CATALOG" "FAO price=$FAO_PRICE"
           echo 'Somente teste pontual, sem database, sem cron ou publicacao.'
+
+# Diagnostico de recusa de schema sem series nem credenciais.
