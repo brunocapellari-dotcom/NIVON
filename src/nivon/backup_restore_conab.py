@@ -212,7 +212,7 @@ def criar_backup_conab(legado_path: str | Path,
             _new_private_file(path)
             created.append(path)
             begin=datetime.now(timezone.utc).isoformat()
-            with sqlite3.connect(str(path),timeout=10) as backup_db:
+            with closing(sqlite3.connect(str(path),timeout=10)) as backup_db:
                 src.backup(backup_db, pages=64, sleep=0.05)
             end=datetime.now(timezone.utc).isoformat()
             with closing(_readonly(path)) as validated:
