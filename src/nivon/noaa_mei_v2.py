@@ -61,7 +61,9 @@ def normalizar_mei_csv(blob: bytes, *, coletado_em: str) -> dict:
             raise ErroMEI("MEI não numérico") from e
         if not math.isfinite(v):
             raise ErroMEI("MEI não finito")
-        if v in (-999.0, -99.9):
+        # NOAA documenta -999 como missing; variantes com casas adicionais
+        # também são sentinelas (valores MEI reais não se aproximam de -99).
+        if v <= -99:
             return None
         if not -10 <= v <= 10:
             raise ErroMEI("MEI fora da faixa operacional")

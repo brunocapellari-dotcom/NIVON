@@ -47,7 +47,7 @@ class TestNOAAMEI(unittest.TestCase):
 
     def test_csv_oficial_real_com_data_mensal_e_indice_bimestral(self):
         raw = (b"Date, Multivariate ENSO Index Version 2 (MEI.v2) missing value -999\n"
-               b"1979-01-01, 0.460\n1979-02-01, 0.290\n1979-03-01, -999\n")
+               b"1979-01-01, 0.460\n1979-02-01, 0.290\n1979-03-01, -999.900\n")
         r = normalizar_mei_csv(raw, coletado_em="2026-10-21T16:00:00Z")
         self.assertEqual(r["quantidade"], 2)
         self.assertEqual(r["observacoes"][0]["data_referencia"], "1979-01-01")
