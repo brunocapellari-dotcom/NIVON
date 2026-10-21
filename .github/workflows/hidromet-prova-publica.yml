@@ -1,0 +1,57 @@
+name: NIVON - Prova pontual APIs hidrometeorologicas publicas
+# Sem secrets, sem agendamento e sem publicacao de dados.
+# Executar no PR de integracao somente quando este workflow for criado/alterado.
+on:
+  pull_request:
+    paths:
+      - .github/workflows/hidromet-prova-publica.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-hidromet-public-probe
+  cancel-in-progress: false
+
+jobs:
+  provar-fontes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: INMET catalogo estacoes uma requisicao
+        continue-on-error: true
+        env:
+          PYTHONPATH: src
+        run: python -m nivon.hidromet_pontual_cli --fonte inmet_estacoes --tipo T --live
+      - name: CPTEC-INPE via BrasilAPI um municipio de referencia
+        continue-on-error: true
+        env:
+          PYTHONPATH: src
+        run: python -m nivon.hidromet_pontual_cli --fonte cptec_brasilapi --codigo-cptec 244 --dias 3 --live
+      - name: NASA POWER dois dias de grade historica
+        continue-on-error: true
+        env:
+          PYTHONPATH: src
+        run: python -m nivon.hidromet_pontual_cli --fonte nasa_power --latitude -12.5 --longitude -55.7 --inicio 2025-08-01 --fim 2025-08-02 --live
+      - name: Open-Meteo previsao unica
+        continue-on-error: true
+        env:
+          PYTHONPATH: src
+        run: python -m nivon.hidromet_pontual_cli --fonte openmeteo --latitude -12.5 --longitude -55.7 --dias 3 --live
+      - name: Open-Meteo reanalise dois dias
+        continue-on-error: true
+        env:
+          PYTHONPATH: src
+        run: python -m nivon.hidromet_pontual_cli --fonte openmeteo --latitude -12.5 --longitude -55.7 --modo historico --inicio 2025-08-01 --fim 2025-08-02 --live
+      - name: GloFAS vazao simulada 3 dias
+        continue-on-error: true
+        env:
+          PYTHONPATH: src
+        run: python -m nivon.hidromet_pontual_cli --fonte glofas --latitude -3.1 --longitude -59.9 --dias 3 --live
