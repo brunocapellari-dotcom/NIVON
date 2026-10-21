@@ -372,8 +372,9 @@ def parse_paranagua_tables(
             arrival = _value(row, arrival_i)
             if arrival_i + 1 < len(row) and re.fullmatch(r"\d{1,2}:\d{2}", _value(row, arrival_i + 1)):
                 arrival = f"{arrival} {_value(row, arrival_i + 1)}".strip()
-            if not arrival:
-                continue
+            # Missing arrival must remain in the auditable row set.
+            # The downstream bridge will exclude it instead of overstating
+            # that the complete edition was parsed.
             eta_has_full_year = bool(re.fullmatch(r"\d{1,2}/\d{1,2}/\d{4} \d{1,2}:\d{2}", arrival))
             try:
                 eta = _normalize_partial_eta(arrival, reference_date)
