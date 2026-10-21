@@ -86,6 +86,10 @@ class TestIntegracaoANPLPC(unittest.TestCase):
         self.assertEqual(o["semana_inicio_oficial"], "2026-10-04")
         self.assertEqual(o["semana_fim_oficial"], "2026-10-10")
         self.assertEqual(o["observacoes"], 2)
+        self.assertTrue(o["indice_registrado"])
+        self.assertEqual(o["indice_sha256"], sha256(k["html_indice"]).hexdigest())
+        self.assertEqual(self.db.execute(
+            "SELECT COUNT(*) FROM anp_semanal_indices").fetchone()[0], 1)
         self.assertEqual(o["arquivo_sha256"], sha256(k["xlsx"]).hexdigest())
         self.assertFalse(o["publicavel"])
         self.assertFalse(o["fonte_real_baixada"])
@@ -114,13 +118,44 @@ class TestIntegracaoANPLPC(unittest.TestCase):
             "SELECT COUNT(*) FROM anp_semanal_observacoes").fetchone()[0], 6)
         self.assertEqual(self.db.execute(
             "SELECT COUNT(*) FROM anp_semanal_capturas").fetchone()[0], 3)
+        self.assertEqual(self.db.execute(
+            "SELECT COUNT(*) FROM anp_semanal_indices").fetchone()[0], 3)
 
     def test_reprocessamento_identico_nao_gera_dupla_captura(self):
         k = fixture()
         self.assertTrue(self.executar(k)["captura_nova"])
-        self.assertFalse(self.executar(k)["captura_nova"])
+        segunda = self.executar(k)
+        self.assertFalse(segunda["captura_nova"])
+        self.assertFalse(segunda["indice_registrado"])
         self.assertEqual(self.db.execute(
             "SELECT COUNT(*) FROM anp_semanal_observacoes").fetchone()[0], 2)
+
+    def test_mesmo_xlsx_novo_snapshot_indice_persiste_sem_duplicar_observacoes(self):
+        k = fixture()
+        self.executar(k)
+        novo_html = k["html_indice"] + b" "
+        novo = {**k, "html_indice": novo_html,
+                "indice_sha256_esperado": sha256(novo_html).hexdigest()}
+        saida = self.executar(novo)
+        self.assertFalse(saida["captura_nova"])
+        self.assertTrue(saida["indice_registrado"])
+        self.assertEqual(self.db.execute(
+            "SELECT COUNT(*) FROM anp_semanal_indices").fetchone()[0], 2)
+        self.assertEqual(self.db.execute(
+            "SELECT COUNT(*) FROM anp_semanal_observacoes").fetchone()[0], 2)
+
+    def test_falha_no_indice_reverte_edicao_e_observacoes_atomicamente(self):
+        self.db.executescript("""
+            CREATE TRIGGER simular_falha_indice
+            BEFORE INSERT ON anp_semanal_indices
+            BEGIN SELECT RAISE(ABORT, 'falha sintética na gravação do índice'); END;
+        """)
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.executar()
+        for nome in ("anp_semanal_edicoes", "anp_semanal_indices",
+                     "anp_semanal_capturas", "anp_semanal_observacoes"):
+            self.assertEqual(self.db.execute(
+                f"SELECT COUNT(*) FROM {nome}").fetchone()[0], 0)
 
     def test_semana_do_excel_deve_ser_a_mesma_do_link_indice(self):
         with self.assertRaisesRegex(ErroIntegracaoLPC, "período"):
