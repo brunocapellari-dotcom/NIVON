@@ -187,8 +187,13 @@ class TestGatewayHermesIVO(unittest.TestCase):
     def test_acl_nega_ou_sua_consulta_e_futura(self):
         self.resource = lambda c: binding(c, direito_consulta=False)
         self.assertEqual(self.query()["evidencias"], [])
-        self.resource = lambda c: binding(c, verificado_em=T+timedelta(hours=1))
+        self.resource = lambda c: binding(c, verificado_em=T+timedelta(hours=1, seconds=1))
         self.assertEqual(self.query()["evidencias"], [])
+
+    def test_acl_atual_pode_ter_sido_concedida_depois_do_corte_historico(self):
+        # Direito da consulta e verificado AGORA, nao no instante da evidência.
+        self.resource = lambda c: binding(c, verificado_em=T+timedelta(minutes=30))
+        self.assertEqual(len(self.query()["evidencias"]), 1)
 
     def test_policy_negada_indisponivel_ou_aprovacao_pendente(self):
         self.p.allowed = False
