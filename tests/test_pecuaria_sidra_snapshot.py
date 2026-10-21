@@ -6,6 +6,7 @@ from hashlib import sha256
 
 from nivon.motores import DadoInvalido
 from nivon.pecuaria_sidra_abate import normalizar_snapshot_sidra_abate
+from nivon.pecuaria_sidra_vintages import historico_sidra_asof
 
 DIM = {"territorio": "D1C", "periodo": "D2C", "variavel": "D3C",
        "referencia_temporal": "D4C", "inspecao": "D5C"}
@@ -203,6 +204,27 @@ class TestPecuariaSidraSnapshot(unittest.TestCase):
         self.assertEqual({r["significado"] for r in result["marcadores_sidra"]},
                          {"ZERO_ABSOLUTO", "INIBIDO"})
         self.assertEqual(len(result["linhas_indisponiveis"]), 1)
+
+
+    def test_ponta_a_ponta_zero_vs_censura_em_corte_historico(self):
+        bruto = json_bytes(linha("9999", "-"), linha("8888", "X"))
+        instantaneo = analisar(bruto)
+        before = historico_sidra_asof(
+            snapshots=[instantaneo], especie="FRANGO", tabela_sidra="1094",
+            corte_asof="2026-10-19T23:59:59-04:00")
+        self.assertEqual(before["observacoes"], [])
+        self.assertEqual(before["censuras_vigentes"], [])
+        after = historico_sidra_asof(
+            snapshots=[instantaneo], especie="FRANGO", tabela_sidra="1094",
+            corte_asof="2026-10-21T00:00:00-04:00")
+        self.assertEqual(len(after["observacoes"]), 1)
+        self.assertEqual(after["observacoes"][0].valor, 0)
+        self.assertEqual(after["observacoes"][0].origem_sha256,
+                         sha256(bruto).hexdigest())
+        self.assertEqual(len(after["censuras_vigentes"]), 1)
+        self.assertEqual(after["censuras_vigentes"][0]["indicador"],
+                         "PESO_CARCACAS_KG")
+        self.assertFalse(after["amostra_real_homologada"])
 
 if __name__ == "__main__":
     unittest.main()
