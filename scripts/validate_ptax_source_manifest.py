@@ -68,8 +68,7 @@ def analyze(value: dict[str, Any]) -> dict[str, Any]:
     nums = {key: _integer(value, key) for key in num_fields}
     if nums["run_successful"] + nums["run_errors"] + nums["run_running"] > nums["run_count"]:
         raise ManifestError("status de execucoes maior que total")
-    if nums["checkpoint_count"] > nums["run_count"]:
-        raise ManifestError("checkpoints maior que total de execucoes")
+    # Um run pode materializar multiplos checkpoints; nao presumir 1:1.
 
     by_currency = value.get("by_currency")
     by_year = value.get("by_year")
