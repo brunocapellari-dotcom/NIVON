@@ -45,3 +45,19 @@ econômica e regressões no SHA reconciliado antes do aceite R01.
 **Próxima ação executável:** negociar contrato do `edicao_sha256` a partir
 do RAW de origem com a frente Logística, harmonizar a classificação dos termos
 comerciais e executar backtest em dados licenciados, historizados e verificados.
+
+## Continuidade — política de data comercial e republicações (21/10/2026)
+
+A ponte quantitativa agora exige `data_referencia == data_publicacao` **no dia
+local `America/Cuiaba`**, e não em UTC. A igualdade bloqueia republicação
+de anúncio antigo em dia atual mesmo quando o campo `edicao_sha256` foi
+preenchido; preserva corretamente publicações próximas de 00:00 UTC cujo
+dia comercial em Mato Grosso ainda é o anterior.
+
+**Limite importante:** igualdade de datas é condição necessária, não prova
+que o texto original oferece frete atual. Prova de atualidade comercial no
+RAW, direitos, origem e atestações independentes continuam sob
+`fretes_adapter_whatsapp.py`/`fretes_atestacoes.py` da PR #18. Não transformar
+o SHA arbitrário em atestação nem permitir publicações com base apenas nas
+datas declaradas pelo emissor. O runner quantitativo permanece offline e
+`publicavel=False`.
