@@ -10,6 +10,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 from hashlib import sha256
+from decimal import Decimal
+from math import isfinite
 import json
 from typing import Sequence
 
@@ -100,13 +102,19 @@ def preparar_painel_pr30(
             "transportadora_id": transp, "preco_base_brl_t": str(x.frete_base_brl_t),
             "evidencias_mesmo_par": sorted(evidencias_por_par[(dia, pickup, transp)]),
         }
+        # O motor Theil-Sen aceita números finitos, não Decimal textual.
+        # Converter apenas quando a representação de ida/volta é exata.
+        valor_analitico = float(x.frete_base_brl_t)
+        if (not isfinite(valor_analitico)
+                or Decimal(str(valor_analitico)) != x.frete_base_brl_t):
+            raise ErroPainelFrete("precisão monetária não representável no motor estatístico")
         digest = sha256(json.dumps(evidencia_derivada, sort_keys=True,
                                    separators=(",", ":"), ensure_ascii=True).encode()).hexdigest()
         linhas.append({
             "periodo": dia.isoformat(),
             "publicacao": x.data_publicacao.astimezone(ZoneInfo("America/Cuiaba")).date().isoformat(),
             "coleta": x.data_coleta.astimezone(ZoneInfo("America/Cuiaba")).date().isoformat(),
-            "valor": str(x.frete_base_brl_t),
+            "valor": valor_analitico,
             "fonte_id": x.fonte_id, "edicao_sha256": digest,
             "origem_ibge": origem_ibge, "destino_ibge": destino_ibge,
             "produto": produto, "veiculo": equipamento, "pedagio": pedagio,
