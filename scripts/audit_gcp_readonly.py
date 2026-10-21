@@ -64,7 +64,7 @@ def _safe_services(value: Any) -> list[str] | None:
         api = config.get("name") if isinstance(config, dict) else None
         if not api and isinstance(item.get("name"), str):
             api = item["name"].split("/")[-1]
-        if isinstance(api, str) and re.fullmatch(r"[a-z0-9.-]+\\.googleapis\\.com", api):
+        if isinstance(api, str) and api.endswith(".googleapis.com") and re.fullmatch(r"[a-z0-9.-]+", api):
             output.add(api)
     return sorted(output)
 
