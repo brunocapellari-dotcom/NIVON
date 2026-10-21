@@ -174,5 +174,48 @@ class TestSIDRAVintages(unittest.TestCase):
         self.assertEqual(result["revisoes"], [])
 
 
+
+    def test_referencia_falsa_de_trimestre_bloqueada(self):
+        s = snap()
+        original = s["observacoes"][0]
+        from dataclasses import replace
+        s["observacoes"][0] = replace(original, referencia="2026-09-30")
+        with self.assertRaisesRegex(DadoInvalido, "referencia difere"):
+            select([s])
+
+    def test_referencia_vazia_nao_recebe_inferencia(self):
+        s = snap()
+        from dataclasses import replace
+        s["observacoes"][0] = replace(s["observacoes"][0], referencia="2026-06-01")
+        with self.assertRaisesRegex(DadoInvalido, "referencia difere"):
+            select([s])
+
+    def test_publicacao_antes_do_fim_da_competencia_bloqueada(self):
+        s = snap(pub="2026-06-15T00:00:00Z",
+                 coleta="2026-10-06T12:00:00-03:00")
+        with self.assertRaisesRegex(DadoInvalido, "publicavel antes"):
+            select([s])
+
+    def test_censura_publicada_antes_do_periodo_bloqueada(self):
+        s = snap(pub="2026-05-15T00:00:00Z",
+                 coleta="2026-10-06T12:00:00-03:00", censurado=True)
+        with self.assertRaisesRegex(DadoInvalido, "publicavel antes"):
+            select([s])
+
+    def test_nao_aceita_1996_apesar_de_observacao_generica(self):
+        s = snap(competencia="1997-T1")
+        from dataclasses import replace
+        s["observacoes"][0] = replace(s["observacoes"][0],
+                                      competencia="1996-T4",
+                                      referencia="1996-12-31")
+        with self.assertRaisesRegex(DadoInvalido, "anterior ao inicio"):
+            select([s])
+
+    def test_validacao_referencia_todas_especies_1997(self):
+        for especie in TAB:
+            resultado = select([snap(especie=especie, competencia="1997-T1")],
+                               especie=especie)
+            self.assertEqual(resultado["observacoes"][0].referencia, "1997-03-31")
+
 if __name__ == "__main__":
     unittest.main()
