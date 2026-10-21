@@ -272,10 +272,18 @@ class TestPonteWhatsAppFrete(unittest.TestCase):
     def test_atestacao_expirada_ou_futura_bloqueada(self):
         with self.assertRaisesRegex(ErroAdaptadorFrete, "expirada"):
             adaptar(coleta=datetime(2026, 10, 27, tzinfo=timezone.utc))
-        ev, res, auth, _ = caso()
-        auth = atestar({**auth, "valido_ate": "2026-10-18T10:00:00+00:00"}, "DIREITOS")
-        with self.assertRaises(ErroAdaptadorFrete):
-            adaptar(auth=auth)
+        # Assinatura genuína, mas alteração da validade sem reatestar.
+        ev, res, auth, coleta = caso()
+        res["evento_sha256"] = hash_evento(ev)
+        res = atestar(res, "RESOLUCAO")
+        auth = atestar(auth, "DIREITOS")
+        auth["valido_ate"] = "2026-10-18T10:00:00+00:00"
+        with self.assertRaisesRegex(ErroAdaptadorFrete, "assinatura"):
+            adaptar_evento_whatsapp(
+                ev, resolucao=res, autorizacao=auth,
+                data_coleta=coleta, chave_hmac=CHAVE,
+                chaves_atestacao=CHAVES, emissores_atestacao=EMISSORES,
+            )
 
     def test_horario_mt_preserva_dia_da_publicacao(self):
         ev, _, _, coleta = caso()
