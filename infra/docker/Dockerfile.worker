@@ -8,6 +8,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app/src
 WORKDIR /app
+# Worker offline não instala dependências nem executa gerenciadores de pacotes.
+# Remover ferramentas de build após herdar a base imutável reduz superfície
+# de ataque; pip/setuptools/wheel/jaraco.context não são usados no runtime.
+# Operação local (uninstall), sem index/download. Não remove CVEs do Debian.
+RUN python -m pip uninstall --yes wheel jaraco.context setuptools && \
+    python -m pip uninstall --yes pip
 COPY src/ /app/src/
 COPY config/ /app/config/
 COPY infra/inventory.v1.json /app/infra/inventory.v1.json
