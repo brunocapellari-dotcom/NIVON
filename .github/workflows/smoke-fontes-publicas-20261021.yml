@@ -65,3 +65,5 @@ jobs:
           printf '%s\n' 'Somente HTTP pontual; nao grava series nem promove datasets para operacao'
 
 # Reexecução pontual após correções de formato: PR #99 integrada.
+
+# Rodada final NOAA MEI sentinela corrigida pela PR #100.
