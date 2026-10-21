@@ -36,6 +36,23 @@ class TestPTAX(unittest.TestCase):
         self.assertEqual(parse_qs(urlsplit(usd).query)["@dataInicial"], ["'10-19-2026'"])
         self.assertEqual(parse_qs(urlsplit(eur).query)["@moeda"], ["'EUR'"])
 
+    def test_endpoint_dolar_sem_tipo_boletim(self):
+        obs = resposta()["value"][0]
+        obs.pop("tipoBoletim")
+        row = normalizar(obs, "USD", date(2026, 10, 20),
+                         date(2026, 10, 20), "2026-10-21T14:00:00+00:00")
+        self.assertEqual(row["tipo_boletim"], "COTACAO_DOLAR_DIARIA")
+        with self.assertRaises(ValueError):
+            normalizar(obs, "EUR", date(2026, 10, 20),
+                       date(2026, 10, 20), "2026-10-21T14:00:00+00:00")
+
+    def test_resposta_paginada_gera_erro_explicito(self):
+        with self.assertRaises(ValueError):
+            sincronizar(self.banco, "USD", inicio=date(2026, 10, 20),
+                        fim=date(2026, 10, 20),
+                        transporte=lambda u: {"value": [], "@odata.nextLink": "pagina2"},
+                        hoje=date(2026, 10, 21))
+
     def test_normalizacao_preserva_hora_sem_inventar_publicacao(self):
         row = normalizar(resposta()["value"][0], "USD", date(2026, 10, 20),
                          date(2026, 10, 20), "2026-10-21T14:00:00+00:00")
