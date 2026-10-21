@@ -16,7 +16,7 @@ class TestNativeARM64(unittest.TestCase):
         self.assertIn("if: github.event.repository.private == false", self.raw)
         self.assertIn("NIVON_NATIVE_ARM64_RUNNER_AND_DOCKER_OK", self.raw)
         self.assertIn('machine not in ("aarch64", "arm64")', self.raw)
-        self.assertIn("docker info", self.raw)
+        self.assertIn('["docker","info","--format","{{.Architecture}}"]', self.raw)
 
     def test_base_digest_identico_and_both_images_native(self):
         baseline = (ROOT / "infra/docker/Dockerfile.worker").read_text(encoding="utf-8")
