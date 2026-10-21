@@ -954,6 +954,14 @@
       "access": "PUBLIC_COG_OR_TIFF_TILE_DATA",
       "rights": "ATTRIBUTION_REVIEW",
       "notes": "Água superficial histórica 1984-2024. Atualização em 15/10/2026 V1.5: camadas anuais/mensais recentes não compõem isoladamente todo o histórico; conciliação com V1.4, mudanças Landsat C1/C2 e potenciais erros de recorrência mensal."
+    },
+    {
+      "id": "EUROSTAT",
+      "provider": "Eurostat Statistics API - produção agrícola europeia",
+      "official_url": "https://ec.europa.eu/eurostat",
+      "access": "PUBLIC_REST_JSON_STAT_NO_KEY",
+      "rights": "ATTRIBUTION_REVIEW",
+      "notes": "API gratuita; disponibiliza versão mais recente, não vintages históricos. Dataset derivado tag00100 de apro_cpsh1, área oleaginosas em milhares de hectares."
     }
   ],
   "datasets": [
@@ -5154,10 +5162,10 @@
       "topic": "estatisticas_agricolas_e_pecuarias_longo_prazo",
       "mode": "FAOSTAT_TABLES",
       "cadence": "ANNUAL",
-      "stage": "DISCOVERY_ONLY",
+      "stage": "CODE_PRESENT",
       "priority": "P1",
-      "existing_module": null,
-      "notes": "Identificada na pesquisa 19/10/2026. Fonte/endpoint/documentação não equivalem à homologação, coleta ou licença.",
+      "existing_module": "nivon.eurostat_faostat_agro.consultar_faostat",
+      "notes": "Consulta oficial FAOSTAT QCL recorte país/cultura/elemento 5510 (produção), ano; sem dados operacionais persistidos.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
@@ -6041,6 +6049,33 @@
       ],
       "downstream_contract": "OBSERVACAO_CANONICA_V1",
       "notes": "Dados gratuitos para pesquisa não comercial; acesso pontual, publicação, backfill e persistência aguardam direitos e homologação real."
+    },
+    {
+      "id": "EUROSTAT_OLEAGINOSAS_AREA",
+      "source_id": "EUROSTAT",
+      "group": "SAFRA",
+      "priority": "P1",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "area_oleaginosas_ue_rapeseed_soja_girassol_historico_em_mil_hectares_2015_em_diante",
+      "mode": "EUROSTAT_JSON_STAT_GET",
+      "cadence": "ANNUAL",
+      "stage": "CODE_PRESENT",
+      "existing_module": "nivon.eurostat_faostat_agro.consultar_eurostat",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1",
+      "notes": "tag00100 é área, NÃO produção. Flags e vintages com fonte; sem confundir referência com data publicação."
     }
   ]
 }
