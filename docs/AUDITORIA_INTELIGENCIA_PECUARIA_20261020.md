@@ -105,3 +105,29 @@ Reproduzir testes sinteticos: PYTHONPATH=src python -m unittest tests.test_pecua
 - Não foram confirmados IDs oficiais de variáveis/categorias nem a estrutura exata DnC dos resultados de API, tampouco direitos para coleta operacional. Não declarar histórico real ou previsão homologada.
 
 **Próxima ação:** obter uma amostra oficial autêntica e permitida por espécie, validar metadados e listas de localidades por referência, executar parser, reconciliar totais e arquivar SHA e datas antes de backfill/agendamento.
+
+## Continuidade 21/10/2026 — histórico 1997–1999 e vintages bitemporais
+
+### Correção de alcance histórico
+- O SIDRA 1092, 1093 e 1094 começa no 1º trimestre de 1997 (consultar https://sidra.ibge.gov.br/pesquisa/abate/tabelas/ ). Os parsers novos rejeitavam erroneamente anos anteriores a 2000.
+- Corrigidos o formato TRIMESTRE em src/nivon/cadeias_adicionais.py e o parser em src/nivon/pecuaria_sidra_abate.py para aceitar os anos de 1997 a 1999 sem liberar períodos anteriores à origem da pesquisa.
+- Testes sintéticos de 1997-T1 e 1999-T4, além de bloqueio de 1996.
+
+### Motor novo: vintage SIDRA
+- Adicionado src/nivon/pecuaria_sidra_vintages.py, consumindo APENAS snapshots do parser offline e reconstruindo a série conhecida conforme o corte temporal (publicação e coleta).
+- Coleta retrospectiva realizada agora não cria conhecimento no passado: dados não entram em um corte anterior ao momento real de coleta.
+- Observações de abate são mantidas por espécie, tabela, UF, competência e indicador; revisão mais recente exige data de publicação posterior, com SHA e diferenças registradas.
+- Censuras explícitas do snapshot funcionam como tombstones, impedindo que valor anterior continue como atual após ser censurado. Ausência em extrato parcial não é interpretada como zero ou censura.
+- Impede duplicações, mudança de valor sem nova publicação, hash inconsistente, mistura de espécies, fuso ausente, excesso de linhas e status artificial de homologação.
+- A saída permanece HISTORICO_OFFLINE_VINTAGES_NAO_HOMOLOGADO, com amostra_real_homologada=false, metadados_publicacao_verificados=false e previsao_homologada=false.
+- Registro de motor incluído nas frentes BOI, FRANGO e SUINO em config/motores_inteligencia.v1.json e na allowlist de src/nivon/registro_motores.py. Sem coleta, armazenamento físico, cron, deploy ou comunicação WhatsApp.
+
+### Evidências
+- Testes 100% sintéticos: tests/test_pecuaria_sidra_snapshot.py e tests/test_pecuaria_sidra_vintages.py; também permanecem os testes de qualidade territorial.
+- GitHub Actions https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39593598730: 1.226 testes, zero falhas, 5 ignorados, gates compileall, validação de catálogo e registro de motores aprovados.
+- A documentação da API oficial permanece em https://servicodados.ibge.gov.br/api/docs/agregados?versao=3, mas endpoints de valores e metadados 1092/1093/1094 continuam não acessíveis neste ambiente. Não transformar inferências do catálogo secundário em IDs oficiais.
+
+### Próximas prioridades
+1. Obter amostra REAL e autorizada da API v3 para cada espécie e validar IDs oficiais, unidades, classificações, cobertura territorial e datas; confrontar com SIDRA e publicações do IBGE.
+2. Registrar comprovante de proveniência, modificações oficiais e revisões (vintage autêntico); somente então permitir REAL_SAMPLE_TESTED em avaliação independente.
+3. Definir persistência histórica append-only a partir do contrato já testado e começar análises de ciclo bovino/aves/suínos com validação temporal. Nenhuma probabilidade ou preço sem evidência.
