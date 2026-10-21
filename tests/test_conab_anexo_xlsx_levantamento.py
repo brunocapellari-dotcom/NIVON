@@ -127,7 +127,7 @@ class TestAnexoCONAB(unittest.TestCase):
             executar(coletado_anexo_em="2026-10-21T15:00:00")
 
     def test_zip_vazio_ou_corrompido(self):
-        for raw in (b"", b"PK\x03\x04"+b"0"*120, b"<html>não é xlsx</html>"):
+        for raw in (b"", b"PK\x03\x04"+b"0"*120, "<html>não é xlsx</html>".encode("utf-8")):
             with self.subTest(raw=raw[:5]):
                 with self.assertRaises(ErroDocumentoConab):
                     executar(xlsx_raw=raw, sha256_xlsx_esperado=sha256(raw).hexdigest())
