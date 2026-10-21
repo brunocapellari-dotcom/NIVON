@@ -1,0 +1,61 @@
+name: Smoke pontual de APIs abertas NIVON
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches:
+      - integration/nivon-acessos-core-convergencia-20261021
+    paths:
+      - .github/workflows/smoke-fontes-publicas-20261021.yml
+
+permissions:
+  contents: read
+
+jobs:
+  fontes-externas-one-shot:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'test/smoke-fontes-publicas-20261021' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: NOAA MEI v2 real
+        id: mei
+        continue-on-error: true
+        run: PYTHONPATH=src python scripts/smoke_gtr_noaa_geodata.py --fonte mei --executar
+      - name: USDA AMS GTR fretes real
+        id: gtr_frete
+        continue-on-error: true
+        run: PYTHONPATH=src python scripts/smoke_gtr_noaa_geodata.py --fonte gtr_frete --executar
+      - name: USDA AMS GTR precos e basis real
+        id: gtr_precos
+        continue-on-error: true
+        run: PYTHONPATH=src python scripts/smoke_gtr_noaa_geodata.py --fonte gtr_precos --executar
+      - name: World Bank Pink Sheet real
+        id: pinksheet
+        continue-on-error: true
+        run: PYTHONPATH=src python scripts/smoke_gtr_noaa_geodata.py --fonte pinksheet --executar
+      - name: ESA WorldCover HEAD real
+        id: esa
+        continue-on-error: true
+        run: PYTHONPATH=src python scripts/smoke_gtr_noaa_geodata.py --fonte esa --latitude -13 --longitude -56 --executar
+      - name: JRC WMTS real
+        id: jrc
+        continue-on-error: true
+        run: PYTHONPATH=src python scripts/smoke_gtr_noaa_geodata.py --fonte jrc --executar
+      - name: Quadro de resultado técnico
+        if: always()
+        env:
+          MEI: ${{ steps.mei.outcome }}
+          GTR_FRETE: ${{ steps.gtr_frete.outcome }}
+          GTR_PRECOS: ${{ steps.gtr_precos.outcome }}
+          PINKSHEET: ${{ steps.pinksheet.outcome }}
+          ESA: ${{ steps.esa.outcome }}
+          JRC: ${{ steps.jrc.outcome }}
+        run: |
+          printf '%s\n' "NOAA MEI: $MEI" "USDA GTR frete: $GTR_FRETE" "USDA GTR precos: $GTR_PRECOS" "World Bank Pink Sheet: $PINKSHEET" "ESA HEAD: $ESA" "JRC WMTS: $JRC"
+          printf '%s\n' 'Somente HTTP pontual; nao grava series nem promove datasets para operacao'
