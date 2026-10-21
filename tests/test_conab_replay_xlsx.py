@@ -5,6 +5,7 @@ import io
 import unittest
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
+from xml.etree import ElementTree as ET
 
 from nivon.conab_replay_xlsx import reexecutar_xlsx_conab,ErroXlsxProgresso,PARSER_ID
 
@@ -100,8 +101,14 @@ class TestProgressoXlsxGolden(unittest.TestCase):
             for obj in zin.infolist():
                 raw=zin.read(obj.filename)
                 if obj.filename=="xl/workbook.xml":
-                    self.assertIn(b"<workbook ",raw)
-                    raw=raw.replace(b"<workbook ",b'<workbook date1904="1" ',1)
+                    node=ET.fromstring(raw)
+                    tag="{http://schemas.openxmlformats.org/spreadsheetml/2006/main}workbookPr"
+                    props=node.find(tag)
+                    if props is None:
+                        props=ET.Element(tag)
+                        node.insert(0,props)
+                    props.set("date1904","1")
+                    raw=ET.tostring(node,encoding="utf-8",xml_declaration=True)
                 zout.writestr(obj.filename,raw)
         with self.assertRaisesRegex(ErroXlsxProgresso,"1904"):
             run(out.getvalue())
