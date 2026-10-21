@@ -115,20 +115,26 @@ class DireitoEntrega:
 
 
 def solicitar_entrega(briefing: dict, direito: DireitoEntrega, *, remetente=None) -> dict:
-    """Interface estreita: sem autorização explícita, não chama remetente.
+    """Interface legada offline: despacho direto desativado permanentemente.
 
-    O chamador deve persistir chave idempotente e ACK durável antes de liberar
-    repetição em nuvem; função não equivale a entrega confirmada.
+    Flags e auditoria declarada não provam revisão independente, consentimento
+    durável nem reserva na outbox. O remetente nunca é chamado neste caminho.
     """
     if not all((direito.destinatario_consentiu, direito.canal_autorizado,
                 direito.custos_aprovados, direito.template_aprovado)):
         return {"status": "BLOQUEADO_ENTREGA", "envio_realizado": False}
-    if remetente is None:
-        return {"status": "SEM_PROVEDOR_CONFIGURADO", "envio_realizado": False}
-    if briefing.get("status") != "PREPARADO_SEM_ENVIO" or not briefing.get("sha256"):
+    if not isinstance(briefing, dict) or briefing.get("status") != "PREPARADO_SEM_ENVIO":
         raise ErroBriefing("briefing não validado")
-    recibo = remetente(briefing["texto"], briefing["sha256"])
-    if not isinstance(recibo, dict) or not recibo.get("id"):
-        raise ErroBriefing("provedor sem recibo de aceitação")
-    return {"status": "ACEITO_PELO_PROVEDOR_NAO_ENTREGUE", "id": recibo["id"],
-            "envio_realizado": True}
+    texto = briefing.get("texto")
+    digest = briefing.get("sha256")
+    if (not isinstance(texto, str) or not isinstance(digest, str)
+            or len(digest) != 64
+            or digest != sha256(texto.encode("utf-8")).hexdigest()):
+        raise ErroBriefing("integridade do briefing divergente do SHA declarado")
+    # Caminho legado de despacho direto não faz reserva transacional nem
+    # reconciliação do resultado incerto do POST. Nem um auditor True ou
+    # quatro autorizações declaradas substituem o controle de outbox.
+    # O parâmetro remetente é mantido somente por compatibilidade e NUNCA
+    # deve ser chamado por esta interface.
+    return {"status": "BLOQUEADO_ENVIO_DIRETO_SEM_OUTBOX",
+            "envio_realizado": False}
