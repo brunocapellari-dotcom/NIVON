@@ -214,6 +214,12 @@ def criar_backup_conab(legado_path: str | Path,
             begin=datetime.now(timezone.utc).isoformat()
             with closing(sqlite3.connect(str(path),timeout=10)) as backup_db:
                 src.backup(backup_db, pages=64, sleep=0.05)
+                # Backups de bases WAL herdam o modo WAL; convertemos APENAS
+                # a cópia, com conexão escritora ainda aberta, para formar
+                # um arquivo SQLite isolado, sem dependência de -wal/-shm.
+                mode = backup_db.execute("PRAGMA journal_mode=DELETE").fetchone()[0]
+                if mode.lower() != "delete":
+                    raise ErroBackupConab("não foi possível normalizar cópia para modo DELETE")
             end=datetime.now(timezone.utc).isoformat()
             with closing(_readonly(path)) as validated:
                 counts = _verificar_integridade(validated,store)
