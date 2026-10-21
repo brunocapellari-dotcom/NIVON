@@ -266,6 +266,7 @@ def planejar_preflight_conab(legado: sqlite3.Connection,
                 if executado_xlsx["mapa_semantico"] != rows:
                     raise ErroPreflightConab("XLSX RAW reprocessado diverge do replay/legado")
                 xlsx_executado=True
+                parser_code_sha=executado_xlsx["parser_codigo_sha256"]
             match = _canonico_por_sha(canonico,raw_hash)
             if match is not None:
                 if match["rows"] != rows:
