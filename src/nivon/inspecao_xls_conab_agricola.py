@@ -10,6 +10,8 @@ from hashlib import sha256
 from hmac import compare_digest
 import re
 
+from .prova_raw_conab_agricola import verificar_raw_conab, ErroProvaRawConab
+
 from .conab_series import (
     UF, ARQUIVOS, normalizar_livro, ErroConab,
 )
@@ -39,18 +41,40 @@ def _abrir_livro(raw: bytes):
 
 
 def inspecionar_xls_conab_capturado(
-    *, manifesto_raw: dict, planilha_raw: bytes, uf: str, safra: str,
-    emitido_em: str,
+    *, manifesto_raw: dict, planilha_raw: bytes, pagina_html_raw: bytes,
+    uf: str, safra: str, emitido_em: str,
 ) -> dict:
     """Valida layout CONAB e extrai uma tripla física, sem afirmar edição.
 
     O manifesto provém de verificar_raw_conab. O SHA é recalculado sobre
-    planilha_raw e não basta confiança em campos declarativos do manifesto.
+    planilha_raw, e o HTML original é revalidado. Não basta confiança em
+    campos declarativos do manifesto: o vínculo exige os DOIS RAWs.
     O decoder XLS é opcional, mas sem ele ocorre erro, nunca sucesso falso.
     """
     if not isinstance(manifesto_raw, dict) or manifesto_raw.get("status") != (
             "CAPTURA_SHA_OLE2_LINK_SEM_VALIDACAO_XLS_OU_VINTAGE"):
         raise ErroLeituraXLSConab("manifesto de captura CONAB não reconhecido")
+    # Um manifesto é dado não confiável; validá-lo novamente com os dois
+    # artefatos originais elimina substituição da URL, origem HTML e flags
+    # sem correspondência com os bytes. A conferência continua sem provar
+    # publicação histórica ou identidade institucional independente.
+    try:
+        reconstituido = verificar_raw_conab(
+            cultura=manifesto_raw.get("cultura"),
+            arquivo=manifesto_raw.get("arquivo"),
+            pagina_html_raw=pagina_html_raw,
+            planilha_raw=planilha_raw,
+            url_documento=manifesto_raw.get("url_documento"),
+            coletado_html_em=manifesto_raw.get("coletado_html_em"),
+            coletado_xls_em=manifesto_raw.get("coletado_xls_em"),
+            sha256_xls_esperado=manifesto_raw.get("xls_raw_sha256"),
+        )
+    except (ErroProvaRawConab, ValueError, TypeError) as exc:
+        raise ErroLeituraXLSConab("proveniência HTML+XLS não verificável") from exc
+    if reconstituido != manifesto_raw:
+        raise ErroLeituraXLSConab(
+            "manifesto difere dos hashes, URLs, captura ou flags reconstituídos"
+        )
     meta = manifesto_raw.get("snapshot_meta")
     arquivo = manifesto_raw.get("arquivo")
     cultura = manifesto_raw.get("cultura")
