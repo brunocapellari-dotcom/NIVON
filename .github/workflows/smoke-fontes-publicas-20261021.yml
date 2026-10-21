@@ -7,6 +7,7 @@ on:
       - integration/nivon-acessos-core-convergencia-20261021
     paths:
       - .github/workflows/smoke-fontes-publicas-20261021.yml
+      - scripts/smoke_gtr_noaa_geodata.py
 
 permissions:
   contents: read
