@@ -115,7 +115,29 @@ jobs:
           set -euo pipefail
           python -m nivon.infra_cve_triage \
             --trivy-json "$RUNNER_TEMP/nivon-trivy.json"
+      - name: Obter snapshot público Debian Security Tracker de origem fixa
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          curl --fail --silent --show-error --location --retry 2 \
+            --proto '=https' --proto-redir '=https' --max-redirs 2 \
+            --connect-timeout 15 --max-time 140 --max-filesize 25000000 \
+            'https://security-tracker.debian.org/tracker/data/json' \
+            --output "$RUNNER_TEMP/nivon-debian-tracker.json"
+          test -s "$RUNNER_TEMP/nivon-debian-tracker.json"
+          echo "Fonte Debian obtida para consulta local sem armazenar/adicionar dados ao repositório"
+      - name: Confrontar avisos Debian por pacote-fonte e CVE sem divulgar identificadores
+        shell: bash
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python -m nivon.infra_debian_advisory \
+            --trivy-json "$RUNNER_TEMP/nivon-trivy.json" \
+            --debian-tracker-json "$RUNNER_TEMP/nivon-debian-tracker.json"
       - name: Aplicar bloqueio HIGH/CRITICAL sem imprimir detalhes sensíveis
+        if: ${{ !cancelled() }}
         shell: bash
         env:
           PYTHONPATH: src
