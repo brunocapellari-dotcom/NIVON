@@ -13,6 +13,9 @@ from typing import Any
 
 from nivon.portos_automaticos import ContratoPorto, processar_documento_porto, ErroPorto
 from nivon._agrolog_portos_html import parse_official_lineup_html
+from nivon._agrolog_portos_pdf import (
+    extract_pdf_tables, parse_itaqui_tables, parse_paranagua_tables,
+)
 from nivon.maritime.shipping_reconciliation import LineupCall
 
 # The pilot authorities publish local operational timestamps. Time zones must be
@@ -21,6 +24,8 @@ _PORT_ZONE = {
     "SANTOS": timezone(timedelta(hours=-3)),
     "SANTAREM": timezone(timedelta(hours=-3)),
     "BARCARENA_VILA_DO_CONDE": timezone(timedelta(hours=-3)),
+    "ITAQUI": timezone(timedelta(hours=-3)),
+    "PARANAGUA": timezone(timedelta(hours=-3)),
 }
 
 
@@ -140,5 +145,99 @@ def bridge_official_html_document(*, contract: ContratoPorto, document: dict,
         port_id=contract.porto, source_id=contract.fonte.fonte_id,
         source_url=contract.fonte.url, document_sha256=parsed["documento_sha256"],
         collected_at=stamp.isoformat(), candidates=tuple(calls),
+        excluded=tuple(excluded), source_rows=len(source_rows),
+    )
+
+
+def bridge_official_pdf_document(
+    *, contract: ContratoPorto, document: dict,
+    captured_before: str | datetime | None = None,
+) -> LineupBridgeResult:
+    """Parse an already acquired PDF without inventing a DUV or ETA clock.
+
+    Reuses the original authorized collector for URL, bytes, SHA, MIME and
+    rights checks. Then compares the PDF parsed rows to the collector's output.
+    N. Prog (Paranagua) and IMO are NOT DUV/port-call identities; if the
+    document does not expose an actual DUV, keep the row excluded and flag
+    the edition as incomplete for vintage publication/homologation.
+
+    PDF source layouts, local timezone contract and ID semantics remain
+    unhomologated until independently reviewed against real official PDFs.
+    """
+    if not isinstance(contract, ContratoPorto) or contract.modo not in {"PDF_PARANAGUA", "PDF_ITAQUI"}:
+        raise ErroPorto("bridge PDF requires registered Paranagua/Itaqui contract")
+    payload = document.get("conteudo") if isinstance(document, dict) else None
+    if not isinstance(payload, bytes) or not (0 < len(payload) <= 20_000_000):
+        raise ErroPorto("PDF original missing or over 20MB offline limit")
+    validated = processar_documento_porto(contract, document)
+    stamp = datetime.fromisoformat(validated["capturado_em"].replace("Z", "+00:00"))
+    if stamp.tzinfo is None or stamp.utcoffset() is None:
+        raise ErroPorto("PDF collection timestamp missing timezone")
+    stamp = stamp.astimezone(timezone.utc)
+    if captured_before is not None:
+        cutoff = captured_before if isinstance(captured_before, datetime) else datetime.fromisoformat(
+            str(captured_before).replace("Z", "+00:00")
+        )
+        if cutoff.tzinfo is None or cutoff.utcoffset() is None or stamp > cutoff.astimezone(timezone.utc):
+            raise ErroPorto("PDF acquired after as-of cutoff or missing cutoff timezone")
+
+    tables = extract_pdf_tables(payload)
+    if contract.modo == "PDF_ITAQUI":
+        source_rows = [
+            row for row in parse_itaqui_tables(tables, reference_date=contract.data_referencia)
+            if row["status"] == "ESPERADO"
+        ]
+    else:
+        source_rows = parse_paranagua_tables(
+            tables, reference_date=contract.data_referencia, series=contract.serie
+        )
+
+    scheduled = validated["registros"]
+    if not source_rows or len(source_rows) != len(scheduled):
+        raise ErroPorto("PDF source rows inconsistent with canonical collector")
+    zone = _PORT_ZONE.get(contract.porto)
+    if zone is None:
+        raise ErroPorto("PDF port has no explicit pilot timezone")
+
+    used: set[str] = set()
+    candidates: list[LineupCall] = []
+    excluded: list[dict[str, str]] = []
+    for index, (source, normalized) in enumerate(zip(source_rows, scheduled), 1):
+        if (source.get("navio") != normalized.navio
+                or source.get("duv", "").strip() != (normalized.duv or "")
+                or source.get("carga") != (normalized.produto or "")
+                or (source.get("imo") or None) != normalized.imo):
+            raise ErroPorto("PDF parser disagrees with normalized collector")
+        if source.get("status") not in {"PROGRAMMED", "ESPERADO"}:
+            raise ErroPorto("PDF physical event cannot become lineup schedule")
+        # The Paranagua parser call_id from N.PROG is a programme reference,
+        # NEVER substitute it for explicit DUV without independent mapping.
+        duv = (source.get("duv") or "").strip()
+        if not duv or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.:/-]{0,127}", duv):
+            excluded.append({"row": str(index), "reason": "explicit_duv_missing_or_invalid"})
+            continue
+        call_id = f"{contract.porto}:{contract.fonte.fonte_id}:{duv}"
+        if call_id in used:
+            excluded.append({"row": str(index), "reason": "duplicate_duv_requires_cargo_row_normalization"})
+            continue
+        used.add(call_id)
+        try:
+            eta = _instant_utc(source.get("eta", ""), zone, collected_at=stamp)
+        except (ValueError, TypeError):
+            excluded.append({"row": str(index), "reason": "precise_pdf_eta_missing_or_invalid"})
+            continue
+        # Programmed tonnage remains a declaration, not an operational event.
+        candidates.append(LineupCall(
+            call_id=call_id, port_id=contract.porto, source_id=contract.fonte.fonte_id,
+            vessel_name=normalized.navio, imo=normalized.imo,
+            eta=eta.isoformat(), collected_at=stamp.isoformat(),
+            product=normalized.produto, planned_volume_t=normalized.toneladas_programadas,
+            terminal_id=source.get("terminal") or None,
+            lineup_status="PROGRAMMED",
+        ))
+    return LineupBridgeResult(
+        port_id=contract.porto, source_id=contract.fonte.fonte_id,
+        source_url=validated["fonte"], document_sha256=validated["documento_sha256"],
+        collected_at=stamp.isoformat(), candidates=tuple(candidates),
         excluded=tuple(excluded), source_rows=len(source_rows),
     )
