@@ -23,7 +23,9 @@ class ErroPacoteChuva(ValueError):
 
 _HASH = re.compile(r"[0-9a-f]{64}\Z")
 _FONTE = re.compile(r"[A-Z][A-Z0-9_]{2,90}\Z")
-_PREVISOES = frozenset({"NOAA_GFS", "ECMWF_MODELOS", "CPTEC_MERGE"})
+# CPTEC_MERGE é análise de precipitação combinada, NÃO modelo NWP ensemble.
+# Não utilizar MERGE como forecast emitido antes de ocorrência dos fatos.
+_PREVISOES = frozenset({"NOAA_GFS", "ECMWF_MODELOS"})
 _OBSERVACOES = frozenset({"INMET_ESTACOES", "ANA_HIDRO"})
 _FONTE_OFICIAL = {"NOAA_GFS": "NOAA", "ECMWF_MODELOS": "ECMWF",
                   "CPTEC_MERGE": "CPTEC", "INMET_ESTACOES": "INMET",
