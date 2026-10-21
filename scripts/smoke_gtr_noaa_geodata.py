@@ -9,7 +9,9 @@ import json
 
 from nivon.planilhas_publicas_xlsx import consultar_planilha
 from nivon.noaa_mei_v2 import consultar_mei_v2
-from nivon.georaster_catalogos import consultar_esa_tile, consultar_jrc_wmts
+from nivon.georaster_catalogos import consultar_esa_tile, consultar_jrc_wmts, ErroRasterCatalogo
+from nivon.planilhas_publicas_xlsx import ErroPlanilhaPublica
+from nivon.noaa_mei_v2 import ErroMEI
 
 
 PLANILHAS = {
@@ -46,8 +48,10 @@ def main(argv=None):
                                       executar=True)
             quantidade = 1
     except Exception as exc:
+        diagnostico = str(exc)[:180] if isinstance(exc, (ErroRasterCatalogo, ErroPlanilhaPublica, ErroMEI)) else "FALHA_TRANSPORTE_SEM_DETALHE"
         print(json.dumps({"estado": "FALHA_HOMOLOGACAO",
-                          "fonte": a.fonte, "classe_erro": type(exc).__name__}))
+                          "fonte": a.fonte, "classe_erro": type(exc).__name__,
+                          "motivo_sem_credencial": diagnostico}))
         return 1
     print(json.dumps({
         "estado": "CONSULTA_PONTUAL_SEM_PERSISTENCIA",
