@@ -127,6 +127,16 @@ class PonteFretes(unittest.TestCase):
         self.assertEqual(r["observacoes_asof"],[])
         self.assertFalse(r["publicavel"])
 
+    def test_sha_sintaticamente_valido_nao_habilita_uso_real(self):
+        r=preparar([frete(edicao_sha256="f"*64)])
+        self.assertEqual(r["status"],
+                         "SERIE_ECONOMICA_INDIVIDUAL_PARA_TESTES_OFFLINE")
+        self.assertTrue(r["preparacao_offline_possivel"])
+        self.assertFalse(r["asof_pronto"])
+        self.assertFalse(r["edicao_raw_externamente_verificada"])
+        self.assertFalse(r["uso_preditivo_real_autorizado"])
+        self.assertFalse(r["publicavel"])
+
     def test_serie_por_entidade_sem_media_municipal(self):
         r=preparar([
             frete(edicao_sha256="a"*64),
@@ -190,7 +200,9 @@ class PonteFretes(unittest.TestCase):
             data_publicacao="2026-10-20T02:30:00Z",
             data_coleta="2026-10-20T03:00:00Z")
         out=preparar([row])
-        self.assertTrue(out["asof_pronto"])
+        self.assertFalse(out["asof_pronto"])
+        self.assertTrue(out["preparacao_offline_possivel"])
+        self.assertFalse(out["uso_preditivo_real_autorizado"])
         self.assertEqual(out["observacoes_asof"][0]["periodo"],"2026-10-19")
         # Mesmo instante, se classificado como dia seguinte, seria falso.
         row["data_referencia"]="2026-10-20"
@@ -204,7 +216,9 @@ class PonteFretes(unittest.TestCase):
                   data_publicacao="2026-10-19T16:00:00+05:00",
                   data_coleta="2026-10-19T16:05:00+05:00")
         out=preparar([row])
-        self.assertTrue(out["asof_pronto"])
+        self.assertFalse(out["asof_pronto"])
+        self.assertTrue(out["preparacao_offline_possivel"])
+        self.assertFalse(out["uso_preditivo_real_autorizado"])
 
     def test_temporalidade_falha_e_hash_conflict(self):
         a=frete(edicao_sha256="a"*64)
@@ -230,7 +244,9 @@ class PonteFretes(unittest.TestCase):
                 data_referencia=d,data_publicacao=d+"T10:00:00-04:00",
                 data_coleta=d+"T11:00:00-04:00"))
         norm=preparar(eventos)
-        self.assertTrue(norm["asof_pronto"])
+        self.assertFalse(norm["asof_pronto"])
+        self.assertTrue(norm["preparacao_offline_possivel"])
+        self.assertFalse(norm["edicao_raw_externamente_verificada"])
         self.assertEqual(len(norm["observacoes_asof"]),15)
         origens={dias[i]:dias[i]+"T18:00:00Z" for i in (6,7,8,9,10)}
         result=executar_rolling_origin_asof(
