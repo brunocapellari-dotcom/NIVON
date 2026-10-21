@@ -30,6 +30,20 @@ _PORT_ZONE = {
 
 
 @dataclass(frozen=True)
+class PdfProgramReference:
+    """Published PDF programme reference, not verified DUV or realized visit."""
+    source_row: int
+    vessel_name: str
+    programme_number: str | None
+    explicit_duv: str | None
+    eta_text: str | None
+    eta_fully_declared: bool
+    product: str | None
+    planned_volume_t: float | None
+    evidence_class: str = "PROGRAMME_REFERENCE_NOT_PORT_CALL"
+
+
+@dataclass(frozen=True)
 class LineupBridgeResult:
     port_id: str
     source_id: str
@@ -42,6 +56,7 @@ class LineupBridgeResult:
     state: str = "SHADOW_NOT_HOMOLOGATED"
     publication_allowed: bool = False
     realized_cargo_claimed: bool = False
+    pdf_program_rows: tuple[PdfProgramReference, ...] = ()
 
     def summary(self) -> dict[str, Any]:
         return {
@@ -55,6 +70,8 @@ class LineupBridgeResult:
             "state": self.state,
             "publication_allowed": False,
             "excluded": self.excluded,
+            "pdf_program_reference_rows": len(self.pdf_program_rows),
+            "programme_references_are_verified_port_calls": False,
         }
 
 
@@ -202,6 +219,7 @@ def bridge_official_pdf_document(
     used: set[str] = set()
     candidates: list[LineupCall] = []
     excluded: list[dict[str, str]] = []
+    programme_rows: list[PdfProgramReference] = []
     for index, (source, normalized) in enumerate(zip(source_rows, scheduled), 1):
         if (source.get("navio") != normalized.navio
                 or source.get("duv", "").strip() != (normalized.duv or "")
@@ -210,6 +228,22 @@ def bridge_official_pdf_document(
             raise ErroPorto("PDF parser disagrees with normalized collector")
         if source.get("status") not in {"PROGRAMMED", "ESPERADO"}:
             raise ErroPorto("PDF physical event cannot become lineup schedule")
+        programme_number = (
+            (str(source.get("call_id") or "").strip() or None)
+            if contract.porto == "PARANAGUA" else None
+        )
+        programme_rows.append(PdfProgramReference(
+            source_row=index,
+            vessel_name=normalized.navio,
+            programme_number=programme_number,
+            explicit_duv=(source.get("duv") or "").strip() or None,
+            eta_text=source.get("eta") or None,
+            eta_fully_declared=bool(
+                source.get("eta") and not source.get("eta_year_inferred", True)
+            ),
+            product=normalized.produto,
+            planned_volume_t=normalized.toneladas_programadas,
+        ))
         # The Paranagua parser call_id from N.PROG is a programme reference,
         # NEVER substitute it for explicit DUV without independent mapping.
         duv = (source.get("duv") or "").strip()
@@ -248,4 +282,5 @@ def bridge_official_pdf_document(
         source_url=validated["fonte"], document_sha256=validated["documento_sha256"],
         collected_at=stamp.isoformat(), candidates=tuple(candidates),
         excluded=tuple(excluded), source_rows=len(source_rows),
+        pdf_program_rows=tuple(programme_rows),
     )
