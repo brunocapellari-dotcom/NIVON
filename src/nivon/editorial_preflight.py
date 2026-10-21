@@ -9,7 +9,7 @@ from __future__ import annotations
 import hashlib
 import re
 import unicodedata
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from urllib.parse import urlsplit, parse_qsl, urlencode, urlunsplit
 
@@ -180,6 +180,23 @@ def _verificar_cotacao(item: dict, agora: datetime, texto: str) -> str:
                and (ref.date().isoformat() in linha or referencia_br in linha)
                for linha in linhas):
         raise ValueError("cotação/unidade/valor/data não reconciliam com texto")
+    if item.get("classe_estatistica") == "MEDIA_AMOSTRAL_MUNICIPAL_REVENDA":
+        if grupo != "ENERGIA" or item["natureza"] != "INDICATIVO" or item["unidade"] != "R$/L":
+            raise ValueError("ANP: média amostral não é preço nacional nem negociação")
+        try:
+            inicio = date.fromisoformat(item["semana_inicio"])
+            fim = date.fromisoformat(item["semana_fim"])
+            postos = item["postos_pesquisados"]
+            if ((fim - inicio).days != 6 or fim.isoformat() != item["competencia"]
+                    or fim > _instante(item["publicado_em"]).date()
+                    or type(postos) is not int or postos < 1):
+                raise ValueError("semana ou amostra inconsistente")
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError("ANP: competência/semana/quantidade de postos inválidas") from exc
+        if not any(inicio.strftime("%d/%m") in linha
+                   and fim.strftime("%d/%m") in linha
+                   and f"{postos} postos" in linha for linha in linhas):
+            raise ValueError("ANP: semana ou tamanho amostral divergente do texto")
     return grupo
 
 
