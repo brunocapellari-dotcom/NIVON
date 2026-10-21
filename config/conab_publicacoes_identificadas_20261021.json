@@ -1,0 +1,27 @@
+{
+  "schema": "NIVON_CONAB_PAGINA_ANEXO_V1",
+  "edicoes": [
+    {
+      "id_edicao": "CONAB_PROG_2026_10_11",
+      "url_pagina": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/progresso-de-safra/acompanhamento-das-lavouras-05-10-a-11-10-26/acompanhamento-das-lavouras-05-10-a-11-10-26",
+      "url_anexo": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/progresso-de-safra/acompanhamento-das-lavouras-05-10-a-11-10-26/plantio-e-colheita-03-10-a-09-10.xlsx",
+      "publicacao_data": "2026-10-12",
+      "pagina_inicio": "2026-10-05",
+      "pagina_fim": "2026-10-11",
+      "planilha_inicio": "2026-10-03",
+      "planilha_fim": "2026-10-09",
+      "conteudo_sha256_verificado": null
+    },
+    {
+      "id_edicao": "CONAB_PROG_2026_10_18",
+      "url_pagina": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/progresso-de-safra/acompanhamento-das-lavouras-12-10-a-18-10-26/acompanhamento-das-lavouras-05-10-a-11-10-26",
+      "url_anexo": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/progresso-de-safra/acompanhamento-das-lavouras-12-10-a-18-10-26/plantio-e-colheita-10-10-a-16-10",
+      "publicacao_data": "2026-10-19",
+      "pagina_inicio": "2026-10-12",
+      "pagina_fim": "2026-10-18",
+      "planilha_inicio": "2026-10-10",
+      "planilha_fim": "2026-10-16",
+      "conteudo_sha256_verificado": null
+    }
+  ]
+}
