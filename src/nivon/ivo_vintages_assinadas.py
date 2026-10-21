@@ -90,9 +90,11 @@ class RegistroVintagesIVO:
         self, eventos: list[EnvelopeAssinadoIVO], *,
         resolver_chave: Callable[[str], bytes],
         obter_ancora: Callable[[str], datetime],
+        obter_cabeca: Callable[[], str],
     ) -> None:
         if (not isinstance(eventos, list) or len(eventos) > 1000
-                or not callable(resolver_chave) or not callable(obter_ancora)):
+                or not callable(resolver_chave) or not callable(obter_ancora)
+                or not callable(obter_cabeca)):
             raise ErroProvenienciaIVO("registro e verificadores obrigatorios")
         self._sealed = []
         for event in eventos:
@@ -105,6 +107,7 @@ class RegistroVintagesIVO:
         self._sealed = tuple(self._sealed)
         self._keys = resolver_chave
         self._anchors = obter_ancora
+        self._head = obter_cabeca
 
     def _read_events(self) -> list[_EventoVerificado]:
         prev = GENESIS
@@ -171,6 +174,14 @@ class RegistroVintagesIVO:
                 raise ErroProvenienciaIVO("verificacao de evento indisponivel") from None
             result.append(_EventoVerificado(p, anchor, event_digest))
             prev, prev_recorded, prev_anchor = event_digest, recorded, anchor
+        # A cabeca deve vir do registry de auditoria, independentemente dos
+        # eventos recebidos. Sem isso, omitir revogacoes permitiria rollback.
+        try:
+            trusted_head = _digest(self._head())
+        except Exception:
+            raise ErroProvenienciaIVO("cabeca de auditoria indisponivel") from None
+        if not hmac.compare_digest(prev, trusted_head):
+            raise ErroProvenienciaIVO("cadeia incompleta ou head divergente")
         return result
 
     def autorizador(
