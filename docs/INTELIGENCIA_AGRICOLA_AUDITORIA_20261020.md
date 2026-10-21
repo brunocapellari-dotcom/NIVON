@@ -91,3 +91,27 @@ Novo algoritmo puro, offline e sem dependências; não coleta dados reais, não 
 - Próximo gate P0 externo: dados reais autorizados do SIDRA/CONAB com RAW e edições/hora comprovadas, mapa de calendário comercial->ano civil por cultura e região, qualidade e cobertura verificadas em amostra MT. Nem URL atual nem SHA sintético recuperam vintage histórica.
 
 Sem merge na `main`, nenhuma execução de rede do código agrícola, ativação de coleta, dados contratados, envio ou deploy.
+
+## Continuidade 21/10/2026 — proteção de RAW e lacunas do histórico CONAB (AG-01 P0)
+
+### Evidência externa, com limite explícito
+
+As páginas oficiais de série histórica de grãos da CONAB indicam que `SojaSerieHist.xls` foi publicado **15/10/2026 09h29**, `Milho1aSerieHist.xls` **15/10/2026 09h26**, `Milho2aSerieHist.xls` **15/10/2026 09h26**, `Milho3aSerieHist.xls` **15/10/2026 09h27** e `MilhoTotalSerieHist.xls` **15/10/2026 09h27**. São **metadados visíveis no portal na consulta de 21/10**, não hashes, comprovantes de disponibilidade histórica anterior nem evidência de que os bytes adquiridos sejam os daquele horário. Fontes:
+- https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/series-historicas/graos/soja/
+- https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/series-historicas/graos/milho
+- https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/safra-de-graos
+
+**Bloqueio observado:** consulta pública localizou as páginas e a URL de download `/@@download/file`, mas o leitor web recusou os bytes `application/vnd.ms-excel`; a tentativa de transferir o XLS para o contêiner também falhou. Nenhum XLS ou conjunto de resultados SIDRA 1612 real foi adquirido/validado nesta execução. Não registrar suposto SHA real nem afirmar dados alimentados.
+
+### Contrato implementado, offline
+
+- `src/nivon/prova_raw_conab_agricola.py:verificar_raw_conab` recebe HTML UTF-8 e XLS **já capturados por processo licitamente autorizado**, SHA-256 esperado do registro do adquirente, URLs e horários independentes.
+- Recalcula SHA-256 sobre os bytes (comparação constante), aplica limite de tamanho, verifica SOMENTE assinatura OLE2 (não parsing do workbook), exige link da planilha na página oficial CONAB reconhecida por `conab_catalogo.py`; vincula `/view` da página ao `/@@download/file` do binário sem confundir os dois.
+- A tolerância de dez minutos entre capturas HTML/XLS é apenas guard de consistência pontual, não validação automática de publicação. Mantém `estrutura_xls_validada=false`, `abas_xls_lidas=false`, `edicao_id=DESCONHECIDA`, `publicado_em=null`, `disponivel_em=null`, `disponibilidade_verificada=false`, `vintage_asof_comprovada=false`, `habilita_backtest=false`, `habilita_treino=false` e `habilita_publicacao=false`.
+- Ajuste em `auditoria_conab_pam._prova_temporal`: admite **ambas** as datas históricas nulas sem falsear uma data. Metadado sem publicação e disponibilidade devolve bloqueio comparativo, jamais `as-of` positivo; uma só data ou alegação de prova verificada com datas nulas continua erro.
+- `tests/test_prova_raw_conab_agricola.py`: regressões sintéticas contra hash adulterado, extensão/formato impróprio, domínio incompatível, URL de download distinta da página, timestamp divergente, metadados nulos e recusa de diferencial físico sem vintage. O OLE2 sintético é intencionalmente incompleto para demonstrar que **assinatura não é validação XLS**.
+- Os motores SOJA e MILHO expõem o adaptador sob allowlist, mas mantêm todos os flags de produção **OFF**.
+
+### Próximo gate verificável
+
+(1) Engenharia de Dados: realizar captura real autorizada de **um** XLS de soja MT e do HTML correspondente num único intervalo, salvar RAW em storage não público; (2) verificar hashes calculados, MIME e workbook via parser isolado, planilhas AREA/PRODUTIVIDADE/PRODUCAO; (3) registrar os valores observados e metadados do levantamento, **sem converter a publicação atual em uma série de edições anteriores**; (4) capturar SIDRA 1612 para um município MT com mesma proveniência, sem forçar leitura de separador ambíguo; (5) comparar com fontes e calendários somente quando houver evidências independentes de disponibilidade do corte histórico. Sem coleta recorrente, novos gastos, merges, deploy nem publicação.
