@@ -29,3 +29,7 @@ Não realizar deploy, transferência de arquivo bruto para outro serviço, publi
 ## Primeira rodada de compatibilidade (ainda sem diagnóstico do pacote faltante)
 
 [Execução 39671894570](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39671894570) no commit `5b41a7550e31cf113e497d1fcf62b89c43dcc2ef`: `excel` e `ports` passaram em AMD64 e ARM64 (resolução apenas wheel, instalação offline e smoke); `agro` e `forecast` reprovaram a fase de download de wheels em ambas arquiteturas. Isso não prova incompatibilidade definitiva; pode ser wheel transitive indisponível ou outro erro PyPI. Um classificador foi acrescentado para extrair somente nomes públicos de requisitos não resolvidos, sem imprimir stdout/stderr brutos, tokens, URLs ou caminhos.
+
+## Segunda etapa — comparação Debian glibc por dependências incompatíveis com musl
+
+Agrobr e StatsForecast tiveram download binário bloqueado no Alpine em ambos os runners: `duckdb` e `statsforecast` sem wheel compatível, respectivamente. Assim, o workflow único foi ampliado para testar os mesmos grupos sobre **Debian Trixie com digest fixo**, nas duas arquiteturas. Isso não suprime os achados CVE da base Debian: a imagem atual continua bloqueada, e um sucesso do ensaio de wheel significa somente viabilidade técnica de instalação/importação em contêiner de teste. O resultado Debian precisa ser auditado com as versões efetivas e SBOM/CVEs de uma imagem de runtime completa antes de deploy.

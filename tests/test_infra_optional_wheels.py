@@ -6,13 +6,25 @@ import json
 import subprocess
 import unittest
 
-from nivon.infra_optional_wheels import EXPECTED, SMOKES, IMAGE, requirements, _subprocess, _files, _resumir_falha
+from nivon.infra_optional_wheels import EXPECTED, SMOKES, IMAGE, DEBIAN_IMAGE, DISTROS, executar, requirements, _subprocess, _files, _resumir_falha
 from nivon.infra_supplychain import ErroSupplyChain
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 class TestOptionalWheels(unittest.TestCase):
+    def test_imagens_pinnadas_e_identidade_distinta(self):
+        self.assertEqual(set(DISTROS), {"alpine", "debian"})
+        self.assertIn("@sha256:", IMAGE)
+        self.assertIn("@sha256:", DEBIAN_IMAGE)
+        self.assertNotEqual(IMAGE, DEBIAN_IMAGE)
+        self.assertNotIn("alpine", DEBIAN_IMAGE)
+
+    def test_falsa_identidade_de_distribuicao_bloqueada(self):
+        with self.assertRaises(ErroSupplyChain):
+            executar("agro", "download", pyproject=str(ROOT / "pyproject.toml"),
+                     root="/var/nivon-wheels", distro="fake-os")
+
     def test_pyproject_real_possui_quatro_extras_esperados(self):
         for group in EXPECTED:
             self.assertEqual(requirements(ROOT / "pyproject.toml", group), EXPECTED[group])
@@ -73,6 +85,9 @@ class TestOptionalWheels(unittest.TestCase):
     def test_workflow_nao_usa_imagem_nao_pinnada_ou_sdist(self):
         wf = (ROOT / ".github/workflows/infra_optional_wheels.yml").read_text(encoding="utf-8")
         self.assertIn(IMAGE, wf)
+        self.assertIn(DEBIAN_IMAGE, wf)
+        self.assertIn("--distro", wf)
+        self.assertIn("distro: debian", wf)
         for phrase in ("ubuntu-24.04-arm", "ubuntu-latest",
                        "--only-binary=:all:", "--phase download",
                        "--phase offline", "--network none", "https://pypi.org/simple",

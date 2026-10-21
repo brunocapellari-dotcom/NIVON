@@ -30,6 +30,8 @@ SMOKES = {
     "excel": "import io,openpyxl; w=openpyxl.Workbook(); w.active['A1']='nivon'; out=io.BytesIO(); w.save(out); assert out.getbuffer().nbytes>0",
 }
 IMAGE = "python:3.11.17-alpine3.23@sha256:924d53e01cee5204d35fbcfb71b6c1568c857d7c31141f960ff6a37e111ecc7f"
+DEBIAN_IMAGE = "python:3.11-slim-trixie@sha256:cce12316475d7d56d605f76e1d811d0dc4e7227f2d4afd29951521264f504ff8"
+DISTROS = {"alpine": IMAGE, "debian": DEBIAN_IMAGE}
 MAX_WHEELS = 220
 MAX_WHEEL_BYTES = 400_000_000
 
@@ -106,8 +108,19 @@ def _subprocess(argv: list[str], *, timeout: int, env: dict[str, str] | None = N
         raise ErroSupplyChain(_resumir_falha(r.stderr))
 
 
-def executar(group: str, phase: str, *, pyproject: str, root: str) -> dict:
+def executar(group: str, phase: str, *, pyproject: str, root: str,
+             distro: str = "alpine") -> dict:
     specs = requirements(pyproject, group)
+    if distro not in DISTROS:
+        raise ErroSupplyChain("distribuição não autorizada")
+    try:
+        release = Path("/etc/os-release").read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as exc:
+        raise ErroSupplyChain("identidade do SO não verificada") from exc
+    os_id = next((line.removeprefix("ID=").strip().strip('"')
+                  for line in release.splitlines() if line.startswith("ID=")), None)
+    if os_id != distro:
+        raise ErroSupplyChain("imagem-base não corresponde à distribuição declarada")
     if phase not in ("download", "offline"):
         raise ErroSupplyChain("fase não autorizada")
     base = Path(root)
@@ -147,10 +160,13 @@ def executar(group: str, phase: str, *, pyproject: str, root: str) -> dict:
         "schema": "nivon.infrastructure.optional_wheels.v1",
         "group": group,
         "phase": phase,
+        "distro": distro,
+        "image_base_pinned": DISTROS[distro],
+        "libc_family": "musl" if distro == "alpine" else "glibc",
         "wheel_count": count,
         "wheels_bytes": size,
         "resolver": "PyPI only / binary wheels" if phase == "download" else "offline-only",
-        "native_musl_dependencies_probed": phase == "offline",
+        "native_musl_dependencies_probed": phase == "offline" and distro == "alpine",
         "collector_network_called": False,
         "release_authorized": False,
         "runtime_image_changed": False,
@@ -161,16 +177,17 @@ def executar(group: str, phase: str, *, pyproject: str, root: str) -> dict:
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Auditoria de rodas binárias opcionais sem deploy")
     p.add_argument("--group", required=True, choices=tuple(EXPECTED))
+    p.add_argument("--distro", required=True, choices=tuple(DISTROS))
     p.add_argument("--phase", required=True, choices=("download", "offline"))
     p.add_argument("--pyproject", default="/workspace/pyproject.toml")
     p.add_argument("--root", default="/var/nivon-wheels")
     args = p.parse_args(argv)
     try:
         result = executar(args.group, args.phase, pyproject=args.pyproject,
-                          root=args.root)
+                          root=args.root, distro=args.distro)
     except (OSError, ValueError) as exc:
         print(json.dumps({"schema": "nivon.infrastructure.optional_wheels.v1",
-                          "group": args.group, "phase": args.phase,
+                          "group": args.group, "phase": args.phase, "distro": args.distro,
                           "status": "BLOCKED", "reason": str(exc),
                           "release_authorized": False}, sort_keys=True))
         return 2
