@@ -224,3 +224,50 @@ de preços em produção.
 Regressões acrescentadas a \`tests/test_pipeline_ptax_briefing.py\`
 conferem os campos oriundos do snapshot de teste, proibição de marcar
 última sessão automaticamente e bloqueio por falta de prova independente.
+
+
+## Continuação autônoma — 21/10/2026: diesel ANP semanal
+
+### Alterações de código
+- \`anp_diesel_briefing.montar_indicadores_diesel\` agora repassa metadados
+  canônicos da amostragem municipal oficial: \`grupo=ENERGIA\`,
+  \`valor_num\`, \`unidade=R$/L\`, \`natureza=INDICATIVO\`,
+  \`classe_estatistica=MEDIA_AMOSTRAL_MUNICIPAL_REVENDA\`,
+  \`competencia\` (data final da semana), \`semana_inicio\`,
+  \`semana_fim\`, \`postos_pesquisados\`, \`periodo_identificado=true\`,
+  \`publicado_em\`, \`coletado_em\`, \`sha256_origem\` e ID documental
+  de direitos externos declarado. A fonte e o código **não homologam**
+  independentemente o próprio documento de direitos.
+- O texto mantém "média municipal amostral de revenda", preço por tipo de
+  diesel, município e semana, com unidade de R$/L explícita. Não o converter
+  em preço nacional, combustível na distribuidora, referência de frete,
+  previsão, negociação ou média municipal de fretes.
+- A data informada de publicação da planilha não pode anteceder o último
+  dia da semana da pesquisa; comparações de defasagem e data local da
+  publicação usam calendário \`America/Sao_Paulo\` para evitar cortes
+  errados na virada da meia-noite UTC. Sem data oficial e \`RAW\` reais
+  homologados, o dado continua **não apto para operação**.
+- \`editorial_evidencias_pipeline\` preserva semana, amostra e classificação
+  como evidências imutáveis provenientes do conector. A reconciliação de
+  suplementos por SHA rejeita alterações desses metadados.
+- \`editorial_preflight\` compara valor, unidade, publicação, duração da
+  semana, competência, intervalo e número de postos com a linha renderizada,
+  bloqueando adulterações ou mistura de mercado.
+- Regressões adicionais em \`test_anp_diesel_briefing.py\` e
+  \`test_pipeline_diesel_anp.py\`: cronologia, timezone do Brasil, preço
+  e amostragem, prova RAW, recusa de complemento adulterado, semana e
+  número de postos diferentes do texto.
+
+### Evidência e pendências de homologação
+A suíte GitHub Actions roda offline com dados sintéticos; consultar CI no
+**SHA final desta PR** antes de atribuir o status aprovado ao incremento.
+Os dados de teste não são autorização comercial, e as evidências declaradas
+pelas fixtures não podem ser interpretadas como documentos do provedor.
+
+**Próxima ação executável:** revisar a fidelidade da associação
+\`registro individual → linha do texto\` para múltiplas transportadoras
+no mesmo corredor e preços físicos homogêneos por praça, garantindo que
+um valor de outra linha não satisfaça indevidamente a validação. Em seguida,
+planejar reconciliação entre PR #26, PR #8 e PR #13 sem merge automático.
+A distribuição Meta/WhatsApp, cron, novos serviços e operações pagas
+continuam bloqueadas.
