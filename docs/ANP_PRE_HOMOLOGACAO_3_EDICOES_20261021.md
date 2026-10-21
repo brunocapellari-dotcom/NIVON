@@ -117,3 +117,20 @@ Nenhuma destas alterações autoriza execução de coleta automática, publicaç
 Uma captura de arquivo pode conter um horário manipulado ou reencaminhado. A rota direta `REAL_AUTORIZADO` agora **também exige** `verificado_em_confiavel`, fornecido pelo controlador (com timezone), e impede que esse instante anteceda a captura. A validade de ambas as atestações é avaliada com base nesse horário externo e não somente em `coletado_em` declarado no resumo.
 
 **Limite explícito:** o módulo não comprova que o chamador realmente obteve `verificado_em_confiavel` de um relógio seguro. Em produção será obrigatório conectar à infraestrutura de identidade/tempo, impedir que collectors especifiquem livremente esse argumento e auditar assinaturas, revogações e atualizações. Passar manualmente um horário e chaves fictícias só atende aos testes sintéticos, nunca à homologação do NIVON.
+
+
+## Continuidade — revogação posterior à ingestão (21/10/2026)
+
+**Motivo:** até esta rodada, as duas atestações eram verificadas exclusivamente na entrada. Uma licença retirada, um erro de layout descoberto depois ou uma chave comprometida não impediriam consultas do preço já armazenado.
+
+**Implementação (offline):**
+
+- `src/nivon/anp_revogacoes.py::registrar_revogacao_anp`: evento de revogação HMAC-SHA256 com domínio `NIVON_ANP_LPC_REVOGACAO_V1`, assinado por emissor diferente dos dois revisores originais. Exige ID único de revogação, SHA da edição, ID da aprovação existente, domínio afetado, motivo enumerado, horário de emissão e recebimento informado pelo controlador. A assinatura vincula todos os campos; não há emissor de documentos nem chave default.
+- `anp_semanal_store.inicializar_store_anp`: tabela `anp_semanal_revogacoes` e índice por edição/recebimento, FK para `anp_semanal_atestacoes` por edição e domínio. Inserção atômica e idempotente. A API não apaga/regrava revogações. A base SQLite, contudo, não implementa WORM contra administradores com acesso direto.
+- `consultar_preco_semanal`: avalia revogações registradas **até `as_of`**, preservando o histórico do que era conhecido antes; se a última semana elegível contiver uma edição revogada, responde `EDICAO_REVOGADA`, `publicavel=false` e **sem campo de preço**. Não escolhe preço de uma edição alternativa ou anterior para contornar a revogação.
+- `tests/test_anp_revogacoes.py`: assinaturas falsas/adulteradas, domínio ou edição incorreta, revisor que tenta revogar sua própria atestação, ID de aprovação inexistente, tempo impossível, reuso de ID em documentação conflitante, idempotência, revogação de direitos e de layout, convivência com revisões, bloqueio sem fallback e reconstituição point-in-time.
+- O job `validar-anp-lpc-fixtures` passa a rodar também `test_anp_revogacoes.py`. Todas as chaves, edições, datas e preços nos testes são **sintéticos**.
+
+**Verificação CI antes da atualização editorial:** commit `69e09f945304fa367357ada36f9d44810ad6789f`, GitHub Actions [#39671037245](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39671037245), status **success**: 1.476 testes na suíte principal, sem falhas (45 ignorados pelo ambiente sem extras), e **77 testes ANP específicos com Excel instalado, todos aprovados**. Houve duas falhas de fixture no commit inicial, corrigidas e reexecutadas no SHA indicado.
+
+**Risco residual crítico:** a revogação vale apenas depois de recebida e gravada **neste banco**. Ausência de revogação registrada NÃO prova que não houve revogação externa. Não existe distribuição de eventos, serviço de atualização de lista, comprovante de sincronização recente, relógio/KMS homologado, login de emissor, chave real nem autorização de divulgar valores. Para consultas operacionais com dados reais, exigir um mecanismo de frescor/autenticação do registro de revogações por fonte independente e falha fechada quando esse registro ficar desatualizado. Permanece proibido chamar o módulo de homologado para uso real. O pipeline segue `SINTETICO` e nenhuma coleta/agendamento/deploy foi habilitada.
