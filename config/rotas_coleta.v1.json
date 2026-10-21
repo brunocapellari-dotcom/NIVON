@@ -4821,7 +4821,8 @@
         "LICENSED_PUBLICATION_GATE",
         "VALIDATE_LIVE_STAC_RESPONSE",
         "COLLECTION_LICENSE_PER_ASSET",
-        "STAC_PAGINATION_VERSION"
+        "STAC_PAGINATION_VERSION",
+        "REAL_PRODUCTION_RESPONSE_SMOKE"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
@@ -4832,7 +4833,7 @@
       "dataset_id": "ESA_WORLDCOVER_2021_10M",
       "collector_class": "STRUCTURED_FILE",
       "locator": {
-        "kind": "PUBLISHED_API_DOC",
+        "kind": "DIRECT_PUBLIC_FILE",
         "url": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_S15W057_Map.tif",
         "source_proof": "https://esa-worldcover.org/en/data-access"
       },
