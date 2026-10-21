@@ -230,8 +230,9 @@ def normalizar_pagina_roi(payload: bytes, *, page: int, size: int,
         raise ErroSISFOGO("página vazia no total com registros")
     if total and page <= paginas and not itens:
         raise ErroSISFOGO("página não vazia esperada pela contagem")
-    if page < paginas and len(itens) != size:
-        raise ErroSISFOGO("página intermediária incompleta")
+    esperado_na_pagina = min(size, max(0, total - size * (page - 1)))
+    if len(itens) != esperado_na_pagina:
+        raise ErroSISFOGO("contagem da página não confere com total de registros")
     sha = hashlib.sha256(payload).hexdigest()
     obs = [_roi(row, coleta=coleta, hash_pagina=sha) for row in itens]
     chaves = [o["roi_id"] for o in obs]
