@@ -28,7 +28,8 @@
         "nivon.motor_tendencias:tendencia_projetada",
         "nivon.tendencias_mercados:tendencia_cbot",
         "nivon.tendencias_mercados:tendencia_preco_fisico",
-        "nivon.dinamica_tendencias:comparar_forca_tendencia"
+        "nivon.dinamica_tendencias:comparar_forca_tendencia",
+        "nivon.qualidade_mercados:dinamica_preco_auditada"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -76,7 +77,8 @@
         "nivon.motor_tendencias:tendencia_projetada",
         "nivon.tendencias_mercados:tendencia_cbot",
         "nivon.tendencias_mercados:tendencia_preco_fisico",
-        "nivon.dinamica_tendencias:comparar_forca_tendencia"
+        "nivon.dinamica_tendencias:comparar_forca_tendencia",
+        "nivon.qualidade_mercados:dinamica_preco_auditada"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -119,7 +121,8 @@
         "nivon.motor_tendencias:tendencia_observada",
         "nivon.motor_tendencias:tendencia_projetada",
         "nivon.tendencias_mercados:tendencia_preco_fisico",
-        "nivon.dinamica_tendencias:comparar_forca_tendencia"
+        "nivon.dinamica_tendencias:comparar_forca_tendencia",
+        "nivon.qualidade_mercados:dinamica_preco_auditada"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
@@ -148,7 +151,8 @@
         "nivon.motor_tendencias:tendencia_observada",
         "nivon.motor_tendencias:tendencia_projetada",
         "nivon.tendencias_mercados:tendencia_preco_fisico",
-        "nivon.dinamica_tendencias:comparar_forca_tendencia"
+        "nivon.dinamica_tendencias:comparar_forca_tendencia",
+        "nivon.qualidade_mercados:dinamica_preco_auditada"
       ],
       "data_dependencies": [
         "IBGE_PPM",
@@ -195,7 +199,8 @@
         "nivon.motores_cadeias:simular_atr_cana",
         "nivon.unidades_mercado:referencia_ice_centavos_libra_usd_t",
         "nivon.motor_tendencias:tendencia_observada",
-        "nivon.motor_tendencias:tendencia_projetada"
+        "nivon.motor_tendencias:tendencia_projetada",
+        "nivon.qualidade_mercados:dinamica_preco_auditada"
       ],
       "data_dependencies": [
         "CONAB_CANA",
@@ -228,7 +233,8 @@
         "nivon.motor_tendencias:tendencia_projetada",
         "nivon.tendencias_mercados:tendencia_cbot",
         "nivon.tendencias_mercados:tendencia_preco_fisico",
-        "nivon.dinamica_tendencias:comparar_forca_tendencia"
+        "nivon.dinamica_tendencias:comparar_forca_tendencia",
+        "nivon.qualidade_mercados:dinamica_preco_auditada"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
