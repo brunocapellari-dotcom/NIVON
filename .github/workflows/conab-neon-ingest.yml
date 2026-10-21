@@ -1,0 +1,71 @@
+name: NIVON - CONAB ingesta autenticada no Neon
+on:
+  push:
+    paths:
+      - '.github/workflows/conab-neon-ingest.yml'
+  workflow_dispatch:
+  schedule:
+    # Quarta 12:00 UTC. So roda automaticamente apos merge na branch padrao.
+    - cron: '0 12 * * 3'
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  conab-neon:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Instalar biblioteca para coleta primaria oficial
+        run: pip install --disable-pip-version-check agrobr==2.0.0
+      - name: Consultar CONAB, verificar origem, autenticar e gravar
+        env:
+          NIVON_CONAB_INGEST_URL: https://br-twilight-cell-b77ukd6x-conabingest.compute.c-13.us-east-1.aws.neon.tech/ingest
+        run: |
+          python - <<'PY'
+          import asyncio, json, os
+          from urllib.request import Request,urlopen
+          from urllib.parse import quote
+          from agrobr import conab
+          from nivon.conab_safras import checar_meta, validar_linhas
+
+          async def main():
+              records=[]
+              for product in ('soja','milho'):
+                  df, meta=await conab.safras(product,safra='2026/27',uf='MT',
+                                              levantamento=1,return_meta=True)
+                  verified=checar_meta(meta)
+                  result=validar_linhas(df.to_dict(orient='records'),
+                                        product,'2026/27','MT',1)
+                  if result['quantidade_validas']!=1 or result['quantidade_rejeitadas']:
+                      raise SystemExit('CONAB_QUARENTINED_'+product)
+                  pub=verified['source_details'].get('publicacao',{})
+                  if not isinstance(pub,dict) or not str(pub.get('url','')).startswith('https://www.gov.br/conab/'):
+                      raise SystemExit('CONAB_SOURCE_URL_INVALID')
+                  records.append({
+                      'source':'CONAB','origin_kind':'agrobr.conab.safras',
+                      'parser_version':'agrobr-2.0.0-schema-'+str(verified['schema_version']),
+                      'publication_url':pub['url'],
+                      'publication_date':pub['data_publicacao'],
+                      'publication_safra':pub['safra'],
+                      'publication_survey':pub['levantamento'],
+                      'metric':result['validas'][0]})
+              audience='urn:nivon:conab:ingest'
+              token_url=os.environ['ACTIONS_ID_TOKEN_REQUEST_URL']+'&audience='+quote(audience,safe='')
+              token_req=Request(token_url,headers={'Authorization':'Bearer '+os.environ['ACTIONS_ID_TOKEN_REQUEST_TOKEN']})
+              with urlopen(token_req,timeout=15) as resp:
+                  jwt=json.load(resp)['value']
+              data=json.dumps({'rows':records},default=str,ensure_ascii=False).encode('utf-8')
+              req=Request(os.environ['NIVON_CONAB_INGEST_URL'], data=data,
+                          headers={'Authorization':'Bearer '+jwt,'Content-Type':'application/json'},
+                          method='POST')
+              with urlopen(req,timeout=35) as resp:
+                  out=json.load(resp)
+              if out.get('status')!='OK' or out.get('received')!=2:
+                  raise SystemExit('CONAB_NEON_INGEST_NOT_CONFIRMED')
+              print(json.dumps({k:out[k] for k in ('status','received','inserted','duplicates','run_id')},ensure_ascii=False))
+          asyncio.run(main())
+          PY
