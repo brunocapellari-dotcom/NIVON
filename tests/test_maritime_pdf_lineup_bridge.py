@@ -142,6 +142,30 @@ class MaritimePdfBridgeTests(unittest.TestCase):
         self.assertFalse(result.candidates)
         self.assertEqual(result.excluded[0]["reason"], "explicit_duv_missing_or_invalid")
 
+    def test_program_reference_retained_but_not_counted_as_call(self):
+        result = bridge("PARANAGUA", tables_paranagua(
+            paranagua(duv="", prog="PRG-22")))
+        self.assertEqual(result.candidates, ())
+        self.assertEqual(result.summary()["pdf_program_reference_rows"], 1)
+        self.assertFalse(result.summary()["programme_references_are_verified_port_calls"])
+        programme = result.pdf_program_rows[0]
+        self.assertEqual(programme.programme_number, "EXPORT_OESTE:PRG-22")
+        self.assertIsNone(programme.explicit_duv)
+        self.assertEqual(programme.evidence_class, "PROGRAMME_REFERENCE_NOT_PORT_CALL")
+
+    def test_itaqui_has_no_invented_program_reference(self):
+        result = bridge("ITAQUI", tables_itaqui(itaqui(duv="")))
+        self.assertEqual(len(result.pdf_program_rows), 1)
+        self.assertIsNone(result.pdf_program_rows[0].programme_number)
+        self.assertIsNone(result.pdf_program_rows[0].explicit_duv)
+
+    def test_pdf_year_inferred_is_flagged_in_programme_evidence(self):
+        result = bridge("PARANAGUA", tables_paranagua(
+            paranagua(eta="21/10 09:00", duv="", prog="PRG-22")))
+        self.assertEqual(len(result.pdf_program_rows), 1)
+        self.assertFalse(result.pdf_program_rows[0].eta_fully_declared)
+        self.assertEqual(result.excluded[0]["reason"], "explicit_duv_missing_or_invalid")
+
     def test_paranagua_explicit_duv_can_become_programmed_port_call(self):
         result = bridge("PARANAGUA", tables_paranagua(paranagua()))
         self.assertEqual(len(result.candidates), 1)
