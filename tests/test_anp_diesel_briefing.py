@@ -72,6 +72,14 @@ class TestDieselBriefing(unittest.TestCase):
         with self.assertRaisesRegex(ErroDieselBriefing,"anterior ao fim"):
             build(publicado_em="2026-10-09T15:14:00-03:00")
 
+    def test_horario_noite_brasilia_nao_converte_semana_para_dia_utc(self):
+        self.assertEqual(len(build(
+            gerado_em="2026-10-24T23:30:00-03:00")["indicadores"]),2)
+        with self.assertRaisesRegex(ErroDieselBriefing,"defasada"):
+            build(gerado_em="2026-10-25T00:01:00-03:00")
+        with self.assertRaisesRegex(ErroDieselBriefing,"anterior ao fim"):
+            build(publicado_em="2026-10-09T23:30:00-03:00")
+
     def test_publicacao_futura_rejeitada(self):
         with self.assertRaisesRegex(ErroDieselBriefing,"posterior"):
             build(publicado_em="2026-10-21T09:00:00-03:00")
