@@ -36,6 +36,7 @@ MODULOS=frozenset({
     "verificacao_chuva_ensemble_asof",
     "pacotes_chuva_asof",
     "adaptador_inmet_chuva",
+    "mjo_rmm", "contexto_mjo_asof",
 })
 
 
