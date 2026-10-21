@@ -342,10 +342,10 @@
     {
       "id": "PORTO_ANGRA_DOS_REIS",
       "provider": "PortosRio / Angra dos Reis",
-      "official_url": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias",
-      "access": "OFFICIAL_CATALOG_ENTRY",
+      "official_url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
+      "access": "INSTITUTIONAL_NAVIGATION_INDEX_RIGHTS_PENDING",
       "rights": "REVIEW",
-      "notes": "Fonte para identificacao; NAO comprova feed line-up neste terminal; recurso exato ainda nao homologado."
+      "notes": "Portal PortosRio com links por porto; confirmar destino do recurso e conteúdo atual. Nenhum feed aprovado."
     },
     {
       "id": "PORTO_ANTONINA",
@@ -358,10 +358,10 @@
     {
       "id": "PORTO_ARATU",
       "provider": "CODEBA / Aratu",
-      "official_url": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias",
-      "access": "OFFICIAL_CATALOG_ENTRY",
+      "official_url": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/porto_aratu.php?secao=tportos_aratu",
+      "access": "PUBLIC_HTML_CANDIDATE_RIGHTS_PENDING",
       "rights": "REVIEW",
-      "notes": "Fonte para identificacao; NAO comprova feed line-up neste terminal; recurso exato ainda nao homologado."
+      "notes": "Endereço candidato de página institucional; HTML real/charset/termos de redistribuição e periodicidade não homologados."
     },
     {
       "id": "PORTO_AREIA_BRANCA",
@@ -382,10 +382,10 @@
     {
       "id": "PORTO_BELEM",
       "provider": "CDP / Belém",
-      "official_url": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias",
-      "access": "OFFICIAL_CATALOG_ENTRY",
+      "official_url": "https://www.cdp.com.br/programacao-de-navios-porto-de-belem/",
+      "access": "PUBLIC_HTML_CANDIDATE_RIGHTS_PENDING",
       "rights": "REVIEW",
-      "notes": "Fonte para identificacao; NAO comprova feed line-up neste terminal; recurso exato ainda nao homologado."
+      "notes": "Tabela institucional CDP possui WDT_ID/QUANTIDADE(T), mas pode conter placeholder; não comprova DUV, data publicada ou navio atual."
     },
     {
       "id": "PORTO_CABEDELO",
@@ -422,10 +422,10 @@
     {
       "id": "PORTO_ILHEUS",
       "provider": "CODEBA/Ilhéus",
-      "official_url": "https://www.codeba.gov.br/",
-      "access": "PUBLIC_PORTAL",
+      "official_url": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/site.php?secao=tportos_ilheus",
+      "access": "PUBLIC_HTML_CANDIDATE_RIGHTS_PENDING",
       "rights": "REVIEW",
-      "notes": ""
+      "notes": "Endereço candidato de página institucional; HTML real/charset/termos de redistribuição e periodicidade não homologados."
     },
     {
       "id": "PORTO_IMBITUBA",
@@ -446,10 +446,10 @@
     {
       "id": "PORTO_ITAGUAI",
       "provider": "PortosRio / Itaguaí",
-      "official_url": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias",
-      "access": "OFFICIAL_CATALOG_ENTRY",
+      "official_url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
+      "access": "INSTITUTIONAL_NAVIGATION_INDEX_RIGHTS_PENDING",
       "rights": "REVIEW",
-      "notes": "Fonte para identificacao; NAO comprova feed line-up neste terminal; recurso exato ainda nao homologado."
+      "notes": "Portal PortosRio com links por porto; confirmar destino do recurso e conteúdo atual. Nenhum feed aprovado."
     },
     {
       "id": "PORTO_ITAJAI",
@@ -470,10 +470,10 @@
     {
       "id": "PORTO_ITAQUI",
       "provider": "EMAP/Itaqui",
-      "official_url": "https://www.portodoitaqui.com.br/porto-agora/navios/esperados",
-      "access": "PUBLIC_HTML",
+      "official_url": "https://www.portodoitaqui.com.br/porto-agora/navios",
+      "access": "PUBLIC_HTML_CANDIDATE_RIGHTS_PENDING",
       "rights": "REVIEW",
-      "notes": ""
+      "notes": "Endereço candidato de página institucional; HTML real/charset/termos de redistribuição e periodicidade não homologados."
     },
     {
       "id": "PORTO_LAGUNA",
@@ -526,10 +526,10 @@
     {
       "id": "PORTO_NITEROI",
       "provider": "PortosRio / Niterói",
-      "official_url": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias",
-      "access": "OFFICIAL_CATALOG_ENTRY",
+      "official_url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
+      "access": "INSTITUTIONAL_NAVIGATION_INDEX_RIGHTS_PENDING",
       "rights": "REVIEW",
-      "notes": "Fonte para identificacao; NAO comprova feed line-up neste terminal; recurso exato ainda nao homologado."
+      "notes": "Portal PortosRio com links por porto; confirmar destino do recurso e conteúdo atual. Nenhum feed aprovado."
     },
     {
       "id": "PORTO_PARANAGUA",
@@ -590,10 +590,10 @@
     {
       "id": "PORTO_RIO_DE_JANEIRO",
       "provider": "PortosRio / Rio de Janeiro",
-      "official_url": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias",
-      "access": "OFFICIAL_CATALOG_ENTRY",
+      "official_url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
+      "access": "INSTITUTIONAL_NAVIGATION_INDEX_RIGHTS_PENDING",
       "rights": "REVIEW",
-      "notes": "Fonte para identificacao; NAO comprova feed line-up neste terminal; recurso exato ainda nao homologado."
+      "notes": "Portal PortosRio com links por porto; confirmar destino do recurso e conteúdo atual. Nenhum feed aprovado."
     },
     {
       "id": "PORTO_RIOGRANDE",
@@ -601,15 +601,15 @@
       "official_url": "https://www.portosrs.com.br/site/transparencia/atas_programacao_navio",
       "access": "PUBLIC_HTML_PDF",
       "rights": "REVIEW",
-      "notes": ""
+      "notes": " A Portos RS disponibiliza relatório público de navios por situação no Portoweb; links específicos exigem prova de atualidade e versão do PDF."
     },
     {
       "id": "PORTO_SALVADOR",
       "provider": "CODEBA/Salvador",
-      "official_url": "https://www.codeba.gov.br/",
-      "access": "PUBLIC_PORTAL",
+      "official_url": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/site.php?secao=tportos_salvador",
+      "access": "PUBLIC_HTML_CANDIDATE_RIGHTS_PENDING",
       "rights": "REVIEW",
-      "notes": ""
+      "notes": "Endereço candidato de página institucional; HTML real/charset/termos de redistribuição e periodicidade não homologados."
     },
     {
       "id": "PORTO_SANTANA",
@@ -623,9 +623,9 @@
       "id": "PORTO_SANTAREM",
       "provider": "CDP/Santarém",
       "official_url": "https://www.cdp.com.br/programacao-de-navios-do-porto-de-santarem/",
-      "access": "PUBLIC_HTML",
+      "access": "PUBLIC_HTML_CANDIDATE_RIGHTS_PENDING",
       "rights": "REVIEW",
-      "notes": ""
+      "notes": "Endereço candidato de página institucional; HTML real/charset/termos de redistribuição e periodicidade não homologados."
     },
     {
       "id": "PORTO_SANTOS",
@@ -695,9 +695,9 @@
       "id": "PORTO_VILA_CONDE",
       "provider": "CDP/Vila do Conde",
       "official_url": "https://www.cdp.com.br/programacao-de-navio-do-porto-de-vila-do-conde/",
-      "access": "PUBLIC_HTML",
+      "access": "PUBLIC_HTML_CANDIDATE_RIGHTS_PENDING",
       "rights": "REVIEW",
-      "notes": ""
+      "notes": "Tabela institucional CDP possui WDT_ID/QUANTIDADE(T), mas pode conter placeholder; não comprova DUV, data publicada ou navio atual."
     },
     {
       "id": "PORTO_VITORIA",
@@ -1189,8 +1189,8 @@
       "cadence": "WEEKLY",
       "stage": "CODE_PRESENT",
       "priority": "P0",
-      "existing_module": "anp_diesel.py; anp_manifesto.py (parser local e descoberta de links offline)",
-      "notes": "Diesel B revenda; não paridade de Diesel A",
+      "existing_module": "anp_diesel.py (postos mensais, semana inferida); anp_semanal_municipios.py (XLSX anual ainda não homologado); anp_indice_lpc.py + anp_resumo_lpc.py (resumo LPC semanal municipal)",
+      "notes": "Priorizar publicação semanal oficial ANP (LPC, preços médios municipais amostrais). Não recomputar média de postos para substituir valores oficiais; diesel B de revenda não é diesel A, PPI ou preço de frete. Arquivo XLSX real e regras de reutilização ainda não homologados.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
@@ -1415,8 +1415,8 @@
       "cadence": "DAILY",
       "stage": "CODE_PRESENT",
       "priority": "P0",
-      "existing_module": "ptax_plano.py; bcb_ptax.py; pipeline_api_dados.py (schema real USD, offline)",
-      "notes": "Parser offline OData para cotação compra/venda e boletins, com testes sintéticos; API pública documentada mas sem coleta operacional habilitada.",
+      "existing_module": "ptax_plano.py; bcb_ptax.py; ptax_briefing.py; pipeline_briefing.py (integração offline e boletim Fechamento)",
+      "notes": "BCB licença ODbL confirmada no portal público, mas atribuição e obrigações sobre derivados/redistribuição precisam de verificação antes de habilitar operação",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
@@ -2453,7 +2453,7 @@
       "cadence": "DAILY",
       "stage": "DISCOVERY_ONLY",
       "priority": "P1",
-      "existing_module": "lineup_nacional.py; lineup_historico.py (vintages SQLite offline)",
+      "existing_module": "lineup_historico.py (registro por edição e as-of); lineup_nacional.py",
       "notes": "Cadastro nacional ANTAQ; nenhum endpoint de line-up verificado. Nao misturar cargas, navios ou portos e terminais pai.",
       "enabled": false,
       "collection_authorized": false,
@@ -2525,7 +2525,7 @@
       "cadence": "DAILY",
       "stage": "DISCOVERY_ONLY",
       "priority": "P0",
-      "existing_module": "lineup_nacional.py; lineup_historico.py (vintages SQLite offline)",
+      "existing_module": "lineup_historico.py (registro por edição e as-of); lineup_portais.py",
       "notes": "Cadastro nacional ANTAQ; nenhum endpoint de line-up verificado. Nao misturar cargas, navios ou portos e terminais pai.",
       "enabled": false,
       "collection_authorized": false,
@@ -2592,7 +2592,7 @@
       "cadence": "DAILY",
       "stage": "DISCOVERY_ONLY",
       "priority": "P1",
-      "existing_module": "lineup_html.py; lineup_historico.py (vintages SQLite offline)",
+      "existing_module": "lineup_historico.py (registro por edição e as-of); lineup_cdp_santarem.py",
       "notes": "Contrato específico exigido; município portuário não implica destino industrial",
       "enabled": false,
       "collection_authorized": false,
@@ -2664,7 +2664,7 @@
       "cadence": "DAILY",
       "stage": "DISCOVERY_ONLY",
       "priority": "P0",
-      "existing_module": "lineup_nacional.py; lineup_historico.py (vintages SQLite offline)",
+      "existing_module": "lineup_historico.py (registro por edição e as-of); lineup_cdp_santarem.py",
       "notes": "Cadastro nacional ANTAQ; nenhum endpoint de line-up verificado. Nao misturar cargas, navios ou portos e terminais pai.",
       "enabled": false,
       "collection_authorized": false,
@@ -2839,7 +2839,7 @@
       "cadence": "DAILY",
       "stage": "DISCOVERY_ONLY",
       "priority": "P1",
-      "existing_module": "lineup_html.py; lineup_historico.py (vintages SQLite offline)",
+      "existing_module": "lineup_historico.py (registro por edição e as-of); lineup_portais.py",
       "notes": "Contrato específico exigido; município portuário não implica destino industrial",
       "enabled": false,
       "collection_authorized": false,
@@ -2947,7 +2947,7 @@
       "cadence": "DAILY",
       "stage": "DISCOVERY_ONLY",
       "priority": "P0",
-      "existing_module": "lineup_nacional.py; lineup_historico.py (vintages SQLite offline)",
+      "existing_module": "lineup_historico.py (registro por edição e as-of); lineup_nacional.py",
       "notes": "Cadastro nacional ANTAQ; nenhum endpoint de line-up verificado. Nao misturar cargas, navios ou portos e terminais pai.",
       "enabled": false,
       "collection_authorized": false,
@@ -3050,7 +3050,7 @@
       "cadence": "DAILY",
       "stage": "DISCOVERY_ONLY",
       "priority": "P1",
-      "existing_module": "lineup_html.py; lineup_historico.py (vintages SQLite offline)",
+      "existing_module": "lineup_historico.py (registro por edição e as-of); lineup_portais.py",
       "notes": "Contrato específico exigido; município portuário não implica destino industrial",
       "enabled": false,
       "collection_authorized": false,
@@ -3302,7 +3302,7 @@
       "cadence": "DAILY",
       "stage": "DISCOVERY_ONLY",
       "priority": "P1",
-      "existing_module": "lineup_nacional.py; lineup_historico.py (vintages SQLite offline)",
+      "existing_module": "lineup_historico.py (registro por edição e as-of); lineup_nacional.py",
       "notes": "Cadastro nacional ANTAQ; nenhum endpoint de line-up verificado. Nao misturar cargas, navios ou portos e terminais pai.",
       "enabled": false,
       "collection_authorized": false,
@@ -3585,7 +3585,7 @@
       "cadence": "DAILY",
       "stage": "DISCOVERY_ONLY",
       "priority": "P1",
-      "existing_module": "lineup_nacional.py; lineup_historico.py (vintages SQLite offline)",
+      "existing_module": "lineup_historico.py (registro por edição e as-of); lineup_nacional.py",
       "notes": "Cadastro nacional ANTAQ; nenhum endpoint de line-up verificado. Nao misturar cargas, navios ou portos e terminais pai.",
       "enabled": false,
       "collection_authorized": false,
@@ -3647,7 +3647,7 @@
       "cadence": "DAILY",
       "stage": "DISCOVERY_ONLY",
       "priority": "P1",
-      "existing_module": "lineup_html.py; lineup_historico.py (vintages SQLite offline)",
+      "existing_module": "lineup_historico.py (registro por edição e as-of); lineup_portais.py",
       "notes": "Contrato específico exigido; município portuário não implica destino industrial",
       "enabled": false,
       "collection_authorized": false,
@@ -3714,7 +3714,7 @@
       "cadence": "DAILY",
       "stage": "DISCOVERY_ONLY",
       "priority": "P1",
-      "existing_module": "lineup_html.py; lineup_historico.py (vintages SQLite offline)",
+      "existing_module": "lineup_historico.py (registro por edição e as-of); lineup_cdp_santarem.py",
       "notes": "Contrato específico exigido; município portuário não implica destino industrial",
       "enabled": false,
       "collection_authorized": false,
