@@ -601,7 +601,10 @@
         "nivon.chuva_areal_ensemble:agregar_ensemble_chuva_areal",
         "nivon.verificacao_chuva_ensemble_asof:verificar_chuva_ensemble_asof",
         "nivon.pacotes_chuva_asof:montar_e_verificar_pares_chuva",
-        "nivon.adaptador_inmet_chuva:converter_dia_inmet_para_snapshot"
+        "nivon.adaptador_inmet_chuva:converter_dia_inmet_para_snapshot",
+        "nivon.mjo_rmm:normalizar_rmm_bom",
+        "nivon.mjo_rmm:ultimo_rmm_ate",
+        "nivon.contexto_mjo_asof:indexar_contexto_mjo_asof"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
