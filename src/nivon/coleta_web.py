@@ -74,14 +74,20 @@ class FonteWeb:
 def adquirir_fonte(fonte: FonteWeb, *, abridor=None, instante: datetime | None = None) -> dict:
     """Obtém bytes com verificação e hash; SOMENTE quando autorizada.
 
-    `abridor` permite testar respostas sintéticas sem rede. DNS/TLS/egress
-    ainda requerem controles de infraestrutura antes de operação real.
+    `abridor` é obrigatório inclusive após concessão de direitos. Sem
+    transporte homologado de DNS/TLS/egress, a coleta real é bloqueada.
     """
     fonte.verificar()
     instante = instante or datetime.now(timezone.utc)
     if instante.tzinfo is None:
         raise ErroAquisicao("instante sem timezone")
-    cliente = abridor if abridor is not None else build_opener(_SemRedirecionar())
+    # Egress real NÃO pode recair em urllib padrão: DNS rebinding resolveria
+    # o host autorizado para IP privado sem uma camada de conexão protegida.
+    # Exigir transporte injetado; o chamador deve homologar egress, TLS/SNI,
+    # resolução/pinning de IP e bloqueio de redirects antes de habilitar rede.
+    if abridor is None:
+        raise PermissionError("EGRESS_NAO_HOMOLOGADO: transporte HTTPS seguro obrigatório")
+    cliente = abridor
     req = Request(fonte.url, headers={
         "Accept": "text/html,application/pdf,text/csv,application/json,application/rss+xml,application/atom+xml,application/xml",
         "User-Agent": "NIVON/0.1 (coleta oficial identificada)",
