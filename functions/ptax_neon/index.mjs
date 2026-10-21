@@ -71,20 +71,22 @@ async function nextHistory(currency,day) {
   }
   return null;
 }
-async function runTask() {
+async function runTask(historyOnly=false) {
   const conn=await pool.connect();
   let locked=false;
   try {
     locked=(await conn.query("SELECT pg_try_advisory_lock(240618) AS ok")).rows[0].ok;
     if(!locked)return {status:"ALREADY_RUNNING"};
-    const last=await conn.query("SELECT count(DISTINCT currency)::int AS currencies_done FROM public.nivon_ptax_runs WHERE status IN ('SUCCESS','EMPTY') AND job_type='DAILY' AND started_at > now() - interval '20 hours'");
-    if(last.rows[0].currencies_done===2) return {status:"ALREADY_CHECKED_RECENTLY"};
     const end=brazilToday(),begin=plusDays(end,-10),out=[];
-    for(const currency of CURRENCIES){
-      try {out.push(await writeWindow(currency,begin,end,"DAILY"))}
-      catch(e){
-        await pool.query("INSERT INTO public.nivon_ptax_runs(job_type,currency,window_start,window_end,finished_at,status,error_class) VALUES('DAILY',$1,$2,$3,now(),'ERROR',$4)",[currency,begin,end,String(e?.message||"UNKNOWN").slice(0,90)]);
-        throw e;
+    if(!historyOnly) {
+      const last=await conn.query("SELECT count(DISTINCT currency)::int AS currencies_done FROM public.nivon_ptax_runs WHERE status IN ('SUCCESS','EMPTY') AND job_type='DAILY' AND started_at > now() - interval '20 hours'");
+      if(last.rows[0].currencies_done===2) return {status:"ALREADY_CHECKED_RECENTLY"};
+      for(const currency of CURRENCIES){
+        try {out.push(await writeWindow(currency,begin,end,"DAILY"))}
+        catch(e){
+          await pool.query("INSERT INTO public.nivon_ptax_runs(job_type,currency,window_start,window_end,finished_at,status,error_class) VALUES('DAILY',$1,$2,$3,now(),'ERROR',$4)",[currency,begin,end,String(e?.message||"UNKNOWN").slice(0,90)]);
+          throw e;
+        }
       }
     }
     for(const currency of CURRENCIES) {
@@ -106,7 +108,9 @@ export default {
     // Neon documented trigger marker. Public requests without marker are rejected;
     // marker is not a cryptographic signature. DB lock + 20h guard reduces abuse.
     if(req.method!=="POST" || !req.headers.get("x-neon-trigger-invocation-id"))return Response.json({error:"FORBIDDEN"}, {status:403});
-    try {return Response.json(await runTask())}
+    const pathname=new URL(req.url).pathname;
+    if(pathname!=="/" && pathname!=="/backfill")return Response.json({error:"NOT_FOUND"}, {status:404});
+    try {return Response.json(await runTask(pathname==="/backfill"))}
     catch(e){console.error("ptax-trigger-failure",String(e?.message||"UNKNOWN").slice(0,80));return Response.json({error:"COLLECTION_FAILED"},{status:503})}
   }
 };
