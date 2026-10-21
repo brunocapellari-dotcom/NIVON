@@ -43,7 +43,7 @@ class PilotSource:
         _validate_url(self.registered_url, self.port_id)
         if self.mode.startswith("PDF") and not self.registered_url.endswith("/"):
             raise ValueError("PDF registered URL prefix must end in slash")
-        if self.mode.startswith("HTML") and self.registered_url.endswith("/"):
+        if self.mode.startswith("HTML") and urlsplit(self.registered_url).path in {"", "/"}:
             raise ValueError("HTML registered URL must identify the exact document endpoint")
         if self.port_id == "PARANAGUA" and self.series not in {
             "EXPORT_OESTE", "EXPORT_LESTE", "IMPORT_SOLIDOS"
@@ -156,7 +156,7 @@ def _validate_url(url: str, port_id: str) -> None:
             or parsed.username is not None or parsed.password is not None
             or port is not None or parsed.fragment or not parsed.path.startswith("/")
             or any(segment in {".", ".."} for segment in decoded_path.split("/"))
-            or "\\\\" in decoded_path):
+            or "\\" in decoded_path):
         raise ValueError("source URL not within registered authority host")
 
 
