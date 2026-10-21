@@ -136,7 +136,8 @@ class TestPonteWhatsAppFrete(unittest.TestCase):
         })
         evento["provenance"]["source_event_id"] = "msg-002"
         resolucao.update({"version": 2, "source_event_id": "msg-002",
-                          "frete_base_brl_t": "175"})
+                          "frete_base_brl_t": "175",
+                          "data_referencia_comercial": "2026-10-20"})
         coleta = datetime(2026, 10, 20, 16, 1, tzinfo=timezone.utc)
         novo = adaptar(ev=evento, res=resolucao, coleta=coleta)
         self.assertEqual(novo.oferta_id, anterior.oferta_id)
