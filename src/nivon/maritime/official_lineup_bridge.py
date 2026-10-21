@@ -221,6 +221,11 @@ def bridge_official_pdf_document(
             excluded.append({"row": str(index), "reason": "duplicate_duv_requires_cargo_row_normalization"})
             continue
         used.add(call_id)
+        # Source date must have contained day, month, four-digit year and clock;
+        # a year computed from the PDF reference date is not a published ETA.
+        if source.get("eta_year_inferred", True):
+            excluded.append({"row": str(index), "reason": "pdf_eta_year_not_explicit"})
+            continue
         try:
             eta = _instant_utc(source.get("eta", ""), zone, collected_at=stamp)
         except (ValueError, TypeError):
