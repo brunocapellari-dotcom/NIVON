@@ -51,6 +51,34 @@ jobs:
           PYTHONPATH: src
         run: python -m nivon.analise_local --config config/contrato_exemplo_sintetico.json
 
+
+  validar-anp-lpc-fixtures:
+    # XLSX inteiramente sintetico: instala apenas o leitor Excel, sem coletar
+    # ANP ou acessar portais. Não habilita a ingestão de fontes reais.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Obter codigo sem credenciais
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Instalar leitor Excel pinado para fixtures
+        run: python -m pip install --disable-pip-version-check --no-input 'openpyxl==3.1.5'
+      - name: Verificar descoberta, leitura e integracao SQLite offline
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m unittest discover -s tests -p 'test_anp_indice_lpc.py' -v
+          python -m unittest discover -s tests -p 'test_anp_resumo_lpc.py' -v
+          python -m unittest discover -s tests -p 'test_anp_lpc_integracao.py' -v
+          python -m unittest discover -s tests -p 'test_anp_semanal_store.py' -v
+
   conferir-schema-mapa:
     # Diagnóstico de fonte real somente manual. Não repetir downloads em todo PR.
     if: github.event_name == 'workflow_dispatch'
