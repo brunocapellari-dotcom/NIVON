@@ -21,6 +21,12 @@ O módulo \`nivon/fontes_agrobr.py\` implementa:
 Teste unitário: \`python -m unittest tests/test_fontes_agrobr.py -v\` (fixtures sintéticos).
 Smoke real manual/CI: \`.github/workflows/cepea-diagnostico.yml\`, consulta apenas soja CEPEA, 01–20/10/2026, com risco de bloqueio externo; sucesso depende de registros CEPEA originais e **não significa autorização para reuso automático de todas as séries**.
 
+## Evidência real de diagnóstico CEPEA — 21/10/2026
+
+Execução da GitHub Action [CEPEA diagnóstico #39652833890](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39652833890): o agrobr foi instalado corretamente e a chamada da série **soja** para 01–20/10/2026 foi efetivamente executada. Houve aviso de fallback para Notícias Agrícolas; a rotina NIVON reconheceu `MetaInfo.data_sources` e lançou `DadosNaoHomologados`. **Nenhuma observação CEPEA foi homologada ou gravada no banco**.
+
+Isso não prova que CEPEA está indisponível em todos os ambientes, apenas que o canal direto não funcionou nessa execução. O workflow de diagnóstico foi atualizado para retornar estado explícito `PRIMARIA_INDISPONIVEL_FALLBACK_BLOQUEADO`, separado de sucesso de coleta. É proibido contornar controle de acesso ou reclassificar números NA como origem CEPEA.
+
 ## Produto a produto (ordem)
 
 | Fonte | Dados prioritários | Razão |
