@@ -3,14 +3,15 @@
   "project": "NIVON",
   "adopted_direction": "GCP_DATA_PLATFORM",
   "state": "PLAN_ONLY_NO_CLOUD_RESOURCES_CREATED",
-  "gcp_project_id": null,
+  "gcp_project_id": "nivon-data",
   "location": "us-central1",
   "billing": {
     "billing_account_verified": false,
     "paid_use_approved": false,
     "zero_cost_required": true,
     "budget_alerts_are_hard_limit": false,
-    "deploy_blocked_until_cost_controls_verified": true
+    "deploy_blocked_until_cost_controls_verified": true,
+    "current_billing_status": "UNKNOWN_NOT_VERIFIED"
   },
   "services": {
     "bigquery": {
@@ -102,5 +103,9 @@
     "require_restore_drill": true,
     "require_independent_reconciliation": true,
     "delete_legacy_after_verified_cutover_only": true
-  }
+  },
+  "gcp_organization_display_name": "brunocapellari-org",
+  "gcp_project_id_source": "USER_SUPPLIED_CLOUD_CONSOLE_SCREENSHOT_2026-10-21",
+  "gcp_project_api_verified": false,
+  "gcp_org_api_verified": false
 }
