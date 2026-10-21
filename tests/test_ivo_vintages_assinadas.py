@@ -70,6 +70,7 @@ def ledger(events=None, anchors=None, resolver=None):
 
 
 def check(lgr, cut=T, **kwargs):
+    kwargs.setdefault("tenant", "TENANT_A")
     return lgr.autorizador(**kwargs)(
         "SOY-001", CLAIM_HASH, RAW_HASH, cut,
     )
