@@ -1,6 +1,9 @@
 """Controle diário de entrega: zero WhatsApp externo e sem PII no SQLite."""
 import hashlib
+import hmac
 import unittest
+
+from nivon.outbox_unificada import registrar_decisao_consentimento, mensagem_de_prova
 
 from nivon.outbox_briefing import (
     abrir_outbox, agendar_briefing, reservar_para_entrega,
@@ -16,10 +19,26 @@ def briefing(texto="teste autorizado"):
             "sha256":hashlib.sha256(texto.encode()).hexdigest(),
             "status":"PREPARADO_SEM_ENVIO"}
 
+CHAVE_CONSENTIMENTO_FIXTURE = b"NIVON-CONSENT-FIXTURE-ASSINATURA-NAO-PRODUCAO-000"
+
+def consentir_teste(db, destinatario_hmac, em):
+    evidencia = "OPTIN_FIXTURE_SINTETICO_20261021"
+    assinatura=hmac.new(
+        CHAVE_CONSENTIMENTO_FIXTURE,
+        mensagem_de_prova(acao="CONCEDER", destinatario_hmac=destinatario_hmac,
+                         evidencia_id=evidencia, em=em),
+        hashlib.sha256,
+    ).hexdigest()
+    return registrar_decisao_consentimento(
+        db,acao="CONCEDER",destinatario_hmac=destinatario_hmac,
+        evidencia_id=evidencia, em=em,
+        assinatura=assinatura, chave_verificacao=CHAVE_CONSENTIMENTO_FIXTURE)
+
 
 class TestOutbox(unittest.TestCase):
     def setUp(self):
         self.db=abrir_outbox()
+        consentir_teste(self.db,HMAC,AGORA)
 
     def tearDown(self):
         self.db.close()
