@@ -29,6 +29,17 @@ def main(argv=None):
         # Não expor URLs externas nem valores de preços no log público.
         from nivon.open_meteo_hidro_ensemble import ErroAgroClimaAberto
         motivo=str(exc)[:120] if isinstance(exc,ErroAgroClimaAberto) else "OUTRO_ERRO"
+        if args.fonte=="ensemble" and isinstance(exc,ErroAgroClimaAberto):
+            try:
+                from nivon.open_meteo_hidro_ensemble import planejar_ensemble
+                from nivon.apis_gratuitas_execucao import _obter_json
+                import json as _json
+                u=planejar_ensemble(latitude=-13.0,longitude=-56.0,dias=1)
+                o=_json.loads(_obter_json(u,recurso="open_ensemble",executar=True)["bytes"])
+                print(_json.dumps({"schema_hourly":sorted(o.get("hourly",{})),
+                                   "schema_units":sorted(o.get("hourly_units",{}))},ensure_ascii=False))
+            except Exception:
+                print("SCHEMA_NOT_AVAILABLE")
         print(json.dumps({"status":"FALHA","fonte":args.fonte,
                           "tipo_erro":type(exc).__name__,"motivo":motivo}))
         return 1
