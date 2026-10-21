@@ -214,6 +214,41 @@ class TestConciliacaoStores(unittest.TestCase):
         with self.assertRaises(ErroConciliacaoConab):
             self.run_audit()
 
+    def test_sha_legado_recalculado_somente_sobre_json(self):
+        self.legacy_ingest()
+        result=self.run_audit()
+        self.assertEqual(result["edicoes_legadas_hash_json_recalculado"],1)
+        self.assertFalse(result["origem_raw_comprovada"])
+
+    def test_adulteracao_valor_legado_falha_por_hash(self):
+        self.legacy_ingest()
+        original=self.legacy.execute(
+            "SELECT registro_json FROM progresso_observacoes").fetchone()[0]
+        payload=json.loads(original)
+        payload["pct_semana_atual"]=0.36
+        self.legacy.execute("UPDATE progresso_observacoes SET registro_json=?",
+                            (json.dumps(payload),))
+        with self.assertRaisesRegex(ErroConciliacaoConab,"SHA do JSON legado"):
+            self.run_audit()
+
+    def test_ausencia_de_observacoes_na_edicao_gera_erro(self):
+        self.legacy_ingest()
+        self.legacy.execute("DELETE FROM progresso_observacoes")
+        with self.assertRaises(ErroConciliacaoConab):
+            self.run_audit()
+
+    def test_edicao_legada_sem_coleta_gera_erro(self):
+        self.legacy_ingest()
+        self.legacy.execute("DELETE FROM progresso_coletas")
+        with self.assertRaisesRegex(ErroConciliacaoConab,"órfã"):
+            self.run_audit()
+
+    def test_snapshot_canonico_sem_captura_gera_erro(self):
+        self.canonical_ingest()
+        self.canonical.execute("DELETE FROM nivon_coletas")
+        with self.assertRaisesRegex(ErroConciliacaoConab,"órfã"):
+            self.run_audit()
+
     def test_cli_never_creates_missing_db(self):
         with tempfile.TemporaryDirectory() as d:
             x=Path(d)/"legado.db"
