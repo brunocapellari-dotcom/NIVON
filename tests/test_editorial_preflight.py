@@ -175,6 +175,59 @@ class TestPreflightEditorial(unittest.TestCase):
         self.assertTrue(any("registro individual" in b
                             for b in avaliar(d)["bloqueios"]))
 
+    def test_mesmo_corredor_transportadoras_distintas_nao_cruzam_valores(self):
+        d = dados()
+        segundo = copy.deepcopy(d["fretes"][0])
+        segundo.update({
+            "pickup_entity_id": "ARMAZEM_SINTETICO_11",
+            "ponto_embarque": "Armazém Sintético 11",
+            "transportadora": "TRANSP_SINTETICA_BETA",
+            "valor_rs_t": 140, "volume_t_dia": 600,
+        })
+        d["fretes"].append(segundo)
+        texto = d["edicao"]["texto"]
+        texto = texto.replace(
+            "Divulgações de transportadoras; não são viagens realizadas.",
+            formatar_linha_frete({**segundo, "referencia": segundo["referencia_em"]}) +
+            "\nDivulgações de transportadoras; não são viagens realizadas.",
+        )
+        d["edicao"]["texto"] = texto
+        d["edicao"]["sha256"] = hashlib.sha256(texto.encode()).hexdigest()
+        self.assertTrue(avaliar(d)["apto_revisao"], avaliar(d)["bloqueios"])
+        for campo, valor in (
+            ("valor_rs_t", 140), ("pickup_entity_id", "ARMAZEM_SINTETICO_11"),
+            ("ponto_embarque", "Armazém Sintético 11"),
+            ("transportadora", "TRANSP_SINTETICA_BETA"),
+            ("produto", "MILHO"), ("equipamento", "RODOTREM"),
+            ("regime_pf_pj", "PF"), ("condicao_pedagio", "NAO INCLUSO"),
+        ):
+            with self.subTest(campo=campo):
+                alterado = copy.deepcopy(d)
+                alterado["fretes"][0][campo] = valor
+                self.assertTrue(any("registro individual" in b or "FRETE_REGISTRO_DUPLICADO" in b
+                                    for b in avaliar(alterado)["bloqueios"]))
+
+    def test_linha_extra_sem_prova_editorial_bloqueada(self):
+        d = dados()
+        texto = d["edicao"]["texto"].replace(
+            "Divulgações de transportadoras; não são viagens realizadas.",
+            formatar_linha_frete({
+                **d["fretes"][0], "referencia": d["fretes"][0]["referencia_em"],
+                "transportadora": "TRANSPORTADORA_NAO_AUDITADA"
+            }) + "\nDivulgações de transportadoras; não são viagens realizadas.",
+        )
+        d["edicao"]["texto"] = texto
+        d["edicao"]["sha256"] = hashlib.sha256(texto.encode()).hexdigest()
+        self.assertIn("FRETE_LINHA_NAO_AUDITADA_OU_AUSENTE", avaliar(d)["bloqueios"])
+
+    def test_texto_de_frete_repetido_na_edicao_bloqueia(self):
+        d = dados()
+        linha = formatar_linha_frete({**d["fretes"][0],
+                                     "referencia": d["fretes"][0]["referencia_em"]})
+        d["edicao"]["texto"] = d["edicao"]["texto"].replace(linha, linha + "\n" + linha)
+        d["edicao"]["sha256"] = hashlib.sha256(d["edicao"]["texto"].encode()).hexdigest()
+        self.assertIn("FRETE_LINHA_NAO_AUDITADA_OU_AUSENTE", avaliar(d)["bloqueios"])
+
     def test_volume_referencia_nao_virar_realizado(self):
         d = dados()
         d["fretes"][0]["volume_realizado"] = True
