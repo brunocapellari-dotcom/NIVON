@@ -10,6 +10,7 @@
 !infra/docker/Dockerfile.audit
 !infra/docker/Dockerfile.worker
 !infra/docker/Dockerfile.worker-trim
+!infra/docker/Dockerfile.worker-alpine
 
 # Nunca incluir segredos ou bancos mesmo se estiverem dentro de paths permitidos.
 **/.env*
