@@ -218,13 +218,14 @@ def _format_number(value: float | None) -> str:
 
 def _normalize_partial_eta(value: str, reference_date: date) -> str:
     text = _cell(value)
+    # A PDF that only prints a calendar date has NOT provided an ETA clock.
+    # datetime.strptime would otherwise invent 00:00 and a false precise ETA.
+    if not re.search(r"\b\d{1,2}:\d{2}\b", text):
+        raise ValueError("eta_clock_missing")
     formats = (
         "%d/%m/%Y %H:%M",
         "%d/%m/%y %H:%M",
-        "%d/%m/%Y",
-        "%d/%m/%y",
         "%d/%m %H:%M",
-        "%d/%m",
     )
     for fmt in formats:
         try:
@@ -268,6 +269,13 @@ def parse_itaqui_tables(tables: Iterable[PdfTable], *, reference_date: date) -> 
                 None,
             )
         berth_i = _index_for(headers, "berco", "berth", before=status_i)
+        # Exact headers only. A substring such as "duvida"/"observacao_duv"
+        # does not establish an authority-issued DUV column.
+        duv_i = next(
+            (i for i, header in enumerate(headers)
+             if header in {"duv", "numero_unico_de_viagem", "numero_unico_da_viagem"}),
+            None,
+        )
         if None in (status_i, vessel_i, product_i, qty_i, eta_i):
             continue
 
@@ -282,7 +290,14 @@ def parse_itaqui_tables(tables: Iterable[PdfTable], *, reference_date: date) -> 
             berth_match = re.search(r"\bBER[CÇ]O\s*(\d{1,3})\b", _value(row, berth_i), re.I)
             if berth_match:
                 current_berth = f"BERCO_{berth_match.group(1)}"
-            eta = _normalize_partial_eta(_value(row, eta_i), reference_date)
+            raw_eta = _value(row, eta_i)
+            eta_has_full_year = bool(re.fullmatch(r"\d{1,2}/\d{1,2}/\d{4} \d{1,2}:\d{2}", raw_eta))
+            try:
+                eta = _normalize_partial_eta(raw_eta, reference_date)
+            except ValueError:
+                # Keep the source row visible for audit; never substitute 00:00
+                # or silently shrink the apparent line-up during parsing.
+                eta = ""
             imo_raw = _value(row, imo_i)
             imo = re.sub(r"\D", "", imo_raw) if imo_raw else ""
             if imo and len(imo) != 7:
@@ -291,11 +306,15 @@ def parse_itaqui_tables(tables: Iterable[PdfTable], *, reference_date: date) -> 
                 "navio": vessel,
                 "imo": imo,
                 "eta": eta,
+                "eta_year_inferred": not eta_has_full_year,
                 "terminal": current_berth,
                 "carga": _value(row, product_i),
                 "quantidade_t": _format_number(_br_number(_value(row, qty_i))),
                 "status": status,
                 "source_status": status,
+                # Only an explicit voyage ID column counts as a DUV. Never
+                # derive a port-call ID from IMO, vessel name or row number.
+                "duv": _value(row, duv_i),
             })
     return output
 
@@ -346,6 +365,11 @@ def parse_paranagua_tables(
         arrival_i = _index_for(headers, "chegada")
         product_i = _index_for(headers, "produto")
         berth_i = _index_for(headers, "berco")
+        duv_i = next(
+            (i for i, header in enumerate(headers)
+             if header in {"duv", "numero_unico_de_viagem", "numero_unico_da_viagem"}),
+            None,
+        )
         if None in (vessel_i, arrival_i, berth_i):
             continue
 
@@ -356,21 +380,27 @@ def parse_paranagua_tables(
             arrival = _value(row, arrival_i)
             if arrival_i + 1 < len(row) and re.fullmatch(r"\d{1,2}:\d{2}", _value(row, arrival_i + 1)):
                 arrival = f"{arrival} {_value(row, arrival_i + 1)}".strip()
-            if not arrival:
-                continue
+            # Missing arrival must remain in the auditable row set.
+            # The downstream bridge will exclude it instead of overstating
+            # that the complete edition was parsed.
+            eta_has_full_year = bool(re.fullmatch(r"\d{1,2}/\d{1,2}/\d{4} \d{1,2}:\d{2}", arrival))
             try:
                 eta = _normalize_partial_eta(arrival, reference_date)
             except ValueError:
-                continue
+                # Preserve the row as unresolvable rather than dropping it.
+                # Later official-lineup bridge must exclude and flag it.
+                eta = ""
             product, volume = _paranagua_volume_and_product(row, headers, product_i)
             parsed = {
                 "navio": vessel,
                 "eta": eta,
+                "eta_year_inferred": not eta_has_full_year,
                 "terminal": " ".join(_value(row, berth_i).split()),
                 "carga": product,
                 "quantidade_t": _format_number(volume),
                 "status": "PROGRAMMED",
                 "source_series": series,
+                "duv": _value(row, duv_i),
             }
             program = _value(row, prog_i)
             if program:
