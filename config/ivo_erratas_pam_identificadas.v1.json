@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0.0",
+  "reference_date": "2026-10-21",
+  "project": "NIVON",
+  "dataset_id": "IBGE_PAM",
+  "source_url": "https://www.ibge.gov.br/erramos.html",
+  "source_kind": "IBGE_ERRAMOS_PUBLIC_NOTICE",
+  "source_evidence": "Notice and affected municipality/crop/year are verified from the official IBGE errata listing. The original and corrected numerical files have NOT been captured or attested.",
+  "documentation_verified_at": "2026-10-21",
+  "do_not_infer_original_values": true,
+  "release_document_bytes_archived": false,
+  "official_document_signature_verified": false,
+  "numerical_revision_values_verified": false,
+  "training_enabled": false,
+  "notices": [
+    {
+      "id": "IBGE_PAM_SOJA_TANGARA_MT_2021_20260917",
+      "notice_date": "2026-09-17",
+      "municipio_ibge": "5107958",
+      "municipio_nome": "Tangará da Serra",
+      "uf": "MT",
+      "category_c81": "2713",
+      "crop_name": "SOJA_EM_GRAO",
+      "years": [
+        2021
+      ],
+      "affected_dimensions": [
+        "AREA_NAO_DISCRIMINADA",
+        "QUANTIDADE_PRODUZIDA",
+        "VALOR_DA_PRODUCAO"
+      ],
+      "correction_type": "ALTERACAO_REGISTRO",
+      "known_variable_codes": [
+        "214"
+      ],
+      "source_url": "https://www.ibge.gov.br/erramos.html",
+      "municipality_code_source": "https://www.ibge.gov.br/cidades-e-estados/mt/tangara-da-serra.html",
+      "original_bytes_known": false,
+      "corrected_bytes_known": false,
+      "scope_validation_required": true
+    },
+    {
+      "id": "IBGE_PAM_SORGO_ARANDU_SP_2020_2022_2023_20260917",
+      "notice_date": "2026-09-17",
+      "municipio_ibge": "3503109",
+      "municipio_nome": "Arandu",
+      "uf": "SP",
+      "category_c81": "2714",
+      "crop_name": "SORGO_EM_GRAO",
+      "years": [
+        2020,
+        2022,
+        2023
+      ],
+      "affected_dimensions": [
+        "AREA_NAO_DISCRIMINADA",
+        "QUANTIDADE_PRODUZIDA",
+        "VALOR_DA_PRODUCAO"
+      ],
+      "correction_type": "INCLUSAO_REGISTRO",
+      "known_variable_codes": [
+        "214"
+      ],
+      "source_url": "https://www.ibge.gov.br/erramos.html",
+      "municipality_code_source": "https://www.ibge.gov.br/cidades-e-estados/sp/arandu.html",
+      "original_bytes_known": false,
+      "corrected_bytes_known": false,
+      "scope_validation_required": true
+    }
+  ]
+}
