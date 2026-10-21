@@ -168,6 +168,21 @@ class MaritimePdfBridgeTests(unittest.TestCase):
         result = bridge("PARANAGUA", raw)
         self.assertEqual(result.excluded[0]["reason"], "precise_pdf_eta_missing_or_invalid")
 
+    def test_missing_paranagua_arrival_row_remains_visible_for_audit(self):
+        raw = tables_paranagua(paranagua(eta=""))
+        parsed = parse_paranagua_tables(raw, reference_date=date(2026, 10, 20),
+                                        series="EXPORT_OESTE")
+        self.assertEqual(len(parsed), 1)
+        self.assertEqual(parsed[0]["eta"], "")
+        result = bridge("PARANAGUA", raw)
+        self.assertEqual(result.source_rows, 1)
+        self.assertEqual(result.excluded[0]["reason"], "precise_pdf_eta_missing_or_invalid")
+
+    def test_explicit_midnight_eta_is_different_from_date_only(self):
+        result = bridge("ITAQUI", tables_itaqui(itaqui(eta="21/10/2026 00:00")))
+        self.assertEqual(len(result.candidates), 1)
+        self.assertEqual(result.candidates[0].eta, "2026-10-21T03:00:00+00:00")
+
     def test_inferred_year_with_clock_is_declared_unsafe(self):
         raw = tables_itaqui(itaqui(eta="21/10 09:00"))
         parsed = parse_itaqui_tables(raw, reference_date=date(2026, 10, 20))
