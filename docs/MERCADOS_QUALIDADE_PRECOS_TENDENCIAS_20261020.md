@@ -492,3 +492,20 @@ disponibilização histórica e as vintages relevantes; comparar
 valores contra documentação original sem usar dados posteriores em
 backtests. Integrar à base transacional e ao briefing somente após
 normalização testada e revisão de licença/uso.
+
+
+## Integração: tendência + dinâmica de CBOT e preço físico sob validação de vintages (21/10/2026)
+
+Nova API `nivon.qualidade_mercados:dinamica_preco_auditada`, integrada ao manifesto dos motores `SOJA`, `MILHO`, `TRIGO`, `ALGODAO`, `ACUCAR` e `BOI` (todos os gates operacionais desligados).
+
+O contrato é intencionalmente **fail-closed**. Antes de classificar perda de força, aumento de força ou reversão histórica, o adaptador:
+1. Recebe observações **externas e já coletadas por meio autorizado**; verifica a identidade de cada registro com `preparar_serie_precos`: mercado/produto/vencimento/tipo/instrumento, ou praça/produto/qualidade/entrega/pagamento/tributação; fonte, precisão decimal e vintages com referência/publicação/coleta anteriores a `as_of`.
+2. Seleciona até duas janelas de `janela` sessões **disjuntas**, sem preencher lacunas ou reconstruir contratos sintéticos; exige um calendário explícito da fonte, com edição e captura disponíveis no corte. A cobertura confronta todas as sessões das duas janelas, não só a janela final.
+3. Alimenta o novo `comparar_forca_tendencia` e devolve `tendencia_atual`, `dinamica`, métricas descritivas, cobertura de calendário, identidade econômica canônica, quantidade de revisões/duplicatas e os flags `precos_homologados=false`, `direitos_publicacao_verificados=false`, `probabilidades_calibradas=null`, `publicavel=false`.
+4. Sem calendário, devolve `INDETERMINADA`. Sem 2 × janela observações, devolve `DADOS_INSUFICIENTES` e não preenche pontos ausentes. Dados posteriores ao corte, revisão sem cadeia, diferentes vencimentos, instrumentos, pontos de coleta ou condição de entrega bloqueiam o cálculo.
+
+**Atenção:** um calendário entregue pelo chamador não é prova de calendário oficial da bolsa. A presença de URL HTTPS, SHA fornecido ou cálculo reproduzível não comprova integridade de bytes brutos nem direito de publicação. Revisões e cortes passam por teste sintético, mas o histórico real e a licença continuam pendentes.
+
+A dinâmica histórica não deve alimentar `probabilidades_calibradas` nem ser publicada como previsão futura. O backtesting probabilístico em `validacao_tendencias_mercado.py`, ledger/auditoria E2E e a auditoria de holdout quantitativo são mecanismos complementares, que só terão poder de homologação após evidências reais verificáveis e validação independente.
+
+**Frete rodoviário:** o painel de valores por lotes/município não é estatisticamente equivalente à variação pareada por estabelecimento e transportadora. A frente de fretes deve consumir o motor pareado e o contrato de coleta da integração logística específica, sem usar preços não comparáveis como média de mercado. Este adaptador é exclusivo de cotações CME/ICE e indicadores físicos.
