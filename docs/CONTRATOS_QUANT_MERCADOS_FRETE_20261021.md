@@ -61,3 +61,17 @@ RAW, direitos, origem e atestações independentes continuam sob
 o SHA arbitrário em atestação nem permitir publicações com base apenas nas
 datas declaradas pelo emissor. O runner quantitativo permanece offline e
 `publicavel=False`.
+
+## Continuidade — proveniência do calendário no relatório probabilístico
+
+A PR #21 já fornece `cobertura_calendario` no resultado do Brier, com fonte,
+SHA da edição, horário de publicação e coleta, número de sessões e status
+`COBERTURA_DECLARADA_NAO_HOMOLOGADA`. A ponte da PR #20 agora **rejeita
+a ausência** desse contrato, confere mercado/horizonte/cronologia/schema e
+o preserva como `cobertura_calendario_declarada` na saída normalizada.
+
+Não marcar `calendario_oficial_comprovado=True` sem auditoria externa:
+esses metadados descrevem o que foi fornecido pelo produtor, não comprovam
+que as sessões correspondem a pregões oficiais da CME/ICE. A transformação
+não deve apagar a proveniência, mesmo que os scores matemáticos permaneçam
+numericamente idênticos.
