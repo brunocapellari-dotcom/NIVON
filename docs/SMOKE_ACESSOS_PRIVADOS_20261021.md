@@ -91,3 +91,21 @@ Foi acrescentado o workflow `.github/workflows/acessos-privados.yml` como altern
 O workflow inicia em `preflight`, que apenas verifica a disponibilidade/formato das credenciais **sem fazer rede e sem revelar valores**; `live` exige seleção adicional. Somente `workflow_dispatch`; cada fonte é um job separado com o mínimo de segredos de que precisa, somente na `main`, ambiente protegido, permissões `contents: read`, sem agendamento, sem job em push/PR, e sem publicação de arquivo. O custo depende dos limites da conta GitHub; não declarar cobrança zero garantida.
 
 **Não habilitar o workflow em `main` antes de revisar o código e habilitar proteções de environment.** Nenhum teste live decorre automaticamente da inclusão deste workflow, mesmo que os testes sintéticos da CI passem.
+
+## Gate de escopo por serviço versus instituição — 21/10/2026
+
+O módulo `src/nivon/escopo_acessos_privados.py` vincula a credencial documentada à **identidade exata do serviço** e a datasets canônicos existentes, sem criar novo catálogo ou habilitar coletas.
+
+| Credencial de email | Serviço específico | Dataset potencial | Limite |
+|---|---|---|---|
+| API.Data.gov (USDA) | FAS Production Supply and Distribution | `USDA_PSD` | Não comprova acesso a `USDA_NASS`, `USDA_EXPORT_SALES`, `USDA_WASDE_RELEASE_VINTAGES` |
+| ANA (identificador/senha) | HidroWebService, série telemétrica adotada | `ANA_HIDRO` | Não equivale a todas as bases SNIRH ou a qualquer série hidrológica |
+| INMET (URL individual BDMEP) | ZIP histórico sob solicitação | `INMET_ESTACOES`, parcialmente | Não equivale a API contínua de estações nem garante acesso permanente ao histórico |
+
+**Correspondência potencial/documental.** A autenticação pontual não homologa parser, cobertura histórica, direitos por operação, armazenamento persistente nem publicação. O auditor continua desabilitando todas as coletas.
+
+Executar offline: `PYTHONPATH=src python -m nivon.escopo_acessos_privados --resumo`.
+
+O diagnóstico deriva dos módulos canônicos `catalogo_fontes` e `rotas_coleta`: verifica proveniência dos IDs, bloqueios e datas de referência. Os testes adversariais recusam remoção de datasets, divergência de fonte e ativação indevida. A CI executa esse diagnóstico sem rede ou acesso a credenciais.
+
+Próximo gate: validar USDA/FAS PSD com amostra real, independentemente de NASS/WASDE; ANA com estação/fuso conhecidos; BDMEP com arquivo ZIP privado válido. Registrar direitos de consulta, coleta, armazenamento e redistribuição separadamente.
