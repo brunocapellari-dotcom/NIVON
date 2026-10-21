@@ -23,8 +23,9 @@ def flood():
 
 def ensemble():
     return {"latitude":-13.0,"longitude":-56.0,"utc_offset_seconds":0,
-            "hourly_units":{"precipitation_member01":"mm","precipitation_member02":"mm"},
+            "hourly_units":{"precipitation":"mm","precipitation_member01":"mm","precipitation_member02":"mm"},
             "hourly":{"time":["2026-10-21T00:00","2026-10-21T01:00"],
+                      "precipitation":[0.2,0.3],
                       "precipitation_member01":[0.0,0.4],
                       "precipitation_member02":[1.2,None]}}
 
