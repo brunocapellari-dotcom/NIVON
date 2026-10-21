@@ -5165,6 +5165,35 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Eurostat atual substitui versões anteriores; snapshots locais por data coleta indispensáveis para backtest. tag00100 = área mil hectares, não preço nem quantidade colhida.",
       "preliminary_evidence": "EUROSTAT_OFFICIAL_DOCS_API_NOT_YET_HOMOLOGATED_HTTP"
+    },
+    {
+      "dataset_id": "FAO_FAOSTAT_BULK_CATALOGO",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "DIRECT_OFFICIAL_API",
+        "url": "https://bulks-faostat.fao.org/production/datasets_E.json",
+        "source_proof": "https://www.fao.org/faostat/en/#developer-portal"
+      },
+      "implementation_scope": "ONE_SHOT_JSON_FAOSTAT_MANIFEST_NO_DOWNLOAD_OF_ZIPS",
+      "authentication": "NONE_PUBLIC",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "TEST_REAL_MANIFEST_AND_SELECT_ZIP_INGESTION",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "RECONCILE_FAOSTAT_QCL_ARCHIVE_VINTAGE",
+        "AVOID_FULL_DATASET_DOWNLOAD_BY_DEFAULT"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "O manifest é metadado de arquivo ZIP: não implica carga de milhões de registros. Para QCL ZIP 33 MB comprimido e milhões de linhas, priorizar leitura seletiva, checkpoint e validação de licenças, custo e frescor.",
+      "preliminary_evidence": "FAO_OFFICIAL_BULK_MANIFEST_PUBLIC_WEB_2026_10_21"
     }
   ]
 }

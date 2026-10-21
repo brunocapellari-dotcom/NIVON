@@ -6076,6 +6076,36 @@
       ],
       "downstream_contract": "OBSERVACAO_CANONICA_V1",
       "notes": "tag00100 é área, NÃO produção. Flags e vintages com fonte; sem confundir referência com data publicação."
+    },
+    {
+      "id": "FAO_FAOSTAT_BULK_CATALOGO",
+      "source_id": "FAO",
+      "group": "BALANCO",
+      "priority": "P0",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO",
+        "FERTILIZANTES",
+        "DIESEL",
+        "LOGISTICA"
+      ],
+      "topic": "manifest_de_dominios_faostat_producao_fertilizantes_bioenergia_com_data_atualizacao_e_link_zip",
+      "mode": "PUBLIC_JSON_MANIFEST",
+      "cadence": "IRREGULAR",
+      "stage": "CODE_PRESENT",
+      "existing_module": "nivon.faostat_bulk_manifest.consultar_manifest",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1",
+      "notes": "Apenas catálogo de versões de arquivos oficiais, sem ingesta do ZIP. FAOSTAT QCL REST legacy demorou mais que 20s na validação e fica contingenciado por esta rota."
     }
   ]
 }
