@@ -27,7 +27,8 @@
         "nivon.inteligencia_agricola_safras:estimar_oferta_remanescente",
         "nivon.auditoria_conab_pam:preparar_tripla_conab",
         "nivon.auditoria_conab_pam:confrontar_conab_pam",
-        "nivon.prova_raw_conab_agricola:verificar_raw_conab"
+        "nivon.prova_raw_conab_agricola:verificar_raw_conab",
+        "nivon.inspecao_xls_conab_agricola:inspecionar_xls_conab_capturado"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -74,7 +75,8 @@
         "nivon.inteligencia_agricola_safras:estimar_oferta_remanescente",
         "nivon.auditoria_conab_pam:preparar_tripla_conab",
         "nivon.auditoria_conab_pam:confrontar_conab_pam",
-        "nivon.prova_raw_conab_agricola:verificar_raw_conab"
+        "nivon.prova_raw_conab_agricola:verificar_raw_conab",
+        "nivon.inspecao_xls_conab_agricola:inspecionar_xls_conab_capturado"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
