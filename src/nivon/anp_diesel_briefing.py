@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 from .lineup_nacional import instante
 
 
@@ -50,9 +51,11 @@ def montar_indicadores_diesel(
     if not isinstance(obs,list) or not obs:
         raise ErroDieselBriefing("arquivo sem observações semanais")
     atual=max(date.fromisoformat(r["semana_fim_oficial"]) for r in obs)
-    if atual>agora.date() or atual<agora.date()-timedelta(days=max_dias_defasagem):
+    calendario_br=ZoneInfo("America/Sao_Paulo")
+    hoje_br=agora.astimezone(calendario_br).date()
+    if atual>hoje_br or atual<hoje_br-timedelta(days=max_dias_defasagem):
         raise ErroDieselBriefing("série ANP defasada: não publicar como atual")
-    if pub.date()<atual:
+    if pub.astimezone(calendario_br).date()<atual:
         raise ErroDieselBriefing("publicação ANP anterior ao fim da semana pesquisada")
     linhas=[];vistos=set()
     for r in obs:
