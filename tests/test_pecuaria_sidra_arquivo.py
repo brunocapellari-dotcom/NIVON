@@ -153,5 +153,49 @@ class TestArquivoAbateSIDRA(unittest.TestCase):
             self.arquivar(bruto_metadados=b'{"variaveis":[]}')
         self.assertFalse(self.banco.exists())
 
+
+    def test_mesma_coleta_publicacao_divergente_falha_fechado(self):
+        base = self.arquivar()
+        with self.assertRaisesRegex(DadoInvalido, "captura conflitante"):
+            self.arquivar(publicacao_declarada="2026-09-22T10:00:00-03:00")
+        atual = recuperar_pacote_sidra_offline(banco=self.banco, id_captura=base["id"])
+        self.assertEqual(atual["sha256_valores"], sha256(VAL).hexdigest())
+        with sqlite3.connect(self.banco) as cx:
+            self.assertEqual(cx.execute("SELECT COUNT(*) FROM capturas_sidra").fetchone()[0], 1)
+
+    def test_mesma_coleta_conteudo_divergente_nao_cria_vintage(self):
+        original = self.arquivar()
+        with self.assertRaisesRegex(DadoInvalido, "captura conflitante"):
+            self.arquivar(bruto_valores=json.dumps([
+                {"NC": "Nivel", "V": "Valor", "D1C": "UF"},
+                {"NC": "1", "V": "120", "D1C": "1"},
+            ]).encode())
+        with self.assertRaisesRegex(DadoInvalido, "captura conflitante"):
+            self.arquivar(bruto_metadados=b'{"id":1092,"nome":"novo mock"}')
+        with sqlite3.connect(self.banco) as cx:
+            self.assertEqual(cx.execute("SELECT COUNT(*) FROM capturas_sidra").fetchone()[0], 1)
+        self.assertEqual(
+            recuperar_pacote_sidra_offline(banco=self.banco, id_captura=original["id"])["bruto_metadados"],
+            META)
+
+    def test_coleta_nova_publicacao_ou_conteudo_novo_preservados(self):
+        a = self.arquivar()
+        b = self.arquivar(
+            coleta_declarada="2026-10-22T08:15:00-04:00",
+            publicacao_declarada="2026-09-22T10:00:00-03:00",
+            bruto_metadados=b'{"id":1092,"versao":"nova ficticia"}')
+        self.assertNotEqual(a["id"], b["id"])
+        with sqlite3.connect(self.banco) as cx:
+            self.assertEqual(cx.execute("SELECT COUNT(*) FROM capturas_sidra").fetchone()[0], 2)
+            with self.assertRaises(sqlite3.IntegrityError):
+                cx.execute("""INSERT INTO capturas_sidra(
+                    especie,tabela_sidra,url_valores,url_metadados,
+                    publicacao_declarada,coleta_declarada,sha256_valores,
+                    sha256_metadados,bruto_valores,bruto_metadados,status
+                ) SELECT especie,tabela_sidra,url_valores,url_metadados,
+                  '2026-08-01T00:00:00+00:00',coleta_declarada,
+                  sha256_valores,sha256_metadados,bruto_valores,
+                  bruto_metadados,status FROM capturas_sidra WHERE id=1""")
+
 if __name__ == "__main__":
     unittest.main()
