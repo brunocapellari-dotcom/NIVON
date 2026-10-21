@@ -1,0 +1,106 @@
+{
+  "schema_version": "1.0.0",
+  "project": "NIVON",
+  "adopted_direction": "GCP_DATA_PLATFORM",
+  "state": "PLAN_ONLY_NO_CLOUD_RESOURCES_CREATED",
+  "gcp_project_id": null,
+  "location": "us-central1",
+  "billing": {
+    "billing_account_verified": false,
+    "paid_use_approved": false,
+    "zero_cost_required": true,
+    "budget_alerts_are_hard_limit": false,
+    "deploy_blocked_until_cost_controls_verified": true
+  },
+  "services": {
+    "bigquery": {
+      "planned": true,
+      "enabled": false,
+      "datasets": [
+        "nivon_control",
+        "nivon_core",
+        "nivon_models"
+      ],
+      "requires_partition_filter": true,
+      "max_bytes_billed_per_query": 1073741824,
+      "sandbox_not_for_durable_history": true
+    },
+    "cloud_storage": {
+      "planned": true,
+      "enabled": false,
+      "bucket_name": null,
+      "public_access_allowed": false,
+      "prefixes": [
+        "raw/",
+        "normalized/",
+        "features/",
+        "models/",
+        "backup/"
+      ],
+      "allowed_formats": [
+        "json",
+        "csv",
+        "parquet",
+        "zip",
+        "xlsx",
+        "pdf"
+      ],
+      "object_write_requires_license_gate": true
+    },
+    "cloud_run": {
+      "planned": true,
+      "enabled": false,
+      "public_ingress_allowed": false,
+      "automatic_scheduler_enabled": false
+    }
+  },
+  "prior_systems": {
+    "neon_ptax": {
+      "mode": "KEEP_RUNNING_UNTIL_VALIDATED_CUTOVER",
+      "migrate_after_backup_and_reconciliation": true
+    },
+    "sqlite": {
+      "mode": "KEEP_OFFLINE_DEVELOPMENT_AND_RECOVERY"
+    },
+    "duckdb": {
+      "mode": "KEEP_ANALYTICAL_PARQUET_PORTABILITY"
+    }
+  },
+  "provenance": {
+    "date_fields": [
+      "competencia",
+      "data_referencia",
+      "data_publicacao",
+      "data_coleta"
+    ],
+    "observation_kinds": [
+      "OBSERVADO",
+      "INFORMADO",
+      "ESTIMADO",
+      "INFERIDO",
+      "PROJETADO",
+      "SOURCE_LAG"
+    ],
+    "mandatory": [
+      "fonte_id",
+      "dataset_id",
+      "origem_sha256",
+      "schema_versao",
+      "vintage_id",
+      "natureza",
+      "status_qualidade"
+    ],
+    "unknown_published_at_must_remain_null": true,
+    "require_individual_source_storage_permission": true,
+    "never_publish_synthetic_as_real": true
+  },
+  "gates": {
+    "require_gcp_project_identification": true,
+    "require_billing_review": true,
+    "require_private_bucket_review": true,
+    "require_identity_federation": true,
+    "require_restore_drill": true,
+    "require_independent_reconciliation": true,
+    "delete_legacy_after_verified_cutover_only": true
+  }
+}
