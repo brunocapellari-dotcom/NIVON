@@ -41,6 +41,12 @@ class TestAgrobrCrosswalk(unittest.TestCase):
         self.assertEqual(d["antt_pedagio"]["source_id_canonico"], "ANTT")
         self.assertEqual(d["cepea"]["proximo_gate"], "REVISAR_DIREITOS_NAO_COMERCIAIS_POR_OPERACAO")
         self.assertEqual(d["defensivos"]["proximo_gate"], "NAO_INTEGRAR")
+        # Mesmo provedor não implica dataset equivalente:
+        self.assertEqual(d["antt_pedagio"]["datasets_canônicos"], [])
+        self.assertEqual(d["mapa_psr"]["datasets_canônicos"], [])
+        self.assertEqual(d["ana"]["datasets_canônicos"], [])
+        self.assertNotIn("ANP_PPI_COMBUSTIVEIS", d["anp_diesel"]["datasets_canônicos"])
+        self.assertNotIn("RADAR_AGRO", d["noticias_agricolas"]["datasets_canônicos"])
 
     def test_exclusao_de_receituario_e_corporate_intelligence(self):
         copy_doc = copy.deepcopy(self.crosswalk)
@@ -52,6 +58,19 @@ class TestAgrobrCrosswalk(unittest.TestCase):
         doc = copy.deepcopy(self.crosswalk)
         x = next(e for e in doc["entries"] if e["slug"] == "conab")
         x["source_id"] = "CONAB_FICTICIA"
+        with self.assertRaises(ErroCrosswalk):
+            reconciliar(self.catalog, doc)
+
+    def test_dataset_semantico_de_outra_fonte_recusado(self):
+        doc = copy.deepcopy(self.crosswalk)
+        next(x for x in doc["entries"] if x["slug"] == "conab")["dataset_ids"] = ["BCB_PTAX"]
+        with self.assertRaises(ErroCrosswalk):
+            reconciliar(self.catalog, doc)
+
+    def test_dataset_repetido_entre_conectores_recusado(self):
+        doc = copy.deepcopy(self.crosswalk)
+        next(x for x in doc["entries"] if x["slug"] == "rnc")["dataset_ids"] = ["MAPA_SANIDADE_PROTEINAS"]
+        next(x for x in doc["entries"] if x["slug"] == "mapa_psr")["dataset_ids"] = ["MAPA_SANIDADE_PROTEINAS"]
         with self.assertRaises(ErroCrosswalk):
             reconciliar(self.catalog, doc)
 
