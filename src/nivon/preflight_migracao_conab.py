@@ -19,6 +19,7 @@ from .conciliacao_progresso_stores import (
 )
 from .verificador_bytes_origem import conferir_bytes_origem, ErroBytesOrigem
 from .conab_replay_raw import PARSER_ID, ErroReplayConab, reexecutar_csv_conab
+from .conab_replay_xlsx import PARSER_ID as XLSX_PARSER_ID, ErroXlsxProgresso, reexecutar_xlsx_conab
 
 _SCHEMA = "NIVON_CONAB_PREFLIGHT_V1"
 _DATASET = "CONAB_PROGRESSO_SEMANAL"
@@ -209,6 +210,7 @@ def planejar_preflight_conab(legado: sqlite3.Connection,
         ed=originals[sid]
         prova=refs.get(sid)
         replay_executado=False
+        xlsx_executado=False
         parser_code_sha=None
         if prova is None:
             estado="SEM_MANIFESTO_RAW"
@@ -247,6 +249,24 @@ def planejar_preflight_conab(legado: sqlite3.Connection,
                     raise ErroPreflightConab("RAW reprocessado diverge do replay/legado")
                 replay_executado=True
                 parser_code_sha=executado["parser_codigo_sha256"]
+            if prova["parser_versao"] == XLSX_PARSER_ID:
+                if prova["raw_mime"] != "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+                    raise ErroPreflightConab("parser XLSX exige MIME XLSX")
+                coleta_db=legado.execute("""SELECT MIN(coletado_utc)
+                    FROM progresso_coletas WHERE edicao_id=?""",(sid,)).fetchone()[0]
+                if coleta_db is None:
+                    raise ErroPreflightConab("edição legada sem coleta")
+                try:
+                    executado_xlsx = reexecutar_xlsx_conab(
+                        Path(prova["raw_path"]).read_bytes(),
+                        sha256_origem=raw_hash, url_origem=ed["url"],
+                        coletado_em=coleta_db, publicado_em=ed["publicacao"])
+                except (ErroXlsxProgresso,OSError) as exc:
+                    raise ErroPreflightConab("XLSX bruto não foi processado no contrato conhecido") from exc
+                if executado_xlsx["mapa_semantico"] != rows:
+                    raise ErroPreflightConab("XLSX RAW reprocessado diverge do replay/legado")
+                xlsx_executado=True
+                parser_code_sha=executado_xlsx["parser_codigo_sha256"]
             match = _canonico_por_sha(canonico,raw_hash)
             if match is not None:
                 if match["rows"] != rows:
@@ -254,7 +274,9 @@ def planejar_preflight_conab(legado: sqlite3.Connection,
                 # Capturas antigas podem divergir mesmo com conteúdo idêntico.
                 estado="SHA_RAW_PRESENTE_NO_CANONICO_CONFERIR_CAPTURAS"
             else:
-                estado=("RAW_CSV_INTERCAMBIO_REPROCESSADO_SEM_HOMOLOGACAO_CONAB"
+                estado=("RAW_XLSX_REFERENCIA_PUBLICA_REPROCESSADO_SEM_HOMOLOGACAO"
+                        if xlsx_executado else
+                        "RAW_CSV_INTERCAMBIO_REPROCESSADO_SEM_HOMOLOGACAO_CONAB"
                         if replay_executado else "RAW_E_REPLAY_LOCAIS_CONFERIDOS_SEM_PROVA_DO_PARSER")
             hashes={"raw_sha256":raw_hash,"normalizado_sha256":ed["sha_json"]}
             replay_count=len(rows)
@@ -268,6 +290,7 @@ def planejar_preflight_conab(legado: sqlite3.Connection,
             "hashes":hashes,
             "parser_raw_reprodutivel_auditado":False,
             "csv_intercambio_reexecutado_localmente":replay_executado,
+            "xlsx_reexecutado_localmente_sem_homologacao":xlsx_executado,
             "parser_codigo_sha256":parser_code_sha,
             "direitos_validados_externamente":False,
             "origem_oficial_comprovada_externamente":False,
@@ -279,6 +302,7 @@ def planejar_preflight_conab(legado: sqlite3.Connection,
         "edicoes_legadas":len(originals),
         "edicoes_com_evidencia":len(refs),
         "replays_csv_intercambio_executados":sum(x["csv_intercambio_reexecutado_localmente"] for x in info),
+        "replays_xlsx_publicos_executados":sum(x["xlsx_reexecutado_localmente_sem_homologacao"] for x in info),
         "parser_conab_oficial_homologado":False,
         "por_estado":dict(sorted(estados.items())),
         "itens":info,
