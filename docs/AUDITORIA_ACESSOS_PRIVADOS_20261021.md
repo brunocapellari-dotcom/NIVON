@@ -5,6 +5,9 @@
 **Auditoria independente:** PR #72, branch `audit/acessos-runner-context-20261021`.  
 **Escopo:** compatibilidade estrutural GitHub Actions do workflow manual de credenciais USDA, ANA e INMET. Sem solicitar nem acessar segredos.
 
+**Execução independente confirmada:** [GitHub Actions 39662109899](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39662109899) sobre commit `d3e079d1d2a5ccaf85b73fbe05407e55acd05a34`: `Ran 1310 tests ... FAILED (failures=2, skipped=6)`. Os dois testes adversariais falharam; dois controles de dispatch/manual/preflight passaram; um cenário dependente do workflow offline inexistente no SHA recebeu skip explícito, sem introduzir erro incidental. O workflow privado da mesma versão também falhou sem jobs.
+
+
 ## Evidências verificáveis
 
 1. [Execução da integração 39660585590](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39660585590) — conclusão `failure` com **zero jobs** retornados pela API GitHub Actions. Outras execuções da mesma família, incluindo 39661694657, mostram falha de inicialização equivalente. **Sem job não há log de runner**, e portanto não atribuir o erro formal do serviço sem annotation correspondente.
