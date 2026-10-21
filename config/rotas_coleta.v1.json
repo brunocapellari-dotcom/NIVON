@@ -1469,7 +1469,7 @@
         "url": "https://servicodados.ibge.gov.br/api/docs/localidades",
         "source_proof": null
       },
-      "implementation_scope": "ibge_municipios.py (parser JSON offline com testes sintéticos; sem fetch)",
+      "implementation_scope": "MANUAL_ONE_SHOT_HTTPS_CLIENT_PLUS_OFFLINE_PARSER; NOT_SCHEDULED_NOT_PERSISTED",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -1482,11 +1482,14 @@
         "HISTORICAL_BACKFILL",
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
-        "LICENSED_PUBLICATION_GATE"
+        "LICENSED_PUBLICATION_GATE",
+        "REAL_PRODUCTION_RESPONSE_SMOKE",
+        "PERSISTENCE_BACKUP_AND_REPLAY",
+        "OPERATION_RIGHTS_REVIEW"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Códigos municipais IBGE e aliases devem ter vigência temporal e resolução canônica.",
+      "source_note": "Códigos municipais IBGE e aliases devem ter vigência temporal e resolução canônica. Cliente de teste HTTP de uma requisição disponível em nivon.apis_gratuitas_execucao; runtime operacional continua desativado.",
       "preliminary_evidence": "OFFICIAL_API_DOC_PARSER_SYNTHETIC_ONLY"
     },
     {
@@ -3388,7 +3391,7 @@
         "url": "https://power.larc.nasa.gov/docs/services/api/temporal/daily/",
         "source_proof": "https://power.larc.nasa.gov/docs/services/api/temporal/daily/"
       },
-      "implementation_scope": "Nasa POWER: planner diário e histórico anual UTC, parser com verificação de coordenadas reais, ingestão manual HTTPS opt-in, cache SHA contra consultas repetidas, histórico bitemporal em SQLite; sem amostra real, agendamento ou publicação homologados",
+      "implementation_scope": "MANUAL_ONE_SHOT_HTTPS_CLIENT_PLUS_OFFLINE_PARSER; NOT_SCHEDULED_NOT_PERSISTED",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -3403,11 +3406,14 @@
         "HISTORICAL_BACKFILL",
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
-        "LICENSED_PUBLICATION_GATE"
+        "LICENSED_PUBLICATION_GATE",
+        "REAL_PRODUCTION_RESPONSE_SMOKE",
+        "PERSISTENCE_BACKUP_AND_REPLAY",
+        "OPERATION_RIGHTS_REVIEW"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "NASA POWER Daily API (1981+), limite 20 variáveis; 0.5° grid global de meteorologia. Evitar consultas repetidas por célula. Sem publicação de dados inferida da coleta.",
+      "source_note": "NASA POWER Daily API (1981+), limite 20 variáveis; 0.5° grid global de meteorologia. Evitar consultas repetidas por célula. Sem publicação de dados inferida da coleta. Cliente de teste HTTP de uma requisição disponível em nivon.apis_gratuitas_execucao; runtime operacional continua desativado.",
       "preliminary_evidence": "CATALOG_ONLY"
     },
     {
@@ -4285,7 +4291,7 @@
         "url": "https://api.open-meteo.com/v1/forecast",
         "source_proof": "https://open-meteo.com/en/docs"
       },
-      "implementation_scope": "OFFLINE_PLANNER_NORMALIZER_NO_FETCH",
+      "implementation_scope": "MANUAL_ONE_SHOT_HTTPS_CLIENT_PLUS_OFFLINE_PARSER; NOT_SCHEDULED_NOT_PERSISTED",
       "authentication": "NONE_EXPECTED_VERIFY",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -4299,11 +4305,14 @@
         "DURABLE_PERSISTENCE_AND_RESTORE",
         "LICENSED_PUBLICATION_GATE",
         "CHECK_FORECAST_ISSUE_TIME",
-        "CC_BY_ATTRIBUTION"
+        "CC_BY_ATTRIBUTION",
+        "REAL_PRODUCTION_RESPONSE_SMOKE",
+        "PERSISTENCE_BACKUP_AND_REPLAY",
+        "OPERATION_RIGHTS_REVIEW"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Modelo de previsão, não observação; não inventar emissão para publicação ou backtest.",
+      "source_note": "Modelo de previsão, não observação; não inventar emissão para publicação ou backtest. Cliente de teste HTTP de uma requisição disponível em nivon.apis_gratuitas_execucao; runtime operacional continua desativado.",
       "preliminary_evidence": "PUBLIC_DOCUMENTATION_VERIFIED_2026_10_21_NO_OPERATIONAL_FETCH"
     },
     {
@@ -4314,7 +4323,7 @@
         "url": "https://archive-api.open-meteo.com/v1/archive",
         "source_proof": "https://open-meteo.com/en/docs/historical-weather-api"
       },
-      "implementation_scope": "OFFLINE_PLANNER_NORMALIZER_NO_FETCH",
+      "implementation_scope": "MANUAL_ONE_SHOT_HTTPS_CLIENT_PLUS_OFFLINE_PARSER; NOT_SCHEDULED_NOT_PERSISTED",
       "authentication": "NONE_EXPECTED_VERIFY",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -4328,11 +4337,14 @@
         "DURABLE_PERSISTENCE_AND_RESTORE",
         "LICENSED_PUBLICATION_GATE",
         "REANALYSIS_NOT_OBSERVED",
-        "CC_BY_ATTRIBUTION"
+        "CC_BY_ATTRIBUTION",
+        "REAL_PRODUCTION_RESPONSE_SMOKE",
+        "PERSISTENCE_BACKUP_AND_REPLAY",
+        "OPERATION_RIGHTS_REVIEW"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "ERA5/ERA5-Land é reanálise e deve ser marcada estimada, não estação.",
+      "source_note": "ERA5/ERA5-Land é reanálise e deve ser marcada estimada, não estação. Cliente de teste HTTP de uma requisição disponível em nivon.apis_gratuitas_execucao; runtime operacional continua desativado.",
       "preliminary_evidence": "PUBLIC_DOCUMENTATION_VERIFIED_2026_10_21_NO_OPERATIONAL_FETCH"
     },
     {
@@ -4459,7 +4471,7 @@
         "url": "https://api.worldbank.org/v2/country/BR/indicator/SP.POP.TOTL?format=json",
         "source_proof": "https://datahelpdesk.worldbank.org/knowledgebase/articles/889392"
       },
-      "implementation_scope": "DOCUMENTED_WORLD_BANK_V2_API_NO_FETCH",
+      "implementation_scope": "MANUAL_ONE_SHOT_HTTPS_CLIENT_PLUS_OFFLINE_PARSER; NOT_SCHEDULED_NOT_PERSISTED",
       "authentication": "NONE_EXPECTED_VERIFY",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -4473,11 +4485,14 @@
         "DURABLE_PERSISTENCE_AND_RESTORE",
         "LICENSED_PUBLICATION_GATE",
         "VERIFY_INDICATORS_ID_AND_UNITS",
-        "ANNUAL_NOT_PRICE_SIGNAL"
+        "ANNUAL_NOT_PRICE_SIGNAL",
+        "REAL_PRODUCTION_RESPONSE_SMOKE",
+        "PERSISTENCE_BACKUP_AND_REPLAY",
+        "OPERATION_RIGHTS_REVIEW"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "World Bank v2 gratuito e sem chave; usar somente macro estrutural, não preços de soja.",
+      "source_note": "World Bank v2 gratuito e sem chave; usar somente macro estrutural, não preços de soja. Cliente de teste HTTP de uma requisição disponível em nivon.apis_gratuitas_execucao; runtime operacional continua desativado.",
       "preliminary_evidence": "PUBLIC_DOCUMENTATION_VERIFIED_2026_10_21_NO_OPERATIONAL_FETCH"
     },
     {
@@ -4488,7 +4503,7 @@
         "url": "https://api.bcb.gov.br/dados/serie/bcdata.sgs.11/dados/ultimos/1?formato=json",
         "source_proof": "https://dadosabertos.bcb.gov.br/"
       },
-      "implementation_scope": "OFFLINE_BCB_SGS_11_DECIMAL_DAILY_NORMALIZER_NO_HTTP_OR_PERSISTENCE",
+      "implementation_scope": "MANUAL_ONE_SHOT_HTTPS_CLIENT_PLUS_OFFLINE_PARSER; NOT_SCHEDULED_NOT_PERSISTED",
       "authentication": "NONE_EXPECTED_VERIFY",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -4502,11 +4517,14 @@
         "DURABLE_PERSISTENCE_AND_RESTORE",
         "LICENSED_PUBLICATION_GATE",
         "VALIDATE_SGS_UNIT_AND_DAY",
-        "OFFICIAL_DATED_RATE_ONLY"
+        "OFFICIAL_DATED_RATE_ONLY",
+        "REAL_PRODUCTION_RESPONSE_SMOKE",
+        "PERSISTENCE_BACKUP_AND_REPLAY",
+        "OPERATION_RIGHTS_REVIEW"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "SGS 11 taxa diária (não meta anual) com campo data. Validar escala e calendários antes de série.",
+      "source_note": "SGS 11 taxa diária (não meta anual) com campo data. Validar escala e calendários antes de série. Cliente de teste HTTP de uma requisição disponível em nivon.apis_gratuitas_execucao; runtime operacional continua desativado.",
       "preliminary_evidence": "PUBLIC_DOCUMENTATION_VERIFIED_2026_10_21_NO_OPERATIONAL_FETCH"
     }
   ]
