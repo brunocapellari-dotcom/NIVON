@@ -149,5 +149,16 @@ class TestPecuariaSidraSnapshot(unittest.TestCase):
             analisar(json_bytes(dict(linha("9999", 4), D6C="1")),
                     dimensoes=dict(DIM, rebanho="D6C"))
 
+
+    def test_inicio_historico_1997_e_1999(self):
+        for periodo, fim in (("199701", "1997-03-31"), ("199904", "1999-12-31")):
+            x = analisar(json_bytes(linha("9999", 10, periodo=periodo),
+                                   linha("8888", 2500, periodo=periodo)))
+            self.assertEqual(x["observacoes"][0].referencia, fim)
+
+    def test_antes_1997_rejeitado(self):
+        with self.assertRaises(DadoInvalido):
+            analisar(json_bytes(linha("9999", 10, periodo="199604")))
+
 if __name__ == "__main__":
     unittest.main()
