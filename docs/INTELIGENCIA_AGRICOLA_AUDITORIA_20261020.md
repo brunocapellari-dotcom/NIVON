@@ -145,3 +145,19 @@ As páginas oficiais de série histórica de grãos da CONAB indicam que `SojaSe
 **Testes:** quatro regressões adicionais cobrem alteração de HTML sem mudar a URL, mistura HTML milho/manifesto soja, URL falsificada e ausência de HTML impedindo invocar o decoder. A suíte final no commit `e56cdb685f2d60c4312d4bf12c7a168daa072641` concluiu com **1.226 testes, zero falhas, cinco ignorados**, GitHub Actions https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39604790112.
 
 **Próximo P0:** a captura autorizada do XLS real e do HTML simultâneo, seguida de `verificar_raw_conab` → `inspecionar_xls_conab_capturado` em worker isolado, gravação do RAW fora do repositório, inspeção do layout e extração de uma safra/UF. Enquanto o acesso a bytes reais não for resolvido, desenvolver/validar evidências de edições históricas por boletins publicados com data verificável. Não ativar publicação, treino, backend, serviço pago, cron, merge em main ou WhatsApp.
+
+## Continuidade 21/10/2026 — colunas históricas CONAB e integridade por safra (AG-01)
+
+**Risco corrigido:** `conab_series.normalizar_livro` comparava apenas a *sequência de safras* entre abas, não os *números das colunas físicas* em que aparecem. Um XLS com Área na coluna B e Produtividade na coluna C poderia passar caso os anos ordenados fossem iguais após deslocamento. Além disso, inferências de rótulo numérico usavam `safras_esperadas[col-1]` em vez de buscar a mesma coluna efetiva, criando risco de atribuir rendimento da safra errada diante de cabeçalhos vazios.
+
+**Mudanças verificáveis na branch agrícola:**
+1. `safras_esperadas` passou a ser mapa `{indice_coluna: safra}`, fixado a partir da aba Área, e **todas as abas devem ter o mesmo conjunto de posições físicas e respectivos anos**. Mudança de coluna reprova mesmo se a lista cronológica é idêntica.
+2. Quando o rótulo das abas Produtividade/Produção é excepcionalmente ilegível, a inferência limitada usa **aquela mesma coluna** na aba Área; sem correspondência exata, reprova em vez de avançar por índice de uma lista compactada.
+3. Valores físicos sob lacunas sem cabeçalho entre colunas anuais reconhecidas, em linhas de UF/BRASIL, passam a ser rejeitados em vez de **descartados silenciosamente**. Lacuna com dados realmente ausentes (inclusive no indicador) pode ser mantida como ausência, não como zero.
+4. `tests/test_conab_series.py`: cenários adversariais com anos iguais mas colunas deslocadas, lacuna vazia e rótulo inferido, ausência seletiva de cabeçalho e célula numérica sob safra vazia.
+5. O normalizador continua **offline**, sem alegar que o layout atual XLS CONAB esteja homologado. Mudanças de versão e possíveis colunas comparativas exigem inspeção real antes de qualquer liberação; não existe base para tratá-las como anos.
+
+**Fonte externa conferida:** https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/series-historicas/graos/soja/sojaseriehist.xls/view, descrição de planilha vigente em 15/10/2026. Tentativa de download XLS pelo ambiente executante continuou falhando (conexão DNS); nenhuma captura de bytes real, nem SHA-256 do arquivo, foi validada nesta rodada.
+
+**Próximo gate P0:** primeiro RAW oficial autorizado (HTML+XLS em storage privado), parser em worker isolado, normalização de safra/MT e inspeção das células reais de cabeçalho; somente depois evidência documental de cada levantamento mensal vintage. Não habilitar modelo, backtest, publicação, cron, deploy, merge ou serviços pagos.
+
