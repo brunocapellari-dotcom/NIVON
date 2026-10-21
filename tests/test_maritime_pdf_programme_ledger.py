@@ -205,6 +205,27 @@ class ProgrammeLedgerTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "outside series"):
             edition(rows=[programme(num="EXPORT_LESTE:PRG-5")])
 
+    def test_source_url_not_allowed_from_different_authority(self):
+        source = edition()
+        with self.assertRaisesRegex(ValueError, "unregistered authority"):
+            replace(source, source_url="https://www.portodoitaqui.com/wrong.pdf")
+
+    def test_https_spoofed_domain_credentials_and_custom_port_refused(self):
+        source = edition()
+        for url in (
+            "https://www.portosdoparana.pr.gov.br.evil.example/f.pdf",
+            "https://user:password@www.portosdoparana.pr.gov.br/f.pdf",
+            "https://www.portosdoparana.pr.gov.br:444/f.pdf",
+            "http://www.portosdoparana.pr.gov.br/f.pdf",
+        ):
+            with self.subTest(url=url):
+                with self.assertRaisesRegex(ValueError, "authority"):
+                    replace(source, source_url=url)
+
+    def test_programme_identifier_must_have_value_after_series(self):
+        with self.assertRaisesRegex(ValueError, "outside series"):
+            edition(rows=[programme(num="EXPORT_OESTE:")])
+
     def test_nonfinite_or_negative_tonnage_refused(self):
         for value in (-1.0, float("inf"), float("nan")):
             with self.subTest(value=value):
