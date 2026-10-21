@@ -111,6 +111,14 @@ class TestPacotesChuva(unittest.TestCase):
         with self.assertRaisesRegex(ErroPacoteChuva, "antes do intervalo"):
             run(fs, obs)
 
+    def test_climatologia_publicada_depois_da_emissao_e_antes_da_captura_bloqueada(self):
+        fs, obs = data()
+        issue = datetime.fromisoformat(json.loads(fs[2]["bytes_json"])["registro"]["emitido_em"])
+        fs[2] = update_payload(fs[2], lambda row: row.update(
+            climatologia_publicada_em=(issue + timedelta(minutes=20)).isoformat()))
+        with self.assertRaisesRegex(ErroPacoteChuva, "depois da emissão"):
+            run(fs, obs)
+
     def test_observacao_duracao_errada_rejeitada(self):
         fs, obs = data()
         obs[3] = update_payload(obs[3], lambda r: r.update(
