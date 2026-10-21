@@ -2,11 +2,36 @@ import unittest
 from copy import deepcopy
 from datetime import datetime, timezone, timedelta
 from decimal import Decimal
+import json
+import hmac
+from hashlib import sha256
 
 from nivon.fretes_adapter_whatsapp import adaptar_evento_whatsapp, ErroAdaptadorFrete
+from nivon.fretes_atestacoes import hash_evento
 from nivon.fretes_registros import consolidar_ofertas
 
 CHAVE = b"chave-sintetica-nao-operacional-para-teste-1234567890"
+CHAVES = {
+    "DIREITOS": b"rights-fixture-unique-key-0123456789-ABCDE",
+    "RESOLUCAO": b"resolver-fixture-unique-key-9876543210-XYZ",
+}
+EMISSORES = {"DIREITOS": "trusted-rights", "RESOLUCAO": "trusted-resolver"}
+
+
+def atestar(payload, dominio):
+    comprovante = dict(payload)
+    comprovante.update({
+        "versao_atestacao": 1,
+        "emissor_id": EMISSORES[dominio],
+        "emitido_em": "2026-10-19T19:00:00+00:00",
+        "valido_ate": "2026-10-25T19:00:00+00:00",
+    })
+    encoded = json.dumps(comprovante, sort_keys=True, separators=(",", ":"),
+                         ensure_ascii=True, allow_nan=False).encode()
+    comprovante["assinatura_hmac_sha256"] = hmac.new(
+        CHAVES[dominio], b"NIVON_ATTESTATION_V1\x00" + dominio.encode() + b"\x00" + encoded, sha256
+    ).hexdigest()
+    return comprovante
 
 
 def caso():
@@ -47,14 +72,24 @@ def caso():
     return evento, resolucao, autorizacao, coleta
 
 
-def adaptar(ev=None, res=None, auth=None, coleta=None, key=CHAVE):
+def adaptar(ev=None, res=None, auth=None, coleta=None, key=CHAVE,
+           chaves=None, autenticar=True):
     evento, resolucao, autorizacao, coletado = caso()
+    evento = ev if ev is not None else evento
+    resolucao = dict(res if res is not None else resolucao)
+    autorizacao = dict(auth if auth is not None else autorizacao)
+    if autenticar:
+        resolucao["evento_sha256"] = hash_evento(evento)
+        resolucao = atestar(resolucao, "RESOLUCAO")
+        autorizacao = atestar(autorizacao, "DIREITOS")
     return adaptar_evento_whatsapp(
-        ev if ev is not None else evento,
-        resolucao=res if res is not None else resolucao,
-        autorizacao=auth if auth is not None else autorizacao,
+        evento,
+        resolucao=resolucao,
+        autorizacao=autorizacao,
         data_coleta=coleta if coleta is not None else coletado,
         chave_hmac=key,
+        chaves_atestacao=chaves if chaves is not None else CHAVES,
+        emissores_atestacao=EMISSORES,
     )
 
 
@@ -193,6 +228,54 @@ class TestPonteWhatsAppFrete(unittest.TestCase):
     def test_chave_deve_ser_forte(self):
         with self.assertRaises(ErroAdaptadorFrete):
             adaptar(key=b"segredo-curto")
+
+    def test_payload_que_alega_aprovacao_sem_assinaturas_bloqueado(self):
+        with self.assertRaisesRegex(ErroAdaptadorFrete, "assinatura"):
+            adaptar(autenticar=False)
+
+    def test_chaves_separadas_e_emissor_esperado(self):
+        for chaves in [
+            {"DIREITOS": CHAVES["RESOLUCAO"], "RESOLUCAO": CHAVES["DIREITOS"]},
+            {"DIREITOS": CHAVES["DIREITOS"], "RESOLUCAO": CHAVES["DIREITOS"]},
+            {"DIREITOS": CHAVE, "RESOLUCAO": CHAVES["RESOLUCAO"]},
+            {"DIREITOS": b"curta", "RESOLUCAO": CHAVES["RESOLUCAO"]},
+        ]:
+            with self.subTest(chaves=chaves), self.assertRaises(ErroAdaptadorFrete):
+                adaptar(chaves=chaves)
+
+    def test_versao_evento_alterada_sem_nova_atestacao_bloqueada(self):
+        ev, res, auth, coleta = caso()
+        res["evento_sha256"] = hash_evento(ev)
+        res = atestar(res, "RESOLUCAO")
+        auth = atestar(auth, "DIREITOS")
+        ev["rate"] = "999.00"
+        with self.assertRaisesRegex(ErroAdaptadorFrete, "exatamente"):
+            adaptar_evento_whatsapp(
+                ev, resolucao=res, autorizacao=auth,
+                data_coleta=coleta, chave_hmac=CHAVE,
+                chaves_atestacao=CHAVES, emissores_atestacao=EMISSORES,
+            )
+
+    def test_modificacao_da_resolucao_assinada_invalida_assinatura(self):
+        ev, res, auth, coleta = caso()
+        res["evento_sha256"] = hash_evento(ev)
+        res = atestar(res, "RESOLUCAO")
+        auth = atestar(auth, "DIREITOS")
+        res["pickup_entity_id"] = "fazenda:forjada"
+        with self.assertRaisesRegex(ErroAdaptadorFrete, "assinatura"):
+            adaptar_evento_whatsapp(
+                ev, resolucao=res, autorizacao=auth,
+                data_coleta=coleta, chave_hmac=CHAVE,
+                chaves_atestacao=CHAVES, emissores_atestacao=EMISSORES,
+            )
+
+    def test_atestacao_expirada_ou_futura_bloqueada(self):
+        with self.assertRaisesRegex(ErroAdaptadorFrete, "expirada"):
+            adaptar(coleta=datetime(2026, 10, 27, tzinfo=timezone.utc))
+        ev, res, auth, _ = caso()
+        auth = atestar({**auth, "valido_ate": "2026-10-18T10:00:00+00:00"}, "DIREITOS")
+        with self.assertRaises(ErroAdaptadorFrete):
+            adaptar(auth=auth)
 
     def test_horario_mt_preserva_dia_da_publicacao(self):
         ev, _, _, coleta = caso()
