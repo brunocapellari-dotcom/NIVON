@@ -1,0 +1,50 @@
+name: NIVON - CONAB evidencia oficial para ingestao
+on:
+  push:
+    paths:
+      - '.github/workflows/conab-evidencia-primaria.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  consulta-soja-mt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install --disable-pip-version-check agrobr==2.0.0
+      - name: Coletar unica observacao com publicacao de origem
+        run: |
+          python - <<'PY'
+          import asyncio,json
+          from datetime import datetime,timezone
+          from agrobr import conab
+          from nivon.conab_safras import checar_meta,validar_linhas
+          async def main():
+              df,meta=await conab.safras(
+                  "soja",safra="2026/27",uf="MT",
+                  levantamento=1,return_meta=True)
+              verified=checar_meta(meta)
+              v=validar_linhas(df.to_dict(orient="records"),"soja","2026/27","MT",1)
+              if v['quantidade_validas']!=1 or v['quantidade_rejeitadas']!=0:
+                  raise SystemExit('CONAB_SCHEMA_NOT_HOMOLOGATED')
+              pub=verified['source_details'].get('publicacao',{})
+              if not isinstance(pub,dict):
+                  raise SystemExit('CONAB_PUBLICACAO_META_INVALID')
+              row=v['validas'][0]
+              origin={
+                  'source':'CONAB',
+                  'origin_kind':'agrobr.conab.safras',
+                  'parser_version':'agrobr-2.0.0-schema-'+str(verified['schema_version']),
+                  'publication_url':pub.get('url'),
+                  'publication_safra':pub.get('safra'),
+                  'publication_survey':pub.get('levantamento'),
+                  'publication_date':pub.get('data_publicacao'),
+                  'metric':row,
+              }
+              print('NIVON_CONAB_VERIFIED_OBSERVATION='+json.dumps(origin,default=str,ensure_ascii=False,sort_keys=True))
+          asyncio.run(main())
+          PY
