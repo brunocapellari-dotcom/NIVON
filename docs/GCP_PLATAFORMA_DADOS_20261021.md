@@ -1,13 +1,13 @@
 # NIVON — Plataforma de dados Google Cloud (decisão 21/10/2026)
 
-**Decisão:** adotar Google Cloud como destino principal da infraestrutura de dados do NIVON, mantendo arquitetura portátil. **Estado: PLANEJADO; nenhum recurso GCP criado, nenhuma cobrança habilitada e nenhuma migração executada por esta PR.**
+**Decisão:** adotar Google Cloud como destino principal da infraestrutura de dados do NIVON, mantendo arquitetura portátil. **Estado: PLANEJADO; o usuário mostrou no Console o projeto existente `nivon-data` da organização exibida `brunocapellari-org`; nenhum recurso GCP, cobrança ou migração foi criado ou habilitado POR ESTA PR.** Estado real de billing/IAM/APIs ainda não foi verificado.
 
 ## 1. Estado de partida e condições
 
 - A `main` contém o bootstrap protegido USDA, ANA e INMET, sem banco GCP.
 - A PR #58 mantém PostgreSQL Neon PTAX real com `nivon_ptax_quotes`, `nivon_ptax_runs` e `nivon_ptax_checkpoints`; há execução histórica em andamento. Preservar Neon e seus dados, sem deletar nem parar triggers.
 - A PR #61 e as branches de domínio possuem múltiplos módulos de persistência SQLite, ainda **não mesclados**. Reconciliar contratos e vintages antes de mover dados.
-- Este documento é um contrato de preparação. `config/gcp_data_platform.v1.json` define `gcp_project_id: null`, serviços `enabled:false` e `paid_use_approved:false`.
+- Este documento é um contrato de preparação. `config/gcp_data_platform.v1.json` registra `gcp_project_id: nivon-data` **identificado somente pela captura**, API não verificada, `billing.current_billing_status: UNKNOWN_NOT_VERIFIED`, serviços `enabled:false` e `paid_use_approved:false`.
 - Cloud Run, Scheduler, GitHub Actions com acesso GCP, IAM, novos buckets, datasets, credenciais, transferências ou cargas reais **não** são ativados.
 - O repositório é público: nunca adicionar dados reais, senhas, chaves de service account, identificadores pessoais ou arquivos licenciados.
 
@@ -57,7 +57,7 @@ Fontes oficiais:
 
 ## 5. Gates obrigatórios para implantação
 
-1. Identificar projeto GCP correto e confirmar status de billing, propriedade, quotas e região. Não deduzir projeto a partir do Gmail/Drive.
+1. Confirmar por API o projeto `nivon-data` (ID mostrado na captura do usuário), status de billing, propriedade, quotas e região. A captura não verifica billing nem IAM.
 2. Auditar licença, retenção, proteção de dados, acesso IAM e necessidade de bucket por dataset.
 3. Aprovar controle de custo concreto antes de criar armazenamento ou jobs pagos. A configuração com `paid_use_approved:false` deve bloquear executor.
 4. Preparar em ambiente isolado só arquivos sintéticos e tabelas de teste; executar validações de schema, hashes, backup, restauração e consulta as-of.
@@ -68,4 +68,4 @@ Fontes oficiais:
 
 ## 6. Próximo passo executável
 
-Ao obter **identificador do projeto GCP + situação de billing** em acesso autorizado, começar por inventário read-only, cotas, IAM e estimativa de custos. Em seguida teste isolado com dados sintéticos e rollback. Sem acesso a GCP, esta PR entrega apenas planejamento versionado, esquema em template e testes offline — **não comprova um sistema em nuvem**.
+O identificador `nivon-data` já foi informado por captura; resta verificar seu estado por API, especialmente **billing**, IAM, cotas e serviços em leitura, além de estimativa de custos. Em seguida teste isolado com dados sintéticos e rollback. Sem acesso a GCP, esta PR entrega apenas planejamento versionado, esquema em template e testes offline — **não comprova um sistema em nuvem**.
