@@ -117,8 +117,11 @@ class TestRawPTAXSQLite(unittest.TestCase):
             "SELECT COUNT(*) FROM sentinela").fetchone()[0],0)
         self.assertEqual(self.db.execute(
             "SELECT COUNT(*) FROM nivon_snapshots").fetchone()[0],0)
-        self.assertEqual(self.db.execute(
-            "SELECT COUNT(*) FROM nivon_ptax_raw_blobs").fetchone()[0],0)
+        # A tabela também foi criada dentro do SAVEPOINT externo; SQLite
+        # faz rollback do próprio DDL, não apenas das linhas.
+        self.assertIsNone(self.db.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' "
+            "AND name='nivon_ptax_raw_blobs'").fetchone())
 
     def test_corte_passado_nao_ve_snapshot_futuro(self):
         self.salvar()
