@@ -43,3 +43,15 @@ P0: reconciliar PRs #7, #24 e #13; preservar a ponte anual PAM/IBGE, aplicar CI 
 P1: gold set temporal/adversarial, RAG de evidencias, citacoes, abstencao, avaliacao estatistica de previsoes e risco operacional.
 
 Sem merge, deploy, secrets, coleta real, integracao paga nem qualquer gasto.
+
+## Aditivo de seguranca — ACL atual de curta duracao (21/10/2026)
+
+O vinculo de recurso retornado por um backend server-side (`VinculoRecursoIVO`) passou a exigir `expira_em` (UTC com fuso); `revogado_em` e opcional e bloqueia se sua data ja foi atingida. Uma permissao sem vencimento expresso **nao** constitui direito atual. Para autorizar a leitura, a janela entre `verificado_em` e `expira_em` precisa ser positiva e de no maximo **cinco minutos**; o vencimento deve ser posterior ao instante da consulta, e a verificacao nao pode ser futura. Tentativas com assinatura temporal malformada, expiracao, revogacao ou TTL longo sao recusadas **antes** de chamar a camada de politica.
+
+Esse mecanismo e defesa adicional, nao substitui validacao da autenticidade do registry nem politicas OPA/OpenFGA atuais. O lease deve ser emitido por um backend que confirma a situacao juridica/contratual **por tenant, recurso e operacao**. Um callback de teste e capaz de fabricar uma permissao; teste sintético nao comprova direito real de dados. O endpoint real deve rejeitar bypass de um registry, expiracao artificial ou clock do cliente. O campo `expira_em` passa a ser obrigatorio **na pratica para toda consulta**, mesmo que a dataclass mantenha default None para detectar consumidores legados e falhar fechado.
+
+Os testes de regressao atuais abrangem: lease ausente, prazo expirado, verificacao antiga, duracao maior que 5 minutos, revogacao ja efetiva, revogacao futura ainda nao efetiva, instantes sem fuso e ocultacao de metadados quando o direito atual e negado.
+
+## Reconciliacao de branches — marco verificavel
+
+A PR #24 incorpora os contratos PAM anuais que avancaram na PR #7, inclusive a ponte anual, catalogo de publicacoes e benchmark anual. Foram criados commits com os dois ancestrais (Git merge commit) **na branch draft do IVO**, sem efetuar merge das PRs na main. A PR #13 nao foi modificada. Em cada reconciliacao, arquivos importados foram confrontados pelos SHA de blob. A aprovacao do CI comprova o estado de codigo, **nao** que as datas reais de publicacao PAM/IBGE, direitos de uso ou resultados do benchmark tenham sido homologados.
