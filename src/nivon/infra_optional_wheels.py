@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -72,15 +73,37 @@ def _files(folder: Path) -> tuple[int, int]:
     return len(entries), total
 
 
+def _resumir_falha(stderr: str) -> str:
+    """Classificar mensagens pip sem devolver URLs, caminhos ou logs brutos."""
+    if not isinstance(stderr, str):
+        return "resolução ou execução falhou; causa indeterminada"
+    missing = re.findall(
+        r"No matching distribution found for ([A-Za-z0-9][A-Za-z0-9._+-]{0,80})",
+        stderr, flags=re.IGNORECASE,
+    )
+    if missing:
+        return "wheel indisponível para requisito público: " + missing[-1]
+    if ("Could not find a version that satisfies the requirement" in stderr
+            or "no matching distribution" in stderr.lower()):
+        return "versão de wheel ausente ou restrições conflitantes"
+    if any(term in stderr.lower() for term in (
+        "temporary failure in name resolution", "name or service not known",
+        "connection refused", "read timed out", "ssl:", "certificate verify failed",
+        "proxyerror", "too many 429 error responses",
+    )):
+        return "falha de rede/TLS/índice PyPI; não inferir ausência de wheel"
+    return "resolução ou execução falhou; causa indeterminada"
+
+
 def _subprocess(argv: list[str], *, timeout: int, env: dict[str, str] | None = None) -> None:
     try:
         r = subprocess.run(argv, check=False, timeout=timeout,
-                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                           env=env)
+                           stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+                           text=True, errors="replace", env=env)
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise ErroSupplyChain("comando isolado indisponível ou excedeu limite") from exc
     if r.returncode:
-        raise ErroSupplyChain("resolução, instalação ou importação falhou")
+        raise ErroSupplyChain(_resumir_falha(r.stderr))
 
 
 def executar(group: str, phase: str, *, pyproject: str, root: str) -> dict:

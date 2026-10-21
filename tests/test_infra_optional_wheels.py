@@ -6,7 +6,7 @@ import json
 import subprocess
 import unittest
 
-from nivon.infra_optional_wheels import EXPECTED, SMOKES, IMAGE, requirements, _subprocess, _files
+from nivon.infra_optional_wheels import EXPECTED, SMOKES, IMAGE, requirements, _subprocess, _files, _resumir_falha
 from nivon.infra_supplychain import ErroSupplyChain
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -48,10 +48,21 @@ class TestOptionalWheels(unittest.TestCase):
     def test_download_falha_nao_oculta_erros_ou_stdout(self):
         with patch("nivon.infra_optional_wheels.subprocess.run") as run:
             run.return_value.returncode = 1
+            run.return_value.stderr = "private path /token?secret=abc"
             with self.assertRaises(ErroSupplyChain):
                 _subprocess(["python", "-m", "pip"], timeout=30)
             self.assertEqual(run.call_args.kwargs["stdout"], subprocess.DEVNULL)
-            self.assertEqual(run.call_args.kwargs["stderr"], subprocess.DEVNULL)
+            self.assertEqual(run.call_args.kwargs["stderr"], subprocess.PIPE)
+            self.assertNotIn("secret=abc", _resumir_falha(run.return_value.stderr))
+
+    def test_diagnostico_wheel_ausente_sem_vazar_log_pip(self):
+        raw = "ERROR: Could not find a version that satisfies the requirement llvmlite\\nERROR: No matching distribution found for llvmlite"
+        summary = _resumir_falha(raw)
+        self.assertIn("llvmlite", summary)
+        self.assertNotIn("ERROR:", summary)
+        self.assertNotIn("Could not find", summary)
+        self.assertEqual(_resumir_falha("Connection refused by gateway"), "falha de rede/TLS/índice PyPI; não inferir ausência de wheel")
+        self.assertEqual(_resumir_falha("a /tmp/private/token"), "resolução ou execução falhou; causa indeterminada")
 
     def test_timeout_fecha_execucao(self):
         with patch("nivon.infra_optional_wheels.subprocess.run",

@@ -25,3 +25,7 @@ Fase 2: contêiner separado, **sem rede**, instala somente wheels já baixadas n
 - Em caso de falhas, agrupar por pacote/version ABI e priorizar a menor solução segura que não implique liberar fontes de dados licenciadas.
 
 Não realizar deploy, transferência de arquivo bruto para outro serviço, publish de imagem, cobrança nova ou ativação de coletores.
+
+## Primeira rodada de compatibilidade (ainda sem diagnóstico do pacote faltante)
+
+[Execução 39671894570](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39671894570) no commit `5b41a7550e31cf113e497d1fcf62b89c43dcc2ef`: `excel` e `ports` passaram em AMD64 e ARM64 (resolução apenas wheel, instalação offline e smoke); `agro` e `forecast` reprovaram a fase de download de wheels em ambas arquiteturas. Isso não prova incompatibilidade definitiva; pode ser wheel transitive indisponível ou outro erro PyPI. Um classificador foi acrescentado para extrair somente nomes públicos de requisitos não resolvidos, sem imprimir stdout/stderr brutos, tokens, URLs ou caminhos.
