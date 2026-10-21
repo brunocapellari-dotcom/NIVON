@@ -16,6 +16,7 @@ from typing import Mapping
 from zoneinfo import ZoneInfo
 
 from .fretes_registros import OfertaFrete, ErroRegistroFrete
+from .fretes_atestacoes import verificar_atestacao, hash_evento, ErroAtestacaoFrete
 
 
 class ErroAdaptadorFrete(ErroRegistroFrete):
@@ -95,6 +96,7 @@ def _entity_one(event: Mapping, categoria: str) -> object:
 def adaptar_evento_whatsapp(
     evento: Mapping, *, resolucao: Mapping, autorizacao: Mapping,
     data_coleta: datetime, chave_hmac: bytes,
+    chaves_atestacao: Mapping, emissores_atestacao: Mapping,
 ) -> OfertaFrete:
     """Retorna UMA observação anunciada; recusa ambiguidades sem inferir valores.
 
@@ -106,7 +108,13 @@ def adaptar_evento_whatsapp(
     resolucao = _dict(resolucao, "resolucao")
     autorizacao = _dict(autorizacao, "autorizacao")
     if not isinstance(chave_hmac, bytes) or len(chave_hmac) < 32:
-        raise ErroAdaptadorFrete("chave HMAC segura fornecida em runtime obrigatória")
+        raise ErroAdaptadorFrete("chave HMAC para pseudonimização obrigatória")
+    chaves_atestacao = _dict(chaves_atestacao, "chaves_atestacao")
+    emissores_atestacao = _dict(emissores_atestacao, "emissores_atestacao")
+    if (chaves_atestacao.get("DIREITOS") == chaves_atestacao.get("RESOLUCAO")
+            or chaves_atestacao.get("DIREITOS") == chave_hmac
+            or chaves_atestacao.get("RESOLUCAO") == chave_hmac):
+        raise ErroAdaptadorFrete("chaves de assinatura e pseudonimização devem ser independentes")
 
     tenant = _id(evento.get("tenant_id"), "tenant_id")
     ev_id = _id(evento.get("event_id"), "event_id")
@@ -139,6 +147,27 @@ def adaptar_evento_whatsapp(
     coleta = _timestamp(data_coleta, "data_coleta")
     if pub > coleta:
         raise ErroAdaptadorFrete("publicação no futuro em relação à coleta")
+
+    # Status e hashes documentais fornecidos pelo próprio payload não bastam:
+    # exigir duas atestações com chaves de runtime e domínios independentes.
+    try:
+        verificar_atestacao(
+            autorizacao, dominio="DIREITOS",
+            chave_confiavel=chaves_atestacao.get("DIREITOS"),
+            emissor_esperado=emissores_atestacao.get("DIREITOS"),
+            recebido_em=coleta, max_dias_validade=30,
+        )
+        verificar_atestacao(
+            resolucao, dominio="RESOLUCAO",
+            chave_confiavel=chaves_atestacao.get("RESOLUCAO"),
+            emissor_esperado=emissores_atestacao.get("RESOLUCAO"),
+            recebido_em=coleta, max_dias_validade=7,
+        )
+        digest = hash_evento(evento)
+    except ErroAtestacaoFrete as exc:
+        raise ErroAdaptadorFrete("atestado externo inválido: " + str(exc)) from exc
+    if resolucao.get("evento_sha256") != digest:
+        raise ErroAdaptadorFrete("resolução não cobre exatamente a edição do evento")
 
     if (autorizacao.get("status") != "APROVADA"
             or autorizacao.get("tenant_id") != tenant
