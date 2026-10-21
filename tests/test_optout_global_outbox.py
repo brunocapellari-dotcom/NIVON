@@ -9,7 +9,7 @@ from tempfile import TemporaryDirectory
 
 from nivon.entrega_whatsapp import preparar_template
 from nivon import outbox_whatsapp as outbox
-from test_outbox_whatsapp import SEGREDO, TestOutboxWhatsApp
+from test_outbox_whatsapp import SEGREDO
 
 
 class TestOptOutGlobal(unittest.TestCase):
@@ -81,6 +81,7 @@ class TestOptOutGlobal(unittest.TestCase):
         # Reusa fixture de outbox já integrada para obter autorização assinada
         # num banco persistido. O próprio método de opt-out é externo ao
         # documento assinado, portanto bloqueia inclusive aprovação antiga.
+        from test_outbox_whatsapp import TestOutboxWhatsApp
         fixture = TestOutboxWhatsApp(methodName="test_registro_idempotente_mesma_edicao")
         fixture.setUp()
         try:
