@@ -94,6 +94,9 @@ class TestANPSemanalStore(unittest.TestCase):
         if classe == "REAL_AUTORIZADO" and kwargs.get("direitos_confirmados") is True:
             kwargs.setdefault("prova_direitos_sha", "c"*64)
             kwargs.setdefault("habilitacao_real", True)
+            kwargs.setdefault("verificado_em_confiavel", (
+                _tempo(entrada["coletado_em"], "coleta")
+                + timedelta(minutes=30)).isoformat())
             kwargs.setdefault("indice_evidencia", indice_real(entrada))
             kwargs.setdefault("autoridades_confiaveis", KEYS)
             kwargs.setdefault("aprovacoes_assinadas", assinar_autorizacao(
@@ -110,6 +113,25 @@ class TestANPSemanalStore(unittest.TestCase):
                       as_of="2026-10-20T17:00:00+00:00")
         params.update(kw)
         return consultar_preco_semanal(self.db, **params)
+
+    def test_relogio_do_controlador_obrigatorio_e_nao_retroativo(self):
+        entrada = resumo()
+        with self.assertRaisesRegex(PermissionError,"instante confiável"):
+            self.grava(
+                r=entrada, classe="REAL_AUTORIZADO",
+                direitos_confirmados=True, verificado_em_confiavel=None)
+        with self.assertRaisesRegex(PermissionError,"preceder a captura"):
+            self.grava(
+                r=entrada, classe="REAL_AUTORIZADO",
+                direitos_confirmados=True,
+                verificado_em_confiavel="2026-10-19T12:00:00+00:00")
+        with self.assertRaisesRegex(ErroAtestacaoANP,"expirada"):
+            self.grava(
+                r=entrada, classe="REAL_AUTORIZADO",
+                direitos_confirmados=True,
+                verificado_em_confiavel="2026-10-30T12:00:00+00:00")
+        self.assertEqual(self.db.execute(
+            "SELECT COUNT(*) FROM anp_semanal_edicoes").fetchone()[0],0)
 
     def test_aprovacoes_duplas_autenticadas_sao_obrigatorias(self):
         r = resumo()
