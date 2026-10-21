@@ -27,8 +27,10 @@ def main(argv=None):
             o=consultar_precos(serie_uuid=args.uuid,executar=True)["dados"]
     except Exception as exc:
         # Não expor URLs externas nem valores de preços no log público.
+        from nivon.open_meteo_hidro_ensemble import ErroAgroClimaAberto
+        motivo=str(exc)[:120] if isinstance(exc,ErroAgroClimaAberto) else "OUTRO_ERRO"
         print(json.dumps({"status":"FALHA","fonte":args.fonte,
-                          "tipo_erro":type(exc).__name__}))
+                          "tipo_erro":type(exc).__name__,"motivo":motivo}))
         return 1
     resumo={"status":"CONSULTA_REAL_PONTUAL_SEM_PERSISTENCIA",
             "fonte":args.fonte,"dataset":o["dataset_id"],
