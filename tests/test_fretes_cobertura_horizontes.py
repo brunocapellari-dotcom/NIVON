@@ -135,7 +135,7 @@ class TestCoberturaHorizontesFrete(unittest.TestCase):
 
     def test_datas_futuras_nao_constituem_rotulo_conhecido(self):
         rows=historico(30)
-        r=avaliar(rows)
+        r=avaliar(rows,as_of=datetime(2026,5,2,16,tzinfo=timezone.utc))
         self.assertGreater(r["horizontes"][2]["origens_ainda_nao_maturadas"],0)
         self.assertEqual(r["horizontes"][2]["origens_com_pares_comparaveis"],0)
 
