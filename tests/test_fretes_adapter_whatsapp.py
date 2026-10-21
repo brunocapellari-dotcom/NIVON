@@ -60,6 +60,8 @@ def caso():
         "descarga_entity_id": "terminal:001",
         "produto": "MILHO", "equipamento": "RODOTREM", "regime": "PJ",
         "rate_role": "BASE", "frete_base_brl_t": "150.00",
+        "atualidade_comercial": "VERIFICADA_NO_CONTEUDO_ORIGINAL",
+        "data_referencia_comercial": "2026-10-19",
         "pedagio_tipo": "ADICIONAL_VALOR", "pedagio_brl_t": "10.00",
     }
     autorizacao = {
@@ -179,6 +181,9 @@ class TestPonteWhatsAppFrete(unittest.TestCase):
             {"frete_base_brl_t": "149"},
             {"municipio_ibge": "xxxxxxxx"},
             {"regime": "INCERTO"},
+            {"atualidade_comercial": "INDETERMINADA"},
+            {"data_referencia_comercial": "2024-10-19"},
+            {"data_referencia_comercial": None},
         ]:
             with self.subTest(change=change), self.assertRaises(ErroAdaptadorFrete):
                 _, r, _, _ = caso()
@@ -284,6 +289,20 @@ class TestPonteWhatsAppFrete(unittest.TestCase):
                 data_coleta=coleta, chave_hmac=CHAVE,
                 chaves_atestacao=CHAVES, emissores_atestacao=EMISSORES,
             )
+
+    def test_frete_antigo_republicado_hoje_nao_herda_atualidade(self):
+        _, resolucao, _, _ = caso()
+        resolucao["data_referencia_comercial"] = "2024-10-19"
+        # Mesmo um documento assinado por agente conhecido não deve passar
+        # se confirmar que a oferta comercial é de uma edição passada.
+        with self.assertRaisesRegex(ErroAdaptadorFrete, "antigo"):
+            adaptar(res=resolucao)
+
+    def test_resolucao_assinada_sem_prova_da_atualidade_bloqueia(self):
+        _, resolucao, _, _ = caso()
+        resolucao.pop("atualidade_comercial")
+        with self.assertRaisesRegex(ErroAdaptadorFrete, "atualidade"):
+            adaptar(res=resolucao)
 
     def test_horario_mt_preserva_dia_da_publicacao(self):
         ev, _, _, coleta = caso()
