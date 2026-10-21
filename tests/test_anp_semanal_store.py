@@ -92,6 +92,7 @@ class TestANPSemanalStore(unittest.TestCase):
         # Credenciais são fictícias e existem somente nesta classe de teste.
         # Casos negativos sem "direitos_confirmados" NÃO recebem aprovação.
         if classe == "REAL_AUTORIZADO" and kwargs.get("direitos_confirmados") is True:
+            kwargs.setdefault("prova_direitos_sha", "c"*64)
             kwargs.setdefault("habilitacao_real", True)
             kwargs.setdefault("indice_evidencia", indice_real(entrada))
             kwargs.setdefault("autoridades_confiaveis", KEYS)
