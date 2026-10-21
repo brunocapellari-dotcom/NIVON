@@ -16,6 +16,7 @@ from .auditoria_evidencias_pacotes import (
 )
 from .auditoria_wheelhouse import verificar
 from .auditoria_fechamento_pacotes import analisar_fechamento
+from .auditoria_licencas_pacotes import inventariar_licencas
 
 
 def verificar_cadeia(
@@ -31,6 +32,7 @@ def verificar_cadeia(
     wheel_gate = verificar(wheelhouse, lock)
     graph_gate = analisar_fechamento(pyproject, lock, wheel_gate,
                                     report_gate["selected_extras"])
+    license_gate = inventariar_licencas(wheel_gate)
     if report_gate["locked_packages"] != wheel_gate["wheel_count"]:
         raise ErroEvidencia("gates não concordam sobre quantidade de distribuições")
     if not all(
@@ -67,6 +69,12 @@ def verificar_cadeia(
         "declared_lock_origin_authenticated": False,
         "wheel_provider_authenticated": False,
         "vulnerability_service_live_queried": False,
+        "license_distributions_requiring_review": license_gate["packages_review_pending"],
+        "license_files_declared": license_gate["declared_license_files"],
+        "license_files_integrity_checked": license_gate[
+            "license_files_checked_against_wheel_record"],
+        "spdx_identifiers_validated": False,
+        "legal_license_review_completed": False,
         "third_party_licenses_verified": False,
         "packages_installed": False,
         "approved_for_install": False,
