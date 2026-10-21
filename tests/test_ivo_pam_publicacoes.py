@@ -41,8 +41,8 @@ class TestIVOEdicoesPAM(unittest.TestCase):
         self.db=abrir_registro()
         self.addCleanup(self.db.close)
 
-    def evento(self,id,tipo,valor,publicado,coleta):
-        raw=json_sidra(valor)
+    def evento(self,id,tipo,valor,publicado,coleta,*,formatado=False):
+        raw=json.dumps(json.loads(json_sidra(valor)),indent=2,ensure_ascii=False).encode() if formatado else json_sidra(valor)
         pdf=("%PDF-1.4\nDocumento de exemplo sintetico "+id+" 000000000000").encode()
         h=sha256(pdf).hexdigest()
         for blob,mime,schema in (
@@ -152,7 +152,7 @@ class TestIVOEdicoesPAM(unittest.TestCase):
 
     def test_republicacao_uma_versao_sem_mudar_valor_nao_e_performance(self):
         a=self.evento("edicao_2025","DIVULGACAO","1500","2026-09-01","2026-09-02")
-        b=self.evento("errata_2025","ERRATA","1500","2026-10-01","2026-10-02")
+        b=self.evento("errata_2025","ERRATA","1500","2026-10-01","2026-10-02",formatado=True)
         r=self.consultar([a,b])
         self.assertEqual(r["historico"][1]["delta_desde_anterior"],0.)
         self.assertFalse(r["treinamento_real_autorizado"])
