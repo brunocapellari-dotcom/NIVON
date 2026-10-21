@@ -11,7 +11,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Iterable
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, unquote
 
 from nivon.portos_automaticos import MODOS, PORTO_HOSTS
 from .lineup_history import LineupVintage, _aware_utc
@@ -32,6 +32,7 @@ class PilotSource:
     port_id: str
     source_id: str
     mode: str
+    registered_url: str
     series: str | None = None
 
     def __post_init__(self) -> None:
@@ -39,6 +40,11 @@ class PilotSource:
             raise ValueError("unsupported port/parser pair")
         if not self.source_id or not self.source_id.strip():
             raise ValueError("source_id required")
+        _validate_url(self.registered_url, self.port_id)
+        if self.mode.startswith("PDF") and not self.registered_url.endswith("/"):
+            raise ValueError("PDF registered URL prefix must end in slash")
+        if self.mode.startswith("HTML") and self.registered_url.endswith("/"):
+            raise ValueError("HTML registered URL must identify the exact document endpoint")
         if self.port_id == "PARANAGUA" and self.series not in {
             "EXPORT_OESTE", "EXPORT_LESTE", "IMPORT_SOLIDOS"
         }:
@@ -145,9 +151,12 @@ def _validate_url(url: str, port_id: str) -> None:
         host, port = parsed.hostname, parsed.port
     except ValueError as exc:
         raise ValueError("invalid source URL") from exc
+    decoded_path = unquote(parsed.path)
     if (parsed.scheme != "https" or host not in PORTO_HOSTS[port_id]
             or parsed.username is not None or parsed.password is not None
-            or port is not None or parsed.fragment or not parsed.path.startswith("/")):
+            or port is not None or parsed.fragment or not parsed.path.startswith("/")
+            or any(segment in {".", ".."} for segment in decoded_path.split("/"))
+            or "\\\\" in decoded_path):
         raise ValueError("source URL not within registered authority host")
 
 
@@ -161,6 +170,11 @@ def audit_edition(edition: EditionEvidence, plan: PilotSource) -> tuple[str, ...
         issues.add("PARSER_CONTRACT_MISMATCH")
     try:
         _validate_url(edition.source_url, plan.port_id)
+        if plan.mode.startswith("HTML"):
+            if edition.source_url != plan.registered_url:
+                issues.add("URL_NOT_REGISTERED_FOR_SOURCE")
+        elif not edition.source_url.startswith(plan.registered_url):
+            issues.add("URL_NOT_REGISTERED_FOR_SOURCE")
     except ValueError:
         issues.add("UNVERIFIED_OFFICIAL_URL")
     if not isinstance(edition.document_bytes, bytes) or not (
