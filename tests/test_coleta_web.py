@@ -74,7 +74,8 @@ class TestColetaWeb(unittest.TestCase):
             "https://user:secret@porto.example/lineup",
             "https://porto.example:8443/lineup",
             "https://porto.example/lineup#fragment",
-            "https://porto.example/lineup\\nHost:evil.example",
+            "https://porto.example/lineup" + chr(10) + "Host:evil.example",
+            "https://porto.example/lineup" + chr(13) + "Host:evil.example",
             "https://porto.example:porta/lineup",
             "https://sem-dominio/lineup",
         )
