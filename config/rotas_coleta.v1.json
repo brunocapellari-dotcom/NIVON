@@ -401,12 +401,12 @@
         "url": "https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/serie-historica-de-precos-de-combustiveis",
         "source_proof": "https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/arquivos/shpc/dsan/2026"
       },
-      "implementation_scope": "anp_diesel.py; anp_manifesto.py (parser local e descoberta de links offline) (sem coleta periódica, dados reais não homologados)",
+      "implementation_scope": "anp_indice_lpc.py; anp_resumo_lpc.py; anp_semanal_municipios.py; anp_diesel_briefing.py; anp_monitor_atualizacao.py; scripts/auditar_atualizacao_anp.py (offline, sem download)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "OFFICIAL_LPC_REAL_XLSX_LAYOUT_AND_RIGHTS_VALIDATION",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -415,12 +415,57 @@
         "HISTORICAL_BACKFILL",
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
-        "LICENSED_PUBLICATION_GATE"
+        "LICENSED_PUBLICATION_GATE",
+        "WEEKLY_INDEX_SNAPSHOT_REAL",
+        "WEEKLY_LPC_OFFICIAL_XLSX_REAL",
+        "VERIFY_EXCEL_LAYOUT",
+        "RECONCILE_WITH_ANP_PUBLISHED_MUNICIPAL_PRICE",
+        "VERIFY_PUBLICATION_DATE_AND_STALENESS"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Diesel S10/S500: preço observado semanal por cidade, snapshot em CSV publicado mensalmente. Fonte não fornece paridade internacional.",
-      "preliminary_evidence": "ANP_CSV_AMOSTRA_REAL_E_PLANO_INDICE_OFFLINE"
+      "source_note": "Em 20/10/2026, ANP lista resumo 11–17/10. Página anual XLSX 2026 indica atualização em 20/10/2026 14h34. Data da página ≠ linha do arquivo. Download/layout/redistribuição continuam pendentes. Monitor offline compara alterações de índice, sem lançar preços não coletados.",
+      "preliminary_evidence": "ANP_WEEKLY_INDEX_2026_10_11_TO_2026_10_17_LISTED__YEARLY_FILE_PAGE_UPDATED_2026_10_20__XLSX_BYTES_NOT_OBTAINED",
+      "recurso_prioritario_semanal": {
+        "url_pagina": "https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/precos-revenda-e-de-distribuicao-combustiveis/shlp/semanal/semanal-municipios-2026.xlsx/view",
+        "indice": "https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/precos-revenda-e-de-distribuicao-combustiveis/shlp/semanal/",
+        "ano": 2026,
+        "formato_publicado": "XLSX",
+        "unidade_preco": "BRL/L",
+        "metodologia": "PRECO_MEDIO_MUNICIPAL_ANP_SEMANA_OFICIAL",
+        "download_url_real": "PENDENTE_CAPTURA",
+        "schema_real": "NAO_HOMOLOGADO",
+        "parser_modulo": "anp_semanal_municipios.py",
+        "parser_estado": "CODIGO_TESTE_LAYOUT_SINTETICO_SEM_HOMOLOGACAO_REAL",
+        "latest_observed_page": {
+          "last_modified_at": "2026-10-20T14:34:00-03:00",
+          "page_url": "https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/precos-revenda-e-de-distribuicao-combustiveis/shlp/semanal/semanal-municipios-2026.xlsx/view",
+          "file_sha256": null,
+          "file_verified": false
+        }
+      },
+      "candidate_official_weekly_summary": {
+        "indice_url": "https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/levantamento-de-precos-de-combustiveis-ultimas-semanas-pesquisadas",
+        "exemplo_recurso_pagina": "https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/arquivos-lpc/2026/resumo_semanal_lpc_2026-10-04_2026-10-10.xlsx",
+        "exemplo_referencia": "2026-10-04_2026-10-10",
+        "schema_candidate": "MUNICIPIOS, cabeçalho linha 7, DATA INICIAL/FINAL, ESTADO, MUNICÍPIO, PRODUTO, NÚMERO DE POSTOS PESQUISADOS, UNIDADE DE MEDIDA, PREÇO MÉDIO REVENDA",
+        "download_efetivamente_testado": false,
+        "html_index_parser": "anp_indice_lpc.py",
+        "parser": "anp_resumo_lpc.py",
+        "nature": "AMOSTRA_PRECO_MEDIO_REVENDA_R$/L_NAO_PPI",
+        "canary": "DIESEL_S10_MT",
+        "daily_briefing_enabled": false,
+        "latest_observed_listing": {
+          "period_start": "2026-10-11",
+          "period_end": "2026-10-17",
+          "index_page_updated_at": "2026-10-20T13:05:00-03:00",
+          "proof": "https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/levantamento-de-precos-de-combustiveis-ultimas-semanas-pesquisadas",
+          "index_html_snapshot_stored": false,
+          "price_file_downloaded": false,
+          "latest_week_data_extracted": false
+        }
+      },
+      "monitoramento_documentado": "docs/ANP_MONITOR_PUBLICACOES_20261020.md"
     },
     {
       "dataset_id": "ANTAQ_MOVIMENTACAO",
@@ -430,12 +475,12 @@
         "url": "https://www.gov.br/antaq/pt-br/central-de-conteudos/publicacoes-da-antaq/estatisticos-aquaviarios",
         "source_proof": null
       },
-      "implementation_scope": "portos.py (código citado não implica coletor ativo)",
+      "implementation_scope": "antaq_zip_autorizado.py + antaq_historico_offline.py (ZIPs locais 2010+, relacionamento atracação-carga-mercadoria)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "REAL_ZIP_ACCESS_RIGHTS_AND_LAYOUT_VALIDATION",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -448,8 +493,12 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Toneladas realizadas agregadas distintas do line-up por navio.",
-      "preliminary_evidence": "DATASET_DISCOVERY"
+      "source_note": "Histórico mensal observado, não line-up em tempo real. ZIPs anuais ainda não testados em acesso real. WAF/retirada da fonte não podem ser contornados.",
+      "preliminary_evidence": "OFFICIAL_OPEN_DATA_DESCRIPTION_AND_UNVERIFIED_ZIP_URL_CANDIDATES",
+      "candidate_source_files": [
+        "https://estatistica.antaq.gov.br/ea/txt/{ANO}.zip",
+        "https://estatistica.antaq.gov.br/ea/txt/Mercadoria.zip"
+      ]
     },
     {
       "dataset_id": "ANTT_CIOT",
@@ -638,12 +687,12 @@
         "url": "https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/",
         "source_proof": "https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/documentacao"
       },
-      "implementation_scope": "ptax_plano.py + bcb_ptax.py + pipeline_api_dados.py (USD diário real schema, sem operação)",
+      "implementation_scope": "ptax_plano.py + bcb_ptax.py + ptax_briefing.py + pipeline_briefing.py: OData USD/EUR, Fechamento estrito, captura autorizada offline/mocks; sem scheduler",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "CATALOG_RUNTIME_OFF_ODBL_COMPLIANCE_SCHEDULER",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -655,8 +704,18 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Endpoint OData do dólar por período verificado no esquema; NÃO comprova todos boletins nem a operação EUR e nenhum direito de publicação.",
-      "preliminary_evidence": "OFFICIAL_ODATA_USD_SCHEMA_OBSERVED_20261019_EUR_UNTESTED"
+      "source_note": "BCB publica PTAX em OData com licença ODbL e fechamento de boletim distinto de spot/interbancário. Código de acesso e adaptação ao briefing testados com fixtures; não ativado em produção.",
+      "preliminary_evidence": "BCB_ODATA_LICENSE_ODBL_DOCUMENTED_PARSER_AND_BRIEFING_TESTED_OFFLINE",
+      "licenca_publica_verificada": {
+        "id": "ODbL-1.0",
+        "published_at": "https://dadosabertos.bcb.gov.br/dataset/dolar-americano-usd-todos-os-boletins-diarios",
+        "requisitos_pendentes": [
+          "REVISAR_ATTRIBUTION",
+          "REVISAR_SHAREALIKE_DADOS_DERIVADOS",
+          "DOCUMENTAR_DIREITOS_COMERCIAIS"
+        ],
+        "status": "LICENCA_IDENTIFICADA_OBRIGACOES_NAO_HOMOLOGADAS"
+      }
     },
     {
       "dataset_id": "BCB_SGS_FOCUS",
@@ -1741,16 +1800,16 @@
       "dataset_id": "LINEUP_ANGRA_DOS_REIS",
       "collector_class": "PUBLISHED_DOCUMENT",
       "locator": {
-        "kind": "NOT_VERIFIED_PER_DATASET",
-        "url": null,
-        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
+        "source_proof": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
+      "implementation_scope": "lineup_historico.py (registro por edição e as-of); Índice institucional PortosRio. Parser não desenvolvido; consulta somente após homologação.",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "primary_blocker": "IDENTIFY_PORT_SPECIFIC_RESOURCE_AND_RIGHTS",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -1760,12 +1819,12 @@
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
         "LICENSED_PUBLICATION_GATE",
-        "EXACT_ENDPOINT_UNKNOWN"
+        "DISCOVER_PORT_SPECIFIC_DOCUMENT"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
-      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+      "source_note": "Página índice lista navios por porto; ausência de recurso individual ou registros atuais bloqueia coleta.",
+      "preliminary_evidence": "INSTITUTIONAL_PAGE_WITH_PORT_LINKS"
     },
     {
       "dataset_id": "LINEUP_ANTONINA",
@@ -1801,16 +1860,16 @@
       "dataset_id": "LINEUP_ARATU",
       "collector_class": "PUBLISHED_DOCUMENT",
       "locator": {
-        "kind": "NOT_VERIFIED_PER_DATASET",
-        "url": null,
-        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/porto_aratu.php?secao=tportos_aratu",
+        "source_proof": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/porto_aratu.php?secao=tportos_aratu"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
+      "implementation_scope": "lineup_historico.py (registro por edição e as-of); lineup_portais.py + ingestao_lineup_portais.py (parser offline, bytes com sha256)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "primary_blocker": "RIGHTS_AND_THREE_REAL_SNAPSHOTS_PENDING",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -1820,12 +1879,13 @@
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
         "LICENSED_PUBLICATION_GATE",
-        "EXACT_ENDPOINT_UNKNOWN"
+        "VERIFY_PUBLICATION_TIMESTAMP",
+        "VERIFY_QUANTITY_UNIT"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
-      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+      "source_note": "CANDIDATO apenas. Não homologado: conferir página atual, formato, licença, fuso, last_updated e unidades; não afirmar line-up atual.",
+      "preliminary_evidence": "INSTITUTIONAL_URL_DISCOVERED_NO_REAL_SNAPSHOT"
     },
     {
       "dataset_id": "LINEUP_AREIA_BRANCA",
@@ -1861,16 +1921,16 @@
       "dataset_id": "LINEUP_BARCARENA_VILA_DO_CONDE",
       "collector_class": "PUBLISHED_DOCUMENT",
       "locator": {
-        "kind": "PROVIDER_PORTAL",
+        "kind": "OFFICIAL_INDEX",
         "url": "https://www.cdp.com.br/programacao-de-navio-do-porto-de-vila-do-conde/",
-        "source_proof": null
+        "source_proof": "https://www.cdp.com.br/programacao-de-navio-do-porto-de-vila-do-conde/"
       },
-      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo); lineup_historico.py (snapshot local por porto, nao homologado)",
+      "implementation_scope": "lineup_historico.py (registro por edição e as-of); lineup_cdp_santarem.interpretar_cdp(): extrai HTML offline por porto; WDT não é DUV",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "RIGHTS_SOURCE_TIMESTAMP_DUV_AND_THREE_SNAPSHOTS",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -1879,12 +1939,14 @@
         "HISTORICAL_BACKFILL",
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
-        "LICENSED_PUBLICATION_GATE"
+        "LICENSED_PUBLICATION_GATE",
+        "VERIFY_PUBLICATION_TIMESTAMP",
+        "VERIFY_VESSEL_SCALE_ID"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
-      "preliminary_evidence": "CATALOG_ONLY"
+      "source_note": "A tabela CDP inclui placeholders e datas possivelmente antigas. Sem DUV ou publicação horária comprovada, não entra como line-up diário de navios.",
+      "preliminary_evidence": "OFFICIAL_PORTAL_TABLE_CANDIDATE_NOT_SNAPSHOT_TESTED"
     },
     {
       "dataset_id": "LINEUP_BARRA_DO_RIACHO",
@@ -1920,16 +1982,16 @@
       "dataset_id": "LINEUP_BELEM",
       "collector_class": "PUBLISHED_DOCUMENT",
       "locator": {
-        "kind": "NOT_VERIFIED_PER_DATASET",
-        "url": null,
-        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://www.cdp.com.br/programacao-de-navios-porto-de-belem/",
+        "source_proof": "https://www.cdp.com.br/programacao-de-navios-porto-de-belem/"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
+      "implementation_scope": "lineup_historico.py (registro por edição e as-of); lineup_cdp_santarem.interpretar_cdp(): extrai HTML offline por porto; WDT não é DUV",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "primary_blocker": "RIGHTS_SOURCE_TIMESTAMP_DUV_AND_THREE_SNAPSHOTS",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -1939,12 +2001,13 @@
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
         "LICENSED_PUBLICATION_GATE",
-        "EXACT_ENDPOINT_UNKNOWN"
+        "VERIFY_PUBLICATION_TIMESTAMP",
+        "VERIFY_VESSEL_SCALE_ID"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
-      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+      "source_note": "A tabela CDP inclui placeholders e datas possivelmente antigas. Sem DUV ou publicação horária comprovada, não entra como line-up diário de navios.",
+      "preliminary_evidence": "OFFICIAL_PORTAL_TABLE_CANDIDATE_NOT_SNAPSHOT_TESTED"
     },
     {
       "dataset_id": "LINEUP_CABEDELO",
@@ -2034,7 +2097,7 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
+      "source_note": "PortosRio aponta a programação do Porto do Forno como 'em breve'. NÃO há endpoint de line-up operacional comprovado.",
       "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
     },
     {
@@ -2071,16 +2134,16 @@
       "dataset_id": "LINEUP_ILHEUS",
       "collector_class": "PUBLISHED_DOCUMENT",
       "locator": {
-        "kind": "PROVIDER_PORTAL",
-        "url": "https://www.codeba.gov.br/",
-        "source_proof": null
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/site.php?secao=tportos_ilheus",
+        "source_proof": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/site.php?secao=tportos_ilheus"
       },
-      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo); lineup_historico.py (snapshot local por porto, nao homologado)",
+      "implementation_scope": "lineup_historico.py (registro por edição e as-of); lineup_portais.py + ingestao_lineup_portais.py (parser offline, bytes com sha256)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "RIGHTS_AND_THREE_REAL_SNAPSHOTS_PENDING",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -2089,12 +2152,14 @@
         "HISTORICAL_BACKFILL",
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
-        "LICENSED_PUBLICATION_GATE"
+        "LICENSED_PUBLICATION_GATE",
+        "VERIFY_PUBLICATION_TIMESTAMP",
+        "VERIFY_QUANTITY_UNIT"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
-      "preliminary_evidence": "CATALOG_ONLY"
+      "source_note": "CANDIDATO apenas. Não homologado: conferir página atual, formato, licença, fuso, last_updated e unidades; não afirmar line-up atual.",
+      "preliminary_evidence": "INSTITUTIONAL_URL_DISCOVERED_NO_REAL_SNAPSHOT"
     },
     {
       "dataset_id": "LINEUP_IMBITUBA",
@@ -2161,16 +2226,16 @@
       "dataset_id": "LINEUP_ITAGUAI",
       "collector_class": "PUBLISHED_DOCUMENT",
       "locator": {
-        "kind": "NOT_VERIFIED_PER_DATASET",
-        "url": null,
-        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
+        "source_proof": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
+      "implementation_scope": "lineup_historico.py (registro por edição e as-of); Índice institucional PortosRio. Parser não desenvolvido; consulta somente após homologação.",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "primary_blocker": "IDENTIFY_PORT_SPECIFIC_RESOURCE_AND_RIGHTS",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -2180,12 +2245,12 @@
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
         "LICENSED_PUBLICATION_GATE",
-        "EXACT_ENDPOINT_UNKNOWN"
+        "DISCOVER_PORT_SPECIFIC_DOCUMENT"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
-      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+      "source_note": "Página índice lista navios por porto; ausência de recurso individual ou registros atuais bloqueia coleta.",
+      "preliminary_evidence": "INSTITUTIONAL_PAGE_WITH_PORT_LINKS"
     },
     {
       "dataset_id": "LINEUP_ITAJAI",
@@ -2252,16 +2317,16 @@
       "dataset_id": "LINEUP_ITAQUI",
       "collector_class": "PUBLISHED_DOCUMENT",
       "locator": {
-        "kind": "PROVIDER_PORTAL",
-        "url": "https://www.portodoitaqui.com.br/porto-agora/navios/esperados",
-        "source_proof": null
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://www.portodoitaqui.com.br/porto-agora/navios",
+        "source_proof": "https://www.portodoitaqui.com.br/porto-agora/navios"
       },
-      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo); lineup_historico.py (snapshot local por porto, nao homologado)",
+      "implementation_scope": "lineup_historico.py (registro por edição e as-of); lineup_portais.py + ingestao_lineup_portais.py (parser offline, bytes com sha256)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "RIGHTS_AND_THREE_REAL_SNAPSHOTS_PENDING",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -2270,12 +2335,14 @@
         "HISTORICAL_BACKFILL",
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
-        "LICENSED_PUBLICATION_GATE"
+        "LICENSED_PUBLICATION_GATE",
+        "VERIFY_PUBLICATION_TIMESTAMP",
+        "VERIFY_QUANTITY_UNIT"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
-      "preliminary_evidence": "CATALOG_ONLY"
+      "source_note": "CANDIDATO apenas. Não homologado: conferir página atual, formato, licença, fuso, last_updated e unidades; não afirmar line-up atual.",
+      "preliminary_evidence": "INSTITUTIONAL_URL_DISCOVERED_NO_REAL_SNAPSHOT"
     },
     {
       "dataset_id": "LINEUP_LAGUNA",
@@ -2463,16 +2530,16 @@
       "dataset_id": "LINEUP_NITEROI",
       "collector_class": "PUBLISHED_DOCUMENT",
       "locator": {
-        "kind": "NOT_VERIFIED_PER_DATASET",
-        "url": null,
-        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
+        "source_proof": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
+      "implementation_scope": "lineup_historico.py (registro por edição e as-of); Índice institucional PortosRio. Parser não desenvolvido; consulta somente após homologação.",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "primary_blocker": "IDENTIFY_PORT_SPECIFIC_RESOURCE_AND_RIGHTS",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -2482,12 +2549,12 @@
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
         "LICENSED_PUBLICATION_GATE",
-        "EXACT_ENDPOINT_UNKNOWN"
+        "DISCOVER_PORT_SPECIFIC_DOCUMENT"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
-      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+      "source_note": "Página índice lista navios por porto; ausência de recurso individual ou registros atuais bloqueia coleta.",
+      "preliminary_evidence": "INSTITUTIONAL_PAGE_WITH_PORT_LINKS"
     },
     {
       "dataset_id": "LINEUP_PARANAGUA",
@@ -2704,16 +2771,16 @@
       "dataset_id": "LINEUP_RIO_DE_JANEIRO",
       "collector_class": "PUBLISHED_DOCUMENT",
       "locator": {
-        "kind": "NOT_VERIFIED_PER_DATASET",
-        "url": null,
-        "source_proof": "https://www.gov.br/antaq/pt-br/assuntos/instalacoes-portuarias/portos/tarifas-das-autoridades-portuarias"
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
+        "source_proof": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios"
       },
-      "implementation_scope": "lineup_nacional.py; adapter por autoridade e fixture real dependente de homologacao; lineup_historico.py (snapshot local por porto, nao homologado)",
+      "implementation_scope": "lineup_historico.py (registro por edição e as-of); Índice institucional PortosRio. Parser não desenvolvido; consulta somente após homologação.",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "EXACT_ENDPOINT_UNKNOWN",
+      "primary_blocker": "IDENTIFY_PORT_SPECIFIC_RESOURCE_AND_RIGHTS",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -2723,12 +2790,12 @@
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
         "LICENSED_PUBLICATION_GATE",
-        "EXACT_ENDPOINT_UNKNOWN"
+        "DISCOVER_PORT_SPECIFIC_DOCUMENT"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Fonte de registro ANTAQ nao equivale a line-up operacional publicado; TUP pode depender de autorizacao privada.",
-      "preliminary_evidence": "OFFICIAL_PORT_REGISTER_ONLY"
+      "source_note": "Página índice lista navios por porto; ausência de recurso individual ou registros atuais bloqueia coleta.",
+      "preliminary_evidence": "INSTITUTIONAL_PAGE_WITH_PORT_LINKS"
     },
     {
       "dataset_id": "LINEUP_RIO_GRANDE",
@@ -2756,23 +2823,23 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
+      "source_note": "Portoweb gera relatório de navios por situação em PDF com horário de emissão, mas URL é dinâmica; identificar recurso atual e autorização de uso. Não considerar PDF antigo atual.",
       "preliminary_evidence": "CATALOG_ONLY"
     },
     {
       "dataset_id": "LINEUP_SALVADOR",
       "collector_class": "PUBLISHED_DOCUMENT",
       "locator": {
-        "kind": "PROVIDER_PORTAL",
-        "url": "https://www.codeba.gov.br/",
-        "source_proof": null
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/site.php?secao=tportos_salvador",
+        "source_proof": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/site.php?secao=tportos_salvador"
       },
-      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo); lineup_historico.py (snapshot local por porto, nao homologado)",
+      "implementation_scope": "lineup_historico.py (registro por edição e as-of); lineup_portais.py + ingestao_lineup_portais.py (parser offline, bytes com sha256)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "RIGHTS_AND_THREE_REAL_SNAPSHOTS_PENDING",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -2781,12 +2848,14 @@
         "HISTORICAL_BACKFILL",
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
-        "LICENSED_PUBLICATION_GATE"
+        "LICENSED_PUBLICATION_GATE",
+        "VERIFY_PUBLICATION_TIMESTAMP",
+        "VERIFY_QUANTITY_UNIT"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
-      "preliminary_evidence": "CATALOG_ONLY"
+      "source_note": "CANDIDATO apenas. Não homologado: conferir página atual, formato, licença, fuso, last_updated e unidades; não afirmar line-up atual.",
+      "preliminary_evidence": "INSTITUTIONAL_URL_DISCOVERED_NO_REAL_SNAPSHOT"
     },
     {
       "dataset_id": "LINEUP_SANTANA",
@@ -2822,16 +2891,16 @@
       "dataset_id": "LINEUP_SANTAREM",
       "collector_class": "PUBLISHED_DOCUMENT",
       "locator": {
-        "kind": "PROVIDER_PORTAL",
+        "kind": "OFFICIAL_INDEX",
         "url": "https://www.cdp.com.br/programacao-de-navios-do-porto-de-santarem/",
-        "source_proof": null
+        "source_proof": "https://www.cdp.com.br/programacao-de-navios-do-porto-de-santarem/"
       },
-      "implementation_scope": "lineup_html.py (código citado não implica coletor ativo); lineup_historico.py (snapshot local por porto, nao homologado)",
+      "implementation_scope": "lineup_historico.py (registro por edição e as-of); lineup_cdp_santarem.py (parser offline; WDT não equivale DUV)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "RIGHTS_AND_THREE_REAL_SNAPSHOTS_PENDING",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -2840,12 +2909,14 @@
         "HISTORICAL_BACKFILL",
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
-        "LICENSED_PUBLICATION_GATE"
+        "LICENSED_PUBLICATION_GATE",
+        "VERIFY_PUBLICATION_TIMESTAMP",
+        "VERIFY_QUANTITY_UNIT"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
-      "preliminary_evidence": "CATALOG_ONLY"
+      "source_note": "CANDIDATO apenas. Não homologado: conferir página atual, formato, licença, fuso, last_updated e unidades; não afirmar line-up atual.",
+      "preliminary_evidence": "INSTITUTIONAL_URL_DISCOVERED_NO_REAL_SNAPSHOT"
     },
     {
       "dataset_id": "LINEUP_SANTOS",
@@ -3568,12 +3639,12 @@
         "url": null,
         "source_proof": null
       },
-      "implementation_scope": "briefing_diario.py (código citado não implica coletor ativo)",
+      "implementation_scope": "coleta_web.py XML + rss_radar.py + historico_noticias.py + curadoria_radar.py + pipeline_briefing.py (offline; lista de candidatos NÃO ativada)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "FEED_REAL_RIGHTS_AND_ORIGINAL_PUBLISHED_VERIFICATION",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -3587,8 +3658,41 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
-      "preliminary_evidence": "CATALOG_ONLY"
+      "source_note": "Catálogo de fontes candidatas: CONAB e ANTAQ só possuem índice HTML identificado, não RSS validado; MAPA-SDA aponta RSS.app, de terceiro. Confirmar termos, acesso, origem do artigo e hora de publicação antes de qualquer coleta ou publicação.",
+      "preliminary_evidence": "OFFICIAL_HTML_NEWS_INDEXES_AND_MAPA_SDA_RSS_REFERENCE_DISCOVERED",
+      "candidate_sources": [
+        {
+          "source": "CONAB",
+          "kind": "OFFICIAL_HTML_NEWS_INDEX",
+          "url": "https://www.gov.br/conab/pt-br/comunicacao-institucional/sala-de-imprensa/noticias",
+          "proof": "https://www.gov.br/conab/pt-br/comunicacao-institucional/sala-de-imprensa/noticias",
+          "feed_verified": false,
+          "article_published_timestamp_required": true,
+          "collection_rights": "REVIEW",
+          "runtime_enabled": false
+        },
+        {
+          "source": "ANTAQ",
+          "kind": "OFFICIAL_HTML_NEWS_INDEX",
+          "url": "https://www.gov.br/antaq/pt-br/noticias",
+          "proof": "https://www.gov.br/antaq/pt-br/noticias",
+          "feed_verified": false,
+          "article_published_timestamp_required": true,
+          "collection_rights": "REVIEW",
+          "runtime_enabled": false
+        },
+        {
+          "source": "MAPA_SDA",
+          "kind": "OFFICIAL_PAGE_REFERENCES_THIRD_PARTY_RSS",
+          "url": "https://rss.app/feeds/0OBEfdY9LbabTjin.xml",
+          "proof": "https://www.gov.br/agricultura/pt-br/assuntos/defesa-agropecuaria/plataforma-sda/comunicados-sda/assine-o-feed-1",
+          "feed_verified": false,
+          "third_party_provider": "rss.app",
+          "article_published_timestamp_required": true,
+          "collection_rights": "REVIEW",
+          "runtime_enabled": false
+        }
+      ]
     },
     {
       "dataset_id": "RADAR_REUTERS",
