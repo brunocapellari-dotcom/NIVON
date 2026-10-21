@@ -17,11 +17,12 @@
       "authority": "PortosRio",
       "kind": "PORTO_ORGANIZADO",
       "parent_port_id": null,
-      "lineup_source_url": null,
+      "lineup_source_url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
       "endpoint_verified": false,
       "commercial_rights": "PENDING",
       "parser_homologated": false,
-      "live_enabled": false
+      "live_enabled": false,
+      "discovery_status": "OFFICIAL_NAVIGATION_INDEX_ONLY"
     },
     {
       "id": "ANTONINA",
@@ -43,11 +44,12 @@
       "authority": "CODEBA",
       "kind": "PORTO_ORGANIZADO",
       "parent_port_id": null,
-      "lineup_source_url": null,
+      "lineup_source_url": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/porto_aratu.php?secao=tportos_aratu",
       "endpoint_verified": false,
       "commercial_rights": "PENDING",
       "parser_homologated": false,
-      "live_enabled": false
+      "live_enabled": false,
+      "discovery_status": "PUBLIC_PAGE_CANDIDATE_UNVERIFIED"
     },
     {
       "id": "AREIA_BRANCA",
@@ -82,11 +84,12 @@
       "authority": "CDP",
       "kind": "PORTO_ORGANIZADO",
       "parent_port_id": null,
-      "lineup_source_url": null,
+      "lineup_source_url": "https://www.cdp.com.br/programacao-de-navios-porto-de-belem/",
       "endpoint_verified": false,
       "commercial_rights": "PENDING",
       "parser_homologated": false,
-      "live_enabled": false
+      "live_enabled": false,
+      "discovery_status": "PUBLIC_PAGE_CANDIDATE_UNVERIFIED"
     },
     {
       "id": "CABEDELO",
@@ -134,11 +137,12 @@
       "authority": "CODEBA",
       "kind": "PORTO_ORGANIZADO",
       "parent_port_id": null,
-      "lineup_source_url": null,
+      "lineup_source_url": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/site.php?secao=tportos_ilheus",
       "endpoint_verified": false,
       "commercial_rights": "PENDING",
       "parser_homologated": false,
-      "live_enabled": false
+      "live_enabled": false,
+      "discovery_status": "PUBLIC_PAGE_CANDIDATE_UNVERIFIED"
     },
     {
       "id": "IMBITUBA",
@@ -160,11 +164,12 @@
       "authority": "PortosRio",
       "kind": "PORTO_ORGANIZADO",
       "parent_port_id": null,
-      "lineup_source_url": null,
+      "lineup_source_url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
       "endpoint_verified": false,
       "commercial_rights": "PENDING",
       "parser_homologated": false,
-      "live_enabled": false
+      "live_enabled": false,
+      "discovery_status": "OFFICIAL_NAVIGATION_INDEX_ONLY"
     },
     {
       "id": "ITAJAI",
@@ -186,11 +191,12 @@
       "authority": "EMAP",
       "kind": "PORTO_ORGANIZADO",
       "parent_port_id": null,
-      "lineup_source_url": null,
+      "lineup_source_url": "https://www.portodoitaqui.com.br/porto-agora/navios",
       "endpoint_verified": false,
       "commercial_rights": "PENDING",
       "parser_homologated": false,
-      "live_enabled": false
+      "live_enabled": false,
+      "discovery_status": "PUBLIC_PAGE_CANDIDATE_UNVERIFIED"
     },
     {
       "id": "LAGUNA",
@@ -251,11 +257,12 @@
       "authority": "PortosRio",
       "kind": "PORTO_ORGANIZADO",
       "parent_port_id": null,
-      "lineup_source_url": null,
+      "lineup_source_url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
       "endpoint_verified": false,
       "commercial_rights": "PENDING",
       "parser_homologated": false,
-      "live_enabled": false
+      "live_enabled": false,
+      "discovery_status": "OFFICIAL_NAVIGATION_INDEX_ONLY"
     },
     {
       "id": "PARANAGUA",
@@ -329,11 +336,12 @@
       "authority": "PortosRio",
       "kind": "PORTO_ORGANIZADO",
       "parent_port_id": null,
-      "lineup_source_url": null,
+      "lineup_source_url": "https://portosrio.gov.br/pt-br/portos/programacao-de-navios",
       "endpoint_verified": false,
       "commercial_rights": "PENDING",
       "parser_homologated": false,
-      "live_enabled": false
+      "live_enabled": false,
+      "discovery_status": "OFFICIAL_NAVIGATION_INDEX_ONLY"
     },
     {
       "id": "RIO_GRANDE",
@@ -355,11 +363,12 @@
       "authority": "CODEBA",
       "kind": "PORTO_ORGANIZADO",
       "parent_port_id": null,
-      "lineup_source_url": null,
+      "lineup_source_url": "https://www.codeba.gov.br/eficiente/sites/portalcodeba/pt-br/site.php?secao=tportos_salvador",
       "endpoint_verified": false,
       "commercial_rights": "PENDING",
       "parser_homologated": false,
-      "live_enabled": false
+      "live_enabled": false,
+      "discovery_status": "PUBLIC_PAGE_CANDIDATE_UNVERIFIED"
     },
     {
       "id": "SANTANA",
@@ -381,11 +390,12 @@
       "authority": "CDP",
       "kind": "PORTO_ORGANIZADO",
       "parent_port_id": null,
-      "lineup_source_url": null,
+      "lineup_source_url": "https://www.cdp.com.br/programacao-de-navios-do-porto-de-santarem/",
       "endpoint_verified": false,
       "commercial_rights": "PENDING",
       "parser_homologated": false,
-      "live_enabled": false
+      "live_enabled": false,
+      "discovery_status": "PUBLIC_PAGE_CANDIDATE_UNVERIFIED"
     },
     {
       "id": "SANTOS",
@@ -446,11 +456,12 @@
       "authority": "CDP",
       "kind": "PORTO_ORGANIZADO",
       "parent_port_id": null,
-      "lineup_source_url": null,
+      "lineup_source_url": "https://www.cdp.com.br/programacao-de-navio-do-porto-de-vila-do-conde/",
       "endpoint_verified": false,
       "commercial_rights": "PENDING",
       "parser_homologated": false,
-      "live_enabled": false
+      "live_enabled": false,
+      "discovery_status": "PUBLIC_PAGE_CANDIDATE_UNVERIFIED"
     },
     {
       "id": "VITORIA",
