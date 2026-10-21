@@ -46,6 +46,28 @@ class TestPipelineDieselANP(unittest.TestCase):
         self.assertIn("6.200",x["texto"])
         self.assertFalse(x["enviado"])
 
+    def test_evidencia_anp_mantem_amostra_semana_raw_e_reconciliacao(self):
+        x=self.edicao()
+        self.assertEqual(len(x["evidencias_editoriais"]["cotacoes"]),1)
+        p=x["evidencias_editoriais"]["cotacoes"][0]
+        self.assertEqual(p["fonte_id"],"ANP")
+        self.assertEqual(p["grupo"],"ENERGIA")
+        self.assertEqual(p["valor"],"6.2")
+        self.assertEqual(p["unidade"],"R$/L")
+        self.assertEqual(p["natureza"],"INDICATIVO")
+        self.assertEqual(p["competencia"],"2026-10-10")
+        self.assertEqual(p["semana_inicio"],"2026-10-04")
+        self.assertEqual(p["semana_fim"],"2026-10-10")
+        self.assertEqual(p["postos_pesquisados"],7)
+        self.assertEqual(p["classe_estatistica"],"MEDIA_AMOSTRAL_MUNICIPAL_REVENDA")
+        self.assertEqual(p["sha256_origem"],SHA)
+        self.assertEqual(p["evidencia_direitos_id"],"TESTE_AUTORIZACAO_SINTETICA")
+        self.assertIn("R$/L",x["texto"])
+        self.assertFalse(any(err.startswith("COTACAO_")
+                             for err in x["preflight_editorial"]["bloqueios"]))
+        self.assertFalse(x["preflight_editorial"]["apto_revisao"])
+        self.assertEqual(x["preflight_editorial"]["modo"],"OFFLINE_SEM_ENVIO")
+
     def test_sem_direito_externo_nao_gera_cotacao(self):
         a=amostra();a["dataset"]["enabled"]=False
         with self.assertRaises(PermissionError):
