@@ -75,3 +75,19 @@ O NIVON não executa receituário agronômico e não possui finalidade comercial
 - ANA: um token válido e uma consulta com **zero medições** agora produzem `AUTENTICACAO_OK_SEM_MEDICOES`, sem afirmar que houve leitura de dados ou homologação. Status de rede/arquivo continuam privados e sem segredos.
 - Verificação Vercel em 21/10/2026: projeto `nivon` existe, mas lista de sandboxes está vazia; tentativa prévia de criação v2 retornou **403 forbidden**. Não insistir em chamadas equivalentes sem mudança verificável de permissão/conta; manter bloqueio real.
 - Testes: incluídos casos positivos e adversariais para recusar JSONs de erros HTTP 200, ausência de campos USDA, serviço indisponível/429 e estação ANA sem medições. A CI valida a PR; **não atribuir operação live à execução da CI**.
+
+## Alternativa sem Sandbox Vercel: GitHub Actions manual e protegido
+
+Foi acrescentado o workflow `.github/workflows/acessos-privados.yml` como alternativa à falha de autorização **403** na criação de Sandbox Vercel. Ele permanece **inativo enquanto estiver somente nesta PR**: o GitHub exige que workflows manuais estejam no branch padrão para acioná-los.
+
+**Não executar com credenciais em PRs.** Depois que as PRs dependentes forem integradas com revisão, o proprietário poderá:
+
+1. No GitHub, abrir NIVON → Settings → Environments → criar `nivon-fontes-privadas`, restringir a implantação à branch `main` e configurar revisores obrigatórios, quando disponível.
+2. Configurar **somente nesse environment**, nunca em arquivo, as credenciais `AGROBR_USDA_API_KEY`, `NIVON_ANA_IDENTIFICADOR`, `NIVON_ANA_SENHA`, `NIVON_INMET_BDMEP_URL`. Esses valores deverão ser extraídos pelo proprietário de seus e-mails originais em uma sessão autenticada; não transferir do Gmail por ferramentas de chat, PR, artefatos ou logs.
+3. Para estação ANA opcional, configurar as variáveis **sem segredo** `NIVON_ANA_ESTACAO`, `NIVON_ANA_DATA_BUSCA`, `NIVON_ANA_ZONA_ESTACAO`, de acordo com estação e fuso confirmados. Sem essas configurações, apenas o token será validado.
+4. Abrir Actions → **NIVON - Verificacao privada manual de APIs** → Run workflow → **main** → escolher uma fonte por execução. Verificar o status sanitizado, sem fazer upload de dados.
+5. INMET recebe um ZIP em diretório temporário isolado, **sem preservação entre execuções e sem artifact**. A carga histórica real exigirá armazenamento privado persistente e verificação adicional de permissões/metadata antes do uso.
+
+O workflow possui somente `workflow_dispatch`; cada fonte é um job separado com o mínimo de segredos de que precisa, somente na `main`, ambiente protegido, permissões `contents: read`, sem agendamento, sem job em push/PR, e sem publicação de arquivo. O custo depende dos limites da conta GitHub; não declarar cobrança zero garantida.
+
+**Não habilitar o workflow em `main` antes de revisar o código e habilitar proteções de environment.** Nenhum teste live decorre automaticamente da inclusão deste workflow, mesmo que os testes sintéticos da CI passem.
