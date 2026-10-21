@@ -8,7 +8,7 @@
 - Integração agrobr existente: `src/nivon/conab_agrobr.py` na PR #3 usa progresso semanal CONAB. A existência do adaptador não comprova operação dos demais conectores.
 
 ## Incremento executável
-- `config/agrobr_crosswalk.v1.json`: vínculos entre 41 slugs documentais do agrobr e source_ids NIVON existentes, sem criar fontes ou datasets.
+- `config/agrobr_crosswalk.v1.json`: vínculos entre 41 slugs documentais do agrobr e source_ids NIVON existentes; `dataset_ids` mapeia somente equivalências de conteúdo verificadas na documentação, **não todos os datasets da mesma instituição**. Sem criar fontes ou datasets.
 - `src/nivon/agrobr_crosswalk.py`: valida IDs, integridade do upstream, escopo não comercial, exclusões e direitos; calcula cobertura sem dupla contagem. **Nenhuma chamada de rede ou coleta.**
 - `tests/test_agrobr_crosswalk.py`: casos positivos e adversariais para duplicatas, fonte inexistente, uso comercial, hashes, exclusão e ativação indevida.
 
@@ -31,3 +31,6 @@ PYTHONPATH=src python -m unittest discover -s tests -v
 
 ## Próximo passo
 Auditar primeiro os conectores agrobr relacionados a CONAB, IBGE, BCB, MDIC, ANP, ANTT, ANA e USDA contra os módulos nativos; selecionar amostra real autorizada com metadata; testar cobertura histórica e persistência sem transformar dados documentais em fatos observados.
+
+## Proteção contra falsa equivalência
+Ter o mesmo provedor não valida igualdade de dataset. `antt_pedagio` não é `ANTT_MDFE_RODOVIARIO`; `mapa_psr` não é `MAPA_SIPEAGRO_RACAO`; ANA/SNIRH ArcGIS hidrografia não equivale às séries de cota/vazão `ANA_HIDRO`. Esses acessos permanecem com `dataset_ids=[]` até existir registro canônico semanticamente correto e evidências de dados.
