@@ -286,8 +286,10 @@ def parse_itaqui_tables(tables: Iterable[PdfTable], *, reference_date: date) -> 
             berth_match = re.search(r"\bBER[CÇ]O\s*(\d{1,3})\b", _value(row, berth_i), re.I)
             if berth_match:
                 current_berth = f"BERCO_{berth_match.group(1)}"
+            raw_eta = _value(row, eta_i)
+            eta_has_full_year = bool(re.fullmatch(r"\d{1,2}/\d{1,2}/\d{4} \d{1,2}:\d{2}", raw_eta))
             try:
-                eta = _normalize_partial_eta(_value(row, eta_i), reference_date)
+                eta = _normalize_partial_eta(raw_eta, reference_date)
             except ValueError:
                 # Keep the source row visible for audit; never substitute 00:00
                 # or silently shrink the apparent line-up during parsing.
@@ -300,6 +302,7 @@ def parse_itaqui_tables(tables: Iterable[PdfTable], *, reference_date: date) -> 
                 "navio": vessel,
                 "imo": imo,
                 "eta": eta,
+                "eta_year_inferred": not eta_has_full_year,
                 "terminal": current_berth,
                 "carga": _value(row, product_i),
                 "quantidade_t": _format_number(_br_number(_value(row, qty_i))),
@@ -371,6 +374,7 @@ def parse_paranagua_tables(
                 arrival = f"{arrival} {_value(row, arrival_i + 1)}".strip()
             if not arrival:
                 continue
+            eta_has_full_year = bool(re.fullmatch(r"\d{1,2}/\d{1,2}/\d{4} \d{1,2}:\d{2}", arrival))
             try:
                 eta = _normalize_partial_eta(arrival, reference_date)
             except ValueError:
@@ -381,6 +385,7 @@ def parse_paranagua_tables(
             parsed = {
                 "navio": vessel,
                 "eta": eta,
+                "eta_year_inferred": not eta_has_full_year,
                 "terminal": " ".join(_value(row, berth_i).split()),
                 "carga": product,
                 "quantidade_t": _format_number(volume),
