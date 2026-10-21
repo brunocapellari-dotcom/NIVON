@@ -8,6 +8,7 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal, InvalidOperation
 from hashlib import sha256
+from math import isfinite
 import json
 from typing import Mapping, Sequence
 from .quant_core import ErroQuantitativo, _identidade, _instante, _hash, _dia
@@ -24,6 +25,12 @@ def _valor_decimal(valor: object, campo: str, *, nao_negativo: bool=False) -> De
     except InvalidOperation as exc: raise ErroQuantitativo(f"{campo}: valor invalido") from exc
     if not n.is_finite() or len(n.as_tuple().digits)>18 or (n < 0 if nao_negativo else n <= 0):
         raise ErroQuantitativo(f"{campo}: fora do dominio")
+    try:
+        aproximado=float(n)
+    except OverflowError as exc:
+        raise ErroQuantitativo(f"{campo}: overflow ao representar BRL/T") from exc
+    if not isfinite(aproximado) or (n != 0 and aproximado == 0):
+        raise ErroQuantitativo(f"{campo}: numero irrepresentavel")
     return n
 
 
@@ -60,6 +67,7 @@ def preparar_serie_frete_anunciado(
     registros_normalizados=[]
     hashes_ausentes=0
     vistos={}
+    registro_ids={}
     pedagio_presente=set()
     for row in registros:
         if not isinstance(row,Mapping):
@@ -70,8 +78,8 @@ def preparar_serie_frete_anunciado(
             raise ErroQuantitativo("natureza deve ser FRETE_ANUNCIADO_NAO_CONTRATADO")
         if row.get("fonte_id")!=fonte:
             raise ErroQuantitativo("fonte_id heterogenea")
-        _identidade(row.get("registro_id"),"registro_id")
-        _identidade(row.get("oferta_id"),"oferta_id")
+        registro_id=_identidade(row.get("registro_id"),"registro_id")
+        oferta_id=_identidade(row.get("oferta_id"),"oferta_id")
         periodo=_dia(row.get("data_referencia"),"data_referencia")
         pub=_instante(row.get("data_publicacao"),"data_publicacao")
         coleta=_instante(row.get("data_coleta"),"data_coleta")
@@ -97,7 +105,11 @@ def preparar_serie_frete_anunciado(
         else:
             _hash(digest)
         key=(periodo.isoformat(),coleta.isoformat())
-        same=(str(valor),str(toll),str(full),digest)
+        same=(str(base),str(valor),str(toll),str(full),digest,
+              pub.isoformat(),registro_id,oferta_id)
+        if registro_id in registro_ids and registro_ids[registro_id]!=same:
+            raise ErroQuantitativo("registro_id reutilizado para edicoes comerciais diferentes")
+        registro_ids[registro_id]=same
         if key in vistos:
             if vistos[key]!=same:
                 raise ErroQuantitativo("vintages de frete conflitantes na mesma coleta")
