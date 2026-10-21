@@ -92,3 +92,49 @@ def auditar_previsao_ponta_a_ponta(
         "publicavel": False,
         "probabilidades_calibradas": None,
     }
+
+
+def auditar_previsao_ponta_a_ponta_csv_canonico(
+    con: sqlite3.Connection, *, previsao_id: str,
+    recibo_ancora: Mapping, ledger_id: str, segredo_verificacao: bytes,
+    pacote_base: Mapping, pacote_alvo: Mapping, calendario_sessoes: Mapping,
+    as_of: str,
+) -> dict:
+    """Extensão rígida: 1:1 raw CSV canônico x JSONL antes do backtest.
+
+    O CSV aqui é contrato de ENSAIO NIVON, não documento oficial
+    CME/ICE. A validação independe do parser que produziu JSONL, mas
+    não homologa esse parser para formatos oficiais ou dados live.
+    """
+    from .auditoria_extracao_csv_mercados import verificar_extracao_csv_canonico
+
+    # O fluxo original verifica ANTES a cadeia, o recibo e a consistência
+    # temporal; ambos os artefatos são inspecionados novamente de forma
+    # estrita, sob os MESMOS bytes e instantes econômicos.
+    result = auditar_previsao_ponta_a_ponta(
+        con, previsao_id=previsao_id, recibo_ancora=recibo_ancora,
+        ledger_id=ledger_id, segredo_verificacao=segredo_verificacao,
+        pacote_base=pacote_base, pacote_alvo=pacote_alvo,
+        calendario_sessoes=calendario_sessoes, as_of=as_of,
+    )
+    corte_base = result["item_backtest"]["emitido_em"]
+    conferidos = []
+    for pacote, corte in ((pacote_base, corte_base), (pacote_alvo, as_of)):
+        conferidos.append(verificar_extracao_csv_canonico(
+            pacote["arquivo_original"], pacote["snapshot_jsonl"],
+            manifesto=pacote["manifesto"], as_of=corte,
+        )["evidencia_extracao_csv"])
+    return {
+        **result,
+        "status": "E2E_CSV_CANONICO_CONFERIDO_OFFLINE_NAO_HOMOLOGADO",
+        "extracao_csv_canonico_conferida": True,
+        "linhas_base_conferidas": conferidos[0]["registros_conferidos"],
+        "linhas_alvo_conferidas": conferidos[1]["registros_conferidos"],
+        # Não confundir contrato CSV NIVON com o formato do fornecedor.
+        "parser_independente_verificado": False,
+        "parser_oficial_mercado_validado": False,
+        "origem_mercado_autenticada": False,
+        "licenca_publicacao_verificada": False,
+        "publicavel": False,
+        "probabilidades_calibradas": None,
+    }
