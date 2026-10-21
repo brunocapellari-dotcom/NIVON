@@ -68,10 +68,13 @@
     }
   ],
   "not_integrated_from_pr9": "Todos os demais módulos de agricultura, logística, Hermes, FinOps, mensagens e relatórios da PR9 permanecem fora.",
-  "missing_canonical_dataset": "NOAA_ENSO_RONI",
   "missing_rights_and_real_samples": true,
   "collectors_operational": false,
   "source_validated": false,
   "forecast_skill_approved": false,
-  "evidence_caveat": "Hash declaratório de disponibilidade não prova que os bytes existiam no passado."
+  "evidence_caveat": "Hash declaratório de disponibilidade não prova que os bytes existiam no passado.",
+  "candidate_registered_offline": "NOAA_ENSO_RONI",
+  "candidate_metadata_checked_online": "2026-10-21",
+  "candidate_operational_authorization": false,
+  "candidate_real_vintage_validated": false
 }
