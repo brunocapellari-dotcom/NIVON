@@ -100,6 +100,18 @@ def _resumir_falha(stderr: str) -> str:
     )
     if module_name:
         return "módulo Python não importável: " + module_name[-1]
+    if "no space left on device" in stderr.lower() or "errno 28" in stderr.lower():
+        return "volume temporário sem espaço; aumentar somente cota de ensaio"
+    if "permission denied" in stderr.lower() or "errno 13" in stderr.lower():
+        return "permissão insuficiente no contêiner efêmero"
+    if ("externally-managed-environment" in stderr.lower()
+            or "this environment is externally managed" in stderr.lower()):
+        return "política de instalação do Python impede destino"
+    if ("cannot install" in stderr.lower() or "resolutionimpossible" in stderr.lower()
+            or "conflicting dependencies" in stderr.lower()):
+        return "conflito de versões na instalação offline"
+    if "invalid wheel" in stderr.lower() or "not a supported wheel" in stderr.lower():
+        return "arquivo wheel ou ABI incompatível"
     if "symbol not found" in stderr.lower() or "undefined symbol" in stderr.lower():
         return "incompatibilidade de símbolo ou biblioteca nativa"
     if "importerror" in stderr.lower():
@@ -164,7 +176,7 @@ def executar(group: str, phase: str, *, pyproject: str, root: str,
             raise ErroSupplyChain("diretório de instalação deve começar vazio")
         site.mkdir(mode=0o700)
         command = [sys.executable, "-m", "pip", "install", "--no-index", "--only-binary=:all:",
-                   "--no-cache-dir", "--no-input", "--find-links", str(wheels),
+                   "--no-cache-dir", "--no-compile", "--no-input", "--find-links", str(wheels),
                    "--target", str(site), *specs]
         env = dict(os.environ)
         env["PIP_CONFIG_FILE"] = os.devnull

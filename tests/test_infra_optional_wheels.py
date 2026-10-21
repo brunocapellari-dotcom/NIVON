@@ -91,6 +91,14 @@ class TestOptionalWheels(unittest.TestCase):
             self.assertIn("OFFLINE_INSTALL", str(install.exception))
             self.assertNotIn("sensitive", str(install.exception))
 
+    def test_espaco_temporario_sem_expor_caminhos(self):
+        self.assertEqual(_resumir_falha("OSError: [Errno 28] No space left on device at /private/path"),
+                         "volume temporário sem espaço; aumentar somente cota de ensaio")
+        self.assertEqual(_resumir_falha("ERROR: Cannot install X and Y because these packages have conflicting dependencies."),
+                         "conflito de versões na instalação offline")
+        self.assertEqual(_resumir_falha("ERROR: [Errno 13] Permission denied: /private/path"),
+                         "permissão insuficiente no contêiner efêmero")
+
     def test_timeout_fecha_execucao(self):
         with patch("nivon.infra_optional_wheels.subprocess.run",
                    side_effect=subprocess.TimeoutExpired("pip", 10)):
@@ -102,6 +110,7 @@ class TestOptionalWheels(unittest.TestCase):
         self.assertIn(IMAGE, wf)
         self.assertIn(DEBIAN_IMAGE, wf)
         self.assertIn("--distro", wf)
+        self.assertIn("size=1024m,uid=65532,gid=65532", wf)
         self.assertIn("distro: debian", wf)
         for phrase in ("ubuntu-24.04-arm", "ubuntu-latest",
                        "--only-binary=:all:", "--phase download",
