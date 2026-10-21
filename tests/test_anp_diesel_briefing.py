@@ -5,7 +5,7 @@ from nivon.briefing_composto import montar_briefing
 
 SHA="a"*64
 AGORA="2026-10-20T10:00:00-03:00"
-PUB="2026-10-09T15:14:00-03:00"
+PUB="2026-10-11T15:14:00-03:00"
 
 def sample(week="2026-10-10"):
     return {
