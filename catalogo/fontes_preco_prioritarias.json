@@ -26,11 +26,11 @@
         "boi MT"
       ],
       "classe": "fonte_primaria",
-      "direitos": "Termos e modalidades de acesso a confirmar por operacao; cadastro ou pagamento pode ser exigido",
+      "direitos": "Termo oficial reserva bases/ativos e proibe uso nao autorizado, mesmo nao comercial; series publicas continuam zona cinza. Requer decisao documental especifica para extracao e armazenamento sistematicos.",
       "acesso": "PENDENTE_HOMOLOGACAO",
-      "estado": "NAO_COLETAR_AUTOMATICAMENTE",
+      "estado": "BLOQUEADO_PARA_COLETA_E_HISTORICIZACAO",
       "historico": "PENDENTE",
-      "proxima_acao": "Verificar direito de extracao automatica, armazenagem e acesso historico; evitar presumir direito por exibir widget"
+      "proxima_acao": "Obter esclarecimento por escrito do IMEA sobre series publicas para NIVON nao comercial; validar data referencia, zeros, duplicatas e indicadores de cada praca"
     },
     {
       "nome": "CEPEA/ESALQ",
@@ -44,11 +44,11 @@
         "algodao"
       ],
       "classe": "fonte_primaria",
-      "direitos": "Condicoes e licenca especifica devem ser confirmadas; uso nao comercial nao implica automaticamente copia irrestrita",
-      "acesso": "PENDENTE_HOMOLOGACAO",
-      "estado": "NAO_COLETAR_AUTOMATICAMENTE",
-      "historico": "PENDENTE",
-      "proxima_acao": "Verificar termos e oferta de series antes de usar adaptadores de terceiros"
+      "direitos": "Documentacao agrobr identifica CC BY-NC 4.0 para indicadores/series; preservar atribuicao e finalidade nao comercial e confirmar escopo original. Fallback Noticias Agricolas tem direitos separados.",
+      "acesso": "AGROBR_CEPEA_DIAGNOSTICO_REAL_FALLBACK_NOTICIAS_AGRICOLAS",
+      "estado": "VALIDACAO_EM_MEMORIA_FALLBACK_BLOQUEADO_SEM_GRAVACAO",
+      "historico": "NAO_CARREGADO",
+      "proxima_acao": "Homologar canal primario CEPEA sem bypass; revalidar fonte, frescor, praça e unidade antes de liberar gravacao e agendas"
     },
     {
       "nome": "Noticias Agricolas",
