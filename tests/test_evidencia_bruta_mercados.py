@@ -39,7 +39,7 @@ def lote(rows=None, arquivo_original=RAW):
         "fonte_url": "https://example.org/test",
         "raw_sha256": sha256(arquivo_original).hexdigest(),
         "normalizado_sha256": sha256(snap).hexdigest(),
-        "capturado_em": "2026-10-14T10:00:00Z",
+        "capturado_em": "2026-10-15T10:00:00Z",
         "parser_id": "PARSER-TESTE", "parser_versao": "0.0-test",
         "direitos_status": "NAO_HOMOLOGADO",
     }
@@ -113,7 +113,7 @@ class TestEvidenciaBrutaMercado(unittest.TestCase):
 
     def test_registro_coletado_depois_snapshot(self):
         a, b, m = lote([
-            row(coleta_em="2026-10-14T15:00:00Z")
+            row(coleta_em="2026-10-16T15:00:00Z")
         ])
         with self.assertRaisesRegex(ErroEvidenciaMercado, "depois da captura"):
             executar(raw=a, snap=b, manifest=m)
