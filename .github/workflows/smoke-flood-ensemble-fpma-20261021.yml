@@ -63,3 +63,5 @@ jobs:
           echo 'Somente teste pontual, sem database, sem cron ou publicacao.'
 
 # Diagnostico de recusa de schema sem series nem credenciais.
+
+# Reteste remoto do ensemble apos correção PR #104.
