@@ -192,3 +192,19 @@ Reproduzir testes sinteticos: PYTHONPATH=src python -m unittest tests.test_pecua
 - O arquivo local permanece sem captura oficial, sem prova de publicacao historica e sem ativacao de coleta, backfill ou previsao. IDs, categorias e layout sao pendencias P0.
 
 **Proxima acao P0:** obter response oficial autenticavel, aferir hash, timestamps, layout DnC, categoria TOTAL, unidades e direitos por especie; entao validar normalizador contra fixture real e anotar divergencias. **Proxima acao P1:** documentar migracao controlada de banco local legado se houver material efetivamente armazenado. Sem merge/deploy/cron/custo.
+
+## Continuidade 21/10/2026 — ponte offline arquivo → parser → vintage
+
+### Avanço implementado e verificável
+- Os endpoints públicos de metadados Agregados v3 para 1092, 1093, 1094 e o endpoint apisidra /values/t/1092 continuaram inacessíveis ao ambiente web nesta rodada; isto não prova indisponibilidade da API na origem.
+- Falha preexistente: `recuperar_pacote_sidra_offline` só retornava bytes/hash/espécie, não URLs nem publicacao/coleta declaradas. Consumidores teriam de reintroduzir timestamps manualmente, enfraquecendo a cadeia de custódia e o corte as-of.
+- Em `src/nivon/pecuaria_sidra_arquivo.py`, a recuperação agora devolve URLs declaradas, datas de publicação/coleta, ID da captura e blobs, sempre conferidos contra espécie/tabela, HTTPS e SHA-256 antes da interpretação do JSON. A escrita continua não operacional.
+- Defeito adicional corrigido: abrir um banco SQLite com schema legado anteriormente executava CREATE TRIGGER IF NOT EXISTS antes de recusar a migração. O novo fluxo verifica o índice legado **antes** de qualquer DDL. Requer migração humana auditada do banco legado; não altera nem destrói registros.
+- Novo `src/nivon/pecuaria_sidra_pacote.py`: `normalizar_captura_arquivada_sidra` usa bytes e timestamps recuperados do próprio arquivo, exigindo direitos e contratos DnC/variáveis/totais explícitos. Confere novamente hash do parser com hash dos bytes arquivados; recusa mistura de espécie e tabela.
+- A ponte é registrada para BOI, FRANGO e SUINO em `config/motores_inteligencia.v1.json` e na allowlist de `registro_motores.py`; os estados de ativação/agendamento continuam todos false.
+- `tests/test_pecuaria_sidra_pacote.py` usa SOMENTE payloads fictícios e cobre recuperação de horários, hashes e URLs, fluxo completo SQLite→parser→vintage, corte temporal, espécie cruzada, direitos, variáveis não verificadas, tampering e legado sem efeitos de DDL.
+
+### Distinção de estados e próximos gates
+- SHA-256 comprova integridade dos bytes **desde sua captura/arquivamento**, não a autenticidade HTTP ou proveniência externa. O campo `identidade_arquivo_verificada=true` significa apenas integridade/identidade LOCAL; `amostra_real_homologada=false`, `mapa_dimensional_homologado=false`, `resposta_http_autenticada=false`, `timestamps_autenticados=false`, `coleta_real_executada=false` e `previsao_homologada=false` permanecem falsos.
+- Para homologar são necessárias respostas oficiais autênticas com headers/horário de aquisição, verificação de schema e variáveis/categorias, regras de direito de acesso e armazenamento, comparação oficial BR/UF e aferição independente de revisões históricas. Nenhuma API real foi conectada ou ativada.
+- P0 pendente: acesso e teste da resposta real 1092/1093/1094. P1 entregue somente em código/testes de armazenamento e integração local. Sem merge, deploy, custos ou envios.
