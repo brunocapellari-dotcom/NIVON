@@ -14,6 +14,7 @@ import re
 
 from .conab_catalogo import descobrir_planilhas, ErroCatalogoConab
 from .conab_series import ARQUIVOS
+from urllib.parse import urlsplit
 
 
 class ErroProvaRawConab(ValueError):
@@ -83,9 +84,24 @@ def verificar_raw_conab(
     except (ErroCatalogoConab, ValueError) as exc:
         raise ErroProvaRawConab("catálogo HTML oficial incompatível") from exc
     matches = [item for item in lista if item["arquivo"] == arquivo]
-    if len(matches) != 1 or matches[0]["url"] != url_documento:
-        raise ErroProvaRawConab("URL não corresponde ao link no HTML bruto")
+    if len(matches) != 1:
+        raise ErroProvaRawConab("arquivo não foi identificado uma vez no HTML bruto")
     item = matches[0]
+    # O portal oficial aponta para /view e o binário é entregue via
+    # /@@download/file. Os dois endereços não são intercambiáveis.
+    url_catalogo = item["url"]
+    part = urlsplit(url_catalogo)
+    if part.query or part.fragment:
+        raise ErroProvaRawConab("catálogo com parâmetros de download ambíguos")
+    if part.path.lower().endswith(".xls/view"):
+        url_esperada = url_catalogo[:-len("/view")] + "/@@download/file"
+    elif part.path.lower().endswith(".xls"):
+        url_esperada = url_catalogo
+    else:
+        raise ErroProvaRawConab("link oficial não aponta para arquivo XLS conhecido")
+    if url_documento != url_esperada:
+        raise ErroProvaRawConab("URL XLS não corresponde ao link de download do catálogo")
+
     meta = {
         "fonte_id": "CONAB", "edicao_id": "DESCONHECIDA",
         "raw_sha256": digest,
@@ -95,10 +111,13 @@ def verificar_raw_conab(
         "disponibilidade_verificada": False,
     }
     return {
-        "status": "CAPTURA_RAW_INTEGRA_SEM_PROVA_DE_EDICAO_ASOF",
+        "status": "CAPTURA_SHA_OLE2_LINK_SEM_VALIDACAO_XLS_OU_VINTAGE",
         "cultura": cultura, "arquivo": arquivo,
         "subdivisao_safra": ARQUIVOS[arquivo][1],
-        "url_documento": item["url"],
+        "url_documento": url_documento,
+        "url_link_catalogo": url_catalogo,
+        "estrutura_xls_validada": False,
+        "abas_xls_lidas": False,
         "pagina_publicacao": item["pagina_publicacao"],
         "html_raw_sha256": sha256(pagina_html_raw).hexdigest(),
         "xls_raw_sha256": digest,
