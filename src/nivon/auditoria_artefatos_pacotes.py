@@ -53,6 +53,7 @@ def verificar_cadeia(
         "lock_report_coherent": True,
         "local_wheel_hashes_match_declared_lock": True,
         "wheel_metadata_identity_checked": True,
+        "wheel_record_integrity_verified": wheel_gate["wheel_record_integrity_verified"],
         "transitive_closure_proven": False,
         "audit_executor_authenticated": False,
         "declared_lock_origin_authenticated": False,
