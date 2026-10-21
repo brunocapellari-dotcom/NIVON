@@ -36,6 +36,15 @@ class TestSegurancaWorkflowsAcessos(unittest.TestCase):
                           "set -x","curl ","wget "):
             self.assertNotIn(forbidden,MANUAL)
 
+    def test_runner_temp_apenas_no_contexto_de_step(self):
+        # runner.* não está disponível em jobs.<job_id>.env: o GitHub
+        # rejeita o YAML antes de agendar qualquer job.
+        illegal = "      NIVON_INMET_DIRETORIO_PRIVADO: " + "$" + "{{ runner.temp }}/nivon-bdmep"
+        self.assertNotIn("\n" + illegal + "\n", MANUAL)
+        allowed = "          NIVON_INMET_DIRETORIO_PRIVADO: " + "$" + "{{ runner.temp }}/nivon-bdmep"
+        self.assertEqual(MANUAL.count(allowed), 2)
+        self.assertIn('run: mkdir -m 700 "$NIVON_INMET_DIRETORIO_PRIVADO"', MANUAL)
+
     def test_ci_de_pr_somente_sintetica_e_read_only(self):
         block=OFFLINE.split("on:",1)[1].split("permissions:",1)[0]
         self.assertIn("pull_request:",block)
