@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Mapping
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from decimal import Decimal, InvalidOperation
 from hashlib import sha256
 import json
@@ -162,7 +162,7 @@ def normalizar_snapshot_sidra_abate(
             raise DadoInvalido("unidade SIDRA diferente de cabecas/quilogramas")
         uf = _uf(linha, dimensoes["territorio"])
         competencia, referencia = _competencia(str(linha[dimensoes["periodo"]]))
-        if pub < datetime.fromisoformat(referencia).replace(tzinfo=timezone.utc):
+        if pub < datetime.fromisoformat(referencia).replace(tzinfo=timezone.utc) + timedelta(days=1):
             raise DadoInvalido("publicacao anterior ao fim da competencia")
         identidade = (uf, competencia, indicador)
         if identidade in vistos:
