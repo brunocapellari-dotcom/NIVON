@@ -81,8 +81,8 @@ jobs:
               'tests', pattern='test_maritime_pdfplumber_e2e.py'
           )
           count = suite.countTestCases()
-          if count != 9:
-              raise SystemExit(f'Expected 9 PDF byte tests, got {count}')
+          if count != 11:
+              raise SystemExit(f'Expected 11 PDF byte tests, got {count}')
           PY
 
   conferir-schema-mapa:
