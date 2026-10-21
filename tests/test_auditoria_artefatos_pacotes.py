@@ -74,6 +74,7 @@ class CadeiaPacotesTests(unittest.TestCase):
         self.assertEqual(res["direct_packages_checked"], 1)
         self.assertTrue(res["lock_report_coherent"])
         self.assertTrue(res["local_wheel_hashes_match_declared_lock"])
+        self.assertTrue(res["wheel_record_integrity_verified"])
         self.assertFalse(res["approved_for_production"])
         self.assertFalse(res["transitive_closure_proven"])
         self.assertFalse(res["audit_executor_authenticated"])
