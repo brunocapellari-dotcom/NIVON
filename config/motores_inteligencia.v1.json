@@ -393,7 +393,9 @@
         "nivon.verificacao_vazao_asof:avaliar_hidrograma_asof",
         "nivon.verificacao_chuva_ensemble_asof:verificar_chuva_ensemble_asof",
         "nivon.pacotes_chuva_asof:montar_e_verificar_pares_chuva",
-        "nivon.adaptador_inmet_chuva:converter_dia_inmet_para_snapshot"
+        "nivon.adaptador_inmet_chuva:converter_dia_inmet_para_snapshot",
+        "nivon.confronto_janelas_fisicas:confrontar_chuva_janelas_equivalentes",
+        "nivon.historico_vintages:normalizar_edicao"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -605,7 +607,12 @@
         "nivon.mjo_rmm:normalizar_rmm_bom",
         "nivon.mjo_rmm:ultimo_rmm_ate",
         "nivon.contexto_mjo_asof:indexar_contexto_mjo_asof",
-        "nivon.contexto_mjo_asof:contextualizar_nwp_com_mjo_asof"
+        "nivon.contexto_mjo_asof:contextualizar_nwp_com_mjo_asof",
+        "nivon.noaa_roni:importar_roni_ascii",
+        "nivon.noaa_roni:classificar_episodios_roni",
+        "nivon.historico_vintages:normalizar_edicao",
+        "nivon.confronto_janelas_fisicas:confrontar_chuva_janelas_equivalentes",
+        "nivon.analogos_historicos:encontrar_anos_analogos"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
