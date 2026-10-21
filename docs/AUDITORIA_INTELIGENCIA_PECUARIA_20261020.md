@@ -177,3 +177,18 @@ Reproduzir testes sinteticos: PYTHONPATH=src python -m unittest tests.test_pecua
 - O arquivo nao faz prova de autenticidade de datas de publicacao nem coleta. Exibe dados_reais_verificados=false, timestamps_autenticados=false e previsao_homologada=false. O motor de vintages continua independente e nao recebe nenhum registro automaticamente.
 - Para passar a amostra real: obter HTTP 200 autentico via fonte oficial, guardar URL exata, response headers e timestamp de captura auditavel fora deste componente, validar metadados, categoria TOTAL, unidade, variavel e cobertura, obter licenca/proveniencia e executar os testes reais. Gravar apenas material permitido.
 - P0 ainda bloqueado: acesso a payload oficial 1092/1093/1094. P1 avancou somente no mecanismo LOCAL de armazenamento de evidencias; sem persistencia operacional, sem backfill historico e sem simulacao de vintages anteriores.
+
+## Continuidade 21/10/2026 — unicidade e conflito de capturas
+
+### Falha corrigida
+- O arquivo SQLite anteriormente indexava (especie,tabela,url_valores,url_metadados,coleta,hash_valores,hash_metadados) e aplicava INSERT OR IGNORE. Duas capturas com mesmo instante declaradamente coletado mas diferentes hashes ou datas de publicacao podiam coexistir e causar ambiguidade ou falsa idempotencia.
+- src/nivon/pecuaria_sidra_arquivo.py agora usa indice unico de identidade (especie,tabela,url_valores,url_metadados,coleta_declarada), valida previamente publicacao e ambos hashes em repeticoes, e recusa colisao divergente com DadoInvalido. Capturas de outro instante continuam podendo representar novas edicoes. Isto nao comprova autenticidade de timestamp.
+- O arquivo existente criado com o esquema antigo agora é detectado via PRAGMA index_list/index_info, falhando fechado. Migracao auditada (backup, reconciliacao de chaves, verificacao de hashes, plano de rollback) e requisito explicito antes de usar banco legado; nao alterar tabelas historicas automaticamente.
+- Novos testes sinteticos em tests/test_pecuaria_sidra_arquivo.py demonstram idempotencia estrita, conflito de publicacao, conflito de ambos payloads, novas coletas legitimas, indice UNIQUE e bloqueio de esquema legado.
+
+### Pesquisa de fonte — controle de proveniencia
+- Retentativas nesta rodada de GET metadados https://servicodados.ibge.gov.br/api/v3/agregados/1092/metadados e valores https://apisidra.ibge.gov.br/values/t/1092/n1/1/p/202602/v/allxp/h/y falharam na rede local com Temporary failure in name resolution; o navegador web tambem informou endpoints inacessiveis. Nao existe payload oficial verificado.
+- Fontes secundarias (nao homologadas) identificam variaveis candidatas 284 (Animais abatidos) e 285 (Peso total das carcacas): https://quantilica.com/fish/variaveis/284 e https://dbfloja.com.br/ferramentas/radar-abate. Nunca aplicar esses IDs como mapeamento aprovado sem metadados oficiais da tabela, unidade e periodo.
+- O arquivo local permanece sem captura oficial, sem prova de publicacao historica e sem ativacao de coleta, backfill ou previsao. IDs, categorias e layout sao pendencias P0.
+
+**Proxima acao P0:** obter response oficial autenticavel, aferir hash, timestamps, layout DnC, categoria TOTAL, unidades e direitos por especie; entao validar normalizador contra fixture real e anotar divergencias. **Proxima acao P1:** documentar migracao controlada de banco local legado se houver material efetivamente armazenado. Sem merge/deploy/cron/custo.
