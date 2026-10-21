@@ -115,6 +115,9 @@ def validar_rotas(rotas: dict, catalogo: dict) -> dict:
                 "IBGE": {"servicodados.ibge.gov.br", "apisidra.ibge.gov.br"},
                 "ANTT": {"dados.antt.gov.br"},
                 "INPE_QUEIMADAS": {"dataserver-coids.inpe.br"},
+                "NASA_GLAM": {"glam1.gsfc.nasa.gov"},
+                "IMF_PORTWATCH": {"portwatch.imf.org"},
+                "GEOGLAM_CROPMONITOR": {"www.cropmonitor.org"},
                 "EMBRAPA_GEOINFO": {"geoinfo.dados.embrapa.br"},
                 "NOAA": {"www.cpc.ncep.noaa.gov"},
             }
