@@ -16,7 +16,7 @@ from nivon.inspecao_xls_conab_agricola import (
 )
 from nivon.prova_raw_conab_agricola import verificar_raw_conab
 from test_conab_series import LivroFalso
-from test_prova_raw_conab_agricola import kwargs, FAKE_XLS, CAPTURE, URL_MILHO
+from test_prova_raw_conab_agricola import kwargs, FAKE_XLS, CAPTURE, URL_MILHO, html_document
 
 CUT = "2026-10-21T10:00:00-03:00"
 
@@ -43,6 +43,7 @@ def livro_falso():
 def invoke(*, ready=None, **edits):
     args = {
         "manifesto_raw": manifesto(), "planilha_raw": FAKE_XLS,
+        "pagina_html_raw": html_document(),
         "uf": "MT", "safra": "1980/1981", "emitido_em": CUT,
     }
     args.update(edits)
@@ -72,7 +73,8 @@ class TestInspecaoXLSConab(TestCase):
         workbook.release_resources.assert_called_once_with()
 
     def test_milho_total_eh_recorte_especifico(self):
-        result, _, _ = invoke(manifesto_raw=manifesto(milho=True))
+        result, _, _ = invoke(manifesto_raw=manifesto(milho=True),
+                              pagina_html_raw=html_document(cultura="MILHO"))
         self.assertEqual((result["cultura"], result["subdivisao_safra"]),
                          ("MILHO", "TOTAL"))
         self.assertFalse(result["habilita_backtest"])
@@ -144,6 +146,7 @@ class TestInspecaoXLSConab(TestCase):
             with self.assertRaisesRegex(ErroLeituraXLSConab, "parser XLS falhou"):
                 inspecionar_xls_conab_capturado(
                     manifesto_raw=manifesto(), planilha_raw=FAKE_XLS,
+                    pagina_html_raw=html_document(),
                     uf="MT", safra="1980/1981", emitido_em=CUT)
 
     def test_dependencia_xlrd_ausente_falha_fechada(self):
@@ -152,6 +155,7 @@ class TestInspecaoXLSConab(TestCase):
             with self.assertRaisesRegex(ErroLeituraXLSConab, "xlrd ausente"):
                 inspecionar_xls_conab_capturado(
                     manifesto_raw=manifesto(), planilha_raw=FAKE_XLS,
+                    pagina_html_raw=html_document(),
                     uf="MT", safra="1980/1981", emitido_em=CUT)
 
     def test_coleta_original_divergente_rejeitada(self):
@@ -159,6 +163,28 @@ class TestInspecaoXLSConab(TestCase):
         m["snapshot_meta"]["coletado_em"] = "2026-10-21T14:00:00Z"
         with self.assertRaisesRegex(ErroLeituraXLSConab, "coleta"):
             invoke(manifesto_raw=m)
+
+    def test_html_trocado_mesmo_url_rejeita_manifesto(self):
+        # Mesmo URL, mas bytes do HTML distintos dos que originaram o SHA.
+        altered = html_document().replace(b"</body>", b" \n</body>")
+        with self.assertRaisesRegex(ErroLeituraXLSConab, "manifesto difere"):
+            invoke(pagina_html_raw=altered)
+
+    def test_html_de_milho_com_manifesto_soja_rejeitado(self):
+        with self.assertRaisesRegex(ErroLeituraXLSConab, "proveniência"):
+            invoke(pagina_html_raw=html_document(cultura="MILHO"))
+
+    def test_url_do_manifesto_alterada_nao_engana_inspecao(self):
+        m = manifesto()
+        m["url_documento"] = "https://www.gov.br/conab/arquivos/falso.xls"
+        with self.assertRaisesRegex(ErroLeituraXLSConab, "proveniência"):
+            invoke(manifesto_raw=m)
+
+    def test_html_ausente_rejeitado_antes_do_parser(self):
+        with mock.patch("nivon.inspecao_xls_conab_agricola._abrir_livro") as dec:
+            with self.assertRaisesRegex(ErroLeituraXLSConab, "proveniência"):
+                invoke(pagina_html_raw=b"")
+            dec.assert_not_called()
 
     def test_nenhum_modelo_preditivo_liberado(self):
         result, _, _ = invoke()
