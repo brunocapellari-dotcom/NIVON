@@ -912,7 +912,7 @@
       "provider": "NASA/USDA FAS GIMMS Global Agricultural Monitoring (GLAM)",
       "official_url": "https://glam1.gsfc.nasa.gov/api/doc/gettbl",
       "access": "PUBLIC_CSV_API_WITHOUT_KEY",
-      "rights": "VERIFY_PRODUCT_ATTRIBUTION",
+      "rights": "ATTRIBUTION_REVIEW",
       "notes": "VIIRS 500m e OLCI 300m NDVI. Identificadores de área GLAM/ADM não equivalem a IBGE, máscara agrícola varia por versão; API versão 4, dados por sensor."
     },
     {
@@ -920,7 +920,7 @@
       "provider": "IMF PortWatch (monitoramento marítimo via AIS agregado)",
       "official_url": "https://portwatch.imf.org/",
       "access": "PUBLIC_PORTAL_OGC_CATALOG",
-      "rights": "VERIFY_DATA_EXPORT_RIGHTS",
+      "rights": "REVIEW",
       "notes": "Séries diárias agregadas de escalas/toneladas estimadas e gargalos; não line-up navio/terminal. URL antiga de ArcGIS Daily_Trade_Data retorna erro 400: não homologar endpoint antigo."
     },
     {
@@ -928,7 +928,7 @@
       "provider": "GEOGLAM Crop Monitor for AMIS/Global",
       "official_url": "https://www.cropmonitor.org/archive",
       "access": "PUBLIC_REPORTS_AND_GEODATA",
-      "rights": "VERIFY_DATASET_ATTRIBUTION",
+      "rights": "REVIEW",
       "notes": "Boletins sazonais e datasets mensais de condição de soja/milho/trigo, evitando tratar avaliação qualitativa como produção observada."
     }
   ],
@@ -5595,7 +5595,7 @@
       ],
       "topic": "evapotranspiracao_real_e_biomassa_modeladas_300m_global_wapor3",
       "mode": "FAO_GISMGR2_API_OR_GEOTIFF",
-      "cadence": "DEKADAL",
+      "cadence": "IRREGULAR",
       "existing_module": null,
       "enabled": false,
       "collection_authorized": false,
@@ -5606,7 +5606,8 @@
         "publicacao",
         "coleta"
       ],
-      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+      "downstream_contract": "OBSERVACAO_CANONICA_V1",
+      "notes": "Séries decendiais de evapotranspiração/biomassa: periodicidade DEKADAL descrita mas não cadastrada como cadência do núcleo NIVON; consultar por janela explícita."
     },
     {
       "id": "IMF_PORTWATCH_PORT_ACTIVITY",
