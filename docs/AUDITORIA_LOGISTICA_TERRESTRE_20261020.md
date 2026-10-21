@@ -95,3 +95,28 @@ Os campos `prova_publicacao_sha` e `prova_direitos_sha` são referências a evid
 Testes: `tests/test_anp_semanal_store.py` (PIT, idempotência, versões, conflito, datas futuras, permissões, preço, produtos, município e semântica); a execução GitHub Actions no HEAD final deve ser verificada.
 
 **Gatilhos restantes P0:** merge coordenado da PR #8 sem perder `anp_resumo_lpc.py`; leitura de 3 arquivos XLSX oficiais homologados, comprovação de publicação de cada edição, licença para coleta/armazenamento e eventual publicação comercial, storage durável protegido/backup+restore, monitoramento de disponibilização e revisão de dados, reconciliação de datas as-of com o calendário oficial, integração ao briefing somente depois de homologação. Não inferir preço de abastecimento contratado ou repasse à tarifa de frete.
+
+
+## Rodada de segurança e compatibilidade — 21/10/2026
+
+### Prioridade P0: confiança dos atestadores
+
+A auditoria demonstrou que `fretes_adapter_whatsapp.py` exigia `status=VERIFICADA`, `status=APROVADA` e SHA documental, mas qualquer chamador poderia fabricar esses campos. Foi criado `fretes_atestacoes.py` com dois domínios HMAC-SHA256 autenticados e independentes: `DIREITOS` (autorização de leitura, armazenamento e análise) e `RESOLUCAO` (identidade do ponto de embarque e transportadora). A assinatura cobre o JSON inteiro da atestação, incluindo emissor, versão, validade, fonte, permissões e prova declarada. A resolução também exige SHA-256 de todo o envelope `FreightEvent`, vinculando-a à exata versão e conteúdo, não apenas ao ID. Rejeita emissor ou chave incorretos, prazo vencido/futuro, falhas de integridade e assinatura ausente; a chave HMAC de pseudonimização de IDs não pode ser reutilizada para atestações. Cinco testes adversariais adicionais cobrem adulteração, expiração, assinaturas ausentes e isolamento de chaves.
+
+**Limitações de segurança:** HMAC implementado **não** é uma autoridade operacional por si só. O runtime futuro precisa prover chaves exclusivas, emitentes aprovados, relógio/recebimento confiáveis, revogação e rotação, auditoria de validação do RAW, isolamento por tenant e evidência de consentimento/licença. Nenhuma credencial de produção foi criada, exibida ou armazenada em GitHub. A integração permanece OFFLINE e não pode assumir que qualquer dicionário arbitrário seja um atestador confiável.
+
+### Prioridade P0: contrato para motor de tendências pareadas
+
+A PR #30 já implementa a estatística de variações pareadas `pickup_entity_id + transportadora_id` e corrige o viés de mudanças na composição de estabelecimentos. **Não duplicamos o cálculo.** A PR #18 acrescenta o preparador `fretes_painel_pr30.py` para disponibilizar registros `OfertaFrete` em formato compatível com os campos exigidos pelo motor da PR #30, mantendo invariantes mais estritos de `descarga_entity_id`, `regime`, `equipamento`, `produto`, `pedagio` e rota municipal. Não cruza condições econômicas nem permite preço diferente do mesmo ponto+transportadora no mesmo dia. Descarta repetições sem preço divergente como unidade estatística independente, **sem apagar os anúncios individuais na base**. Avalia o `as_of` por timestamp de publicação/coleta, evitando reoferta futura vazando para uma sessão histórica. Envia apenas `frete_base_brl_t`, não confunde preço cheio com base e não atribui média municipal. `edicao_sha256` é explicitamente hash **DERIVADO de normalização**, não prova do arquivo RAW. Até a integração, a saída é `PREPARADO_OFFLINE_NAO_HOMOLOGADO`, `publicavel=false`.
+
+A PR #30 continua draft e não é ancestral da PR #18. O contrato de preparação poderá ser integrado **após a reconciliação coordenada** do arquivo `tendencias_mercados.py`, evitando substituição da implementação pareada por uma versão legada. Tests `tests/test_fretes_painel_pr30.py` verificam base, duplicatas, pares, condições comerciais, valores conflitantes, cortes intradiários e classificação sem publicação. Nenhuma previsão probabilística real foi criada.
+
+### Gates de continuidade
+
+1. **P0 — integrar código e testes:** reconciliar PR #18 com PR #30 preservando invariantes de descarga, regime, base/pedágio, corte intradiário e identidade; executar regressão cruzada no SHA resultante.
+2. **P0 — trust chain real:** verificar atestações assinadas por resolvers autorizados e dados RAW em ambiente confiável, incluindo revogação/rotação; nenhuma entrada comercial sem prova.
+3. **P0 — ANP semanal:** conciliar parser PR #8 ao store oficial criado na PR #18; obter legalmente e conferir ao menos três XLSX reais e respectivos horários de publicação/vintages.
+4. **P1 — corredores:** introduzir itinerários validados DNIT/SNV, pedágios por categoria, sentidos e classes de veículos antes de comparar R$/TKU ou custos.
+5. **P1 — previsão:** somente depois de volume histórico suficiente, calibração temporal por corredor e métricas de generalização robustas.
+
+Nenhum merge, deploy, coleta de rede, envio de WhatsApp, custo ou integração de fonte paga. Código aprovado por fixtures/CI não representa operação real.
