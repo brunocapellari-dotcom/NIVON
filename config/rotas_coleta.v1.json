@@ -4489,7 +4489,7 @@
         "url": "https://api.bcb.gov.br/dados/serie/bcdata.sgs.11/dados/ultimos/1?formato=json",
         "source_proof": "https://dadosabertos.bcb.gov.br/"
       },
-      "implementation_scope": "DOCUMENTED_SGS_DATED_RATE_NOT_FETCHED",
+      "implementation_scope": "OFFLINE_BCB_SGS_11_DECIMAL_DAILY_NORMALIZER_NO_HTTP_OR_PERSISTENCE",
       "authentication": "NONE_EXPECTED_VERIFY",
       "last_verified_data": null,
       "runtime_enabled": false,
