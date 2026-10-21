@@ -51,7 +51,7 @@ class TestAcessosPrivados(unittest.TestCase):
 
     def test_usda_header_correto_sem_segredo_em_json(self):
         secret = "n" * 40
-        client = FakeTransport(b'[{"commodityCode":"0440000"}]')
+        client = FakeTransport(b'[{"commodityCode":"0440000","commodityName":"Corn"}]')
         with patch.dict(os.environ, {"AGROBR_USDA_API_KEY": secret}):
             r = executar("usda", habilitar_rede=True, transporte=client)
         self.assertEqual(r["estado"], "AUTENTICACAO_E_SCHEMA_OK")
@@ -68,6 +68,37 @@ class TestAcessosPrivados(unittest.TestCase):
             r = executar("usda", habilitar_rede=True, transporte=client)
         self.assertEqual(r["estado"], "CHAVE_RECUSADA")
         self.assertNotIn(secret, json.dumps(r))
+
+    def test_usda_http_200_com_json_de_erro_nao_autentica(self):
+        client = FakeTransport(b'[{"error":"API_KEY_INVALID"}]')
+        with patch.dict(os.environ, {"AGROBR_USDA_API_KEY": "f"*40}):
+            r=executar("usda", habilitar_rede=True, transporte=client)
+        self.assertEqual(r["estado"], "SCHEMA_INESPERADO")
+
+    def test_usda_recusa_item_sem_campos_canônicos(self):
+        for payload in (
+            b'[{"commodityCode":"0440000"}]',
+            b'[{"commodityCode":"x","commodityName":"Corn"}]',
+            b'[{"commodityCode":"0440000","commodityName":""}]',
+            b'[{"commodityCode":"0440000","commodityName":"Corn"}, {"foo":"bar"}]',
+            b'[]',
+        ):
+            with self.subTest(payload=payload):
+                client=FakeTransport(payload)
+                with patch.dict(os.environ, {"AGROBR_USDA_API_KEY": "f"*40}):
+                    result=executar("usda", habilitar_rede=True, transporte=client)
+                self.assertEqual(result["estado"], "SCHEMA_INESPERADO")
+                self.assertFalse(result["homologado"])
+
+    def test_usda_limiter_e_indisponibilidade_diferenciados(self):
+        for http_status, state in (
+            (429, "LIMITE_API_ATINGIDO"), (503, "SERVICO_TEMPORARIAMENTE_INDISPONIVEL"),
+            (404, "STATUS_HTTP_NAO_VALIDADO"),
+        ):
+            client=FakeTransport(b"", code=http_status)
+            with patch.dict(os.environ, {"AGROBR_USDA_API_KEY": "f"*40}):
+                r=executar("usda", habilitar_rede=True, transporte=client)
+            self.assertEqual(r["estado"],state)
 
     def test_usda_200_sem_json_valido_nao_homologa(self):
         client = FakeTransport(b"<html>Invalid Key</html>")
@@ -110,6 +141,20 @@ class TestAcessosPrivados(unittest.TestCase):
         self.assertEqual(r["estado"], "AUTENTICACAO_E_LEITURA_OK")
         self.assertEqual(r["evidencias"]["medicoes_normalizadas"],2)
         self.assertEqual(r["evidencias"]["medicoes_aprovadas_qc"],1)
+
+    def test_ana_sem_medicoes_nao_declara_leitura_validada(self):
+        from nivon import ana_hidrowebservice as ana
+        with (patch.object(ana, "credenciais_ambiente", return_value=("12345678901", "fake")),
+              patch.object(ana, "efetuar_request", side_effect=[b'{}', b'{}']),
+              patch.object(ana, "extrair_token", return_value="x"*60),
+              patch.object(ana, "normalizar_adotada", return_value=[]),
+              patch.dict(os.environ, {"NIVON_ANA_ESTACAO":"15400000",
+                                      "NIVON_ANA_DATA_BUSCA":"2026-08-01",
+                                      "NIVON_ANA_ZONA_ESTACAO":"America/Manaus"})):
+            r=executar("ana", habilitar_rede=True)
+        self.assertEqual(r["estado"], "AUTENTICACAO_OK_SEM_MEDICOES")
+        self.assertEqual(r["evidencias"]["medicoes_normalizadas"], 0)
+        self.assertFalse(r["homologado"])
 
     def test_inmet_sem_link_bloqueado(self):
         from nivon import inmet_bdmep as im
