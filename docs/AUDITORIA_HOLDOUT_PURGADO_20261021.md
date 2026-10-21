@@ -43,3 +43,30 @@ efetivamente treinado nesses folds. Nenhum sinal de ganho serve como
 certificado de validação real enquanto o protocolo de seleção do modelo,
 o tratamento de revisões e a prova das emissões originais não forem
 auditados externamente.
+
+## Auditoria adversarial adicional (21/10/2026)
+
+**Problema 1 — fases ausentes:** no avaliador inicial, somente as fases que
+apareciam no holdout eram inspecionadas. Uma série com todas as previsões
+emitidas a cada quinto pregão (horizonte 5) podia concluir ganho robusto usando
+apenas uma fase observada. O contrato corrigido exige **todas as H fases** e
+contagem mínima por fase. Registra `fases_esperadas`, `fases_ausentes`,
+`fases_suficientes`; lacunas resultam em
+`FASES_DISJUNTAS_INSUFICIENTES`, nunca em sinal favorável.
+
+**Problema 2 — deriva temporal mascarada:** médias positivas de MAE/RMSE na
+fase inteira podem esconder deterioração no fim. Cada fase é agora dividida
+cronologicamente em `inicio` e `fim`, com pelo menos
+`minimo_por_subjanela=3` observações por metade (configurável, mínimo 2).
+O sinal descritivo só aparece quando ambas as metades de **todas as fases**
+superam o baseline em MAE e RMSE. Se as fases completas apresentarem ganho,
+mas a estabilidade início/fim falhar, o status passa a
+`DEGRADACAO_TEMPORAL_NO_HOLDOUT`. Se faltarem fases ou observações, retorna
+`FASES_DISJUNTAS_INSUFICIENTES`.
+
+Essa proteção **não** equivale a detecção estatística de mudança estrutural,
+teste formal de estabilidade, controle de dependência temporal nem
+homologação de habilidade preditiva. Subjanelas menores são sensíveis a ruído;
+não reportar significância iid. O contrato conserva `publicavel=False` e
+`habilitado_para_producao=False`, e informa explicitamente
+`sinal_descritivo_sustentado`, que nunca deve ser interpretado como autorização.
