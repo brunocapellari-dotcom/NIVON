@@ -57,12 +57,13 @@ class TestPonteSIDRA(unittest.TestCase):
         return arquivar_pacote_sidra_offline(**self.arch_args)
 
     def normalizar(self, id_captura, **kwargs):
-        return normalizar_captura_arquivada_sidra(
-            **dict(banco=self.banco, id_captura=id_captura,
-                   especie="FRANGO", tabela_sidra="1094",
-                   dimensoes=DIM, totais=TOTAIS, variaveis=VARIAVEIS,
-                   status_fonte="APROVADA",
-                   operacoes_autorizadas=self.permissoes, **kwargs))
+        params = dict(banco=self.banco, id_captura=id_captura,
+                      especie="FRANGO", tabela_sidra="1094",
+                      dimensoes=DIM, totais=TOTAIS, variaveis=VARIAVEIS,
+                      status_fonte="APROVADA",
+                      operacoes_autorizadas=self.permissoes)
+        params.update(kwargs)
+        return normalizar_captura_arquivada_sidra(**params)
 
     def test_bytes_originais_integridade_e_datas_do_banco(self):
         cap = self.capturar()
