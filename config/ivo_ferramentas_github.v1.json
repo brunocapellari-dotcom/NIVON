@@ -1,0 +1,414 @@
+{
+  "project": "NIVON",
+  "module": "IVO",
+  "schema_version": "1.0",
+  "updated_on": "2026-10-20",
+  "default_policy": "RESEARCH_ONLY_NO_AUTO_INSTALL_NO_NETWORK_NO_COST",
+  "notes": "Repositórios de ferramentas, não novas fontes de dados ou coletores operacionais. Direitos por versão, dependências transitivas, limites de custo e segurança devem ser auditados antes da instalação. O código desenvolvido aqui é independente de bibliotecas terceiras.",
+  "components": [
+    {
+      "id": "STATSFORECAST",
+      "repository": "https://github.com/Nixtla/statsforecast",
+      "purpose": "previsoes estatisticas, intervalos e baseline sazonal",
+      "license_declared": "Apache-2.0",
+      "status": "ALREADY_OPTIONAL_IN_NIVON",
+      "priority": "P0",
+      "integration": "src/nivon/previsoes_bibliotecas.py",
+      "gate": "VALIDAR_VERSAO_COMPATIVEL_SERIES_REAIS_BACKTEST_ASOF"
+    },
+    {
+      "id": "MLFORECAST",
+      "repository": "https://github.com/Nixtla/mlforecast",
+      "purpose": "regressores preditivos com defasagens e covariaveis",
+      "license_declared": "Apache-2.0",
+      "status": "OPTIONAL_ADAPTER_IMPLEMENTED",
+      "priority": "P0",
+      "integration": "src/nivon/ivo_mlforecast_adapter.py; src/nivon/ivo_benchmark_ml.py",
+      "gate": "REQUIRES_EXPLICIT_RIGHTS_HISTORICAL_ASOF_REAL_BACKTEST_AND_INSTALLED_EXTRA",
+      "installation_verified": false,
+      "data_homologated": false
+    },
+    {
+      "id": "RIVER",
+      "repository": "https://github.com/online-ml/river",
+      "purpose": "aprendizado incremental e deteccao de drift",
+      "license_declared": "BSD-3-Clause",
+      "status": "OPTIONAL_ADAPTER_IMPLEMENTED",
+      "priority": "P0",
+      "integration": "src/nivon/ivo_river_adapter.py",
+      "gate": "REQUIRES_RELEASED_LABELS_PREQUENTIAL_REAL_DATA_PERFORMANCE_AND_INSTALLED_EXTRA",
+      "installation_verified": false,
+      "data_homologated": false
+    },
+    {
+      "id": "DUCKDB",
+      "repository": "https://github.com/duckdb/duckdb",
+      "purpose": "consulta e processamento local de historicos tabulares",
+      "license_declared": "MIT",
+      "status": "OPTIONAL_ADAPTER_IMPLEMENTED",
+      "priority": "P0",
+      "integration": "src/nivon/ivo_duckdb_adapter.py",
+      "gate": "REQUIRES_APPROVED_LOCAL_PARQUET_SCHEMA_PATH_CONFINEMENT_INSTALLED_EXTRA_AND_BACKUP",
+      "installation_verified": false,
+      "data_homologated": false
+    },
+    {
+      "id": "NETWORKX",
+      "repository": "https://github.com/networkx/networkx",
+      "purpose": "grafo de eventos, mecanismos e dependencias causais hipoteticas",
+      "license_declared": "BSD-3-Clause",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "IVO_EVENT_GRAPH",
+      "gate": "AVALIAR_NAO_CONFUNDIR_CORRELACAO_COM_CAUSALIDADE"
+    },
+    {
+      "id": "LLAMAINDEX",
+      "repository": "https://github.com/run-llama/llama_index",
+      "purpose": "recuperacao de documentos, citacoes e RAG",
+      "license_declared": "MIT-core; plugins variam",
+      "status": "NATIVE_LEXICAL_RETRIEVAL_ADAPTER_LIBRARY_NOT_INSTALLED",
+      "priority": "P1",
+      "integration": "src/nivon/ivo_conhecimento_adapter.py",
+      "gate": "REQUIRES_HERMES_KNOWLEDGE_FACTORY_SIGNED_APPROVED_SNAPSHOT_AND_RIGHTS_LLM_OUTPUT_UNTRUSTED",
+      "installation_verified": false,
+      "data_homologated": false
+    },
+    {
+      "id": "MLFLOW",
+      "repository": "https://github.com/mlflow/mlflow",
+      "purpose": "versoes, experimentos, comparacao e auditoria",
+      "license_declared": "Apache-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "IVO_EXPERIMENT_REGISTRY",
+      "gate": "COMPARAR_SQLITE_EXISTENTE_CUSTO_OPERACIONAL_BACKUP"
+    },
+    {
+      "id": "DOWHY",
+      "repository": "https://github.com/py-why/dowhy",
+      "purpose": "validacao de hipoteses e inferencia causal",
+      "license_declared": "MIT",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P2",
+      "integration": "IVO_CAUSAL_RESEARCH",
+      "gate": "EXIGE_DESENHO_CAUSAL_IDENTIFICABILIDADE"
+    },
+    {
+      "id": "GRAPH_RAG",
+      "repository": "https://github.com/microsoft/graphrag",
+      "purpose": "referencia de extracao de relacoes entre documentos",
+      "license_declared": "MIT",
+      "status": "REFERENCE_ONLY_MAINTENANCE",
+      "priority": "P2",
+      "integration": "RESEARCH_ONLY",
+      "gate": "PROJETO_EM_MANUTENCAO_SEM_USO_RUNTIME"
+    },
+    {
+      "id": "HERMES_SELF_IMPROVEMENT",
+      "repository": "https://github.com/brunocapellari-dotcom/Hermes-AI-Platform",
+      "purpose": "workflow de autoaperfeicoamento com testes, auditoria e rollback",
+      "license_declared": "INTERNAL_REUSE_REVIEW",
+      "status": "REUSE_CONTRACT_ONLY",
+      "priority": "P0",
+      "integration": "src/hermes/self_improvement.py",
+      "gate": "EVITAR_DUPLICACAO_AUTORIDADE_CONTROLE_EXTERNALIZADO"
+    },
+    {
+      "id": "WHISPER_CPP",
+      "repository": "https://github.com/ggml-org/whisper.cpp",
+      "purpose": "transcricao por voz local ou no dispositivo do usuario, opcional",
+      "license_declared": "MIT (codigo); pesos e datasets revisar separadamente",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "IVO_VOICE_CLIENT",
+      "gate": "NAO_HABILITAR_MICROFONE_PERMANENTE_NEM_CUSTO_CLOUD_PESOS_DIREITOS"
+    },
+    {
+      "id": "OPENWAKEWORD",
+      "repository": "https://github.com/dscripka/openWakeWord",
+      "purpose": "ativacao por palavra chave no dispositivo cliente",
+      "license_declared": "Apache-2.0 codigo; modelos incluidos CC-BY-NC-SA-4.0",
+      "status": "REFERENCE_ONLY_LICENSE_RESTRICTION",
+      "priority": "P2",
+      "integration": "IVO_VOICE_CLIENT",
+      "gate": "MODELOS_PRETREINADOS_NAO_APROVADOS_PARA_USO_COMERCIAL"
+    },
+    {
+      "id": "SKFORECAST",
+      "repository": "https://github.com/skforecast/skforecast",
+      "purpose": "modelos supervisionados de series temporais com regressores/defasagens",
+      "license_declared": "BSD-3-Clause",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "FORECAST_CHALLENGER",
+      "gate": "AUDITORIA_FOLDS_EXOGENAS_E_CUSTO_ESCOLHER_SOMENTE_SE_MELHORAR_MLFORECAST"
+    },
+    {
+      "id": "DARTS",
+      "repository": "https://github.com/unit8co/darts",
+      "purpose": "benchmark unificado de modelos probabilisticos e classicos",
+      "license_declared": "Apache-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P2",
+      "integration": "FORECAST_BENCHMARK",
+      "gate": "AVALIAR_DEPS_PESADAS_CUSTO_CPU_PARA_NAO_DUPLICAR_STATSFORECAST"
+    },
+    {
+      "id": "EVIDENTLY",
+      "repository": "https://github.com/evidentlyai/evidently",
+      "purpose": "monitoramento de performance e data drift",
+      "license_declared": "Apache-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "MODEL_QUALITY",
+      "gate": "COMPARAR_COM_MONITOR_OFFLINE_LEVE_SEM_SERVIDOR_EXTRA"
+    },
+    {
+      "id": "MAPIE",
+      "repository": "https://github.com/scikit-learn-contrib/MAPIE",
+      "purpose": "intervalos de previsao e conformal calibration",
+      "license_declared": "BSD-3-Clause",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "FORECAST_INTERVALS",
+      "gate": "VALIDAR_COBERTURA_OUT_OF_SAMPLE_E_ASSUNCOES_TEMPORAIS"
+    },
+    {
+      "id": "PYSTAC_CLIENT",
+      "repository": "https://github.com/stac-utils/pystac-client",
+      "purpose": "consulta autorizada de catalogos espaciais STAC",
+      "license_declared": "Apache-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "EO_CATALOG_DISCOVERY",
+      "gate": "LICENCA_DADOS_CREDENCIAIS_COTA_RESTRICOES_REVISAR"
+    },
+    {
+      "id": "XARRAY",
+      "repository": "https://github.com/pydata/xarray",
+      "purpose": "dados espaciais e series meteorologicas N dimensionais",
+      "license_declared": "Apache-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "CLIMA_HIDRO_GRID",
+      "gate": "CONTROLE_DIMENSAO_ESTATISTICA_CRS_UNIDADES_BACKFILL"
+    },
+    {
+      "id": "GEOPANDAS",
+      "repository": "https://github.com/geopandas/geopandas",
+      "purpose": "sobreposicao espacial municipios bacias e corredores",
+      "license_declared": "BSD-3-Clause",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "GIS_ANALYTICS",
+      "gate": "VALIDAR_CRS_VERSAO_MUNICIPIOS_E_COBERTURA_GEOGRAFICA"
+    },
+    {
+      "id": "SHAP",
+      "repository": "https://github.com/shap/shap",
+      "purpose": "explicabilidade local de modelos estatisticos/ML",
+      "license_declared": "MIT",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P2",
+      "integration": "MODEL_EXPLANATION",
+      "gate": "NAO_CONFUNDIR_SHAP_COM_EVIDENCIA_CAUSAL"
+    },
+    {
+      "id": "NEURALFORECAST",
+      "repository": "https://github.com/Nixtla/neuralforecast",
+      "purpose": "rede neural de series temporais somente se superar baselines",
+      "license_declared": "Apache-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P2",
+      "integration": "RESEARCH_EXPERIMENTS",
+      "gate": "PROIBIR_GPU_PAGO_VERIFICAR_CUSTO_MEMORIA_CPU"
+    },
+    {
+      "id": "ODC_STAC",
+      "repository": "https://github.com/opendatacube/odc-stac",
+      "purpose": "transformacao STAC em xarray e cargas espaciais",
+      "license_declared": "Apache-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "EO_GRID_CONNECTOR",
+      "gate": "USAR_QUANDO_IMAGENS_AUTORIZADAS_E_COTA_RESOLVIDA"
+    },
+    {
+      "id": "RASTERIO",
+      "repository": "https://github.com/rasterio/rasterio",
+      "purpose": "acesso a rasters e metadados espaciais",
+      "license_declared": "BSD-3-Clause",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P2",
+      "integration": "GIS_RASTER",
+      "gate": "DEPENDENCIAS_GDAL_CRS_METADADOS_LICENCAS_DADOS"
+    },
+    {
+      "id": "PYDANTIC_AI",
+      "repository": "https://github.com/pydantic/pydantic-ai",
+      "purpose": "agentes estruturados tipados com injecao de dependencias",
+      "license_declared": "MIT",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "IVO_AGENT_ADAPTER",
+      "gate": "NAO_DUPLICAR_HERMES_NEM_DAR_FERRAMENTAS_EXECUTIVAS_A_LLM"
+    },
+    {
+      "id": "ECONML",
+      "repository": "https://github.com/py-why/EconML",
+      "purpose": "estimacao de efeitos heterogeneos sob suposicoes causais",
+      "license_declared": "MIT",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P2",
+      "integration": "CAUSAL_RESEARCH",
+      "gate": "IDENTIFICABILIDADE_GRUPOS_COMPARAVEIS_E_TESTES_FALSIFICACAO"
+    },
+    {
+      "id": "OPENEO_CLIENT",
+      "repository": "https://github.com/Open-EO/openeo-python-client",
+      "purpose": "cliente para computacao geoespacial em provedores openEO",
+      "license_declared": "Apache-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P2",
+      "integration": "EO_PLATFORM_BACKEND",
+      "gate": "CUSTO_DO_BACKEND_E_DIREITOS_DOS_DADOS_SEPARADOS_DA_LICENCA_CLIENTE"
+    },
+    {
+      "id": "HIERARCHICALFORECAST",
+      "repository": "https://github.com/Nixtla/hierarchicalforecast",
+      "purpose": "reconciliar previsoes Brasil UF municipios e safras sem soma dupla",
+      "license_declared": "Apache-2.0",
+      "status": "NATIVE_BOTTOMUP_ONLY_LIBRARY_NOT_INSTALLED",
+      "priority": "P0",
+      "integration": "src/nivon/ivo_hierarquias.py",
+      "gate": "FULL_PROBABILISTIC_RECONCILIATION_NOT_IMPLEMENTED_REQUIRE_TERRITORIAL_COMPLETENESS_AND_HIERARCHICAL_VALIDATION",
+      "installation_verified": false,
+      "data_homologated": false
+    },
+    {
+      "id": "SKTIME",
+      "repository": "https://github.com/sktime/sktime",
+      "purpose": "avaliar reducao de duplicidade em experimentos e pipelines temporais",
+      "license_declared": "BSD-3-Clause",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "IVO_MODEL_EVALUATION",
+      "gate": "NAO_INSTALAR_JUNTO_A_MULTIPLOS_FRAMEWORKS_SEM_GANHO_EMPIRICO"
+    },
+    {
+      "id": "GLUONTS",
+      "repository": "https://github.com/awslabs/gluonts",
+      "purpose": "modelos probabilisticos de series e multiplas sazonalidades",
+      "license_declared": "Apache-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P2",
+      "integration": "IVO_PROBABILISTIC_EXPERIMENTS",
+      "gate": "RECURSOS_DE_CPU_RAM_PESOS_DEPENDENCIAS_VALIDAR"
+    },
+    {
+      "id": "POLARS",
+      "repository": "https://github.com/pola-rs/polars",
+      "purpose": "dataframes eficientes em CPU para grandes backfills",
+      "license_declared": "MIT",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "HISTORICO_TRANSFORM",
+      "gate": "MEDIR_MEMORIA_CPU_E_CONFERIR_ENCODING_CSV"
+    },
+    {
+      "id": "SQLITE_VEC",
+      "repository": "https://github.com/asg017/sqlite-vec",
+      "purpose": "busca semantica vetorial local sem servidor extra",
+      "license_declared": "MIT_OR_APACHE-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "IVO_LOCAL_RAG",
+      "gate": "EXTENSAO_BINARIA_WHITELIST_ASSINATURA_SQLITE_CUSTO_EMBEDDINGS"
+    },
+    {
+      "id": "EO_LEARN",
+      "repository": "https://github.com/sentinel-hub/eo-learn",
+      "purpose": "pipeline EO de satelite para fenologia e vegetacao",
+      "license_declared": "MIT",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P2",
+      "integration": "IVO_AGROMETEOROLOGIA_EO",
+      "gate": "DADOS_NAO_INCLUSOS_CUSTO_SATELITE_ETIQUETAS_CALIBRACAO"
+    },
+    {
+      "id": "PYETO",
+      "repository": "https://github.com/woodcrafty/PyETo",
+      "purpose": "calculadora de referencia FAO56 para evapotranspiracao",
+      "license_declared": "BSD-like 3-clause (verify precise metadata)",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "IVO_WATER_BALANCE",
+      "gate": "ALGORITMO_DE_REFERENCIA_NAO_SUBSTITUI_ET0_ESPACIAL_DADOS_CONSISTENTES"
+    },
+    {
+      "id": "CAUSAL_LEARN",
+      "repository": "https://github.com/py-why/causal-learn",
+      "purpose": "descoberta de estruturas causais como gerador de hipoteses",
+      "license_declared": "MIT",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P2",
+      "integration": "IVO_HYPOTHESIS_LAB",
+      "gate": "GRAFO_NAO_E_PROVA_CAUSAL_SEM_DESENHO_INTERVENCIONAL"
+    },
+    {
+      "id": "XGBOOST",
+      "repository": "https://github.com/dmlc/xgboost",
+      "purpose": "baseline robusto para regressao de safras e fretes",
+      "license_declared": "Apache-2.0",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "IVO_SUPERVISED_ML",
+      "gate": "TEMPO_FEATURES_POR_VINTAGE_REGULARIZACAO_OVERFITTING"
+    },
+    {
+      "id": "CONFORMAL_REFERENCE",
+      "repository": "https://github.com/aangelopoulos/conformal-prediction",
+      "purpose": "referencia academica para calibracao de incerteza e testes sob dependencia temporal",
+      "license_declared": "MIT",
+      "status": "RESEARCH_ONLY",
+      "priority": "P1",
+      "integration": "src/nivon/ivo_intervalos.py",
+      "gate": "CALIBRACAO_REAL_POR_CADEIA_REGIME_HORIZONTE_COMPROVAR_COBERTURA"
+    },
+    {
+      "id": "FRICTIONLESS",
+      "repository": "https://github.com/frictionlessdata/frictionless-py",
+      "purpose": "validar schemas e qualidade de arquivos tabulares CSV e planilhas antes da memoria do IVO",
+      "license_declared": "MIT",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P1",
+      "integration": "HISTORICO_QUALIDADE",
+      "gate": "COMPARAR_VALIDADORES_CANONICOS_EXISTENTES_CUSTO_DEPENDENCIAS"
+    },
+    {
+      "id": "PYGEOAPI",
+      "repository": "https://github.com/geopython/pygeoapi",
+      "purpose": "publicar e consultar dados espaciais usando padroes abertos OGC",
+      "license_declared": "MIT",
+      "status": "CANDIDATE_REVIEW",
+      "priority": "P2",
+      "integration": "IVO_GEOSPATIAL_API",
+      "gate": "NAO_HOSPEDAR_SERVIDOR_ATE_HOMOLOGACAO_LICENCA_FONTE_CUSTO_SEGURANCA"
+    }
+  ],
+  "integration_notes": {
+    "optional_extras": [
+      "ivo-ml",
+      "ivo-online",
+      "ivo-query"
+    ],
+    "mandatory_dependencies_unchanged": true,
+    "code_live_in_repo": true,
+    "real_backend_tests_in_default_ci": false,
+    "manual_package_validation_required": true,
+    "auto_install": false,
+    "auto_deploy": false,
+    "knowledge_claims": "Read-only local lexical retrieval prototype; no canonical writes and no LlamaIndex package installed"
+  }
+}
