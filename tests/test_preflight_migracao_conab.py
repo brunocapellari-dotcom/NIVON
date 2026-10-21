@@ -1,5 +1,7 @@
 """Pré-voo migratório CONAB: fixtures, direitos não afirmados e zero escrita."""
 import copy
+import csv
+import io
 import hashlib
 import io
 import json
@@ -15,6 +17,7 @@ from nivon.progresso_store import abrir_progresso,gravar_progresso
 from nivon.registro_snapshots import abrir_registro
 from nivon.progresso_conab_historico import registrar_progresso_local,preparar_esquema
 from nivon.conciliacao_progresso_stores import ErroConciliacaoConab
+from nivon.conab_replay_raw import CAMPOS_CSV, PARSER_ID
 from nivon.preflight_migracao_conab import (
     ErroPreflightConab,planejar_preflight_conab,main,
 )
@@ -71,6 +74,76 @@ class TestPreflightMigracaoConab(unittest.TestCase):
         }
         self.manifesto["edicoes"].append(entry)
         return entry
+
+
+    def usar_parser_csv(self, evidence):
+        original=normalizar()[0]
+        def cell(k):
+            if k=="semana_atual":return original["competencia"]
+            v=original.get(k)
+            if v is None:return ""
+            if isinstance(v,bool):return "true" if v else "false"
+            return str(v)
+        target=io.StringIO(newline="")
+        w=csv.writer(target)
+        w.writerow(CAMPOS_CSV)
+        w.writerow([cell(k) for k in CAMPOS_CSV])
+        raw=target.getvalue().encode("utf-8")
+        Path(evidence["raw_path"]).write_bytes(raw)
+        evidence["raw_sha256"]=hashlib.sha256(raw).hexdigest()
+        evidence["raw_bytes"]=len(raw)
+        evidence["raw_mime"]="text/csv"
+        evidence["parser_versao"]=PARSER_ID
+        return raw
+
+    def test_preflight_executa_bytes_csv_sem_homologar(self):
+        sid,sha=self.salvar_legado()
+        proof=self.adicionar_evidencia(sid,sha)
+        self.usar_parser_csv(proof)
+        r=self.plano()
+        self.assertEqual(r["replays_csv_intercambio_executados"],1)
+        self.assertEqual(r["por_estado"],{
+            "RAW_CSV_INTERCAMBIO_REPROCESSADO_SEM_HOMOLOGACAO_CONAB":1})
+        self.assertTrue(r["itens"][0]["csv_intercambio_reexecutado_localmente"])
+        self.assertEqual(len(r["itens"][0]["parser_codigo_sha256"]),64)
+        self.assertFalse(r["itens"][0]["parser_raw_reprodutivel_auditado"])
+        self.assertFalse(r["parser_conab_oficial_homologado"])
+        self.assertFalse(r["migracao_permitida"])
+
+    def test_preflight_bytes_alterados_com_hash_novo_mas_replay_velho(self):
+        sid,sha=self.salvar_legado()
+        proof=self.adicionar_evidencia(sid,sha)
+        raw=self.usar_parser_csv(proof)
+        edited=raw.replace(b"0.35",b"0.36")
+        Path(proof["raw_path"]).write_bytes(edited)
+        proof["raw_sha256"]=hashlib.sha256(edited).hexdigest()
+        proof["raw_bytes"]=len(edited)
+        with self.assertRaisesRegex(ErroPreflightConab,"RAW reprocessado diverge"):
+            self.plano()
+
+    def test_preflight_parser_csv_nao_e_parser_xlsx(self):
+        sid,sha=self.salvar_legado()
+        proof=self.adicionar_evidencia(sid,sha)
+        self.usar_parser_csv(proof)
+        proof["raw_mime"]="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        with self.assertRaises(ErroPreflightConab):
+            self.plano()
+
+    def test_preflight_parser_legado_nao_executavel_resta_nao_verificado(self):
+        sid,sha=self.salvar_legado()
+        self.adicionar_evidencia(sid,sha)
+        r=self.plano()
+        self.assertEqual(r["replays_csv_intercambio_executados"],0)
+        self.assertIsNone(r["itens"][0]["parser_codigo_sha256"])
+        self.assertFalse(r["migracao_permitida"])
+
+    def test_preflight_csv_adulterado_sem_atualizar_sha_rejeitado(self):
+        sid,sha=self.salvar_legado()
+        proof=self.adicionar_evidencia(sid,sha)
+        raw=self.usar_parser_csv(proof)
+        Path(proof["raw_path"]).write_bytes(raw+b"adulterado")
+        with self.assertRaises(ErroPreflightConab):
+            self.plano()
 
     def plano(self,doc=None):
         return planejar_preflight_conab(self.legado,self.canonico,
