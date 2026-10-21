@@ -394,7 +394,7 @@
         "nivon.verificacao_chuva_ensemble_asof:verificar_chuva_ensemble_asof",
         "nivon.pacotes_chuva_asof:montar_e_verificar_pares_chuva",
         "nivon.adaptador_inmet_chuva:converter_dia_inmet_para_snapshot",
-        "nivon.confronto_climatico_qc:confronto_diario_inmet_power",
+        "nivon.confronto_janelas_fisicas:confrontar_chuva_janelas_equivalentes",
         "nivon.historico_vintages:normalizar_edicao"
       ],
       "data_dependencies": [
@@ -611,7 +611,7 @@
         "nivon.noaa_roni:importar_roni_ascii",
         "nivon.noaa_roni:classificar_episodios_roni",
         "nivon.historico_vintages:normalizar_edicao",
-        "nivon.confronto_climatico_qc:confronto_diario_inmet_power",
+        "nivon.confronto_janelas_fisicas:confrontar_chuva_janelas_equivalentes",
         "nivon.analogos_historicos:encontrar_anos_analogos"
       ],
       "data_dependencies": [
