@@ -83,6 +83,7 @@ class TestMaritimeStore(unittest.TestCase):
             restoration = MaritimeStore.validate_restore(backup)
             self.assertEqual(restoration["ais_rows"], 1)
             self.assertEqual(restoration["lineup_rows"], 1)
+            self.assertEqual(restoration["lineup_vintage_rows"], 0)
             self.assertEqual(restoration["integrity"], "ok")
 
     def test_symlink_rejected(self):
