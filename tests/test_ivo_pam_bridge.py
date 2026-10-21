@@ -23,7 +23,7 @@ CAT={"datasets":[{"id":"IBGE_PAM","source_id":"IBGE",
 
 def plano():
     return planejar_pam_1612(municipio_ibge="5107925",ano=2025,
-                             codigo_produto_c81="2692",codigo_variavel="109")
+                             codigo_produto_c81="2713",codigo_variavel="214")
 
 
 def payload(v="1500",unidade="Toneladas"):
@@ -32,8 +32,8 @@ def payload(v="1500",unidade="Toneladas"):
          "D3C":"Ano (Código)",
          "D4C":"Produto das lavouras temporárias (Código)",
          "V":"Valor","MN":"Unidade de Medida"},
-        {"D1C":"5107925","D2C":"109","D3C":"2025",
-         "D4C":"2692","V":v,"MN":unidade},
+        {"D1C":"5107925","D2C":"214","D3C":"2025",
+         "D4C":"2713","V":v,"MN":unidade},
     ],ensure_ascii=False).encode("utf-8")
 
 
@@ -55,7 +55,7 @@ class TestIVOPAMBridge(unittest.TestCase):
     def preparar(self,bruto=None,**kwargs):
         args=dict(payload=payload() if bruto is None else bruto,plano=plano(),
                   coletado_em=COLETA,corte=CORTE,registro_db=self.db,
-                  variavel_autorizada="109",produto_autorizado="2692",
+                  variavel_autorizada="214",produto_autorizado="2713",
                   unidade_autorizada="Toneladas")
         args.update(kwargs)
         return preparar_pam_anual_asof(**args)
