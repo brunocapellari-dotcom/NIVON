@@ -219,6 +219,105 @@ class TestOutboxWhatsApp(unittest.TestCase):
         self.assertEqual(self.webhook("delivered")["atualizados"],1)
         self.assertEqual(consultar_envio(self.con,self.modelo["idempotency_key"])["estado"],"ENTREGUE")
 
+    def test_sem_aprovacao_persistida_nao_chama_remetente(self):
+        self.registrar()
+        chamadas = []
+        with self.assertRaisesRegex(PermissionError, "autorização"):
+            despachar_registrado(
+                self.con, self.modelo, autorizar_envio=True,
+                custos_aprovados=True,
+                remetente=lambda *_: chamadas.append(True),
+            )
+        self.assertEqual(chamadas, [])
+        self.assertEqual(consultar_envio(
+            self.con, self.modelo["idempotency_key"])["tentativas"], 0)
+
+    def test_documento_de_outra_edicao_nao_gera_aprovacao(self):
+        self.registrar()
+        with self.assertRaisesRegex(ErroOutbox, "não corresponde"):
+            self.aprovar(edicao="2026-10-21")
+        linhas = self.con.execute("SELECT count(*) FROM nivon_autorizacoes").fetchone()[0]
+        self.assertEqual(linhas, 0)
+
+    def test_assinatura_alterada_ou_chave_diferente_bloqueia(self):
+        self.registrar()
+        self.aprovar()
+        chamadas = []
+        antiga = self.assinatura
+        self.assinatura = "sha256=" + "0"*64
+        with self.assertRaisesRegex(PermissionError, "assinatura"):
+            self.despachar(lambda *_: chamadas.append(True))
+        self.assinatura = antiga
+        self.documento = dict(self.documento, consentimento_id="CONSENTIMENTO_TROCADO_1234")
+        with self.assertRaisesRegex(PermissionError, "assinatura"):
+            self.despachar(lambda *_: chamadas.append(True))
+        self.assertEqual(chamadas, [])
+        self.assertEqual(consultar_envio(
+            self.con, self.modelo["idempotency_key"])["tentativas"], 0)
+
+    def test_editorial_com_hash_divergente_nao_registra(self):
+        self.registrar()
+        doc = self.aprovar()
+        self.assertEqual(doc["estado"], "AUTORIZACAO_REGISTRADA_SEM_ENVIO")
+        self.assertEqual(self.con.execute(
+            "SELECT count(*) FROM nivon_autorizacoes").fetchone()[0], 1)
+        # O conteúdo assinado é imutável: uma segunda revisão precisa de uma nova
+        # edição/versão e não deve sobrescrever a autorização anterior.
+        with self.assertRaisesRegex(ErroOutbox, "edição editorial diverge"):
+            self.aprovar(edicao_texto="Texto corrigido, sem novo SHA da aprovação",
+                         sha256_editorial="a"*64)
+
+    def test_revogacao_bloqueia_antes_da_reserva(self):
+        self.registrar()
+        self.aprovar()
+        resultado = revogar_autorizacao(
+            self.con, chave=self.modelo["idempotency_key"],
+            evidencia_revogacao="OPT_OUT_DOCUMENTADO_20261020",
+        )
+        self.assertEqual(resultado["estado"], "AUTORIZACAO_REVOGADA")
+        chamadas = []
+        with self.assertRaisesRegex(PermissionError, "revogada"):
+            self.despachar(lambda *_: chamadas.append(True))
+        self.assertEqual(chamadas, [])
+        self.assertEqual(consultar_envio(
+            self.con, self.modelo["idempotency_key"])["tentativas"], 0)
+        with self.assertRaises(ErroOutbox):
+            self.aprovar()  # revogação não se apaga por nova assinatura idêntica
+
+    def test_consentimento_desativado_reprova_mesmo_assinado(self):
+        self.registrar()
+        with self.assertRaisesRegex(PermissionError, "consentimento"):
+            self.aprovar(consentimento_ativo=False)
+        self.assertEqual(self.con.execute(
+            "SELECT count(*) FROM nivon_autorizacoes").fetchone()[0], 0)
+
+    def test_aprovacao_expirada_reprova(self):
+        self.registrar()
+        ontem = datetime.now(timezone.utc) - timedelta(days=3)
+        with self.assertRaisesRegex(PermissionError, "expirada"):
+            self.aprovar(emitido_em=ontem.isoformat(),
+                         valido_ate=(ontem + timedelta(hours=1)).isoformat())
+        self.assertEqual(self.con.execute(
+            "SELECT count(*) FROM nivon_autorizacoes").fetchone()[0], 0)
+
+    def test_recuperacao_crash_apos_reserva_nao_duplica(self):
+        self.registrar()
+        self.aprovar()
+        eventos = []
+        def falha_apos_reserva(preparado):
+            estado = consultar_envio(self.con, preparado["idempotency_key"])["estado"]
+            eventos.append(estado)
+            raise RuntimeError("processo caiu depois da reserva")
+        resultado = self.despachar(falha_apos_reserva)
+        self.assertEqual(eventos, ["ENVIO_INDETERMINADO"])
+        self.assertEqual(resultado["estado"], "ENVIO_INDETERMINADO")
+        self.con.close()
+        self.con = sqlite3.connect(self.path)
+        with self.assertRaises(ErroOutbox):
+            self.despachar(lambda *_: self.fail("POST duplicado no replay"))
+        self.assertEqual(consultar_envio(
+            self.con, self.modelo["idempotency_key"])["tentativas"], 1)
+
     def test_nao_persiste_destino_ou_texto_no_banco(self):
         self.registrar()
         blob=self.path.read_bytes()
