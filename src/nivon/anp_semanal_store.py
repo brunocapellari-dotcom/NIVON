@@ -16,6 +16,8 @@ import sqlite3
 from typing import Mapping
 from urllib.parse import urlsplit
 
+from .anp_atestacoes import validar_aprovacoes_anp
+
 
 class ErroANPOficial(ValueError):
     pass
@@ -117,6 +119,14 @@ def inicializar_store_anp(db: sqlite3.Connection) -> None:
       data_publicacao TEXT NOT NULL, prova_publicacao_sha TEXT NOT NULL,
       prova_direitos_sha TEXT, resumo_sha TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS anp_semanal_atestacoes (
+      sha TEXT NOT NULL REFERENCES anp_semanal_edicoes(sha),
+      dominio TEXT NOT NULL CHECK (dominio IN ('DIREITOS_USO','HOMOLOGACAO_LAYOUT')),
+      aprovacao_id TEXT NOT NULL UNIQUE, emissor_id TEXT NOT NULL,
+      assinatura_sha256 TEXT NOT NULL, emitido_em TEXT NOT NULL,
+      valido_ate TEXT NOT NULL,
+      PRIMARY KEY(sha,dominio)
+    );
     CREATE TABLE IF NOT EXISTS anp_semanal_capturas (
       sha TEXT NOT NULL REFERENCES anp_semanal_edicoes(sha),
       data_coleta TEXT NOT NULL, PRIMARY KEY (sha, data_coleta)
@@ -145,6 +155,10 @@ def gravar_edicao_semanal(
     classe: str = "SINTETICO", prova_direitos_sha: str | None = None,
     direitos_confirmados: bool = False,
     indice_evidencia: Mapping | None = None,
+    aprovacoes_assinadas: Mapping | None = None,
+    autoridades_confiaveis: Mapping | None = None,
+    ids_revogados: frozenset[str] | None = None,
+    habilitacao_real: bool = False,
 ) -> dict:
     """Persiste apenas agregado; real exige atestação de direitos independente.
 
@@ -162,11 +176,16 @@ def gravar_edicao_semanal(
     if classe not in {"SINTETICO", "REAL_AUTORIZADO"}:
         raise ErroANPOficial("classe de edição não suportada")
     if classe == "REAL_AUTORIZADO":
-        if direitos_confirmados is not True:
-            raise PermissionError("armazenamento real sem direitos homologados")
+        # Flags e SHA textuais jamais habilitam REAL_AUTORIZADO sozinhos.
+        # O pipeline da ANP não fornece habilitação real, nem chaves de emissão.
+        if (habilitacao_real is not True or direitos_confirmados is not True
+                or indice_evidencia is None):
+            raise PermissionError("ingestão REAL bloqueada: homologação externa obrigatória")
         prova_direitos = _sha(prova_direitos_sha, "prova_direitos_sha")
-    elif prova_direitos_sha is not None or direitos_confirmados:
-        raise ErroANPOficial("fixture não recebe direitos de edição real")
+    elif (prova_direitos_sha is not None or direitos_confirmados
+          or aprovacoes_assinadas is not None or autoridades_confiaveis is not None
+          or ids_revogados is not None or habilitacao_real is not False):
+        raise ErroANPOficial("fixture não recebe credenciais ou direitos reais")
     else:
         prova_direitos = None
 
@@ -196,6 +215,19 @@ def gravar_edicao_semanal(
     linhas = _observacoes(resumo, pub)
     digest = sha256(json.dumps(linhas, sort_keys=True, separators=(",", ":"),
                                ensure_ascii=True).encode()).hexdigest()
+    aprovados = None
+    if classe == "REAL_AUTORIZADO":
+        if indice_dados is None:
+            raise PermissionError("índice independente obrigatório para edição real")
+        aprovados = validar_aprovacoes_anp(
+            aprovacao=aprovacoes_assinadas, confianca=autoridades_confiaveis,
+            edicao_sha256=original, resumo_sha256=digest,
+            origem_url=origem, publicacao_em=pub.isoformat(),
+            prova_publicacao_sha256=prova_pub,
+            prova_direitos_sha256=prova_direitos,
+            indice_sha256=indice_dados[1],
+            verificado_em=coleta.isoformat(), ids_revogados=ids_revogados,
+        )
     db.row_factory = sqlite3.Row
     with db:
         ja = db.execute("SELECT * FROM anp_semanal_edicoes WHERE sha=?",
@@ -220,6 +252,26 @@ def gravar_edicao_semanal(
             ja["resumo_sha"] != digest,
         )):
             raise ErroANPOficial("mesmo SHA original com edição, provas ou dados conflitantes")
+        if aprovados is not None:
+            for dominio, evidencia in aprovados.items():
+                existente = db.execute("""SELECT * FROM anp_semanal_atestacoes
+                    WHERE sha=? AND dominio=?""", (original, dominio)).fetchone()
+                if existente is not None:
+                    if any((
+                        existente["aprovacao_id"] != evidencia["aprovacao_id"],
+                        existente["emissor_id"] != evidencia["emissor_id"],
+                        existente["assinatura_sha256"] != evidencia["assinatura_sha256"],
+                        existente["emitido_em"] != evidencia["emitido_em"],
+                        existente["valido_ate"] != evidencia["valido_ate"],
+                    )):
+                        raise ErroANPOficial("atestação divergente para mesma edição")
+                else:
+                    db.execute("""INSERT INTO anp_semanal_atestacoes
+                        (sha,dominio,aprovacao_id,emissor_id,assinatura_sha256,
+                         emitido_em,valido_ate) VALUES (?,?,?,?,?,?,?)""",
+                        (original, dominio, evidencia["aprovacao_id"],
+                         evidencia["emissor_id"], evidencia["assinatura_sha256"],
+                         evidencia["emitido_em"], evidencia["valido_ate"]))
         changes = db.execute("""INSERT OR IGNORE INTO anp_semanal_capturas
             (sha,data_coleta) VALUES (?,?)""", (original, coleta.isoformat())).rowcount
         indice_novo = None
@@ -231,6 +283,7 @@ def gravar_edicao_semanal(
         "status": "AGREGADO_OFICIAL_ISOLADO",
         "sha256_original": original, "captura_nova": changes == 1,
         "observacoes": len(linhas), "classe": classe,
+        "atestacoes_independentes_validadas": len(aprovados or {}),
         "fonte_publicavel": False, "reconstroi_semana": False,
         "data_publicacao": pub.isoformat(), "data_coleta": coleta.isoformat(),
         "indice_registrado": indice_novo, "indice_sha256": (
@@ -262,6 +315,9 @@ def consultar_preco_semanal(
         JOIN anp_semanal_edicoes e ON e.sha=o.sha
         JOIN anp_semanal_capturas c ON c.sha=e.sha
         WHERE e.classe='REAL_AUTORIZADO'
+          AND (SELECT COUNT(*) FROM anp_semanal_atestacoes a
+               WHERE a.sha=e.sha
+                 AND a.dominio IN ('DIREITOS_USO','HOMOLOGACAO_LAYOUT')) = 2
           AND o.uf=? AND o.municipio=? AND o.produto=?
           AND o.semana_fim<=? AND e.data_publicacao<=? AND c.data_coleta<=?
         GROUP BY o.sha,o.uf,o.municipio,o.produto,o.semana_inicio
