@@ -34,6 +34,7 @@ MODULOS=frozenset({
     "ensemble_hidrologico_bacia",
     "chuva_areal_ensemble","verificacao_vazao_asof",
     "verificacao_chuva_ensemble_asof",
+    "pacotes_chuva_asof",
 })
 
 
