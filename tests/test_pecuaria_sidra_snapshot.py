@@ -160,5 +160,15 @@ class TestPecuariaSidraSnapshot(unittest.TestCase):
         with self.assertRaises(DadoInvalido):
             analisar(json_bytes(linha("9999", 10, periodo="199604")))
 
+
+    def test_trimestre_precisa_ter_terminado_por_completo(self):
+        bruto = json_bytes(linha("9999", 10), linha("8888", 2500))
+        with self.assertRaisesRegex(DadoInvalido, "publicacao anterior"):
+            analisar(bruto, publicacao="2026-06-30T23:59:00+00:00",
+                    coleta="2026-07-01T12:00:00+00:00")
+        atual = analisar(bruto, publicacao="2026-07-01T00:00:00+00:00",
+                        coleta="2026-07-01T12:00:00+00:00")
+        self.assertEqual(len(atual["observacoes"]), 2)
+
 if __name__ == "__main__":
     unittest.main()
