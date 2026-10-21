@@ -187,3 +187,27 @@ Exemplos: um modelo emitido em dezembro de 2023 não pode usar a página **atual
 
 **Próximo P0 desbloqueável:** obter um exemplar do arquivo de boletim **de uma edição datada** e respectiva tabela, preservando RAW, SHA real, licença e evidência independente de disponibilidade na data; só então normalizar números com cultura/UF/unidade e gravar `historico_vintages` e produzir backtest. O XLS consolidado permanece fonte de contexto, jamais mecanismo de reprodução do passado por si só.
 
+
+## Continuidade de 21/10/2026 — anexo XLSX dos levantamentos mensais CONAB (AG-01)
+
+**Nova evidência oficial verificada externamente:** além de páginas de levantamentos por edição, a CONAB expõe o respectivo anexo “Tabela de dados - Produção e balanço de oferta e demanda de grãos”. Exemplo documental para o 3º levantamento da safra 2023/24:
+- Página do levantamento (publicada **07/12/2023 09h00**, modificada 24/01/2025): https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/safra-de-graos/boletim-da-safra-de-graos/3o-levantamento-safra-2023-24
+- Página de visualização de arquivo (atualizada **24/01/2025 12h43**, conforme portal): https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/safra-de-graos/boletim-da-safra-de-graos/3o-levantamento-safra-2023-24/tabela-de-dados-producao-e-balanco-de-oferta-e-demanda-de-graos/view
+- Nome anunciado na visualização: `Site_PREVISAO_DE_SAFRA-POR_PRODUTO-DEZ-2023.xlsx`, aprox. 966 KB. A URL **sem** `/view` entrega um arquivo XLSX (tipo MIME reportado por ferramenta web), mas **o download de bytes não foi concluído**.
+- A requisição HTTPS direta via ambiente local para o portal falhou por resolução DNS. Não foram extraídas células ou hashes de XLSX real.
+
+**Importante:** a data de atualização da visualização em 2025 não comprova, sem comparação de arquivos, que os próprios bytes tenham mudado. Mas tampouco podemos presumir que a versão atual reproduza o conteúdo de dezembro de 2023. Portanto ela é **candidata para pesquisa histórica**, não vintage autenticada.
+
+**Implementação offline criada:** `src/nivon/conab_anexo_xlsx_levantamento.py:conferir_anexo_xlsx_levantamento`. Recebe diretamente HTML bruto do levantamento, HTML bruto do anexo, bytes do XLSX, URL de cada etapa, carimbos independentes e SHA esperado do arquivo adquirido. Verifica:
+1. Relação estrutural entre `/3o-levantamento-safra-2023-24`, `/.../tabela-de-dados-producao-e-balanco-de-oferta-e-demanda-de-graos/view` e a URL de download sem `/view`, sem redirecionamento, crawling ou acesso de rede.
+2. O link do anexo realmente constava no HTML bruto do levantamento, inclusive se relativo. Rejeita domínio distinto, query strings, credenciais ou mudança de safra e levantamento.
+3. Três capturas com horários ISO/fuso em janela máxima de dez minutos, restrição apenas de consistência pontual, **não** de prova histórica.
+4. SHA-256 recalculado sobre o XLSX, tamanho limite, cabeçalho ZIP e arquivo com três entradas obrigatórias mínimas; bloqueia caminhos `..`, entradas duplicadas, payloads binários/macros/links externos comuns, ZIP criptografado ou risco básico de ZIP-bomb. O método **não** decodifica XML, células, fórmulas ou conteúdo agrícola; também não substitui sandbox/antivírus.
+5. Na saída, `celulas_xlsx_lidas=false`, `edicao_historica_autenticada=false`, `disponibilidade_asof_comprovada=false`, `habilita_treino=false`, `habilita_backtest=false`, `habilita_publicacao=false`. Hash é da captura recebida, não da edição histórica independente.
+
+**Evidência de código:** `tests/test_conab_anexo_xlsx_levantamento.py` contém **16 regressões offline** com ZIPs sintéticos, URLs hostis, troca de edição, hash divergente, XML faltante, macro/links externos, compressão hostil e bloqueio de retroteste. A tentativa inicial de CI encontrou erro de sintaxe no teste UTF-8; foi corrigida. Um ajuste adicional na resolução de links relativos também foi aplicado e validado. Testes passam sem conexão de rede.
+
+**Registro dos motores:** entrada adicional para as frentes SOJA e MILHO, política operacional integralmente OFF. Nenhum coletor foi ativado; não houve merge nem deploy.
+
+**Próximo gate P0 real:** obter HTML e XLSX oficiais para **um** levantamento identificado em storage privado e autorizado, recalcular hashes, rodar esse verificador, e então abrir o workbook com parser `openpyxl` isolado e mapear explicitamente abas/cabeçalhos/unidades da **versão capturada**. Uma validação estrutural de XLSX não autentica o conteúdo histórico. Somente persistir em `historico_vintages` após comprovar a edição e a disponibilidade documental independente do cutoff.
+
