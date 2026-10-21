@@ -16,6 +16,7 @@ for fonte, url, metodo in (("NOAA", url_noaa, "GET"), ("ESA", url_esa, "HEAD")):
                 lines = body.decode("utf-8-sig", "replace").splitlines()
                 obj.update(linhas=len(lines), cabecalho=lines[0][:200] if lines else "",
                            linhas_nao_vazias=sum(bool(x.strip()) for x in lines),
+                           linhas_iniciais=lines[1:4],
                            separadores_ponto_virgula=lines[0].count(";") if lines else 0,
                            separadores_virgula=lines[0].count(",") if lines else 0)
             print(json.dumps(obj, ensure_ascii=False))
