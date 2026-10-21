@@ -54,27 +54,6 @@ def inspecionar_xls_conab_capturado(
     if not isinstance(manifesto_raw, dict) or manifesto_raw.get("status") != (
             "CAPTURA_SHA_OLE2_LINK_SEM_VALIDACAO_XLS_OU_VINTAGE"):
         raise ErroLeituraXLSConab("manifesto de captura CONAB não reconhecido")
-    # Um manifesto é dado não confiável; validá-lo novamente com os dois
-    # artefatos originais elimina substituição da URL, origem HTML e flags
-    # sem correspondência com os bytes. A conferência continua sem provar
-    # publicação histórica ou identidade institucional independente.
-    try:
-        reconstituido = verificar_raw_conab(
-            cultura=manifesto_raw.get("cultura"),
-            arquivo=manifesto_raw.get("arquivo"),
-            pagina_html_raw=pagina_html_raw,
-            planilha_raw=planilha_raw,
-            url_documento=manifesto_raw.get("url_documento"),
-            coletado_html_em=manifesto_raw.get("coletado_html_em"),
-            coletado_xls_em=manifesto_raw.get("coletado_xls_em"),
-            sha256_xls_esperado=manifesto_raw.get("xls_raw_sha256"),
-        )
-    except (ErroProvaRawConab, ValueError, TypeError) as exc:
-        raise ErroLeituraXLSConab("proveniência HTML+XLS não verificável") from exc
-    if reconstituido != manifesto_raw:
-        raise ErroLeituraXLSConab(
-            "manifesto difere dos hashes, URLs, captura ou flags reconstituídos"
-        )
     meta = manifesto_raw.get("snapshot_meta")
     arquivo = manifesto_raw.get("arquivo")
     cultura = manifesto_raw.get("cultura")
@@ -114,6 +93,27 @@ def inspecionar_xls_conab_capturado(
         raise ErroLeituraXLSConab("data real de coleta ausente")
     if meta["coletado_em"] != manifesto_raw.get("coletado_xls_em"):
         raise ErroLeituraXLSConab("coleta da captura divergente")
+    # Um manifesto é dado não confiável; validá-lo novamente com os dois
+    # artefatos originais elimina substituição da URL, origem HTML e flags
+    # sem correspondência com os bytes. A conferência continua sem provar
+    # publicação histórica ou identidade institucional independente.
+    try:
+        reconstituido = verificar_raw_conab(
+            cultura=manifesto_raw.get("cultura"),
+            arquivo=manifesto_raw.get("arquivo"),
+            pagina_html_raw=pagina_html_raw,
+            planilha_raw=planilha_raw,
+            url_documento=manifesto_raw.get("url_documento"),
+            coletado_html_em=manifesto_raw.get("coletado_html_em"),
+            coletado_xls_em=manifesto_raw.get("coletado_xls_em"),
+            sha256_xls_esperado=manifesto_raw.get("xls_raw_sha256"),
+        )
+    except (ErroProvaRawConab, ValueError, TypeError) as exc:
+        raise ErroLeituraXLSConab("proveniência HTML+XLS não verificável") from exc
+    if reconstituido != manifesto_raw:
+        raise ErroLeituraXLSConab(
+            "manifesto difere dos hashes, URLs, captura ou flags reconstituídos"
+        )
     livro = None
     try:
         # O executor deve isolar parsing de arquivos não confiáveis. Este
