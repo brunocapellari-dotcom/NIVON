@@ -31,7 +31,10 @@ MODES = {
 def plan(port="SANTOS"):
     return PilotSource(
         port_id=port, source_id="OFFICIAL_" + port,
-        mode=MODES[port], series="EXPORT_OESTE" if port == "PARANAGUA" else None,
+        mode=MODES[port],
+        registered_url=(f"https://{HOSTS[port]}/official/" if MODES[port].startswith("PDF")
+                        else f"https://{HOSTS[port]}/official/lineup"),
+        series="EXPORT_OESTE" if port == "PARANAGUA" else None,
     )
 
 
@@ -59,7 +62,8 @@ def edition(target=None, num=1, *, document=None, **changes):
         ),),
     )
     fields = dict(vintage=v, document_bytes=raw, mime=mime,
-        source_url=f"https://{HOSTS[target.port_id]}/official/test-{num}",
+        source_url=(target.registered_url + f"test-{num}"
+                    if target.mode.startswith("PDF") else target.registered_url),
         parser_mode=target.mode, series=target.series, eligible_source_rows=1,
         rejected_eligible_rows=0, parser_review_id="parser-review",
         identity_review_id="duv-review", acquisition_evidence_id="acquisition-proof",
@@ -143,6 +147,30 @@ class HomologationManifestTests(unittest.TestCase):
                 bad = replace(edition(), source_url=url)
                 self.assertIn("UNVERIFIED_OFFICIAL_URL", audit_edition(bad, plan()))
 
+    def test_unregistered_page_on_same_official_domain_blocked(self):
+        wrong = replace(edition(), source_url="https://www.portodesantos.com.br/official/other")
+        self.assertIn("URL_NOT_REGISTERED_FOR_SOURCE", audit_edition(wrong, plan()))
+
+    def test_unregistered_pdf_directory_blocked(self):
+        p = plan("ITAQUI")
+        wrong = replace(edition(p), source_url="https://www.portodoitaqui.com/unrelated/test.pdf")
+        self.assertIn("URL_NOT_REGISTERED_FOR_SOURCE", audit_edition(wrong, p))
+
+    def test_registered_url_path_traversal_rejected(self):
+        p = plan("ITAQUI")
+        bad = replace(edition(p), source_url=p.registered_url + "../unrelated.pdf")
+        self.assertIn("UNVERIFIED_OFFICIAL_URL", audit_edition(bad, p))
+
+    def test_registered_pdf_prefix_requires_trailing_slash(self):
+        with self.assertRaisesRegex(ValueError, "end in slash"):
+            PilotSource("ITAQUI", "SOURCE", MODES["ITAQUI"],
+                        "https://www.portodoitaqui.com/official")
+
+    def test_registered_html_url_cannot_use_unspecific_root(self):
+        with self.assertRaisesRegex(ValueError, "exact document"):
+            PilotSource("SANTOS", "SOURCE", MODES["SANTOS"],
+                        "https://www.portodesantos.com.br/official/")
+
     def test_pdf_signature_wrong_blocked(self):
         p = plan("ITAQUI")
         bad = replace(edition(p), document_bytes=b"not a pdf")
@@ -223,9 +251,11 @@ class HomologationManifestTests(unittest.TestCase):
 
     def test_paranagua_requires_explicit_series(self):
         with self.assertRaisesRegex(ValueError, "canonical series"):
-            PilotSource("PARANAGUA", "PARANAGUA_SOURCE", MODES["PARANAGUA"])
+            PilotSource("PARANAGUA", "PARANAGUA_SOURCE", MODES["PARANAGUA"],
+                        "https://www.portosdoparana.pr.gov.br/official/")
         with self.assertRaisesRegex(ValueError, "series only"):
-            PilotSource("ITAQUI", "ITAQUI_SOURCE", MODES["ITAQUI"], series="EXPORT_OESTE")
+            PilotSource("ITAQUI", "ITAQUI_SOURCE", MODES["ITAQUI"],
+                        "https://www.portodoitaqui.com/official/", series="EXPORT_OESTE")
 
     def test_parser_mismatch_fails(self):
         row = replace(edition(), parser_mode="PDF_ITAQUI")
