@@ -123,8 +123,8 @@ class LineupVintageLedger:
     @classmethod
     def _decode(cls, row: tuple[Any, ...]) -> LineupVintage:
         (
-            stored_port, stored_source, collected, published, reference_date,
-            competence, source_sha256, publication_evidence_id,
+            stored_vintage_id, stored_port, stored_source, collected, published,
+            reference_date, competence, source_sha256, publication_evidence_id,
             checksum, payload,
         ) = row
         if not isinstance(payload, str) or len(payload.encode("utf-8")) > cls.MAX_PAYLOAD_BYTES:
@@ -157,6 +157,10 @@ class LineupVintageLedger:
             or snapshot.publication_evidence_id != publication_evidence_id
         ):
             raise ValueError("historical lineup metadata mismatch")
+        derived_id, derived_checksum, derived_payload = cls._canonical(snapshot)
+        if (derived_id != stored_vintage_id or derived_checksum != checksum
+                or derived_payload != payload):
+            raise ValueError("historical lineup identity or canonical payload mismatch")
         return snapshot
 
     def select_asof(
@@ -170,7 +174,7 @@ class LineupVintageLedger:
             raise ValueError("port_id and source_id required")
         cutoff = _aware_utc(as_of, "as_of").isoformat()
         rows = self.db.execute("""
-            SELECT port_id,source_id,collected_at,published_at,reference_date,
+            SELECT vintage_id,port_id,source_id,collected_at,published_at,reference_date,
                    competence,source_sha256,publication_evidence_id,
                    payload_sha256,payload_json
             FROM maritime_lineup_vintages
