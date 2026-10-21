@@ -11,11 +11,13 @@ from hashlib import sha256
 from math import isfinite
 import json
 from typing import Mapping, Sequence
+from zoneinfo import ZoneInfo
 from .quant_core import ErroQuantitativo, _identidade, _instante, _hash, _dia
 
 CHAVE=("municipio_ibge","pickup_entity_id","transportadora_id",
        "destino_ibge","descarga_entity_id","produto","equipamento","regime")
 NATUREZA="FRETE_ANUNCIADO_NAO_CONTRATADO"
+FUSO_COMERCIAL=ZoneInfo("America/Cuiaba")
 
 
 def _valor_decimal(valor: object, campo: str, *, nao_negativo: bool=False) -> Decimal:
@@ -87,8 +89,16 @@ def preparar_serie_frete_anunciado(
         periodo=_dia(row.get("data_referencia"),"data_referencia")
         pub=_instante(row.get("data_publicacao"),"data_publicacao")
         coleta=_instante(row.get("data_coleta"),"data_coleta")
-        if not (periodo<=pub.date() and pub<=coleta<=corte):
+        if not pub<=coleta<=corte:
             raise ErroQuantitativo("cronologia invalida ou preco apos as_of")
+        # Um anuncio divulgado em 2026 com referencia comercial de 2024
+        # NAO e uma serie de preco atual. Datas em UTC tambem podem mudar
+        # de dia na fronteira: a unidade comercial e o dia local de Mato Grosso.
+        if periodo != pub.astimezone(FUSO_COMERCIAL).date():
+            raise ErroQuantitativo(
+                "data de referencia difere do dia local de publicacao; "
+                "republicacao antiga ou fuso comercial nao validado"
+            )
         base=_valor_decimal(row.get("frete_base_brl_t"),"frete_base_brl_t")
         pedagio=row.get("pedagio_brl_t")
         cheio=row.get("frete_cheio_brl_t")
