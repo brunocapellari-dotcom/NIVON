@@ -161,8 +161,11 @@ def capturar_xlsx_conab(reg: dict, *, destino: str | Path,
     meta=validar_publicacao_conab(reg)
     out=_destino_privado(destino)
     raw,network=_download_uma_vez(meta["url_anexo"],transport=transport,clock=clock)
-    audit=auditar_conab_local(reg,bytes_anexo=raw,
-                             coletado_utc=network["finalizado_utc"])
+    try:
+        audit=auditar_conab_local(reg,bytes_anexo=raw,
+                                 coletado_utc=network["finalizado_utc"])
+    except ErroProvenienciaConab as exc:
+        raise ErroCapturaConab("XLSX não passou auditoria local de proveniência/conteúdo") from exc
     expected=reg["conteudo_sha256_verificado"]
     sha=hashlib.sha256(raw).hexdigest()
     if expected is not None and sha!=expected:
