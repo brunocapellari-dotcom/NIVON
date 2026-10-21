@@ -121,6 +121,12 @@ def inicializar_store_anp(db: sqlite3.Connection) -> None:
       sha TEXT NOT NULL REFERENCES anp_semanal_edicoes(sha),
       data_coleta TEXT NOT NULL, PRIMARY KEY (sha, data_coleta)
     );
+    CREATE TABLE IF NOT EXISTS anp_semanal_indices (
+      sha_arquivo TEXT NOT NULL REFERENCES anp_semanal_edicoes(sha),
+      sha_indice TEXT NOT NULL, data_coleta_indice TEXT NOT NULL,
+      indice_url TEXT NOT NULL, url_no_indice TEXT NOT NULL,
+      PRIMARY KEY (sha_arquivo,sha_indice,data_coleta_indice)
+    );
     CREATE TABLE IF NOT EXISTS anp_semanal_observacoes (
       sha TEXT NOT NULL REFERENCES anp_semanal_edicoes(sha),
       uf TEXT NOT NULL, municipio TEXT NOT NULL, produto TEXT NOT NULL,
@@ -138,6 +144,7 @@ def gravar_edicao_semanal(
     data_publicacao: str, prova_publicacao_sha: str,
     classe: str = "SINTETICO", prova_direitos_sha: str | None = None,
     direitos_confirmados: bool = False,
+    indice_evidencia: Mapping | None = None,
 ) -> dict:
     """Persiste apenas agregado; real exige atestação de direitos independente.
 
@@ -162,6 +169,29 @@ def gravar_edicao_semanal(
         raise ErroANPOficial("fixture não recebe direitos de edição real")
     else:
         prova_direitos = None
+
+    # Salvar a referência do índice na MESMA transação das observações.
+    # Seu hash prova identidade do snapshot declarado, não autenticidade
+    # nem data de publicação oficial sem fonte independente.
+    indice_dados = None
+    if indice_evidencia is not None:
+        if (not isinstance(indice_evidencia, Mapping)
+                or set(indice_evidencia) != {
+                    "sha256", "coletado_em", "indice_url", "url_no_indice"
+                }):
+            raise ErroANPOficial("schema da evidência do índice divergente")
+        from .anp_indice_lpc import URL_INDICE
+        sha_indice = _sha(indice_evidencia["sha256"], "indice_sha256")
+        instante_indice = _tempo(indice_evidencia["coletado_em"], "data_coleta_indice")
+        if not (pub <= instante_indice <= coleta):
+            raise ErroANPOficial("índice não tem cronologia point-in-time coerente")
+        if (indice_evidencia["indice_url"] != URL_INDICE
+                or indice_evidencia["url_no_indice"] != origem):
+            raise ErroANPOficial("snapshot do índice não corresponde à origem do XLSX")
+        indice_dados = (
+            original, sha_indice, instante_indice.isoformat(),
+            URL_INDICE, origem,
+        )
 
     linhas = _observacoes(resumo, pub)
     digest = sha256(json.dumps(linhas, sort_keys=True, separators=(",", ":"),
@@ -192,12 +222,20 @@ def gravar_edicao_semanal(
             raise ErroANPOficial("mesmo SHA original com edição, provas ou dados conflitantes")
         changes = db.execute("""INSERT OR IGNORE INTO anp_semanal_capturas
             (sha,data_coleta) VALUES (?,?)""", (original, coleta.isoformat())).rowcount
+        indice_novo = None
+        if indice_dados is not None:
+            indice_novo = db.execute("""INSERT OR IGNORE INTO anp_semanal_indices
+                (sha_arquivo,sha_indice,data_coleta_indice,indice_url,url_no_indice)
+                VALUES (?,?,?,?,?)""", indice_dados).rowcount == 1
     return {
         "status": "AGREGADO_OFICIAL_ISOLADO",
         "sha256_original": original, "captura_nova": changes == 1,
         "observacoes": len(linhas), "classe": classe,
         "fonte_publicavel": False, "reconstroi_semana": False,
         "data_publicacao": pub.isoformat(), "data_coleta": coleta.isoformat(),
+        "indice_registrado": indice_novo, "indice_sha256": (
+            indice_dados[1] if indice_dados is not None else None
+        ),
     }
 
 
