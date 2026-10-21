@@ -20,6 +20,7 @@ from pathlib import Path
 from .auditoria_evidencias_pacotes import ErroEvidencia, _arquivo, _lock
 from .auditoria_extras import ErroDependencias, analisar_requisito
 from .verificacao_record import verificar_record
+from .inspecao_licencas_wheel import inspecionar_licenca
 
 MAX_WHEEL_BYTES = 128 * 1024 * 1024
 MAX_ENTRIES = 10000
@@ -131,8 +132,10 @@ def _metadata_zip(fh, expected_name: str, expected_version: str) -> dict:
                     NotImplementedError, zipfile.BadZipFile) as exc:
                 raise ErroEvidencia("metadados wheel inválidos ou corrompidos") from exc
             record = verificar_record(zf, members, dist_dir)
+            licenses = inspecionar_licenca(zf, members, dist_dir, meta)
             return {"zip_members": len(members), "dist_info_verified": True,
-                    "requires_dist": requirements, **record}
+                    "requires_dist": requirements, **record,
+                    "license_evidence": licenses}
     except (OSError, zipfile.BadZipFile, zipfile.LargeZipFile) as exc:
         raise ErroEvidencia("wheel ZIP ilegível/corrompido") from exc
 
