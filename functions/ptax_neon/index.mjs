@@ -77,8 +77,8 @@ async function runTask() {
   try {
     locked=(await conn.query("SELECT pg_try_advisory_lock(240618) AS ok")).rows[0].ok;
     if(!locked)return {status:"ALREADY_RUNNING"};
-    const last=await conn.query("SELECT max(started_at) AS last FROM public.nivon_ptax_runs WHERE status IN ('SUCCESS','EMPTY') AND job_type='DAILY'");
-    if(last.rows[0].last && Date.now()-new Date(last.rows[0].last).getTime()<20*3600*1000) return {status:"ALREADY_CHECKED_RECENTLY"};
+    const last=await conn.query("SELECT count(DISTINCT currency)::int AS currencies_done FROM public.nivon_ptax_runs WHERE status IN ('SUCCESS','EMPTY') AND job_type='DAILY' AND started_at > now() - interval '20 hours'");
+    if(last.rows[0].currencies_done===2) return {status:"ALREADY_CHECKED_RECENTLY"};
     const end=brazilToday(),begin=plusDays(end,-10),out=[];
     for(const currency of CURRENCIES){
       try {out.push(await writeWindow(currency,begin,end,"DAILY"))}
