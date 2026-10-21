@@ -13,6 +13,7 @@ from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from collections import Counter
 from .frete_linhas_editoriais import formatar_linha_frete, linha_identificada
+from .politica_frescor_briefing import secao_do_grupo, validar_frescor_indicador
 from urllib.parse import urlsplit, parse_qsl, urlencode, urlunsplit
 
 TITULO = "RESUMO ESTRATÉGICO DO AGRONEGÓCIO"
@@ -150,6 +151,11 @@ def _verificar_cotacao(item: dict, agora: datetime, texto: str) -> str:
     ref = _instante(item.get("referencia_em"))
     if ref > agora:
         raise ValueError("cotação com referência futura")
+    # O mesmo backstop temporal do renderer deve se aplicar ao pacote
+    # auditado; ANP usa seção DIESEL e não preço intradiário de energia.
+    secao = secao_do_grupo(grupo=grupo, secao_declarada=item.get("secao"))
+    validar_frescor_indicador(secao=secao, referencia=item["referencia_em"],
+                              gerado_em=agora.isoformat())
     if not all(isinstance(item.get(x), str) and item[x].strip()
                for x in ("titulo", "unidade", "competencia", "natureza")):
         raise ValueError("unidade, competência ou natureza ausente")
