@@ -89,6 +89,10 @@ def _esquema(con: sqlite3.Connection) -> None:
         valido_ate TEXT NOT NULL,
         revogado_em TEXT,
         criado_em TEXT NOT NULL)""")
+    con.execute("""CREATE TABLE IF NOT EXISTS nivon_revogacoes (
+        idempotency_key TEXT PRIMARY KEY REFERENCES nivon_envios(idempotency_key),
+        evidencia_sha256 TEXT NOT NULL,
+        revogado_em TEXT NOT NULL)""")
 
 
 def registrar_edicao(con: sqlite3.Connection, preparado: dict, *,
@@ -218,8 +222,16 @@ def revogar_autorizacao(con: sqlite3.Connection, *, chave: str,
         if not r:
             raise ErroOutbox("aprovação a revogar não encontrada")
         if r[1] is None:
+            instante = _hora()
             con.execute("UPDATE nivon_autorizacoes SET revogado_em=? WHERE idempotency_key=?",
-                        (_hora(), chave))
+                        (instante, chave))
+            # Manter prova pseudonimizada e imutável de opt-out em transação
+            # conjunta à revogação; não persistir documentos pessoais brutos.
+            con.execute("""INSERT INTO nivon_revogacoes
+                           (idempotency_key,evidencia_sha256,revogado_em)
+                           VALUES (?,?,?)""",
+                        (chave, hashlib.sha256(evidencia_revogacao.encode("utf-8")).hexdigest(),
+                         instante))
         con.commit()
     except Exception:
         con.rollback()
