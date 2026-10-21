@@ -166,7 +166,9 @@ class TestIVOBenchmarkPAMAnual(unittest.TestCase):
 
     def test_ano_reclassificado_bloqueado(self):
         x=self.serie()
-        x[2020]=(replace(x[2020][0],plano=dict(x[2020][0].plano,ano=2021)),)
+        outra=planejar_pam_1612(municipio_ibge="5107925",ano=2021,
+                                 codigo_produto_c81="2692",codigo_variavel="109")
+        x[2020]=(replace(x[2020][0],plano=outra),)
         with self.assertRaises(ErroBenchmarkAnual):
             self.rodar(x)
 
