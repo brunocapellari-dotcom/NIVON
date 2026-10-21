@@ -230,7 +230,7 @@ class TestPonteWhatsAppFrete(unittest.TestCase):
             adaptar(key=b"segredo-curto")
 
     def test_payload_que_alega_aprovacao_sem_assinaturas_bloqueado(self):
-        with self.assertRaisesRegex(ErroAdaptadorFrete, "assinatura"):
+        with self.assertRaisesRegex(ErroAdaptadorFrete, "atestado externo inválido"):
             adaptar(autenticar=False)
 
     def test_chaves_separadas_e_emissor_esperado(self):
