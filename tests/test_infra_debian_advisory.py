@@ -143,7 +143,7 @@ class TestDebianAdvisory(unittest.TestCase):
         w = WF.read_text(encoding="utf-8")
         self.assertIn("security-tracker.debian.org/tracker/data/json", w)
         self.assertIn("python -m nivon.infra_debian_advisory", w)
-        self.assertIn("--max-filesize 25000000", w)
+        self.assertIn("--max-filesize 90000000", w)
         self.assertIn("if: ${{ !cancelled() }}", w)
         self.assertLess(w.index("python -m nivon.infra_debian_advisory"),
                         w.index("python -m nivon.infra_supplychain"))

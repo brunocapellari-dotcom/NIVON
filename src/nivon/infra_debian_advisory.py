@@ -20,7 +20,7 @@ EXPECTED_IMAGE = "nivon-worker-supply:ci"
 CVE = re.compile(r"CVE-[0-9]{4}-[0-9]{4,9}\Z")
 SOURCE = re.compile(r"[a-z0-9][a-z0-9+._-]{0,99}\Z")
 RELEASE = "trixie"
-MAX_TRACKER_BYTES = 25_000_000
+MAX_TRACKER_BYTES = 90_000_000
 OS_STATUSES = ("open", "resolved", "undetermined", "not-affected", "other")
 SEVERITIES = ("HIGH", "CRITICAL")
 
@@ -29,8 +29,17 @@ def _tracker_file(path: str | Path) -> dict:
     f = Path(path)
     if f.is_symlink() or not f.is_file() or not 100 < f.stat().st_size <= MAX_TRACKER_BYTES:
         raise ErroSupplyChain("snapshot oficial Debian ausente/inválido/tamanho não homologado")
-    # O parser existente recusa JSON com chaves duplicadas.
-    return _carregar_json(f)
+    # Snapshot Debian e maior que o limite do scanner Trivy local.
+    # Reutilizar verificacao de duplicidades, sem permitir leitura sem limite.
+    from .infra_supplychain import _sem_duplicatas
+    try:
+        with f.open("r", encoding="utf-8") as fp:
+            result = json.load(fp, object_pairs_hook=_sem_duplicatas)
+    except (OSError, UnicodeError, ValueError) as exc:
+        raise ErroSupplyChain("snapshot JSON Debian ilegível") from exc
+    if not isinstance(result, dict):
+        raise ErroSupplyChain("snapshot Debian sem mapa de pacotes")
+    return result
 
 
 def _tracker_release(entry: object) -> tuple[str, bool, bool]:
