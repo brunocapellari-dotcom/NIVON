@@ -270,7 +270,8 @@ class TestSegundoCerebroBridge(unittest.TestCase):
                 texto_sha256=sha256(c.texto.encode()).hexdigest(),
                 auditoria_id=c.auditoria_id, tenant="TENANT_A",
                 projeto="NIVON", direito_consulta=True,
-                verificado_em=T-timedelta(days=1),
+                verificado_em=T-timedelta(minutes=2),
+                expira_em=T+timedelta(minutes=2),
             )
         gateway = GatewayHermesIVO(
             identity_verifier=V(),
