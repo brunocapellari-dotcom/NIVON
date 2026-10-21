@@ -1,0 +1,48 @@
+name: PTAX - backfill real e retomada
+on:
+  push:
+    paths:
+      - 'nivon/ptax_backfill.py'
+      - 'tests/test_ptax_backfill.py'
+      - '.github/workflows/ptax-backfill-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  backfill-reprodutivel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Testar checkpoint offline
+        run: python -m unittest discover -s tests -v
+      - name: Backfill oficial USD em duas janelas de 2026
+        run: |
+          python - <<'PY'
+          import os
+          import sqlite3
+          from pathlib import Path
+          from datetime import date
+          from nivon.ptax_backfill import recuperar_historico
+          banco = Path(os.environ["RUNNER_TEMP"]) / "ptax-backfill-temporario.sqlite3"
+          args = dict(banco=banco, moeda="USD", inicio=date(2026, 1, 1),
+                      fim=date(2026, 2, 10), max_janelas=3, segundos_entre_consultas=1)
+          primeiro = recuperar_historico(**args)
+          segundo = recuperar_historico(**args)
+          assert primeiro["estado"] == "COMPLETO", primeiro
+          assert primeiro["janelas_executadas"] == 2, primeiro
+          assert primeiro["registros_recebidos"] > 0, primeiro
+          assert segundo["estado"] == "COMPLETO", segundo
+          assert segundo["janelas_executadas"] == 0, segundo
+          assert segundo["janelas_puladas"] == 2, segundo
+          with sqlite3.connect(banco) as c:
+              registros = c.execute("select count(*) from ptax_observacoes").fetchone()[0]
+              janelas = c.execute("select count(*) from ptax_backfill_janelas").fetchone()[0]
+              logs = c.execute("select count(*) from ptax_execucoes").fetchone()[0]
+          assert registros > 0 and janelas == 2 and logs == 2
+          print(f"Backfill real: {janelas} janelas e {registros} observacoes; "
+                "checkpoint, retomada e idempotencia validados. Banco temporario, nao duravel.")
+          PY
