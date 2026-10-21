@@ -1,0 +1,235 @@
+{
+  "_status": "EXEMPLO EDITORIAL 21/10/2026. Valores históricos informados nesta conversa; validar de novo antes de publicar. Não é feed automático.",
+  "edition": {
+    "date_label": "Quarta-feira, 21 de outubro de 2026",
+    "closing_label": "20/10",
+    "date_reference": "2026-10-21",
+    "closing_date": "2026-10-20",
+    "sources_note": "Fontes referidas: CME, B3, Cepea, Imea, ICE, USDA, Conab, ANEC, Reuters e Notícias Agrícolas. Checagem final obrigatória."
+  },
+  "market_groups": [
+    {
+      "title": "CHICAGO — CME",
+      "items": [
+        {
+          "label": "Soja nov/26",
+          "value": "1.248,25 ¢/bu",
+          "change": "−0,42%",
+          "direction": "down"
+        },
+        {
+          "label": "Milho dez/26",
+          "value": "462,00 ¢/bu",
+          "change": "−1,07%",
+          "direction": "down"
+        },
+        {
+          "label": "Trigo dez/26",
+          "value": "643,25 ¢/bu",
+          "change": "−1,83%",
+          "direction": "down"
+        }
+      ]
+    },
+    {
+      "title": "MERCADO FÍSICO",
+      "items": [
+        {
+          "label": "Soja Paranaguá (Cepea)",
+          "value": "R$ 153,40/sc",
+          "change": "−0,54%",
+          "direction": "down"
+        },
+        {
+          "label": "Soja Sorriso/MT (Imea)",
+          "value": "R$ 134,50/sc",
+          "change": "−0,52%",
+          "direction": "down"
+        },
+        {
+          "label": "Milho Cepea",
+          "value": "R$ 64,34/sc",
+          "change": "−0,62%",
+          "direction": "down"
+        },
+        {
+          "label": "Milho Sorriso/MT",
+          "value": "R$ 46,00/sc",
+          "change": "−1,08%",
+          "direction": "down"
+        }
+      ]
+    },
+    {
+      "title": "PECUÁRIA",
+      "accent": "gold",
+      "items": [
+        {
+          "label": "Boi Cepea/SP",
+          "value": "R$ 380,45/@",
+          "change": "−0,07%",
+          "direction": "down"
+        },
+        {
+          "label": "Boi Sinop/MT",
+          "value": "R$ 348,32/@",
+          "change": "+0,25%",
+          "direction": "up"
+        },
+        {
+          "label": "Boi B3 nov/26",
+          "value": "R$ 394,50/@",
+          "change": "−0,50%",
+          "direction": "down"
+        }
+      ]
+    },
+    {
+      "title": "NOVA YORK — ICE",
+      "items": [
+        {
+          "label": "Café dez/26",
+          "value": "310,10 ¢/lb",
+          "change": "−1,77%",
+          "direction": "down"
+        },
+        {
+          "label": "Algodão dez/26",
+          "value": "80,88 ¢/lb",
+          "change": "+0,93%",
+          "direction": "up"
+        },
+        {
+          "label": "Açúcar mar/27",
+          "value": "20,52 ¢/lb",
+          "change": "−0,24%",
+          "direction": "down"
+        }
+      ]
+    },
+    {
+      "title": "B3 FUTUROS",
+      "items": [
+        {
+          "label": "Soja nov/26",
+          "value": "US$ 27,49/sc",
+          "change": "−0,51%",
+          "direction": "down"
+        },
+        {
+          "label": "Milho nov/26",
+          "value": "R$ 65,96/sc",
+          "change": "+0,08%",
+          "direction": "up"
+        }
+      ]
+    },
+    {
+      "title": "ENERGIA E ECONOMIA",
+      "items": [
+        {
+          "label": "Etanol B3 nov/26",
+          "value": "R$ 2.960/m³",
+          "change": "+2,07%",
+          "direction": "up"
+        },
+        {
+          "label": "Brent dez/26",
+          "value": "US$ 108,79/barril",
+          "change": "−0,69%",
+          "direction": "down"
+        },
+        {
+          "label": "Dólar comercial",
+          "value": "R$ 5,019",
+          "change": "−0,58%",
+          "direction": "down"
+        }
+      ]
+    }
+  ],
+  "freight": {
+    "source_type": "Referências informadas pelo usuário, não preços negociados.",
+    "rate_reference_date": "2026-10-21",
+    "volume_type": "volume de referência, não realizado",
+    "main": [
+      {
+        "route": "SORRISO → RONDONÓPOLIS",
+        "rate": "R$ 180,00/t",
+        "reference_volume": "100.000 t/dia"
+      },
+      {
+        "route": "SORRISO → DOM AQUINO",
+        "rate": "R$ 160,00/t",
+        "reference_volume": "18.000 t/dia"
+      },
+      {
+        "route": "SINOP → MIRITITUBA",
+        "rate": "R$ 265,00/t",
+        "reference_volume": "45.000 t/dia"
+      }
+    ],
+    "additional": [
+      {
+        "route": "Sorriso → Paranaguá",
+        "rate": "R$ 515,00/t"
+      },
+      {
+        "route": "Sorriso → Santos",
+        "rate": "R$ 495,00/t"
+      },
+      {
+        "route": "Sorriso → Uberaba",
+        "rate": "R$ 365,00/t"
+      }
+    ]
+  },
+  "news": [
+    {
+      "topic": "SOJA",
+      "headline": "EUA anunciam venda de 612 mil toneladas à China",
+      "summary": "O USDA confirmou venda para a safra 2026/27. Chicago encerrou em queda."
+    },
+    {
+      "topic": "EXPORTAÇÕES",
+      "headline": "ANEC eleva projeção do milho brasileiro",
+      "summary": "Previsão de 6,87 milhões de toneladas em outubro. Soja: 6,40 milhões; farelo: 2,52 milhões."
+    },
+    {
+      "topic": "SAFRA",
+      "headline": "Plantio da soja chega a 30,1% no Brasil",
+      "summary": "Conab: semeadura alcançou 30,1% da área. Chuvas dificultam trabalhos no Paraná."
+    },
+    {
+      "topic": "MILHO MT",
+      "headline": "Custos pressionam rentabilidade",
+      "summary": "Imea: receita projetada supera custo operacional efetivo em 5,75%, mas fica 4,04% abaixo do custo total."
+    },
+    {
+      "topic": "LOGÍSTICA",
+      "headline": "Frete rodoviário sobe com diesel mais caro",
+      "summary": "Índice Edenred subiu 0,57% em setembro, a R$ 8,77/km. Diesel S-10 a R$ 7,24/litro."
+    },
+    {
+      "topic": "AÇÚCAR",
+      "headline": "Déficit mundial projetado em 6,3 milhões de t",
+      "summary": "Green Pool elevou estimativa de déficit em 2026/27 para 6,3 milhões de toneladas."
+    },
+    {
+      "topic": "CAFÉ E ALGODÃO",
+      "headline": "Mercados em direções opostas",
+      "summary": "Café recuou 1,77% e algodão subiu 0,93% em Nova York."
+    },
+    {
+      "topic": "AVICULTURA",
+      "headline": "Newcastle provoca restrições comerciais",
+      "summary": "México suspendeu compras; China e Chile restringiram importações de Santa Catarina."
+    },
+    {
+      "topic": "PETRÓLEO",
+      "headline": "Brent recua após superar US$ 111",
+      "summary": "Fechou em US$ 108,79 por barril, com atenção às tensões no Oriente Médio."
+    }
+  ],
+  "whatsapp_intro": "Bom dia!\n\nQuarta-feira começa com queda dos grãos em Chicago, avanço do plantio da soja no Brasil e novas projeções para as exportações."
+}
