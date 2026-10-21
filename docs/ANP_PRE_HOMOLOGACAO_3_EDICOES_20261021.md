@@ -110,3 +110,10 @@ A rota `anp_semanal_store.gravar_edicao_semanal` foi endurecida para eliminar a 
 5. Implementar invalidação pós-ingestão em caso de revogação de qualquer autoridade e bloqueio de consultas de edições revogadas — a verificação atual na ingestão **não** cobre revogações futuras.
 
 Nenhuma destas alterações autoriza execução de coleta automática, publicação, dump da base, deploy, agendamento, compra ou mudança de finalidade.
+
+
+### Tempo de verificação confiável
+
+Uma captura de arquivo pode conter um horário manipulado ou reencaminhado. A rota direta `REAL_AUTORIZADO` agora **também exige** `verificado_em_confiavel`, fornecido pelo controlador (com timezone), e impede que esse instante anteceda a captura. A validade de ambas as atestações é avaliada com base nesse horário externo e não somente em `coletado_em` declarado no resumo.
+
+**Limite explícito:** o módulo não comprova que o chamador realmente obteve `verificado_em_confiavel` de um relógio seguro. Em produção será obrigatório conectar à infraestrutura de identidade/tempo, impedir que collectors especifiquem livremente esse argumento e auditar assinaturas, revogações e atualizações. Passar manualmente um horário e chaves fictícias só atende aos testes sintéticos, nunca à homologação do NIVON.
