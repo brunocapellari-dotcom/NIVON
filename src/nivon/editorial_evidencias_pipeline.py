@@ -84,6 +84,10 @@ def montar_candidatos_evidencias(
             "ultima_sessao_concluida": reg.get("ultima_sessao_concluida"),
             "fechamento_confirmado": reg.get("fechamento_confirmado") is True,
             "periodo_identificado": reg.get("periodo_identificado") is True,
+            "classe_estatistica": reg.get("classe_estatistica"),
+            "semana_inicio": reg.get("semana_inicio"),
+            "semana_fim": reg.get("semana_fim"),
+            "postos_pesquisados": reg.get("postos_pesquisados"),
         })
         for extra in ("valor_anterior", "variacao_pct"):
             if extra in reg:
@@ -131,7 +135,8 @@ CHAVES_IMUTAVEIS = {
         "sha256_origem", "direitos_publicacao", "evidencia_direitos_id",
     }),
     "cotacoes": frozenset({"fonte_id", "titulo", "direitos_publicacao",
-                           "evidencia_direitos_id"}),
+                           "evidencia_direitos_id", "classe_estatistica",
+                           "semana_inicio", "semana_fim", "postos_pesquisados"}),
     "fretes": frozenset({
         "fonte_id", "tipo", "origem", "uf_origem", "destino", "uf_destino",
         "valor_rs_t", "referencia_em", "direitos_publicacao",
