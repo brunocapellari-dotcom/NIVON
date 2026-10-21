@@ -4,7 +4,7 @@ import hashlib
 import io
 import unittest
 from pathlib import Path
-from zipfile import ZipFile
+from zipfile import ZipFile, ZIP_DEFLATED
 
 from nivon.conab_replay_xlsx import reexecutar_xlsx_conab,ErroXlsxProgresso,PARSER_ID
 
@@ -87,6 +87,24 @@ class TestProgressoXlsxGolden(unittest.TestCase):
             z.writestr("malicioso.txt","teste")
         with self.assertRaises(ErroXlsxProgresso):
             run(dst.getvalue())
+
+    def test_hash_codigo_parser_com_64_hex(self):
+        v=run()
+        self.assertEqual(len(v["parser_codigo_sha256"]),64)
+        self.assertTrue(all(c in "0123456789abcdef" for c in v["parser_codigo_sha256"]))
+
+    def test_calendario_1904_bloqueado_sem_antecipar_semana(self):
+        original=workbook()
+        out=io.BytesIO()
+        with ZipFile(io.BytesIO(original)) as zin, ZipFile(out,"w",ZIP_DEFLATED) as zout:
+            for obj in zin.infolist():
+                raw=zin.read(obj.filename)
+                if obj.filename=="xl/workbook.xml":
+                    self.assertIn(b"<workbook ",raw)
+                    raw=raw.replace(b"<workbook ",b'<workbook date1904="1" ',1)
+                zout.writestr(obj.filename,raw)
+        with self.assertRaisesRegex(ErroXlsxProgresso,"1904"):
+            run(out.getvalue())
 
     def test_url_fora_dominios_conab_recusada(self):
         with self.assertRaises(ErroXlsxProgresso):
