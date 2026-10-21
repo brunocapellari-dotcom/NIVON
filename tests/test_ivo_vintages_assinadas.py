@@ -58,7 +58,7 @@ def event_digest(event):
     })).hexdigest()
 
 
-def ledger(events=None, anchors=None, resolver=None):
+def ledger(events=None, anchors=None, resolver=None, head=None):
     events = [signed(payload())] if events is None else events
     anchors = ({event_digest(e): T+timedelta(days=-8+i)
                 for i, e in enumerate(events)} if anchors is None else anchors)
@@ -66,6 +66,7 @@ def ledger(events=None, anchors=None, resolver=None):
         events,
         resolver_chave=(resolver or (lambda k: KEY if k == "key-v1" else None)),
         obter_ancora=lambda digest: anchors[digest],
+        obter_cabeca=lambda: (event_digest(events[-1]) if events else GENESIS) if head is None else head,
     )
 
 
@@ -138,6 +139,32 @@ class TestVintagesAssinadas(unittest.TestCase):
         e1 = signed(payload(seq=2))
         with self.assertRaises(ErroProvenienciaIVO):
             check(ledger([e1]))
+
+    def test_truncamento_da_revogacao_falha_com_cabeca_confiavel(self):
+        e1 = signed(payload())
+        e2 = revoke(e1)
+        # Fonte independente afirma que o head verdadeiro inclui a revogacao.
+        with self.assertRaisesRegex(ErroProvenienciaIVO, "incompleta"):
+            check(ledger([e1], head=event_digest(e2)))
+
+    def test_cabeca_externa_obrigatoria(self):
+        e = signed(payload())
+        with self.assertRaises(ErroProvenienciaIVO):
+            RegistroVintagesIVO(
+                [e], resolver_chave=lambda kid: KEY,
+                obter_ancora=lambda _: T-timedelta(days=8),
+                obter_cabeca=None,
+            )
+
+    def test_cabeca_confiavel_indisponivel(self):
+        e = signed(payload())
+        lgr = RegistroVintagesIVO(
+            [e], resolver_chave=lambda kid: KEY,
+            obter_ancora=lambda _: T-timedelta(days=8),
+            obter_cabeca=lambda: (_ for _ in ()).throw(TimeoutError()),
+        )
+        with self.assertRaises(ErroProvenienciaIVO):
+            check(lgr)
 
     def test_revogacao_ancorada_bloqueia_acesso_atual(self):
         e1 = signed(payload())
