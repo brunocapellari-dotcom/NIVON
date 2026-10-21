@@ -68,6 +68,37 @@ class TestOptOutGlobal(unittest.TestCase):
         self.assertNotIn(b"5566999999999", self.path.read_bytes())
         self.assertNotIn(b"OPT_OUT_SINTETICO_DOC_20261021", self.path.read_bytes())
 
+    def test_rotacao_de_chave_sem_migracao_nao_pode_contornar_optout(self):
+        self.revogar()
+        outro_segredo = b"nova_chave_sem_migracao_nao_permitida_sintetica_2026"
+        novo = self.modelo(dia="2026-10-21")
+        with self.assertRaisesRegex(PermissionError, "chave HMAC"):
+            outbox.registrar_edicao(
+                self.con, novo, edicao="2026-10-21",
+                chave_destinatario=outro_segredo,
+            )
+        with self.assertRaisesRegex(PermissionError, "chave HMAC"):
+            outbox.revogar_destinatario(
+                self.con, destino="5566999999999",
+                chave_destinatario=outro_segredo,
+                evidencia_revogacao="OPT_OUT_COM_CHAVE_ERRADA_20261021",
+            )
+        self.assertEqual(
+            self.con.execute("SELECT count(*) FROM nivon_optouts_destinatario").fetchone()[0],
+            1,
+        )
+
+    def test_rotacao_de_chave_bloqueada_apos_reinicializar_banco(self):
+        self.revogar()
+        self.con.close()
+        self.con = sqlite3.connect(self.path)
+        with self.assertRaisesRegex(PermissionError, "chave HMAC"):
+            outbox.registrar_edicao(
+                self.con, self.modelo(dia="2026-10-23"),
+                edicao="2026-10-23",
+                chave_destinatario=b"outra_chave_extensa_que_nao_foi_migrada_2026",
+            )
+
     def test_optout_isola_destinatarios_e_e_idempotente(self):
         self.revogar()
         self.revogar()
