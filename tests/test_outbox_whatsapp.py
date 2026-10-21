@@ -282,13 +282,13 @@ class TestOutboxWhatsApp(unittest.TestCase):
             b"OPT_OUT_DOCUMENTADO_20261020").hexdigest())
         self.assertNotIn(b"OPT_OUT_DOCUMENTADO_20261020", self.path.read_bytes())
         chamadas = []
-        with self.assertRaisesRegex(PermissionError, "revogada"):
+        with self.assertRaisesRegex(PermissionError, "opt-out"):
             self.despachar(lambda *_: chamadas.append(True))
         self.assertEqual(chamadas, [])
         self.assertEqual(consultar_envio(
             self.con, self.modelo["idempotency_key"])["tentativas"], 0)
-        with self.assertRaises(ErroOutbox):
-            self.aprovar()  # revogação não se apaga por nova assinatura idêntica
+        with self.assertRaises(PermissionError):
+            self.aprovar()  # opt-out protege inclusive a reaprovação idêntica
 
     def test_revogacao_preservada_apos_reabrir_sqlite(self):
         self.registrar()
