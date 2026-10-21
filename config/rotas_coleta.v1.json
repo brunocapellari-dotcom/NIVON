@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "project": "NIVON",
-  "updated_on": "2026-10-19",
+  "updated_on": "2026-10-21",
   "description": "Rotas de coleta complementares ao catálogo mestre. Fonte/cadência/produto/estágio permanecem somente em fontes_nivon_master.v1.json; endpoints são documentados por dataset, não inferidos pela URL institucional.",
   "source_catalog": "config/fontes_nivon_master.v1.json",
   "policy": "DENY_ALL_UNTIL_PER_OPERATION_RIGHTS_TESTS_AND_PERSISTENCE",
@@ -4162,6 +4162,91 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "API/tabulação/versão e períodos por domínio ainda a homologar.",
       "preliminary_evidence": "OFFICIAL_DOCUMENTATION_RESEARCH_ONLY"
+    },
+    {
+      "dataset_id": "SISCOMEX_TABELA_NCM",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "DIRECT_OFFICIAL_API",
+        "url": "https://portalunico.siscomex.gov.br/classif/api/publico/nomenclatura/download/json",
+        "source_proof": "DOCUMENTED_OFFICIAL_URL_NOT_FETCHED_THIS_SESSION"
+      },
+      "implementation_scope": "OFFICIAL_JSON_LAYOUT_PENDING; no collector active",
+      "authentication": "NONE_EXPECTED_NOT_VERIFIED",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "SCHEMA_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Tabela NCM oficial. Sem confirmar layout real/versao/vigencia nem habilitar coleta.",
+      "preliminary_evidence": "DOCUMENTED_ENDPOINT_OFFLINE_PARSER_NO_LIVE_COLLECTION"
+    },
+    {
+      "dataset_id": "BRASILAPI_NCM_CONSULTA",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PUBLISHED_API_DOC",
+        "url": "https://brasilapi.com.br/api/ncm/v1/33051000",
+        "source_proof": "USER_PROVIDED_EXAMPLE_NOT_LIVE_VALIDATION"
+      },
+      "implementation_scope": "OFFLINE_SINGLE_NCM_NORMALIZER_PRESENT; no full scan, no collector active",
+      "authentication": "NONE_EXPECTED_NOT_VERIFIED",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "SCHEMA_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "NO_BULK_SCAN",
+        "RECONCILE_WITH_SISCOMEX"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Apenas código individual, não listagem integral; conferir validade no Siscomex. BrasilAPI é agregadora.",
+      "preliminary_evidence": "DOCUMENTED_ENDPOINT_OFFLINE_PARSER_NO_LIVE_COLLECTION"
+    },
+    {
+      "dataset_id": "BRASILAPI_TAXAS_SEM_DATA",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PUBLISHED_API_DOC",
+        "url": "https://brasilapi.com.br/api/taxas/v1",
+        "source_proof": "JSON_OBSERVED_2026_10_21_WITHOUT_REFERENCE_DATE"
+      },
+      "implementation_scope": "OFFLINE_SCHEMA_NORMALIZER_PRESENT; publication blocked",
+      "authentication": "NONE_EXPECTED_NOT_VERIFIED",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "SCHEMA_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "REFERENCE_DATE_MISSING",
+        "VERIFY_PRIMARY_BCB_SGS"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Resposta sem competência/referência por taxa; não publicar como atual nem alimentar tendências sem BCB e data.",
+      "preliminary_evidence": "DOCUMENTED_ENDPOINT_OFFLINE_PARSER_NO_LIVE_COLLECTION"
     }
   ]
 }
