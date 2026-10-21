@@ -169,7 +169,7 @@ class HomologationManifestTests(unittest.TestCase):
     def test_registered_html_url_cannot_use_unspecific_root(self):
         with self.assertRaisesRegex(ValueError, "exact document"):
             PilotSource("SANTOS", "SOURCE", MODES["SANTOS"],
-                        "https://www.portodesantos.com.br/official/")
+                        "https://www.portodesantos.com.br/")
 
     def test_pdf_signature_wrong_blocked(self):
         p = plan("ITAQUI")
