@@ -193,3 +193,71 @@ posterior pode ser usada para verificação ex post de horizonte, mas NÃO pode
 ser apresentada como feature conhecida na emissão de previsão histórica.
 O calendário injetado é declarado, não validado contra fontes oficiais,
 e nenhum Brier sintético comprova poder preditivo ou calibração comercial.
+
+
+## 8. Continuação de 21/10/2026 — proveniência de previsões
+
+Novo módulo `nivon.proveniencia_previsoes_mercado` (offline, sem dependências
+externas) e `tests/test_proveniencia_previsoes_mercado.py`.
+
+### Contrato de emissão e integridade relativa
+
+`criar_registro_previsao` registra de forma canônica (JSON ordenado, SHA-256):
+ID de previsão, ID de série **declarado**, versão do modelo,
+identidade econômica integral (12 campos), `emitido_em`,
+`registrado_em`, `treinado_ate`, sessões base/alvo e horizonte,
+preço-base Decimal textual e SHA de sua edição, regra e banda de
+rotulagem, tripla de probabilidades (ALTA/BAIXA/ESTABILIDADE) e
+referência/hash da evidência de registro fornecida pelo sistema externo.
+É obrigatório que `treinado_ate <= emitido_em <= registrado_em` e
+que o registro seja anterior à data da sessão alvo.
+
+Cada registro inclui `anterior_sha256` e `registro_sha256`,
+permitindo uma **cadeia hash tamper-evident**. O verificador exige a cabeça
+SHA esperada, que deve vir de uma âncora externa independente.
+Verificação da cadeia detecta alteração de payload, troca de ordem,
+truncamento de sufixo (diante de uma cabeça conhecida), duplicação
+de IDs e anomalias temporais. Os registros de chamada são objetos comuns
+de memória e **NÃO constituem armazenamento append-only, timestamp
+confiável, assinatura digital ou imutabilidade verdadeira**.
+A implementação retorna `ancora_externa_autenticada=false`;
+uma string fornecida à função não autentica origem por si só.
+
+### Reconciliação as-of
+
+`reconciliar_previsao` verifica a cadeia e:
+1. Seleciona apenas vintages cujo instante de publicação **e** coleta
+   estavam disponíveis no momento da emissão;
+2. Confere preço-base, SHA de edição, instrumento e especificação
+   contra o registro encadeado, bloqueando revisões retroativas;
+3. Obtém o preço-alvo com as edições conhecidas até o corte de avaliação;
+4. Exige distância exata entre sessões declaradas no calendário injetado;
+5. Recalcula a classe efetiva pelo retorno Decimal e banda originalmente
+   comprometida, sem usar previsões de resultado posterior;
+6. Produz `item_backtest` no contrato do motor
+   `validacao_tendencias_mercado.avaliar_probabilidades_tendencia`.
+
+O identificador interno de série do `item_backtest` deriva do SHA-256
+da **identidade econômica completa**; um apelido igual não permite
+agregar instrumento ou praça diferentes. O rótulo original permanece
+como `serie_rotulo_declarado` para rastreabilidade.
+
+As saídas mantêm `publicavel=false`, `probabilidades_calibradas=null`,
+`previsao_historica_independente_comprovada=false` e o SHA da edição
+alvo. A validação só prova coerência **relativa aos inputs recebidos**.
+Não valida autenticidade da fonte, precisão do raw, evidência externa de
+emissão, licenças, calendário oficial, escopo comercial nem existência
+histórica independente da previsão. SHA declarado é insuficiente para
+certificar o snapshot original.
+
+### Próxima prioridade executável
+
+Criar persistência de eventos append-only com controle de duplicidade,
+constraint de ordem e exportação da âncora para armazenamento remoto
+independente; a homologação desse armazenamento requer revisão de
+segurança, prova de restore, IAM e autorização de custo, quando aplicável.
+Em paralelo, preparar ingestão autorizada de cotações históricas PTAX/ANP
+com raw verificável e vintages, e homologar calendário por exchange,
+especificação de contrato e licenças. Depois: E2E de múltiplas previsões,
+walk-forward com dados reais, benchmarks e auditoria de calibração.
+Nenhum processo em produção foi habilitado.
