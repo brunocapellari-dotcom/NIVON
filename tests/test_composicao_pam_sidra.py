@@ -16,11 +16,11 @@ def inputs(municipio="5107925",area="100",prod="300",yield_="3000"):
         header={"D1C":"Município (Código)","D2C":"Variável (Código)",
                 "D3C":"Ano (Código)","D4C":"Produto das lavouras temporárias (Código)",
                 "V":"Valor","MN":"Unidade de Medida"}
-        row={"D1C":municipio,"D2C":code,"D3C":"2025","D4C":"2702",
+        row={"D1C":municipio,"D2C":code,"D3C":"2025","D4C":"2713",
              "V":value,"MN":unit}
         raws[kind]=json.dumps([header,row],sort_keys=True).encode()
     return dict(raws=raws,coletas={k:"2026-10-20T12:00:00Z" for k in raws},
-                municipio_ibge=municipio,ano=2025,cultura="SOJA",codigo_c81="2702",
+                municipio_ibge=municipio,ano=2025,cultura="SOJA",codigo_c81="2713",
                 prova_categoria_url="https://sidra.ibge.gov.br/tabela/1612",
                 resolucoes_oficiais={k:"1" for k in raws},
                 prova_resolucoes_sha256=sha256(b"proof fixture").hexdigest())
@@ -40,11 +40,51 @@ class TestComposicaoPAM(unittest.TestCase):
             agregar_municipios_pam(registros=[a["registro_agregavel"],
                 b["registro_agregavel"]],uf_ibge=51,cultura="SOJA",ano=2025)
 
+    def test_soja_c81_deve_ser_2713_e_2702_feijao_e_proibido(self):
+        real=montar_pam_municipal(**inputs())
+        self.assertEqual(real["registro_agregavel"]["codigo_categoria_c81"],"2713")
+        self.assertEqual(real["mapping_c81"],"SIDRA_1612_TEMPORARIAS_2026_10_20")
+        impostor=inputs()
+        # Mesmo quando TODAS as respostas SIDRA são coerentes com FEIJÃO,
+        # rotulá-las como SOJA deve ser bloqueado, antes de métricas.
+        impostor["codigo_c81"]="2702"
+        for k,bytes_ in impostor["raws"].items():
+            x=json.loads(bytes_)
+            x[1]["D4C"]="2702"
+            impostor["raws"][k]=json.dumps(x).encode()
+        with self.assertRaisesRegex(ErroComposicaoPAM,"C81 incompatível"):
+            montar_pam_municipal(**impostor)
+
+    def test_classes_c81_canonicas_sem_permutacao(self):
+        from nivon.composicao_pam_sidra import C81_PAM_POR_CULTURA
+        esperado={"SOJA":"2713","MILHO":"2711","TRIGO":"2716",
+                  "ALGODAO":"2689","CANA":"2696","SORGO":"2714",
+                  "GERGELIM":"83383"}
+        self.assertEqual(C81_PAM_POR_CULTURA,esperado)
+        self.assertEqual(len(set(esperado.values())),len(esperado))
+        for cultura,codigo in esperado.items():
+            args=inputs()
+            args["cultura"]=cultura;args["codigo_c81"]=codigo
+            for name,blob in args["raws"].items():
+                item=json.loads(blob)
+                item[1]["D4C"]=codigo
+                args["raws"][name]=json.dumps(item).encode()
+            result=montar_pam_municipal(**args)
+            self.assertEqual(result["registro_agregavel"]["cultura"],cultura)
+            self.assertEqual(result["registro_agregavel"]["codigo_categoria_c81"],codigo)
+
     def test_sigilo_ou_arredondamento_nao_converte_zero(self):
         for marcador in ("X","..","...","0"):
             i=inputs(area=marcador)
             with self.assertRaises(ErroComposicaoPAM):
                 montar_pam_municipal(**i)
+
+    def test_separador_de_milhar_e_decimal_ambiguo_reprovado(self):
+        for texto in ("3.750","12.000","0.000"):
+            with self.assertRaisesRegex(ErroComposicaoPAM,"ambígua"):
+                montar_pam_municipal(**inputs(yield_=texto))
+        x=montar_pam_municipal(**inputs(yield_="3750"))
+        self.assertEqual(x["registro_agregavel"]["rendimento_reportado_kg_ha"],"3750")
 
     def test_unidade_uma_variavel_incompativel(self):
         i=inputs()
