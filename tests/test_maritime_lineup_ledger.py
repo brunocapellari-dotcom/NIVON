@@ -171,6 +171,7 @@ class LineupLedgerTests(unittest.TestCase):
                 self.assertEqual(receipt["integrity"], "ok")
             validation = MaritimeStore.validate_restore(backup)
             self.assertEqual(validation["integrity"], "ok")
+            self.assertEqual(validation["lineup_vintage_rows"], 2)
             with MaritimeStore(backup) as store:
                 ledger = LineupVintageLedger(store)
                 self.assertEqual(ledger.count_editions(port_id="SANTOS", source_id="APS", read_authorized=True), 2)
