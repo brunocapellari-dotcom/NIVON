@@ -1,0 +1,35 @@
+name: NIVON - CEPEA consulta unica sem persistencia
+on:
+  push:
+    paths:
+      - '.github/workflows/cepea-diagnostico.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke-cepea:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Instalar biblioteca agrobr para teste isolado
+        run: pip install --disable-pip-version-check agrobr
+      - name: Consultar uma serie de soja CEPEA sem gravar dados
+        run: |
+          python - <<'PY'
+          import asyncio
+          import json
+          from nivon.fontes_agrobr import consultar_cepea_para_validacao
+
+          async def main():
+              result = await consultar_cepea_para_validacao(
+                  'soja', aceite_nc=True,
+                  inicio='2026-10-01', fim='2026-10-20')
+              print(json.dumps(result, ensure_ascii=False, default=str))
+              if result['linhas_aprovadas_em_memoria'] < 1:
+                  raise SystemExit('CEPEA: nenhuma observacao primaria aprovada')
+          asyncio.run(main())
+          PY
