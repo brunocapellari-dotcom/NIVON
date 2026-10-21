@@ -13,6 +13,11 @@ def frete(**alteracoes):
             "origem": "SORRISO", "uf_origem": "MT",
             "destino": "DOM AQUINO", "uf_destino": "MT",
             "valor_rs_t": 130, "referencia": "2026-10-20T11:00:00-03:00",
+            "pickup_entity_id": "PICKUP_SYNTHETIC_001",
+            "ponto_embarque": "Armazém Sintético Norte",
+            "transportadora": "Transporte Sintético Alfa",
+            "produto": "SOJA", "equipamento": "BITREM",
+            "regime_pf_pj": "PJ", "condicao_pedagio": "INCLUSO",
             "volume_t_dia": 800, "classificacao_volume": "REFERENCIA",
             "volume_realizado": False}
     item.update(alteracoes)
@@ -56,6 +61,43 @@ class TestFreteEditorial(unittest.TestCase):
         for volume in (float("nan"), float("inf"), -1, 0, True):
             with self.subTest(volume=volume):
                 self.assertEqual(gerar(frete(volume_t_dia=volume))["fretes_incluidos"], 0)
+
+    def test_registro_incompleto_nao_pode_aparecer_como_divulgacao(self):
+        for campo in ("pickup_entity_id","ponto_embarque","transportadora",
+                      "produto","equipamento","regime_pf_pj","condicao_pedagio"):
+            with self.subTest(campo=campo):
+                registro=frete()
+                registro.pop(campo)
+                b=gerar(registro)
+                self.assertEqual(b["fretes_incluidos"],0)
+                self.assertNotIn("FRETES ANUNCIADOS",b["texto"])
+                self.assertTrue(any(x["tipo"]=="FRETE" for x in b["rejeicoes"]))
+
+    def test_mesma_rota_dois_estabelecimentos_transportadoras_sem_media(self):
+        registro_a=frete()
+        registro_b=frete(pickup_entity_id="PICKUP_SYNTHETIC_002",
+                          ponto_embarque="Armazém Sintético Sul",
+                          transportadora="Transporte Sintético Beta",
+                          valor_rs_t=145, volume_t_dia=600)
+        b=gerar(registro_a,registro_b)
+        self.assertEqual(b["fretes_incluidos"],2)
+        self.assertIn("Armazém Sintético Norte [PICKUP_SYNTHETIC_001]",b["texto"])
+        self.assertIn("Armazém Sintético Sul [PICKUP_SYNTHETIC_002]",b["texto"])
+        self.assertIn("Transporte Sintético Alfa",b["texto"])
+        self.assertIn("Transporte Sintético Beta",b["texto"])
+        self.assertIn("R$ 130,00/t",b["texto"])
+        self.assertIn("R$ 145,00/t",b["texto"])
+        self.assertNotIn("média municipal",b["texto"])
+        linhas=[l for l in b["texto"].splitlines() if " | embarque: " in l]
+        self.assertEqual(len(linhas),2)
+
+    def test_nao_duplica_anuncio_exatamente_repetido(self):
+        b=gerar(frete(),frete())
+        self.assertEqual(b["fretes_incluidos"],1)
+        self.assertTrue(any("duplicado" in x["motivo"] for x in b["rejeicoes"]))
+
+    def test_nao_publica_referencia_futura(self):
+        self.assertEqual(gerar(frete(referencia="2026-10-21T11:00:00-03:00"))["fretes_incluidos"],0)
 
     def test_sem_cotacao_fabricada(self):
         b = gerar(frete())
