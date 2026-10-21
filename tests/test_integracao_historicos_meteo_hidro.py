@@ -71,8 +71,14 @@ class TestHistoricosMeteoHidroIntegrados(unittest.TestCase):
                 self.assertTrue((ROOT / "src" / "nivon" / (mod + ".py")).is_file())
         datasets = self.sources["datasets"]
         self.assertEqual(len(datasets), len({d["id"] for d in datasets}))
-        self.assertNotIn("NOAA_ENSO_RONI", {d["id"] for d in datasets})
-        self.assertEqual(self.manifest["missing_canonical_dataset"], "NOAA_ENSO_RONI")
+        self.assertIn("NOAA_ENSO_RONI", {d["id"] for d in datasets})
+        roni = next(d for d in datasets if d["id"] == "NOAA_ENSO_RONI")
+        self.assertEqual(roni["source_id"], "NOAA")
+        self.assertEqual(roni["stage"], "CANDIDATE")
+        self.assertFalse(roni["enabled"])
+        self.assertFalse(roni["collection_authorized"])
+        self.assertEqual(self.manifest["candidate_registered_offline"], "NOAA_ENSO_RONI")
+        self.assertFalse(self.manifest["candidate_operational_authorization"])
         self.assertFalse(self.manifest["collectors_operational"])
         self.assertFalse(self.manifest["forecast_skill_approved"])
 

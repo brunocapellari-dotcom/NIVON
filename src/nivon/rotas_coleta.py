@@ -110,9 +110,17 @@ def validar_rotas(rotas: dict, catalogo: dict) -> dict:
                 "ANP": {"www.gov.br", "gov.br"},
                 "MDIC": {"www.gov.br", "gov.br"},
                 "IBGE": {"servicodados.ibge.gov.br", "apisidra.ibge.gov.br"},
+                # CPC/NCEP é domínio institucional NOAA; URL RONI exata está no manifesto.
+                "NOAA": {"www.cpc.ncep.noaa.gov"},
             }
             if parsed.hostname != fonte_host and parsed.hostname not in homologados.get(d["source_id"], set()):
                 raise ErroRota(f"{id_}: host não demonstrado como domínio oficial da fonte")
+        # Este índice é RONI/ERSSTv6, não ONI nem RONI/ERSSTv5.
+        # Rejeitar troca silenciosa de recurso na mesma origem NOAA.
+        if id_ == "NOAA_ENSO_RONI":
+            if (loc["kind"] != "DIRECT_PUBLIC_FILE" or
+                    uri != "https://www.cpc.ncep.noaa.gov/data/indices/RONI.ascii.txt"):
+                raise ErroRota("NOAA_ENSO_RONI: rota não corresponde ao RONI oficial v6")
         if not isinstance(e["source_note"], str) or not e["source_note"]:
             raise ErroRota(f"{id_}: limitações da fonte não identificadas")
     ausentes = set(datasets) - ids

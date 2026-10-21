@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "project": "NIVON",
-  "updated_on": "2026-10-19",
+  "updated_on": "2026-10-21",
   "description": "Rotas de coleta complementares ao catálogo mestre. Fonte/cadência/produto/estágio permanecem somente em fontes_nivon_master.v1.json; endpoints são documentados por dataset, não inferidos pela URL institucional.",
   "source_catalog": "config/fontes_nivon_master.v1.json",
   "policy": "DENY_ALL_UNTIL_PER_OPERATION_RIGHTS_TESTS_AND_PERSISTENCE",
@@ -3402,6 +3402,36 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "NASA POWER Daily API (1981+), limite 20 variáveis; 0.5° grid global de meteorologia. Evitar consultas repetidas por célula. Sem publicação de dados inferida da coleta.",
       "preliminary_evidence": "CATALOG_ONLY"
+    },
+    {
+      "dataset_id": "NOAA_ENSO_RONI",
+      "collector_class": "STRUCTURED_FILE",
+      "locator": {
+        "kind": "DIRECT_PUBLIC_FILE",
+        "url": "https://www.cpc.ncep.noaa.gov/data/indices/RONI.ascii.txt",
+        "source_proof": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/"
+      },
+      "implementation_scope": "Parser ASCII RONI offline presente (noaa_roni.py). URL comprovada; nenhum download automatizado, cron, arquivo RAW real ou publicação operacional homologados.",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "VERIFY_REDISTRIBUTION_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "POINT_IN_TIME_VINTAGE_ARCHIVE",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "RONI NOAA CPC ERSSTv6: série RONI de médias móveis trimestrais sobrepostas, publicada mensalmente, dados recentes revisáveis por até 2 meses. CSV ASCII descoberto sem coleta neste PR; download atual não certifica publicação histórica de linhas individuais. É índice de diagnóstico ENSO, não previsão municipal.",
+      "preliminary_evidence": "OFFICIAL_RESOURCE_DISCOVERED"
     },
     {
       "dataset_id": "NOAA_GFS",

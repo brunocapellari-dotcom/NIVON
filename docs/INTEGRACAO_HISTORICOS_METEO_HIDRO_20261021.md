@@ -15,7 +15,7 @@ Agora a consulta exige cumulativamente `publicado_em <= corte`, `disponivel_em <
 
 ### Limites de evidência e dados reais
 - O RONI é um **indicador retrospectivo**. O parser mantém publicação desconhecida para cada mês central; a série atual não é feature `as-of` de uma previsão emitida no passado e não pode ser confundida com a MJO/RMM.
-- Ainda falta o dataset canônico `NOAA_ENSO_RONI` no catálogo central e confirmação de direitos. **Não foi criado coletor nem fonte habilitada** nesta rodada.
+- O dataset canônico `NOAA_ENSO_RONI` passou a existir como **CANDIDATE** no catálogo central em 21/10/2026; a rota direta oficial está documentada, porém direitos, preservação de vintages por edição e amostra real no pipeline **continuam pendentes**. **Não foi criado coletor nem fonte habilitada**.
 - Confronto INMET–NASA POWER **descreve diferenças estação/grade**, não skill de um modelo prognóstico; não imputar faltantes, não tomar uma célula espacial como medição instrumental.
 - Anos análogos são proximidade estatística **descritiva**, não probabilidade, projeção automática de safra ou previsibilidade inferida.
 - `historico_vintages` exige arquivo efetivamente coletado na data da decisão para selecionar edições passadas, mas relógios, hashes e evidências autodeclarados ainda requerem auditoria externa. Não existe snapshot real homologado.
@@ -27,7 +27,7 @@ A nova suíte `tests/test_integracao_historicos_meteo_hidro.py` confere os hashe
 **Critério de aceitação:** GitHub Actions aprovado exatamente no HEAD final, com testes de upstream e regressões contra coleta tardia. Sem alteração em `main`, ativação de fontes ou merge central automático.
 
 ## Próximo passo executável
-Auditar o ajuste fino de `confronto_climatico_qc` ao calendário físico de 24h INMET e o vintage temporal de grade NASA POWER, após amostras reais legalmente autorizadas; registrar `NOAA_ENSO_RONI` como fonte candidata sem ativar coleta. Conciliar as demais PRs da #9 em sua própria frente, não pela meteorologia.
+Auditar o ajuste fino de `confronto_climatico_qc` ao calendário físico de 24h INMET e o vintage temporal de grade NASA POWER, após amostras reais legalmente autorizadas; homologar direitos, autenticação de vintage e amostra real para `NOAA_ENSO_RONI` já cadastrado como candidato OFF. Conciliar as demais PRs da #9 em sua própria frente, não pela meteorologia.
 
 
 ## Correção adicional — equivalência física de precipitação diária
