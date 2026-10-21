@@ -138,6 +138,9 @@ class PdfPlumberE2ETests(unittest.TestCase):
         self.assertEqual(result.candidates[0].eta, "2026-10-21T12:00:00+00:00")
         self.assertTrue(result.candidates[0].call_id.endswith(":DUV-P-001"))
         self.assertNotIn("PRG-5", result.candidates[0].call_id)
+        self.assertEqual(result.pdf_program_rows[0].programme_number, "EXPORT_OESTE:PRG-5")
+        self.assertTrue(result.pdf_program_rows[0].eta_fully_declared)
+        self.assertEqual(result.pdf_program_rows[0].evidence_class, "PROGRAMME_REFERENCE_NOT_PORT_CALL")
 
     def test_itaqui_real_pdf_date_only_kept_as_invalid_evidence(self):
         payload = itaqui_pdf(eta="21/10/2026")
@@ -162,6 +165,9 @@ class PdfPlumberE2ETests(unittest.TestCase):
         self.assertEqual(result.source_rows, 1)
         self.assertFalse(result.candidates)
         self.assertEqual(result.excluded[0]["reason"], "explicit_duv_missing_or_invalid")
+        self.assertEqual(result.pdf_program_rows[0].programme_number, "EXPORT_OESTE:PRG-555")
+        self.assertIsNone(result.pdf_program_rows[0].explicit_duv)
+        self.assertFalse(result.summary()["programme_references_are_verified_port_calls"])
         with self.assertRaisesRegex(ValueError, "partial lineup"):
             vintage_from_official_bridge(result, reference_date="2026-10-20",
                 competence="2026-10", published_at="2026-10-20T11:00:00+00:00",
