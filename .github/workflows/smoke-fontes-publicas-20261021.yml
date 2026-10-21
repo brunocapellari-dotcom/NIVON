@@ -8,6 +8,7 @@ on:
     paths:
       - .github/workflows/smoke-fontes-publicas-20261021.yml
       - scripts/smoke_gtr_noaa_geodata.py
+      - scripts/inspecionar_formatos_noaa_esa.py
 
 permissions:
   contents: read
@@ -24,6 +25,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Inspecionar formato de NOAA e ESA
+        run: python scripts/inspecionar_formatos_noaa_esa.py
       - name: NOAA MEI v2 real
         id: mei
         continue-on-error: true
