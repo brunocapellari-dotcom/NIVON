@@ -80,3 +80,22 @@ rótulos maturados; conciliar R01 da PR #30 com identidade comercial
 completa (issue #25), preservar SHA/RAW na PR #18 e executar a suíte
 integrada de todas as frentes. Não fechar automaticamente esses gates
 por CI verde com fixtures.
+
+## Reconciliação incremental — nova auditoria PTAX em Mercados
+
+Após o primeiro merge, a PR #21 evoluiu de
+`981331a446a99f7a1191f8c033b8548c03d21faf` para
+`3aaba7780174ecf4f89d2c088fb10b901b3e662a` (dois commits). Seu
+novo escopo acrescentou exclusivamente
+`src/nivon/auditoria_migracao_ptax.py` e
+`tests/test_auditoria_migracao_ptax.py`. O cotejo de SHA entre o HEAD
+Mercados anterior, o novo HEAD e o Quant integrado confirmou **zero
+conflitos**, sem deleções. Ambos foram transportados por blob SHA,
+preservando a árvore e ambas as histórias no merge incremental
+`fb80e10e5d8cf46419af113b7609c36adbd148ae`.
+
+A PR #21 continua dona de seus coletores e contratos de migração PTAX.
+Não há autorização de ingestão real, uso produtivo de PTAX, mudança
+de infraestrutura, publicação, deploy ou merge na `main`.
+Os testes integrados e a situação das branches devem ser conferidos
+no SHA final da PR #20, sem reutilizar evidências de builds anteriores.
