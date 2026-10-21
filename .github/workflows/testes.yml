@@ -42,6 +42,7 @@ jobs:
           python -m nivon.auditoria_prontidao --resumo
           python -m nivon.orquestrador_fontes --prioridade P0 --resumo
           python -m nivon.auditoria_coletores --resumo
+          python -m nivon.escopo_acessos_privados --resumo
       - name: Demonstracao deterministica
         env:
           PYTHONPATH: src
