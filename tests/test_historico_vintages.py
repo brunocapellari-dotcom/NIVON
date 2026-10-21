@@ -1,11 +1,15 @@
 import hashlib
 import unittest
+from datetime import datetime, timedelta
 from nivon.qualidade_cientifica import ErroCientifico
 from nivon.historico_vintages import ArmazemVintages,normalizar_edicao
 
 
-def item(edicao,valor,publicado,coletado="2026-10-20T08:00:00-04:00",
+def item(edicao,valor,publicado,coletado=None,
          disponivel=None):
+    if coletado is None:
+        coletado = ((datetime.fromisoformat(publicado) + timedelta(hours=1)).isoformat()
+                    if publicado is not None else "2026-10-20T08:00:00-04:00")
     return dict(source_id="CONAB",dataset_id="CONAB_GRAOS_SERIES",
         serie_id="MT/SOJA/PRODUCAO_T",competencia="2025/26",
         referencia="2026-01-01",edicao_id=edicao,unidade="t",valor=valor,
@@ -50,13 +54,39 @@ class TestVintages(unittest.TestCase):
         self.assertIsNone(self.q("2026-10-20T08:00:00-04:00"))
 
     def test_temporalidade_erro(self):
-        a=item("2026-01","1000","2026-10-21T09:00:00-04:00")
+        a=item("2026-01","1000","2026-10-21T09:00:00-04:00",
+               coletado="2026-10-20T08:00:00-04:00")
         with self.assertRaises(ErroCientifico):
             normalizar_edicao(a)
         b=item("2026-01","1000","2026-01-12T09:00:00-04:00",
                disponivel="2026-01-01T09:00:00-04:00")
         with self.assertRaises(ErroCientifico):
             normalizar_edicao(b)
+
+    def test_download_posterior_nao_reconstitui_passado_asof(self):
+        a = item(
+            "2026-01", "1000.0", "2026-01-12T09:00:00-04:00",
+            coletado="2026-10-20T08:00:00-04:00")
+        self.s.gravar(a)
+        # A publicação e a disponibilidade foram declaradas para janeiro,
+        # mas os bytes só ingressaram no acervo em outubro.
+        self.assertIsNone(self.q("2026-02-01T12:00:00-04:00"))
+        self.assertIsNone(self.q("2026-10-19T12:00:00-04:00"))
+        self.assertEqual(self.q("2026-10-20T09:00:00-04:00")["valor"], "1000.0")
+
+    def test_reedicao_futura_nao_vaza_e_primeira_coleta_nao_retroage(self):
+        a = item("2026-01", "1000", "2026-01-12T09:00:00-04:00",
+                 coletado="2026-01-13T09:00:00-04:00")
+        b = item("2026-02", "1300", "2026-02-12T09:00:00-04:00",
+                 coletado="2026-10-20T08:00:00-04:00")
+        self.s.gravar(a)
+        self.s.gravar(b)
+        self.assertEqual(self.q("2026-03-01T12:00:00-04:00")["valor"], "1000")
+        self.assertEqual(self.q("2026-10-20T09:00:00-04:00")["valor"], "1300")
+        self.assertEqual(
+            self.s.gravar({**b, "coletado_em": "2026-02-12T09:30:00-04:00"}),
+            "DUPLICATA_IDEMPOTENTE")
+        self.assertEqual(self.q("2026-03-01T12:00:00-04:00")["valor"], "1000")
 
     def test_sem_prova_nao_aceita_historico_asof(self):
         a=item("2026-01","1000","2026-01-12T09:00:00-04:00")
