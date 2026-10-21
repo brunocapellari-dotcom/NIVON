@@ -77,6 +77,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_anp_indice_lpc.py' -v
           python -m unittest discover -s tests -p 'test_anp_resumo_lpc.py' -v
           python -m unittest discover -s tests -p 'test_anp_lpc_integracao.py' -v
+          python -m unittest discover -s tests -p 'test_anp_lpc_homologacao.py' -v
           python -m unittest discover -s tests -p 'test_anp_semanal_store.py' -v
 
   conferir-schema-mapa:
