@@ -17,6 +17,11 @@ from datetime import datetime, timezone
 from typing import Callable
 
 from .lineup_nacional import instante
+from .outbox_unificada import (
+    _schema as _controle_esquema,
+    reservar_na_transacao, verificar_consentimento_pre_post,
+)
+
 
 
 class ErroOutbox(ValueError):
@@ -147,16 +152,23 @@ def despachar_registrado(con: sqlite3.Connection, preparado: dict, *,
         raise ErroOutbox("provedor WhatsApp não conectado")
     _,_,chave=_revisar_preparado(preparado)
     _esquema(con)
+    _controle_esquema(con)
     con.execute("BEGIN IMMEDIATE")
     try:
-        d=con.execute("SELECT estado,payload_sha256 FROM nivon_envios WHERE idempotency_key=?",
-                      (chave,)).fetchone()
+        d=con.execute("""SELECT estado,payload_sha256,edicao,destinatario_hmac
+            FROM nivon_envios WHERE idempotency_key=?""",(chave,)).fetchone()
         if not d:
             raise ErroOutbox("envio não registrado antes do POST")
         if d[0]!="PREPARADO":
             raise ErroOutbox("envio já reservado/realizado: sem retry automático")
         if d[1]!=_fingerprint(preparado["payload"]):
             raise ErroOutbox("conteúdo divergente do registrado")
+        # Mesma edição/destinatário, INDEPENDENTEMENTE do template e do canal.
+        # Se o briefing antigo reservou primeiro, a transação inteira reverte.
+        reservar_na_transacao(
+            con, dia_local=d[2], destinatario_hmac=d[3],
+            canal="WHATSAPP", intencao_id=chave, agora=_hora(),
+        )
         con.execute("""UPDATE nivon_envios
                        SET estado='ENVIO_INDETERMINADO',tentativas=1,atualizado_em=?
                        WHERE idempotency_key=?""",(_hora(),chave))
@@ -164,6 +176,11 @@ def despachar_registrado(con: sqlite3.Connection, preparado: dict, *,
     except Exception:
         con.rollback()
         raise
+    # Opt-out após a reserva invalida a chamada: não chamar provedor.
+    verificar_consentimento_pre_post(
+        con, dia_local=d[2], destinatario_hmac=d[3],
+        canal="WHATSAPP", intencao_id=chave,
+    )
     # Não há exceção que autorize repetir o POST com a mesma edição.
     try:
         resposta=remetente(preparado)
