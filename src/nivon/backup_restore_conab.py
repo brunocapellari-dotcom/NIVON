@@ -248,6 +248,11 @@ def criar_backup_conab(legado_path: str | Path,
         }
     except (OSError,sqlite3.Error,ValueError):
         for p in reversed(created):
+            # Destino era vazio antes do ciclo: sidecars SQLite eventuais
+            # foram criados por esta execução, nunca pelo usuário.
+            if p.name.endswith(".sqlite"):
+                for suffix in ("-wal","-shm"):
+                    p.with_name(p.name+suffix).unlink(missing_ok=True)
             p.unlink(missing_ok=True)
         raise
     finally:
@@ -265,6 +270,8 @@ def restaurar_em_diretorio_novo(backup_dir: str | Path,
     backup = Path(backup_dir)
     if not backup.is_absolute() or backup.is_symlink() or not backup.is_dir():
         raise ErroBackupConab("diretório do backup inválido")
+    if os.name == "posix" and (stat.S_IMODE(backup.stat().st_mode) & 0o077):
+        raise ErroBackupConab("backup precisa estar em diretório privado (modo 0700)")
     target = _diretorio_privado_vazio(destino_dir)
     if backup.resolve() == target.resolve():
         raise ErroBackupConab("backup e restauração devem usar diretórios distintos")
@@ -280,10 +287,9 @@ def restaurar_em_diretorio_novo(backup_dir: str | Path,
     try:
         for store,src in files.items():
             dst=target/_FILES[store]
-            with src.open("rb") as r, dst.open("xb") as w:
-                created.append(dst)
-                if os.name=="posix":
-                    dst.chmod(0o600)
+            fd = os.open(dst, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            created.append(dst)
+            with src.open("rb") as r, os.fdopen(fd, "wb") as w:
                 shutil.copyfileobj(r,w,1024*1024)
                 w.flush()
                 os.fsync(w.fileno())
@@ -310,6 +316,11 @@ def restaurar_em_diretorio_novo(backup_dir: str | Path,
         return report
     except (OSError,sqlite3.Error,ValueError):
         for p in reversed(created):
+            # Destino era vazio antes do ciclo: sidecars SQLite eventuais
+            # foram criados por esta execução, nunca pelo usuário.
+            if p.name.endswith(".sqlite"):
+                for suffix in ("-wal","-shm"):
+                    p.with_name(p.name+suffix).unlink(missing_ok=True)
             p.unlink(missing_ok=True)
         raise
 
