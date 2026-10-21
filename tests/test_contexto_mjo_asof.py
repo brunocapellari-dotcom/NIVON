@@ -98,6 +98,19 @@ class TestContextoMJOAsOf(unittest.TestCase):
         with self.assertRaises(PermissionError):
             run(snaps=[s])
 
+    def test_edicao_publicada_antes_do_dia_da_observacao_e_rejeitada(self):
+        s = snapshot(RMM2, "2026-10-20T13:00:00Z",
+                     "2026-10-22T14:00:00Z")
+        with self.assertRaisesRegex(ErroContextoMJO, "anterior à observação"):
+            run(snaps=[s])
+
+    def test_edicoes_distintas_mesma_publicacao_e_captura_sao_ambiguas(self):
+        s1 = snapshot()
+        s2 = snapshot(
+            RMM1.replace("0.60 0.80 6 1.00", "0.80 0.60 6 1.00"))
+        with self.assertRaisesRegex(ErroContextoMJO, "edições conflitantes"):
+            run(snaps=[s1, s2])
+
     def test_mistura_bom_e_cpc_bloqueada(self):
         s = snapshot()
         s["fonte_id"] = "CPC_MJO"
