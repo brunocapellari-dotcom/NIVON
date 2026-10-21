@@ -7,7 +7,7 @@ reliability bins one-vs-rest. Nenhuma conversão homologa probabilidades.
 from __future__ import annotations
 from math import isfinite
 from typing import Mapping
-from .quant_core import ErroQuantitativo, _identidade
+from .quant_core import ErroQuantitativo, _identidade, _hash, _instante
 
 
 def _num(v: object, nome: str, *, minimo: float = 0, maximo: float | None = None) -> float:
@@ -37,10 +37,31 @@ def normalizar_relatorio_brier_mercados(relatorio: Mapping) -> dict:
         raise ErroQuantitativo("gates de publicação/calibração incompatíveis")
     for k in ("serie_id", "modelo_versao", "regra_rotulagem"):
         _identidade(relatorio.get(k), k)
+    # Contrato da PR #21 ja inclui comprovante de cobertura de calendario
+    # declarado; NAO eliminar essa prova na transformacao de Brier.
+    calendario=relatorio.get("cobertura_calendario")
+    if not isinstance(calendario, Mapping):
+        raise ErroQuantitativo("cobertura de calendario ausente no relatorio")
+    if (calendario.get("status")!="COBERTURA_DECLARADA_NAO_HOMOLOGADA"
+            or calendario.get("publicavel") is not False
+            or calendario.get("calendario_oficial_comprovado") is not False):
+        raise ErroQuantitativo("cobertura de calendario nao e uma prova declarada valida")
+    mercado=calendario.get("mercado")
+    if mercado not in {"CME","ICE","FISICO"} or not relatorio["serie_id"].startswith(mercado+":"):
+        raise ErroQuantitativo("mercado da serie nao corresponde ao calendario")
+    _identidade(calendario.get("fonte_id"),"calendario.fonte_id")
+    _hash(calendario.get("edicao_sha256"))
+    publicado=_instante(calendario.get("publicacao_em"),"calendario.publicacao_em")
+    coletado=_instante(calendario.get("coleta_em"),"calendario.coleta_em")
+    if publicado>coletado:
+        raise ErroQuantitativo("calendario coleta anterior a publicacao")
+    sessoes=calendario.get("sessoes_conferidas")
+    if type(sessoes) is not int or not 2<=sessoes<=5000:
+        raise ErroQuantitativo("numero de sessoes conferidas invalido")
     h = relatorio.get("horizonte_sessoes")
     n = relatorio.get("avaliacoes")
     total = relatorio.get("amostra_total")
-    if any(type(v) is not int for v in (h,n,total)) or not (1 <= h <= 365 and 30 <= n <= total <= 200000):
+    if any(type(v) is not int for v in (h,n,total)) or not (1 <= h <= 365 and h < sessoes and 30 <= n <= total <= 200000):
         raise ErroQuantitativo("amostra/horizonte de Mercado invalidos")
     raw=_num(relatorio.get("brier_multiclasse"),"brier_mercados_soma",maximo=2)
     raw_baseline=_num(relatorio.get("brier_benchmark_expansivo"),"brier_baseline_soma",maximo=2)
@@ -84,7 +105,15 @@ def normalizar_relatorio_brier_mercados(relatorio: Mapping) -> dict:
         "serie_id":relatorio["serie_id"],"modelo_versao":relatorio["modelo_versao"],
         "regra_rotulagem":relatorio["regra_rotulagem"],
         "horizonte_periodos":h,"periodos_tipo":"SESSOES",
-        "n_folds":n,"brier_soma_tres_classes":raw,
+        "n_folds":n,"cobertura_calendario_declarada":{
+            "mercado":mercado,"fonte_id":calendario["fonte_id"],
+            "edicao_sha256":calendario["edicao_sha256"],
+            "publicacao_em":publicado.isoformat(),
+            "coleta_em":coletado.isoformat(),
+            "sessoes_conferidas":sessoes,
+            "calendario_oficial_comprovado":False,
+        },
+        "brier_soma_tres_classes":raw,
         "brier_multiclasse_medio":raw/3,
         "brier_benchmark_expansivo_medio":raw_baseline/3,
         "skill_brier_vs_benchmark":skill,
