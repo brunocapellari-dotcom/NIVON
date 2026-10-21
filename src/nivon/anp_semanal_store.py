@@ -159,6 +159,7 @@ def gravar_edicao_semanal(
     autoridades_confiaveis: Mapping | None = None,
     ids_revogados: frozenset[str] | None = None,
     habilitacao_real: bool = False,
+    verificado_em_confiavel: str | None = None,
 ) -> dict:
     """Persiste apenas agregado; real exige atestação de direitos independente.
 
@@ -182,9 +183,15 @@ def gravar_edicao_semanal(
                 or indice_evidencia is None):
             raise PermissionError("ingestão REAL bloqueada: homologação externa obrigatória")
         prova_direitos = _sha(prova_direitos_sha, "prova_direitos_sha")
+        if verificado_em_confiavel is None:
+            raise PermissionError("instante confiável de verificação obrigatório")
+        verificador = _tempo(verificado_em_confiavel, "verificado_em_confiavel")
+        if verificador < coleta:
+            raise PermissionError("relógio confiável não pode preceder a captura")
     elif (prova_direitos_sha is not None or direitos_confirmados
           or aprovacoes_assinadas is not None or autoridades_confiaveis is not None
-          or ids_revogados is not None or habilitacao_real is not False):
+          or ids_revogados is not None or habilitacao_real is not False
+          or verificado_em_confiavel is not None):
         raise ErroANPOficial("fixture não recebe credenciais ou direitos reais")
     else:
         prova_direitos = None
@@ -226,7 +233,7 @@ def gravar_edicao_semanal(
             prova_publicacao_sha256=prova_pub,
             prova_direitos_sha256=prova_direitos,
             indice_sha256=indice_dados[1],
-            verificado_em=coleta.isoformat(), ids_revogados=ids_revogados,
+            verificado_em=verificador.isoformat(), ids_revogados=ids_revogados,
         )
     db.row_factory = sqlite3.Row
     with db:
