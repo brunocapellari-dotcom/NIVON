@@ -18,6 +18,7 @@ from .conciliacao_progresso_stores import (
     _verificar_esquemas,
 )
 from .verificador_bytes_origem import conferir_bytes_origem, ErroBytesOrigem
+from .conab_replay_raw import PARSER_ID, ErroReplayConab, reexecutar_csv_conab
 
 _SCHEMA = "NIVON_CONAB_PREFLIGHT_V1"
 _DATASET = "CONAB_PROGRESSO_SEMANAL"
@@ -207,6 +208,8 @@ def planejar_preflight_conab(legado: sqlite3.Connection,
     for sid in sorted(originals):
         ed=originals[sid]
         prova=refs.get(sid)
+        replay_executado=False
+        parser_code_sha=None
         if prova is None:
             estado="SEM_MANIFESTO_RAW"
             hashes=None
@@ -226,6 +229,24 @@ def planejar_preflight_conab(legado: sqlite3.Connection,
             rows = _registros_replay(Path(prova["replay_json_path"]))
             if rows != ed["rows"]:
                 raise ErroPreflightConab("replay declarado diverge do histórico legado")
+            if prova["parser_versao"] == PARSER_ID:
+                if prova["raw_mime"] != "text/csv":
+                    raise ErroPreflightConab("parser de intercâmbio requer CSV")
+                coleta_db=legado.execute("""SELECT MIN(coletado_utc)
+                    FROM progresso_coletas WHERE edicao_id=?""",(sid,)).fetchone()[0]
+                if coleta_db is None:
+                    raise ErroPreflightConab("edição legada sem coleta")
+                try:
+                    executado = reexecutar_csv_conab(
+                        Path(prova["raw_path"]).read_bytes(),
+                        sha256_origem=raw_hash, url_origem=ed["url"],
+                        coletado_em=coleta_db, publicado_em=ed["publicacao"])
+                except (ErroReplayConab,OSError) as exc:
+                    raise ErroPreflightConab("RAW não pôde ser reprocessado pelo parser de laboratório") from exc
+                if executado["mapa_semantico"] != rows:
+                    raise ErroPreflightConab("RAW reprocessado diverge do replay/legado")
+                replay_executado=True
+                parser_code_sha=executado["parser_codigo_sha256"]
             match = _canonico_por_sha(canonico,raw_hash)
             if match is not None:
                 if match["rows"] != rows:
@@ -233,7 +254,8 @@ def planejar_preflight_conab(legado: sqlite3.Connection,
                 # Capturas antigas podem divergir mesmo com conteúdo idêntico.
                 estado="SHA_RAW_PRESENTE_NO_CANONICO_CONFERIR_CAPTURAS"
             else:
-                estado="RAW_E_REPLAY_LOCAIS_CONFERIDOS_SEM_PROVA_DO_PARSER"
+                estado=("RAW_CSV_INTERCAMBIO_REPROCESSADO_SEM_HOMOLOGACAO_CONAB"
+                        if replay_executado else "RAW_E_REPLAY_LOCAIS_CONFERIDOS_SEM_PROVA_DO_PARSER")
             hashes={"raw_sha256":raw_hash,"normalizado_sha256":ed["sha_json"]}
             replay_count=len(rows)
         estados[estado]+=1
@@ -245,6 +267,8 @@ def planejar_preflight_conab(legado: sqlite3.Connection,
             "observacoes_replay":replay_count,
             "hashes":hashes,
             "parser_raw_reprodutivel_auditado":False,
+            "csv_intercambio_reexecutado_localmente":replay_executado,
+            "parser_codigo_sha256":parser_code_sha,
             "direitos_validados_externamente":False,
             "origem_oficial_comprovada_externamente":False,
             "pronto_para_migracao":False,
@@ -254,6 +278,8 @@ def planejar_preflight_conab(legado: sqlite3.Connection,
         "dataset_id":_DATASET,
         "edicoes_legadas":len(originals),
         "edicoes_com_evidencia":len(refs),
+        "replays_csv_intercambio_executados":sum(x["csv_intercambio_reexecutado_localmente"] for x in info),
+        "parser_conab_oficial_homologado":False,
         "por_estado":dict(sorted(estados.items())),
         "itens":info,
         "plano_de_execucao":"SOMENTE_DRY_RUN_SEM_SQL_DE_MIGRACAO",
