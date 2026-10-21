@@ -13,10 +13,10 @@ import tomllib
 from collections import defaultdict
 from pathlib import Path
 
+from .auditoria_extras import ErroDependencias, analisar_requisito, chave_requisito
+
 ROOT = Path(__file__).resolve().parents[2]
 _NOME = re.compile(r"[A-Za-z][A-Za-z0-9_.-]*\Z")
-_ESPEC = re.compile(r"(==|>=|>|<=|<)\s*(\d+(?:\.\d+){0,3})\Z")
-_VERSAO = re.compile(r"\d+(?:\.\d+){0,3}\Z")
 _TAMANHO_MAX = 80_000
 
 
@@ -30,53 +30,37 @@ def _nome(nome: str) -> str:
     return re.sub(r"[-_.]+", "-", nome).casefold()
 
 
-def _versao(texto: str) -> tuple[int, ...]:
-    if not _VERSAO.fullmatch(texto):
-        raise ErroDependencia("versão não numérica")
-    return tuple(int(x) for x in texto.split("."))
+def _requisito(declaracao: str) -> tuple[str, str, tuple]:
+    """Usa parser único da auditoria IVO; aplica gate mais rigoroso do inventário.
 
-
-def _comparar(a: tuple[int, ...], b: tuple[int, ...]) -> int:
-    a = a + (0,) * (4 - len(a))
-    b = b + (0,) * (4 - len(b))
-    return (a > b) - (a < b)
-
-
-def _requisito(declaracao: str) -> tuple[str, str]:
-    """Somente versões diretas explícitas: pin exato ou faixa inferior/superior.
-
-    Recusa URLs diretas, markers, extras transitivos e operadores sem gate.
-    A sintaxe deliberadamente é mais restrita que PEP 508.
+    Este inventário requer pin exato ou exatamente uma faixa inferior e superior
+    ESTRITAMENTE ordenada. O parser compartilhado também aceita o requisito
+    livre de build, que é tratado separadamente e nunca permite deploy.
     """
     if not isinstance(declaracao, str) or len(declaracao) > 180:
         raise ErroDependencia("dependência inválida ou extensa")
-    if any(x in declaracao for x in ("@", ";", "://", "[", "]", "\\", "/")):
-        raise ErroDependencia("referência direta, marker ou extra aninhado não auditado")
-    m = re.fullmatch(r"\s*([A-Za-z][A-Za-z0-9_.-]*)\s*(.*?)\s*", declaracao)
-    if m is None or not m.group(2).strip():
-        raise ErroDependencia("versão obrigatória para dependência")
-    nome = _nome(m.group(1))
-    partes = [x.strip() for x in m.group(2).split(",")]
-    if len(partes) not in (1, 2) or any(not x for x in partes):
+    try:
+        parsed = analisar_requisito(declaracao)
+    except ErroDependencias as exc:
+        raise ErroDependencia("dependência fora do subconjunto seguro") from exc
+    nome = parsed["distribution"]
+    if not re.fullmatch(r"[a-z][a-z0-9-]*", nome):
+        raise ErroDependencia("nome de distribuição inválido")
+    chave = chave_requisito(parsed)
+    if parsed["exact_pin"]:
+        return nome, "==" + parsed["constraints"][0][1], chave
+    # Os valores são canônicos independentemente da ordem informada.
+    bounds = [(op, val, canonical) for op, val in parsed["constraints"]
+              for cop, canonical in chave if cop == op and canonical ==
+              tuple(int(n) for n in val.split(".")) + (0,) * (4 - len(val.split(".")))]
+    lows = [(op, val, canonical) for op, val, canonical in bounds if op in (">", ">=")]
+    ups = [(op, val, canonical) for op, val, canonical in bounds if op in ("<", "<=")]
+    if len(parsed["constraints"]) != 2 or len(lows) != 1 or len(ups) != 1:
         raise ErroDependencia(f"{nome}: faixa de versão não permitida")
-    parsed = []
-    for parte in partes:
-        p = _ESPEC.fullmatch(parte)
-        if not p:
-            raise ErroDependencia(f"{nome}: especificador de versão não suportado")
-        parsed.append((p.group(1), _versao(p.group(2)), p.group(2)))
-    if len(parsed) == 1:
-        if parsed[0][0] != "==":
-            raise ErroDependencia(f"{nome}: versão flutuante sem limite superior/inferior")
-        return nome, "==" + parsed[0][2]
-    lows = [(op, val, raw) for op, val, raw in parsed if op in (">", ">=")]
-    ups = [(op, val, raw) for op, val, raw in parsed if op in ("<", "<=")]
-    if len(lows) != 1 or len(ups) != 1:
-        raise ErroDependencia(f"{nome}: intervalo deve ter exatamente dois limites")
-    lower, upper = lows[0], ups[0]
-    if _comparar(lower[1], upper[1]) >= 0:
+    lo, hi = lows[0], ups[0]
+    if lo[2] >= hi[2]:
         raise ErroDependencia(f"{nome}: intervalo vazio/invertido")
-    return nome, lower[0] + lower[2] + "," + upper[0] + upper[2]
+    return nome, lo[0] + lo[1] + "," + hi[0] + hi[1], chave
 
 
 def inventariar(pyproject: str) -> dict:
@@ -106,19 +90,21 @@ def inventariar(pyproject: str) -> dict:
         raise ErroDependencia("listas de dependências inválidas")
 
     vistos: dict[str, str] = {}
+    chaves: dict[str, tuple] = {}
     grupos: dict[str, set[str]] = defaultdict(set)
     def registrar(items: list, origem: str) -> None:
         if not isinstance(items, list):
             raise ErroDependencia(f"grupo não é lista: {origem}")
         nomes_no_grupo: set[str] = set()
         for item in items:
-            nome, constraint = _requisito(item)
+            nome, constraint, chave = _requisito(item)
             if nome in nomes_no_grupo:
                 raise ErroDependencia(f"distribuição duplicada no grupo {origem}: {nome}")
             nomes_no_grupo.add(nome)
-            if nome in vistos and vistos[nome] != constraint:
+            if nome in chaves and chaves[nome] != chave:
                 raise ErroDependencia(f"distribuição com faixas divergentes: {nome}")
-            vistos[nome] = constraint
+            vistos.setdefault(nome, constraint)
+            chaves[nome] = chave
             grupos[nome].add(origem)
 
     registrar(core, "core")
@@ -135,17 +121,19 @@ def inventariar(pyproject: str) -> dict:
     build_revisao = []
     for item in raw_build:
         try:
-            name, constraint = _requisito(item)
+            name, constraint, _ = _requisito(item)
             risco = None
         except ErroDependencia:
-            # Limite inferior simples de build é risco explícito; URL/marker
-            # direto jamais vira exceção tolerada.
-            m = re.fullmatch(
-                r"\s*([A-Za-z][A-Za-z0-9_.-]*)\s*>=\s*(\d+(?:\.\d+){0,3})\s*", item
-            )
-            if not m:
+            # Build permite >= como risco explícito, mas não URL, marker, VCS
+            # nem faixa parcialmente oculta. A sintaxe vem do mesmo parser.
+            try:
+                parsed = analisar_requisito(item)
+            except ErroDependencias as exc:
+                raise ErroDependencia("requisito de build não auditável") from exc
+            clauses = parsed["constraints"]
+            if len(clauses) != 1 or clauses[0][0] != ">=":
                 raise ErroDependencia("requisito de build não auditável")
-            name, constraint = _nome(m.group(1)), ">=" + m.group(2)
+            name, constraint = parsed["distribution"], ">=" + clauses[0][1]
             risco = "BUILD_REQUIRES_MANUAL_RESOLUTION_REVIEW"
         build_revisao.append({"distribution": name, "declared": constraint, "risk": risco})
 
