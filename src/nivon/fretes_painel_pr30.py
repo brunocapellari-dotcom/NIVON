@@ -28,6 +28,9 @@ def preparar_painel_pr30(
 ) -> dict:
     """Prepara entrada da PR #30 sem autorizar uso operacional.
 
+    Datas de publicação/coleta são expressas em dias locais de Mato Grosso,
+    após teste intradiário timezone-aware, para respeitar o calendário das
+    datas de referência e evitar falsos bloqueios na virada UTC.
     A lista resultante inclui somente preço BASE anunciado; frete cheio e
     preço contratado são conceitos diferentes. A aplicação deve garantir
     previamente a autenticidade e direitos dos registros no canal confiável.
@@ -101,8 +104,8 @@ def preparar_painel_pr30(
                                    separators=(",", ":"), ensure_ascii=True).encode()).hexdigest()
         linhas.append({
             "periodo": dia.isoformat(),
-            "publicacao": x.data_publicacao.date().isoformat(),
-            "coleta": x.data_coleta.date().isoformat(),
+            "publicacao": x.data_publicacao.astimezone(ZoneInfo("America/Cuiaba")).date().isoformat(),
+            "coleta": x.data_coleta.astimezone(ZoneInfo("America/Cuiaba")).date().isoformat(),
             "valor": str(x.frete_base_brl_t),
             "fonte_id": x.fonte_id, "edicao_sha256": digest,
             "origem_ibge": origem_ibge, "destino_ibge": destino_ibge,
