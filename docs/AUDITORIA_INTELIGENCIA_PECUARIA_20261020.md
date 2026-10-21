@@ -131,3 +131,14 @@ Reproduzir testes sinteticos: PYTHONPATH=src python -m unittest tests.test_pecua
 1. Obter amostra REAL e autorizada da API v3 para cada espécie e validar IDs oficiais, unidades, classificações, cobertura territorial e datas; confrontar com SIDRA e publicações do IBGE.
 2. Registrar comprovante de proveniência, modificações oficiais e revisões (vintage autêntico); somente então permitir REAL_SAMPLE_TESTED em avaliação independente.
 3. Definir persistência histórica append-only a partir do contrato já testado e começar análises de ciclo bovino/aves/suínos com validação temporal. Nenhuma probabilidade ou preço sem evidência.
+
+## Continuidade 21/10/2026 — cronologia fail-closed SIDRA
+
+- Auditoria da branch confirmou parser SIDRA e motor bitemporal offline com CI anterior verde. A API IBGE v3 de metadados e a API de valores SIDRA não responderam no navegador de pesquisa e na rede do container (DNS): nenhum JSON real foi obtido.
+- Evidência externa, NÃO HOMOLOGADA de metadados: https://quantilica.com/fish/variaveis/284 e https://quantilica.com/fish/tabelas/1092/numero-informantes-quantidade-peso-total-carcacas-bovinos-abatidos-mes-trimestre-tipo-rebanho-tipo-i indicam 284 como animais abatidos nas tabelas 1092/1093/1094, mas não autorizam preencher mapas oficiais automaticamente nem inferir unidades e categorias de extrato real.
+- Vulnerabilidade corrigida em src/nivon/pecuaria_sidra_vintages.py: anteriormente observação manual com referência arbitrária ou publicação anterior ao encerramento de um trimestre poderia atravessar a seleção as-of; o motor agora exige fim de trimestre canônico, origem >= 1997, publicação posterior ao encerramento para valores e censuras.
+- Validação temporal harmonizada em src/nivon/pecuaria_sidra_abate.py: a publicação precisa ser >= 00:00 UTC do dia posterior ao fim da competência. Este gate não autentica o timestamp, apenas barra um intervalo objetivamente impossível.
+- Testes adversariais novos em tests/test_pecuaria_sidra_vintages.py e tests/test_pecuaria_sidra_snapshot.py: referência 2026-T2 registrada em setembro, registro de 1996, publicação em junho antes do fim do trimestre, censura antecipada e controles positivos de 1997.
+- Quatro datas canônicas preservadas nos resultados ou objetos: competência, referência, publicação e coleta. Publicação/coleta são DECLARADAS por operador, ainda não comprovadas com divulgação oficial histórica; não promover vintages nem classificação para observado sem evidência.
+
+**Pendências em ordem:** (P0) amostras autênticas API v3/values das 3 tabelas e mapeamento por documentação oficial; (P0) homologação de licença/proveniência de aquisição e publicação, comparando o período do extrato à divulgação original; (P1) reprodução real BR x UFs por cobertura efetiva e revisão; (P1) persistência append-only e backtesting PIT por espécie. Sem merge, deploy, cron, envio ou preço real.
