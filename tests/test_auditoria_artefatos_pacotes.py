@@ -1,6 +1,7 @@
 """Testes de cadeia de artefatos locais; não requer dependências instaladas."""
 from __future__ import annotations
 
+import base64
 import hashlib
 import io
 import json
@@ -26,10 +27,21 @@ class CadeiaPacotesTests(unittest.TestCase):
             'ivo-query = ["duckdb>=1,<2"]\n'
         )
         raw = io.BytesIO()
+        files = {
+            "duckdb-1.2.3.dist-info/METADATA":
+                b"Metadata-Version: 2.1\nName: duckdb\nVersion: 1.2.3\n",
+            "duckdb-1.2.3.dist-info/WHEEL":
+                b"Wheel-Version: 1.0\n",
+        }
+        record = ""
+        for name, data in files.items():
+            digest = base64.urlsafe_b64encode(hashlib.sha256(data).digest()).decode().rstrip("=")
+            record += f"{name},sha256={digest},{len(data)}\n"
+        record += "duckdb-1.2.3.dist-info/RECORD,,\n"
         with zipfile.ZipFile(raw, "w", compression=zipfile.ZIP_DEFLATED) as z:
-            z.writestr("duckdb-1.2.3.dist-info/METADATA",
-                       "Metadata-Version: 2.1\nName: duckdb\nVersion: 1.2.3\n")
-            z.writestr("duckdb-1.2.3.dist-info/WHEEL", "Wheel-Version: 1.0\n")
+            for name, data in files.items():
+                z.writestr(name, data)
+            z.writestr("duckdb-1.2.3.dist-info/RECORD", record.encode())
         self.wheel = self.root / "duckdb-1.2.3-py3-none-any.whl"
         self.wheel.write_bytes(raw.getvalue())
         self.lock = "duckdb==1.2.3 --hash=sha256:" + hashlib.sha256(raw.getvalue()).hexdigest() + "\n"
@@ -62,6 +74,7 @@ class CadeiaPacotesTests(unittest.TestCase):
         self.assertEqual(res["direct_packages_checked"], 1)
         self.assertTrue(res["lock_report_coherent"])
         self.assertTrue(res["local_wheel_hashes_match_declared_lock"])
+        self.assertFalse(res["approved_for_production"])
         self.assertFalse(res["transitive_closure_proven"])
         self.assertFalse(res["audit_executor_authenticated"])
         self.assertFalse(res["approved_for_production"])
