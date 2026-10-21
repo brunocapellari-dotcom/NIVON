@@ -39,7 +39,8 @@ def binding(c, **updates):
         documento_sha256=c.documento_sha256,
         texto_sha256=sha256(c.texto.encode("utf-8")).hexdigest(),
         auditoria_id=c.auditoria_id, tenant="TENANT_A", projeto="NIVON",
-        direito_consulta=True, verificado_em=T-timedelta(days=1),
+        direito_consulta=True, verificado_em=T+timedelta(minutes=58),
+        expira_em=T+timedelta(minutes=62),
     )
     args.update(updates)
     return VinculoRecursoIVO(**args)
@@ -192,8 +193,47 @@ class TestGatewayHermesIVO(unittest.TestCase):
 
     def test_acl_atual_pode_ter_sido_concedida_depois_do_corte_historico(self):
         # Direito da consulta e verificado AGORA, nao no instante da evidência.
-        self.resource = lambda c: binding(c, verificado_em=T+timedelta(minutes=30))
+        self.resource = lambda c: binding(c, verificado_em=T+timedelta(minutes=58))
         self.assertEqual(len(self.query()["evidencias"]), 1)
+
+    def test_concessao_sem_prazo_expresso_nao_serve_como_direito_atual(self):
+        self.resource = lambda c: binding(c, expira_em=None)
+        self.assertEqual(self.query()["evidencias"], [])
+        self.assertEqual(self.p.requests, [])
+
+    def test_lease_expirada_ou_verificacao_antiga_bloqueia(self):
+        for changes in (
+            {"expira_em": T+timedelta(hours=1)},
+            {"verificado_em": T+timedelta(minutes=50)},
+            {"verificado_em": T-timedelta(days=1)},
+        ):
+            with self.subTest(changes=changes):
+                self.p.requests.clear()
+                self.resource = lambda c, changes=changes: binding(c, **changes)
+                self.assertEqual(self.query()["evidencias"], [])
+                self.assertEqual(self.p.requests, [])
+
+    def test_revogacao_efetiva_bloqueia_mesmo_se_lease_ainda_valida(self):
+        self.resource = lambda c: binding(c, revogado_em=T+timedelta(minutes=59))
+        self.assertEqual(self.query()["evidencias"], [])
+        self.assertEqual(self.p.requests, [])
+
+    def test_revogacao_futura_nao_e_inventada_como_vigente(self):
+        self.resource = lambda c: binding(c, revogado_em=T+timedelta(minutes=61))
+        self.assertEqual(len(self.query()["evidencias"]), 1)
+
+    def test_lease_incoerente_ou_data_sem_fuso_nega_acesso(self):
+        for changes in (
+            {"expira_em": T+timedelta(minutes=58)},
+            {"expira_em": T+timedelta(minutes=75)},
+            {"expira_em": T.replace(tzinfo=None)},
+            {"revogado_em": T.replace(tzinfo=None)},
+        ):
+            with self.subTest(changes=changes):
+                self.p.requests.clear()
+                self.resource = lambda c, changes=changes: binding(c, **changes)
+                self.assertEqual(self.query()["evidencias"], [])
+                self.assertEqual(self.p.requests, [])
 
     def test_policy_negada_indisponivel_ou_aprovacao_pendente(self):
         self.p.allowed = False
