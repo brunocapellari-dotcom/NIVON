@@ -32,7 +32,11 @@ UF_IBGE = {
 INDICADORES = frozenset({"ABATE_CABECAS", "PESO_CARCACAS_KG"})
 UNIDADE_FONTE = {"ABATE_CABECAS": "cabeças", "PESO_CARCACAS_KG": "quilogramas"}
 UNIDADE_CANONICA = {"ABATE_CABECAS": "CABECAS", "PESO_CARCACAS_KG": "KG"}
-DADO_NAO_DISPONIVEL = frozenset({"...", "..", "-", "X", "x", "", "NA", "N/A"})
+# Notacao documentada pelo SIDRA. O traco representa ZERO ABSOLUTO,
+# e nao um valor ausente. Preservar o marcador no diagnostico de proveniencia.
+SINAIS_SIDRA = {"-": "ZERO_ABSOLUTO", "X": "INIBIDO", "x": "INIBIDO",
+                "..": "NAO_APLICAVEL", "...": "NAO_DISPONIVEL"}
+DADO_NAO_DISPONIVEL = frozenset({"...", "..", "X", "x", "", "NA", "N/A"})
 
 
 def _exigir_mapa(*, especie, tabela, dimensoes, totais, variaveis):
@@ -82,6 +86,8 @@ def _uf(linha, campo):
 def _numero(valor, indicador):
     if not isinstance(valor, str):
         raise DadoInvalido("valor SIDRA nao textual; conversao implicita proibida")
+    if valor.strip() == "-":
+        return 0.0
     if valor.strip() in DADO_NAO_DISPONIVEL:
         return None
     if not re.fullmatch(r"[0-9]+(?:\.[0-9]+)?", valor):
@@ -142,7 +148,7 @@ def normalizar_snapshot_sidra_abate(
         raise DadoInvalido("classificacao nao declarada: risco de dupla contagem")
     if not all(isinstance(cabecalho[k], str) for k in colunas_dimensoes):
         raise DadoInvalido("rotulos do cabecalho nao textuais")
-    registros, censurados, vistos = [], [], set()
+    registros, censurados, vistos, marcadores = [], [], set(), []
     por_chave = defaultdict(set)
     origem_hash = sha256(bruto).hexdigest()
     for linha in payload[1:]:
@@ -169,6 +175,11 @@ def normalizar_snapshot_sidra_abate(
             raise DadoInvalido("linha duplicada: total por inspecao ou por rebanho")
         vistos.add(identidade)
         valor = _numero(linha["V"], indicador)
+        simbolo = linha["V"].strip()
+        if simbolo in SINAIS_SIDRA:
+            marcadores.append({"uf": uf, "competencia": competencia,
+                               "indicador": indicador, "simbolo": simbolo,
+                               "significado": SINAIS_SIDRA[simbolo]})
         por_chave[(uf, competencia)].add(indicador if valor is not None else "CENSURADO_"+indicador)
         if valor is None:
             censurados.append({"uf": uf, "competencia": competencia, "indicador": indicador,
@@ -190,6 +201,7 @@ def normalizar_snapshot_sidra_abate(
     return {"especie": especie, "tabela_sidra": tabela_sidra,
             "observacoes": sorted(registros, key=lambda o: (o.uf, o.competencia, o.indicador)),
             "linhas_indisponiveis": censurados, "pares_incompletos": incompletos,
+            "marcadores_sidra": marcadores,
             "origem_sha256": origem_hash, "publicacao": publicacao, "coleta": coleta,
             "classificacao": "NORMALIZACAO_OFFLINE_NAO_HOMOLOGADA",
             "coleta_real_executada": False, "previsao_homologada": False,
