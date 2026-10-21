@@ -63,6 +63,33 @@ class TestColetaWeb(unittest.TestCase):
             with self.assertRaises(ErroAquisicao):
                 replace(self.fonte(), url=url).verificar()
 
+    def test_ssrf_local_e_url_hostil_bloqueados_antes_de_abrir(self):
+        urls = (
+            "https://localhost/admin",
+            "https://metadata.google.internal/computeMetadata/v1/",
+            "https://service.local/health",
+            "https://example.test/sneaky",
+            "https://127.0.0.1/",
+            "https://[::1]/",
+            "https://user:secret@porto.example/lineup",
+            "https://porto.example:8443/lineup",
+            "https://porto.example/lineup#fragment",
+            "https://porto.example/lineup\\nHost:evil.example",
+            "https://porto.example:porta/lineup",
+            "https://sem-dominio/lineup",
+        )
+        for url in urls:
+            from urllib.parse import urlsplit
+            host = urlsplit(url).hostname or "porto.example"
+            if url.startswith("https://porto.example:porta"):
+                host = "porto.example"
+            fonte = replace(self.fonte(), url=url, dominio_autorizado=host)
+            abertura = AbridorFalso(RespostaFalsa(url))
+            with self.subTest(url=url):
+                with self.assertRaises(ErroAquisicao):
+                    adquirir_fonte(fonte, abridor=abertura)
+                self.assertEqual(abertura.chamadas, 0)
+
     def test_recebe_payload_com_hash_e_metadados(self):
         f = self.fonte()
         r = adquirir_fonte(f, abridor=AbridorFalso(RespostaFalsa(f.url)))
