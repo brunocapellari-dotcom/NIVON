@@ -372,3 +372,60 @@ separado, após validação do arquiteto de segurança. Em seguida,
 executar E2E com vintages genuínos e avaliação walk-forward em janela
 não usada no treinamento. Nenhuma dessas etapas foi simulada como
 homologada.
+
+
+## 11. Continuidade 21/10/2026 — auditor independente de linhas CSV
+
+**P0 executado para um formato controlado, não para fontes oficiais.**
+
+`src/nivon/auditoria_extracao_csv_mercados.py` implementa
+`verificar_extracao_csv_canonico`, que usa a biblioteca padrão
+`csv` separadamente do produtor do JSONL e confronta **todas**
+as linhas, posições físicas e hashes SHA-256 linha a linha:
+
+- Contrato `NIVON_CSV_CANONICO_V1`, versão 1; CSV UTF-8,
+  separador ponto e vírgula, cabeçalho de campos canônico em ordem fixa,
+  quebra LF obrigatória, sem CRLF, BOM ou campos multilinha.
+  **Não é o formato oficial CME/ICE/CEPEA/BCB e não deve ser rotulado
+  como parser oficial de qualquer fornecedor.**
+- Cada JSONL contém todos os atributos do CSV e
+  `raw_linha` (número inteiro da linha original) e
+  `raw_linha_sha256` (SHA dos bytes integrais da linha incluindo LF).
+  Contrato não permite inserção de campos inesperados, omissão de
+  linhas, adulteração de preço ou troca de ordem.
+- O confronto é **exato por valor e forma textual**, incluindo
+  escala e identidade econômica da cotação. Os campos opcionais vazios
+  se normalizam explicitamente para `null`; preço bruto decimal
+  nunca vira float.
+- Antes da análise, é exigido o duplo hash raw/JSONL do manifesto,
+  origem/tempo de captura coerentes e o contrato existente de
+  qualidade point-in-time, revisão e vencimento.
+- Testes negativos recalculam deliberadamente os dois hashes depois
+  de adulterar valores, omitir linhas ou falsificar posição.
+  **Mesmo nesse cenário**, a checagem independente rejeita a
+  conversão discordante. Testes cobrem preço físico com ponto,
+  qualidade, entrega, pagamento e regime tributário distintos.
+
+O `auditar_previsao_ponta_a_ponta_csv_canonico`, no módulo
+`auditoria_e2e_mercados.py`, exige o mesmo controle estrito para
+os pacotes de preço-base e alvo, além do registro ancorado, do
+ledger, da reconciliação as-of e do calendário já auditados.
+
+A saída `extracao_csv_canonico_conferida=true` comprova apenas
+a equivalência entre dois artefatos **neste contrato controlado**.
+Mantém `parser_oficial_mercado_validado=false`,
+`parser_independente_verificado=false` (formato do fornecedor),
+`origem_mercado_autenticada=false`,
+`licenca_publicacao_verificada=false`,
+`publicavel=false` e `probabilidades_calibradas=null`.
+
+**Próxima prioridade P0:** selecionar uma fonte histórica pública
+legalmente permitida com formato real documentado, preservar os
+bytes tal como recebidos e a licença, implementar seu parser
+especializado, travar schema/mudanças, conferir arquivo/posição
+raw de cada preço, comparar com amostra independente e verificar
+data de divulgação, unidade, revisões e calendário.
+Para CME/ICE/CEPEA, bloquear redistribuição/WhatsApp até
+validar expressamente os direitos e condições contratuais.
+O assinador HMAC e a localização declarada também ainda
+não constituem prova externa de WORM ou timestamp independente.
