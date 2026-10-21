@@ -2,7 +2,8 @@
 
 Nao descobre IDs de variaveis/categorias: exige mapa conferido contra os
 metadados oficiais da extracao. Nao coleta, grava, agenda nem redistribui.
-Os valores "..." e "-" sao NA, nunca zero. O trimestre nao pode ser somado
+O simbolo "-" significa zero absoluto; X, ".." e "..." nao sao zero.
+O trimestre nao pode ser somado
 a seus meses; as categorias de inspecao/rebanho nao podem ser somadas aos totais.
 """
 from __future__ import annotations
