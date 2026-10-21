@@ -111,9 +111,9 @@ class TestAuditoriaSSRFDNS(unittest.TestCase):
         # Um retorno DNS público + privado não habilita fallback para o
         # endereço interno; check de apenas uma resposta é insuficiente.
         for ips in (
-            ("203.0.113.23", "127.0.0.1"),
-            ("203.0.113.23", "169.254.169.254"),
-            ("2001:db8::1", "fd00::1"),
+            ("1.1.1.1", "127.0.0.1"),
+            ("1.1.1.1", "169.254.169.254"),
+            ("2606:4700:4700::1111", "fd00::1"),
         ):
             with self.subTest(resolucao=ips):
                 abridor = _Abridor()
