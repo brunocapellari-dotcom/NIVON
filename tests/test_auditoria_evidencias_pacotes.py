@@ -144,17 +144,13 @@ class EvidenciaPacotesTests(unittest.TestCase):
             self.lock.replace("--hash=sha256:" + "a" * 64, ""),
             self.lock + "evil==1.0 --hash=sha256:" + "a" * 64,
         ]
+        original = self.lock
         for value in cases:
             self.lock = value
             self.meta = self.metadata()
             with self.subTest(value=value[-50:]), self.assertRaises(ErroEvidencia):
                 self.run_eval()
-            self.lock = cases[0].split("duckdb==1.2.0 --hash=sha256:" + "a" * 64)[0] if False else (
-                "duckdb==1.2.0 --hash=sha256:" + "a" * 64 + "\n"
-                "pandas==2.2.3 --hash=sha256:" + "b" * 64 + "\n"
-                "mlforecast==1.0.1 --hash=sha256:" + "c" * 64 + "\n"
-                "numpy==2.1.0 --hash=sha256:" + "d" * 64 + "\n"
-            )
+            self.lock = original
             self.meta = self.metadata()
 
     def test_symlinks_for_evidence_rejected(self):
