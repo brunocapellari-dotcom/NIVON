@@ -54,12 +54,12 @@ class TestHistoricosMeteoHidroIntegrados(unittest.TestCase):
             "METEOROLOGIA": (
                 "nivon.noaa_roni:importar_roni_ascii",
                 "nivon.noaa_roni:classificar_episodios_roni",
-                "nivon.confronto_climatico_qc:confronto_diario_inmet_power",
+                "nivon.confronto_janelas_fisicas:confrontar_chuva_janelas_equivalentes",
                 "nivon.analogos_historicos:encontrar_anos_analogos",
                 "nivon.historico_vintages:normalizar_edicao",
             ),
             "CLIMA_HIDRO": (
-                "nivon.confronto_climatico_qc:confronto_diario_inmet_power",
+                "nivon.confronto_janelas_fisicas:confrontar_chuva_janelas_equivalentes",
                 "nivon.historico_vintages:normalizar_edicao",
             ),
         }
