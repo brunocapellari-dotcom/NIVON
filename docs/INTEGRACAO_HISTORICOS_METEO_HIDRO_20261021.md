@@ -28,3 +28,14 @@ A nova suíte `tests/test_integracao_historicos_meteo_hidro.py` confere os hashe
 
 ## Próximo passo executável
 Auditar o ajuste fino de `confronto_climatico_qc` ao calendário físico de 24h INMET e o vintage temporal de grade NASA POWER, após amostras reais legalmente autorizadas; registrar `NOAA_ENSO_RONI` como fonte candidata sem ativar coleta. Conciliar as demais PRs da #9 em sua própria frente, não pela meteorologia.
+
+
+## Correção adicional — equivalência física de precipitação diária
+
+Durante a conciliação foi detectado outro risco científico: o agregado INMET de 24 registros rotulados pela data `D` pode cobrir `D-1 às 23h → D às 23h UTC` sob a convenção de **hora como fim do intervalo**, enquanto uma grade diária com a mesma etiqueta `D` pode representar `D às 00h → D+1 às 00h UTC`. Esses números **não** são acumulados do mesmo período e não devem ser comparados por simples igualdade de rótulo.
+
+- Criado `src/nivon/confronto_janelas_fisicas.py:confrontar_chuva_janelas_equivalentes`, que exige para **cada dia** início e fim de intervalo, 24 horas exatas, SHA associado ao dataset correto e referência documental de convenção física. Recusa lacunas, datas duplicadas, fusos ausentes e intervalos distintos. Só após essa conferência chama o confronto descritivo original `confronto_diario_inmet_power`.
+- Os **entrypoints registrados** de `CLIMA_HIDRO` e `METEOROLOGIA` agora direcionam exclusivamente ao wrapper de equivalência física; o método original foi mantido para compatibilidade com a PR #9, mas não é ponto de entrada do registro governado.
+- `tests/test_confronto_janelas_fisicas.py` executa regressões de 30 e 29 dias, intervalos com 23/25 horas, incompatibilidade INMET fim/NASA início, SHA indevido, datas não pareadas, publicação tardia e QC reprovado.
+- A evidência temporal de cada produto ainda é **declarada** no contrato, portanto `evidencias_intervalo_auditadas_externamente=false`, `homologado=false` e `skill_preditiva_comprovada=false` mesmo quando as janelas coincidem.
+- O JSON diário original NASA POWER precisa ser enriquecido **somente após fonte, produto, referência espacial, temporalidade e edição serem verificadas**. Não inferir automaticamente UTC civil da etiqueta do arquivo sem consultar a documentação do produto.
