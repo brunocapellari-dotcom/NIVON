@@ -35,7 +35,39 @@ gcloud billing projects describe nivon-data --format='json'
 gcloud services list --enabled --project=nivon-data --format='value(config.name)'
 ```
 
-## 3. Próximos gates da plataforma
+## 3. Auditoria completa read-only com saída sanitizada
+
+Com acesso via Cloud Shell no projeto existente, a versão recomendada é:
+
+```sh
+cd NIVON
+python3 scripts/audit_gcp_readonly.py --check --project nivon-data
+```
+
+Caso ainda não tenha clonado o repositório, executar primeiro os comandos do item 2.
+O script usa **exclusivamente comandos de leitura** (`projects describe`,
+`billing projects describe`, `services list --enabled` e
+`projects get-iam-policy`), sem permitir `gcloud services enable`, criar
+recursos ou configurar IAM. A execução **não requer chave de serviço**.
+Resultados incluem apenas: verificação do ID do projeto, estado de faturamento,
+nomes de APIs habilitadas, contagem de vínculos IAM e próximo bloqueio.
+**Não incluem emails dos membros IAM nem identificadores de conta de faturamento.**
+
+Interpretação do campo `billing_status`:
+
+- `DISABLED`: situação de billing confirmada como desativada pela CLI. Isso não prova que há infraestrutura implantada, nem autoriza nenhuma operação paga.
+- `ENABLED`: já existe faturamento ativo; **não altera/desliga** a conta. Revisar custos e recursos antes de fazer qualquer implantação.
+- `UNKNOWN_NOT_VERIFIED`: sem acesso ou resposta confiável; **não interpretar como desativado**. A CLI retorna código de saída 3 nessa condição.
+
+`enabled_apis` é somente uma lista de APIs habilitadas: **não significa**
+que datasets, buckets ou Cloud Run estejam criados. Se `iam_audit_verified`
+for falso, o papel necessário para inspecionar IAM poderá estar ausente.
+
+A linha `deploy_allowed` sempre permanece `false` por política de
+segurança, qualquer que seja o resultado. Os testes offline da CI não
+executam o CLI Google Cloud nem possuem credenciais.
+
+## 4. Próximos gates da plataforma
 
 - Configuração canônica em `config/gcp_data_platform.v1.json`: ID identificado por captura, sem comprovação por API, status de faturamento desconhecido e serviços desativados.
 - Região planejada para datasets/buckets futuros: `us-central1`, sujeita à auditoria de licença, região e custo. Projetos GCP não recebem essa região na criação.
