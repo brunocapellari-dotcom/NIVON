@@ -220,7 +220,7 @@ def _normalize_partial_eta(value: str, reference_date: date) -> str:
     text = _cell(value)
     # A PDF that only prints a calendar date has NOT provided an ETA clock.
     # datetime.strptime would otherwise invent 00:00 and a false precise ETA.
-    if not re.search(r"\\b\\d{1,2}:\\d{2}\\b", text):
+    if not re.search(r"\b\d{1,2}:\d{2}\b", text):
         raise ValueError("eta_clock_missing")
     formats = (
         "%d/%m/%Y %H:%M",
@@ -286,7 +286,12 @@ def parse_itaqui_tables(tables: Iterable[PdfTable], *, reference_date: date) -> 
             berth_match = re.search(r"\bBER[CÇ]O\s*(\d{1,3})\b", _value(row, berth_i), re.I)
             if berth_match:
                 current_berth = f"BERCO_{berth_match.group(1)}"
-            eta = _normalize_partial_eta(_value(row, eta_i), reference_date)
+            try:
+                eta = _normalize_partial_eta(_value(row, eta_i), reference_date)
+            except ValueError:
+                # Keep the source row visible for audit; never substitute 00:00
+                # or silently shrink the apparent line-up during parsing.
+                eta = ""
             imo_raw = _value(row, imo_i)
             imo = re.sub(r"\D", "", imo_raw) if imo_raw else ""
             if imo and len(imo) != 7:
@@ -369,7 +374,9 @@ def parse_paranagua_tables(
             try:
                 eta = _normalize_partial_eta(arrival, reference_date)
             except ValueError:
-                continue
+                # Preserve the row as unresolvable rather than dropping it.
+                # Later official-lineup bridge must exclude and flag it.
+                eta = ""
             product, volume = _paranagua_volume_and_product(row, headers, product_i)
             parsed = {
                 "navio": vessel,
