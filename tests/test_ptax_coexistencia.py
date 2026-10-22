@@ -110,6 +110,36 @@ class TestCoexistenciaPTAX(unittest.TestCase):
             selecionar_ptax_decimal_asof(
                 self.db,corte=T.isoformat(),incluir_sinteticos=True)
 
+    def test_leitura_raw_recusa_legado_adulterado(self):
+        from nivon.ptax_raw_sqlite import consultar_raw_ptax_asof, ErroRawPTAX
+        self.legado()
+        self.novo()
+        okay=consultar_raw_ptax_asof(
+            self.db,corte=T.isoformat(),incluir_sinteticos=True)
+        self.assertEqual(okay["schema_snapshot_preservado"],"PTAX_ODATA_1")
+        self.db.execute(
+            "UPDATE nivon_observacoes_api SET observacao_json='{}'")
+        with self.assertRaisesRegex(ErroRawPTAX,"integridade"):
+            consultar_raw_ptax_asof(
+                self.db,corte=T.isoformat(),incluir_sinteticos=True)
+
+    def test_leitura_raw_recusa_classe_ou_edicao_falsa(self):
+        from nivon.ptax_raw_sqlite import consultar_raw_ptax_asof
+        self.legado()
+        self.novo()
+        self.db.execute(
+            "UPDATE nivon_ptax_raw_capturas SET tipo='REAL_AUTORIZADO'")
+        result=consultar_raw_ptax_asof(
+            self.db,corte=T.isoformat(),incluir_sinteticos=True)
+        self.assertEqual(result["status"],"SEM_RAW_PTAX_ATE_CORTE")
+        self.db.execute(
+            "UPDATE nivon_ptax_raw_capturas SET tipo='SINTETICO'")
+        self.db.execute(
+            "UPDATE nivon_ptax_raw_capturas SET coletado_em='2026-10-19T00:00:00+00:00'")
+        result=consultar_raw_ptax_asof(
+            self.db,corte=T.isoformat(),incluir_sinteticos=True)
+        self.assertEqual(result["status"],"SEM_RAW_PTAX_ATE_CORTE")
+
     def test_schema_desconhecido_nao_faz_migracao_automatica(self):
         self.legado()
         self.db.execute("UPDATE nivon_snapshots SET schema_versao='OUTRA_VERSAO'")
