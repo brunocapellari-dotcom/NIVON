@@ -759,7 +759,7 @@
         "url": null,
         "source_proof": null
       },
-      "implementation_scope": "NO_PARSER (código citado não implica coletor ativo)",
+      "implementation_scope": "importacao_cotacoes_autorizadas.py: CSV offline, quarentena e direitos pendentes; NAO API remota",
       "authentication": "RIGHTS_APPROVAL_REQUIRED",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -779,7 +779,7 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
+      "source_note": "Importador CSV supervisionado não comprova acesso, licença ou layout CEPEA/IMEA. Não fazer scraping.",
       "preliminary_evidence": "CATALOG_ONLY"
     },
     {
@@ -1655,7 +1655,7 @@
         "url": null,
         "source_proof": null
       },
-      "implementation_scope": "NO_PARSER (código citado não implica coletor ativo)",
+      "implementation_scope": "importacao_cotacoes_autorizadas.py: CSV offline, quarentena e direitos pendentes; NAO API remota",
       "authentication": "RIGHTS_APPROVAL_REQUIRED",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -1675,7 +1675,7 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
+      "source_note": "Importador CSV supervisionado não comprova acesso, licença ou layout CEPEA/IMEA. Não fazer scraping.",
       "preliminary_evidence": "CATALOG_ONLY"
     },
     {
@@ -5196,6 +5196,95 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "O manifest é metadado de arquivo ZIP: não implica carga de milhões de registros. Para QCL ZIP 33 MB comprimido e milhões de linhas, priorizar leitura seletiva, checkpoint e validação de licenças, custo e frescor.",
       "preliminary_evidence": "FAO_OFFICIAL_BULK_MANIFEST_PUBLIC_WEB_2026_10_21"
+    },
+    {
+      "dataset_id": "INMET_CATALOGO_ESTACOES",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "DIRECT_OFFICIAL_API",
+        "url": "https://apitempo.inmet.gov.br/estacoes/T",
+        "source_proof": "https://apitempo.inmet.gov.br/estacoes/T"
+      },
+      "implementation_scope": "inmet_estacoes_publicas.py: metadata offline/GET pontual opt-in",
+      "authentication": "NONE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_HTTP_SCHEMA_LICENSE_FRESHNESS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "REAL_HTTP_VALIDATION_AND_FRESHNESS"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Inventário público T/M; domínio e layout real precisam homologação; não publica dados climáticos.",
+      "preliminary_evidence": "CODE_AND_SYNTHETIC_TESTS_ONLY"
+    },
+    {
+      "dataset_id": "CPTEC_PREVISAO_CIDADE",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PUBLISHED_API_DOC",
+        "url": "https://brasilapi.com.br/api/cptec/v1/clima/previsao/244/3",
+        "source_proof": "https://brasilapi.com.br/api/cptec/v1/clima/previsao/244/3"
+      },
+      "implementation_scope": "cptec_previsao_brasilapi.py: previsao pontual offline/GET opt-in",
+      "authentication": "NONE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_HTTP_SCHEMA_LICENSE_FRESHNESS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "REAL_HTTP_VALIDATION_AND_FRESHNESS"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "URL de exemplo por código CPTEC (244), não coleta Mato Grosso; agregador e frescor a conferir.",
+      "preliminary_evidence": "CODE_AND_SYNTHETIC_TESTS_ONLY"
+    },
+    {
+      "dataset_id": "CEMADEN_CHUVA_ACUMULADA_RECENTE",
+      "collector_class": "ACCESS_GATED",
+      "locator": {
+        "kind": "PUBLISHED_API_DOC",
+        "url": "https://sws.cemaden.gov.br/PED/api/ui/swagger.json",
+        "source_proof": "https://sws.cemaden.gov.br/PED/api/ui/swagger.json"
+      },
+      "implementation_scope": "cemaden_ped.py: JWT por ambiente e consulta pontual; sem rede padrão",
+      "authentication": "JWT_EXTERNAL_ONLY",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "JWT_RIGHTS_AND_REAL_SAMPLE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "RIGHTS_COLLECTION",
+        "APPROVED_ACCESS",
+        "AUTH_TOKEN_HOMOLOGATION"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "PED autenticado; sem JWT/consentimento comprovados, execução e persistência bloqueadas.",
+      "preliminary_evidence": "CODE_AND_SYNTHETIC_TESTS_ONLY"
     }
   ]
 }

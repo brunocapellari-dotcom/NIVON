@@ -114,6 +114,8 @@ def validar_rotas(rotas: dict, catalogo: dict) -> dict:
                 "MDIC": {"www.gov.br", "gov.br"},
                 "IBGE": {"servicodados.ibge.gov.br", "apisidra.ibge.gov.br"},
                 "ANTT": {"dados.antt.gov.br"},
+                "INMET": {"apitempo.inmet.gov.br"},
+                "CPTEC": {"brasilapi.com.br"},  # agregador, nao fonte primaria
                 "INPE_QUEIMADAS": {"dataserver-coids.inpe.br"},
                 "NASA_GLAM": {"glam1.gsfc.nasa.gov"},
                 "EARTH_SEARCH": {"earth-search.aws.element84.com"},
