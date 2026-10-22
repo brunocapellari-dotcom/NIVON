@@ -123,9 +123,11 @@ def claim(db, agent, minutes=60):
         raise
 
 
-def change(db, task_id, agent, action, note="", tokens_in=None, tokens_out=None):
+def change(db, task_id, agent, action, note="", tokens_in=None, tokens_out=None, next_agent=None):
     if agent not in AGENTS or action not in {"done", "blocked", "handoff", "heartbeat"}:
         raise ValueError("Ação/agente inválidos")
+    if next_agent is not None and (action != "handoff" or next_agent not in AGENTS):
+        raise ValueError("Destino de handoff inválido")
     if (tokens_in is not None and tokens_in < 0) or (tokens_out is not None and tokens_out < 0):
         raise ValueError("Tokens inválidos")
     db.execute("BEGIN IMMEDIATE")
@@ -140,9 +142,9 @@ def change(db, task_id, agent, action, note="", tokens_in=None, tokens_out=None)
             if not note.strip():
                 raise ValueError("Handoff requer checkpoint")
             db.execute("""UPDATE tasks SET status='pending', owner=NULL, claimed_at=NULL,
-                lease_until=NULL, note=?,tokens_in=COALESCE(?,tokens_in),
-                tokens_out=COALESCE(?,tokens_out) WHERE id=?""",
-                (note[:3000], tokens_in, tokens_out, task_id))
+                lease_until=NULL, preferred_agent=COALESCE(?,preferred_agent),
+                note=?,tokens_in=COALESCE(?,tokens_in),tokens_out=COALESCE(?,tokens_out) WHERE id=?""",
+                (next_agent, note[:3000], tokens_in, tokens_out, task_id))
         else:
             db.execute("""UPDATE tasks SET status=?,finished_at=?,lease_until=NULL,
                 note=?, tokens_in=COALESCE(?,tokens_in),
@@ -183,6 +185,8 @@ def main(argv=None):
         p.add_argument("--id", required=True)
         p.add_argument("--agent", choices=sorted(AGENTS), required=True)
         p.add_argument("--note", default="")
+        if command == "handoff":
+            p.add_argument("--to", choices=sorted(AGENTS), help="Agente que assumirá a próxima tentativa")
         p.add_argument("--input-tokens", type=int)
         p.add_argument("--output-tokens", type=int)
     sub.add_parser("report")
@@ -197,7 +201,8 @@ def main(argv=None):
                 result = report(db)
             else:
                 result = change(db, args.id, args.agent, args.command, args.note,
-                                args.input_tokens, args.output_tokens)
+                                args.input_tokens, args.output_tokens,
+                                getattr(args, "to", None))
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
     except (ValueError, OSError, sqlite3.Error, json.JSONDecodeError) as exc:
