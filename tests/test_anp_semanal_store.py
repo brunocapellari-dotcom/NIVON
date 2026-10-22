@@ -84,9 +84,9 @@ def checkpoint_ficticio(
         ensure_ascii=True, allow_nan=False,
     ).encode()
     document["assinatura_hmac_sha256"] = hmac.new(
-        trust["chave"], b"NIVON_ANP_LPC_REVOGACOES_CHECKPOINT_V1\\x00".replace(
-            b"\\\\x00", bytes([0])
-        ) + payload, sha256,
+        trust["chave"],
+        b"NIVON_ANP_LPC_REVOGACOES_CHECKPOINT_V1" + bytes([0]) + payload,
+        sha256,
     ).hexdigest()
     return receber_checkpoint_revogacoes(
         db, checkpoint=document, autoridade=trust,
