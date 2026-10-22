@@ -25,6 +25,19 @@ jobs:
             --banner:js="import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);" \
             --outfile=functions/conab_neon/dist/index.mjs
           node --check functions/conab_neon/dist/index.mjs
+      - name: Recusar acesso nao autenticado nos dois endpoints
+        run: |
+          node --input-type=module - <<'NODE'
+          import functionCode from './functions/conab_neon/dist/index.mjs'
+          const endpoints=['/ingest','/ingest-balanco']
+          for(const path of endpoints){
+            const result=await functionCode.fetch(new Request('https://test.local'+path,{method:'POST',body:'{}'}))
+            if(result.status!==401)throw new Error(path+': expected 401, got '+result.status)
+          }
+          const health=await functionCode.fetch(new Request('https://test.local/health'))
+          if(health.status!==200)throw new Error('health endpoint failed')
+          console.log('GitHub OIDC required for CONAB safra and balanco endpoints')
+          NODE
       - name: Commit bundle revisável
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
