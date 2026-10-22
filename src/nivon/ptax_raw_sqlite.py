@@ -16,6 +16,7 @@ from .ptax_odata_bruta_mercados import verificar_ptax_odata_bruta
 from .qualidade_mercados import _momento
 from .registro_snapshots import registrar_snapshot
 from .transacoes_sqlite import savepoint_atomico
+from .ptax_coexistencia import identificar_schema_snapshot_ptax
 
 
 class ErroRawPTAX(ValueError):
@@ -97,10 +98,15 @@ def guardar_raw_ptax(
                       separators=(",", ":"))
     preparar_tabelas_raw_ptax(db)
     with savepoint_atomico(db):
+        coexistencia = identificar_schema_snapshot_ptax(
+            db, catalogo=catalogo, sha256=digest, tamanho=len(raw),
+            tipo=tipo, evidencia_direitos=evidencia_direitos,
+            payload=raw, plano=plano, coletado_em=coleta,
+        )
         snapshot = registrar_snapshot(
             db, catalogo, dataset_id="BCB_PTAX", sha256=digest,
             tamanho=len(raw), mime="application/json",
-            schema_versao="PTAX_ODATA_RAW_V1", coletado_em=coleta,
+            schema_versao=coexistencia["schema_versao"], coletado_em=coleta,
             tipo=tipo, autorizacoes=autorizacoes,
             evidencia_direitos=evidencia_direitos,
         )
@@ -144,6 +150,8 @@ def guardar_raw_ptax(
         "boletins": prova["boletins_distintos"],
         "nova_captura": antes is None,
         "nova_versao_snapshot": snapshot["nova_versao"],
+        "adotou_snapshot_legado": coexistencia["adotou_snapshot_legado"],
+        "schema_snapshot_preservado": coexistencia["schema_versao"],
         "raw_preservado": True, "publicavel": False,
     }
 
