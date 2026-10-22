@@ -141,6 +141,41 @@ class TestFrescorRevogacoes(unittest.TestCase):
         self.assertEqual(self.db.execute(
             "SELECT COUNT(*) FROM anp_semanal_checkpoints").fetchone()[0], 0)
 
+    def test_emissor_de_feed_nao_pode_ser_revisor_ou_revogador(self):
+        doc, recebido = fixture_checkpoint(self.db)
+        for emissor in (
+            KEYS["DIREITOS_USO"]["emissor"],
+            KEYS["HOMOLOGACAO_LAYOUT"]["emissor"],
+        ):
+            autoridade = {**FEED, "emissor": emissor}
+            signed = assinar_checkpoint({**doc, "emissor_id": emissor},
+                                        authority=autoridade)
+            with self.subTest(emissor=emissor), self.assertRaisesRegex(
+                    ErroCheckpointANP, "não pode ser revisor"):
+                receber_checkpoint_revogacoes(
+                    self.db, checkpoint=signed, autoridade=autoridade,
+                    recebido_em_confiavel=recebido,
+                )
+        self.add_revocation()
+        doc, received = fixture_checkpoint(
+            self.db, seq=1, coverage="2026-10-20T18:02:00+00:00",
+            issued="2026-10-20T18:03:00+00:00",
+            received="2026-10-20T18:04:00+00:00",
+            valid="2026-10-20T22:03:00+00:00",
+        )
+        autoridade = {**FEED, "emissor": REVOKER["emissor"]}
+        signed = assinar_checkpoint(
+            {**doc, "emissor_id": autoridade["emissor"]},
+            authority=autoridade,
+        )
+        with self.assertRaisesRegex(ErroCheckpointANP, "nem revogador"):
+            receber_checkpoint_revogacoes(
+                self.db, checkpoint=signed, autoridade=autoridade,
+                recebido_em_confiavel=received,
+            )
+        self.assertEqual(self.db.execute(
+            "SELECT COUNT(*) FROM anp_semanal_checkpoints").fetchone()[0], 0)
+
     def test_checkpoint_assinado_mas_lista_incorreta_bloqueia(self):
         doc, _ = fixture_checkpoint(self.db)
         falha = assinar_checkpoint({**doc, "total_revogacoes": 1})
