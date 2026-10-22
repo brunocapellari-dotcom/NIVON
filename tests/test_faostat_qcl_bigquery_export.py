@@ -11,6 +11,7 @@ from nivon.faostat_qcl_bigquery_export import ErroExportacaoQCL, exportar_stage_
 
 def snapshot(valor="123.45",hash_="a"*64):
     return {
+        "dataset_id":"FAO_FAOSTAT_LONG_RUN",
         "estado":"QCL_FILTRADO_SEM_PUBLICACAO",
         "sha256_zip":hash_,
         "data_coleta":"2026-10-21T23:00:00+00:00",
