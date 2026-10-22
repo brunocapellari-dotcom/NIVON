@@ -124,6 +124,10 @@ def coletar_candidato_pam(*, catalogo:dict, direitos:dict, tipo:str,
     """
     ref=_fonte_liberada(catalogo,direitos)
     instante=_utc(coletado_em)
+    # No HTTP real a data não pode ser fornecida livremente como histórica.
+    # Um teste com transporte injetado é fixture, não prova de coleta.
+    if transporte is None and abs((datetime.now(timezone.utc)-instante).total_seconds())>120:
+        raise ErroColetaPAM("instante de coleta real não coincide com o relógio atual")
     if type(timeout) is not int or not 1<=timeout<=20:
         raise ErroColetaPAM("timeout fora de limites")
     if transporte is not None and not callable(transporte):
@@ -193,7 +197,7 @@ def coletar_candidato_pam(*, catalogo:dict, direitos:dict, tipo:str,
         "sha256":hashlib.sha256(raw).hexdigest(),"bytes":len(raw),
         "content_type":mimetype,"estado_valor":marker,
         "conteudo_original":raw,
-        "fonte_de_transportes_reais_verificada":transporte is None,
+        "http_real_executado":transporte is None,
         "evidencia_direitos_declarada":ref,
         "autenticidade_documental_verificada":False,
         "publicacao_oficial_verificada":False,
