@@ -187,10 +187,17 @@ def assess_programme_duv_evidence(
         ):
             blockers.add("LINK_EVIDENCE_FUTURE_ASOF")
             continue
-        if (evidence.evidence_kind == "OFFICIAL_SOURCE_EXPLICIT_PAIR"
-                and evidence.link_evidence_url != edition.source_url):
-            blockers.add("ORIGINAL_PDF_URL_MISMATCH")
-            continue
+        if evidence.evidence_kind == "OFFICIAL_SOURCE_EXPLICIT_PAIR":
+            if evidence.link_evidence_url != edition.source_url:
+                blockers.add("ORIGINAL_PDF_URL_MISMATCH")
+                continue
+            if not any(
+                row.programme_number == evidence.programme_number
+                and row.explicit_duv == evidence.duv
+                for row in edition.rows
+            ):
+                blockers.add("ORIGINAL_PDF_DOES_NOT_DECLARE_PAIR")
+                continue
         earlier = pairs.get(evidence.programme_number)
         if earlier is not None and earlier != evidence.duv:
             conflicts.add(evidence.programme_number)
