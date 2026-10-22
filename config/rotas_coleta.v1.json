@@ -453,23 +453,21 @@
     },
     {
       "dataset_id": "ANTT_CIOT",
-      "collector_class": "STRUCTURED_FILE",
+      "collector_class": "OFFICIAL_API",
       "locator": {
-        "kind": "NOT_VERIFIED_PER_DATASET",
-        "url": null,
-        "source_proof": null
+        "kind": "DIRECT_OFFICIAL_API",
+        "url": "https://dados.antt.gov.br/api/3/action/package_show?id=ciot",
+        "source_proof": "https://dados.antt.gov.br/dataset/ciot"
       },
-      "implementation_scope": "NO_PARSER (código citado não implica coletor ativo)",
-      "authentication": "VERIFY_PER_SOURCE",
+      "implementation_scope": "CKAN_METADATA_ONLY_FIRST_HTTP_OK_LATER_MIME_MISMATCH",
+      "authentication": "NONE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "WAF_MIME_INTERMITTENT_DATA_SCHEMA_AND_RIGHTS",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
-        "EXACT_ENDPOINT_UNKNOWN",
-        "DISCOVER_OFFICIAL_DATA_RESOURCE",
         "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
         "HISTORICAL_BACKFILL",
         "SCHEDULE_AND_FRESHNESS",
@@ -478,8 +476,8 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
-      "preliminary_evidence": "CATALOG_ONLY"
+      "source_note": "Quantidade mensal de CIOT registrados conforme descrição oficial; não confundir contagem com tonelagem, tarifa, rota ou frete praticado. Uma prova HTTP positiva e uma MIME incompatível.",
+      "preliminary_evidence": "HTTP_REAL_CKAN_DISCOVERY_ACTIONS_39716314302_AND_MIME_FAILURE_ACTIONS_39716757659"
     },
     {
       "dataset_id": "ANTT_MDFE_RODOVIARIO",
@@ -4020,21 +4018,19 @@
       "dataset_id": "ZARC_JANELAS",
       "collector_class": "STRUCTURED_FILE",
       "locator": {
-        "kind": "NOT_VERIFIED_PER_DATASET",
-        "url": null,
-        "source_proof": null
+        "kind": "DIRECT_PUBLIC_FILE",
+        "url": "https://dados.agricultura.gov.br/dataset/6d3d141c-885e-41a4-ab7f-dc8ff323b96f/resource/139e5a60-1f43-4cc8-aeab-a35dbbf816c0/download/dados-abertos-tabua-de-risco-safra-2026-2027.csv",
+        "source_proof": "https://dados.agricultura.gov.br/dataset/tabua-de-risco-zoneamento-agricola-de-risco-climatico/resource/139e5a60-1f43-4cc8-aeab-a35dbbf816c0"
       },
-      "implementation_scope": "NO_PARSER (código citado não implica coletor ativo)",
-      "authentication": "VERIFY_PER_SOURCE",
+      "implementation_scope": "CSV_PREFIXO_512K_ONLY_REAL_HTTP_SCHEMA_NUMERICO_NAO_HOMOLOGADO",
+      "authentication": "NONE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "STREAM_FULL_QC_AGRONOMICO_DIREITOS_PERSISTENCIA",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
-        "EXACT_ENDPOINT_UNKNOWN",
-        "DISCOVER_OFFICIAL_DATA_RESOURCE",
         "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
         "HISTORICAL_BACKFILL",
         "SCHEDULE_AND_FRESHNESS",
@@ -4043,8 +4039,8 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
-      "preliminary_evidence": "CATALOG_ONLY"
+      "source_note": "CC Atribuição declarada no portal oficial. Prefixo real 512KiB, 2.262 linhas; não inferir quantidade total nem risco de plantio sem schema e versionamento completos.",
+      "preliminary_evidence": "HTTP_REAL_PREFIXO_SUCESSO_ACTIONS_39717080539"
     },
     {
       "dataset_id": "NOAA_ENSO_RONI",
