@@ -273,7 +273,8 @@ CREATE INDEX IF NOT EXISTS idx_faostat_qcl_asof
 
 def gravar_snapshot_sqlite(snapshot: dict, *, arquivo_banco: str) -> dict:
     """Stage local opt-in: arquivo SQLite ou :memory:, nunca GCP."""
-    if snapshot.get("estado") != "QCL_FILTRADO_SEM_PUBLICACAO":
+    if (snapshot.get("estado") != "QCL_FILTRADO_SEM_PUBLICACAO" or
+            snapshot.get("dataset_id") != "FAO_FAOSTAT_LONG_RUN"):
         raise ErroQCL("snapshot não homologado para staging")
     obs = snapshot.get("observacoes")
     if not isinstance(obs, list) or not 1 <= len(obs) <= MAX_MATCHES:
