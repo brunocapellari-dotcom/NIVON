@@ -14,6 +14,9 @@ from nivon.outbox_unificada import registrar_decisao_consentimento, mensagem_de_
 from nivon.outbox_briefing import (
     abrir_outbox,agendar_briefing,reservar_para_entrega,registrar_aceite
 )
+from nivon.entrega_whatsapp import preparar_template
+from nivon.outbox_whatsapp import registrar_edicao, despachar_registrado, consultar_envio
+from nivon.outbox_recibos import consultar_recibo
 from nivon.webhook_wsgi import app
 
 SECRET="s"*40
@@ -134,6 +137,97 @@ class TestWebhookWSGI(unittest.TestCase):
     def test_path_desconhecido_nao_exposto(self):
         status,_=emitir(self.event(),path="/send")
         self.assertEqual(status,"404 Not Found")
+
+    def preparar_whatsapp_sintetico(self):
+        recipient_key=b"TESTE-DESTINATARIO-WHATSAPP-UNICO-R09-SINTETICO-000"
+        phone="5566999999999"
+        dest_hash=hmac.new(recipient_key,phone.encode(),hashlib.sha256).hexdigest()
+        con=abrir_outbox(self.dbpath)
+        try:
+            consentir_teste(con,dest_hash,"2026-10-19T11:00:00+00:00")
+            item=preparar_template(
+                destino=phone,template="nivon_briefing_diario",
+                resumo="Conteúdo inteiramente sintético para verificar recibos.",
+                link="https://nivon.example/teste",
+                gerado_em="2026-10-19T08:00:00-03:00",
+                opt_in_registrado=True,template_aprovado=True,
+            )
+            registrar_edicao(
+                con,item,edicao="2026-10-19",chave_destinatario=recipient_key,
+            )
+            resp=despachar_registrado(
+                con,item,autorizar_envio=True,custos_aprovados=True,
+                remetente=lambda _:{"provider_message_id":"wamid.sintetico-whatsapp"},
+            )
+            self.assertEqual(resp["estado"],"ACEITO_PROVEDOR")
+            return item["idempotency_key"]
+        finally:
+            con.close()
+
+    def test_post_sintetico_reconcilia_recibo_whatsapp_apos_assinatura(self):
+        chave=self.preparar_whatsapp_sintetico()
+        status,_=emitir(self.event(
+            msgid="wamid.sintetico-whatsapp",status="sent"))
+        self.assertEqual(status,"200 OK")
+        status,_=emitir(self.event(
+            msgid="wamid.sintetico-whatsapp",status="delivered"))
+        self.assertEqual(status,"200 OK")
+        db=abrir_outbox(self.dbpath)
+        try:
+            self.assertEqual(consultar_envio(db,chave)["estado"],"ENTREGUE")
+            snap=consultar_recibo(db,provider_message_id="wamid.sintetico-whatsapp")
+            self.assertEqual(snap["estado"],"ENTREGUE")
+            self.assertIsNotNone(snap["entregue_utc"])
+            self.assertEqual(db.execute(
+                "SELECT status FROM briefing_outbox").fetchone()[0],"ACCEPTED")
+        finally:
+            db.close()
+
+    def test_webhook_com_dois_recibos_assinados_atualiza_os_dois_canais(self):
+        chave=self.preparar_whatsapp_sintetico()
+        raw=json.dumps({"object":"whatsapp_business_account","entry":[{
+            "changes":[{"field":"messages","value":{"statuses":[
+                {"id":"wamid.sintetico","status":"delivered",
+                 "timestamp":"1792425600"},
+                {"id":"wamid.sintetico-whatsapp","status":"delivered",
+                 "timestamp":"1792425600"},
+            ]}}]
+        }]}).encode()
+        status,_=emitir(raw)
+        self.assertEqual(status,"200 OK")
+        self.assertEqual(self.estado(),"DELIVERED")
+        db=abrir_outbox(self.dbpath)
+        try:
+            self.assertEqual(consultar_envio(db,chave)["estado"],"ENTREGUE")
+            self.assertEqual(db.execute(
+                "SELECT COUNT(*) FROM nivon_recibos_canonicos "
+                "WHERE estado='ENTREGUE'").fetchone()[0],2)
+        finally:
+            db.close()
+
+    def test_webhook_malformado_reverte_lote_completo(self):
+        self.preparar_whatsapp_sintetico()
+        raw=json.dumps({"object":"whatsapp_business_account","entry":[{
+            "changes":[{"field":"messages","value":{"statuses":[
+                {"id":"wamid.sintetico","status":"delivered",
+                 "timestamp":"1792425600"},
+                {"id":"wamid.sintetico-whatsapp","status":"paid",
+                 "timestamp":"1792425600"},
+            ]}}]
+        }]}).encode()
+        status,_=emitir(raw)
+        self.assertEqual(status,"400 Bad Request")
+        self.assertEqual(self.estado(),"ACCEPTED")
+        db=abrir_outbox(self.dbpath)
+        try:
+            self.assertEqual(consultar_recibo(
+                db,provider_message_id="wamid.sintetico")["estado"],
+                "ACEITO_PROVEDOR")
+            self.assertEqual(consultar_recibo(
+                db,provider_message_id="wamid.sintetico-whatsapp")["estado"],
+                "ACEITO_PROVEDOR")
+        finally:
+            db.close()
 
     def test_banco_indisponivel_nao_parece_evento_invalido(self):
         bad_path=str(Path(self.temp.name)/"pasta_inexistente"/"db.sqlite")
