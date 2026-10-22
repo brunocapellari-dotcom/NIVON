@@ -150,3 +150,63 @@ publicação ou mensagem real.
 
 Status: implementação **offline e não comercial** sob PR em draft;
 sem deploy, agendamento ou conexão com o provedor Meta.
+
+## Cinco comprovantes de origem externa — 21/10/2026
+
+O gate da PR #53 foi ampliado em
+`src/nivon/provas_externas_envio.py` para não promover uma lista
+autodeclarada de IDs ao estado de aprovação auditada.
+
+Para cada edição, o chamador apresenta cinco comprovantes estruturados,
+assinados via HMAC-SHA256, correspondentes a:
+
+1. `REVISAO_EDITORIAL`: ID de revisão e SHA-256 do boletim.
+2. `DIREITOS_PUBLICACAO`: ID da autorização de uso/publicação.
+3. `CONSENTIMENTO`: ID do consentimento e destinatário pseudonimizado.
+4. `TEMPLATE`: identificação da aprovação do template.
+5. `ORCAMENTO`: identificação do orçamento aprovado.
+
+A verificação exige um **emissor ativo diferente para cada natureza**,
+chaves distintas entre os cinco emissores e diferentes da chave do
+documento geral de aprovação. O registro de confiança
+`emissores` é fornecido separadamente da mensagem e deve ser
+administrado **fora do canal de produção do briefing**. Cada prova inclui
+ID de evidência, tipo, ID de emissor, data da edição, chave de
+idempotência, SHA editorial, destinatário HMAC, SHA do payload,
+assinatura, estado aprovado e prazo de validade.
+
+**A prova tem de estar válida no momento da reserva, e não apenas no
+momento do cadastro.** O gate compara novamente todo o conjunto sob
+`BEGIN IMMEDIATE`; um emissor desativado, prova expirada, assinatura
+alterada, comprovante de outro destinatário ou edição, pacote duplicado
+ou conjunto diferente do previamente registrado impede o callback.
+A tabela `nivon_provas_externas` persiste somente o SHA canônico do
+conjunto, vinculado à idempotência da edição, sem guardar comprovação
+bruta, chave, número, URL de consentimento ou conteúdo editorial.
+Registros legados sem esse SHA não podem ser enviados.
+
+`tests/suporte_provas_outbox.py` produz credenciais e comprovantes
+**estritamente sintéticos**, separados por emissor, que mantêm os
+testes de timeout, webhook, revogação e multiprocesso. Os novos testes
+`tests/test_provas_externas_outbox.py` verificam o bloqueio de prova
+faltante/duplicada, emissor desconhecido/desativado, tipo e chave
+incompatíveis, troca de destinatário, edição diferente, prova futura,
+expirada ou revogada, substituição pós-registro, ausência de digest
+legado e não persistência de evidências brutas.
+
+### Limitação fundamental: verificação criptográfica não é fato independente
+
+O registro de emissores **não foi provisionado com sistemas reais**:
+não existe integração com cadastro oficial de consentimentos, revisão
+humana, orçamento, Meta ou administração de contratos/licenças.
+A função valida assinaturas contra chaves que recebeu como
+configuração; ela **não descobre se um emissor é realmente confiável**,
+se sua chave foi comprometida ou se sua autorização tinha base jurídica.
+Os IDs das fixtures não são provas reais. Para homologação, o controle
+de chaves e emissores deve ocorrer fora da execução que compõe o
+briefing, com segregação de responsabilidades, política de rotação,
+revogação atualizável e rastreabilidade independente de aprovações.
+
+A PR permanece em draft. Não alterar o bloqueio dos despachos diretos,
+não habilitar callback real, cron, deploy ou publicação automática
+com base na aprovação da suíte sintética.
