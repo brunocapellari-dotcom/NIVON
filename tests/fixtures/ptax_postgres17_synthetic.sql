@@ -40,6 +40,9 @@ CREATE TABLE public.nivon_ptax_checkpoints (
   fetched INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY(currency,window_start,window_end)
 );
+CREATE INDEX idx_nivon_ptax_quotes_latest ON public.nivon_ptax_quotes(currency,reference_date DESC,quote_time_original DESC);
+CREATE INDEX idx_nivon_ptax_runs_by_date ON public.nivon_ptax_runs(currency,window_start,window_end,started_at DESC);
+CREATE INDEX idx_nivon_ptax_checkpoints_latest ON public.nivon_ptax_checkpoints(currency,window_start DESC);
 INSERT INTO public.nivon_ptax_quotes
 (currency,reference_date,quote_time_original,bulletin_type,buy_brl,sell_brl,unit,source,license,published_at,first_collected_at,last_verified_at,observation_kind)
 VALUES
