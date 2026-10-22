@@ -47,3 +47,23 @@ Se arquivos forem fornecidos, qualquer problema de hash ou layout falha a execu�
 5. Ativação/migração/publicação **dependem de autorização e auditoria adicionais**.
 
 Estados incondicionais em todos os relatórios desta PR: `captura_proveniencia_oficial_comprovada=false`, `licencas_confirmadas_individualmente=false`, `migracao_permitida=false` e `publicacao_permitida=false`. Nenhuma coleta automática, gasto, banco ou workflow externo é acionado.
+
+### Gate de execução para operadores e CI manual
+
+Adicionar `--exigir-multivintage` para bloquear falso sucesso em pasta
+sem arquivos ou contendo somente uma edição:
+
+```sh
+PYTHONPATH=src python -m nivon.auditoria_vintages_conab \
+  --catalogo config/conab_referencias_multivintage_20261021.json \
+  --diretorio /caminho/absoluto/arquivos-locais \
+  --resumo --exigir-multivintage
+```
+
+Neste modo, **código de saída 3 significa que menos de duas edições
+com seus bytes foram efetivamente reprocessadas**. O relatório JSON ainda
+é impresso para mostrar quantas estão pendentes. Código 0 atesta apenas
+que pelo menos duas edições passaram pelo parser e por suas evidências
+locais, **nunca** autorização jurídica, aquisição direta pelo NIVON,
+publicação ou migração. Mismatch de hash/oráculo continua sendo erro
+fatal de contrato (código 2).
