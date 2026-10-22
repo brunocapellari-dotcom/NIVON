@@ -55,6 +55,46 @@ async function store(rows,claims){
     return {status:'OK',received:rows.length,inserted,duplicates:rows.length-inserted,run_id:String(claims.run_id||'')};
   }catch(e){await c.query('ROLLBACK');throw e}finally{c.release()}
 }
+const BALANCE_KEYS=['estoque_inicial','producao','importacao','suprimento','consumo','exportacao','demanda_total','estoque_final'];
+function validateBalance(release,row,stamp){
+  if(!release||typeof release!=='object'||!row||row.fonte!=='CONAB'||!['soja','milho'].includes(row.produto)||row.unidade!=='mil_ton')throw new Error('BALANCE_SOURCE');
+  const uri=release.url;
+  if(typeof uri!=='string'||!uri.startsWith('https://www.gov.br/conab/')||!uri.endsWith('.xlsx'))throw new Error('BALANCE_URL');
+  if(!validDate(release.data_publicacao)||release.data_publicacao>new Date().toISOString().slice(0,10)||!/^20\d{2}\/\d{2}$/.test(release.safra)||!Number.isInteger(release.levantamento)||release.levantamento<1||release.levantamento>12)throw new Error('BALANCE_RELEASE');
+  if(typeof row.safra!=='string'||!/^20\d{2}(?:\/\d{2})?$/.test(row.safra))throw new Error('BALANCE_PERIOD');
+  if(!row.metricas||typeof row.metricas!=='object')throw new Error('BALANCE_METRICS');
+  const vals=BALANCE_KEYS.map(k=>{
+    const v=row.metricas[k];
+    if(v===null)return null;
+    if(typeof v!=='string'||! /^-?\d+(?:\.\d+)?$/.test(v)||!Number.isFinite(Number(v))||Math.abs(Number(v))>1e10)throw new Error('BALANCE_VALUE');
+    return v;
+  });
+  if(vals.every(x=>x===null))throw new Error('BALANCE_EMPTY');
+  if(!Array.isArray(row.alertas)||row.alertas.some(x=>!['SUPRIMENTO','DEMANDA','ESTOQUE_FINAL'].includes(x)))throw new Error('BALANCE_ANOMALY');
+  if(typeof stamp!=='string'||!Number.isFinite(Date.parse(stamp))||Math.abs(Date.now()-Date.parse(stamp))>86400000)throw new Error('BALANCE_COLLECTED');
+  const identity=['CONAB',row.produto,row.safra,release.safra,release.levantamento,release.data_publicacao].join('|');
+  return {product:row.produto,period:row.safra,pub:release,vals,warnings:row.alertas,stamp,
+          source_key:hash(identity),version_hash:hash(vals.map(x=>x??'NULL').join('|'))};
+}
+async function storeBalance(rows,claims){
+  const c=await POOL.connect();let inserted=0;
+  try{
+    await c.query('BEGIN');
+    for(const r of rows){
+      const p=r.pub;
+      const q=await c.query(
+       "INSERT INTO public.nivon_conab_balancos(product,crop_period,publication_crop_year,publication_survey,publication_date,source_url,collected_at,initial_stock_mil_t,production_mil_t,import_mil_t,supply_mil_t,consumption_mil_t,export_mil_t,total_demand_mil_t,final_stock_mil_t,quality_warnings,parser_version,source_key,version_hash) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) ON CONFLICT(source_key,version_hash) DO NOTHING RETURNING id",
+       [r.product,r.period,p.safra,p.levantamento,p.data_publicacao,p.url,r.stamp,...r.vals,r.warnings,'agrobr-2.0.0-balanco-1.1',r.source_key,r.version_hash]
+      );
+      inserted+=q.rowCount;
+    }
+    const p=rows[0].pub;
+    await c.query("INSERT INTO public.nivon_conab_ingestions (dataset,crop_year,survey_number,collection_started_at,collection_finished_at,status,rows_received,rows_validated,rows_inserted,source_uri) VALUES('balanco',$1,$2,$3,now(),'SUCCESS',$4,$4,$5,$6)",[p.safra,p.levantamento,rows[0].stamp,rows.length,inserted,p.url]);
+    await c.query('COMMIT');
+    return {status:'OK',received:rows.length,inserted,duplicates:rows.length-inserted,run_id:String(claims.run_id||'')};
+  }catch(e){await c.query('ROLLBACK');throw e}finally{c.release()}
+}
+
 export default {
  async fetch(req){
    const path=new URL(req.url).pathname;
