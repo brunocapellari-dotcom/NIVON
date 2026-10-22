@@ -8,6 +8,8 @@ from __future__ import annotations
 import argparse
 import json
 from time import monotonic
+from urllib.error import HTTPError, URLError
+from nivon.coleta_ckan_csv_pontual import coletar_amostra_csv
 
 from nivon.bcb_sicor_mdcr import consultar_sicor
 from nivon.fontes_abertas_lote import consultar as consultar_catalogo
@@ -17,6 +19,7 @@ CHECKS = (
         entidade="RegiaoUF", limite=3, executar=True)),
     ("MAPA_ZARC", lambda: consultar_catalogo("MAPA_ZARC", executar=True)),
     ("ANTT_CIOT", lambda: consultar_catalogo("ANTT_CIOT", executar=True)),
+    ("ZARC_CSV_2026_2027", lambda: coletar_amostra_csv(fonte="MAPA_ZARC", recurso_id="139e5a60-1f43-4cc8-aeab-a35dbbf816c0", executar=True)),
     ("UN_COMTRADE_PREVIEW", lambda: consultar_catalogo(
         "UN_COMTRADE_PREVIEW", ano=2025, executar=True)),
 )
@@ -42,9 +45,17 @@ def main(argv=None):
                           "linhas", out.get("total_recursos"))),
                       "duracao_segundos": round(monotonic() - start, 2),
                       "persistido": False, "publicavel": False}
-        except Exception:
-            # Não exibir exceções com URL, dados ou proxies/headers de rede.
-            result = {"fonte_id": name, "estado": "FALHA_OU_BLOQUEIO_NAO_CLASSIFICADO",
+        except HTTPError as exc:
+            result = {"fonte_id": name, "estado": "HTTP_NAO_VALIDADO",
+                      "http_status": exc.code,
+                      "duracao_segundos": round(monotonic() - start, 2)}
+        except URLError as exc:
+            result = {"fonte_id": name, "estado": "REDE_NAO_VALIDADA",
+                      "causa_tipo": type(exc.reason).__name__,
+                      "duracao_segundos": round(monotonic() - start, 2)}
+        except Exception as exc:
+            result = {"fonte_id": name, "estado": "PARSER_OU_SERVICO_NAO_VALIDADO",
+                      "causa_tipo": type(exc).__name__,
                       "duracao_segundos": round(monotonic() - start, 2)}
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     print(json.dumps({"sumario": "CONSULTAS_PONTUAIS_SEM_PERSISTENCIA",
