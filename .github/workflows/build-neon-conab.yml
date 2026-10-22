@@ -29,7 +29,7 @@ jobs:
         run: |
           node --input-type=module - <<'NODE'
           import functionCode from './functions/conab_neon/dist/index.mjs'
-          const endpoints=['/ingest','/ingest-balanco']
+          const endpoints=['/ingest','/ingest-balanco','/ingest-historico']
           for(const path of endpoints){
             const result=await functionCode.fetch(new Request('https://test.local'+path,{method:'POST',body:'{}'}))
             if(result.status!==401)throw new Error(path+': expected 401, got '+result.status)
