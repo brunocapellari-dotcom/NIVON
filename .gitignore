@@ -1,0 +1,16 @@
+# Dados locais e possíveis segredos (nenhuma credencial em commits)
+.ai/cezar/runs.json
+.ai/cezar/todos.json
+.ai/cezar/lifecycle/
+.ai/cezar/worktrees/
+.ai/cezar/*.ndjson
+.nivon-local/
+.nivon-logs/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example

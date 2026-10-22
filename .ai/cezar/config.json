@@ -1,0 +1,8 @@
+{
+  "defaultRunner": "codex",
+  "modelsLocked": true,
+  "baseBranch": "main",
+  "worktreeRetention": 4,
+  "defaultSkill": "nivon-cooperative-dev",
+  "skillsRepos": []
+}
