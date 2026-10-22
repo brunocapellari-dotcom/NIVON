@@ -9,7 +9,9 @@ import argparse
 import json
 from time import monotonic
 from urllib.error import HTTPError, URLError
-from nivon.coleta_ckan_csv_pontual import coletar_amostra_csv
+from nivon.coleta_ckan_csv_pontual import coletar_amostra_csv, ErroCSVCKAN
+from nivon.fontes_abertas_lote import ErroFonteAberta
+from nivon.arquivos_publicos_lote import ErroArquivoAberto
 
 from nivon.bcb_sicor_mdcr import consultar_sicor
 from nivon.fontes_abertas_lote import consultar as consultar_catalogo
@@ -45,6 +47,10 @@ def main(argv=None):
                           "linhas", out.get("linhas_amostra", out.get("total_recursos")))),
                       "duracao_segundos": round(monotonic() - start, 2),
                       "persistido": False, "publicavel": False}
+        except (ErroCSVCKAN, ErroFonteAberta, ErroArquivoAberto) as exc:
+            result = {"fonte_id": name, "estado": "VALIDADOR_RECUSOU_FONTE",
+                      "regra": str(exc)[:120],
+                      "duracao_segundos": round(monotonic() - start, 2)}
         except HTTPError as exc:
             result = {"fonte_id": name, "estado": "HTTP_NAO_VALIDADO",
                       "http_status": exc.code,
