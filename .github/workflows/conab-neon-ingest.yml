@@ -33,44 +33,33 @@ jobs:
           from urllib.request import Request,urlopen
           from urllib.parse import quote
           from agrobr import conab
-          from nivon.conab_safras import checar_meta, validar_linhas
-          from nivon.conab_job import edicoes_atuais
+          from nivon.conab_job import edicoes_atuais, registros_publicacao
 
           async def main():
-              edicao=(await edicoes_atuais(conab,limite=1))[0]
-              records=[]
-              for product in ('soja','milho'):
-                  df, meta=await conab.safras(product,safra=edicao['safra'],uf='MT',
-                                              levantamento=edicao['levantamento'],return_meta=True)
-                  verified=checar_meta(meta)
-                  result=validar_linhas(df.to_dict(orient='records'),
-                                        product,edicao['safra'],'MT',edicao['levantamento'])
-                  if result['quantidade_validas']!=1 or result['quantidade_rejeitadas']:
-                      raise SystemExit('CONAB_QUARENTINED_'+product)
-                  pub=verified['source_details'].get('publicacao',{})
-                  if not isinstance(pub,dict) or any(pub.get(k)!=edicao[k] for k in ('safra','levantamento','data_publicacao','url')):
-                      raise SystemExit('CONAB_SOURCE_URL_INVALID')
-                  records.append({
-                      'source':'CONAB','origin_kind':'agrobr.conab.safras',
-                      'parser_version':'agrobr-2.0.0-schema-'+str(verified['schema_version']),
-                      'publication_url':pub['url'],
-                      'publication_date':pub['data_publicacao'],
-                      'publication_safra':pub['safra'],
-                      'publication_survey':pub['levantamento'],
-                      'metric':result['validas'][0]})
+              edicoes=await edicoes_atuais(conab,limite=2)
               audience='urn:nivon:conab:ingest'
               token_url=os.environ['ACTIONS_ID_TOKEN_REQUEST_URL']+'&audience='+quote(audience,safe='')
               token_req=Request(token_url,headers={'Authorization':'Bearer '+os.environ['ACTIONS_ID_TOKEN_REQUEST_TOKEN']})
               with urlopen(token_req,timeout=15) as resp:
                   jwt=json.load(resp)['value']
-              data=json.dumps({'rows':records},default=str,ensure_ascii=False).encode('utf-8')
-              req=Request(os.environ['NIVON_CONAB_INGEST_URL'], data=data,
-                          headers={'Authorization':'Bearer '+jwt,'Content-Type':'application/json'},
-                          method='POST')
-              with urlopen(req,timeout=35) as resp:
-                  out=json.load(resp)
-              if out.get('status')!='OK' or out.get('received')!=2:
-                  raise SystemExit('CONAB_NEON_INGEST_NOT_CONFIRMED')
-              print(json.dumps({'safra':edicao['safra'],'levantamento':edicao['levantamento'],'publicacao':edicao['data_publicacao'],**{k:out[k] for k in ('status','received','inserted','duplicates','run_id')}},ensure_ascii=False))
+              resumo={'edicoes':0,'inseridos':0,'duplicados':0}
+              for edicao in edicoes:
+                  records=await registros_publicacao(conab,edicao)
+                  data=json.dumps({'rows':records},default=str,ensure_ascii=False).encode('utf-8')
+                  req=Request(os.environ['NIVON_CONAB_INGEST_URL'],data=data,
+                              headers={'Authorization':'Bearer '+jwt,'Content-Type':'application/json'},
+                              method='POST')
+                  with urlopen(req,timeout=35) as resp:
+                      out=json.load(resp)
+                  if out.get('status')!='OK' or out.get('received')!=2:
+                      raise SystemExit('CONAB_NEON_INGEST_NOT_CONFIRMED')
+                  resumo['edicoes']+=1
+                  resumo['inseridos']+=out['inserted']
+                  resumo['duplicados']+=out['duplicates']
+                  print(json.dumps({'safra':edicao['safra'],'levantamento':edicao['levantamento'],
+                      'publicacao':edicao['data_publicacao'],'status':out['status'],
+                      'received':out['received'],'inserted':out['inserted'],
+                      'duplicates':out['duplicates']},ensure_ascii=False))
+              print(json.dumps(resumo,ensure_ascii=False))
           asyncio.run(main())
           PY
