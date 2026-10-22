@@ -11,6 +11,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from nivon.autorizacao_envio import conteudo_canonico
+from suporte_provas_outbox import provas_sinteticas
 from nivon.entrega_whatsapp import preparar_template
 from nivon.outbox_whatsapp import (
     registrar_edicao, registrar_autorizacao, consultar_envio,
@@ -64,12 +65,14 @@ def preparar(con):
         "preflight_editorial":{"apto_revisao":True, "bloqueios":[],
                                "modo":"OFFLINE_SEM_ENVIO","sha256_texto":sha}
     }
+    comprovantes, emissores = provas_sinteticas(doc)
     registrar_autorizacao(con,modelo,edicao_editorial=editorial,
-                          documento=doc,assinatura=sig,chave_auditoria=AUDITOR)
-    return modelo,doc,sig
+                          documento=doc,assinatura=sig,chave_auditoria=AUDITOR,
+                          comprovantes=comprovantes, emissores=emissores)
+    return modelo,doc,sig,comprovantes,emissores
 
 
-def tentar_processo(path, modelo, documento, assinatura, sinal, fila):
+def tentar_processo(path, modelo, documento, assinatura, comprovantes, emissores, sinal, fila):
     """Executado pelo processo filho: só simula callback, nenhuma rede."""
     con=None
     chamadas=[]
@@ -83,7 +86,8 @@ def tentar_processo(path, modelo, documento, assinatura, sinal, fila):
         result=despachar_registrado(
             con,modelo,autorizar_envio=True,custos_aprovados=True,
             remetente=callback,documento=documento,
-            assinatura=assinatura,chave_auditoria=AUDITOR)
+            assinatura=assinatura,chave_auditoria=AUDITOR,
+            comprovantes=comprovantes, emissores=emissores)
         fila.put(("ok",result["estado"],len(chamadas)))
     except (ErroOutbox,PermissionError) as exc:
         fila.put(("bloqueado",type(exc).__name__,len(chamadas)))
@@ -100,7 +104,7 @@ class TestOutboxIntegracaoProcessos(unittest.TestCase):
         self.tmp=tempfile.TemporaryDirectory()
         self.path=Path(self.tmp.name)/"envios.sqlite"
         self.con=sqlite3.connect(self.path,timeout=5)
-        self.modelo,self.doc,self.sig=preparar(self.con)
+        self.modelo,self.doc,self.sig,self.comprovantes,self.emissores=preparar(self.con)
 
     def tearDown(self):
         self.con.close()
@@ -112,7 +116,8 @@ class TestOutboxIntegracaoProcessos(unittest.TestCase):
         barrier=ctx.Event()
         fila=ctx.Queue()
         jobs=[ctx.Process(target=tentar_processo,args=(
-            str(self.path),self.modelo,self.doc,self.sig,barrier,fila))
+            str(self.path),self.modelo,self.doc,self.sig,
+            self.comprovantes,self.emissores,barrier,fila))
               for _ in range(2)]
         try:
             for p in jobs:p.start()
@@ -145,7 +150,8 @@ class TestOutboxIntegracaoProcessos(unittest.TestCase):
         r=despachar_registrado(
             self.con,self.modelo,autorizar_envio=True,custos_aprovados=True,
             remetente=timeout,documento=self.doc,assinatura=self.sig,
-            chave_auditoria=AUDITOR)
+            chave_auditoria=AUDITOR,
+            comprovantes=self.comprovantes, emissores=self.emissores)
         self.assertEqual(r["estado"],"ENVIO_INDETERMINADO")
         self.assertEqual(chamados,[True])
         backup=Path(self.tmp.name)/"copia.sqlite"
@@ -161,7 +167,8 @@ class TestOutboxIntegracaoProcessos(unittest.TestCase):
                 self.con,self.modelo,autorizar_envio=True,custos_aprovados=True,
                 remetente=lambda *_: self.fail("duplicação após restaurar banco"),
                 documento=self.doc,assinatura=self.sig,
-                chave_auditoria=AUDITOR)
+                chave_auditoria=AUDITOR,
+                comprovantes=self.comprovantes, emissores=self.emissores)
         registro=consultar_envio(self.con,self.modelo["idempotency_key"])
         self.assertEqual(registro["tentativas"],1)
         self.assertEqual(registro["estado"],"ENVIO_INDETERMINADO")
