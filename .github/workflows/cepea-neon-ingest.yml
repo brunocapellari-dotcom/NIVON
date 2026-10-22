@@ -9,6 +9,8 @@ on:
     # Dias uteis, apos horario de fechamento do mercado brasileiro.
     # Rotina operacional isolada da PR; checkout em commit imutável e homologado.
     - cron: '30 21 * * 1-5'
+    # Milho separado duas horas depois para reduzir carga e isolar falhas.
+    - cron: '30 23 * * 1-5'
 permissions:
   contents: read
   id-token: write
@@ -32,31 +34,31 @@ jobs:
       - name: CEPEA fonte original, validar e gravar sob OIDC
         env:
           NIVON_CEPEA_INGEST_URL: https://br-twilight-cell-b77ukd6x-cepeaingest.compute.c-13.us-east-1.aws.neon.tech/ingest
+          NIVON_CEPEA_PRODUTO: ${{ github.event.schedule == '30 23 * * 1-5' && 'MILHO' || 'SOJA' }}
         run: |
           python - <<'PY'
           import json, os
           from urllib.parse import quote
           from urllib.request import Request, urlopen
-          from urllib.request import urlopen
           from urllib.error import URLError
           from nivon.cepea_web_primario import consultar_pagina_primaria,extrair_precos_html,URL_SOJA,URL_MILHO
           def abrir_com_timeout(req,timeout):
-              return urlopen(req,timeout=40)
+              return urlopen(req,timeout=30)
           def ler_pagina(url):
               try:
                   return consultar_pagina_primaria(url,open_url=abrir_com_timeout)
               except (TimeoutError,URLError):
                   return consultar_pagina_primaria(url,open_url=abrir_com_timeout)
-          html=ler_pagina(URL_SOJA)
-          observacoes=extrair_precos_html(html,('soja_paranagua','soja_parana'))
-          milho_status='OK'
-          try:
-              milho_html=ler_pagina(URL_MILHO)
-              observacoes+=extrair_precos_html(milho_html,('milho_esalq_b3',))
-          except (TimeoutError,URLError) as exc:
-              milho_status='SOURCE_UNAVAILABLE'
-              print('::warning::CEPEA milho indisponivel nesta rodada; soja continua, milho nao sera atualizado')
-          if len(observacoes)<2:
+          produto=os.environ['NIVON_CEPEA_PRODUTO']
+          if produto=='MILHO':
+              html=ler_pagina(URL_MILHO)
+              observacoes=extrair_precos_html(html,('milho_esalq_b3',))
+          elif produto=='SOJA':
+              html=ler_pagina(URL_SOJA)
+              observacoes=extrair_precos_html(html,('soja_paranagua','soja_parana'))
+          else:
+              raise SystemExit('CEPEA_PRODUTO_INVALIDO')
+          if len(observacoes)<1:
               raise SystemExit('CEPEA_POUCAS_OBSERVACOES')
           audience='urn:nivon:cepea:ingest'
           token_url=os.environ['ACTIONS_ID_TOKEN_REQUEST_URL']+'&audience='+quote(audience,safe='')
@@ -71,7 +73,7 @@ jobs:
               result=json.load(r)
           if result.get('status') not in ('OK','NO_UPDATE','SOURCE_LAG') or result.get('received')!=len(observacoes):
               raise SystemExit('CEPEA_PERSISTENCIA_NAO_CONFIRMADA')
-          print('CEPEA_MILHO_CHECK='+milho_status)
+          print('CEPEA_SERIE='+produto)
           print(json.dumps({'fonte':'CEPEA','status':result['status'],
               'recebidos':result['received'],'inseridos':result['inserted'],
               'duplicados':result['duplicates'],'referencia':result['latest_reference']},
