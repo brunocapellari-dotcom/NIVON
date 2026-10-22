@@ -88,7 +88,13 @@ class DuvCrosswalkEvidenceTests(unittest.TestCase):
         self.assertEqual(result.candidate_pairs, ())
 
     def test_same_programme_two_distinct_duvs_is_hard_conflict(self):
-        result = review(records=[evidence(), evidence(duv="DUV-DIFFERENT")])
+        independent = evidence(
+            duv="DUV-DIFFERENT",
+            link_evidence_url="https://concentrador.portosempapel.gov.br/portal/other-pair",
+            link_document_sha256="b" * 64,
+            evidence_kind="OFFICIAL_AUTHORITY_CROSSWALK",
+        )
+        result = review(records=[evidence(), independent])
         self.assertIn("CONTRADICTORY_DUV_FOR_SAME_PROGRAMME", result.rejected_reasons)
         self.assertEqual(result.candidate_pairs, ())
 
@@ -122,7 +128,7 @@ class DuvCrosswalkEvidenceTests(unittest.TestCase):
             {"source_id": "OTHER"}, {"series": "EXPORT_LESTE",
              "programme_number": "EXPORT_LESTE:PROG-15"},
             {"reference_date": "2026-10-19"},
-            {"lineup_source_sha256": "b"*64}
+            {"lineup_source_sha256": "b"*64, "link_document_sha256": "b"*64}
         ):
             with self.subTest(patch=patch):
                 self.assertIn("DOCUMENT_SCOPE_MISMATCH",
