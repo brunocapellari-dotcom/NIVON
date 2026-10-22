@@ -4146,16 +4146,16 @@
       "dataset_id": "FAO_FAOSTAT_LONG_RUN",
       "collector_class": "OFFICIAL_API",
       "locator": {
-        "kind": "DIRECT_OFFICIAL_API",
-        "url": "https://fenixservices.fao.org/faostat/api/v1/en/data/QCL",
-        "source_proof": "https://www.fao.org/faostat/en/#developer-portal"
+        "kind": "DIRECT_PUBLIC_FILE",
+        "url": "https://bulks-faostat.fao.org/production/Production_Crops_Livestock_E_All_Data_(Normalized).zip",
+        "source_proof": "https://bulks-faostat.fao.org/production/datasets_E.json"
       },
-      "implementation_scope": "ONE_SHOT_FAOSTAT_QCL_PRODUCTION_WITH_STRICT_CODES_BRAZIL_SOY_CORN_WHEAT",
+      "implementation_scope": "REAL_HTTP_2026_10_21_QCL_ZIP_STREAM_4209110_SCANNED_1_BRA_SOJA_2023_SQLITE_LOCAL_ONLY",
       "authentication": "NONE_PUBLIC",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "REAL_HTTP_SCHEMA_RIGHTS_PERSISTENCE",
+      "primary_blocker": "CENTRAL_BIGQUERY_PERSISTENCE_LICENSE_AND_BACKUP_NOT_VERIFIED",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -4166,13 +4166,15 @@
         "LICENSED_PUBLICATION_GATE",
         "POINT_IN_TIME_VINTAGE_AUDIT",
         "MODEL_BENCHMARK_AND_PHYSICAL_IDENTITY",
-        "REAL_PRODUCTION_RESPONSE_SMOKE",
-        "VERIFY_ITEM_CODES_CURRENT_FAOSTAT_QCL"
+        "VERIFY_ITEM_CODES_CURRENT_FAOSTAT_QCL",
+        "BIGQUERY_PERSISTENCE_INTEGRATION",
+        "BACKUP_RESTORE_AND_TEMPORAL_VINTAGE",
+        "VERIFY_OTHER_CROPS_AREAS_YEARS_REAL"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "API/tabulação/versão e períodos por domínio ainda a homologar. Parser para QCL explicitamente limitado por país, item, elemento, ano. Não inferir safra brasileira atual nem produto derivado de commodities sem revisar definições.",
-      "preliminary_evidence": "OFFICIAL_DOCUMENTATION_RESEARCH_ONLY"
+      "source_note": "Fonte oficial QCL por ZIP, 4.209.110 linhas normalizadas. Teste HTTP real SHA c5835418c18f9322e7decbd6800f93a216eaae3cdfa31acb08f0518c0c6d6853, recorte soja BRA 2023, staging SQLite temporário validado; não comprova ingestão em BigQuery. Código de API legado permanece como fallback experimental, mas expirou timeout em QA.",
+      "preliminary_evidence": "GITHUB_ACTIONS_39698793414_REAL_QCL_HTTP_SQLITE_LOCAL_QA"
     },
     {
       "dataset_id": "SISCOMEX_TABELA_NCM",
