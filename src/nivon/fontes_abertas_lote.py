@@ -60,7 +60,7 @@ def planejar(fonte, *, ano=None, reporter=76, hs="1201", fluxo="X",
         url = "https://" + host + "/api/3/action/package_show?" + urlencode({"id": slug})
         tipo = "CKAN_METADATA"
     elif fonte == "COPERNICUS_STAC_CATALOG":
-        url = "https://stac.dataspace.copernicus.eu/v1/collections"
+        url = "https://stac.dataspace.copernicus.eu/v1/collections/sentinel-2-l2a"
         tipo = "STAC_METADATA"
     elif fonte == "UN_COMTRADE_PREVIEW":
         _int(ano, 1990, 2100)
@@ -163,11 +163,10 @@ def normalizar(payload, *, fonte, coletado_em):
                     "recursos": recursos, "licenca_declarada": d.get("license_id"),
                     "atualizado_em": d.get("metadata_modified")})
     elif fonte == "COPERNICUS_STAC_CATALOG":
-        c = obj.get("collections")
-        if not isinstance(c, list) or len(c) > 300:
-            raise ErroFonteAberta("STAC collections ausentes/excessivas")
-        out.update({"tipo": "STAC_METADATA", "colecoes": [
-            d["id"] for d in c if isinstance(d, dict) and isinstance(d.get("id"), str)]})
+        if obj.get("id") != "sentinel-2-l2a" or obj.get("type") != "Collection":
+            raise ErroFonteAberta("colecao STAC Sentinel-2 L2A divergente")
+        out.update({"tipo": "STAC_METADATA", "colecoes": ["sentinel-2-l2a"],
+                    "licenca_informada": obj.get("license")})
     elif fonte == "UN_COMTRADE_PREVIEW":
         if not isinstance(obj.get("data"), list) or len(obj["data"]) > 500:
             raise ErroFonteAberta("Comtrade preview incompatível")
