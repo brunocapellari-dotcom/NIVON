@@ -217,5 +217,55 @@ class TestArquivoAbateSIDRA(unittest.TestCase):
             self.assertIn("sha256_metadados)", schema)
             self.assertEqual(cx.execute("SELECT COUNT(*) FROM capturas_sidra").fetchone()[0], 0)
 
+
+    def test_leitura_inexistente_nao_cria_banco(self):
+        self.assertFalse(self.banco.exists())
+        with self.assertRaisesRegex(DadoInvalido, "inexistente"):
+            recuperar_pacote_sidra_offline(banco=self.banco, id_captura=1)
+        self.assertFalse(self.banco.exists())
+
+    def test_leitura_nao_reconstroi_trigger_ausente(self):
+        cap = self.arquivar()
+        with sqlite3.connect(self.banco) as cx:
+            cx.execute("DROP TRIGGER sidra_sem_update")
+            versao_antes = cx.execute("PRAGMA schema_version").fetchone()[0]
+        restaurado = recuperar_pacote_sidra_offline(
+            banco=self.banco, id_captura=cap["id"])
+        self.assertEqual(restaurado["sha256_valores"], sha256(VAL).hexdigest())
+        with sqlite3.connect(self.banco) as cx:
+            versao_depois = cx.execute("PRAGMA schema_version").fetchone()[0]
+            triggers = {r[0] for r in cx.execute(
+                "SELECT name FROM sqlite_master WHERE type='trigger'")}
+        self.assertEqual(versao_antes, versao_depois)
+        self.assertNotIn("sidra_sem_update", triggers)
+
+    def test_leitura_banco_legado_nao_executa_ddl(self):
+        with sqlite3.connect(self.banco) as cx:
+            cx.execute("""CREATE TABLE capturas_sidra (
+              id INTEGER PRIMARY KEY,
+              especie TEXT, tabela_sidra TEXT,
+              url_valores TEXT, url_metadados TEXT, coleta_declarada TEXT,
+              sha256_valores TEXT, sha256_metadados TEXT,
+              UNIQUE(especie, tabela_sidra, url_valores, url_metadados,
+                     coleta_declarada, sha256_valores, sha256_metadados)
+            )""")
+            versao = cx.execute("PRAGMA schema_version").fetchone()[0]
+        with self.assertRaisesRegex(DadoInvalido, "legado"):
+            recuperar_pacote_sidra_offline(banco=self.banco, id_captura=1)
+        with sqlite3.connect(self.banco) as cx:
+            self.assertEqual(cx.execute("PRAGMA schema_version").fetchone()[0], versao)
+            self.assertEqual(cx.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='trigger'").fetchone()[0], 0)
+
+    def test_leitura_id_ausente_nao_cria_ou_edita(self):
+        self.arquivar()
+        with sqlite3.connect(self.banco) as cx:
+            antes = cx.execute("PRAGMA schema_version").fetchone()[0]
+            n = cx.execute("SELECT COUNT(*) FROM capturas_sidra").fetchone()[0]
+        with self.assertRaisesRegex(DadoInvalido, "nao encontrada"):
+            recuperar_pacote_sidra_offline(banco=self.banco, id_captura=999)
+        with sqlite3.connect(self.banco) as cx:
+            self.assertEqual(cx.execute("PRAGMA schema_version").fetchone()[0], antes)
+            self.assertEqual(cx.execute("SELECT COUNT(*) FROM capturas_sidra").fetchone()[0], n)
+
 if __name__ == "__main__":
     unittest.main()
