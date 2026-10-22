@@ -13,6 +13,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 from .outbox_unificada import _schema as _controle_esquema, reservar_na_transacao
+from .outbox_recibos import preparar_recibos, vincular_aceite_na_transacao, aplicar_recibo_na_transacao
 
 
 class ErroOutbox(ValueError):
@@ -135,29 +136,52 @@ def reservar_para_entrega(db: sqlite3.Connection, *, id: int) -> dict:
 
 def registrar_aceite(db: sqlite3.Connection, *, id: int, token: str,
                     provider_message_id: str) -> dict:
-    """ACCEPTED significa que provedor recebeu requisição, não que entregou."""
+    """ACK de aceite do provedor sem inferir entrega; grava dois ledgers atomicamente."""
     if not isinstance(provider_message_id,str) or not re.fullmatch(r"[A-Za-z0-9_.:@-]{1,256}",provider_message_id):
         raise ErroOutbox("ID de provedor inválido")
-    with db:
+    preparar_recibos(db)
+    db.execute("BEGIN IMMEDIATE")
+    try:
         r=db.execute("""UPDATE briefing_outbox SET status='ACCEPTED',provider_message_id=?
           WHERE id=? AND status='RESERVED' AND reservacao=?""",
           (provider_message_id,id,token))
         if r.rowcount!=1:
             raise ErroOutbox("ID/nonce não está reservado")
+        vincular_aceite_na_transacao(
+            db,canal="BRIEFING",intencao_id=str(id),
+            provider_message_id=provider_message_id,
+            quando=datetime.now(timezone.utc).isoformat(),
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     return {"id":id,"status":"ACCEPTED_AGUARDA_DELIVERY_ACK"}
 
 
 def confirmar_entrega(db: sqlite3.Connection, *, provider_message_id: str,
                       autenticado: bool = False, quando: str) -> dict:
-    """Somente o adaptador que VERIFICOU assinatura externa pode chamar."""
+    """Entrega exige prova externa já autenticada, ACK anterior e ledger canônico."""
     if autenticado is not True:
         raise PermissionError("webhook sem autenticação/assinatura verificada")
     ts=_instante(quando)
-    with db:
+    preparar_recibos(db)
+    db.execute("BEGIN IMMEDIATE")
+    try:
         result=db.execute("""UPDATE briefing_outbox
           SET status='DELIVERED',confirmado_utc=?
           WHERE provider_message_id=? AND status='ACCEPTED'""",
           (ts,provider_message_id))
         if result.rowcount!=1:
             raise ErroOutbox("recibo não reconhecido ou duplicado")
+        registrado=aplicar_recibo_na_transacao(
+            db,provider_message_id=provider_message_id,
+            estado="ENTREGUE",quando=ts,
+        )
+        if not registrado["reconhecido"] or not registrado["atualizado"]:
+            raise ErroOutbox("recibo canônico sem aceite ou já concluído")
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     return {"status":"ENTREGUE_COM_ACK_AUTENTICADO"}
