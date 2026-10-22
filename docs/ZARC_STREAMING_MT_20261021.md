@@ -27,3 +27,13 @@ Registros foram contabilizados em MT somente quando UF=MT, geocodigo possui 7 d�
 ## Gates de operação
 
 O resultado de análise estrutural **não libera** backend, BigQuery, relatórios, exportação, publicação, agendamentos ou backtests. Requer: interpretação formal da metodologia dec1..dec36, portarias e relação com município/cultura/ciclo/solo/clima; validação espacial com IBGE; qualidade observada de edição e vintages; direitos por operação; snapshots imutáveis com backup e idempotência; e três provas em edições distintas antes de uso operacional.
+
+
+## Resultado da prova integral de 21/10 (UTC 22/10)
+
+- [Execução #39717906602](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39717906602): o arquivo completo NÃO foi homologado. O script retornou ErroZarcStream, sem imprimir o motivo interno. Não há contagem integral comprovada, hash completo ou persistência; nenhum valor pode ser publicado.
+- [Execução #39718216591](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39718216591): HEAD confirmou HTTP 200 e Content-Type text/csv, mas não forneceu Content-Length.
+- [Execução #39718357455](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39718357455): a consulta CKAN confirmou o recurso, mas o portal também não informou tamanho em bytes. Não é correto supor que a falha integral decorreu do teto de 160 MB.
+- A inspeção parcial do cabeçalho/2.262 linhas permanece válida e separada do teste integral. O leitor integral existe e foi aprovado em fixtures sintéticas, mas não em dados integrais reais.
+
+**Próxima correção técnica:** realizar prova de estrutura e tamanho em pequenos blocos com diagnóstico seguro, distinguindo arquivo maior que teto, linhas inválidas, UTF-8, geocódigo, Portaria e divergência de safra antes de repetir um download integral. Não ampliar teto às cegas e não iniciar backfill na infraestrutura real.
