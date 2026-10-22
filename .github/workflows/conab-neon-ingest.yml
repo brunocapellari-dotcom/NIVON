@@ -34,13 +34,14 @@ jobs:
           from nivon.conab_job import edicoes_atuais
 
           async def main():
+              edicao=(await edicoes_atuais(conab,limite=1))[0]
               records=[]
               for product in ('soja','milho'):
-                  df, meta=await conab.safras(product,safra='2026/27',uf='MT',
-                                              levantamento=1,return_meta=True)
+                  df, meta=await conab.safras(product,safra=edicao['safra'],uf='MT',
+                                              levantamento=edicao['levantamento'],return_meta=True)
                   verified=checar_meta(meta)
                   result=validar_linhas(df.to_dict(orient='records'),
-                                        product,'2026/27','MT',1)
+                                        product,edicao['safra'],'MT',edicao['levantamento'])
                   if result['quantidade_validas']!=1 or result['quantidade_rejeitadas']:
                       raise SystemExit('CONAB_QUARENTINED_'+product)
                   pub=verified['source_details'].get('publicacao',{})
