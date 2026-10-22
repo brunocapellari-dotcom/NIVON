@@ -3,6 +3,8 @@ on:
   push:
     paths:
       - '.github/workflows/conab-balanco-probe.yml'
+      - 'nivon/conab_balanco_probe.py'
+      - 'nivon/conab_balanco.py'
   workflow_dispatch:
 permissions:
   contents: read
