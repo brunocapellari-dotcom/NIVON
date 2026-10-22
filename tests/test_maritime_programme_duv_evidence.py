@@ -12,7 +12,7 @@ from nivon.maritime.programme_duv_evidence import (
 def programme(num="EXPORT_OESTE:PROG-15"):
     return PdfProgramReference(
         source_row=1, vessel_name="NAVIO SINTETICO",
-        programme_number=num, explicit_duv=None, eta_text="22/10/2026 08:30",
+        programme_number=num, explicit_duv="DUV-2026-5543", eta_text="22/10/2026 08:30",
         eta_fully_declared=True, product="SOJA", planned_volume_t=20000.0
     )
 
@@ -168,6 +168,27 @@ class DuvCrosswalkEvidenceTests(unittest.TestCase):
         result = review(records=[evidence(
             link_evidence_url="https://www.portosdoparana.pr.gov.br/official/other.pdf")])
         self.assertIn("ORIGINAL_PDF_URL_MISMATCH", result.rejected_reasons)
+
+    def test_original_pdf_must_really_show_both_ids(self):
+        snap = replace(edition(), rows=(
+            replace(programme(), explicit_duv=None),
+        ), excluded_call_rows=1)
+        result = review(snapshot=snap)
+        self.assertIn("ORIGINAL_PDF_DOES_NOT_DECLARE_PAIR", result.rejected_reasons)
+        self.assertEqual(result.candidate_pairs, ())
+
+    def test_external_direct_evidence_may_link_pdf_without_duv_but_stays_candidate(self):
+        snap = replace(edition(), rows=(
+            replace(programme(), explicit_duv=None),
+        ), excluded_call_rows=1)
+        independent = evidence(
+            link_evidence_url="https://concentrador.portosempapel.gov.br/portal/association",
+            link_document_sha256="b" * 64,
+            evidence_kind="OFFICIAL_AUTHORITY_CROSSWALK",
+        )
+        result = review(snapshot=snap, records=[independent])
+        self.assertEqual(result.status, "CANDIDATE_READY_FOR_EXTERNAL_VERIFICATION")
+        self.assertFalse(result.canonical_duv_link_allowed)
 
     def test_original_pdf_pair_requires_same_hash(self):
         with self.assertRaisesRegex(ValueError, "hash does not match"):
