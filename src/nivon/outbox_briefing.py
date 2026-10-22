@@ -153,6 +153,9 @@ def registrar_aceite(db: sqlite3.Connection, *, id: int, token: str,
             quando=datetime.now(timezone.utc).isoformat(),
         )
         db.commit()
+    except sqlite3.IntegrityError as exc:
+        db.rollback()
+        raise ErroOutbox("identificador do provedor já associado a outra reserva") from exc
     except Exception:
         db.rollback()
         raise
