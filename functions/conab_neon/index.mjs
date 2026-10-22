@@ -95,12 +95,70 @@ async function storeBalance(rows,claims){
   }catch(e){await c.query('ROLLBACK');throw e}finally{c.release()}
 }
 
+
+const HIST_KEYS=['area_plantada_mil_ha','area_em_producao_mil_ha','area_formacao_mil_ha','area_colhida_mil_ha','producao_mil_ton','produtividade_kg_ha'];
+const HIST_URL='https://www.conab.gov.br/info-agro/safras/serie-historica-das-safras';
+function validateHistory(row){
+  if(!row||row.fonte!=='CONAB'||row.origin_kind!=='conab_serie_historica'||!['soja','milho'].includes(row.produto)||row.uf!=='MT')throw new Error('HISTORY_PROVENANCE');
+  if(!/^20\d{2}\/\d{2}$/.test(row.safra)||row.competencia!==row.safra)throw new Error('HISTORY_CROP_YEAR');
+  const y=Number(row.safra.slice(0,4)),next=Number(row.safra.slice(5));
+  if(y<2022||y>2025||next!==(y+1)%100)throw new Error('HISTORY_SCOPE');
+  if(row.data_publicacao!==null||row.data_referencia!==null||row.natureza!=='INFORMADO')throw new Error('HISTORY_SEMANTICS');
+  if(row.source_url!==HIST_URL||row.parser_version!=='agrobr-2.0.0-historico-v1')throw new Error('HISTORY_SOURCE_URL');
+  if(!row.metricas||typeof row.metricas!=='object')throw new Error('HISTORY_METRICS');
+  if(row.regiao!==null&&(typeof row.regiao!=='string'||row.regiao.length>100))throw new Error('HISTORY_REGION');
+  const values=HIST_KEYS.map(k=>{
+    const v=row.metricas[k];
+    if(v===null)return null;
+    if(typeof v!=='string'||!/^\d+(?:\.\d+)?$/.test(v)||!Number.isFinite(Number(v))||Number(v)>1e10)throw new Error('HISTORY_INVALID_'+k);
+    return v;
+  });
+  if(values[0]===null&&values[4]===null&&values[5]===null)throw new Error('HISTORY_ALL_MISSING');
+  const ts=Date.parse(row.data_coleta);
+  if(typeof row.data_coleta!=='string'||!Number.isFinite(ts)||Math.abs(Date.now()-ts)>86400000)throw new Error('HISTORY_TIMESTAMP');
+  return {product:row.produto,year:row.safra,region:row.regiao,metrics:values,
+    collected:row.data_coleta,uri:HIST_URL,parser:row.parser_version,
+    source_key:hash(['CONAB_HISTORY',row.produto,'MT',row.safra].join('|')),
+    version_hash:hash([row.regiao??'',...values.map(v=>v??'NULL')].join('|'))};
+}
+async function storeHistory(rows,claims){
+  const c=await POOL.connect();let inserted=0;
+  try {
+    await c.query('BEGIN');
+    for(const r of rows){
+      const q=await c.query(
+        "INSERT INTO public.nivon_conab_series_historicas (product,uf,crop_year,region,area_planted_mil_ha,area_producing_mil_ha,area_formation_mil_ha,area_harvested_mil_ha,production_mil_t,productivity_kg_ha,competence,collected_at,source_uri,parser_version,source_key,version_hash) VALUES ($1,'MT',$2,$3,$4,$5,$6,$7,$8,$9,$2,$10,$11,$12,$13,$14) ON CONFLICT (source_key,version_hash) DO NOTHING RETURNING id",
+        [r.product,r.year,r.region,...r.metrics,r.collected,r.uri,r.parser,r.source_key,r.version_hash]);
+      inserted+=q.rowCount;
+    }
+    await c.query(
+      "INSERT INTO public.nivon_conab_ingestions(dataset,collection_started_at,collection_finished_at,status,rows_received,rows_validated,rows_inserted,source_uri) VALUES('serie_historica',$1,now(),'SUCCESS',$2,$2,$3,$4)",
+      [rows[0].collected,rows.length,inserted,HIST_URL]);
+    await c.query('COMMIT');
+    return {status:'OK',received:rows.length,inserted,duplicates:rows.length-inserted,run_id:String(claims.run_id||'')};
+  }catch(e){await c.query('ROLLBACK');throw e}finally{c.release()}
+}
+
 export default {
  async fetch(req){
    const path=new URL(req.url).pathname;
    if(req.method==='GET'&&path==='/health')return Response.json({service:'NIVON-CONAB',status:'DEPLOYED'});
-   if(req.method!=='POST'||!['/ingest','/ingest-balanco'].includes(path))return error(404,'NOT_FOUND');
+   if(req.method!=='POST'||!['/ingest','/ingest-balanco','/ingest-historico'].includes(path))return error(404,'NOT_FOUND');
    let claims;try{claims=await authenticate(req)}catch(e){return error(401,'OIDC_REJECTED')}
+   if(path==='/ingest-historico'){
+     let records;
+     try{
+       const txt=await req.text();
+       if(txt.length>40000)throw new Error('HISTORY_SIZE');
+       const body=JSON.parse(txt);
+       if(body.source!=='CONAB'||!Array.isArray(body.rows)||body.rows.length<1||body.rows.length>12)throw new Error('HISTORY_PAYLOAD');
+       records=body.rows.map(validateHistory);
+       if(records.some(r=>r.product!==records[0].product))throw new Error('HISTORY_MIXED_PRODUCTS');
+       if(new Set(records.map(r=>r.year)).size!==records.length)throw new Error('HISTORY_DUPLICATE_PERIOD');
+     }catch(e){return error(422,'BAD_HISTORY_PAYLOAD')}
+     try{return Response.json(await storeHistory(records,claims))}
+     catch(e){console.error('conab-history-failure',String(e?.code||e?.message||'UNKNOWN').slice(0,55));return error(503,'HISTORY_PERSISTENCE_ERROR')}
+   }
    if(path==='/ingest-balanco'){
      let balancos;
      try{
