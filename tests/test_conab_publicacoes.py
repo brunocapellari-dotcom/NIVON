@@ -1,5 +1,5 @@
 """CONAB: verificacao deterministica de novas edicoes publicadas."""
-from datetime import date
+from datetime import date, datetime
 import unittest
 from nivon.conab_publicacoes import (
     CatalogoConabInvalido, selecionar_publicacoes, normalizar_publicacao,
@@ -43,6 +43,13 @@ class PublicacoesTest(unittest.TestCase):
         self.assertIsNone(normalizar_publicacao(r,HOJE))
         self.assertIsNone(normalizar_publicacao(row("2026/28",1,"2026-10-15"),HOJE))
         self.assertIsNone(normalizar_publicacao(row("2026/27",1,"2040-10-15"),HOJE))
+    def test_agrobr_retorna_data_nativa(self):
+        x=row("2026/27",1,date(2026,10,15))
+        y=row("2025/26",12,datetime(2026,9,15,10,0))
+        escolhidas=selecionar_publicacoes([x,y],hoje=HOJE)
+        self.assertEqual(len(escolhidas),2)
+        self.assertEqual(escolhidas[0]["data_publicacao"],"2026-10-15")
+        self.assertEqual(escolhidas[1]["data_publicacao"],"2026-09-15")
     def test_recusa_catalogo_vazio(self):
         with self.assertRaises(CatalogoConabInvalido):
             selecionar_publicacoes([],hoje=HOJE)
