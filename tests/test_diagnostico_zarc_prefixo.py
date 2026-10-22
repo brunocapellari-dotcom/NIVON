@@ -17,9 +17,12 @@ def payload(uf="MT",year="2026",portaria="Portaria 3",ibge="5105259"):
 
 class Resp:
     status=200
-    def __init__(self,blob,url=URL,mime="text/csv"):
+    def __init__(self,blob,url=URL,mime="text/csv",status=200,content_range=None):
         self.blob,self.url=blob,url
         self.headers={"Content-Type":mime}
+        self.status=status
+        if content_range is not None:
+            self.headers["Content-Range"]=content_range
         self.reads=[]
     def geturl(self):return self.url
     def read(self,n):self.reads.append(n);return self.blob[:n]
@@ -60,6 +63,18 @@ class TestZarcPrefixo(unittest.TestCase):
         self.assertEqual(resp.reads,[4096])
         self.assertEqual(r["http_status"],200)
         self.assertFalse(r["arquivo_integral_lido"])
+    def test_range_total_real_excedente(self):
+        b=payload()
+        r=Resp(b,status=206,content_range="bytes 0-8191/280000000")
+        c=Open(r)
+        # A resposta sintética contém menos bytes que o limite e ainda preserva o conteúdo.
+        def custom_open(req,timeout=35):
+            c.calls+=1
+            return r
+        c.open=custom_open
+        out=consultar_prefixo(executar=True,abridor=c,limite=8192)
+        self.assertEqual(out["tamanho_total_declarado_por_range"],280000000)
+        self.assertTrue(out["excede_teto_160mb"])
     def test_rejeita_html_host_e_sem_newline(self):
         for r in (Resp(b"<html></html>",mime="text/html"),Resp(payload(),url="https://other.example/")):
             with self.assertRaises(ErroZarcAmostra):
