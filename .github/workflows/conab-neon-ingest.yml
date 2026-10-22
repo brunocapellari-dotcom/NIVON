@@ -10,7 +10,7 @@ on:
   schedule:
     # Quarta 12:00 UTC. So roda automaticamente apos merge na branch padrao.
     - cron: '0 12 * * 3'
-# Dados permanecem no banco privado; execucoes repetidas devem ser idempotentes.
+# Dados permanecem no banco privado; CI de repeticao valida deduplicacao tambem no historico.
 permissions:
   contents: read
   id-token: write
