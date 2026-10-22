@@ -45,7 +45,7 @@ jobs:
                   if result['quantidade_validas']!=1 or result['quantidade_rejeitadas']:
                       raise SystemExit('CONAB_QUARENTINED_'+product)
                   pub=verified['source_details'].get('publicacao',{})
-                  if not isinstance(pub,dict) or not str(pub.get('url','')).startswith('https://www.gov.br/conab/'):
+                  if not isinstance(pub,dict) or any(pub.get(k)!=edicao[k] for k in ('safra','levantamento','data_publicacao','url')):
                       raise SystemExit('CONAB_SOURCE_URL_INVALID')
                   records.append({
                       'source':'CONAB','origin_kind':'agrobr.conab.safras',
@@ -68,6 +68,6 @@ jobs:
                   out=json.load(resp)
               if out.get('status')!='OK' or out.get('received')!=2:
                   raise SystemExit('CONAB_NEON_INGEST_NOT_CONFIRMED')
-              print(json.dumps({k:out[k] for k in ('status','received','inserted','duplicates','run_id')},ensure_ascii=False))
+              print(json.dumps({'safra':edicao['safra'],'levantamento':edicao['levantamento'],'publicacao':edicao['data_publicacao'],**{k:out[k] for k in ('status','received','inserted','duplicates','run_id')}},ensure_ascii=False))
           asyncio.run(main())
           PY
