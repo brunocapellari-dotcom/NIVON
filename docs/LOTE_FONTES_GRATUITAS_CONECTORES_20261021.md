@@ -67,3 +67,27 @@ A existência do código dessas fontes NÃO confirma coleta ativa ou persistênc
 Direito de consulta/coleta/armazenamento, teste live pontual, schema REAL, QC/metodologia, separação de OBSERVADO/ESTIMADO/PROJETADO, referência/publicação/coleta/competência, processamento incremental, idempotência, backup/restauração e autorização de publicação. Até esses gates: runtime_enabled=false e scheduled_enabled=false, sem custos.
 
 Fontes documentais: https://dados.agricultura.gov.br/ ; https://dados.antt.gov.br/ ; https://dadosabertos.bcb.gov.br/dataset/matrizdadoscreditorural ; https://uncomtrade.org/docs/un-comtrade-api/ ; https://documentation.dataspace.copernicus.eu/APIs/STAC.html ; https://www.ncei.noaa.gov/cdo-web/webservices/v2 ; https://fred.stlouisfed.org/docs/api/fred/series_observations.html ; https://quickstats.nass.usda.gov/api ; https://www.eia.gov/opendata/
+
+
+## Download pontual de amostras CKAN com licença declarada
+
+Código adicional src/nivon/coleta_ckan_csv_pontual.py e teste
+tests/test_coleta_ckan_csv_pontual.py disponibilizam **uma amostra CSV oficial
+por execução** para MAPA_ZARC ou ANTT_CIOT. A execução é **OFF por padrão**,
+exige o UUID do recurso obtido do catálogo e verifica a licença declarada no
+CKAN (cc-by e variantes permitidas), host oficial, caminho
+/dataset/.../resource/.../download/...csv, MIME CSV, tamanho de até 8 MB,
+não-redirect e hash dos bytes. Faz até **dois GETs**: metadados e um CSV; não
+pagina, não cria backfill e não salva dados.
+A saída é um relatório de schema e quantidade de registros, jamais números
+interpretados automaticamente. Licença declarada pelo catálogo é apenas gate
+inicial: uso, qualidade e direitos de publicação continuam pendentes. URLs
+que apontam a hosts de armazenamento externos não são seguidas e pedem
+verificação independente.
+
+Exemplo manual controlado (substitua pelo UUID oficial da edição desejada):
+
+    PYTHONPATH=src python -c "from nivon.coleta_ckan_csv_pontual import coletar_amostra_csv; print(coletar_amostra_csv(fonte='MAPA_ZARC',recurso_id='139e5a60-1f43-4cc8-aeab-a35dbbf816c0', executar=True)['estado'])"
+
+Esse comando **não foi executado com rede real neste lote**. Usar apenas uma
+consulta pontual controlada após verificar termos e orçamento de rede.
