@@ -134,3 +134,22 @@ Uma captura de arquivo pode conter um horário manipulado ou reencaminhado. A ro
 **Verificação CI antes da atualização editorial:** commit `69e09f945304fa367357ada36f9d44810ad6789f`, GitHub Actions [#39671037245](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39671037245), status **success**: 1.476 testes na suíte principal, sem falhas (45 ignorados pelo ambiente sem extras), e **77 testes ANP específicos com Excel instalado, todos aprovados**. Houve duas falhas de fixture no commit inicial, corrigidas e reexecutadas no SHA indicado.
 
 **Risco residual crítico:** a revogação vale apenas depois de recebida e gravada **neste banco**. Ausência de revogação registrada NÃO prova que não houve revogação externa. Não existe distribuição de eventos, serviço de atualização de lista, comprovante de sincronização recente, relógio/KMS homologado, login de emissor, chave real nem autorização de divulgar valores. Para consultas operacionais com dados reais, exigir um mecanismo de frescor/autenticação do registro de revogações por fonte independente e falha fechada quando esse registro ficar desatualizado. Permanece proibido chamar o módulo de homologado para uso real. O pipeline segue `SINTETICO` e nenhuma coleta/agendamento/deploy foi habilitada.
+
+
+## Gate P0: frescor do feed de revogações — 21/10/2026
+
+A auditoria da continuidade constatou que `anp_semanal_revogacoes` apenas continha eventos conhecidos localmente; **ausência de eventos em SQLite não comprova ausência de revogações externas**.
+
+### Comportamento do código (implementado, testado e não habilitado para operação real)
+
+- `src/nivon/anp_revogacoes_frescor.py` aceita um **checkpoint externo HMAC-SHA256**, com domínio próprio `NIVON_ANP_LPC_REVOGACOES_CHECKPOINT_V1` e assinatura abrangendo emissor, sequência monotônica, instante de cobertura, emissão, validade, número total de eventos e hash canônico de TODOS os registros de revogação reconhecidos no período. O emissor precisa ser independente dos dois aprovadores de direitos/layout e do revogador de eventos individuais.
+- Checkpoints são gravados na nova tabela `anp_semanal_checkpoints` (sequência não reutilizável, hash do documento, timestamps normalizados e resumo do feed). Mesmo documento recebido no mesmo horário é idempotente; seq/tempo/autoridade regressivos, duplicação conflitante ou assinatura falsificada falham fechados. São retidas versões temporais sem sobrescrever registros anteriores.
+- `verificar_frescor_revogacoes` seleciona **somente checkpoints recebidos até `as_of`**. Exige que o checkpoint ainda seja válido e que a cobertura tenha no máximo 120 minutos de defasagem por padrão (limite parametrizável dentro de limites internos). Compara contagem/hash com a lista local e detecta qualquer revogação recebida posteriormente à cobertura, porém antes do corte.
+- `consultar_preco_semanal` agora só devolve `AMOSTRA_HISTORICA_PIT` com preço quando há `CHECKPOINT_FRESCO_APENAS_LOCAL`. Sem checkpoint, expirado, divergente ou faltando reconhecimento de revogação, retorna status de bloqueio (`REVOGACOES_SEM_CHECKPOINT`, `REVOGACOES_CHECKPOINT_VENCIDO`, `REVOGACOES_LISTA_DIVERGENTE`, `REVOGACOES_NAO_SINCRONIZADAS`) e `publicavel=false`, **sem campo de preço**. As recusas anteriores por edição revogada, conflito de revisões, preço vencido ou ausência de edição seguem protegendo sem exigir novo dado.
+- Ao responder com preço, inclui `checkpoint_revogacoes_sequencia` e `checkpoint_revogacoes_cobertura_ate` como referências para auditoria (mas `publicavel=false` permanece obrigatório).
+
+### Limites e dependências não resolvidos
+
+O checkpoint *local* autentica a declaração de um emissor previamente configurado e a correspondência com o banco. **Não comprova que o emissor conhece todos os eventos externos.** Em produção serão necessários serviço confiável de distribuição, fonte canônica de revogações, geração externa independente de provas de completude, transporte seguro, relógio autoritativo, custódia/rotação de chaves e sincronização com política de indisponibilidade. Nenhuma dessas capacidades foi declarada implementada ou homologada nesta rodada.
+
+Todas as chaves e eventos usados em `tests/test_anp_revogacoes_frescor.py` e em `test_anp_semanal_store.py` são **artificiais e públicas nos testes**; nunca reutilizar em sistemas reais. A CI `validar-anp-lpc-fixtures` exige também o novo conjunto de regressões. O fluxo real do parser ANP permanece bloqueado; isso é uma defesa de leitura no armazenamento, não autorização operacional.
