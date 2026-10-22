@@ -1,0 +1,54 @@
+{
+  "schema": "NIVON_CONAB_REFERENCIAS_TERCEIRO_V1",
+  "fornecedor_referencia": "bruno-portfolio/agrobr",
+  "natureza": "REFERENCIAS_PUBLICADAS_POR_TERCEIRO_NAO_CAPTURA_DIRETA_CONAB",
+  "edicoes": [
+    {
+      "id": "AGROBR_20250927",
+      "arquivo": "agrobr_20250927.xlsx",
+      "origem_repositorio": "tests/golden_data/conab_progresso/historico_20250927/response.xlsx",
+      "git_blob_sha1": "8fbcb0bced54781d3703014e80f29d2efba96305",
+      "sha256": "ae5932cbef54b2b141b8b45adc1e66c6ff091104725989438f6583ff4fa5e050",
+      "bytes": 78617,
+      "competencia": "2025-09-27",
+      "captura_declarada": "2026-09-16T20:07:26.871267-03:00",
+      "url_original_declarada": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/progresso-de-safra/acompanhamento-das-lavouras-22-09-a-28-09-25/plantio-e-colheita-21-09-a-27-09",
+      "observacoes_esperadas": 66,
+      "culturas_esperadas": [
+        "Algodão",
+        "Arroz",
+        "Feijão 1ª",
+        "Milho 1ª",
+        "Milho 2ª",
+        "Soja",
+        "Trigo"
+      ]
+    },
+    {
+      "id": "AGROBR_20260221",
+      "arquivo": "agrobr_20260221.xlsx",
+      "origem_repositorio": "tests/golden_data/conab_progresso/oficial_20260925/progresso_20260222.xlsx",
+      "git_blob_sha1": "bc0567156379d2a708b577be03a6184d83624668",
+      "sha256": "d42d49715bb393c14f67855db7af2e79d08a3bd982201e7a0ce02f75e2ec8ff9",
+      "bytes": 76946,
+      "competencia": "2026-02-21",
+      "captura_declarada": "2026-09-25T20:37:18.207178+00:00",
+      "url_original_declarada": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/progresso-de-safra/acompanhamento-das-lavouras-16-02-a-22-02-26/plantio-e-colheita-15-02-a-21-02",
+      "observacoes_esperadas": null,
+      "culturas_esperadas": null
+    },
+    {
+      "id": "AGROBR_20260918",
+      "arquivo": "agrobr_20260918.xlsx",
+      "origem_repositorio": "tests/golden_data/conab_progresso/oficial_20260925/progresso_20260920.xlsx",
+      "git_blob_sha1": "d6e339b1833d1c0e1e3a78c4af56dab9cc7a3407",
+      "sha256": "35dd6b33daa9d04e9797cb25109722fa338cd85d5fdca3600bf3246bed94376e",
+      "bytes": 77631,
+      "competencia": "2026-09-18",
+      "captura_declarada": "2026-09-25T20:37:29.018513+00:00",
+      "url_original_declarada": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/progresso-de-safra/acompanhamento-das-lavouras-14-09-a-20-09-26/plantio-e-colheita-12-09-a-18-09",
+      "observacoes_esperadas": null,
+      "culturas_esperadas": null
+    }
+  ]
+}
