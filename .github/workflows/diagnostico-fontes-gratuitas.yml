@@ -17,7 +17,7 @@ permissions:
 jobs:
   smoke-pontual:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     steps:
       - name: Checkout sem credenciais persistentes
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -30,4 +30,4 @@ jobs:
       - name: Diagnostico controlado de quatro GET publicos
         env:
           PYTHONPATH: src
-        run: python scripts/diagnostico_http_fontes_gratuitas.py --executar --fonte ZARC_PREFIX_2026_2027
+        run: python scripts/diagnostico_zarc_stream_mt.py --executar
