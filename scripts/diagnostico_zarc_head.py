@@ -4,6 +4,7 @@ import json
 from urllib.request import Request, build_opener
 
 from nivon.zarc_stream_mt import URL, MAX_DOWNLOAD, _NoRedirect
+from nivon.fontes_abertas_lote import consultar as consultar_catalogo
 
 def main(argv=None):
     p=argparse.ArgumentParser()
@@ -25,6 +26,10 @@ def main(argv=None):
                   "maior_que_limite":size is not None and size>MAX_DOWNLOAD,
                   "respondeu_origem_exata":valid,
                   "bytes_corpo_baixados":0}
+            cat = consultar_catalogo('MAPA_ZARC', executar=True)
+            item = next((r for r in cat['recursos'] if r['id'].lower()=='139e5a60-1f43-4cc8-aeab-a35dbbf816c0'), None)
+            info['tamanho_catalogo_bytes'] = item.get('tamanho_declarado_bytes') if item else None
+            info['recurso_encontrado_no_catalogo'] = item is not None
             print(json.dumps(info,sort_keys=True))
             return 0 if valid else 1
     except Exception as exc:
