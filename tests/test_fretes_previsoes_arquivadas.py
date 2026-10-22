@@ -136,7 +136,7 @@ class TestPrevisoesArquivadasFrete(unittest.TestCase):
         rows=historico(30)
         ps=[emissao(rows,j) for j in range(1,6)]
         rows[2]=replace(rows[2],data_coleta=rows[2].data_coleta+timedelta(hours=2))
-        with self.assertRaisesRegex(ErroAvaliacaoFrete,"snapshot.*(dois pares|diverge)|menos de dois pares"):
+        with self.assertRaisesRegex(ErroAvaliacaoFrete,"painel de origem insuficiente na emissão"):
             avaliar(rows,ps)
 
     def test_falta_de_par_no_alvo_rejeita_lote_inteiro(self):
