@@ -278,8 +278,8 @@ def gravar_snapshot_sqlite(snapshot: dict, *, arquivo_banco: str) -> dict:
     obs = snapshot.get("observacoes")
     if not isinstance(obs, list) or not 1 <= len(obs) <= MAX_MATCHES:
         raise ErroQCL("coleção inesperada")
-    if not isinstance(arquivo_banco, str) or not arquivo_banco or
-            "\x00" in arquivo_banco:
+    if (not isinstance(arquivo_banco, str) or not arquivo_banco or
+            "\x00" in arquivo_banco):
         raise ErroQCL("caminho SQLite inválido")
     con = sqlite3.connect(arquivo_banco, timeout=10)
     try:
