@@ -21,7 +21,7 @@
 | ANTT_RNTRC | dados.antt.gov.br — CKAN package_show | Inventário RNTRC; sem dados individuais/PII |
 | BCB_MDCR | dadosabertos.bcb.gov.br — CKAN package_show | Descoberta API OData/recursos do SICOR, **não** extração OData |
 | UN_COMTRADE_PREVIEW | comtradeapi.un.org — /public/v1/preview/C/A/HS | Consulta limitadíssima de um ano/HS/país/fluxo, retorna contagem sem promover totais |
-| COPERNICUS_STAC_CATALOG | stac.dataspace.copernicus.eu — /v1/collections | Lista de coleções STAC, sem baixas de cenas ou imagens |
+| COPERNICUS_STAC_CATALOG | stac.dataspace.copernicus.eu — /v1/collections | Metadados de uma coleção Sentinel-2 L2A, sem baixar cenas nem imagens |
 | NOAA_CDO | www.ncei.noaa.gov — /cdo-web/api/v2/datasets | Descoberta de datasets com token gratuito |
 | FRED | api.stlouisfed.org — /fred/series/observations | Amostra de até 100 registros de série whitelist, sem interpretação temporal |
 | USDA_NASS | quickstats.nass.usda.gov — /api/api_GET/ | Consulta pontual de cultura/ano nacional, sem normalização dos valores |
