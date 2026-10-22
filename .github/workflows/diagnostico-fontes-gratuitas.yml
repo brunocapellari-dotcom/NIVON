@@ -31,4 +31,4 @@ jobs:
       - name: Diagnostico controlado de quatro GET publicos
         env:
           PYTHONPATH: src
-        run: python -m nivon.diagnostico_zarc_prefixo --executar
+        run: python -m nivon.diagnostico_zarc_prefixo --executar --limite-bytes 8192
