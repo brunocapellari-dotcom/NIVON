@@ -28,3 +28,10 @@ O trabalho de implementação inicial ficará em uma branch e em PR para revisã
 ## Licenciamento do código
 
 **Ainda não foi concedida uma licença aberta para este código.** A visibilidade pública do repositório não deve ser interpretada como permissão genérica de cópia ou sublicenciamento. Componentes de terceiros só serão incorporados após exame das respectivas licenças.
+
+## Desenvolvimento autônomo local (Claude Code + Codex)
+
+A PR de cooperação fornece o comando Claude Code \`/nivon-autonomo\` e o script local \`bash scripts/nivon-autonomo.sh\`.
+Ambos operam com **tarefas delimitadas**, worktrees separadas, testes offline, limites de duração e commits **somente locais**. Não fazem deploy, push ou merge automático. A operação real requer um host com as duas CLIs autenticadas; não está ativada pelo simples merge dos arquivos.
+
+Instruções: [docs/AUTONOMIA_CONTINUA_NIVON.md](docs/AUTONOMIA_CONTINUA_NIVON.md).
