@@ -22,6 +22,8 @@
 - Alertas de identidades contábeis sinalizam incoerências sem reescrever valores originais.
 - As séries distintas têm PK lógica com produto, período, edição e hash do conjunto de valores; versões anteriores não são sobrescritas.
 
+- Teste numérico de consistência: produção, área plantada e produtividade com desvio relativo máximo de 0,000% na precisão armazenada para 32 observações; não preencher campos de área colhida ausentes.
+
 ## Limitações
 - Histórico parcial: 2010/11–2025/26 persistido, 32 registros reais, ainda sem cobrir anos anteriores a 2010. Dois levantamentos de safra e um balanço confirmados, não todos os produtos/anos/UFs.
 - A PR #58 permanece draft e o cron de quarta-feira na branch principal **não está ativo** até merge.
@@ -31,7 +33,7 @@
 - CEPEA e IMEA são as outras fontes P0, ainda sem coleta estrutural homologada.
 
 ## Próximas ações
-1. Confirmar segunda execução idempotente de toda a janela 2010/11–2025/26 no Neon e reconciliar eventuais revisões futuras por fonte; 2010–2025 já foi gravado com validação de qualidade.
+1. Idempotência do histórico de 2010/11–2025/26 **comprovada**: segunda execução obteve 32 observações, 0 inserções e 32 duplicatas reconhecidas. Evidência: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39702649991 . Próxima etapa: backfill de safras anteriores a 2010 e tratamento de revisões futuras.
 2. Expandir backfill dos levantamentos CONAB em lotes controlados; ampliar oferta/demanda às edições anteriores.
 3. Avaliar catálogo/arquivos oficiais do SICARM sem contornar o mecanismo de consulta.
 4. Concluir CI e merge controlado para liberar programação semanal, com monitoramento de freshness e backup.
