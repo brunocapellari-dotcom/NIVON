@@ -1,4 +1,5 @@
 name: Diagnostico HTTP fontes gratuitas (pontual)
+# Terceira prova: evidência de regras recusar sem expor URLs.
 # Segunda prova: classificação de erro SICOR e amostra CSV ZARC publicada.
 
 on:
