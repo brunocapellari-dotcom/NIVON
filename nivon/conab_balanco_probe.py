@@ -12,7 +12,11 @@ async def main():
                                    levantamento=1,return_meta=True)
         origem=checar_meta(meta)
         release=(origem.get("source_details") or {}).get("publicacao")
-        validos=normalizar_balanco(df.to_dict(orient="records"),"conab",release)
+        registros=df.to_dict(orient="records")
+        print(json.dumps({"produto_solicitado":produto,
+                          "rótulos_de_produto":sorted({str(r.get("produto")) for r in registros}),
+                          "colunas":sorted(df.columns)},ensure_ascii=False))
+        validos=normalizar_balanco(registros,"conab",release)
         resumo.append({"produto":produto,"linhas":len(validos),
                        "alertas":sum(len(v["alertas"]) for v in validos),
                        "fonte":origem["fonte"],"armazenado":False})
