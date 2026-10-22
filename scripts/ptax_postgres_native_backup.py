@@ -142,6 +142,8 @@ def build(
             raise BackupBlocked("pg_dump indisponivel, expirou ou falhou") from None
         if result.returncode != 0:
             raise BackupBlocked("pg_dump nao criou arquivo validado")
+        if archive.is_symlink() or not archive.is_file():
+            raise BackupBlocked("pg_dump nao produziu arquivo regular")
         os.chmod(archive, 0o600)
         toc, sha, size = _archive_check(archive, run=runner)
         payload = {
