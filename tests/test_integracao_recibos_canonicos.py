@@ -222,7 +222,7 @@ class TestRecibosCanonicos(unittest.TestCase):
             agora=STAMP,auditoria_aprovada=True,
         )
         reservado=reservar_para_entrega(self.db,id=ag["id"])
-        with self.assertRaises(ErroControleEnvio):
+        with self.assertRaisesRegex(ValueError, "identificador do provedor") :
             registrar_aceite(
                 self.db,id=ag["id"],token=reservado["token"],
                 provider_message_id="wamid.BRIEFING-R09",
