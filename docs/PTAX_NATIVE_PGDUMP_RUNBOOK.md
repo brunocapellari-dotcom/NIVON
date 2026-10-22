@@ -1,6 +1,6 @@
 # NIVON — Backup nativo PostgreSQL da PTAX (sem Google Cloud)
 
-**Situação:** utilitário versionado, testes com arquivos sintéticos. **Não foi executado pg_dump contra o Neon real**, nem foi restaurado banco Postgres nesta etapa. Não existe comprovação de backup externo/criptografado. Esta operação não autoriza migrar/desligar o Neon ou ativar faturamento no Google Cloud.
+**Situação:** utilitário versionado, testes unitários e **ensaio E2E real com PostgreSQL 17 e registros exclusivamente sintéticos**. **Não foi executado pg_dump contra o Neon real**, nem foi restaurado seu banco operacional. Não existe comprovação de backup externo/criptografado. Esta operação não autoriza migrar/desligar o Neon ou ativar faturamento no Google Cloud.
 
 ## Por que um segundo método de backup?
 
@@ -39,6 +39,17 @@ O resultado `LOCAL_PGDUMP_ARCHIVE_TOC_VERIFIED` significa que o inventário do a
 - Após restauração, conciliar contagens, chaves, preços, timestamps e sequências de identidade com snapshot consistente; e executar os testes de replay e reconciliação já versionados na PR #84.
 - Reconciliar a cobertura histórica, que ainda não abrange integralmente 2020–2026; ausência de erro de coleta não prova cobertura dos pregões.
 - Google Cloud `nivon-data`: status de faturamento/permissões não chegou de forma verificável; não criar dataset/bucket nem copiar os arquivos até esse gate ser resolvido.
+
+## Evidência nova: restauração PostgreSQL 17 realmente executada
+
+A CI `NIVON - Teste restauracao PostgreSQL 17 sintetica` executou a ferramenta PostgreSQL real em um **contêiner Docker temporário** (sem rede, portas expostas ou volumes do host):
+
+- Fixture artificial em `tests/fixtures/ptax_postgres17_synthetic.sql`: 3 cotações (incluindo revisão), 2 execuções e 2 checkpoints;
+- `scripts/ptax_pg_restore_synthetic_e2e.sh --run-synthetic`: cria esquema, executa `pg_dump --format=custom` para 3 tabelas + 2 sequências, confere o TOC pelo mesmo parser do backup NIVON, executa `pg_restore` em outro banco descartável e compara hash de todo o conteúdo, timestamps e `last_value` das sequências;
+- [Execução E2E 39700752662](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39700752662): **success**; log `POSTGRES17_SYNTHETIC_RESTORE_OK; quotes=3; runs=2; checkpoints=2; sequences=2; production_restore_verified=false`.
+- [Execução de testes offline 39700752619](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39700752619): **200 testes aprovados**, sem falhas.
+
+**Limite da evidência:** o teste verifica que a **cadeia técnica de dump/restore** funciona no PostgreSQL 17 com os objetos e dados fictícios. Não comprova acesso à instância Neon, performance/CPU de um dump produtivo, backup externo persistente, íntegra de preços reais, direitos de armazenamento nem recuperação nativa da base real.
 
 ## Evidências de execução
 
