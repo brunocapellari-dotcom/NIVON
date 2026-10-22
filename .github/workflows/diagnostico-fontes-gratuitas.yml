@@ -31,4 +31,4 @@ jobs:
       - name: Diagnostico controlado de quatro GET publicos
         env:
           PYTHONPATH: src
-        run: python scripts/diagnostico_zarc_head.py --executar
+        run: python scripts/diagnostico_zarc_range_size.py --executar
