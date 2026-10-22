@@ -122,6 +122,18 @@ def receber_checkpoint_revogacoes(
             or valido - emitido > timedelta(hours=6)
             or emitido == valido):
         raise ErroCheckpointANP("vintage, cobertura ou validade temporal incorreta")
+    # O emissor da prova de COMPLETUDE deve ser independente de quem
+    # emitiu atestações originais ou revogações individuais.
+    db.row_factory = sqlite3.Row
+    outros_emissores = db.execute(
+        """SELECT emissor_id FROM anp_semanal_atestacoes
+           UNION SELECT emissor_id FROM anp_semanal_revogacoes"""
+    ).fetchall()
+    if any(registro["emissor_id"] == autoridade["emissor"]
+           for registro in outros_emissores):
+        raise ErroCheckpointANP(
+            "emissor do feed não pode ser revisor nem revogador"
+        )
     presente = estado_revogacoes_local(db, ate=coberto.isoformat())
     if (presente["total_revogacoes"] != checkpoint["total_revogacoes"]
             or presente["hash_revogacoes"] != checkpoint["hash_revogacoes"]):
