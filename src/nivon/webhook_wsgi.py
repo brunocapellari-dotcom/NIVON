@@ -13,7 +13,8 @@ import sqlite3
 from urllib.parse import parse_qs
 
 from .outbox_briefing import abrir_outbox, ErroOutbox
-from .whatsapp_webhook import aplicar_webhook_entregas, ErroWebhook
+from .whatsapp_webhook import ErroWebhook
+from .webhook_recibos_unificados import aplicar_webhook_unificado
 
 _MAX = 256_000
 _PATH = "/webhooks/whatsapp"
@@ -75,7 +76,7 @@ def app(environ: dict, start_response):
     signature=environ.get("HTTP_X_HUB_SIGNATURE_256","")
     try:
         with closing(abrir_outbox(dbpath)) as db:
-            aplicar_webhook_entregas(
+            aplicar_webhook_unificado(
                 db,raw_body=raw,signature=signature,app_secret=secret)
     except PermissionError:
         return _response(start_response,"403 Forbidden",b"forbidden")
