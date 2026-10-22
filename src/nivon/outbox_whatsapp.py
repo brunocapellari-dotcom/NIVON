@@ -18,6 +18,7 @@ from typing import Callable
 
 from .lineup_nacional import instante
 from .autorizacao_envio import verificar_autorizacao
+from .provas_externas_envio import verificar_pacote_externo
 
 
 class ErroOutbox(ValueError):
@@ -149,6 +150,10 @@ def _esquema(con: sqlite3.Connection) -> None:
         id INTEGER PRIMARY KEY CHECK (id=1),
         fingerprint_sha256 TEXT NOT NULL,
         criado_em TEXT NOT NULL)""")
+    con.execute("""CREATE TABLE IF NOT EXISTS nivon_provas_externas (
+        idempotency_key TEXT PRIMARY KEY REFERENCES nivon_envios(idempotency_key),
+        comprovantes_sha256 TEXT NOT NULL,
+        registrado_em TEXT NOT NULL)""")
 
 
 def registrar_edicao(con: sqlite3.Connection, preparado: dict, *,
@@ -205,7 +210,9 @@ def consultar_envio(con: sqlite3.Connection, chave: str) -> dict:
 
 def registrar_autorizacao(con: sqlite3.Connection, preparado: dict, *, 
                            edicao_editorial: dict, documento: dict,
-                           assinatura: str, chave_auditoria: bytes) -> dict:
+                           assinatura: str, chave_auditoria: bytes,
+                           comprovantes: list[dict] | None = None,
+                           emissores: dict | None = None) -> dict:
     """Persiste apenas o SHA do documento assinado, nunca o texto/telefone.
 
     O documento e a edição são insumos de governança EXTERNOS: a verificação
@@ -230,6 +237,8 @@ def registrar_autorizacao(con: sqlite3.Connection, preparado: dict, *,
             or relatorio.get("modo") != "OFFLINE_SEM_ENVIO"):
         raise ErroOutbox("revisão editorial independente não comprovada no pacote")
     digest_doc = verificar_autorizacao(documento, assinatura, chave_auditoria=chave_auditoria)
+    digest_provas = verificar_pacote_externo(
+        documento, comprovantes, emissores, chave_auditoria=chave_auditoria)
     destino, template, chave = _revisar_preparado(preparado)
     del destino, template  # não salvar telefone nem template nesta tabela
     _esquema(con)
@@ -257,6 +266,15 @@ def registrar_autorizacao(con: sqlite3.Connection, preparado: dict, *,
                             valido_ate,revogado_em,criado_em)
                            VALUES (?,?,?,?,NULL,?)""",
                         (chave, digest_doc, sha, documento["valido_ate"], _hora()))
+        anterior = con.execute(
+            "SELECT comprovantes_sha256 FROM nivon_provas_externas WHERE idempotency_key=?",
+            (chave,)).fetchone()
+        if anterior is not None and anterior[0] != digest_provas:
+            raise ErroOutbox("pacote de provas externas diverge do registro anterior")
+        if anterior is None:
+            con.execute("""INSERT INTO nivon_provas_externas
+                           (idempotency_key,comprovantes_sha256,registrado_em)
+                           VALUES (?,?,?)""", (chave, digest_provas, _hora()))
         con.commit()
     except Exception:
         con.rollback()
@@ -338,7 +356,9 @@ def despachar_registrado(con: sqlite3.Connection, preparado: dict, *,
                         autorizar_envio: bool = False, custos_aprovados: bool = False,
                         remetente: Callable[[dict],dict] | None = None,
                         documento: dict | None = None, assinatura: str | None = None,
-                        chave_auditoria: bytes | None = None) -> dict:
+                        chave_auditoria: bytes | None = None,
+                        comprovantes: list[dict] | None = None,
+                        emissores: dict | None = None) -> dict:
     """Reserva atomicamente a primeira e ÚNICA tentativa. Nada é repetido.
 
     A conexão deve apontar para disco durável com backup; teste não é prova de
@@ -354,6 +374,8 @@ def despachar_registrado(con: sqlite3.Connection, preparado: dict, *,
         raise PermissionError("autorização editorial registrada e assinada obrigatória")
     digest_doc = verificar_autorizacao(documento, assinatura,
                                      chave_auditoria=chave_auditoria)
+    digest_provas = verificar_pacote_externo(
+        documento, comprovantes, emissores, chave_auditoria=chave_auditoria)
     _,_,chave=_revisar_preparado(preparado)
     _esquema(con)
     con.execute("BEGIN IMMEDIATE")
@@ -361,6 +383,8 @@ def despachar_registrado(con: sqlite3.Connection, preparado: dict, *,
         # Revalidar validade temporal sob a mesma reserva atômica.
         # A janela pode expirar enquanto a conexão espera o lock SQLite.
         verificar_autorizacao(documento, assinatura, chave_auditoria=chave_auditoria)
+        verificar_pacote_externo(documento, comprovantes, emissores,
+                                chave_auditoria=chave_auditoria)
         d=con.execute("""SELECT e.estado,e.payload_sha256,e.edicao,e.destinatario_hmac,
                            a.documento_sha256,a.sha256_editorial,a.revogado_em
                            FROM nivon_envios e LEFT JOIN nivon_autorizacoes a
@@ -373,6 +397,11 @@ def despachar_registrado(con: sqlite3.Connection, preparado: dict, *,
         if d[1]!=_fingerprint(preparado["payload"]):
             raise ErroOutbox("conteúdo divergente do registrado")
         _bloquear_se_optout(con, d[3])
+        prova_registrada = con.execute(
+            "SELECT comprovantes_sha256 FROM nivon_provas_externas WHERE idempotency_key=?",
+            (chave,)).fetchone()
+        if not prova_registrada or prova_registrada[0] != digest_provas:
+            raise PermissionError("provas externas inexistentes ou divergentes da outbox")
         if (d[4] != digest_doc or d[5] != documento.get("sha256_editorial")
                 or d[6] is not None or d[2] != documento.get("edicao")
                 or d[3] != documento.get("destinatario_hmac")
