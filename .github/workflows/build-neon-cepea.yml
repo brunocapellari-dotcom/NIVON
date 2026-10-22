@@ -1,0 +1,45 @@
+name: NIVON - build CEPEA Neon OIDC
+on:
+  push:
+    paths:
+      - 'functions/cepea_neon/index.mjs'
+      - '.github/workflows/build-neon-cepea.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Compilar função e verificar proteção de acesso
+        run: |
+          npm install --no-audit --no-fund --no-save pg@8.13.0 jose@6.1.0 esbuild@0.25.0
+          mkdir -p functions/cepea_neon/dist
+          ./node_modules/.bin/esbuild functions/cepea_neon/index.mjs \
+            --bundle --platform=node --target=node24 --format=esm \
+            --banner:js="import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);" \
+            --outfile=functions/cepea_neon/dist/index.mjs
+          node --check functions/cepea_neon/dist/index.mjs
+          node --input-type=module - <<'NODE'
+          import fn from './functions/cepea_neon/dist/index.mjs'
+          const req=new Request('https://testing.local/ingest',{method:'POST',body:'{}'})
+          const resp=await fn.fetch(req)
+          if(resp.status!==401)throw new Error('Expected no-auth 401')
+          const health=await fn.fetch(new Request('https://testing.local/health'))
+          if(health.status!==200)throw new Error('Health check failed')
+          console.log('CEPEA OIDC guard: OK')
+          NODE
+      - name: Commitar bundle inspecionavel para implantacao
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f functions/cepea_neon/dist/index.mjs
+          if ! git diff --cached --quiet; then
+            git commit -m "build(cepea): gerar bundle Neon autenticado [skip ci]"
+            git push origin HEAD:${{ github.ref_name }}
+          fi
