@@ -15,6 +15,10 @@ class TestBalanco(unittest.TestCase):
         x=normalizar_balanco([row(estoque_final=9)],"conab",PUB)[0]
         self.assertEqual(x["alertas"],["ESTOQUE_FINAL"])
         self.assertEqual(x["metricas"]["estoque_final"],"9")
+    def test_produto_maiusculo_da_fonte(self):
+        x=normalizar_balanco([row(produto="SOJA")],"conab",PUB)
+        self.assertEqual(x[0]["produto"],"soja")
+
     def test_metrica_nula_nao_se_torna_zero(self):
         x=normalizar_balanco([row(demanda_total=None)],"conab",PUB)[0]
         self.assertIsNone(x["metricas"]["demanda_total"])
