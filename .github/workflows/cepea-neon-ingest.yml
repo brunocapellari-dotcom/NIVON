@@ -37,9 +37,11 @@ jobs:
           import json, os
           from urllib.parse import quote
           from urllib.request import Request, urlopen
-          from nivon.cepea_web_primario import consultar_pagina_primaria,extrair_precos_html,URL_SOJA
+          from nivon.cepea_web_primario import consultar_pagina_primaria,extrair_precos_html,URL_SOJA,URL_MILHO
           html=consultar_pagina_primaria(URL_SOJA)
           observacoes=extrair_precos_html(html,('soja_paranagua','soja_parana'))
+          milho_html=consultar_pagina_primaria(URL_MILHO)
+          observacoes+=extrair_precos_html(milho_html,('milho_esalq_b3',))
           if len(observacoes)<2:
               raise SystemExit('CEPEA_POUCAS_OBSERVACOES')
           audience='urn:nivon:cepea:ingest'
