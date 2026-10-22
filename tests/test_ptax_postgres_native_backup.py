@@ -64,7 +64,7 @@ class NativeBackupTests(unittest.TestCase):
         self.assertFalse(one["native_postgres_restore_verified"])
         self.assertFalse(one["bigquery_cutover_approved"])
         self.assertFalse(one["stored_offsite"])
-        self.assertEqual(len(self.calls), 3)
+        self.assertEqual(len(self.calls), 4)
         dump_cmd = self.calls[0][0]
         self.assertIn("--serializable-deferrable", dump_cmd)
         self.assertIn("--no-password", dump_cmd)
