@@ -3,6 +3,9 @@ on:
   push:
     paths:
       - '.github/workflows/conab-neon-ingest.yml'
+      - 'nivon/conab_publicacoes.py'
+      - 'nivon/conab_job.py'
+      - 'tests/test_conab_publicacoes.py'
   workflow_dispatch:
   schedule:
     # Quarta 12:00 UTC. So roda automaticamente apos merge na branch padrao.
