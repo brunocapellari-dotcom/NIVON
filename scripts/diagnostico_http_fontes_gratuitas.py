@@ -9,7 +9,8 @@ import argparse
 import json
 from time import monotonic
 from urllib.error import HTTPError, URLError
-from nivon.coleta_ckan_csv_pontual import coletar_amostra_csv, ErroCSVCKAN
+from nivon.coleta_ckan_csv_pontual import ErroCSVCKAN
+from nivon.amostra_csv_ckan_range import consultar_prefixo_ckan
 from nivon.fontes_abertas_lote import ErroFonteAberta
 from nivon.arquivos_publicos_lote import ErroArquivoAberto
 
@@ -21,7 +22,7 @@ CHECKS = (
         entidade="RegiaoUF", limite=3, executar=True)),
     ("MAPA_ZARC", lambda: consultar_catalogo("MAPA_ZARC", executar=True)),
     ("ANTT_CIOT", lambda: consultar_catalogo("ANTT_CIOT", executar=True)),
-    ("ZARC_CSV_2026_2027", lambda: coletar_amostra_csv(fonte="MAPA_ZARC", recurso_id="139e5a60-1f43-4cc8-aeab-a35dbbf816c0", executar=True)),
+    ("ZARC_PREFIX_2026_2027", lambda: consultar_prefixo_ckan(fonte="MAPA_ZARC", recurso_id="139e5a60-1f43-4cc8-aeab-a35dbbf816c0", executar=True)),
     ("UN_COMTRADE_PREVIEW", lambda: consultar_catalogo(
         "UN_COMTRADE_PREVIEW", ano=2025, executar=True)),
 )
@@ -29,6 +30,7 @@ CHECKS = (
 def main(argv=None):
     p = argparse.ArgumentParser(description="Uma rodada HTTP pública, sem persistência")
     p.add_argument("--executar", action="store_true")
+    p.add_argument("--fonte", choices=["todas"] + [name for name, _ in CHECKS], default="todas")
     args = p.parse_args(argv)
     if args.executar is not True:
         print(json.dumps({"status": "REDE_DESATIVADA", "fontes_testadas": 0}))
@@ -36,6 +38,8 @@ def main(argv=None):
     good = 0
     total = 0
     for name, operation in CHECKS:
+        if args.fonte != "todas" and name != args.fonte:
+            continue
         start = monotonic()
         total += 1
         try:
@@ -44,7 +48,7 @@ def main(argv=None):
             result = {"fonte_id": name, "estado": "HTTP_OK_PARSER_OK_SEM_HOMOLOGACAO",
                       "sha256": out.get("sha256_original"),
                       "registros": out.get("registros_recebidos", out.get(
-                          "linhas", out.get("linhas_amostra", out.get("total_recursos")))),
+                          "linhas", out.get("linhas_amostra_completas", out.get("linhas_amostra", out.get("total_recursos"))))),
                       "duracao_segundos": round(monotonic() - start, 2),
                       "persistido": False, "publicavel": False}
         except (ErroCSVCKAN, ErroFonteAberta, ErroArquivoAberto) as exc:
