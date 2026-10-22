@@ -12,7 +12,9 @@ from nivon.anp_revogacoes import ErroRevogacaoANP, registrar_revogacao_anp
 from nivon.anp_semanal_store import (
     inicializar_store_anp, gravar_edicao_semanal, consultar_preco_semanal,
 )
-from test_anp_semanal_store import resumo, KEYS, indice_real, assinar_autorizacao
+from test_anp_semanal_store import (
+    resumo, KEYS, indice_real, assinar_autorizacao, checkpoint_ficticio,
+)
 
 
 REVOKER = {
@@ -49,6 +51,12 @@ class TestRevogacaoANPLPC(unittest.TestCase):
         self.r=resumo()
         self.entrada=self.r["sha256"]
         self.gravar(self.r)
+        checkpoint_ficticio(
+            self.db, cobertura="2026-10-20T17:20:00+00:00",
+            emitido="2026-10-20T17:21:00+00:00",
+            recebido="2026-10-20T17:22:00+00:00",
+            valido="2026-10-20T21:21:00+00:00",
+        )
 
     def gravar(self, r):
         return gravar_edicao_semanal(
