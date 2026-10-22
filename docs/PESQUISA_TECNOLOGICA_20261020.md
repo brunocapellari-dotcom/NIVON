@@ -228,3 +228,32 @@ PYTHONPATH=src python -m nivon.proveniencia_github \
 **Atestação criptográfica futura:** o GitHub disponibiliza artifact attestations para repositórios **públicos** no plano gratuito, segundo sua documentação; confirmar permissões e política no momento da ativação. A emissão poderia usar `actions/attest` em workflow revisado e uma verificação separada com `gh attestation verify ... --repo brunocapellari-dotcom/NIVON --signer-workflow ... --source-digest SHA40`. A criação de workflow com `id-token: write` e `attestations: write` **não foi realizada** por este PR e requer revisão de segurança antes de habilitar. Referências: https://docs.github.com/en/rest/actions/artifacts e https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations e https://cli.github.com/manual/gh_attestation_verify.
 
 **Próximo P0:** submeter à revisão independente um workflow `workflow_dispatch` que capture lock e wheels resolvidos num sandbox autorizado, hash de todos os arquivos e relatório CVE real; atestar o artefato gerado e comprovar a assinatura/verificador antes de avançar para smoke-tests instalados. Não declarar esse fluxo operacional até existirem logs, artefatos reais, digests e atestação verificável.
+
+## Continuidade — piloto de atestação GitHub com dados sintéticos (21/10/2026)
+
+**Status de código:** o workflow `.github/workflows/auditoria_pacotes.yml` e o gerador `src/nivon/pacote_proveniencia_sintetico.py` foram incluídos na PR #27 **em draft**. Há testes automáticos em `tests/test_pacote_proveniencia_sintetico.py`, mas o workflow de atestação **não foi disparado**; nenhuma assinatura real, ZIP de Actions ou evidência de pacotes externos foi produzido. A documentação do GitHub estabelece que o evento `workflow_dispatch` só pode ser acionado depois que a definição do workflow existir na branch padrão. Como ele está apenas no ramo da PR, não declarar execução manual disponível/confirmada. Fonte: https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow .
+
+**Proteções do workflow:** somente `workflow_dispatch`, filtro de job para `github.repository == 'brunocapellari-dotcom/NIVON'` e `github.ref == 'refs/heads/main'`, sem entrada de usuário, sem trigger em PR/push, sem secrets, `permissions: {}` no escopo global, e permissões mínimas por job (`contents: read`, `id-token: write` e `attestations: write`) necessárias à assinatura. `actions/checkout`, `actions/setup-python`, `actions/attest` v4 e `actions/upload-artifact` são referenciadas por SHAs completos, obtidos dos próprios repositórios de ações. Runner GitHub Ubuntu, timeout de cinco minutos, zero `pip install`, coletas, execução de conectores, download de wheels ou scanner CVE. Assinaturas futuras usam serviços do GitHub e Sigstore, não chaves locais.
+
+**Conteúdo permitido:** o comando de geração cria `evidencias/nivon-pipeline-sintetico.zip` contendo **somente** `manifesto.json` e uma cópia do `pyproject.toml` do checkout. O manifesto registra `SYNTHETIC_WORKFLOW_TEST_NOT_DEPENDENCY_EVIDENCE`, commit exato, repo, run ID, hash do pyproject e várias flags permanentes `false` para download/instalação, resolução, CVEs, licença e aprovação de produção. O ZIP é determinístico para as mesmas entradas, tem limites rígidos, é revisado localmente após gravação e nunca sobrescreve saída existente.
+
+**Duas camadas ZIP que não podem ser confundidas:** o `subject-path` de `actions/attest` é o **ZIP interno** `nivon-pipeline-sintetico.zip` (sujeito da assinatura). A ação `actions/upload-artifact` empacota esse arquivo num **ZIP externo de distribuição do Actions**, cujo digest na API é o que `nivon.proveniencia_github` confere. A checagem criptográfica via GitHub CLI deve ser feita sobre o ZIP interno, após obtê-lo pelo download autorizado do artefato; comparar apenas o digest do ZIP externo não verifica a assinatura do ZIP interno.
+
+**Procedimento FUTURO, somente quando o workflow aprovado estiver na branch padrão e alguém o executar manualmente:**
+
+```bash
+# 1. Obter com GitHub CLI o artefato do run autorizado (ainda INEXISTENTE).
+gh run download ID_EXECUCAO --repo brunocapellari-dotcom/NIVON \
+  --name nivon-evidencias-dependencias --dir ./evidencia-local
+
+# 2. Verificar a ASSINATURA do ZIP interno, não do ZIP de download.
+gh attestation verify ./evidencia-local/nivon-pipeline-sintetico.zip \
+  --repo brunocapellari-dotcom/NIVON \
+  --signer-workflow brunocapellari-dotcom/NIVON/.github/workflows/auditoria_pacotes.yml \
+  --source-ref refs/heads/main \
+  --source-digest SHA40_DO_COMMIT_DA_EXECUCAO
+```
+
+Além da verificação de assinatura e identidade do emissor, a futura auditoria deve comparar o resultado verificado com o SHA/ID esperados e o manifesto do ZIP interno. A presença de uma atestação verdadeira significa somente que **aquele arquivo sintético** foi gerado pelo workflow informado; jamais comprova CVEs, licença, origem de wheels, supply-chain externa ou liberação para instalação. Documentação oficial: https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations e https://cli.github.com/manual/gh_attestation_verify .
+
+**Próximo P0 de verdade:** revisão de segurança do workflow manual, colocação deliberada na branch padrão quando autorizado e teste real de emissão/verificação. Só então criar fluxo separado para download de dependências e CVEs com resolução reprodutível, controles de rede, licenças e atestação de fontes reais. A suíte desta PR permanece 100% sintética, sem execução de workflow de atestação, merge ou deploy.
