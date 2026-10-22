@@ -11,6 +11,7 @@ on:
 permissions:
   contents: read
   id-token: write
+# Funcao Neon CEPEA OIDC verificada; repetir teste E2E apos deploy.
 concurrency:
   group: nivon-cepea-ingest
   cancel-in-progress: false
