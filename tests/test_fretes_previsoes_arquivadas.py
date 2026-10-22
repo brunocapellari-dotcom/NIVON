@@ -203,6 +203,16 @@ class TestPrevisoesArquivadasFrete(unittest.TestCase):
             with self.subTest(h=h),self.assertRaises(ErroAvaliacaoFrete):
                 avaliar(rows,ps,horizonte_dias_corridos=h)
 
+    def test_horizonte_declarado_float_reassinado_ainda_bloqueia(self):
+        rows=historico(30)
+        preds=[emissao(rows,j) for j in range(1,6)]
+        for falso in (7.0,):
+            p=dict(preds[0]);p.pop("assinatura_hmac_sha256")
+            p["horizonte_dias_corridos"]=falso
+            preds[0]=assinar(p)
+            with self.assertRaisesRegex(ErroAvaliacaoFrete,"inteiro exato"):
+                avaliar(rows,preds)
+
     def test_preco_anunciado_nao_preco_contratado(self):
         rows=historico(30)
         ps=[emissao(rows,j) for j in range(1,6)]
