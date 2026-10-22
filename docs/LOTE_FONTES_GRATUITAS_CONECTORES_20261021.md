@@ -31,7 +31,7 @@ Nota: os identificadores acima são identificadores de **adapters de consulta**,
 
 ## Arquivos CSV/ZIP homologáveis apenas após contrato real
 
-Classes técnicas aceitas pelo inspecionador: MAPA_ZARC, MAPA_SISZARC, MAPA_SIPEAGRO, MAPA_SEGURO_RURAL, ANTT_CIOT, ANTT_RNTRC, ANTT_DNIT_TRAFEGO, ANP_DIESEL_PRECO, ANP_MOVIMENTACAO, MDIC_COMEX_NCM, MDIC_COMEX_MUNICIPIO, ANTAQ_MOVIMENTACAO, USDA_ERS_CUSTOS, FAOSTAT_CSV e MAPA_SIAGRO_FERTILIZANTES.
+Classes técnicas aceitas pelo inspecionador: MAPA_ZARC, MAPA_SISZARC, MAPA_SIPEAGRO, MAPA_SEGURO_RURAL, ANTT_CIOT, ANTT_RNTRC, ANTT_DNIT_TRAFEGO, ANP_DIESEL_PRECO, ANP_MOVIMENTACAO, MDIC_COMEX_NCM, MDIC_COMEX_MUNICIPIO, ANTAQ_MOVIMENTACAO, USDA_ERS_CUSTOS, FAOSTAT_CSV e MAPA_SIPEAGRO_FERTILIZANTES.
 
 São rótulos do **inspecionador**, não licença confirmada nem schema científico. Para arquivos ZIP, só se aceita 1 CSV plano, sem caminho ou symlink, no máximo 8 MB compactados, até 16 MB extraídos, razão <=50 e 100 mil linhas. CSV malformado é rejeitado. Arquivos gigantes Comex e GeoTIFF/NetCDF precisam de pipeline de streaming especializado, **não** passam pelo leitor de amostras.
 
