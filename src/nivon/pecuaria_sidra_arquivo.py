@@ -75,7 +75,7 @@ def _conteudo(bruto, *, tipo, max_bytes, tabela):
     return sha256(bruto).hexdigest()
 
 
-def _abrir(path):
+def _abrir(path, *, somente_leitura=False):
     if not isinstance(path, (str, Path)):
         raise DadoInvalido("caminho local SQLite obrigatorio")
     p = Path(path).expanduser()
@@ -83,7 +83,17 @@ def _abrir(path):
         raise DadoInvalido("SQLite: caminho inseguro ou diretorio ausente")
     if p.exists() and not p.is_file():
         raise DadoInvalido("SQLite deve ser arquivo regular")
-    cx = sqlite3.connect(str(p), timeout=5)
+    if type(somente_leitura) is not bool:
+        raise DadoInvalido("modo de abertura invalido")
+    if somente_leitura:
+        if not p.is_file():
+            raise DadoInvalido("arquivo SQLite inexistente para leitura")
+        # URI SQLite mode=ro recusa criacao e mutacao de paginas do banco.
+        # O caminho e convertido por pathlib, com escape URI dos caracteres.
+        cx = sqlite3.connect(p.resolve().as_uri() + "?mode=ro",
+                             timeout=5, uri=True)
+    else:
+        cx = sqlite3.connect(str(p), timeout=5)
     esperado = ("especie", "tabela_sidra", "url_valores",
                 "url_metadados", "coleta_declarada")
 
@@ -104,6 +114,10 @@ def _abrir(path):
         # CREATE TRIGGER alteraria o banco mesmo quando a migracao e negada.
         existe = cx.execute("""SELECT 1 FROM sqlite_master
             WHERE type='table' AND name='capturas_sidra'""").fetchone()
+        if somente_leitura:
+            if not existe or not indice_canonico():
+                raise DadoInvalido("arquivo SIDRA inexistente ou legado sem schema canonico")
+            return cx
         if existe and not indice_canonico():
             raise DadoInvalido(
                 "esquema SIDRA legado sem unicidade de captura; migracao auditada necessaria")
@@ -186,7 +200,7 @@ def recuperar_pacote_sidra_offline(*, banco, id_captura: int):
     """Recuperacao byte-a-byte, conferindo metadados e origem DECLARADA."""
     if type(id_captura) is not int or id_captura < 1:
         raise DadoInvalido("id de captura invalido")
-    with closing(_abrir(banco)) as cx:
+    with closing(_abrir(banco, somente_leitura=True)) as cx:
         row = cx.execute("""SELECT especie, tabela_sidra,
             url_valores, url_metadados,
             publicacao_declarada, coleta_declarada,
