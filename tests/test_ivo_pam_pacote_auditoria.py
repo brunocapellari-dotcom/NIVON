@@ -80,7 +80,7 @@ class TestIVOPacoteAuditoriaPAM(unittest.TestCase):
 
     def test_pdf_anexo_confere_hash_mas_nao_prova_que_corresponde_ao_valor(self):
         digest=self.arquivar()
-        pdf=self.arquivar(raw=b"%PDF-1.4\n"+b"Documento apenas sintético"*3,
+        pdf=self.arquivar(raw=b"%PDF-1.4\n"+"Documento apenas sintético".encode("utf-8")*3,
              kind="PDF_IBGE",documento_url="https://biblioteca.ibge.gov.br/pam/nota.pdf")
         r=self.pacote(digest,recibo_pdf=pdf,data_publicacao_declarada="2026-09-01")
         self.assertIsNotNone(r["documento_anexo"])
