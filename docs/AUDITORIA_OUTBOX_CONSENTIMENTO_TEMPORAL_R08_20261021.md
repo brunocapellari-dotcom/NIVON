@@ -5,6 +5,7 @@
 **Auditoria:** [PR #112](https://github.com/brunocapellari-dotcom/NIVON/pull/112), branch `audit/r08-consentimento-temporal-20261021`.  
 **Teste:** `tests/test_auditoria_independente_consentimento_temporal_r08.py`, SHA `949e4851199623d51621ed0968511946558d4c4a`.  
 **Evidência automatizada:** [run GitHub Actions 39698710033](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39698710033); **2.051 testes; 2 falhas, 3 ignorados**. Quatro novos testes: dois controles passaram e dois adversariais falharam.
+**Reteste do relatório:** [run 39698879625](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39698879625), commit de documentação `7b9f5554b21b2b196d08a736af7dab936262412e`: **2.051 testes, 2 falhas e 3 skips**, os mesmos quatro testes auditados com dois controles verdes, duas reprovações e nenhuma falha incidental nova.
 
 ## NC-AUD-026 — P0: autorização não vigente aceita na reserva da outbox
 
