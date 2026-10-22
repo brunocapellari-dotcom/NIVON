@@ -612,7 +612,8 @@
         "nivon.noaa_roni:classificar_episodios_roni",
         "nivon.historico_vintages:normalizar_edicao",
         "nivon.confronto_janelas_fisicas:confrontar_chuva_janelas_equivalentes",
-        "nivon.analogos_historicos:encontrar_anos_analogos"
+        "nivon.analogos_historicos:encontrar_anos_analogos",
+        "nivon.inspecao_roni_offline:inspecionar_amostra_roni_offline"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
