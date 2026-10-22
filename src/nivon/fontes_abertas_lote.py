@@ -158,6 +158,7 @@ def normalizar(payload, *, fonte, coletado_em):
             if f in ("CSV", "JSON", "ZIP", "XLSX", "SHP", "GEOJSON"):
                 recursos.append({"id": r["id"], "formato": f, "nome": str(r.get("name") or "")[:150],
                                  "atualizado_em": r.get("last_modified"),
+                                 "tamanho_declarado_bytes": r.get("size") if type(r.get("size")) is int and 0 <= r["size"] <= 10_000_000_000 else None,
                                  "url_somente_referencia": _referencia(r.get("url"), CKAN[fonte][0])})
         out.update({"tipo": "CKAN_METADATA", "total_recursos": len(d["resources"]),
                     "recursos": recursos, "licenca_declarada": d.get("license_id"),
