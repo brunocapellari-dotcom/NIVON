@@ -49,11 +49,13 @@ class BackupError(ValueError):
 
 
 def _private_path(path: Path, *, must_exist: bool = True) -> Path:
-    actual = path.absolute()
+    if path.is_symlink():
+        raise BackupError("symlink proibido no diretorio")
+    actual = path.resolve(strict=must_exist)
     if actual.is_relative_to(ROOT):
         raise BackupError("backup nao pode residir no repositorio publico")
-    if must_exist and (not actual.is_dir() or actual.is_symlink()):
-        raise BackupError("diretorio ausente ou symlink proibido")
+    if must_exist and not actual.is_dir():
+        raise BackupError("diretorio ausente")
     return actual
 
 
@@ -168,18 +170,20 @@ def _replay(folder: Path) -> dict[str, Any]:
             ).fetchone()[0]
             if restored != count:
                 raise BackupError("replay nao restituiu todos os registros")
-            # prova round-trip exato dos bytes originais e ordenacao independente
-            original_rows = []
+            # Round-trip por chave, sem carregar os arquivos inteiros na memoria.
             with path.open("rb") as fp:
                 for raw in fp:
-                    original_rows.append(raw)
-            restored_rows = [
-                row[0] for row in db.execute(
-                    "SELECT row_bytes FROM archive WHERE table_name=?", (kind,)
-                )
-            ]
-            if sorted(original_rows) != sorted(restored_rows):
-                raise BackupError("replay divergiu dos registros do arquivo")
+                    try:
+                        obj = json.loads(raw.decode("utf-8"), parse_float=Decimal)
+                        key = _key_for(kind, obj)
+                    except (UnicodeError, TypeError, ValueError, KeyError):
+                        raise BackupError("registro invalido na releitura") from None
+                    restored = db.execute(
+                        "SELECT row_bytes FROM archive WHERE table_name=? AND row_key=?",
+                        (kind, key),
+                    ).fetchone()
+                    if restored is None or restored[0] != raw:
+                        raise BackupError("replay divergiu dos registros do arquivo")
             stats[kind] = {"sha256": digest, "bytes": size, "rows": count}
         if stats["quotes"]["rows"] == 0:
             raise BackupError("backup sem nenhuma cotacao")
