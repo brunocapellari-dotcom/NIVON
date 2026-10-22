@@ -18,7 +18,7 @@ permissions:
 jobs:
   smoke-pontual:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 7
     steps:
       - name: Checkout sem credenciais persistentes
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -31,4 +31,4 @@ jobs:
       - name: Diagnostico controlado de quatro GET publicos
         env:
           PYTHONPATH: src
-        run: python -m nivon.diagnostico_zarc_prefixo --executar --limite-bytes 8192
+        run: python scripts/diagnostico_zarc_stream_mt.py --executar
