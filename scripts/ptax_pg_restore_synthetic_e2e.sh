@@ -100,7 +100,7 @@ fi
 # Reutiliza a auditoria read-only versionada (mesma consulta em cada banco).
 # Ignorar somente a hora de execução do relatório, que varia entre consultas.
 audit_normalize() {
-  python3 -c 'import sys,json; obj=json.load(sys.stdin)["source_audit_manifest"]; obj.pop("snapshot_timestamp_utc",None); assert obj["invalid_prices"]==0 and obj["duplicate_business_keys"]==0 and obj["invalid_timestamps"]==0; print(json.dumps(obj,sort_keys=True,separators=(",",":")))'
+  python3 -c 'import sys,json; obj=json.load(sys.stdin); obj=obj.get("source_audit_manifest",obj); obj.pop("snapshot_timestamp_utc",None); assert obj["invalid_prices"]==0 and obj["duplicate_business_keys"]==0 and obj["invalid_timestamps"]==0; print(json.dumps(obj,sort_keys=True,separators=(",",":")))'
 }
 source_audit="$(
   docker exec -i "$container" psql -X -A -t -v ON_ERROR_STOP=1 -U postgres -d nivon \
