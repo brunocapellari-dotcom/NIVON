@@ -66,7 +66,15 @@ SELECT jsonb_build_object(
  'runs',(SELECT jsonb_agg(to_jsonb(r) ORDER BY id) FROM public.nivon_ptax_runs r),
  'checkpoints',(SELECT jsonb_agg(to_jsonb(c) ORDER BY currency,window_start,window_end) FROM public.nivon_ptax_checkpoints c),
  'quotes_sequence',(SELECT last_value FROM public.nivon_ptax_quotes_id_seq),
- 'runs_sequence',(SELECT last_value FROM public.nivon_ptax_runs_id_seq)
+ 'runs_sequence',(SELECT last_value FROM public.nivon_ptax_runs_id_seq),
+ 'indexes',(SELECT jsonb_agg(jsonb_build_object('name',indexname,'ddl',indexdef) ORDER BY indexname)
+              FROM pg_indexes WHERE schemaname='public' AND tablename IN
+              ('nivon_ptax_quotes','nivon_ptax_runs','nivon_ptax_checkpoints')),
+ 'constraints',(SELECT jsonb_agg(jsonb_build_object('table_name',cl.relname,'name',co.conname,'definition',pg_get_constraintdef(co.oid)) ORDER BY cl.relname,co.conname)
+                  FROM pg_constraint co JOIN pg_class cl ON cl.oid=co.conrelid
+                  JOIN pg_namespace ns ON ns.oid=cl.relnamespace
+                  WHERE ns.nspname='public' AND cl.relname IN
+                  ('nivon_ptax_quotes','nivon_ptax_runs','nivon_ptax_checkpoints'))
 )::text;
 SQL
 )"
@@ -86,6 +94,24 @@ counts="$(
 )"
 if [[ "$counts" != "3:2:2" ]]; then
   echo "Contagens sinteticas inesperadas." >&2
+  exit 1
+fi
+
+# Reutiliza a auditoria read-only versionada (mesma consulta em cada banco).
+# Ignorar somente a hora de execução do relatório, que varia entre consultas.
+audit_normalize() {
+  python3 -c 'import sys,json; obj=json.load(sys.stdin)["source_audit_manifest"]; obj.pop("snapshot_timestamp_utc",None); assert obj["invalid_prices"]==0 and obj["duplicate_business_keys"]==0 and obj["invalid_timestamps"]==0; print(json.dumps(obj,sort_keys=True,separators=(",",":")))'
+}
+source_audit="$(
+  docker exec -i "$container" psql -X -A -t -v ON_ERROR_STOP=1 -U postgres -d nivon \
+    < database/neon_ptax_readonly_audit.sql | audit_normalize
+)"
+restored_audit="$(
+  docker exec -i "$container" psql -X -A -t -v ON_ERROR_STOP=1 -U postgres -d nivon_restore_check \
+    < database/neon_ptax_readonly_audit.sql | audit_normalize
+)"
+if [[ "$source_audit" != "$restored_audit" ]]; then
+  echo "Auditoria de agregados da restauracao sintetica divergiu." >&2
   exit 1
 fi
 printf 'POSTGRES17_SYNTHETIC_RESTORE_OK; quotes=3; runs=2; checkpoints=2; sequences=2; production_restore_verified=false\n'
