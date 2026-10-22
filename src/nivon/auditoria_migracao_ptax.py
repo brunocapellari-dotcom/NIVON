@@ -199,3 +199,60 @@ def auditar_migracao_ptax(
         incluir_sinteticos=False, idade_maxima_horas=idade_maxima_horas,
     )
     return comparar_indicadores_ptax(velho, novo, moeda=moeda)
+
+
+def auditar_lote_migracao_ptax(
+    db_legado: sqlite3.Connection, db_raw: sqlite3.Connection, *,
+    cortes: list[str] | tuple[str, ...], fontes: dict, moeda: str = "USD",
+    idade_maxima_horas: int = 168,
+) -> dict:
+    """Avalia 1-32 datas de corte em ordem; nunca habilita mudança de fonte.
+
+    Todas as datas são avaliadas independentemente. A primeira falha
+    bloqueia o gate, mas as demais ainda são contabilizadas para que o
+    operador enxergue a cobertura longitudinal da migração.
+    """
+    if (type(cortes) not in (list, tuple) or
+            not 1 <= len(cortes) <= 32):
+        raise ErroParidadePTAX("lote exige de 1 a 32 datas de corte")
+    try:
+        instantes = [_momento(x, "corte") for x in cortes]
+    except (TypeError, ValueError) as exc:
+        raise ErroParidadePTAX("data de corte inválida no lote") from exc
+    if (any(instantes[i] >= instantes[i+1]
+            for i in range(len(instantes)-1)) or
+            (instantes[-1] - instantes[0]).days > 366):
+        raise ErroParidadePTAX("cortes fora de ordem, duplicados ou janela excessiva")
+    linhas = []
+    for t in instantes:
+        r = auditar_migracao_ptax(
+            db_legado, db_raw, gerado_em=t.isoformat(),
+            fontes=fontes, moeda=moeda,
+            idade_maxima_horas=idade_maxima_horas,
+        )
+        linhas.append({
+            "corte_utc": t.isoformat(),
+            "status": r["status"],
+            "motivos": r.get("motivos", []),
+            "mesma_edicao_raw_comprovada": r["mesma_edicao_raw_comprovada"],
+            "comparacao_numerica_confirmada": r["comparacao_numerica_confirmada"],
+        })
+    exatas = sum(x["status"] == "PARIDADE_NUMERICA_MESMA_EDICAO_OFFLINE"
+                 for x in linhas)
+    somente_valores = sum(
+        x["status"] == "PARIDADE_NUMERICA_SEM_MESMA_EDICAO_COMPROVADA"
+        for x in linhas
+    )
+    return {
+        "status": ("PARIDADE_LOTE_OFFLINE_SEM_HOMOLOGACAO"
+                   if exatas == len(linhas)
+                   else "LOTE_MIGRACAO_BLOQUEADO"),
+        "total_cortes": len(linhas),
+        "comparacoes_mesma_edicao": exatas,
+        "comparacoes_apenas_valores": somente_valores,
+        "cortes_bloqueados": len(linhas) - exatas,
+        "resultados": linhas,
+        "substituicao_automatica_autorizada": False,
+        "publicavel": False,
+        "apto_backtest_por_publicacao": False,
+    }

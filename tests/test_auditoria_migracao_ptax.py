@@ -222,6 +222,54 @@ class TestAuditoriaMigracaoPTAX(unittest.TestCase):
             auditar_migracao_ptax(self.legacy,self.raw,gerado_em=T.isoformat(),
                                  fontes=RIGHTS,idade_maxima_horas=True)
 
+    def lote(self, instantes, rights=RIGHTS):
+        from nivon.auditoria_migracao_ptax import auditar_lote_migracao_ptax
+        return auditar_lote_migracao_ptax(
+            self.legacy,self.raw,cortes=instantes,fontes=rights,
+        )
+
+    def test_lote_longitudinal_duas_datas_misma_edicao(self):
+        self.inserir()
+        r=self.lote([T.isoformat(),(T+timedelta(hours=1)).isoformat()])
+        self.assertEqual(r["status"],"PARIDADE_LOTE_OFFLINE_SEM_HOMOLOGACAO")
+        self.assertEqual(r["total_cortes"],2)
+        self.assertEqual(r["comparacoes_mesma_edicao"],2)
+        self.assertFalse(r["substituicao_automatica_autorizada"])
+        self.assertFalse(r["publicavel"])
+
+    def test_lote_inclui_corte_sem_dados_e_bloqueia(self):
+        self.inserir()
+        antes=(T-timedelta(minutes=1)).isoformat()
+        r=self.lote([antes,T.isoformat()])
+        self.assertEqual(r["status"],"LOTE_MIGRACAO_BLOQUEADO")
+        self.assertEqual(r["comparacoes_mesma_edicao"],1)
+        self.assertEqual(r["cortes_bloqueados"],1)
+        self.assertEqual(r["resultados"][0]["status"],"COMPARACAO_INCOMPLETA")
+
+    def test_lote_mesmo_valor_edicao_diferente_nao_passa(self):
+        self.inserir(payload_new=body(compra="5.10000"))
+        r=self.lote([T.isoformat()])
+        self.assertEqual(r["status"],"LOTE_MIGRACAO_BLOQUEADO")
+        self.assertEqual(r["comparacoes_apenas_valores"],1)
+
+    def test_lote_rejeita_datas_duplicadas_invertidas_e_excesso(self):
+        self.inserir()
+        for cuts in ([],[T.isoformat()]*33,
+                     [T.isoformat(),T.isoformat()],
+                     [(T+timedelta(minutes=1)).isoformat(),T.isoformat()],
+                     [T.isoformat(),"sem-data"]):
+            with self.subTest(cuts=cuts),self.assertRaises(ErroParidadePTAX):
+                self.lote(cuts)
+
+    def test_lote_direitos_ausentes_bloqueia_todas_as_datas(self):
+        self.inserir()
+        r=self.lote([T.isoformat(),
+                     (T+timedelta(minutes=1)).isoformat()],rights={})
+        self.assertEqual(r["status"],"LOTE_MIGRACAO_BLOQUEADO")
+        self.assertEqual(r["cortes_bloqueados"],2)
+        self.assertTrue(all(x["status"]=="BLOQUEADO_DIREITOS"
+                            for x in r["resultados"]))
+
 
 if __name__=="__main__":
     unittest.main()

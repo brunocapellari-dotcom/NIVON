@@ -675,3 +675,85 @@ O catálogo operacional, licenciamento ODbL/reutilização, assinatura
 de tempo externa, integração ao workflow do IVO/editor e migração
 controlada do legado permanecem pendentes. Sem merges/deploys/
 automação/compartilhamento WhatsApp.
+
+
+## 15. Continuidade 21/10/2026 — auditoria de migração PTAX legado/Decimal
+
+**Objetivo:** verificar a paridade entre `indicador_ptax_sqlite`
+(legado com `float` e apresentação em quatro casas) e
+`selecionar_ptax_decimal_asof` (RAW+SHA+JSON `Decimal`) **antes**
+de qualquer troca editorial. Não há modificação do adaptador antigo
+nem mutação das tabelas, cronjobs, rede ou habilitação de feature flags.
+
+### Contrato de auditoria e bloqueio
+
+Novo arquivo `src/nivon/auditoria_migracao_ptax.py`:
+
+- `comparar_indicadores_ptax(antigo, novo, moeda)`: compara
+  representação com quatro casas do texto LEGADO, preço Decimal bruto
+  com precisão original, `referencia_em`, instante de coleta, tipo
+  explícito de boletim, origem, moeda e coerência das alegações
+  `REAL_AUTORIZADO`. Se a parte Decimal tiver frações não representáveis
+  a quatro casas, classifica divergência em vez de arredondar
+  silenciosamente; **qualquer diferença de cotação** também bloqueia.
+- SHA-256 idêntico + mesma coleta + valores e atributos equivalentes
+  é `PARIDADE_NUMERICA_MESMA_EDICAO_OFFLINE`, um resultado relativo
+  aos metadados e bytes persistidos **não prova de autenticidade
+  externa nem de horário de publicação pelo BCB**. Valores numericamente
+  iguais oriundos de SHA/coletas diferentes recebem
+  `PARIDADE_NUMERICA_SEM_MESMA_EDICAO_COMPROVADA`, que
+  **não libera o gate**. Ausência de um dos caminhos devolve
+  `COMPARACAO_INCOMPLETA`; diferenças devolvem
+  `DIVERGENCIA_PTAX_BLOQUEADA`.
+- `auditar_migracao_ptax(db_legado, db_raw, ...)`: chama
+  as funções preexistentes de leitura sem acesso de rede;
+  exige direito `LEITURA` e `PUBLICACAO_DERIVADA` no
+  mapa de fontes para sequer comparar os números. Ambos caminhos
+  excluem `SINTETICO` por padrão. Pode receber duas conexões
+  SQLite distintas para evitar colisão histórica entre os esquemas
+  `PTAX_ODATA_1` e `PTAX_ODATA_RAW_V1` no ledger
+  `UNIQUE(dataset_id, sha256)`.
+- `auditar_lote_migracao_ptax(..., cortes=[...])`: avalia até
+  32 cortes temporais canônicos, em ordem crescente e extensão
+  limitada a 366 dias. Relata paridade observada por corte, gaps,
+  edições distintas e bloqueios. Mesmo quando todas as amostras
+  conferem, o estado é `PARIDADE_LOTE_OFFLINE_SEM_HOMOLOGACAO`.
+  Se algum corte falhar, `LOTE_MIGRACAO_BLOQUEADO`.
+- Em **todos** os resultados:
+  `substituicao_automatica_autorizada=false`,
+  `publicavel=false` e `apto_backtest_por_publicacao=false`.
+  A comparação deliberadamente não injeta o novo dado no
+  briefing/IVO e **não é** uma decisão de rollout.
+
+### Evidência de testes
+
+`tests/test_auditoria_migracao_ptax.py` cria dois bancos SQLite
+temporários separados, um com o legado e outro com o RAW.
+Para testar a porta real, é necessário criar uma fixture
+`REAL_AUTORIZADO` **falsa exclusivamente em memória** com o
+catálogo também simulado: isso **não deve ser entendido como dados
+ou direitos reais concedidos**. Os testes cobrem mesmo SHA e captura,
+SHA diferente apesar de valores iguais, alteração de compra,
+precisão de cinco casas, divergência de referência/tipo, ausência de
+novo raw, rollback temporal, direitos ausentes, exclusão de sintéticos,
+adulteração no banco, alterações não persistentes e auditoria de múltiplos
+cortes, com bloqueio de lacunas e edições distintas.
+
+**Execução verificada:** [CI #39671854879](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39671854879),
+1.437 testes executados, cinco ignorados e zero falhas.
+
+### Requisitos de homologação restantes
+
+1. Capturar amostras reais BCB sob catálogo ativado, TLS e evidência
+   de direitos ODbL avaliada, verificando também mudanças de contrato.
+2. Comprovar origem e horário de coleta por mecanismo independente,
+   dados de publicação quando disponíveis e armazenamento/restore.
+3. Auditar datas de diferentes sessões/feriados e todas as categorias
+   de boletins, contrastando bytes reais com o adaptador antigo;
+   não usar a hora da cotação como se fosse hora de publicação.
+4. Planejar migração de schema versionada e rollback dos consumidores
+   legados **sem sobrescrever** snapshots antigos ou permitir
+   dependência de cotações `SINTETICO`.
+5. Aprovação humana explícita para alteração operacional do briefing
+   e deploy. A autorização atual cobre apenas código reversível,
+   offline, em PR draft e testes de custo zero.
