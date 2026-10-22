@@ -6197,6 +6197,34 @@
         "coleta"
       ],
       "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BCB_SICOR_MDCR",
+      "source_id": "BCB",
+      "group": "MACRO",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO"
+      ],
+      "topic": "credito_rural_sicor_matriz_odata_amostra_exploratoria_sem_serie_homologada",
+      "mode": "OFFICIAL_ODATA_API",
+      "cadence": "MONTHLY",
+      "stage": "CODE_PRESENT",
+      "priority": "P1",
+      "existing_module": "bcb_sicor_mdcr.py",
+      "notes": "Amostra OData SICOR v2 de até 25 linhas por requisição; não é total regional, não usar em relatórios até schema temporal e licença ODbL homologados.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
     }
   ]
 }
