@@ -51,6 +51,17 @@ class TestLedger(unittest.TestCase):
         change(self.db, "x", "codex", "done", "SHA def, testes OK", tokens_in=100, tokens_out=20)
         self.assertEqual(report(self.db)["tokens_reported"], {"input": 100, "output": 20})
 
+    def test_provider_handoff_preserves_checkpoint(self):
+        seed(self.db, [{"id": "x", "title": "X", "scope": ["src/x.py"],
+                        "preferred_agent": "claude"}])
+        self.assertEqual(claim(self.db, "claude")["id"], "x")
+        change(self.db, "x", "claude", "handoff", "branch x, SHA abc, passos para continuar",
+               next_agent="codex")
+        self.assertEqual(claim(self.db, "codex")["id"], "x")
+        with self.assertRaises(ValueError):
+            change(self.db, "x", "codex", "done", next_agent="claude")
+
+
     def test_expired_task_not_reclaimed_automatically(self):
         seed(self.db, [{"id": "x", "title": "X", "scope": ["src/x.py"], "preferred_agent": "any"}])
         claim(self.db, "claude")
