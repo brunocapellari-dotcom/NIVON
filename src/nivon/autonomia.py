@@ -131,7 +131,10 @@ def do_task(agent, task, *, timeout_minutes=15):
     logfile.touch(mode=0o600, exist_ok=False)
     runtime_env = os.environ.copy()
     for key in tuple(runtime_env):
-        if key.startswith(("AWS_", "GOOGLE_", "GCP_", "AZURE_", "VERCEL_", "NEON_", "SUPABASE_")):
+        if key.startswith(("AWS_", "GOOGLE_", "GCP_", "AZURE_", "VERCEL_", "NEON_", "SUPABASE_")) or key in (
+            "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "CODEX_API_KEY",
+            "ANTHROPIC_AUTH_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN"
+        ):
             runtime_env.pop(key, None)
     try:
         with logfile.open("w", encoding="utf-8") as log:
