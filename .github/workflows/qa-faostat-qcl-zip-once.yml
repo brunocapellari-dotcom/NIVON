@@ -1,0 +1,51 @@
+name: NIVON FAOSTAT QCL smoke unico
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches:
+      - integration/nivon-acessos-core-convergencia-20261021
+    paths:
+      - .github/workflows/qa-faostat-qcl-zip-once.yml
+
+permissions:
+  contents: read
+
+jobs:
+  qcl-real:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'test/qa-faostat-qcl-zip-once-20261021' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Uma coleta QCL por ZIP no estágio SQLite temporário
+        id: qcl
+        continue-on-error: true
+        run: |
+          PYTHONPATH=src python scripts/smoke_faostat_qcl_stream.py \
+            --pais BRA --cultura SOJA --inicio 2023 --fim 2023 \
+            --sqlite /tmp/nivon_faostat_qcl_prova.db --executar
+      - name: Confirmar stage local e idempotência
+        if: steps.qcl.outcome == 'success'
+        run: |
+          PYTHONPATH=src python - <<'PY'
+          import sqlite3
+          p='/tmp/nivon_faostat_qcl_prova.db'
+          with sqlite3.connect(p) as con:
+              n=con.execute('SELECT COUNT(*) FROM faostat_qcl_snapshot').fetchone()[0]
+              n_null=con.execute('SELECT COUNT(*) FROM faostat_qcl_snapshot WHERE data_publicacao IS NOT NULL').fetchone()[0]
+              print('SQLITE_STAGE_QCL_VALIDO',n,'PUBLICACAO_NULL_OK',n_null==0)
+              assert n>0 and n_null==0
+          PY
+      - name: Estado técnico sem valores agrícolas
+        if: always()
+        env:
+          QCL: ${{ steps.qcl.outcome }}
+        run: |
+          echo "FAOSTAT_QCL_HTTP=$QCL"
+          echo "Sem upload de artefatos, sem agendamento ou Cloud SQL/BigQuery."
