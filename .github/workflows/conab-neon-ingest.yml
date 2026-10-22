@@ -31,6 +31,7 @@ jobs:
           from urllib.parse import quote
           from agrobr import conab
           from nivon.conab_safras import checar_meta, validar_linhas
+          from nivon.conab_job import edicoes_atuais
 
           async def main():
               records=[]
