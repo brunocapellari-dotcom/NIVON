@@ -5,7 +5,7 @@ Não supor data/levantamento apenas pelo relógio ou nomes do arquivo.
 """
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from urllib.parse import urlsplit
 
 
@@ -29,11 +29,16 @@ def normalizar_publicacao(item: dict, hoje: date) -> dict | None:
         return None
     if not isinstance(n, int) or isinstance(n, bool) or n < 1 or n > 12:
         return None
-    if not isinstance(quando, str):
-        return None
-    try:
-        data = date.fromisoformat(quando)
-    except ValueError:
+    if isinstance(quando, datetime):
+        data = quando.date()
+    elif isinstance(quando, date):
+        data = quando
+    elif isinstance(quando, str):
+        try:
+            data = date.fromisoformat(quando)
+        except ValueError:
+            return None
+    else:
         return None
     if data > hoje or data.year < inicio or data.year > inicio+2:
         return None
