@@ -85,6 +85,10 @@ jobs:
           PY
               exit 1
             }
+          # A montagem é escrita pelo UID 65532; devolver posse ao runner
+          # somente após encerrar o container efêmero, para validar os hashes.
+          sudo chown -R "$(id -u):$(id -g)" "$RUNNER_TEMP/nivon-analytics-wheels"
+          chmod 0700 "$RUNNER_TEMP/nivon-analytics-wheels"
           test "$(find "$RUNNER_TEMP/nivon-analytics-wheels" -maxdepth 1 -type f -name '*.whl' | wc -l)" -gt 10
           ( cd "$RUNNER_TEMP/nivon-analytics-wheels" && sha256sum ./*.whl > "$RUNNER_TEMP/nivon-analytics-wheels.sha256" )
           ( cd "$RUNNER_TEMP/nivon-analytics-wheels" && sha256sum -c "$RUNNER_TEMP/nivon-analytics-wheels.sha256" > /dev/null )
