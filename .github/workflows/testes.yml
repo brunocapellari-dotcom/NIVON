@@ -81,6 +81,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_auditar_tres_resumos_lpc.py' -v
           python -m unittest discover -s tests -p 'test_anp_semanal_store.py' -v
           python -m unittest discover -s tests -p 'test_anp_revogacoes.py' -v
+          python -m unittest discover -s tests -p 'test_anp_revogacoes_frescor.py' -v
 
   conferir-schema-mapa:
     # Diagnóstico de fonte real somente manual. Não repetir downloads em todo PR.
