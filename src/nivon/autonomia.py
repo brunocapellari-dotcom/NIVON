@@ -133,7 +133,8 @@ def do_task(agent, task, *, timeout_minutes=15):
     for key in tuple(runtime_env):
         if key.startswith(("AWS_", "GOOGLE_", "GCP_", "AZURE_", "VERCEL_", "NEON_", "SUPABASE_")) or key in (
             "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "CODEX_API_KEY",
-            "ANTHROPIC_AUTH_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN"
+            "ANTHROPIC_AUTH_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN",
+            "CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT"
         ):
             runtime_env.pop(key, None)
     try:
@@ -254,9 +255,13 @@ def main(argv=None):
                 argv = [sys.executable, "-m", "nivon.autonomia", "run",
                         "--max-tasks", str(args.max_tasks), "--minutes", str(args.minutes),
                         "--per-task", str(args.per_task)]
+                supervisor_env = os.environ.copy()
+                supervisor_env.pop("CLAUDECODE", None)
+                supervisor_env.pop("CLAUDE_CODE_ENTRYPOINT", None)
+                supervisor_env["PYTHONPATH"] = str(ROOT / "src")
                 subprocess.Popen(argv, cwd=str(ROOT), stdin=subprocess.DEVNULL,
                                  stdout=log, stderr=subprocess.STDOUT,
-                                 start_new_session=True, env={**os.environ, "PYTHONPATH": str(ROOT / "src")})
+                                 start_new_session=True, env=supervisor_env)
             print(f"Orquestrador iniciado no host. Log local: {destination}")
             return 0
         print(json.dumps(run(max_tasks=args.max_tasks, minutes=args.minutes,
