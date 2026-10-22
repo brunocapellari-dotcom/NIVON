@@ -32,6 +32,7 @@ CREATE OR REPLACE VIEW public.nivon_p0_frescor AS
   CASE WHEN s.auth_state='PENDING_WRITTEN_PERMISSION' OR s.ingest_state='BLOCKED_BY_RIGHTS' THEN 'BLOCKED_RIGHTS'
        WHEN s.source='CEPEA' AND (SELECT max(reference_date) FROM public.nivon_cepea_prices) IS NULL THEN 'NO_LIVE_DATA'
        WHEN s.source='CONAB' AND (SELECT max(published_on) FROM public.nivon_conab_safras) IS NULL THEN 'NO_LIVE_DATA'
+       WHEN (SELECT status FROM public.nivon_p0_source_checks c WHERE c.source=s.source ORDER BY c.id DESC LIMIT 1)='ERROR' THEN 'COLLECTOR_ERROR'
        WHEN s.source='CEPEA' AND (SELECT max(reference_date) FROM public.nivon_cepea_prices)<current_date-4 THEN 'SOURCE_LAG'
        WHEN s.source='CONAB' AND (SELECT max(published_on) FROM public.nivon_conab_safras)<current_date-45 THEN 'SOURCE_LAG'
        WHEN NOT s.allow_automated_ingest OR s.ingest_state!='ACTIVE' THEN 'DATA_PRESENT_AUTOMATION_PENDING'
