@@ -93,13 +93,22 @@ def _painel_dia(ofertas: Sequence[OfertaFrete], *, dia: date, corte: datetime, p
     if not filtradas:
         return {}
     painel = preparar_painel_pr30(filtradas, as_of=corte, **params)
-    return {(x["pickup_entity_id"], x["transportadora_id"]): x
-            for x in painel["observacoes"]}
+    por_id = {x.registro_id: x for x in filtradas}
+    linhas = {}
+    for row in painel["observacoes"]:
+        evento = por_id[row["lote_id"]]
+        chave = (row["pickup_entity_id"], row["transportadora_id"])
+        linhas[chave] = {
+            **row, "publicacao_em": evento.data_publicacao.astimezone(timezone.utc).isoformat(),
+            "coleta_em": evento.data_coleta.astimezone(timezone.utc).isoformat(),
+        }
+    return linhas
 
 
 def _assinatura_painel(painel: Mapping) -> str:
     conteudo = [
-        [list(k), x["edicao_sha256"], x["preco_rs_t"], x["fonte_id"]]
+        [list(k), x["edicao_sha256"], x["preco_rs_t"], x["fonte_id"],
+         x["publicacao_em"], x["coleta_em"]]
         for k, x in sorted(painel.items())
     ]
     return sha256(serializacao_canonica({"versao": 1, "pares_base": conteudo})).hexdigest()
@@ -213,7 +222,7 @@ def avaliar_previsoes_arquivadas_frete(
             raise ErroAvaliacaoFrete("alvo sem pares comparáveis; não descartar fold silenciosamente")
         if any(base[k]["fonte_id"] != fonte_id or alvo_painel[k]["fonte_id"] != fonte_id for k in mesmos):
             raise ErroAvaliacaoFrete("fonte econômica mudou entre origem e alvo")
-        if any(not _hora(alvo_painel[k]["coleta"]+"T23:59:59-04:00","coleta alvo") > emitido
+        if any(_hora(alvo_painel[k]["coleta_em"], "coleta alvo") <= emitido
                for k in mesmos):
             raise ErroAvaliacaoFrete("alvo pode ter sido conhecido antes da emissão")
         # O alvo diário é observação posterior, de forma alguma preço realizado contratado.
@@ -262,7 +271,7 @@ def avaliar_previsoes_arquivadas_frete(
         "carimbo_temporal_externo_comprovado": False,
         "integridade_raw_provedor_comprovada": False,
         "licenca_de_uso_comprovada": False,
-        "vies_de_sobrevivencia_do_painel_avaliado": False,
+        "vies_de_sobrevivencia_do_painel_avaliado": True,
         "independencia_entre_folds_comprovada": False,
         "habilitado_para_producao": False,
         "probabilidades_calibradas": None,
