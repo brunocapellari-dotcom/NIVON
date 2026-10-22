@@ -42,7 +42,7 @@ def main(argv=None):
             result = {"fonte_id": name, "estado": "HTTP_OK_PARSER_OK_SEM_HOMOLOGACAO",
                       "sha256": out.get("sha256_original"),
                       "registros": out.get("registros_recebidos", out.get(
-                          "linhas", out.get("total_recursos"))),
+                          "linhas", out.get("linhas_amostra", out.get("total_recursos")))),
                       "duracao_segundos": round(monotonic() - start, 2),
                       "persistido": False, "publicavel": False}
         except HTTPError as exc:
