@@ -232,7 +232,10 @@ def normalizar_exportacoes_canonicas(
         fonte_url = _url(at.fonte_url)
         approved = _momento(at.aprovado_em, "aprovado_em")
         verified = _momento(at.verificado_em, "verificado_em")
-        if not (collection <= approved <= verified <= asof):
+        # A Knowledge Factory deve ter aprovado o registro ANTES ou NO
+        # instante em que o snapshot ja se declarava CANONICO. Uma
+        # aprovacao posterior nao pode legitimar retroativamente a exportacao.
+        if not (collection <= approved <= exportado and approved <= verified <= asof):
             raise ErroProvenienciaIVO("atestado tardio ou retroativo")
         # O modelo Second Brain armazena data, nao hora, para referencia e
         # competencia. Convertemos 00 UTC apenas como convenio de transporte.

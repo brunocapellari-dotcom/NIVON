@@ -181,6 +181,24 @@ class TestSegundoCerebroBridge(unittest.TestCase):
         with self.assertRaises(ErroProvenienciaIVO):
             call(export(exportado_em=T+timedelta(minutes=1)))
 
+    def test_aprovacao_posterior_a_exportacao_canonica_e_invalida(self):
+        # Exportacao T-2 declara CANONICO, mas a fabrica so promove em T-1:
+        # a atestacao verificada antes da consulta nao reescreve o passado.
+        with self.assertRaises(ErroProvenienciaIVO):
+            call(check=verifier(
+                aprovado_em=T-timedelta(days=1),
+                verificado_em=T-timedelta(hours=12),
+            ))
+
+    def test_aprovacao_no_instante_da_exportacao_e_permitida(self):
+        result=call(check=verifier(
+            aprovado_em=T-timedelta(days=2),
+            verificado_em=T-timedelta(days=1),
+        ))
+        self.assertEqual(len(result["claims"]),1)
+        self.assertFalse(result["treino_executado"])
+
+
     def test_publicacao_e_coleta_invertidas_rejeitadas(self):
         r = registro()
         r["dates"]["publication_date"] = T.isoformat()
