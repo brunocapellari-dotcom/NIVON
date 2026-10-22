@@ -17,8 +17,8 @@ class ErroImportacaoCotacoes(ValueError):
     pass
 
 _ORIGENS = {
-    "CEPEA": ("CEPEA_COTACOES_MANUAIS", {"cepea.esalq.usp.br", "www.cepea.esalq.usp.br"}),
-    "IMEA": ("IMEA_COTACOES_MANUAIS", {"imea.com.br", "www.imea.com.br"}),
+    "CEPEA": ("CEPEA_FISICO", {"cepea.esalq.usp.br", "www.cepea.esalq.usp.br"}),
+    "IMEA": ("IMEA_FISICO", {"imea.com.br", "www.imea.com.br"}),
 }
 _CAMPOS = ("serie_id", "produto", "localidade", "competencia", "referencia", "preco", "unidade")
 _UNIDADES = {"BRL/SC60KG", "BRL/ARROBA", "BRL/L", "BRL/T", "USD/SC60KG"}

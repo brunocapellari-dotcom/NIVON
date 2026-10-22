@@ -962,6 +962,14 @@
       "access": "PUBLIC_REST_JSON_STAT_NO_KEY",
       "rights": "ATTRIBUTION_REVIEW",
       "notes": "API gratuita; disponibiliza versão mais recente, não vintages históricos. Dataset derivado tag00100 de apro_cpsh1, área oleaginosas em milhares de hectares."
+    },
+    {
+      "id": "CEMADEN",
+      "provider": "CEMADEN / Plataforma de Entrega de Dados",
+      "official_url": "https://sws.cemaden.gov.br/",
+      "access": "AUTHENTICATED_API",
+      "rights": "RESTRICTED",
+      "notes": "Swagger publico, dados apenas com JWT autorizado; sem credencial no NIVON."
     }
   ],
   "datasets": [
@@ -1651,8 +1659,8 @@
       "cadence": "DAILY",
       "stage": "BLOCKED_RIGHTS",
       "priority": "P0",
-      "existing_module": null,
-      "notes": "",
+      "existing_module": "importacao_cotacoes_autorizadas.py",
+      "notes": "Importador CSV OFFLINE supervisionado com armazenamento somente em quarentena; não comprova API nem direitos.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
@@ -2487,8 +2495,8 @@
       "cadence": "DAILY",
       "stage": "BLOCKED_RIGHTS",
       "priority": "P0",
-      "existing_module": null,
-      "notes": "",
+      "existing_module": "importacao_cotacoes_autorizadas.py",
+      "notes": "Importador CSV OFFLINE supervisionado com armazenamento somente em quarentena; não comprova API nem direitos.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
@@ -6106,6 +6114,89 @@
       ],
       "downstream_contract": "OBSERVACAO_CANONICA_V1",
       "notes": "Apenas catálogo de versões de arquivos oficiais, sem ingesta do ZIP. FAOSTAT QCL REST legacy demorou mais que 20s na validação e fica contingenciado por esta rota."
+    },
+    {
+      "id": "INMET_CATALOGO_ESTACOES",
+      "source_id": "INMET",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "LOGISTICA"
+      ],
+      "topic": "inventario_metadados_estacoes_sem_leituras_meteorologicas",
+      "mode": "OFFICIAL_API",
+      "cadence": "IRREGULAR",
+      "stage": "CODE_PRESENT",
+      "priority": "P1",
+      "existing_module": "inmet_estacoes_publicas.py",
+      "notes": "Metadado de estação, não leitura horária nem acesso BDMEP privado.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "CPTEC_PREVISAO_CIDADE",
+      "source_id": "CPTEC",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "LOGISTICA"
+      ],
+      "topic": "previsao_diaria_cptec_via_brasilapi_codigo_proprio",
+      "mode": "AGGREGATOR_API",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P1",
+      "existing_module": "cptec_previsao_brasilapi.py",
+      "notes": "BrasilAPI é agregador; código CPTEC diferente de IBGE, dado PROJETADO e até 6 dias.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "CEMADEN_CHUVA_ACUMULADA_RECENTE",
+      "source_id": "CEMADEN",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "LOGISTICA"
+      ],
+      "topic": "acumulados_recentres_pluviometricos_por_municipio_com_jwt",
+      "mode": "AUTHENTICATED_API",
+      "cadence": "INTRADAY",
+      "stage": "BLOCKED_RIGHTS",
+      "priority": "P1",
+      "existing_module": "cemaden_ped.py",
+      "notes": "Exige token legítimo, fuso bruto e validação independente de estações e observação.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
     }
   ]
 }
