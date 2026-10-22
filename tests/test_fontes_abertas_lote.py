@@ -98,7 +98,7 @@ class FontesAbertasTest(unittest.TestCase):
         self.assertFalse(dados["homologado"])
 
     def test_stac_sem_assets(self):
-        o = normalizar(payload({"collections": [{"id": "sentinel-2-l2a"}]}),
+        o = normalizar(payload({"id": "sentinel-2-l2a", "type": "Collection", "license": "other"}),
                        fonte="COPERNICUS_STAC_CATALOG", coletado_em=T)
         self.assertEqual(o["colecoes"], ["sentinel-2-l2a"])
         self.assertFalse(o["persistido"])
