@@ -5,7 +5,7 @@ CAMPOS=("estoque_inicial","producao","importacao","suprimento",
         "consumo","exportacao","demanda_total","estoque_final")
 
 def decimal_opcional(v):
-    if v is None or v == "":
+    if v is None or v == "" or (isinstance(v, float) and v != v):
         return None
     if isinstance(v,bool):
         raise ValueError("Booleano no balanço")
