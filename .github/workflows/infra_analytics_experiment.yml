@@ -1,0 +1,154 @@
+# NIVON: imagem analítica ESTRITAMENTE EXPERIMENTAL; rede SOMENTE para rodas PyPI.
+name: NIVON analytical image CVE and synthetic probe
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/infra_analytics_experiment.yml'
+      - 'infra/docker/Dockerfile.analytics-experiment'
+      - '.dockerignore'
+      - 'src/nivon/infra_analytics_probe.py'
+      - 'src/nivon/infra_analytics_audit.py'
+      - 'tests/test_infra_analytics_experiment.py'
+      - 'pyproject.toml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-analytics-experiment-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  offline-analytics-and-cve:
+    if: github.event.repository.private == false
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {runner: ubuntu-latest, arch: amd64, platform: linux/amd64, trivy_tar: trivy_0.76.0_Linux-64bit.tar.gz, trivy_sha: e24b1c51293c1b15e4ba8d45bbc7891ba053f90278ec2698f3562c993e145fe7}
+          - {runner: ubuntu-24.04-arm, arch: arm64, platform: linux/arm64, trivy_tar: trivy_0.76.0_Linux-ARM64.tar.gz, trivy_sha: aab21e677a7b7071fc79f1711480840754c18a1b9d9cefa7ccd06af63a0e8f4c}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 28
+    steps:
+      - name: Checkout sem token persistente
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Python 3.11 para contratos
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Conferir arquitetura Docker e contratos antes de download
+        shell: bash
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          PYTHONPATH=src python -m unittest discover -s tests -p test_infra_analytics_experiment.py -v
+          docker_arch="$(docker info --format '{{.Architecture}}')"
+          case "$docker_arch" in
+            x86_64) docker_arch=amd64 ;;
+            aarch64) docker_arch=arm64 ;;
+          esac
+          test "$docker_arch" = "$ARCH"
+      - name: Preparar wheelhouse privado e baixar APENAS wheels do PyPI
+        shell: bash
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -euo pipefail
+          umask 077
+          docker pull --platform "$PLATFORM" \
+            python:3.11-slim-trixie@sha256:cce12316475d7d56d605f76e1d811d0dc4e7227f2d4afd29951521264f504ff8
+          mkdir -p "$RUNNER_TEMP/nivon-analytics-wheels"
+          sudo chown 65532:65532 "$RUNNER_TEMP/nivon-analytics-wheels"
+          docker run --rm --platform "$PLATFORM" --network bridge --read-only \
+            --cap-drop ALL --security-opt no-new-privileges:true --user 65532:65532 \
+            --pids-limit 128 --memory 2g --cpus 1 \
+            --tmpfs /tmp:rw,nosuid,nodev,size=256m,uid=65532,gid=65532 \
+            -e PIP_CONFIG_FILE=/dev/null -e PIP_EXTRA_INDEX_URL= \
+            --mount "type=bind,source=$RUNNER_TEMP/nivon-analytics-wheels,target=/wheelhouse" \
+            --entrypoint python python:3.11-slim-trixie@sha256:cce12316475d7d56d605f76e1d811d0dc4e7227f2d4afd29951521264f504ff8 \
+            -m pip download --only-binary=:all: --no-cache-dir --no-input \
+            --index-url https://pypi.org/simple --dest /wheelhouse \
+            "agrobr==2.0.0" "pandas>=2.2,<3" "statsforecast>=2,<3" \
+            > /dev/null 2>&1 || { echo "::error::WHEEL_DOWNLOAD_FAILED"; exit 1; }
+          test "$(find "$RUNNER_TEMP/nivon-analytics-wheels" -maxdepth 1 -type f -name '*.whl' | wc -l)" -gt 10
+          ( cd "$RUNNER_TEMP/nivon-analytics-wheels" && sha256sum ./*.whl > "$RUNNER_TEMP/nivon-analytics-wheels.sha256" )
+          ( cd "$RUNNER_TEMP/nivon-analytics-wheels" && sha256sum -c "$RUNNER_TEMP/nivon-analytics-wheels.sha256" > /dev/null )
+          echo "NIVON_WHEELS_SHA256_VERIFIED_PRIVATE"
+      - name: Build analítico com wheelhouse externo e SEM rede
+        shell: bash
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          DOCKER_BUILDKIT=1 docker build --network=none --platform "$PLATFORM" \
+            --build-context "wheelhouse=$RUNNER_TEMP/nivon-analytics-wheels" \
+            -f infra/docker/Dockerfile.analytics-experiment \
+            -t nivon-analytics:ci . > /dev/null
+          docker build --network=none --platform "$PLATFORM" \
+            -f infra/docker/Dockerfile.worker -t nivon-analytics:baseline . > /dev/null
+          test "$(docker image inspect nivon-analytics:ci --format '{{.Architecture}}')" = "$ARCH"
+          test "$(docker image inspect nivon-analytics:baseline --format '{{.Architecture}}')" = "$ARCH"
+      - name: Testar importações e forecast REAL com série sintética em rede zero
+        shell: bash
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -euo pipefail
+          docker run --rm --platform "$PLATFORM" --network none --read-only \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            --user 65532:65532 --pids-limit 96 --memory 1024m --cpus 1.0 \
+            --tmpfs /tmp:rw,nosuid,nodev,size=192m,uid=65532,gid=65532 \
+            -e NUMBA_CACHE_DIR=/tmp/numba -e NUMBA_NUM_THREADS=1 \
+            -e OPENBLAS_NUM_THREADS=1 -e OMP_NUM_THREADS=1 \
+            -e NIVON_RUNTIME_ENABLED=false -e NIVON_COLLECTORS_ENABLED=false \
+            -e NIVON_BACKUP_ENABLED=false -e NIVON_PUBLICATION_ENABLED=false \
+            nivon-analytics:ci --offline-synthetic
+          docker run --rm --platform "$PLATFORM" --network none --read-only \
+            --cap-drop ALL --security-opt no-new-privileges:true --user 65532:65532 \
+            --entrypoint python nivon-analytics:ci \
+            -m nivon.infra_worker --mode self-check
+      - name: Instalar Trivy com SHA256 pinado
+        shell: bash
+        env:
+          TRIVY_TAR: ${{ matrix.trivy_tar }}
+          TRIVY_SHA: ${{ matrix.trivy_sha }}
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p "$RUNNER_TEMP/trivy-tool"
+          curl -fsSL --retry 2 --connect-timeout 10 --max-time 180 \
+            "https://github.com/aquasecurity/trivy/releases/download/v0.76.0/$TRIVY_TAR" \
+            -o "$RUNNER_TEMP/$TRIVY_TAR"
+          printf '%s  %s\n' "$TRIVY_SHA" "$RUNNER_TEMP/$TRIVY_TAR" | sha256sum -c
+          tar -xzf "$RUNNER_TEMP/$TRIVY_TAR" -C "$RUNNER_TEMP/trivy-tool" trivy
+          chmod 0700 "$RUNNER_TEMP/trivy-tool/trivy"
+          printf '%s\n' "$RUNNER_TEMP/trivy-tool" >> "$GITHUB_PATH"
+      - name: Scanner baseline versus candidato e SBOM completo sem upload
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          trivy image --quiet --scanners vuln --format json \
+            --output "$RUNNER_TEMP/analytics-baseline.json" nivon-analytics:baseline
+          trivy image --quiet --scanners vuln --format json \
+            --output "$RUNNER_TEMP/analytics-candidate.json" nivon-analytics:ci
+          trivy image --quiet --format cyclonedx \
+            --output "$RUNNER_TEMP/analytics-bom.json" nivon-analytics:ci
+      - name: Emitir somente resumo de segurança (NÃO libera produção)
+        shell: bash
+        env:
+          PYTHONPATH: src
+          ARCH: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          python -m nivon.infra_analytics_audit \
+            --baseline "$RUNNER_TEMP/analytics-baseline.json" \
+            --candidate "$RUNNER_TEMP/analytics-candidate.json" \
+            --sbom "$RUNNER_TEMP/analytics-bom.json" --arch "$ARCH"
+          echo "NIVON_ANALYTICS_EXPERIMENT_ONLY_NO_DEPLOY"
