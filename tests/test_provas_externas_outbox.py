@@ -135,6 +135,21 @@ class TestCincoProvasIndependentes(unittest.TestCase):
         self.assertEqual(self.f.con.execute(
             "SELECT count(*) FROM nivon_autorizacoes").fetchone()[0], 0)
 
+    def test_base_legada_sem_digest_das_provas_nao_despacha(self):
+        self.f.con.execute("DELETE FROM nivon_provas_externas")
+        self.f.con.commit()
+        self._nao_despacha()
+
+    def test_comprovante_de_outra_edicao_mesmo_reassinado_nao_vale(self):
+        self.f.comprovantes[0]["edicao"] = "2026-10-21"
+        self._assinar(0)
+        self._nao_despacha()
+
+    def test_comprovante_sem_emissor_confiavel_nao_vale(self):
+        emissor = self.f.comprovantes[0]["emissor_id"]
+        del self.f.emissores[emissor]
+        self._nao_despacha()
+
     def test_persistir_so_hash_sem_comprovantes_brutos(self):
         conteudo = self.f.path.read_bytes()
         self.assertNotIn(b"EMISSOR_REVISAO_EDITORIAL_SINTETICO", conteudo)
