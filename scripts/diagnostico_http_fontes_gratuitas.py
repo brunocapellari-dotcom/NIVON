@@ -46,7 +46,10 @@ def main(argv=None):
             out = operation()
             good += 1
             result = {"fonte_id": name, "estado": "HTTP_OK_PARSER_OK_SEM_HOMOLOGACAO",
-                      "sha256": out.get("sha256_original"),
+                      "sha256_full": out.get("sha256_original"),
+                      "sha256_prefixo": out.get("sha256_prefixo"),
+                      "colunas_amostra": out.get("colunas"),
+                      "arquivo_completo": out.get("arquivo_completo"),
                       "registros": out.get("registros_recebidos", out.get(
                           "linhas", out.get("linhas_amostra_completas", out.get("linhas_amostra", out.get("total_recursos"))))),
                       "duracao_segundos": round(monotonic() - start, 2),
