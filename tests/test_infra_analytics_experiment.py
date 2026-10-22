@@ -68,11 +68,14 @@ class TestAnalyticsExperiment(unittest.TestCase):
         workflow=(ROOT / ".github/workflows/infra_analytics_experiment.yml").read_text(encoding="utf-8")
         for signal in ("ubuntu-24.04-arm", "ubuntu-latest", "pypi.org/simple",
                        "wheelhouse=", "--network=none", "--network none",
-                       "--only-binary=:all:", "--no-index", "persist-credentials: false",
+                       "--only-binary=:all:", "persist-credentials: false",
                        "sha256sum -c", "--format cyclonedx", "infra_analytics_audit",
-                       "infra_analytics_probe", "--offline-synthetic", "--cap-drop ALL",
+                       "--offline-synthetic", "--cap-drop ALL",
                        "--read-only", "docker image inspect", "NUMBA_NUM_THREADS=1"):
             self.assertIn(signal, workflow)
+        docker=(ROOT / "infra/docker/Dockerfile.analytics-experiment").read_text(encoding="utf-8")
+        self.assertIn("--no-index", docker)
+        self.assertIn("ENTRYPOINT [\"python\", \"-m\", \"nivon.infra_analytics_probe\"]", docker)
         for forbidden in ("docker push", "docker login", "upload-artifact@",
                           "secrets.", "pull_request_target:", "continue-on-error: true"):
             self.assertNotIn(forbidden, workflow)
