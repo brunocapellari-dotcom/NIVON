@@ -41,6 +41,7 @@ jobs:
           from datetime import datetime, timezone
           from nivon.conab_safras import checar_meta
           from nivon.conab_balanco import normalizar_balanco
+          from nivon.conab_historico import normalizar_historico
 
           async def main():
               edicoes=await edicoes_atuais(conab,limite=2)
@@ -93,6 +94,24 @@ jobs:
                                     'levantamento':ultima['levantamento'],'linhas':saved['received'],
                                     'inseridos':saved['inserted'],'duplicados':saved['duplicates'],
                                     'alertas':sum(len(v['alertas']) for v in validos)},ensure_ascii=False))
+              for produto in ('soja','milho'):
+                  historico,meta=await conab.serie_historica(
+                      produto,ano_inicio=2022,ano_fim=2025,uf='MT',return_meta=True)
+                  linhas=normalizar_historico(
+                      historico.to_dict(orient='records'),meta,produto,inicio=2022,fim=2025)
+                  if len(linhas)!=4 or any(r['safra'][:4] not in ('2022','2023','2024','2025') for r in linhas):
+                      raise SystemExit('CONAB_HISTORICO_INCOMPLETO_'+produto)
+                  payload={'source':'CONAB','rows':linhas}
+                  url=os.environ['NIVON_CONAB_INGEST_URL'].removesuffix('/ingest')+'/ingest-historico'
+                  req=Request(url,data=json.dumps(payload,default=str,ensure_ascii=False).encode('utf-8'),
+                              headers={'Authorization':'Bearer '+jwt,'Content-Type':'application/json'},method='POST')
+                  with urlopen(req,timeout=40) as resp:
+                      saved=json.load(resp)
+                  if saved.get('status')!='OK' or saved.get('received')!=len(linhas):
+                      raise SystemExit('CONAB_HISTORICO_NAO_PERSISTIDO_'+produto)
+                  print(json.dumps({'historico':produto,'linhas':saved['received'],
+                      'inseridos':saved['inserted'],'duplicados':saved['duplicates'],
+                      'periodo':'2022-2025'},ensure_ascii=False))
               print(json.dumps(resumo,ensure_ascii=False))
           asyncio.run(main())
           PY
