@@ -34,7 +34,7 @@ class TestZarcRange(unittest.TestCase):
         cli=Opener(resp)
         out=consultar_tamanho(executar=True,abridor=cli)
         self.assertEqual(out["total_bytes_comprovado"],170000001)
-        self.assertEqual(out["maior_que_limite_160mb"], 170000001 > MAX_DOWNLOAD)
+        self.assertEqual(out["maior_que_limite_atual"], 170000001 > MAX_DOWNLOAD)
         self.assertEqual(cli.calls,1)
         self.assertEqual(resp.lidos,[1])
         self.assertFalse(out["arquivo_integral_baixado"])
@@ -47,7 +47,7 @@ class TestZarcRange(unittest.TestCase):
         out=interpretar_resposta(url=URL,status=200,mime="text/csv",
                       content_range=None,content_length=None,primeiro_byte=b"N")
         self.assertIsNone(out["total_bytes_comprovado"])
-        self.assertIsNone(out["maior_que_limite_160mb"])
+        self.assertIsNone(out["maior_que_limite_atual"])
     def test_rejeitar_range_status_host_mime(self):
         bad=[
             (URL,206,"text/csv","bytes 100-100/170000000",None,b"N"),
