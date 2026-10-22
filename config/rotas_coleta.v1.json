@@ -4022,25 +4022,25 @@
         "url": "https://dados.agricultura.gov.br/dataset/6d3d141c-885e-41a4-ab7f-dc8ff323b96f/resource/139e5a60-1f43-4cc8-aeab-a35dbbf816c0/download/dados-abertos-tabua-de-risco-safra-2026-2027.csv",
         "source_proof": "https://dados.agricultura.gov.br/dataset/tabua-de-risco-zoneamento-agricola-de-risco-climatico/resource/139e5a60-1f43-4cc8-aeab-a35dbbf816c0"
       },
-      "implementation_scope": "CSV_PREFIXO_512K_ONLY_REAL_HTTP_SCHEMA_NUMERICO_NAO_HOMOLOGADO",
+      "implementation_scope": "FULL_CSV_2026_2027_211652014_BYTES_REAL_STRUCTURAL_TEST_ONLY_NO_PERSISTENCE",
       "authentication": "NONE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "STREAM_FULL_QC_AGRONOMICO_DIREITOS_PERSISTENCIA",
+      "primary_blocker": "QC_AGRONOMICO_VINTAGES_DIREITOS_PERSISTENCIA",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
-        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
         "HISTORICAL_BACKFILL",
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
-        "LICENSED_PUBLICATION_GATE"
+        "LICENSED_PUBLICATION_GATE",
+        "REAL_SAMPLE_SCHEMA_STRUCTURAL_OK_BUT_AGRONOMIC_QC_PENDING"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "CC Atribuição declarada no portal oficial. Prefixo real 512KiB, 2.262 linhas; não inferir quantidade total nem risco de plantio sem schema e versionamento completos.",
-      "preliminary_evidence": "HTTP_REAL_PREFIXO_SUCESSO_ACTIONS_39717080539"
+      "source_note": "CC Atribuição no catálogo oficial; leitura integral real de 957490 linhas (MT 27918) comprovada em run 39854814268. Dados dec1..36 NÃO são inferidos como porcentagem de risco; Cod_Munic SICOR != geocodigo IBGE. Arquivo sazonal sujeito a revisões sem data de publicação provada por snapshot.",
+      "preliminary_evidence": "HTTP_REAL_FULL_CSV_39854814268_SHA256_65f52578a4869894311888323d87db75a5452829a3dabef90786f3f14b02d652"
     },
     {
       "dataset_id": "NOAA_ENSO_RONI",
