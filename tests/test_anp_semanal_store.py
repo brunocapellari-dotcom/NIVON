@@ -9,6 +9,9 @@ from copy import deepcopy
 from nivon.anp_atestacoes import DOMAIN_PREFIX, ErroAtestacaoANP
 from nivon.anp_semanal_store import _observacoes, _tempo
 from nivon.anp_indice_lpc import URL_INDICE
+from nivon.anp_revogacoes_frescor import (
+    estado_revogacoes_local, receber_checkpoint_revogacoes,
+)
 
 from nivon.anp_semanal_store import (
     ErroANPOficial, consultar_preco_semanal,
@@ -57,6 +60,38 @@ def assinar_autorizacao(r, pub, rights_sha="c"*64, indice_sha="9"*64):
 def indice_real(r, coleta="2026-10-20T14:00:00+00:00"):
     return dict(sha256="9"*64, coletado_em=coleta,
                 indice_url=URL_INDICE, url_no_indice=r["url_origem"])
+
+
+def checkpoint_ficticio(
+    db, *, seq=1, cobertura="2026-10-20T16:00:00+00:00",
+    emitido="2026-10-20T16:01:00+00:00",
+    recebido="2026-10-20T16:02:00+00:00",
+    valido="2026-10-20T20:01:00+00:00",
+):
+    """Chaves FALSAS e feed sintético; nunca são atestações reais."""
+    trust = {
+        "chave": b"fixture-checkpoint-feed-000000000000000001",
+        "emissor": "synthetic-ANP-revocations-feed",
+    }
+    document = dict(
+        versao=1, escopo="ANP_LPC_REVOGACOES",
+        emissor_id=trust["emissor"], sequencia=seq,
+        cobertura_ate=cobertura, emitido_em=emitido, valido_ate=valido,
+        **estado_revogacoes_local(db, ate=cobertura),
+    )
+    payload = json.dumps(
+        document, sort_keys=True, separators=(",", ":"),
+        ensure_ascii=True, allow_nan=False,
+    ).encode()
+    document["assinatura_hmac_sha256"] = hmac.new(
+        trust["chave"], b"NIVON_ANP_LPC_REVOGACOES_CHECKPOINT_V1\\x00".replace(
+            b"\\\\x00", bytes([0])
+        ) + payload, sha256,
+    ).hexdigest()
+    return receber_checkpoint_revogacoes(
+        db, checkpoint=document, autoridade=trust,
+        recebido_em_confiavel=recebido,
+    )
 
 
 def resumo(sha="a"*64, preco=5.85, semana="2026-10-17",
@@ -294,6 +329,7 @@ class TestANPSemanalStore(unittest.TestCase):
     def test_publicacao_e_coleta_independentes_no_asof(self):
         self.grava(classe="REAL_AUTORIZADO", direitos_confirmados=True,
                    prova_direitos_sha="c"*64)
+        checkpoint_ficticio(self.db)
         self.assertEqual(self.consulta(
             as_of="2026-10-18T20:00:00+00:00")["status"], "SEM_EDICAO_REAL_ASOF")
         self.assertEqual(self.consulta(
@@ -309,6 +345,7 @@ class TestANPSemanalStore(unittest.TestCase):
     def test_revisao_entre_edicoes_nao_substitui_preco_implicitamente(self):
         self.grava(classe="REAL_AUTORIZADO", direitos_confirmados=True,
                    prova_direitos_sha="c"*64)
+        checkpoint_ficticio(self.db)
         novo = resumo(sha="d"*64, preco=5.90)
         novo["coletado_em"] = "2026-10-20T18:00:00+00:00"
         self.grava(r=novo, classe="REAL_AUTORIZADO", direitos_confirmados=True,
