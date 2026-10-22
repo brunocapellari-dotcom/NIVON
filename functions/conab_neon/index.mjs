@@ -99,8 +99,20 @@ export default {
  async fetch(req){
    const path=new URL(req.url).pathname;
    if(req.method==='GET'&&path==='/health')return Response.json({service:'NIVON-CONAB',status:'DEPLOYED'});
-   if(req.method!=='POST'||path!=='/ingest')return error(404,'NOT_FOUND');
+   if(req.method!=='POST'||!['/ingest','/ingest-balanco'].includes(path))return error(404,'NOT_FOUND');
    let claims;try{claims=await authenticate(req)}catch(e){return error(401,'OIDC_REJECTED')}
+   if(path==='/ingest-balanco'){
+     let balancos;
+     try{
+       const txt=await req.text();
+       if(txt.length>40000)throw new Error('BALANCE_SIZE');
+       const body=JSON.parse(txt);
+       if(body.source!=='CONAB'||!Array.isArray(body.rows)||body.rows.length<1||body.rows.length>10)throw new Error('BALANCE_PAYLOAD');
+       balancos=body.rows.map(row=>validateBalance(body.publicacao,row,body.data_coleta));
+     }catch(e){return error(422,'BAD_BALANCE_PAYLOAD')}
+     try{return Response.json(await storeBalance(balancos,claims))}
+     catch(e){console.error('conab-balance-error',String(e?.code||e?.message||'UNKNOWN').slice(0,50));return error(503,'BALANCE_PERSISTENCE_ERROR')}
+   }
    let rows;try{
      const t=await req.text();
      if(t.length>18000)throw new Error('SIZE');
