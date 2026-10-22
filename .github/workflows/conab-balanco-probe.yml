@@ -1,0 +1,21 @@
+name: NIVON CONAB - balanco oferta demanda
+on:
+  push:
+    paths:
+      - '.github/workflows/conab-balanco-probe.yml'
+      - 'nivon/conab_balanco_probe.py'
+      - 'nivon/conab_balanco.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install --disable-pip-version-check agrobr==2.0.0
+      - run: python -m nivon.conab_balanco_probe

@@ -1,0 +1,42 @@
+name: NIVON - CONAB fonte oficial (piloto)
+on:
+  push:
+    paths:
+      - 'nivon/conab_safras.py'
+      - 'tests/test_conab_safras.py'
+      - '.github/workflows/conab-safras-diagnostico.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validar-contrato:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m unittest discover -s tests -p 'test_conab_safras.py' -v
+  consulta-real:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Instalar agrobr para diagnostico pontual
+        run: pip install --disable-pip-version-check agrobr==2.0.0
+      - name: Consultar primeira estimativa 2026/27 MT (soja)
+        run: |
+          python - <<'PY'
+          import asyncio, json
+          from nivon.conab_safras import diagnostico_safra
+          async def main():
+              result=await diagnostico_safra("soja","2026/27","MT",1)
+              print(json.dumps(result,ensure_ascii=False,default=str))
+              if result["status"] != "DADOS_VALIDOS_EM_MEMORIA" or result["quantidade_validas"] < 1:
+                  raise SystemExit("CONAB nao homologada: sem linhas validas em memoria")
+          asyncio.run(main())
+          PY

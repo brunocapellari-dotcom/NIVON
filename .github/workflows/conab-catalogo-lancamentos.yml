@@ -1,0 +1,32 @@
+name: NIVON CONAB - diagnostico catalogo de publicacoes
+on:
+  push:
+    paths:
+      - '.github/workflows/conab-catalogo-lancamentos.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  catalogo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install --disable-pip-version-check agrobr==2.0.0
+      - name: Inspecionar metadados oficiais de edicoes sem copiar dados brutos
+        run: |
+          python - <<'PY'
+          import asyncio, json
+          from agrobr import conab
+          async def main():
+              rows=await conab.levantamentos()
+              print("CONAB_CATALOG_COUNT",len(rows))
+              for row in rows[:12]:
+                  print("CONAB_CATALOG_ROW",json.dumps(row,ensure_ascii=False,default=str)[:800])
+              if not rows:
+                  raise SystemExit("CONAB_PUBLICATION_CATALOG_EMPTY")
+          asyncio.run(main())
+          PY

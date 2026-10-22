@@ -1,0 +1,119 @@
+name: NIVON - CONAB ingesta autenticada no Neon
+on:
+  push:
+    paths:
+      - '.github/workflows/conab-neon-ingest.yml'
+      - 'nivon/conab_publicacoes.py'
+      - 'nivon/conab_job.py'
+      - 'tests/test_conab_publicacoes.py'
+  workflow_dispatch:
+  schedule:
+    # Quarta 12:00 UTC. So roda automaticamente apos merge na branch padrao.
+    - cron: '0 12 * * 3'
+# Banco privado: segunda passagem audita idempotencia de safras, balancos e historico 2010-2025.
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: nivon-conab-ingest
+  cancel-in-progress: false
+jobs:
+  conab-neon:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Instalar biblioteca para coleta primaria oficial
+        run: pip install --disable-pip-version-check agrobr==2.0.0
+      - name: Consultar CONAB, verificar origem, autenticar e gravar
+        env:
+          NIVON_CONAB_INGEST_URL: https://br-twilight-cell-b77ukd6x-conabingest.compute.c-13.us-east-1.aws.neon.tech/ingest
+        run: |
+          python - <<'PY'
+          import asyncio, json, os
+          from urllib.request import Request,urlopen
+          from urllib.parse import quote
+          from agrobr import conab
+          from nivon.conab_job import edicoes_atuais, registros_publicacao
+          from datetime import datetime, timezone
+          from nivon.conab_safras import checar_meta
+          from nivon.conab_balanco import normalizar_balanco
+          from nivon.conab_historico import normalizar_historico
+
+          async def main():
+              edicoes=await edicoes_atuais(conab,limite=2)
+              audience='urn:nivon:conab:ingest'
+              token_url=os.environ['ACTIONS_ID_TOKEN_REQUEST_URL']+'&audience='+quote(audience,safe='')
+              token_req=Request(token_url,headers={'Authorization':'Bearer '+os.environ['ACTIONS_ID_TOKEN_REQUEST_TOKEN']})
+              with urlopen(token_req,timeout=15) as resp:
+                  jwt=json.load(resp)['value']
+              resumo={'edicoes':0,'inseridos':0,'duplicados':0}
+              for edicao in edicoes:
+                  records=await registros_publicacao(conab,edicao)
+                  data=json.dumps({'rows':records},default=str,ensure_ascii=False).encode('utf-8')
+                  req=Request(os.environ['NIVON_CONAB_INGEST_URL'],data=data,
+                              headers={'Authorization':'Bearer '+jwt,'Content-Type':'application/json'},
+                              method='POST')
+                  with urlopen(req,timeout=35) as resp:
+                      out=json.load(resp)
+                  if out.get('status')!='OK' or out.get('received')!=2:
+                      raise SystemExit('CONAB_NEON_INGEST_NOT_CONFIRMED')
+                  resumo['edicoes']+=1
+                  resumo['inseridos']+=out['inserted']
+                  resumo['duplicados']+=out['duplicates']
+                  print(json.dumps({'safra':edicao['safra'],'levantamento':edicao['levantamento'],
+                      'publicacao':edicao['data_publicacao'],'status':out['status'],
+                      'received':out['received'],'inserted':out['inserted'],
+                      'duplicates':out['duplicates']},ensure_ascii=False))
+              ultima=edicoes[0]
+              for produto in ('soja','milho'):
+                  df,meta=await conab.balanco(produto,safra=ultima['safra'],
+                                              levantamento=ultima['levantamento'],return_meta=True)
+                  origem=checar_meta(meta)
+                  pub=(origem.get('source_details') or {}).get('publicacao')
+                  if not isinstance(pub,dict) or any(str(pub.get(k))!=str(ultima[k]) for k in ('safra','levantamento','data_publicacao','url')):
+                      raise SystemExit('CONAB_BALANCO_PUBLICACAO_DIVERGENTE')
+                  validos=normalizar_balanco(df.to_dict(orient='records'),'conab',pub)
+                  if not validos or any(v['produto']!=produto for v in validos):
+                      raise SystemExit('CONAB_BALANCO_NAO_HOMOLOGADO')
+                  payload={'source':'CONAB','publicacao':pub,
+                           'data_coleta':datetime.now(timezone.utc).isoformat(),
+                           'rows':validos}
+                  url=os.environ['NIVON_CONAB_INGEST_URL'].removesuffix('/ingest')+'/ingest-balanco'
+                  req=Request(url,data=json.dumps(payload,default=str,ensure_ascii=False).encode('utf-8'),
+                              headers={'Authorization':'Bearer '+jwt,'Content-Type':'application/json'},
+                              method='POST')
+                  with urlopen(req,timeout=35) as resp:
+                      saved=json.load(resp)
+                  if saved.get('status')!='OK' or saved.get('received')!=len(validos):
+                      raise SystemExit('CONAB_BALANCO_NAO_PERSISTIDO')
+                  print(json.dumps({'balanco':produto,'safra_publicacao':ultima['safra'],
+                                    'levantamento':ultima['levantamento'],'linhas':saved['received'],
+                                    'inseridos':saved['inserted'],'duplicados':saved['duplicates'],
+                                    'alertas':sum(len(v['alertas']) for v in validos)},ensure_ascii=False))
+              for produto in ('soja','milho'):
+                  for inicio,fim in ((2010,2021),(2022,2025)):
+                      historico,meta=await conab.serie_historica(
+                          produto,ano_inicio=inicio,ano_fim=fim,uf='MT',return_meta=True)
+                      linhas=normalizar_historico(
+                          historico.to_dict(orient='records'),meta,produto,
+                          inicio=inicio,fim=fim)
+                      if len(linhas)!=(fim-inicio+1):
+                          raise SystemExit('CONAB_HISTORICO_INCOMPLETO_'+produto)
+                      payload={'source':'CONAB','rows':linhas}
+                      url=os.environ['NIVON_CONAB_INGEST_URL'].removesuffix('/ingest')+'/ingest-historico'
+                      req=Request(url,data=json.dumps(payload,default=str,ensure_ascii=False).encode('utf-8'),
+                                  headers={'Authorization':'Bearer '+jwt,'Content-Type':'application/json'},method='POST')
+                      with urlopen(req,timeout=40) as resp:
+                          saved=json.load(resp)
+                      if saved.get('status')!='OK' or saved.get('received')!=len(linhas):
+                          raise SystemExit('CONAB_HISTORICO_NAO_PERSISTIDO_'+produto)
+                      print(json.dumps({'historico':produto,'linhas':saved['received'],
+                          'inseridos':saved['inserted'],'duplicados':saved['duplicates'],
+                          'periodo':str(inicio)+'-'+str(fim)},ensure_ascii=False))
+              print(json.dumps(resumo,ensure_ascii=False))
+          asyncio.run(main())
+          PY

@@ -1,0 +1,20 @@
+name: NIVON CONAB - serie historica oficial
+on:
+  push:
+    paths:
+      - 'nivon/conab_historico_probe.py'
+      - '.github/workflows/conab-historico-probe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  teste:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install --disable-pip-version-check agrobr==2.0.0
+      - run: python -m nivon.conab_historico_probe

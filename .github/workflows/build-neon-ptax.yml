@@ -1,0 +1,43 @@
+name: Neon PTAX - build function
+on:
+  push:
+    paths:
+      - 'functions/ptax_neon/index.mjs'
+      - '.github/workflows/build-neon-ptax.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install pinned build dependencies
+        run: npm install --no-audit --no-fund --no-save pg@8.13.0 esbuild@0.25.0
+      - name: Bundle official PTAX collector for Neon Functions
+        run: |
+          mkdir -p functions/ptax_neon/dist
+          ./node_modules/.bin/esbuild functions/ptax_neon/index.mjs \
+            --bundle --platform=node --target=node24 --format=esm \
+            --legal-comments=inline \
+            --banner:js="import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);" \
+            --outfile=functions/ptax_neon/dist/index.mjs
+          node --check functions/ptax_neon/dist/index.mjs
+          test $(wc -c < functions/ptax_neon/dist/index.mjs) -lt 800000
+      - name: Commit built function to feature branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f functions/ptax_neon/dist/index.mjs
+          if ! git diff --cached --quiet; then
+            git commit -m "build(ptax): publish reviewed Neon function bundle [skip ci]"
+            git push origin HEAD:${{ github.ref_name }}
+          fi

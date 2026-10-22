@@ -1,0 +1,184 @@
+import { Pool } from 'pg';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { createHash } from 'node:crypto';
+const POOL = new Pool({connectionString:process.env.DATABASE_URL,max:2,connectionTimeoutMillis:10000});
+const KEYS=createRemoteJWKSet(new URL('https://token.actions.githubusercontent.com/.well-known/jwks'));
+const REPO='brunocapellari-dotcom/NIVON';
+const REF='refs/heads/feat/catalogo-noticias-agricolas-20261021';
+const WF=REPO+'/.github/workflows/conab-neon-ingest.yml@'+REF;
+const hash=s=>createHash('md5').update(s,'utf8').digest('hex');
+const error=(code,message)=>Response.json({status:message},{status:code});
+function validDate(s){return typeof s==='string' && /^20\d{2}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s+'T00:00:00Z'))}
+function metric(v,name){
+  if(v===null)return null;
+  if(typeof v!=='string'||! /^\d+(?:\.\d+)?$/.test(v)||!Number.isFinite(Number(v))||Number(v)>1e10)throw new Error('INVALID_'+name);
+  return v;
+}
+function validate(o){
+  const m=o?.metric;
+  if(o?.source!=='CONAB'||o?.origin_kind!=='agrobr.conab.safras'||!m||m.fonte!=='CONAB'||!['soja','milho'].includes(m.produto)||m.uf!=='MT')throw new Error('SOURCE');
+  if(!/^20\d{2}\/\d{2}$/.test(m.safra)||m.competencia!==m.safra||!Number.isInteger(m.levantamento)||m.levantamento<1||m.levantamento>12)throw new Error('SCOPE');
+  if(!validDate(m.data_publicacao)||m.data_publicacao>new Date().toISOString().slice(0,10))throw new Error('DATE');
+  if(o.publication_date!==m.data_publicacao||o.publication_safra!==m.safra||Number(o.publication_survey)!==m.levantamento)throw new Error('RELEASE_MISMATCH');
+  if(typeof o.publication_url!=='string'||!o.publication_url.startsWith('https://www.gov.br/conab/')||! /\.xlsx?$/.test(o.publication_url))throw new Error('ORIGIN_URL');
+  if(typeof o.parser_version!=='string'||!o.parser_version.startsWith('agrobr-2.0.0-schema-'))throw new Error('VERSION');
+  if(m.data_referencia!==null||m.area_colhida_mil_ha!==null||m.natureza!=='PROJETADO')throw new Error('SEMANTICS');
+  const a=metric(m.area_plantada_mil_ha,'AREA'),y=metric(m.produtividade_kg_ha,'YIELD'),p=metric(m.producao_mil_t,'PRODUCTION');
+  if(a===null&&y===null&&p===null)throw new Error('NO_METRICS');
+  const stamp=Date.parse(m.data_coleta);
+  if(!Number.isFinite(stamp)||Math.abs(Date.now()-stamp)>86400000)throw new Error('COLLECTION_TIME');
+  return {product:m.produto,uf:'MT',year:m.safra,survey:m.levantamento,published:m.data_publicacao,collected:m.data_coleta,
+    area:a,yieldKg:y,prod:p,url:o.publication_url,parser:o.parser_version,
+    source_key:hash(['CONAB',m.produto,'MT',m.safra,m.levantamento,m.data_publicacao].join('|')),
+    version_hash:hash([a??'',y??'',p??''].join('|'))};
+}
+async function authenticate(req){
+  const header=req.headers.get('authorization')||'';
+  if(!header.startsWith('Bearer ')||header.length>12000)throw new Error('MISSING_TOKEN');
+  const {payload}=await jwtVerify(header.slice(7),KEYS,{issuer:'https://token.actions.githubusercontent.com',audience:'urn:nivon:conab:ingest',clockTolerance:15});
+  const whitelisted=new Set([REF,'refs/heads/main']);
+  const expected=REPO+'/.github/workflows/conab-neon-ingest.yml@'+payload.ref;
+  if(payload.repository!==REPO||!whitelisted.has(payload.ref)||payload.workflow_ref!==expected||!['push','workflow_dispatch','schedule'].includes(payload.event_name))throw new Error('BAD_WORKFLOW');
+  return payload;
+}
+async function store(rows,claims){
+  const c=await POOL.connect();let inserted=0;
+  try{
+    await c.query('BEGIN');
+    for(const r of rows){
+      const q=await c.query("INSERT INTO public.nivon_conab_safras (product,uf,crop_year,survey_number,published_on,reference_date,collected_at,competence,area_mil_ha,yield_kg_ha,production_mil_t,source_name,source_uri,parser_version,epistemic_type,origin_kind,source_key,version_hash,quality_status) VALUES($1,$2,$3,$4,$5,NULL,$6,$3,$7,$8,$9,'CONAB',$10,$11,'PROJETADO','agrobr.conab.safras',$12,$13,'VALIDADO') ON CONFLICT(source_key,version_hash) DO NOTHING RETURNING id",
+        [r.product,r.uf,r.year,r.survey,r.published,r.collected,r.area,r.yieldKg,r.prod,r.url,r.parser,r.source_key,r.version_hash]);
+      inserted+=q.rowCount;
+      await c.query("INSERT INTO public.nivon_conab_ingestions (source_name,dataset,product,uf,crop_year,survey_number,collection_started_at,collection_finished_at,status,rows_received,rows_validated,rows_inserted,source_uri,error_code) VALUES('CONAB','safras',$1,$2,$3,$4,$5,now(),'SUCCESS',1,1,$6,$7,NULL)",[r.product,r.uf,r.year,r.survey,r.collected,q.rowCount,r.url]);
+    }
+    await c.query('COMMIT');
+    return {status:'OK',received:rows.length,inserted,duplicates:rows.length-inserted,run_id:String(claims.run_id||'')};
+  }catch(e){await c.query('ROLLBACK');throw e}finally{c.release()}
+}
+const BALANCE_KEYS=['estoque_inicial','producao','importacao','suprimento','consumo','exportacao','demanda_total','estoque_final'];
+function validateBalance(release,row,stamp){
+  if(!release||typeof release!=='object'||!row||row.fonte!=='CONAB'||!['soja','milho'].includes(row.produto)||row.unidade!=='mil_ton')throw new Error('BALANCE_SOURCE');
+  const uri=release.url;
+  if(typeof uri!=='string'||!uri.startsWith('https://www.gov.br/conab/')||!uri.endsWith('.xlsx'))throw new Error('BALANCE_URL');
+  if(!validDate(release.data_publicacao)||release.data_publicacao>new Date().toISOString().slice(0,10)||!/^20\d{2}\/\d{2}$/.test(release.safra)||!Number.isInteger(release.levantamento)||release.levantamento<1||release.levantamento>12)throw new Error('BALANCE_RELEASE');
+  if(typeof row.safra!=='string'||!/^20\d{2}(?:\/\d{2})?$/.test(row.safra))throw new Error('BALANCE_PERIOD');
+  if(!row.metricas||typeof row.metricas!=='object')throw new Error('BALANCE_METRICS');
+  const vals=BALANCE_KEYS.map(k=>{
+    const v=row.metricas[k];
+    if(v===null)return null;
+    if(typeof v!=='string'||! /^-?\d+(?:\.\d+)?$/.test(v)||!Number.isFinite(Number(v))||Math.abs(Number(v))>1e10)throw new Error('BALANCE_VALUE');
+    return v;
+  });
+  if(vals.every(x=>x===null))throw new Error('BALANCE_EMPTY');
+  if(!Array.isArray(row.alertas)||row.alertas.some(x=>!['SUPRIMENTO','DEMANDA','ESTOQUE_FINAL'].includes(x)))throw new Error('BALANCE_ANOMALY');
+  if(typeof stamp!=='string'||!Number.isFinite(Date.parse(stamp))||Math.abs(Date.now()-Date.parse(stamp))>86400000)throw new Error('BALANCE_COLLECTED');
+  const identity=['CONAB',row.produto,row.safra,release.safra,release.levantamento,release.data_publicacao].join('|');
+  return {product:row.produto,period:row.safra,pub:release,vals,warnings:row.alertas,stamp,
+          source_key:hash(identity),version_hash:hash(vals.map(x=>x??'NULL').join('|'))};
+}
+async function storeBalance(rows,claims){
+  const c=await POOL.connect();let inserted=0;
+  try{
+    await c.query('BEGIN');
+    for(const r of rows){
+      const p=r.pub;
+      const q=await c.query(
+       "INSERT INTO public.nivon_conab_balancos(product,crop_period,publication_crop_year,publication_survey,publication_date,source_url,collected_at,initial_stock_mil_t,production_mil_t,import_mil_t,supply_mil_t,consumption_mil_t,export_mil_t,total_demand_mil_t,final_stock_mil_t,quality_warnings,parser_version,source_key,version_hash) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) ON CONFLICT(source_key,version_hash) DO NOTHING RETURNING id",
+       [r.product,r.period,p.safra,p.levantamento,p.data_publicacao,p.url,r.stamp,...r.vals,r.warnings,'agrobr-2.0.0-balanco-1.1',r.source_key,r.version_hash]
+      );
+      inserted+=q.rowCount;
+    }
+    const p=rows[0].pub;
+    await c.query("INSERT INTO public.nivon_conab_ingestions (dataset,crop_year,survey_number,collection_started_at,collection_finished_at,status,rows_received,rows_validated,rows_inserted,source_uri) VALUES('balanco',$1,$2,$3,now(),'SUCCESS',$4,$4,$5,$6)",[p.safra,p.levantamento,rows[0].stamp,rows.length,inserted,p.url]);
+    await c.query('COMMIT');
+    return {status:'OK',received:rows.length,inserted,duplicates:rows.length-inserted,run_id:String(claims.run_id||'')};
+  }catch(e){await c.query('ROLLBACK');throw e}finally{c.release()}
+}
+
+
+const HIST_KEYS=['area_plantada_mil_ha','area_em_producao_mil_ha','area_formacao_mil_ha','area_colhida_mil_ha','producao_mil_ton','produtividade_kg_ha'];
+const HIST_URL='https://www.conab.gov.br/info-agro/safras/serie-historica-das-safras';
+function validateHistory(row){
+  if(!row||row.fonte!=='CONAB'||row.origin_kind!=='conab_serie_historica'||!['soja','milho'].includes(row.produto)||row.uf!=='MT')throw new Error('HISTORY_PROVENANCE');
+  if(!/^20\d{2}\/\d{2}$/.test(row.safra)||row.competencia!==row.safra)throw new Error('HISTORY_CROP_YEAR');
+  const y=Number(row.safra.slice(0,4)),next=Number(row.safra.slice(5));
+  if(y<2010||y>2025||next!==(y+1)%100)throw new Error('HISTORY_SCOPE');
+  if(row.data_publicacao!==null||row.data_referencia!==null||row.natureza!=='INFORMADO')throw new Error('HISTORY_SEMANTICS');
+  if(row.source_url!==HIST_URL||row.parser_version!=='agrobr-2.0.0-historico-v1')throw new Error('HISTORY_SOURCE_URL');
+  if(!row.metricas||typeof row.metricas!=='object')throw new Error('HISTORY_METRICS');
+  if(row.regiao!==null&&(typeof row.regiao!=='string'||row.regiao.length>100))throw new Error('HISTORY_REGION');
+  const values=HIST_KEYS.map(k=>{
+    const v=row.metricas[k];
+    if(v===null)return null;
+    if(typeof v!=='string'||!/^\d+(?:\.\d+)?$/.test(v)||!Number.isFinite(Number(v))||Number(v)>1e10)throw new Error('HISTORY_INVALID_'+k);
+    return v;
+  });
+  if(values[0]===null&&values[4]===null&&values[5]===null)throw new Error('HISTORY_ALL_MISSING');
+  const ts=Date.parse(row.data_coleta);
+  if(typeof row.data_coleta!=='string'||!Number.isFinite(ts)||Math.abs(Date.now()-ts)>86400000)throw new Error('HISTORY_TIMESTAMP');
+  return {product:row.produto,year:row.safra,region:row.regiao,metrics:values,
+    collected:row.data_coleta,uri:HIST_URL,parser:row.parser_version,
+    source_key:hash(['CONAB_HISTORY',row.produto,'MT',row.safra].join('|')),
+    version_hash:hash([row.regiao??'',...values.map(v=>v??'NULL')].join('|'))};
+}
+async function storeHistory(rows,claims){
+  const c=await POOL.connect();let inserted=0;
+  try {
+    await c.query('BEGIN');
+    for(const r of rows){
+      const q=await c.query(
+        "INSERT INTO public.nivon_conab_series_historicas (product,uf,crop_year,region,area_planted_mil_ha,area_producing_mil_ha,area_formation_mil_ha,area_harvested_mil_ha,production_mil_t,productivity_kg_ha,competence,collected_at,source_uri,parser_version,source_key,version_hash) VALUES ($1,'MT',$2,$3,$4,$5,$6,$7,$8,$9,$2,$10,$11,$12,$13,$14) ON CONFLICT (source_key,version_hash) DO NOTHING RETURNING id",
+        [r.product,r.year,r.region,...r.metrics,r.collected,r.uri,r.parser,r.source_key,r.version_hash]);
+      inserted+=q.rowCount;
+    }
+    await c.query(
+      "INSERT INTO public.nivon_conab_ingestions(dataset,collection_started_at,collection_finished_at,status,rows_received,rows_validated,rows_inserted,source_uri) VALUES('serie_historica',$1,now(),'SUCCESS',$2,$2,$3,$4)",
+      [rows[0].collected,rows.length,inserted,HIST_URL]);
+    await c.query('COMMIT');
+    return {status:'OK',received:rows.length,inserted,duplicates:rows.length-inserted,run_id:String(claims.run_id||'')};
+  }catch(e){await c.query('ROLLBACK');throw e}finally{c.release()}
+}
+
+export default {
+ async fetch(req){
+   const path=new URL(req.url).pathname;
+   if(req.method==='GET'&&path==='/health')return Response.json({service:'NIVON-CONAB',status:'DEPLOYED'});
+   if(req.method!=='POST'||!['/ingest','/ingest-balanco','/ingest-historico'].includes(path))return error(404,'NOT_FOUND');
+   let claims;try{claims=await authenticate(req)}catch(e){return error(401,'OIDC_REJECTED')}
+   if(path==='/ingest-historico'){
+     let records;
+     try{
+       const txt=await req.text();
+       if(txt.length>40000)throw new Error('HISTORY_SIZE');
+       const body=JSON.parse(txt);
+       if(body.source!=='CONAB'||!Array.isArray(body.rows)||body.rows.length<1||body.rows.length>12)throw new Error('HISTORY_PAYLOAD');
+       records=body.rows.map(validateHistory);
+       if(records.some(r=>r.product!==records[0].product))throw new Error('HISTORY_MIXED_PRODUCTS');
+       if(new Set(records.map(r=>r.year)).size!==records.length)throw new Error('HISTORY_DUPLICATE_PERIOD');
+     }catch(e){return error(422,'BAD_HISTORY_PAYLOAD')}
+     try{return Response.json(await storeHistory(records,claims))}
+     catch(e){console.error('conab-history-failure',String(e?.code||e?.message||'UNKNOWN').slice(0,55));return error(503,'HISTORY_PERSISTENCE_ERROR')}
+   }
+   if(path==='/ingest-balanco'){
+     let balancos;
+     try{
+       const txt=await req.text();
+       if(txt.length>40000)throw new Error('BALANCE_SIZE');
+       const body=JSON.parse(txt);
+       if(body.source!=='CONAB'||!Array.isArray(body.rows)||body.rows.length<1||body.rows.length>10)throw new Error('BALANCE_PAYLOAD');
+       balancos=body.rows.map(row=>validateBalance(body.publicacao,row,body.data_coleta));
+     }catch(e){return error(422,'BAD_BALANCE_PAYLOAD')}
+     try{return Response.json(await storeBalance(balancos,claims))}
+     catch(e){console.error('conab-balance-error',String(e?.code||e?.message||'UNKNOWN').slice(0,50));return error(503,'BALANCE_PERSISTENCE_ERROR')}
+   }
+   let rows;try{
+     const t=await req.text();
+     if(t.length>18000)throw new Error('SIZE');
+     const body=JSON.parse(t);
+     if(!Array.isArray(body.rows)||body.rows.length<1||body.rows.length>2)throw new Error('ROWS');
+     rows=body.rows.map(validate);
+   }catch(e){return error(422,'BAD_CONAB_PAYLOAD')}
+   try{return Response.json(await store(rows,claims))}
+   catch(e){console.error('conab-ingest-failure',String(e?.code||e?.message||'UNKNOWN').slice(0,60));return error(503,'PERSISTENCE_ERROR')}
+ }
+};

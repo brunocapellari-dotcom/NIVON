@@ -1,0 +1,35 @@
+name: PTAX - teste real de conectividade
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'nivon/ptax_bcb.py'
+      - 'tests/test_ptax_bcb.py'
+      - '.github/workflows/ptax-integracao.yml'
+permissions:
+  contents: read
+jobs:
+  consulta-oficial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Consultar PTAX oficial e armazenar somente no runner temporário
+        run: python -m nivon.ptax_bcb --banco "$RUNNER_TEMP/nivon-ptax-teste.sqlite3" --moeda AMBAS
+      - name: Conferir persistência e boletins sem publicar cotações
+        run: |
+          python - <<'PY'
+          import os
+          import sqlite3
+          from pathlib import Path
+          db = Path(os.environ["RUNNER_TEMP"]) / "nivon-ptax-teste.sqlite3"
+          with sqlite3.connect(db) as conn:
+              linhas = conn.execute("select moeda, count(*) from ptax_observacoes group by moeda").fetchall()
+              erros = conn.execute("select count(*) from ptax_execucoes where estado <> 'SUCESSO'").fetchone()[0]
+          if erros or sorted(moeda for moeda, n in linhas if n > 0) != ["EUR", "USD"]:
+              raise SystemExit(f"Falha no teste real: moedas={len(linhas)}, execuções sem cotações={erros}")
+          print("PTAX live: USD e EUR obtidos, normalizados e gravados somente em SQLite temporário.")
+          PY

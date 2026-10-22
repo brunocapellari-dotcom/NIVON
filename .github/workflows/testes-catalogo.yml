@@ -1,0 +1,24 @@
+name: Testes de catálogo de cotações
+on:
+  push:
+    paths:
+      - 'catalogo/**'
+      - 'nivon/**'
+      - 'tests/**'
+      - '.github/workflows/testes-catalogo.yml'
+  pull_request:
+    paths:
+      - 'catalogo/**'
+      - 'nivon/**'
+      - 'tests/**'
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m nivon.cotacoes validar-catalogo
+      - run: python -m unittest discover -s tests -v
+      - run: python -m nivon.cotacoes importar --arquivo exemplos/cotacoes_sinteticas.json --banco /tmp/nivon_cotacoes_teste.sqlite3 --sintetico

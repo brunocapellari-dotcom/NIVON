@@ -1,0 +1,67 @@
+{
+  "atualizacao": "2026-10-21",
+  "uso_projeto": "Nao comercial; operacoes e direitos avaliados por fonte",
+  "fontes": [
+    {
+      "nome": "Banco Central PTAX",
+      "url": "https://dadosabertos.bcb.gov.br/dataset/dolar-americano-usd-todos-os-boletins-diarios",
+      "dados": [
+        "USD compra/venda",
+        "EUR compra/venda"
+      ],
+      "classe": "fonte_primaria_oficial",
+      "direitos": "ODbL; observar atribuicao e share-alike",
+      "acesso": "API_OData",
+      "estado": "COLETA_REAL_VALIDADA_EM_RUNNER_TEMPORARIO",
+      "historico": "DISPONIVEL_NA_FONTE_NAO_CARREGADO",
+      "proxima_acao": "Conectar armazenamento persistente autorizado e executar backfill com controle de volume"
+    },
+    {
+      "nome": "IMEA",
+      "url": "https://www.imea.com.br/",
+      "dados": [
+        "soja MT",
+        "milho MT",
+        "algodao MT",
+        "boi MT"
+      ],
+      "classe": "fonte_primaria",
+      "direitos": "Termo oficial reserva bases/ativos e proibe uso nao autorizado, mesmo nao comercial; series publicas continuam zona cinza. Requer decisao documental especifica para extracao e armazenamento sistematicos.",
+      "acesso": "PENDENTE_HOMOLOGACAO",
+      "estado": "BLOQUEADO_PARA_COLETA_E_HISTORICIZACAO",
+      "historico": "PENDENTE",
+      "proxima_acao": "Obter esclarecimento por escrito do IMEA sobre series publicas para NIVON nao comercial; validar data referencia, zeros, duplicatas e indicadores de cada praca"
+    },
+    {
+      "nome": "CEPEA/ESALQ",
+      "url": "https://www.cepea.esalq.usp.br/",
+      "dados": [
+        "soja",
+        "milho",
+        "boi",
+        "cafe",
+        "etanol",
+        "algodao"
+      ],
+      "classe": "fonte_primaria",
+      "direitos": "Documentacao agrobr identifica CC BY-NC 4.0 para indicadores/series; preservar atribuicao e finalidade nao comercial e confirmar escopo original. Fallback Noticias Agricolas tem direitos separados.",
+      "acesso": "AGROBR_CEPEA_DIAGNOSTICO_REAL_FALLBACK_NOTICIAS_AGRICOLAS",
+      "estado": "VALIDACAO_EM_MEMORIA_FALLBACK_BLOQUEADO_SEM_GRAVACAO",
+      "historico": "NAO_CARREGADO",
+      "proxima_acao": "Homologar canal primario CEPEA sem bypass; revalidar fonte, frescor, praça e unidade antes de liberar gravacao e agendas"
+    },
+    {
+      "nome": "Noticias Agricolas",
+      "url": "https://www.noticiasagricolas.com.br/widgets/",
+      "dados": [
+        "42 widgets de cotacoes"
+      ],
+      "classe": "agregador",
+      "direitos": "Incorporacao visual demonstrada; coleta historica e reutilizacao nao homologadas",
+      "acesso": "WIDGET_JAVASCRIPT",
+      "estado": "APENAS_CATALOGO",
+      "historico": "PENDENTE",
+      "proxima_acao": "Usar como conferencia e apresentacao, priorizando API primaria autorizada"
+    }
+  ]
+}
