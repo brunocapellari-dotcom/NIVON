@@ -26,10 +26,13 @@ class TestIVOPlanoAcervoPAM(unittest.TestCase):
 
     def test_antes_da_errata_plano_nao_vaza_consulta_corrigida(self):
         r=plano(corte=date(2026,8,1))
-        tarefas={x["id"]:x for x in r["tarefas"][0]["tarefas"]}
-        self.assertIsNone(tarefas["SIDRA_ESTADO_ATUAL"]["url"])
-        self.assertEqual(tarefas["SIDRA_ESTADO_ATUAL"]["estado"],
-                         "BLOQUEADO_POR_DATA")
+        # Nenhum aviso futuro pode sequer entrar no conjunto de tarefas.
+        self.assertEqual(r["avisos"],0)
+        self.assertEqual(r["tarefas"],[])
+        self.assertNotIn("2026-09-17",str(r))
+        self.assertNotIn("SIDRA_ESTADO_ATUAL",str(r))
+        self.assertFalse(r["valores_anteriores_recuperados"])
+        self.assertFalse(r["arquivos_numericos_baixados"])
 
     def test_producao_municipal_nao_confundida_com_lspa_mensal(self):
         r=plano()
