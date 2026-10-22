@@ -21,6 +21,9 @@ from .outbox_unificada import (
     _schema as _controle_esquema,
     reservar_na_transacao, verificar_consentimento_pre_post,
 )
+from .outbox_recibos import (
+    preparar_recibos, vincular_aceite_na_transacao, aplicar_recibo_na_transacao,
+)
 
 
 
@@ -190,6 +193,7 @@ def despachar_registrado(con: sqlite3.Connection, preparado: dict, *,
     except Exception:
         return {"chave":chave,"estado":"ENVIO_INDETERMINADO","enviado_confirmado":False,
                 "nota":"verificar no provedor antes de nova tentativa; nunca reenviar automaticamente"}
+    preparar_recibos(con)
     con.execute("BEGIN IMMEDIATE")
     try:
         estado=con.execute("SELECT estado FROM nivon_envios WHERE idempotency_key=?",
@@ -198,6 +202,10 @@ def despachar_registrado(con: sqlite3.Connection, preparado: dict, *,
         novo="ACEITO_PROVEDOR" if estado=="ENVIO_INDETERMINADO" else estado
         con.execute("""UPDATE nivon_envios SET provider_message_id=?,estado=?,atualizado_em=?
                        WHERE idempotency_key=?""",(provider_id,novo,_hora(),chave))
+        vincular_aceite_na_transacao(
+            con,canal="WHATSAPP",intencao_id=chave,
+            provider_message_id=provider_id,quando=_hora(),
+        )
         con.commit()
     except Exception:
         con.rollback()
@@ -238,6 +246,7 @@ def aplicar_status_assinado(con: sqlite3.Connection, *, corpo: bytes,
                 if status and isinstance(pid,str) and len(pid)<=220:
                     updates.append((pid,status))
     _esquema(con)
+    preparar_recibos(con)
     mudancas=0;ignoradas=0
     con.execute("BEGIN IMMEDIATE")
     try:
@@ -254,6 +263,11 @@ def aplicar_status_assinado(con: sqlite3.Connection, *, corpo: bytes,
             if novo!="FALHOU" and ORDEM.get(novo,0)<=ORDEM.get(atual,0):
                 ignoradas+=1
                 continue
+            canonic=aplicar_recibo_na_transacao(
+                con,provider_message_id=pid,estado=novo,quando=_hora(),
+            )
+            if not canonic["reconhecido"] or not canonic["atualizado"]:
+                raise ErroOutbox("webhook sem aceite canônico ou estado conflitante")
             con.execute("UPDATE nivon_envios SET estado=?, atualizado_em=? WHERE idempotency_key=?",
                         (novo,_hora(),chave))
             mudancas+=1
@@ -274,6 +288,7 @@ def vincular_ack_verificado(con: sqlite3.Connection, *, chave: str,
     if not isinstance(evidencia_conciliacao,str) or not re.fullmatch(r"[A-Za-z0-9_:.-]{12,120}",evidencia_conciliacao):
         raise ErroOutbox("identificador de evidência humana obrigatório")
     _esquema(con)
+    preparar_recibos(con)
     con.execute("BEGIN IMMEDIATE")
     try:
         r=con.execute("SELECT estado FROM nivon_envios WHERE idempotency_key=?",(chave,)).fetchone()
@@ -282,6 +297,10 @@ def vincular_ack_verificado(con: sqlite3.Connection, *, chave: str,
         con.execute("""UPDATE nivon_envios SET provider_message_id=?,
                         estado='ACEITO_PROVEDOR', atualizado_em=? WHERE idempotency_key=?""",
                     (provider_message_id,_hora(),chave))
+        vincular_aceite_na_transacao(
+            con,canal="WHATSAPP",intencao_id=chave,
+            provider_message_id=provider_message_id,quando=_hora(),
+        )
         con.commit()
     except Exception:
         con.rollback()
