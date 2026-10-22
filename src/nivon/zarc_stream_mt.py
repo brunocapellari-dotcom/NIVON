@@ -30,7 +30,10 @@ FIXOS = (
 )
 DEC = tuple("dec" + str(n) for n in range(1, 37))
 COLUNAS = FIXOS + DEC
-MAX_DOWNLOAD = 160_000_000
+# Tamanho comprovado via Content-Range HTTP 206 em 22/10/2026:
+# 211.652.014 bytes (GitHub Actions #39854558010). Teto de 230 MB
+# restrito a esta URL/edicao. Se crescer além, bloquear para reavaliar.
+MAX_DOWNLOAD = 230_000_000
 MAX_LINHAS = 5_000_000
 MAX_GRUPOS = 500
 MAX_PORTARIAS = 10_000
