@@ -6381,7 +6381,7 @@ function validateHistory(row) {
   if (!row || row.fonte !== "CONAB" || row.origin_kind !== "conab_serie_historica" || !["soja", "milho"].includes(row.produto) || row.uf !== "MT") throw new Error("HISTORY_PROVENANCE");
   if (!/^20\d{2}\/\d{2}$/.test(row.safra) || row.competencia !== row.safra) throw new Error("HISTORY_CROP_YEAR");
   const y = Number(row.safra.slice(0, 4)), next = Number(row.safra.slice(5));
-  if (y < 2022 || y > 2025 || next !== (y + 1) % 100) throw new Error("HISTORY_SCOPE");
+  if (y < 2010 || y > 2025 || next !== (y + 1) % 100) throw new Error("HISTORY_SCOPE");
   if (row.data_publicacao !== null || row.data_referencia !== null || row.natureza !== "INFORMADO") throw new Error("HISTORY_SEMANTICS");
   if (row.source_url !== HIST_URL || row.parser_version !== "agrobr-2.0.0-historico-v1") throw new Error("HISTORY_SOURCE_URL");
   if (!row.metricas || typeof row.metricas !== "object") throw new Error("HISTORY_METRICS");
