@@ -1,4 +1,5 @@
 name: Diagnostico HTTP fontes gratuitas (pontual)
+# Quinta prova: inspecionar schema CSV ZARC sem expor registros.
 # Terceira prova: evidência de regras recusar sem expor URLs.
 # Segunda prova: classificação de erro SICOR e amostra CSV ZARC publicada.
 
