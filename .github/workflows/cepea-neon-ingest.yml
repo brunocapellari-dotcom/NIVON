@@ -37,11 +37,25 @@ jobs:
           import json, os
           from urllib.parse import quote
           from urllib.request import Request, urlopen
+          from urllib.request import urlopen
+          from urllib.error import URLError
           from nivon.cepea_web_primario import consultar_pagina_primaria,extrair_precos_html,URL_SOJA,URL_MILHO
-          html=consultar_pagina_primaria(URL_SOJA)
+          def abrir_com_timeout(req,timeout):
+              return urlopen(req,timeout=40)
+          def ler_pagina(url):
+              try:
+                  return consultar_pagina_primaria(url,open_url=abrir_com_timeout)
+              except (TimeoutError,URLError):
+                  return consultar_pagina_primaria(url,open_url=abrir_com_timeout)
+          html=ler_pagina(URL_SOJA)
           observacoes=extrair_precos_html(html,('soja_paranagua','soja_parana'))
-          milho_html=consultar_pagina_primaria(URL_MILHO)
-          observacoes+=extrair_precos_html(milho_html,('milho_esalq_b3',))
+          milho_status='OK'
+          try:
+              milho_html=ler_pagina(URL_MILHO)
+              observacoes+=extrair_precos_html(milho_html,('milho_esalq_b3',))
+          except (TimeoutError,URLError) as exc:
+              milho_status='SOURCE_UNAVAILABLE'
+              print('::warning::CEPEA milho indisponivel nesta rodada; soja continua, milho nao sera atualizado')
           if len(observacoes)<2:
               raise SystemExit('CEPEA_POUCAS_OBSERVACOES')
           audience='urn:nivon:cepea:ingest'
@@ -57,6 +71,7 @@ jobs:
               result=json.load(r)
           if result.get('status') not in ('OK','NO_UPDATE','SOURCE_LAG') or result.get('received')!=len(observacoes):
               raise SystemExit('CEPEA_PERSISTENCIA_NAO_CONFIRMADA')
+          print('CEPEA_MILHO_CHECK='+milho_status)
           print(json.dumps({'fonte':'CEPEA','status':result['status'],
               'recebidos':result['received'],'inseridos':result['inserted'],
               'duplicados':result['duplicates'],'referencia':result['latest_reference']},
