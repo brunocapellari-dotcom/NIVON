@@ -7,7 +7,7 @@
 
 | Fonte | Direitos | Coleta real | Banco no Neon | Recorrência |
 |---|---|---|---|---|
-| CEPEA | CC BY-NC 4.0 (uso pessoal não comercial e atribuição) | Soja Paranaguá e Paraná pelo site oficial; 30 observações | Sim, `nivon_cepea_prices` | Workflow no **main** `cepea-neon-ingest.yml`, cron `30 21 * * 1-5` UTC; primeira execução main concluída com 30 duplicatas e zero inserções, provando persistência idempotente. Execução futura por cron ainda não observada. |
+| CEPEA | CC BY-NC 4.0 (uso pessoal não comercial e atribuição) | Soja Paranaguá e Paraná pelo site oficial; 30 observações | Sim, `nivon_cepea_prices` | Workflow no **main** `cepea-neon-ingest.yml`: dois cron separados (`30 21 * * 1-5` UTC para soja; `30 23 * * 1-5` UTC para milho) para limitar carga por coleta; primeira execução main soja concluída com 30 duplicatas e zero inserções, provando persistência idempotente. Execuções agendadas futuras ainda não observadas; milho passou em diagnóstico isolado, mas sofreu timeout ao ser coletado junto com a soja e continua aguardando gravação E2E. |
 | CONAB | Dados públicos oficiais com proveniência | Soja/milho MT: dois levantamentos, 2010–2025, balanços | Sim, 4 estimativas + 32 séries históricas + 14 balanços | Workflow OIDC validado por push no **branch feature**; cron apenas efetivo quando fluxo principal estiver homologado. **Não afirmar produção diária em main**. |
 | IMEA | Aguardando confirmação documental para coleta e armazenamento automatizados | Não homologada | Apenas inventário histórico do Drive, sem cotações promovidas | **Bloqueada por direitos.** Preparado pedido de autorização, ainda não enviado. |
 
@@ -15,6 +15,7 @@
 - CEPEA coleta direta oficial com parser isolado, sem Notícias Agrícolas: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39855374825
 - CEPEA ingestão OIDC Neon com 30 novas observações: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39856137721
 - CEPEA **primeira execução na main**, 30 duplicatas corretamente evitadas: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39856413420
+- CEPEA milho original validado em diagnóstico, sem persistência: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39857311058
 - CONAB coleta e histórico 2010–2025: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39702302650
 - CONAB segunda execução histórica: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39702649991
 
@@ -41,7 +42,7 @@
 1. Confirmar segunda data de execução do agendamento CEPEA em main e instrumentar alertas de falhas / atraso.
 2. Habilitar agendamento CONAB em main após reconciliação de workflow, testes de integração e segurança; não usar PR draft como fonte permanente de execução.
 3. IMEA: encaminhar o pedido formal de autorização; após recebimento, homologar atualização automatizada diária/semanal de preços regionais, fretes e comercialização sem violar termos.
-4. Ampliar o CEPEA para milho e outras culturas só após teste em fonte original, identificação de séries e licença.
+4. CEPEA milho: fonte original e 15 registros validados em diagnóstico; aguardar gravação E2E do cron isolado, sem bypass de timeout. Outras culturas dependem de validações específicas.
 5. Auditar/adaptar histórico do Drive por documento/lote, em quarentena, reconciliando com dados de origem e revisões antes da promoção à base canônica.
 6. Backup externo, alertas de pipeline e controle de quotas gratuitos.
 
