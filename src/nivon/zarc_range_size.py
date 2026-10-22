@@ -36,7 +36,7 @@ def interpretar_resposta(*, url, status, mime, content_range, content_length, pr
     return {"estado": "PROVA_DE_CABECALHO_NAO_ARQUIVO",
             "status_http": status, "http_range_atendido": status == 206,
             "total_bytes_comprovado": total,
-            "maior_que_limite_160mb": total > MAX_DOWNLOAD if total is not None else None,
+            "maior_que_limite_atual": total > MAX_DOWNLOAD if total is not None else None,
             "max_download_bytes": MAX_DOWNLOAD,
             "corpo_transferido_bytes": 1,
             "coleta_persistida": False, "arquivo_integral_baixado": False}
