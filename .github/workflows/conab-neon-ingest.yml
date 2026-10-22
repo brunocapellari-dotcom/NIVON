@@ -37,6 +37,9 @@ jobs:
           from urllib.parse import quote
           from agrobr import conab
           from nivon.conab_job import edicoes_atuais, registros_publicacao
+          from datetime import datetime, timezone
+          from nivon.conab_safras import checar_meta
+          from nivon.conab_balanco import normalizar_balanco
 
           async def main():
               edicoes=await edicoes_atuais(conab,limite=2)
@@ -63,6 +66,32 @@ jobs:
                       'publicacao':edicao['data_publicacao'],'status':out['status'],
                       'received':out['received'],'inserted':out['inserted'],
                       'duplicates':out['duplicates']},ensure_ascii=False))
+              ultima=edicoes[0]
+              for produto in ('soja','milho'):
+                  df,meta=await conab.balanco(produto,safra=ultima['safra'],
+                                              levantamento=ultima['levantamento'],return_meta=True)
+                  origem=checar_meta(meta)
+                  pub=(origem.get('source_details') or {}).get('publicacao')
+                  if not isinstance(pub,dict) or any(str(pub.get(k))!=str(ultima[k]) for k in ('safra','levantamento','data_publicacao','url')):
+                      raise SystemExit('CONAB_BALANCO_PUBLICACAO_DIVERGENTE')
+                  validos=normalizar_balanco(df.to_dict(orient='records'),'conab',pub)
+                  if not validos or any(v['produto']!=produto for v in validos):
+                      raise SystemExit('CONAB_BALANCO_NAO_HOMOLOGADO')
+                  payload={'source':'CONAB','publicacao':pub,
+                           'data_coleta':datetime.now(timezone.utc).isoformat(),
+                           'rows':validos}
+                  url=os.environ['NIVON_CONAB_INGEST_URL'].removesuffix('/ingest')+'/ingest-balanco'
+                  req=Request(url,data=json.dumps(payload,default=str,ensure_ascii=False).encode('utf-8'),
+                              headers={'Authorization':'Bearer '+jwt,'Content-Type':'application/json'},
+                              method='POST')
+                  with urlopen(req,timeout=35) as resp:
+                      saved=json.load(resp)
+                  if saved.get('status')!='OK' or saved.get('received')!=len(validos):
+                      raise SystemExit('CONAB_BALANCO_NAO_PERSISTIDO')
+                  print(json.dumps({'balanco':produto,'safra_publicacao':ultima['safra'],
+                                    'levantamento':ultima['levantamento'],'linhas':saved['received'],
+                                    'inseridos':saved['inserted'],'duplicados':saved['duplicates'],
+                                    'alertas':sum(len(v['alertas']) for v in validos)},ensure_ascii=False))
               print(json.dumps(resumo,ensure_ascii=False))
           asyncio.run(main())
           PY
