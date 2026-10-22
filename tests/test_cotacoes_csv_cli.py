@@ -8,8 +8,8 @@ from pathlib import Path
 from nivon.cotacoes_csv_cli import executar_importacao, main, ErroCLIImportacao
 from nivon.historico_vintages import ArmazemVintages
 
-_CSV = ("serie_id;produto;localidade;competencia;referencia;preco;unidade\\n"
-        "SOJA_MT;Soja;Sorriso;2026-10;2026-10-20;123,45;BRL/SC60KG\\n")
+_CSV = ("serie_id;produto;localidade;competencia;referencia;preco;unidade\n"
+        "SOJA_MT;Soja;Sorriso;2026-10;2026-10-20;123,45;BRL/SC60KG\n")
 _DOC = {"fonte_id":"IMEA", "fonte_url":"https://www.imea.com.br/",
         "edicao_id":"EDICAO_SINTETICA", "coletado_em":"2026-10-21T14:00:00Z",
         "publicado_em":None, "disponivel_em":None, "arquivo_csv":"cotacoes.csv"}

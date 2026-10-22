@@ -19,7 +19,7 @@ _CAMPOS = frozenset({
     "fonte_id", "fonte_url", "edicao_id", "coletado_em", "publicado_em",
     "disponivel_em", "arquivo_csv",
 })
-_ARQUIVO = re.compile(r"[a-zA-Z0-9][a-zA-Z0-9_.-]{0,120}\\Z")
+_ARQUIVO = re.compile(r"[a-zA-Z0-9][a-zA-Z0-9_.-]{0,120}\Z")
 
 class ErroCLIImportacao(ValueError):
     pass
