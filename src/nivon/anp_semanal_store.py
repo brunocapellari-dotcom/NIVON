@@ -17,6 +17,7 @@ from typing import Mapping
 from urllib.parse import urlsplit
 
 from .anp_atestacoes import validar_aprovacoes_anp
+from .anp_revogacoes_frescor import verificar_frescor_revogacoes
 
 
 class ErroANPOficial(ValueError):
@@ -137,6 +138,15 @@ def inicializar_store_anp(db: sqlite3.Connection) -> None:
     );
     CREATE INDEX IF NOT EXISTS idx_anp_revogacoes_consulta
        ON anp_semanal_revogacoes(sha,recebido_em);
+    CREATE TABLE IF NOT EXISTS anp_semanal_checkpoints (
+      sequencia INTEGER PRIMARY KEY CHECK (sequencia >= 1),
+      emissor_id TEXT NOT NULL, cobertura_ate TEXT NOT NULL,
+      emitido_em TEXT NOT NULL, valido_ate TEXT NOT NULL,
+      recebido_em TEXT NOT NULL, total_revogacoes INTEGER NOT NULL,
+      hash_revogacoes TEXT NOT NULL, documento_sha256 TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_anp_checkpoints_recebido
+       ON anp_semanal_checkpoints(recebido_em,sequencia);
     CREATE TABLE IF NOT EXISTS anp_semanal_capturas (
       sha TEXT NOT NULL REFERENCES anp_semanal_edicoes(sha),
       data_coleta TEXT NOT NULL, PRIMARY KEY (sha, data_coleta)
@@ -367,6 +377,12 @@ def consultar_preco_semanal(
     if (corte.date()-_semana(semana)).days > limite_dias:
         return {"status": "DADO_VENCIDO", "publicavel": False,
                 "semana_fim": semana}
+    # Não expor nível de preço quando não há evidência autenticada e recente
+    # de que o registro de revogações foi sincronizado. Não se infere
+    # completude da lista apenas porque nenhuma revogação local existe.
+    frescor = verificar_frescor_revogacoes(db, as_of=as_of)
+    if frescor["status"] != "CHECKPOINT_FRESCO_APENAS_LOCAL":
+        return frescor
     escolhido = min(atual, key=lambda x: (x["data_publicacao"], x["primeira_coleta"], x["sha"]))
     return {
         "status": "AMOSTRA_HISTORICA_PIT", "publicavel": False,
@@ -378,6 +394,8 @@ def consultar_preco_semanal(
         "data_publicacao": escolhido["data_publicacao"],
         "primeira_coleta": escolhido["primeira_coleta"],
         "sha256": escolhido["sha"], "fonte_url": escolhido["fonte_url"],
+        "checkpoint_revogacoes_sequencia": frescor["sequencia"],
+        "checkpoint_revogacoes_cobertura_ate": frescor["cobertura_ate"],
         "classe": "ANP_MEDIA_AMOSTRAL_MUNICIPAL_DIESEL_B_NAO_FRETE",
         "observacao": "Não comprova preço pago por transportadora; divulgação externa não autorizada automaticamente",
     }
