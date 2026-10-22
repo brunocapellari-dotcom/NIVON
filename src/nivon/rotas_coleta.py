@@ -105,6 +105,7 @@ def validar_rotas(rotas: dict, catalogo: dict) -> dict:
             # para evitar transformar host arbitrário em endpoint de dados.
             homologados = {
                 "MAPA": {"dados.agricultura.gov.br"},
+                "ZARC": {"dados.agricultura.gov.br"},
                 "BCB": {"olinda.bcb.gov.br", "dadosabertos.bcb.gov.br", "api.bcb.gov.br"},
                 "OPEN_METEO": {"api.open-meteo.com", "archive-api.open-meteo.com", "flood-api.open-meteo.com", "ensemble-api.open-meteo.com"},
                 "INPE_TERRABRASILIS": {"terrabrasilis.dpi.inpe.br"},
