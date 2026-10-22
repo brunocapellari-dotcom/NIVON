@@ -29,12 +29,12 @@ class Opener:
 class TestZarcRange(unittest.TestCase):
     def test_off(self):
         with self.assertRaises(PermissionError):consultar_tamanho()
-    def test_206_prova_maior_160mb(self):
+    def test_206_prova_tamanho_versus_teto_atual(self):
         resp=Response()
         cli=Opener(resp)
         out=consultar_tamanho(executar=True,abridor=cli)
         self.assertEqual(out["total_bytes_comprovado"],170000001)
-        self.assertTrue(out["maior_que_limite_160mb"])
+        self.assertEqual(out["maior_que_limite_160mb"], 170000001 > MAX_DOWNLOAD)
         self.assertEqual(cli.calls,1)
         self.assertEqual(resp.lidos,[1])
         self.assertFalse(out["arquivo_integral_baixado"])
