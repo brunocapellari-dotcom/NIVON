@@ -29,4 +29,4 @@ jobs:
       - name: Diagnostico controlado de quatro GET publicos
         env:
           PYTHONPATH: src
-        run: python scripts/diagnostico_http_fontes_gratuitas.py --executar
+        run: python scripts/diagnostico_http_fontes_gratuitas.py --executar --fonte ZARC_PREFIX_2026_2027
