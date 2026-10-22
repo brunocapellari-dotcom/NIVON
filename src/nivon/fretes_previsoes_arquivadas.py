@@ -184,6 +184,8 @@ def avaliar_previsoes_arquivadas_frete(
     for p in previsoes:
         if not isinstance(p, Mapping) or set(p) != CAMPOS:
             raise ErroAvaliacaoFrete("esquema exato de previsão arquivada obrigatório")
+        if type(p.get("horizonte_dias_corridos")) is not int:
+            raise ErroAvaliacaoFrete("horizonte declarado deve ser inteiro exato")
         if any(p.get(k) != v for k,v in {
             **params, "fonte_id":fonte_id, "modelo_versao":modelo_versao,
             "emissor_id":emissor_esperado,
