@@ -91,6 +91,21 @@ class TestAutonomia(unittest.TestCase):
             self.assertIn(result["counts"]["done"] + result["counts"]["pending"], (1,))
             self.assertLessEqual(len(result["executions"]), 2)
 
+    def test_cli_usage_parsers_are_best_effort(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            logfile = Path(tmp) / "usage.log"
+            logfile.write_text(json.dumps({"usage": {"input_tokens": 220, "output_tokens": 40}}),
+                               encoding="utf-8")
+            self.assertEqual(autonomia.usage_from_log(logfile), (220, 40))
+            logfile.write_text(
+                '{"type":"thread.started"}\n'
+                '{"type":"turn.completed","usage":{"input_tokens":330,"output_tokens":44}}\n',
+                encoding="utf-8"
+            )
+            self.assertEqual(autonomia.usage_from_log(logfile), (330, 44))
+            logfile.write_text("texto sem métricas", encoding="utf-8")
+            self.assertEqual(autonomia.usage_from_log(logfile), (None, None))
+
     def test_run_limits_and_no_llm_on_preflight(self):
         with patch.object(autonomia, "preflight", side_effect=RuntimeError("sem CLI")):
             self.assertEqual(autonomia.main(["run", "--max-tasks", "1"]), 2)
