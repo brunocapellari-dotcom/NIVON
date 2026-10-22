@@ -1,0 +1,27 @@
+name: NIVON CEPEA - diagnostico milho original
+on:
+  push:
+    paths:
+      - '.github/workflows/cepea-milho-diagnostico.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install --disable-pip-version-check beautifulsoup4==4.12.3
+      - name: Verificar indicador milho CEPEA sem fallback nem gravacao
+        run: |
+          python - <<'PY'
+          from nivon.cepea_web_primario import consultar_pagina_primaria,extrair_precos_html,URL_MILHO
+          html=consultar_pagina_primaria(URL_MILHO)
+          rows=extrair_precos_html(html,('milho_esalq_b3',))
+          print({'fonte':'CEPEA','produto':'milho','linhas':len(rows),
+                 'ultimo_ref':max(v['data_referencia'] for v in rows),'gravado':False})
+          PY
