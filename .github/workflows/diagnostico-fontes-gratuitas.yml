@@ -1,4 +1,5 @@
 name: Diagnostico HTTP fontes gratuitas (pontual)
+# Segunda prova: classificação de erro SICOR e amostra CSV ZARC publicada.
 
 on:
   push:
