@@ -1,0 +1,43 @@
+name: NIVON CEPEA — coletor primário e diagnóstico
+on:
+  push:
+    paths:
+      - 'nivon/cepea_web_primario.py'
+      - 'tests/test_cepea_web_primario.py'
+      - '.github/workflows/cepea-primario-diagnostico.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  teste-contrato:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install --disable-pip-version-check beautifulsoup4==4.12.3
+      - run: python -m unittest discover -s tests -p 'test_cepea_web_primario.py' -v
+  teste-origem-real:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install --disable-pip-version-check beautifulsoup4==4.12.3
+      - name: Consultar CEPEA oficial uma vez sem gravar dados
+        run: |
+          python - <<'PY'
+          from datetime import date
+          from nivon.cepea_web_primario import consultar_pagina_primaria,extrair_precos_html,URL_SOJA
+          html=consultar_pagina_primaria(URL_SOJA)
+          rows=extrair_precos_html(html,('soja_paranagua','soja_parana'))
+          ultimo=max(date.fromisoformat(r['data_referencia']) for r in rows)
+          dias=(date.today()-ultimo).days
+          print(f"CEPEA_FONTE_ORIGINAL=SIM series=2 observacoes={len(rows)} ultima_referencia={ultimo} idade_dias={dias} armazenado=NAO")
+          if dias>4:
+              raise SystemExit(f"SOURCE_LAG: CEPEA com {dias} dias de defasagem; bloquear preco atual")
+          PY
