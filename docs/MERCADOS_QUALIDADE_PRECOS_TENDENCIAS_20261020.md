@@ -757,3 +757,66 @@ cortes, com bloqueio de lacunas e edições distintas.
 5. Aprovação humana explícita para alteração operacional do briefing
    e deploy. A autorização atual cobre apenas código reversível,
    offline, em PR draft e testes de custo zero.
+
+
+## 16. Continuidade 21/10/2026 — coexistência por SHA do legado e RAW
+
+**Risco encontrado:** `registro_snapshots.py` usa
+`UNIQUE(dataset_id,sha256)` e restringe alterações posteriores de
+`schema_versao`, `tipo`, fonte e evidência de direitos. Logo,
+o **mesmo corpo HTTP PTAX** não pode ser registrado duas vezes,
+uma no formato `PTAX_ODATA_1` e outra em `PTAX_ODATA_RAW_V1`,
+sem entrar em conflito com o ledger central. O contrato foi preservado,
+**não foi feita migração destrutiva** nem relaxamento de índice.
+
+### Implementação
+
+- `src/nivon/ptax_coexistencia.py` adiciona
+  `identificar_schema_snapshot_ptax` e
+  `conferir_observacoes_legadas`.
+  Quando um SHA já existe no ledger e seu schema é
+  `PTAX_ODATA_1`, verifica que fornecedor, tamanho, MIME,
+  classe, direitos, campos temporais e **todas as linhas normalizadas**
+  coincidem com a reinterpretação do mesmo raw pelo pipeline antigo.
+  Exige 1:1 na contagem, chave e JSON canônico; linha apagada ou
+  alterada bloqueia a adoção.
+- `guardar_raw_ptax` chama a auditoria **dentro do savepoint**
+  e, quando o snapshot legado é íntegro e compatível, reutiliza seu
+  `snapshot_id` e sua **versão original**. Armazena bytes brutos
+  e registros de coleta na camada lateral, sem sobrescrever tabelas
+  antigas. Dados com novos SHA continuam recebendo
+  `PTAX_ODATA_RAW_V1`.
+- `selecionar_ptax_decimal_asof` e
+  `consultar_raw_ptax_asof` passam a aceitar ambos os schemas,
+  mas conferem, na **consulta**, sua ligação canônica com
+  `nivon_snapshots` e `nivon_coletas`. Quando schema é legado,
+  exigem novamente a concordância total das linhas normalizadas
+  com o raw; adulterações posteriores bloqueiam resultados.
+  Os dois retornos permanecem não publicáveis.
+- Os testes `tests/test_ptax_coexistencia.py` verificam
+  coexistência 1:1 para mesmo SHA, nova coleta do mesmo arquivo,
+  leitura Decimal e legado, contagem imutável, exclusão de
+  linha/corrupção, troca de schema, fonte ou direitos, visibilidade
+  as-of, inconsistências forjadas nas ligações da captura e
+  rollback SQLite incluindo DDL.
+
+### Limites de segurança e migração
+
+Reexecutar o normalizador `float` legado apenas comprova a
+consistência interna de suas observações com o RAW, **não**
+que o normalizador legado reproduz a precisão original. Para isso,
+o parser independente `ptax_odata_bruta_mercados.py` segue
+obrigatório e o shadow comparator precisa bloquear diferenças.
+
+Esta implementação trata somente **legado primeiro, RAW depois** para
+o mesmo SHA. Se o RAW novo foi gravado antes, a tentativa posterior
+de gravar o legado com o mesmo SHA é **rejeitada** pelo ledger:
+não se reclassifica uma edição nem se inventam campos normalizados.
+Dados em diferentes SHA/schema convivem naturalmente.
+
+A integração editorial permanece ausente; a assinatura de horário
+de coleta, autenticidade externa, direitos ODbL homologados,
+migração inversa compatível, restauração de banco e deploy seguem
+pendentes. Jamais elevar `SINTETICO` a `REAL_AUTORIZADO`
+por este procedimento. Coexistência de schema não é autorização
+de divulgação nem de previsão.
