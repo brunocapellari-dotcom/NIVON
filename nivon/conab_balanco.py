@@ -24,7 +24,8 @@ def normalizar_balanco(linhas, fonte, publicacao):
         raise ValueError("Metadados da publicação ausentes")
     saida=[]
     for row in linhas:
-        if row.get("produto") not in ("soja","milho"):
+        produto = str(row.get("produto") or "").strip().lower()
+        if produto not in ("soja","milho"):
             raise ValueError("Produto não homologado")
         if row.get("unidade")!="mil_ton":
             raise ValueError("Unidade de balanço inesperada")
@@ -39,7 +40,7 @@ def normalizar_balanco(linhas, fonte, publicacao):
             inconsistencias.append("DEMANDA")
         if all(x is not None for x in (supr,cons,exp,final)) and erro(supr-cons-exp,final):
             inconsistencias.append("ESTOQUE_FINAL")
-        saida.append({"produto":row["produto"],"safra":str(row.get("safra")),
+        saida.append({"produto":produto,"safra":str(row.get("safra")),
                        "unidade":"mil_ton","fonte":"CONAB","edicao":publicacao,
                        "metricas":{k:str(v) if v is not None else None for k,v in serie.items()},
                        "alertas":inconsistencias,"armazenado":False})
