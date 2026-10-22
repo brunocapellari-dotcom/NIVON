@@ -151,6 +151,28 @@ class TestMetadadosOOXML(TestCase):
         with self.assertRaisesRegex(ErroDocumentoConab,"sair do pacote"):
             run(d)
 
+    def test_relativo_legitimo_para_desenho_nao_sai_do_zip(self):
+        d=fixtures()
+        d["xl/drawings/drawing1.xml"]=b"<drawing/>"
+        d["xl/worksheets/_rels/sheet1.xml.rels"]=(
+            f'<Relationships xmlns="{PKG}"><Relationship Id="rId9" '
+            f'Type="{REL}/drawing" Target="../drawings/drawing1.xml"/>'
+            '</Relationships>'
+        ).encode()
+        result=run(d)
+        self.assertEqual(result["quantidade_abas"],2)
+        self.assertFalse(result["dados_agricolas_extraidos"])
+
+    def test_relativo_da_worksheet_que_escapa_do_zip_reprovado(self):
+        d=fixtures()
+        d["xl/worksheets/_rels/sheet1.xml.rels"]=(
+            f'<Relationships xmlns="{PKG}"><Relationship Id="rId9" '
+            f'Type="{REL}/drawing" Target="../../../fora.xml"/>'
+            '</Relationships>'
+        ).encode()
+        with self.assertRaisesRegex(ErroDocumentoConab,"sair do pacote"):
+            run(d)
+
     def test_aba_duplicada_ignorando_maiusculas(self):
         d=fixtures()
         d["xl/workbook.xml"]=d["xl/workbook.xml"].replace(
