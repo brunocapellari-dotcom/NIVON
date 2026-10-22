@@ -13,6 +13,9 @@ on:
 permissions:
   contents: read
   id-token: write
+concurrency:
+  group: nivon-conab-ingest
+  cancel-in-progress: false
 jobs:
   conab-neon:
     runs-on: ubuntu-latest
