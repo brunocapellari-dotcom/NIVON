@@ -1,0 +1,38 @@
+name: NIVON CONAB - auditar historico 2010 a 2021
+on:
+  push:
+    paths:
+      - '.github/workflows/conab-historico-2010-probe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install --disable-pip-version-check agrobr==2.0.0
+      - name: Consulta CONAB historico delimitado em memoria
+        run: |
+          python - <<'PY'
+          import asyncio,json
+          from agrobr import conab
+          from nivon.conab_historico import normalizar_historico
+          async def main():
+              resultado=[]
+              for produto in ('soja','milho'):
+                  df,meta=await conab.serie_historica(produto,ano_inicio=2010,
+                          ano_fim=2021,uf='MT',return_meta=True)
+                  rows=normalizar_historico(df.to_dict(orient='records'),meta,
+                                              produto,inicio=2010,fim=2021)
+                  resultado.append({'produto':produto,'linhas':len(rows),
+                                    'primeira':rows[0]['safra'],'ultima':rows[-1]['safra'],
+                                    'gravado':False})
+                  if len(rows)!=12: raise SystemExit('CONAB_HISTORICO_INCOMPLETO')
+              print(json.dumps(resultado,ensure_ascii=False))
+          asyncio.run(main())
+          PY
