@@ -171,6 +171,31 @@ class TestAuditoriaVintagesConab(unittest.TestCase):
         self.assertEqual(doc["edicoes_pendentes"],3)
         self.assertNotIn("itens",doc)
 
+    def test_cli_exigir_duas_vintages_nao_marca_ausencia_como_sucesso(self):
+        out=io.StringIO()
+        with redirect_stdout(out):
+            exit_code=main(["--catalogo",str(CAT),"--diretorio",str(self.root),
+                            "--resumo","--exigir-multivintage"])
+        self.assertEqual(exit_code,3)
+        report=json.loads(out.getvalue())
+        self.assertEqual(report["edicoes_presentes_reprocessadas"],0)
+        self.assertEqual(report["edicoes_pendentes"],3)
+        self.assertFalse(report["parser_multivintage_testado_localmente"])
+
+    def test_cli_exigir_duas_nao_aceita_uma_fixture(self):
+        self.put()
+        with tempfile.TemporaryDirectory() as temp:
+            fixture_catalog=Path(temp)/"cat.json"
+            fixture_catalog.write_text(json.dumps(self.sample_catalog()))
+            out=io.StringIO()
+            with redirect_stdout(out):
+                exit_code=main(["--catalogo",str(fixture_catalog),
+                                "--diretorio",str(self.root),"--exigir-multivintage"])
+            self.assertEqual(exit_code,3)
+            report=json.loads(out.getvalue())
+            self.assertEqual(report["edicoes_presentes_reprocessadas"],1)
+            self.assertFalse(report["migracao_permitida"])
+
     def test_cli_falha_se_raw_nao_coincide(self):
         self.put(b"RAW adulterado")
         doc=self.sample_catalog()
