@@ -35,7 +35,7 @@ Para marcar tarefa concluída só depois de validar código/commit:
 \`\`\`sh
 PYTHONPATH=src python -m nivon.cooperacao done --agent claude --id nivon-inmet-01 --note 'SHA + evidência dos testes'
 \`\`\`
-Em limite de uso, primeiro registrar checkpoint e encerrar o processo, depois executar \`handoff --agent claude --id ... --note 'branch, SHA, testes, próximo passo'\`. O projeto evita retomada automática de tarefas stale (podem estar em execução). Para trocar agente preferencial, atualizar próximo manifesto sob controle de versão.
+Em limite de uso, primeiro **confirmar encerramento do processo anterior** e salvar checkpoint; depois executar \`handoff --agent claude --to codex --id nivon-inmet-01 --note 'branch, SHA, arquivos, testes, próximo passo'\`. O Codex poderá reivindicar a tarefa na próxima tentativa. Isso não transfere automaticamente o checkout, nem finaliza commits pendentes. Tarefas com lease vencido não são retomadas automaticamente (o worker pode continuar vivo).
 
 ## Gates para uso noturno
 1. Simulação local, revisão da segurança do Cezar e permissão workspace-write sem rede no Codex.
