@@ -74,7 +74,17 @@ jobs:
             -m pip download --only-binary=:all: --no-cache-dir --no-input \
             --index-url https://pypi.org/simple --dest /wheelhouse \
             "agrobr==2.0.0" "pandas>=2.2,<3" "statsforecast>=2,<3" \
-            > /dev/null 2>&1 || { echo "::error::WHEEL_DOWNLOAD_FAILED"; exit 1; }
+            > "$RUNNER_TEMP/nivon-analytics-download.log" 2>&1 || {
+              PYTHONPATH=src PIP_LOG="$RUNNER_TEMP/nivon-analytics-download.log" python - <<'PY'
+          import os
+          from pathlib import Path
+          from nivon.infra_optional_wheels import _resumir_falha
+          # Não emitir stdout/stderr do pip, índices, URLs ou detalhes locais.
+          raw = Path(os.environ["PIP_LOG"]).read_text(encoding="utf-8", errors="replace")
+          print("WHEEL_DOWNLOAD_FAILED: " + _resumir_falha(raw))
+          PY
+              exit 1
+            }
           test "$(find "$RUNNER_TEMP/nivon-analytics-wheels" -maxdepth 1 -type f -name '*.whl' | wc -l)" -gt 10
           ( cd "$RUNNER_TEMP/nivon-analytics-wheels" && sha256sum ./*.whl > "$RUNNER_TEMP/nivon-analytics-wheels.sha256" )
           ( cd "$RUNNER_TEMP/nivon-analytics-wheels" && sha256sum -c "$RUNNER_TEMP/nivon-analytics-wheels.sha256" > /dev/null )
