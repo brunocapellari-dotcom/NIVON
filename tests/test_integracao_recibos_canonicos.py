@@ -210,6 +210,72 @@ class TestRecibosCanonicos(unittest.TestCase):
         self.assertEqual(consultar_recibo(self.db,provider_message_id="wamid.TIMEOUT-MANUAL")["estado"],"ACEITO_PROVEDOR")
         self.assertEqual(self.meta_whatsapp("wamid.TIMEOUT-MANUAL","delivered")["atualizados"],1)
 
+    def test_mesmo_id_provedor_para_outro_destinatario_reverte_aceite(self):
+        self.briefing()
+        outro_digest="b"*64
+        consentir(self.db,outro_digest)
+        texto="Segundo boletim inteiramente sintetico"
+        ag=agendar_briefing(
+            self.db,dia_local=EDICAO,destinatario_hmac=outro_digest,
+            briefing={"status":"PREPARADO_SEM_ENVIO","texto":texto,
+                      "sha256":hashlib.sha256(texto.encode()).hexdigest()},
+            agora=STAMP,auditoria_aprovada=True,
+        )
+        reservado=reservar_para_entrega(self.db,id=ag["id"])
+        with self.assertRaises(ErroControleEnvio):
+            registrar_aceite(
+                self.db,id=ag["id"],token=reservado["token"],
+                provider_message_id="wamid.BRIEFING-R09",
+            )
+        self.assertEqual(self.db.execute(
+            "SELECT status FROM briefing_outbox WHERE id=?",
+            (ag["id"],)).fetchone()[0],"RESERVED")
+        self.assertEqual(self.db.execute(
+            "SELECT COUNT(*) FROM nivon_recibos_canonicos").fetchone()[0],1)
+
+    def test_falta_recibo_canonico_reverte_webhook_whatsapp(self):
+        item,_=self.whatsapp()
+        pid="wamid.WHATSAPP-R09"
+        self.db.execute("DELETE FROM nivon_eventos_recibo")
+        self.db.execute("DELETE FROM nivon_recibos_canonicos")
+        self.db.commit()
+        with self.assertRaises(ValueError):
+            self.meta_whatsapp(pid,"delivered")
+        self.assertEqual(
+            consultar_envio(self.db,item["idempotency_key"])["estado"],
+            "ACEITO_PROVEDOR",
+        )
+        self.assertEqual(self.db.execute(
+            "SELECT COUNT(*) FROM nivon_eventos_recibo").fetchone()[0],0)
+
+    def test_revogacao_de_consentimento_nao_apaga_recibo_ja_emitido(self):
+        item,_=self.whatsapp()
+        evidence="REVO-R09-TEST-SINTETICO"
+        em="2026-10-21T12:00:00+00:00"
+        proof=mensagem_de_prova(
+            acao="REVOGAR", destinatario_hmac=self.digest,
+            evidencia_id=evidence,em=em)
+        sig=hmac.new(KEY,proof,hashlib.sha256).hexdigest()
+        registrar_decisao_consentimento(
+            self.db,acao="REVOGAR",destinatario_hmac=self.digest,
+            evidencia_id=evidence,em=em,assinatura=sig,
+            chave_verificacao=KEY,
+        )
+        self.assertEqual(self.db.execute(
+            "SELECT estado FROM nivon_reservas_canonicas").fetchone()[0],
+            "BLOQUEADA_REVOGACAO",
+        )
+        self.assertEqual(self.meta_whatsapp(
+            "wamid.WHATSAPP-R09","delivered")["atualizados"],1)
+        self.assertEqual(consultar_recibo(
+            self.db,provider_message_id="wamid.WHATSAPP-R09")["estado"],
+            "ENTREGUE",
+        )
+        self.assertEqual(self.db.execute(
+            "SELECT estado FROM nivon_consentimentos").fetchone()[0],
+            "REVOGADO",
+        )
+
     def test_nao_vaza_telefone_nem_corpo_para_ledger(self):
         self.whatsapp()
         raw=Path(self.tmp.name,"outbox.sqlite").read_bytes()
