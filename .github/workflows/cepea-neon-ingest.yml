@@ -1,0 +1,62 @@
+# Fluxo estável da branch principal. Código-fonte pinado; não depende de PR draft.
+name: NIVON - CEPEA coleta primaria para Neon
+on:
+  push:
+    paths:
+      - '.github/workflows/cepea-neon-ingest.yml'
+  workflow_dispatch:
+  schedule:
+    # Dias uteis, apos horario de fechamento do mercado brasileiro.
+    # Rotina operacional isolada da PR; checkout em commit imutável e homologado.
+    - cron: '30 21 * * 1-5'
+permissions:
+  contents: read
+  id-token: write
+# Funcao Neon CEPEA OIDC verificada; repetir teste E2E apos deploy.
+concurrency:
+  group: nivon-cepea-ingest
+  cancel-in-progress: false
+jobs:
+  ingestar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 8d56fc697beb0672044a6f1479215681264e5f88
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install --disable-pip-version-check beautifulsoup4==4.12.3
+      - name: CEPEA fonte original, validar e gravar sob OIDC
+        env:
+          NIVON_CEPEA_INGEST_URL: https://br-twilight-cell-b77ukd6x-cepeaingest.compute.c-13.us-east-1.aws.neon.tech/ingest
+        run: |
+          python - <<'PY'
+          import json, os
+          from urllib.parse import quote
+          from urllib.request import Request, urlopen
+          from nivon.cepea_web_primario import consultar_pagina_primaria,extrair_precos_html,URL_SOJA
+          html=consultar_pagina_primaria(URL_SOJA)
+          observacoes=extrair_precos_html(html,('soja_paranagua','soja_parana'))
+          if len(observacoes)<2:
+              raise SystemExit('CEPEA_POUCAS_OBSERVACOES')
+          audience='urn:nivon:cepea:ingest'
+          token_url=os.environ['ACTIONS_ID_TOKEN_REQUEST_URL']+'&audience='+quote(audience,safe='')
+          token_req=Request(token_url,headers={'Authorization':'Bearer '+os.environ['ACTIONS_ID_TOKEN_REQUEST_TOKEN']})
+          with urlopen(token_req,timeout=20) as r:
+              jwt=json.load(r)['value']
+          url=os.environ['NIVON_CEPEA_INGEST_URL']
+          data=json.dumps({'source':'CEPEA','rows':observacoes},ensure_ascii=False).encode('utf8')
+          req=Request(url,data=data,method='POST',headers={
+              'Content-Type':'application/json','Authorization':'Bearer '+jwt})
+          with urlopen(req,timeout=45) as r:
+              result=json.load(r)
+          if result.get('status') not in ('OK','NO_UPDATE','SOURCE_LAG') or result.get('received')!=len(observacoes):
+              raise SystemExit('CEPEA_PERSISTENCIA_NAO_CONFIRMADA')
+          print(json.dumps({'fonte':'CEPEA','status':result['status'],
+              'recebidos':result['received'],'inseridos':result['inserted'],
+              'duplicados':result['duplicates'],'referencia':result['latest_reference']},
+              ensure_ascii=False))
+          PY
