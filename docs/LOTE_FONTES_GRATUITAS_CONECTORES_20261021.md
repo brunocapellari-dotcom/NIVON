@@ -91,3 +91,26 @@ Exemplo manual controlado (substitua pelo UUID oficial da edição desejada):
 
 Esse comando **não foi executado com rede real neste lote**. Usar apenas uma
 consulta pontual controlada após verificar termos e orçamento de rede.
+
+## Rodada real de homologação exploratória — 21/10/2026 (UTC já 22/10)
+
+**GitHub Actions, GitHub-hosted ubuntu-latest padrão, repositório público (sem cobrança do runner padrão).**
+
+- [Run #39716314302](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39716314302): MAPA ZARC CKAN retornou 13 recursos; ANTT CIOT CKAN 161 recursos; UN Comtrade preview 1 linha; BCB SICOR não validado. Respostas positivas não implicam publicação ou banco.
+- [Run #39716757659](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39716757659): **BCB SICOR timeout de 15 segundos**, indicando falha de acesso do runner, NÃO indisponibilidade global; **ANTT CIOT MIME inesperado**, após ter passado em run anterior (fonte/intermediário instável); **ZARC CSV 2026/27 ultrapassou 8 MB**, não falha de licença; UN Comtrade preview passou novamente.
+- [Run #39717080539](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39717080539): ZARC 2026/27 via src/nivon/amostra_csv_ckan_range.py **PASSOU**; 2.262 linhas CSV completas do prefixo lido de no máximo 512 KiB, sem download integral, nenhum dado persistido. O digest é somente do prefixo — nunca do arquivo completo.
+- [Run #39717340572](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39717340572): suite offline passou após integração dos IDs canônicos; o escopo do teste é código/contratos, não séries reais em banco.
+
+**Rotas/catalogação canônicas atualizadas:** ZARC_JANELAS e ANTT_CIOT agora referenciam os arquivos/API oficiais; stage CODE_PRESENT significa **somente módulo implementado**, não dados integrados em produção. BCB_SICOR_MDCR registrado como novo dataset P1 (177 no catálogo) com endpoint OData v2, porém com o mesmo bloqueio de rede observado.
+
+**Correção metodológica essencial:** o conjunto aberto CIOT da ANTT descreve **quantidade mensal de CIOTs emitidos**, não preço médio de frete, fluxo de toneladas ou frete por município. Não usar a contagem CIOT como proxy direta de frete sem validação.
+
+### Pendências técnicas próximas
+
+1. ZARC: obter layout completo via processamento streaming autorizado, filtrar MT e culturas relevantes sem exceder memória, checar datas e portarias e gerar vintages; apenas depois persistir no banco e habilitar relatórios.
+2. CIOT: verificar resposta text/html ou MIME alternativo em ambiente/endpoint legítimo; se houver WAF, não contornar. Resolver formato oficial por recurso com verificação de licença.
+3. SICOR: diferenciar indisponibilidade de runner x endpoint atual; considerar fontes oficiais alternativas ou consulta manual autorizada. Sem ignorar timeout/fazer retries agressivos.
+4. UN Comtrade: preview sem chave é **amostra**; conjuntos completos requerem API com chave gratuita e limites, ou transferência oficial autorizada.
+5. Não liberar coleta automática, redistribuição, BigQuery ou Cloud Run sem validação de direitos por operação, QC, persistência idempotente, backup/restauração e orçamento zero.
+
+Fonte oficial da edição ZARC: https://dados.agricultura.gov.br/dataset/tabua-de-risco-zoneamento-agricola-de-risco-climatico/resource/139e5a60-1f43-4cc8-aeab-a35dbbf816c0
