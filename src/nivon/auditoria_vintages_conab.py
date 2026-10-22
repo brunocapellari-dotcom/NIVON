@@ -206,6 +206,8 @@ def main(argv=None):
     parser.add_argument("--catalogo",required=True)
     parser.add_argument("--diretorio",required=True)
     parser.add_argument("--resumo",action="store_true")
+    parser.add_argument("--exigir-multivintage",action="store_true",
+                        help="exige pelo menos duas edições realmente reprocessadas; sem dados, falha")
     args=parser.parse_args(argv)
     try:
         doc=_json_strict(Path(args.catalogo))
@@ -215,6 +217,8 @@ def main(argv=None):
     if args.resumo:
         report.pop("itens")
     print(json.dumps(report,ensure_ascii=False,indent=2,sort_keys=True))
+    if args.exigir_multivintage and not report["parser_multivintage_testado_localmente"]:
+        return 3
     return 0
 
 
