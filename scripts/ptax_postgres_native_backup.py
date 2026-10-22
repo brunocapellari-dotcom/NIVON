@@ -22,6 +22,7 @@ from typing import Any, Callable
 
 ROOT = Path(__file__).resolve().parents[1]
 TABLES = ("nivon_ptax_quotes", "nivon_ptax_runs", "nivon_ptax_checkpoints")
+SEQUENCES = ("nivon_ptax_quotes_id_seq", "nivon_ptax_runs_id_seq")
 SCHEMA = "public"
 BACKUP_NAME = "nivon_ptax.pgcustom"
 MANIFEST_NAME = "manifest.json"
@@ -62,18 +63,18 @@ def _hash_file(path: Path) -> tuple[str, int]:
 def _analyze_toc(toc: str) -> dict[str, list[str]]:
     if len(toc.encode("utf-8")) > MAX_LIST_BYTES:
         raise BackupBlocked("TOC grande demais")
-    parsed: dict[str, set[str]] = {"TABLE": set(), "TABLE DATA": set()}
+    parsed: dict[str, set[str]] = {"TABLE": set(), "TABLE DATA": set(), "SEQUENCE SET": set()}
     # Formato de pg_restore -l: "123; 1259 456 TABLE public nome_table owner".
     expression = re.compile(
-        r"^\d+;\s+\d+\s+\d+\s+(TABLE DATA|TABLE)\s+public\s+([a-z_][a-z0-9_]*)\s+\S+"
+        r"^\d+;\s+\d+\s+\d+\s+(TABLE DATA|TABLE|SEQUENCE SET)\s+public\s+([a-z_][a-z0-9_]*)\s+\S+"
     )
     for line in toc.splitlines():
         found = expression.match(line)
         if found:
             category, name = found.groups()
-            if name in TABLES:
+            if name in (SEQUENCES if category == "SEQUENCE SET" else TABLES):
                 parsed[category].add(name)
-    if any(parsed[category] != set(TABLES) for category in parsed):
+    if any(parsed[category] != set(SEQUENCES if category == "SEQUENCE SET" else TABLES) for category in parsed):
         raise BackupBlocked("tres tabelas e TABLE DATA nao confirmados no arquivo")
     return {k: sorted(v) for k, v in parsed.items()}
 
@@ -108,7 +109,7 @@ def build(
     environment = dict(os.environ if env is None else env)
     if not environment.get("PGSERVICE"):
         raise BackupBlocked("PGSERVICE ausente: usar perfil privado autenticado")
-    if environment.get("PGPASSWORD") and environment.get("NIVON_ALLOW_PGPASSWORD") != "1":
+    if environment.get("PGPASSWORD"):
         raise BackupBlocked("use .pgpass/PGSERVICE em vez de senha no ambiente")
     if not environment.get("PGSERVICEFILE") and not environment.get("HOME"):
         raise BackupBlocked("servico PG sem arquivo de configuracao ou HOME")
@@ -130,7 +131,7 @@ def build(
             "--lock-wait-timeout=5000",
             "--file=" + str(archive),
         ]
-        for table in TABLES:
+        for table in (*TABLES, *SEQUENCES):
             command.append("--table=public." + table)
         try:
             result = runner(
