@@ -208,3 +208,17 @@ Reproduzir testes sinteticos: PYTHONPATH=src python -m unittest tests.test_pecua
 - SHA-256 comprova integridade dos bytes **desde sua captura/arquivamento**, não a autenticidade HTTP ou proveniência externa. O campo `identidade_arquivo_verificada=true` significa apenas integridade/identidade LOCAL; `amostra_real_homologada=false`, `mapa_dimensional_homologado=false`, `resposta_http_autenticada=false`, `timestamps_autenticados=false`, `coleta_real_executada=false` e `previsao_homologada=false` permanecem falsos.
 - Para homologar são necessárias respostas oficiais autênticas com headers/horário de aquisição, verificação de schema e variáveis/categorias, regras de direito de acesso e armazenamento, comparação oficial BR/UF e aferição independente de revisões históricas. Nenhuma API real foi conectada ou ativada.
 - P0 pendente: acesso e teste da resposta real 1092/1093/1094. P1 entregue somente em código/testes de armazenamento e integração local. Sem merge, deploy, custos ou envios.
+
+## Continuidade 21/10/2026 — recuperação estritamente read-only do arquivo SIDRA
+
+### Falha corrigida no arquivo SQLite
+- O módulo src/nivon/pecuaria_sidra_arquivo.py usava `_abrir` com `sqlite3.connect` e `executescript(_SCHEMA)` mesmo em `recuperar_pacote_sidra_offline`. Isso poderia criar o arquivo caso estivesse ausente e reconstruir triggers durante uma consulta, introduzindo efeitos colaterais em uma operação destinada apenas à leitura.
+- A abertura passa a distinguir explicitamente somente_leitura. Em leitura, exige arquivo preexistente e índice canônico; usa URI `file:/...?...mode=ro`, sem executar DDL nem CREATE TRIGGER. Em escrita, conserva o fluxo transacional, validação de legado e idempotência existentes.
+- O suporte a URI é construído com pathlib Path.resolve().as_uri(), sem interpolar parâmetros do usuário em SQL, e continua rejeitando arquivo/parent symlink e diretórios inválidos. Não representa proteção absoluta contra acesso externo de administrador ou alteração de arquivos.
+- Os testes test_leitura_inexistente_nao_cria_banco, test_leitura_nao_reconstroi_trigger_ausente, test_leitura_banco_legado_nao_executa_ddl e test_leitura_id_ausente_nao_cria_ou_edita verificam inexistência, versionamento do schema e ausência de efeitos colaterais da leitura.
+- CI comprovado https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39698730650: 1.265 testes executados, 0 falhas, 5 ignorados. Fixtures são 100% sintéticas.
+
+### Estado das fontes e próxima prioridade
+- Consultas diretas nesta rodada a https://servicodados.ibge.gov.br/api/v3/agregados/1092/metadados, /1093/metadados, /1094/metadados e ao serviço https://apisidra.ibge.gov.br/values/t/1092/n1/1/p/202602/v/allxp/h/y não retornaram JSON utilizável no navegador. Não provar indisponibilidade da API na origem.
+- Os serviços metadados, períodos, localidades e variáveis são contratos distintos da API Agregados v3, segundo estudo técnico: https://www.scielo.br/j/eb/a/yzWLzKTbKMkxgsZ9vYypPCv/?lang=pt. A primeira validação com payload oficial continua P0.
+- Próximo passo técnico: captura limitada e autorizada de dados reais fora do runner restrito, com verificação da resposta HTTPS, identificadores, categorias, unidades, períodos, localidades e direito de armazenamento; só depois processar arquivo e produzir série real. Nenhuma coleta automática, registro operacional ou promoção de maturidade foi ativada.
