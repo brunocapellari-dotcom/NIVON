@@ -169,7 +169,7 @@ class TestIVOPacoteAuditoriaPAM(unittest.TestCase):
         self.assertEqual(len(list((self.root/"recibos").glob("*.json"))),1)
 
     def test_nao_aceita_pdf_como_recibo_json(self):
-        pdf=self.arquivar(raw=b"%PDF-1.4\n"+b"PDF sintético"*5,
+        pdf=self.arquivar(raw=b"%PDF-1.4\n"+"PDF sintético".encode("utf-8")*5,
             kind="PDF_IBGE",documento_url="https://www.ibge.gov.br/pam/nota.pdf")
         with self.assertRaises(ErroPacotePAM):
             self.pacote(pdf)
