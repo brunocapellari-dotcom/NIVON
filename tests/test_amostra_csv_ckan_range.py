@@ -76,7 +76,7 @@ class CSVRangeTest(unittest.TestCase):
         with self.assertRaises(PermissionError):
             consultar_prefixo_ckan(fonte="CME_FUTUROS", recurso_id=RID, executar=True)
 
-    def test_limites_e UUID(self):
+    def test_limites_e_uuid(self):
         for lim in (0, 4095, PREFIXO_MAX+1, "1024", True):
             with self.assertRaises(ErroCSVCKAN):
                 consultar_prefixo_ckan(fonte=FONTE,recurso_id=RID,
