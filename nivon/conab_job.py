@@ -26,7 +26,9 @@ async def registros_publicacao(conab, publicacao):
             raise ValueError("Origem da publicação não disponível")
         for chave, item in (("safra","safra"), ("levantamento","levantamento"),
                             ("data_publicacao","data_publicacao"),("url","url")):
-            if p.get(chave) != publicacao[item]:
+            esquerda = str(p.get(chave)) if chave == "data_publicacao" else p.get(chave)
+            direita = publicacao[item]
+            if esquerda != direita:
                 raise ValueError("Metadados divergentes da edição: "+chave)
         linhas=validar_linhas(tabela.to_dict(orient="records"), produto,
                             publicacao["safra"],"MT",publicacao["levantamento"])
