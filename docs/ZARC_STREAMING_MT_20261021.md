@@ -37,3 +37,24 @@ O resultado de análise estrutural **não libera** backend, BigQuery, relatório
 - A inspeção parcial do cabeçalho/2.262 linhas permanece válida e separada do teste integral. O leitor integral existe e foi aprovado em fixtures sintéticas, mas não em dados integrais reais.
 
 **Próxima correção técnica:** realizar prova de estrutura e tamanho em pequenos blocos com diagnóstico seguro, distinguindo arquivo maior que teto, linhas inválidas, UTF-8, geocódigo, Portaria e divergência de safra antes de repetir um download integral. Não ampliar teto às cegas e não iniciar backfill na infraestrutura real.
+
+
+## Resolução técnica em 22/10/2026
+
+A prova inicial de leitura integral falhou pelo limite configurado de 160 MB. Diagnóstico sem novo download integral:
+- GitHub Actions [#39853919233](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39853919233): requisição de um byte recebeu HTTP 200 sem Content-Length, tamanho ainda desconhecido.
+- [#39854304370](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39854304370): 8 MiB de prefixo, 36.517 registros completos, 821 em MT, zero violações das regras examinadas na amostra.
+- [#39854558010](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39854558010): Range de 8 KiB recebeu HTTP 206 com Content-Range comprovando **211.652.014 bytes**. O comportamento de suporte ao Range variou conforme requisição. Nunca depender dele nem presumir Content-Length.
+- Teto de transporte atualizado para 230.000.000 bytes **apenas neste coletor da edição fixa**. Arquivo maior falha fechado; não ampliar automaticamente.
+- [#39854814268](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39854814268): **LEITURA INTEGRAL PASSOU** no runner, com hash SHA-256 `65f52578a4869894311888323d87db75a5452829a3dabef90786f3f14b02d652`, total de 957.490 linhas no Brasil e 27.918 de MT; **142 geocódigos IBGE distintos**, **16 valores de Portaria distintos**, **17 nomes originais de culturas** em MT. O processamento não criou artefato de dados nem escrita em DB.
+- O workflow foi revertido a diagnóstico de cabeçalho de 8 KiB como padrão. Downloads integrais exigem disparo manual específico `workflow_dispatch`, `modo=integral`, para não consumir banda de forma recorrente.
+
+### Dicionário canônico publicado pelo MAPA
+
+Fonte: https://dados.agricultura.gov.br/dataset/6d3d141c-885e-41a4-ab7f-dc8ff323b96f/resource/bebb0ebb-bc75-460c-b900-a7a1ebd87bee/download/dicionario-de-dados---tabua-de-risco-2.pdf
+
+Novo módulo `src/nivon/zarc_dicionario_oficial.py` traz descrições de Cod_Ciclo, Cod_Solo, Cod_Outros_Manejos, Cod_Clima e Cod_NM. Importante: `geocodigo` é identificador municipal IBGE, ao passo que `Cod_Munic` é o código municipal do SICOR/Proagro. Não realizar junção por igualdade entre os dois. Os campos `dec1` a `dec36` identificam períodos decendiais; o documento não oferece uma legenda numérica completa para converter todos os valores em riscos percentuais. Portanto, valores devem permanecer BRUTOS até definição metodológica adicional.
+
+### Próximo avanço técnico
+
+Normalizar e versionar os 27.918 registros de MT com chaves compostas de safra, cultura, ciclo, solo, clima, manejo, geocódigo IBGE e Portaria; preservar decêndios, revisão e seus quatro tempos. Testar idempotência e conflito de edição em banco de staging local; os dados reais só entram no banco operacional quando os gates de direitos, qualidade e persistência forem formalmente demonstrados. Permanece `runtime_enabled=false` e `scheduled_enabled=false`.
