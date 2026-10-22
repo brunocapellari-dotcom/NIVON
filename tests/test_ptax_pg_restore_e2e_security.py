@@ -68,6 +68,32 @@ class SyntheticPgRestoreGuardTests(unittest.TestCase):
         self.assertNotIn("DATABASE_URL", self.sql)
         self.assertEqual(self.sql.count("CREATE TABLE"), 3)
 
+    def test_audit_reads_same_canonical_sql_both_sides(self):
+        self.assertEqual(
+            self.script.count("< database/neon_ptax_readonly_audit.sql"), 2
+        )
+        self.assertIn("audit_normalize", self.script)
+        self.assertIn("source_audit", self.script)
+        self.assertIn("restored_audit", self.script)
+        self.assertIn('obj=obj.get("source_audit_manifest",obj)', self.script)
+        self.assertIn('obj.pop("snapshot_timestamp_utc",None)', self.script)
+        self.assertIn('obj["duplicate_business_keys"]==0', self.script)
+        self.assertIn('obj["invalid_prices"]==0', self.script)
+
+    def test_source_and_restored_schema_indexes_constraints_matched(self):
+        self.assertIn("'indexes',(SELECT jsonb_agg", self.script)
+        self.assertIn("'constraints',(SELECT jsonb_agg", self.script)
+        self.assertIn("pg_indexes", self.script)
+        self.assertIn("pg_get_constraintdef", self.script)
+        self.assertIn("source_fingerprint", self.script)
+        self.assertIn("restored_fingerprint", self.script)
+        for index in (
+            "idx_nivon_ptax_quotes_latest",
+            "idx_nivon_ptax_runs_by_date",
+            "idx_nivon_ptax_checkpoints_latest",
+        ):
+            self.assertIn(index, self.sql)
+
     def test_workflow_only_pull_requests_and_read_only(self):
         self.assertIn("  pull_request:", self.workflow)
         self.assertIn("  contents: read", self.workflow)
