@@ -5285,6 +5285,35 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "PED autenticado; sem JWT/consentimento comprovados, execução e persistência bloqueadas.",
       "preliminary_evidence": "CODE_AND_SYNTHETIC_TESTS_ONLY"
+    },
+    {
+      "dataset_id": "BCB_SICOR_MDCR",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "DIRECT_OFFICIAL_API",
+        "url": "https://olinda.bcb.gov.br/olinda/servico/SICOR/versao/v2/odata/CusteioMunicipioProduto",
+        "source_proof": "https://dadosabertos.bcb.gov.br/dataset/matrizdadoscreditorural"
+      },
+      "implementation_scope": "SICOR_ODATA_SAMPLE_ONLY_NO_HOMOLOGATED_NUMERIC_SERIES",
+      "authentication": "NONE_FOR_PUBLIC_READ",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_RESPONSE_FIELD_MAP_RIGHTS_AND_PERSISTENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "SEMANTIC_FIELD_MAPPING",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "BCB SICOR OData v2, ODbL. $top amostra; não total ou tendência sem filtro, schema e contexto. Nenhum consumo automatizado habilitado.",
+      "preliminary_evidence": "OFFICIAL_ODATA_DOCUMENTATION_AND_SYNTHETIC_TESTS_ONLY"
     }
   ]
 }
