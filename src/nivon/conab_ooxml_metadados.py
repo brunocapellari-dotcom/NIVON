@@ -54,9 +54,10 @@ def _resolve_target(base_dir: str, target: str) -> str:
     else:
         path = posixpath.join(base_dir, target)
     canon = posixpath.normpath(path)
+    # OOXML permite caminhos internos relativos como ../drawings/drawing1.xml;
+    # após a normalização, nunca podem ultrapassar a raiz do pacote ZIP.
     if (canon in ("", ".", "..") or canon.startswith("../") or
-            canon.startswith("/") or "\x00" in canon or
-            any(p in ("..", ".") for p in target.split("/"))):
+            canon.startswith("/") or "\x00" in canon):
         raise ErroDocumentoConab("relationship OOXML tenta sair do pacote")
     return canon
 
