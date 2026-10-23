@@ -1,0 +1,71 @@
+name: NIVON IMEA - staging oficial Neon
+on:
+  push:
+    paths:
+      - '.github/workflows/imea-neon-stage.yml'
+  workflow_dispatch:
+  schedule:
+    # 10:00 e 19:00 em Mato Grosso, segunda a sexta (UTC-4).
+    - cron: '0 14,23 * * 1-5'
+permissions:
+  contents: read
+  id-token: write
+# Reexecução de homologação: dados já existentes não devem gerar novas linhas.
+concurrency:
+  group: nivon-imea-staging
+  cancel-in-progress: false
+jobs:
+  ingestar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 3ece3362d3c30d804d713e2656c5f156f92884fc
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install --disable-pip-version-check agrobr==2.0.0
+      - name: Consultar origem, validar lotes e persistir usando OIDC GitHub
+        env:
+          NIVON_IMEA_STAGE_URL: https://br-twilight-cell-b77ukd6x-imeastage.compute.c-13.us-east-1.aws.neon.tech/stage
+        run: |
+          python - <<'PY'
+          import asyncio,json,os
+          from urllib.parse import quote
+          from urllib.request import Request,urlopen
+          from agrobr import imea
+          from nivon.imea_lotes import prepare
+          async def main():
+              uri=os.environ['ACTIONS_ID_TOKEN_REQUEST_URL']+'&audience='+quote('urn:nivon:imea:stage',safe='')
+              req=Request(uri,headers={'Authorization':'Bearer '+os.environ['ACTIONS_ID_TOKEN_REQUEST_TOKEN']})
+              with urlopen(req,timeout=20) as res:
+                  jwt=json.load(res)['value']
+              summary={'source':'IMEA','chains':{},'received':0,'inserted':0,'duplicates':0,'canonical_quotes_inserted':0}
+              for chain in ('soja','milho','algodao','bovinocultura'):
+                  df,meta=await imea.cotacoes(chain,return_meta=True)
+                  p=prepare(df.to_dict(orient='records'),meta,chain,batch_size=80)
+                  count=0;new=0;dupes=0
+                  for batch in p['batches']:
+                      body=json.dumps({'source':'IMEA','rows':batch},ensure_ascii=False).encode('utf-8')
+                      req=Request(os.environ['NIVON_IMEA_STAGE_URL'],data=body,method='POST',
+                                  headers={'Authorization':'Bearer '+jwt,'Content-Type':'application/json'})
+                      with urlopen(req,timeout=45) as res:
+                          status=json.load(res)
+                      if status.get('status')!='STAGED' or status.get('received')!=len(batch) or status.get('canonical_quotes_inserted')!=0:
+                          raise SystemExit('IMEA_STAGE_NOT_CONFIRMED_'+chain)
+                      count+=status['received']
+                      new+=status['inserted']
+                      dupes+=status['duplicates']
+                  if count!=p['validated'] or new+dupes!=count:
+                      raise SystemExit('IMEA_BATCH_TOTAL_INCONSISTENT_'+chain)
+                  summary['chains'][chain]={'validated':p['validated'],
+                       'received':count,'inserted':new,'duplicates':dupes,
+                       'latest_publication':p['last_publication'],'reference_date_verified':False}
+                  summary['received']+=count
+                  summary['inserted']+=new
+                  summary['duplicates']+=dupes
+              print('IMEA_NEON_STAGING='+json.dumps(summary,ensure_ascii=False))
+          asyncio.run(main())
+          PY
