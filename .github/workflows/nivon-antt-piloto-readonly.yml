@@ -9,6 +9,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/nivon-antt-piloto-readonly.yml'
+      - 'src/nivon/coleta_antt.py'
   workflow_dispatch:
 
 permissions:
