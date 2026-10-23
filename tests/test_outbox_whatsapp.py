@@ -7,7 +7,7 @@ import unittest
 from datetime import datetime, timedelta, timezone
 
 from nivon.autorizacao_envio import conteudo_canonico, verificar_autorizacao
-from suporte_provas_outbox import provas_sinteticas
+from suporte_provas_outbox import provas_sinteticas, provisionar_teste
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -96,6 +96,7 @@ class TestOutboxWhatsApp(unittest.TestCase):
         self.documento = doc
         self.assinatura = assinatura
         self.comprovantes, self.emissores = provas_sinteticas(doc)
+        provisionar_teste(self.con, self.emissores)
         return registrar_autorizacao(
             self.con, modelo, edicao_editorial=editorial,
             documento=doc, assinatura=assinatura,

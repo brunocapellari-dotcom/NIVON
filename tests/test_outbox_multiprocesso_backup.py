@@ -11,7 +11,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from nivon.autorizacao_envio import conteudo_canonico
-from suporte_provas_outbox import provas_sinteticas
+from suporte_provas_outbox import provas_sinteticas, provisionar_teste
 from nivon.entrega_whatsapp import preparar_template
 from nivon.outbox_whatsapp import (
     registrar_edicao, registrar_autorizacao, consultar_envio,
@@ -66,6 +66,7 @@ def preparar(con):
                                "modo":"OFFLINE_SEM_ENVIO","sha256_texto":sha}
     }
     comprovantes, emissores = provas_sinteticas(doc)
+    provisionar_teste(con, emissores)
     registrar_autorizacao(con,modelo,edicao_editorial=editorial,
                           documento=doc,assinatura=sig,chave_auditoria=AUDITOR,
                           comprovantes=comprovantes, emissores=emissores)
