@@ -19,6 +19,7 @@ import io
 import json
 import os
 import re
+import shutil
 import tempfile
 import zipfile
 from datetime import datetime, timezone
@@ -227,12 +228,9 @@ def executar(pyproject: bytes, *, source_sha: str, run_id: int, output: Path) ->
         (output / "sha256sums.txt").write_text(
             "\n".join(checksums) + "\n", encoding="ascii")
     except BaseException:
-        # Evita deixar evidências incompletas que possam ser confundidas
-        # com uma execução aprovada.
-        for file in output.iterdir():
-            if file.is_file():
-                file.unlink()
-        output.rmdir()
+        # Somente diretório novo criado acima; apaga inclusive a subpasta
+        # wheelhouse se falhar a gravação de qualquer parte do bundle.
+        shutil.rmtree(output)
         raise
     return summary
 
