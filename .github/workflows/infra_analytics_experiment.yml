@@ -8,6 +8,8 @@ on:
       - 'infra/docker/Dockerfile.analytics-experiment'
       - '.dockerignore'
       - 'src/nivon/infra_analytics_probe.py'
+      - 'src/nivon/infra_offline_pipeline.py'
+      - 'tests/test_infra_offline_pipeline.py'
       - 'src/nivon/infra_analytics_audit.py'
       - 'tests/test_infra_analytics_experiment.py'
       - 'pyproject.toml'
@@ -47,6 +49,7 @@ jobs:
         run: |
           set -euo pipefail
           PYTHONPATH=src python -m unittest discover -s tests -p test_infra_analytics_experiment.py -v
+          PYTHONPATH=src python -m unittest discover -s tests -p test_infra_offline_pipeline.py -v
           docker_arch="$(docker info --format '{{.Architecture}}')"
           case "$docker_arch" in
             x86_64) docker_arch=amd64 ;;
@@ -127,6 +130,53 @@ jobs:
             --cap-drop ALL --security-opt no-new-privileges:true --user 65532:65532 \
             --entrypoint python nivon-analytics:ci \
             -m nivon.infra_worker --mode self-check
+      - name: E2E dois containers, tres jobs, crash e restauração
+        shell: bash
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -euo pipefail
+          for folder in batch-state batch-backup batch-restore; do
+            sudo install -d -o 65532 -g 65532 -m 0700 "$RUNNER_TEMP/$folder"
+          done
+          docker pull --platform "$PLATFORM" \
+            python:3.11.17-alpine3.23@sha256:924d53e01cee5204d35fbcfb71b6c1568c857d7c31141f960ff6a37e111ecc7f
+          docker build --network=none --platform "$PLATFORM" \
+            -f infra/docker/Dockerfile.worker-alpine -t nivon-batch:worker . > /dev/null
+          batch_cmd() {
+            local image="$1" root="$2" stage="$3"
+            shift 3
+            docker run --rm --platform "$PLATFORM" --network none --read-only \
+              --cap-drop ALL --security-opt no-new-privileges:true \
+              --user 65532:65532 --pids-limit 96 --memory 1024m --cpus 1.0 \
+              --tmpfs /tmp:rw,nosuid,nodev,size=192m,uid=65532,gid=65532 \
+              --mount "type=bind,source=$root,target=/var/lib/nivon/state" \
+              --mount "type=bind,source=$RUNNER_TEMP/batch-backup,target=/var/lib/nivon/backups" \
+              -e NIVON_OFFLINE_STATE_DIR=/var/lib/nivon/state \
+              -e NIVON_OFFLINE_BACKUP_DIR=/var/lib/nivon/backups \
+              -e NIVON_RUNTIME_ENABLED=false -e NIVON_BACKUP_ENABLED=false \
+              -e NIVON_COLLECTORS_ENABLED=false -e NIVON_PUBLICATION_ENABLED=false \
+              -e NUMBA_NUM_THREADS=1 -e OPENBLAS_NUM_THREADS=1 \
+              -e OMP_NUM_THREADS=1 -e NUMBA_CACHE_DIR=/tmp/numba \
+              --entrypoint python "$image" \
+              -m nivon.infra_offline_pipeline --stage "$stage" "$@"
+          }
+          batch_cmd nivon-batch:worker "$RUNNER_TEMP/batch-state" prepare
+          batch_cmd nivon-batch:worker "$RUNNER_TEMP/batch-state" prepare
+          set +e
+          batch_cmd nivon-analytics:ci "$RUNNER_TEMP/batch-state" process --interrupt-after-lease
+          interrupted_rc=$?
+          set -e
+          test "$interrupted_rc" -eq 3
+          batch_cmd nivon-batch:worker "$RUNNER_TEMP/batch-state" reconcile
+          batch_cmd nivon-analytics:ci "$RUNNER_TEMP/batch-state" process
+          batch_cmd nivon-analytics:ci "$RUNNER_TEMP/batch-state" process
+          batch_cmd nivon-batch:worker "$RUNNER_TEMP/batch-state" verify
+          batch_cmd nivon-batch:worker "$RUNNER_TEMP/batch-state" backup
+          batch_cmd nivon-batch:worker "$RUNNER_TEMP/batch-restore" restore
+          batch_cmd nivon-batch:worker "$RUNNER_TEMP/batch-restore" verify
+          batch_cmd nivon-analytics:ci "$RUNNER_TEMP/batch-restore" process
+          echo "NIVON_2_WORKERS_3_JOBS_CRASH_RESTORE_E2E_OK_NO_DEPLOY"
       - name: Instalar Trivy com SHA256 pinado
         shell: bash
         env:
