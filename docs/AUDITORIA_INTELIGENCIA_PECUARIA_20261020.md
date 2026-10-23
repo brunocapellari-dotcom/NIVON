@@ -251,3 +251,15 @@ Reproduzir testes sinteticos: PYTHONPATH=src python -m unittest tests.test_pecua
 - O teste de rede pontual foi retirado de `tests/` após demonstrar conectividade, códigos e processamento. Nenhuma sondagem é executada automaticamente pela suíte permanente.
 
 **Próximos gates necessários:** (P0) validar metadados oficiais v3 e direitos de armazenamento; (P0) testar e registrar controles semânticos por espécie/território/período e obter proveniência de publicação; (P1) ativar capturas reais na quarentena em ambiente autorizado e persistente, SEM promoção para produção; (P1) revisão editorial independente e regras de liberação de séries. CI permanente deve permanecer verde.
+
+## Lote concluído 23/10/2026 — backfill multi-trimestre e as-of
+
+- Limitação removida: quarentena antes aceitava apenas 2026-T2. Agora exige trimestre encerrado desde 1997, identificadores 284/285, headers DnC SEM correspondência parcial de texto, presença de D3N compatível e códigos totais corretos em cada resposta. Qualquer divergência falha antes de escrita.
+- Criado src/nivon/pecuaria_sidra_backfill.py: recebe 1-4 trimestres, executa 6-24 consultas explícitas, prepara todas antes de gravar, preserva bytes/URL/hash e insere conjunto inteiro em transação única; importações idênticas reaproveitam hash e versões diferentes não sobrescrevem edições anteriores.
+- Nova consulta as-of read-only por espécie e períodos: somente a última captura conhecida até o corte, jamais antecipar um backfill baixado depois. A data da primeira coleta substitui publicacao APENAS como piso conservador para consulta, sem afirmar data de divulgação no IBGE. Rejeita consultas potencialmente truncadas acima de 500 linhas.
+- CLI permite --consultar --especie --periodo --corte --banco, sem --rede/--gravar. Mantém dry-run sem rede como padrão; armazenamento de bytes reais não foi autorizado/executado neste lote.
+- Testes integrados de 12 extratos, rollback se a última resposta falha ou trigger SQL rejeita inserção, replay idempotente, variável/dimensão alterada, trimestre divergente, captura anterior ao corte, revisão posterior e CLI read-only.
+- Evidência real IBGE: GitHub Actions #39983108842 verificou 2025-T2 (6 extratos, 132 numéricos, 32 indisponíveis) e 2026-T1 (6 extratos, 134 numéricos, 30 indisponíveis). Eram respostas HTTP oficiais obtidas no runner, não bytes persistidos. O teste temporário de rede foi removido do CI permanente após a inspeção.
+- Evidência CI com teste de revisão as-of: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39983435093 com 1.319 testes, 0 falhas, 5 ignorados (inclui o teste HTTPS temporário removido depois). Runbook atualizado: docs/RUNBOOK_SIDRA_PECUARIA_LOTES_20261022.md.
+
+**Bloqueios remanescentes:** obter metadados oficiais completos, garantir direitos específicos de retenção/redistribuição, datas reais de publicação e eventual contrato de armazenamento Google Cloud; sem merge/deploy/cron/agendamento, sem dados reais em banco persistente e sem previsões operacionalmente homologadas.
