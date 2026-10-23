@@ -41,6 +41,10 @@ class CorredoresTeste(unittest.TestCase):
             data=consultar_corredores(banco,recorte="mt_especifico",competencia="2026-09",limite=20)
             self.assertEqual(data["estado"],"RECORTE_IMPORTADO_NAO_HOMOLOGADO")
             self.assertEqual(data["corredores_relevantes"],7)
+            self.assertEqual(data["resumo_polos"][0]["polo"]["id"],"PA_MIRITITUBA_HIDRO")
+            self.assertEqual(data["resumo_polos"][0]["toneladas_no_recorte"],"100")
+            self.assertFalse(data["resumo_polos"][0]["transbordo_confirmado"])
+            self.assertEqual(data["resumo_polos"][0]["principais_origens"][0]["origem"],"Sorriso")
             top=data["corredores"][0]
             self.assertEqual(top["polo"]["id"],"PA_MIRITITUBA_HIDRO")
             self.assertEqual(top["toneladas_no_recorte"],"100")
