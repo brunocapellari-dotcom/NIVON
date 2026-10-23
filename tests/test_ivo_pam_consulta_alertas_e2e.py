@@ -203,5 +203,76 @@ class TestIVOIntegralPAM(unittest.TestCase):
         self.assertEqual(terceiro["backup"]["vintages"],2)
 
 
+    def test_alertas_do_console_nao_exibem_outro_municipio_ou_cultura(self):
+        self.gravar("100",20,municipio="5107925")
+        self.gravar("200",21,municipio="5107925")
+        self.gravar("300",20,cat="2692")
+        self.gravar("350",21,cat="2692")
+        self.assertEqual(self.radar(20)["alteracoes_relevantes"],2)
+        code,documento=self.consultar_ivo(
+            alertas_desde=instante(20).isoformat())
+        self.assertEqual(code,0)
+        self.assertEqual(documento["alertas_pam"]["alteracoes_relevantes"],0)
+        self.assertEqual(documento["alertas_pam"]["escopo"]["municipio_ibge"],"5107958")
+        self.assertEqual(documento["alertas_pam"]["escopo"]["categoria_c81"],"2713")
+
+    def test_filtro_de_alertas_rejeita_escopo_parcial(self):
+        self.gravar("100",20)
+        with self.assertRaises(ErroAlertasPAM):
+            alertas_revisoes_pam(self.db,desde_exclusivo=instante(19),
+                                municipio_ibge="5107958")
+
+    def test_ciclo_entrega_dois_anos_com_delta_e_alerta_material(self):
+        entrada=self.root/"lote"
+        entrada.mkdir()
+        tarefas=[]
+        for ano,valor in ((2020,"100"),(2021,"200")):
+            name=f"ano-{ano}.json"
+            (entrada/name).write_bytes(json_sidra(valor,ano=ano))
+            tarefas.append({"municipio_ibge":"5107958","ano":ano,
+                           "variavel":"214","categoria_c81":"2713","arquivo":name})
+        a=executar_ciclo_pam(saida=self.root/"serie1",tarefas=tarefas,
+                             modo="LOCAL",entrada=entrada,iniciar_novo=True)
+        feed=a["entrega_ivo"]
+        self.assertEqual(feed["celulas_unicas"],2)
+        atual=next(x for x in feed["linhas"] if x["ano_civil"]==2021)
+        self.assertEqual(atual["comparacao_ano_anterior"]["delta"],100.)
+        self.assertEqual(atual["comparacao_ano_anterior"]["variacao_pct"],100.)
+        self.assertFalse(feed["previsao_gerada"])
+        self.assertFalse(feed["frete_medio_municipal_calculado"])
+        self.assertTrue((self.root/"serie1"/"entrega_ivo_pam.json").is_file())
+        (entrada/"ano-2021.json").write_bytes(json_sidra("250",ano=2021))
+        b=executar_ciclo_pam(saida=self.root/"serie2",tarefas=tarefas,
+                             modo="LOCAL",entrada=entrada,
+                             arquivo_anterior=self.root/"serie1"/"estado_pam.zip")
+        self.assertEqual(b["alertas"]["alteracoes_relevantes"],1)
+        self.assertEqual(b["entrega_ivo"]["alteracoes_materiais_neste_ciclo"],1)
+        self.assertEqual(b["entrega_ivo"]["eventos_relevantes"][0]["variacao_absoluta"],50.)
+        outro=next(x for x in b["entrega_ivo"]["linhas"] if x["ano_civil"]==2021)
+        self.assertEqual(outro["valor_candidato"],250.)
+        self.assertEqual(outro["comparacao_ano_anterior"]["delta"],150.)
+        self.assertEqual(b["backup"]["capturas"],4)
+        self.assertEqual(b["backup"]["vintages"],3)
+
+    def test_limite_de_radar_nao_oculta_revisoes_silenciosamente(self):
+        self.gravar("100",20)
+        self.gravar("200",21)
+        with self.assertRaises(ErroAlertasPAM):
+            alertas_revisoes_pam(self.db,desde_exclusivo=instante(19),
+                                limite_capturas=1)
+
+    def test_cli_de_pam_nao_cria_sqlite_inexistente(self):
+        from nivon.ivo_pam_consulta import main as pam_main
+        destino=self.root/"nao-criar.sqlite"
+        buffer=io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            codigo=pam_main(["--db",str(destino),"--municipio","5107958",
+                "--produto","2713","--variavel","214",
+                "--inicio","2021","--fim","2021"])
+        self.assertEqual(codigo,2)
+        self.assertFalse(destino.exists())
+        self.assertEqual(json.loads(buffer.getvalue())["estado"],"ERRO")
+
+
 if __name__=="__main__":
     unittest.main()
