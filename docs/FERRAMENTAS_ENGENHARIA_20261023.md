@@ -33,6 +33,7 @@ Data de avaliação: 23/10/2026. Inventário de oportunidades, não declaração
 2. `nivon.qualidade`: análise AST offline de `src/` e `tests/`, sem executar os arquivos, mais Ruff opcional selecionando regras críticas `E9,F821,F822,F823`.
 3. `nivon.ferramentas doctor`: informa disponibilidade de ferramentas, sem instalar nem configurar credenciais.
 4. `nivon.contexto_codigo`: indexação Python por hash e dicas de símbolos limitadas; não injeta arquivos inteiros no prompt.
+7. Claude Code é invocado com `--restricted --bare --no-session-persistence`, sem plugins/hook/MCP de usuário, e somente ferramentas de arquivo explicitadas; `AGENTS.md` deve ser lido diretamente pela tarefa. Isso reduz carregamento de contexto, mas ainda exige teste no host para validar a versão da CLI.
 5. `nivon.planejador`: tarefas priorizadas com dependências, gates de licença/risco e ítems de qualidade Ruff; não toma texto de issue como instrução livre.
 6. `nivon.autonomia`: duas worktrees em paralelo e integração serializada na branch local `autonomo/integracao`, com regressão offline em contêiner sem rede.
 
