@@ -18,7 +18,7 @@ def record(id="1", currency="USD",val="5.123400000",date="2026-10-22"):
        "observation_kind":"INFORMADO"}
 
 def stub(upper="3",rows=None):
-    rows=rows or [record("1"),record("3",currency="EUR")]
+    rows=rows if rows is not None else [record("1"),record("3",currency="EUR")]
     def f(endpoint,token,path,query):
         if path=="/checkpoint":
             return {"status":"CHECKPOINT","upper_id":upper,"row_count":len(rows)}
