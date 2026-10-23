@@ -19,7 +19,7 @@ from pathlib import Path
 
 from .noaa_roni import ErroRONI, MAX_RAW_BYTES, importar_roni_ascii
 from .roni_store import (abrir_arquivo_roni, executar_lote_roni,
-                         panorama_local_roni)
+                         panorama_local_roni, auditar_acervo_roni)
 
 
 def _load_manifest(path):
@@ -121,7 +121,7 @@ def executar_manifesto_roni(
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description="NIVON RONI: pipeline offline")
-    ap.add_argument("modo", choices=["validar", "executar", "capturar"])
+    ap.add_argument("modo", choices=["validar", "executar", "capturar", "auditar"])
     ap.add_argument("--manifesto")
     ap.add_argument("--banco")
     ap.add_argument("--raw-dir")
@@ -131,7 +131,15 @@ def main(argv=None):
     ap.add_argument("--confirmar-revisao", action="store_true")
     a = ap.parse_args(argv)
     try:
-        if a.modo == "capturar":
+        if a.modo == "auditar":
+            if not a.banco or not a.raw_dir or not Path(a.banco).is_file():
+                raise ErroRONI("acervo SQLite pré-existente obrigatório na auditoria")
+            db = abrir_arquivo_roni(a.banco)
+            try:
+                result = auditar_acervo_roni(db, raw_dir=a.raw_dir)
+            finally:
+                db.close()
+        elif a.modo == "capturar":
             if not a.confirmar_gravacao_local or not a.banco or not a.raw_dir:
                 raise PermissionError("captura requer persistência local explicitamente autorizada")
             from .roni_captura_manual import capturar_roni_manual
