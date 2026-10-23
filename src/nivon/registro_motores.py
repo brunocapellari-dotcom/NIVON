@@ -37,7 +37,9 @@ MODULOS=frozenset({
     "pacotes_chuva_asof",
     "adaptador_inmet_chuva",
     "mjo_rmm", "contexto_mjo_asof",
-    "noaa_roni", "inspecao_roni_offline", "qualidade_cientifica", "historico_vintages",
+    "noaa_roni", "inspecao_roni_offline", "roni_store", "roni_cli",
+    "roni_captura_manual",
+    "qualidade_cientifica", "historico_vintages",
     "confronto_climatico_qc", "confronto_janelas_fisicas",
     "analogos_historicos",
 })
