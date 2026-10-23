@@ -118,7 +118,11 @@ def stream_pages(endpoint: str, token: str, after: int,
         for row in rows:
             if not isinstance(row,dict):raise PrivateExportError("BAD_ROW")
             rid=safe_id(row.get("id"))
-            if rid<=after or rid>upper:raise PrivateExportError("UNORDERED_IDS")
+            if rid<=after:
+                # Somente IDs surrogate; nunca logar preco ou payload.
+                raise PrivateExportError("UNORDERED_IDS_PREV_"+str(after)+"_CURRENT_"+str(rid))
+            if rid>upper:
+                raise PrivateExportError("ROW_ID_ABOVE_SNAPSHOT_UPPER")
             after=rid
         if block.get("next_after_id")!=str(after) or after==old:
             raise PrivateExportError("INVALID_NEXT_CURSOR")
