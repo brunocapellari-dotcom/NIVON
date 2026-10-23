@@ -1,0 +1,152 @@
+name: NIVON - Sonda Real BCB SGS11 e Estado GCP
+
+on:
+  pull_request:
+    paths:
+      - 'src/nivon/sonda_sgs11.py'
+      - 'tests/test_sonda_sgs11.py'
+      - '.github/workflows/sonda-real-bcb-google-cloud.yml'
+  push:
+    branches: [main, feat/prova-real-sgs-gcp-fontes-20261023]
+    paths:
+      - 'src/nivon/sonda_sgs11.py'
+      - 'tests/test_sonda_sgs11.py'
+      - '.github/workflows/sonda-real-bcb-google-cloud.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-sonda-real-bcb-gcp-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  bcb-http-real:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Instalar codigo e executar 5 testes independentes de nuvem
+        run: |
+          python -m pip install -e .
+          python -m unittest discover -s tests -p 'test_sonda_sgs11.py' -v
+      - name: Consultar fonte oficial BCB SGS11 em tempo real, SEM gravar
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m nivon.sonda_sgs11 --executar | tee sonda-sgs11.json
+          echo '### BCB SGS11 (somente leitura HTTP público)' >> "$GITHUB_STEP_SUMMARY"
+          python - <<'PY'
+          import json,os
+          r=json.load(open('sonda-sgs11.json',encoding='utf-8'))
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as fp:
+              fp.write('Endpoint HTTPS real consultado e dados normalizados.\n\n')
+              fp.write('Referência: '+r['referencia']+'; idade: '+str(r['idade_dias'])+' dias.\n')
+              fp.write('RAW SHA256: `'+r['sha256_http']+'`.\n\n')
+              fp.write('Não executou carga GCS ou BigQuery.\n')
+          PY
+
+  metadados-cloud-readonly:
+    needs: bcb-http-real
+    if: ${{ github.ref == 'refs/heads/main' && vars.NIVON_GCP_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && vars.NIVON_BQ_PROJECT != '' && vars.NIVON_BQ_DATASET != '' && vars.NIVON_GCS_BUCKET != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      PROJETO: ${{ vars.NIVON_BQ_PROJECT }}
+      DATASET: ${{ vars.NIVON_BQ_DATASET }}
+      BUCKET: ${{ vars.NIVON_GCS_BUCKET }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ vars.NIVON_BQ_PROJECT }}
+          create_credentials_file: true
+      - name: Instalar SDK exclusivamente para leitura de metadados
+        run: python -m pip install -e '.[gcp]'
+      - name: Conferir tabela canônica, bucket e esquema do staging
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json,os
+          from google.cloud import bigquery,storage
+          from google.api_core.exceptions import NotFound,Forbidden
+          proj=os.environ['PROJETO']; ds=os.environ['DATASET']; bucket=os.environ['BUCKET']
+          bq=bigquery.Client(project=proj)
+          gcs=storage.Client(project=proj)
+          d=bq.get_dataset(f'{proj}.{ds}')
+          bk=gcs.get_bucket(bucket)
+          if str(d.location).lower()!='southamerica-east1' or str(bk.location).lower()!='southamerica-east1':
+              raise SystemExit('DESTINO_FORA_DA_REGIAO')
+          tab={}
+          for name,partition in [('nivon_observacoes','data_referencia'),
+                                 ('agro_publicacoes_staging','data_coleta')]:
+              try:
+                  t=bq.get_table(f'{proj}.{ds}.{name}')
+              except NotFound: status='AUSENTE'
+              except Forbidden: status='SEM_PERMISSAO'
+              else:
+                  p=getattr(t,'time_partitioning',None)
+                  status='SCHEMA_PARTICAO_OK' if p is not None and p.field==partition and t.require_partition_filter else 'SCHEMA_DIVERGENTE'
+              tab[name]=status
+          report={'estado':'LEITURA_REAL_GCP_SEM_ESCRITA',
+                  'projeto':proj,'dataset':ds,'bucket':bucket,
+                  'regiao':'southamerica-east1','tabelas':tab,
+                  'criou_tabelas':False,'upload_gcs':False,'merge_bigquery':False}
+          print(json.dumps(report,ensure_ascii=False,sort_keys=True))
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as f:
+              f.write('### Estado real dos destinos agrícolas Google Cloud\n\n')
+              for name,status in tab.items():
+                  f.write('- '+name+': **'+status+'**\n')
+              f.write('\nSomente metadados, nenhum job SQL ou operação de escrita.\n')
+          PY
+
+  primeira-carga-controlada:
+    needs: [bcb-http-real, metadados-cloud-readonly]
+    if: ${{ github.ref == 'refs/heads/main' && vars.NIVON_SGS11_GCP_WRITE_APPROVED == 'true' && vars.NIVON_RAW_ARCHIVE_APPROVED == 'true' && vars.NIVON_ZERO_COST_BQ_APPROVED == 'true' && vars.NIVON_SGS11_EVIDENCIA_USO != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    environment: nivon-gcp-producao
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      NIVON_SGS11_GCP_WRITE_APPROVED: ${{ vars.NIVON_SGS11_GCP_WRITE_APPROVED }}
+      NIVON_RAW_ARCHIVE_APPROVED: ${{ vars.NIVON_RAW_ARCHIVE_APPROVED }}
+      NIVON_ZERO_COST_BQ_APPROVED: ${{ vars.NIVON_ZERO_COST_BQ_APPROVED }}
+      NIVON_SGS11_EVIDENCIA_USO: ${{ vars.NIVON_SGS11_EVIDENCIA_USO }}
+      NIVON_BQ_PROJECT: ${{ vars.NIVON_BQ_PROJECT }}
+      NIVON_BQ_DATASET: ${{ vars.NIVON_BQ_DATASET }}
+      NIVON_GCS_BUCKET: ${{ vars.NIVON_GCS_BUCKET }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ vars.NIVON_BQ_PROJECT }}
+          create_credentials_file: true
+      - run: python -m pip install -e '.[gcp]'
+      - name: SGS11 real → GCS RAW → GCS manifesto → BigQuery → leitura final
+        run: python -m nivon.sgs11_gcp --executar
