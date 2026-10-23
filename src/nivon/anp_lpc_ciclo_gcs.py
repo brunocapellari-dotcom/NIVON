@@ -194,6 +194,8 @@ def executar_ciclo_lpc_gcs(
     arquivos_locais: dict | None=None,
     abridor=None,
     esperar_segundos: float=1.0,
+    semana_desde: str | None=None,
+    semana_ate: str | None=None,
 ) -> dict:
     """Restaura > coleta/normaliza > audita > exporta > confirma snapshot.
 
@@ -215,6 +217,7 @@ def executar_ciclo_lpc_gcs(
                 db,ano=ano,limite_semanas=limite_semanas,raw_dir=raw,
                 indice_bytes=indice_bytes,arquivos_locais=arquivos_locais,
                 abridor=abridor,esperar_segundos=esperar_segundos,
+                semana_desde=semana_desde,semana_ate=semana_ate,
             )
             if batch["status"]=="LOTE_FALHOU":
                 raise ErroGCSANP("nenhum XLSX válido; snapshot não será avançado")
