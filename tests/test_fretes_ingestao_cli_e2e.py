@@ -115,6 +115,61 @@ class TestCLILoteAtestado(unittest.TestCase):
         self.assertNotIn("Anuncio privado",str(l))
         self.assertNotIn(PSEUDO.hex(),run.stdout)
 
+    def _shadow(self,head):
+        shadow_config=self.p/"shadow.json"
+        shadow_config.write_text(json.dumps({
+            "arquivo_ofertas_sqlite":str(self.db),
+            "cabeca_ofertas_sha256":head,
+            "condicoes":{
+                "origem_ibge":"5107925",
+                "destino_ibge":"5107602",
+                "descarga_entity_id":"terminal:001",
+                "produto":"SOJA","equipamento":"RODOTREM",
+                "regime":"PJ","pedagio":"ADICIONAL",
+            },
+            "fonte_id":"WHATSAPP_FIXTURE",
+            "emissor_id":"fixture-archive",
+            "horizontes_dias":[7,30,90],
+        }),encoding="utf-8")
+        shadow_config.chmod(0o600)
+        env=dict(os.environ)
+        env["PYTHONPATH"]=str(ROOT/"src")
+        return subprocess.run([
+            sys.executable,str(ROOT/"scripts"/"preparar_shadow_fretes_local.py"),
+            "--config",str(shadow_config),
+        ],cwd=ROOT,env=env,capture_output=True,text=True,timeout=25,
+            check=False)
+
+    def test_entrada_whatsapp_sqlite_prepara_tres_intencoes_shadow(self):
+        r=self.cli()
+        self.assertEqual(r.returncode,0,r.stderr)
+        head=json.loads(r.stdout)["nova_cabeca_sha256"]
+        antes=self.db.read_bytes()
+        output=self._shadow(head)
+        self.assertEqual(output.returncode,0,output.stderr)
+        result=json.loads(output.stdout)
+        self.assertEqual(result["executor"],"CLI_READONLY_SHADOW")
+        self.assertEqual(result["pares_origem"],2)
+        self.assertEqual(result["horizontes_dias_corridos"],[7,30,90])
+        self.assertEqual(result["ofertas_elegiveis_nesta_rota"],2)
+        self.assertEqual(len(result["previsoes_para_assinatura_externa"]),3)
+        for proposta in result["previsoes_para_assinatura_externa"]:
+            self.assertEqual(proposta["delta_previsto_brl_t"],"0")
+            self.assertNotIn("registrado_em",proposta)
+            self.assertNotIn("assinatura_hmac_sha256",proposta)
+        self.assertFalse(result["persistencia_realizada"])
+        self.assertFalse(result["publicavel"])
+        self.assertEqual(antes,self.db.read_bytes())
+
+    def test_shadow_recusa_ancora_incorreta(self):
+        r=self.cli()
+        self.assertEqual(r.returncode,0,r.stderr)
+        output=self._shadow(GENESIS)
+        self.assertEqual(output.returncode,2)
+        self.assertEqual(
+            json.loads(output.stderr)["status"],"EMISSAO_SHADOW_BLOQUEADA"
+        )
+
     def test_repeticao_arquivo_nao_regrava_ofertas(self):
         primeiro=json.loads(self.cli().stdout)
         self.preparar(head=primeiro["nova_cabeca_sha256"])
