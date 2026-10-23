@@ -145,3 +145,50 @@ de schema/versionamento com banco operacional, verificação de
 calendário e de data de disponibilidade; depois análise de preços
 físicos/CBOT/frete com direitos separados. Somente após isso,
 habilitar motores preditivos e camada editorial, com aprovação.
+
+
+## Pacote integrado — 23/10/2026: porta de entrada real em quarentena + Google Cloud
+
+**Status:** implementação e ensaio técnico concluídos; fontes/cloud externas
+não executadas nem homologadas. Entrega sem publicação e sem custos.
+
+- `ptax_quarentena_coleta.py`: importação de bytes JSON
+  OData com manifesto de captura independente da via operacional,
+  SHA-256, timestamps com fuso, URL canônica, HTTP/MIME e
+  verificação rigorosa; aceita `value:[]` como ausência de resposta
+  cotada, não zero ou feriado inferido. SQLite append-only lógico,
+  eventos idempotentes, armazenamento content-addressed.
+- `ptax_google_cloud.py`: prepara objetos content-addressed de RAW e
+  manifesto para Google Cloud Storage; adaptador SDK opcional com
+  `if_generation_match=0`, valida caminho, bucket, SHA e manifest.
+  Upload requer `permitir_upload=True` e referências de
+  direitos e orçamento. Nenhum upload real em CI.
+- `scripts/importar_ptax_quarentena.py`: CLI unitária para arquivos
+  externos recebidos; `scripts/importar_lote_ptax_quarentena.py`:
+  CLI de até 50 pares de arquivos, validados todos antes de iniciar
+  uma transação SQLite; erro cancela todo lote.
+- `tests/test_ptax_quarentena_cloud.py` e
+  `tests/test_importar_lote_ptax_quarentena.py`: segurança,
+  entradas inválidas, lote idempotente, symlinks, JSON HTML/WAF,
+  valor ausente, corrupção, rollback, cliente GCS simulado.
+- `scripts/ensaio_ptax_integrado.py` e workflow da CI agora
+  exercitam **17 passos E2E**; continuam 100% sintéticos.
+- `docs/PTAX_QUARENTENA_GOOGLE_CLOUD_20261023.md`: contrato,
+  importação em lote, manifest, plano de cloud, IAM, custos e ODbL.
+
+**Evidência:** [CI #39984545928](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39984545928):
+`success`, **1.508 testes executados, 5 skipped, 0 falhas**, ensaio
+E2E `ENSAIO_PTAX_E2E_APROVADO_APENAS_SINTETICO`, 17 fases aprovadas.
+
+**Bloqueios P0 reais:** a consulta pública confirmou endpoint
+/documentação/licença ODbL do BCB, mas acesso HTTP externo por esta
+sessão não conseguiu obter um corpo JSON real. O Source Registry
+NIVON tem BCB_PTAX desabilitado; inserir arquivo em quarentena
+não promove o dado ao ledger operacional. Bucket GCS, credencial
+e orçamento/objeto real não foram verificados nesta rodada.
+É indevido registrar status `REAL_SNAPSHOT_TESTED`, `REAL_AUTORIZADO`
+ou publicação. Próximo pacote é realizar prova de captura HTTPS
+real e ingestão em ambiente com rede, guardar cabeçalhos e hashes,
+confrontar boletins originais, e homologar destino cloud antes de
+ativar escrita. Prioridades CEPEA/IMEA/CONAB e Argentina continuam
+em suas frentes sem substituir os processos próprios.
