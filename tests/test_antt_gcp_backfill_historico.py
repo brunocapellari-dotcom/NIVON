@@ -108,7 +108,7 @@ class Historico(unittest.TestCase):
         self.assertEqual(r["estado"],"BACKFILL_HISTORICO_CONCILIADO")
         self.assertEqual([x["ano"] for x in r["anos_conciliados"]],[2022,2023,2024,2025])
         self.assertEqual(eventos[:4],[f"preparar{y}" for y in [2022,2023,2024,2025]])
-        self.assertEqual(len(client.chamadas),5)
+        self.assertEqual(len(cliente.chamadas),5)
         self.assertEqual(partial[-1],("BACKFILL_HISTORICO_CONCILIADO",4))
         self.assertEqual(r["carga_recorrente_ativada"],False)
         self.assertEqual([x["gcs_estado"] for x in r["anos_conciliados"]],["ARQUIVADO"]*4)
