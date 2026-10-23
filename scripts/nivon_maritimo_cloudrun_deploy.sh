@@ -15,13 +15,9 @@ if [ "${GITHUB_REF:-refs/heads/main}" != "refs/heads/main" ]; then
  exit 3
 fi
 REGION=southamerica-east1
-# Não tentar o deploy sem as quatro APIs. São permissões externas ao pipeline.
-for service in run.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com; do
-  if ! gcloud services describe "$service" --project="$NIVON_PROJETO" --format='value(state)' 2>/dev/null | grep -qx ENABLED; then
-    echo "API_NAO_CONFIRMADA_OU_SEM_PERMISSAO=$service"
-    exit 4
-  fi
-done
+# IAM de ingestao nao precisa ter serviceusage.services.get.
+# A validacao ocorre pelas operacoes alvo: listar repo Docker, fazer build
+# e deploy; cada falha retorna codigo especifico, sem ampliar IAM.
 # Reutilizar repositório Docker existente; nunca criar repositório por surpresa.
 REPO="${NIVON_MARITIMO_ARTIFACT_REPO:-}"
 if [ -z "$REPO" ]; then
