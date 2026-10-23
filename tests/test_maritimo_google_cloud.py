@@ -135,7 +135,7 @@ class TestCloud(unittest.TestCase):
         self.assertEqual(result["estados"],{"OK":2,"QUARENTENA":2,"FALHA":0})
         self.assertEqual(result["persistencia"]["contagens"]["fluxos_passagens"],1)
         self.assertEqual(len(client.sql),4)
-        self.assertEqual(len(storage.bucket("bucket-nivon-123").blobs),3)
+        self.assertEqual(len(storage.bucket("bucket-nivon-123").blobs),5)
 
     def test_cloud_run_desabilitado_sem_qualquer_escrita(self):
         with self.assertRaises(PermissionError):
