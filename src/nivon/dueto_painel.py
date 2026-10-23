@@ -13,6 +13,7 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import time
 
 from nivon.cooperacao import connect, default_db, report
 from nivon.indicadores_engenharia import summarize_metrics
@@ -111,6 +112,7 @@ def render_html(data):
     label = ("Ativa" if night["active"] else "Inativa") + " · " + night["window"] + " " + night["timezone"]
     return ("""<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="refresh" content="15">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
 <title>NIVON · Dueto de Desenvolvimento</title>
 <style>
@@ -175,14 +177,44 @@ def write_private(path, content):
     return path
 
 
+def snapshot(database=None):
+    with connect(database or default_db()) as db:
+        return summary(report(db), night_status())
+
+
+def watch(*, db=None, output=None, interval=15, minutes=120):
+    """Refresh local HTML for a bounded period; does not spawn any providers."""
+    if type(interval) is not int or not 2 <= interval <= 120:
+        raise ValueError("Intervalo de atualização inválido")
+    if type(minutes) is not int or not 1 <= minutes <= 240:
+        raise ValueError("Duração do painel inválida")
+    target = output or HOME / "painel-dueto.html"
+    started = time.monotonic()
+    updated = 0
+    while True:
+        write_private(target, render_html(snapshot(db)))
+        updated += 1
+        remaining = minutes * 60 - (time.monotonic() - started)
+        if remaining <= 0:
+            break
+        time.sleep(min(interval, remaining))
+    return {"updates": updated, "output": str(target), "duration_minutes": minutes}
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Painel privado e offline Claude + Codex")
-    parser.add_argument("command", choices=["json", "html"])
+    parser.add_argument("command", choices=["json", "html", "watch"])
+    parser.add_argument("--interval", type=int, default=15)
+    parser.add_argument("--minutes", type=int, default=120)
     parser.add_argument("--db", type=Path)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args(argv)
-    with connect(args.db or default_db()) as db:
-        data = summary(report(db), night_status())
+    if args.command == "watch":
+        print(json.dumps(watch(db=args.db, output=args.output,
+                               interval=args.interval, minutes=args.minutes),
+                         ensure_ascii=False))
+        return 0
+    data = snapshot(args.db)
     if args.command == "json":
         print(json.dumps(data, ensure_ascii=False, indent=2))
     else:
