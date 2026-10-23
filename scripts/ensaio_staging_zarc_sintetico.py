@@ -17,6 +17,7 @@ from time import monotonic
 from nivon.catalogo_fontes import carregar_catalogo
 from nivon.zarc_stream_mt import COLUNAS
 from nivon.zarc_staging import abrir_zarc_staging, importar_zarc_local
+from nivon.zarc_raw_vault import guardar_raw_zarc, verificar_raw_zarc
 
 N = 27_918
 MUNICIPIOS_FICTICIOS = 142
@@ -57,6 +58,15 @@ def executar():
             segunda=importar_zarc_local(
                 db,catalogo,io.BytesIO(body),
                 coletado_em="2026-10-22T13:00:00-04:00")
+            vault=Path(d)/"raw_privado"
+            vault.mkdir(mode=0o700)
+            raw=guardar_raw_zarc(db=db,arquivo=io.BytesIO(body),raiz=vault)
+            verificado=verificar_raw_zarc(db=db,raiz=vault,sha256=primeira["sha256"])
+            if raw["sha256"]!=primeira["sha256"] or raw["bytes"]!=len(body):
+                raise RuntimeError("RAW_NAO_CONFERE_COM_STAGE")
+            repetido=guardar_raw_zarc(db=db,arquivo=io.BytesIO(body),raiz=vault)
+            if repetido["novo_arquivo"]:
+                raise RuntimeError("RAW_DUPLICADO_NO_REPLAY")
             qtd=db.execute("SELECT COUNT(*) FROM zarc_linhas").fetchone()[0]
             snap=db.execute("SELECT COUNT(*) FROM nivon_snapshots").fetchone()[0]
             capturas=db.execute("SELECT COUNT(*) FROM nivon_coletas").fetchone()[0]
@@ -76,6 +86,17 @@ def executar():
                 check_backup=restored.execute("PRAGMA integrity_check").fetchone()[0]
                 if linhas_backup!=N or ledger_backup!=1 or check_backup!="ok":
                     raise RuntimeError("BACKUP_STAGE_INCONSISTENTE")
+                novo_vault=Path(d)/"raw_restaurado_privado"
+                novo_vault.mkdir(mode=0o700)
+                origem_raw=vault/(primeira["sha256"]+".csv")
+                with origem_raw.open("rb") as origem:
+                    raw_restaurado=guardar_raw_zarc(
+                        db=restored,arquivo=origem,raiz=novo_vault)
+                conferir_restaurado=verificar_raw_zarc(
+                    db=restored,raiz=novo_vault,sha256=primeira["sha256"])
+                if (raw_restaurado["sha256"]!=primeira["sha256"]
+                        or conferir_restaurado["bytes"]!=len(body)):
+                    raise RuntimeError("RAW_RESTAURADO_INCONSISTENTE")
             elapsed=round(monotonic()-start,3)
             return {
                 "tipo":"CARGA_FICTICIA_SEM_FONTE_REAL",
@@ -86,6 +107,11 @@ def executar():
                 "vintages":snap,
                 "coletas":capturas,
                 "backup_linhas":linhas_backup,
+                "raw_sha256":raw["sha256"],
+                "raw_bytes":raw["bytes"],
+                "raw_integridade":verificado["integridade"],
+                "raw_arquivo_recriado_no_restore":raw_restaurado["novo_arquivo"],
+                "raw_backup_integridade":conferir_restaurado["integridade"],
                 "sqlite_integrity_check":integridade,
                 "chaves_estrangeiras": "OK",
                 "duracao_segundos":elapsed,
