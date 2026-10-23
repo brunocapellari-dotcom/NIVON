@@ -55,6 +55,7 @@ jobs:
         run: |
           python -m nivon.arquivo_raw_gcs --banco data/nivon/fontes_reais.sqlite --raw-dir data/nivon/raw --bucket "$NIVON_GCS_BUCKET" --executar
       - name: Arquivar stage e manifesto recuperavel no GCS antes do MERGE
+        if: ${{ vars.NIVON_RECOVERABLE_STAGE_APPROVED == 'true' }}
         run: |
           python scripts/lote_cloud_recuperavel.py --fase arquivar --banco data/nivon/fontes_reais.sqlite --arquivo data/nivon/staging_fontes_reais.jsonl --projeto "$NIVON_BQ_PROJECT" --dataset "$NIVON_BQ_DATASET" --bucket "$NIVON_GCS_BUCKET" --executar
       - name: Carregar observacoes com MERGE historico no BigQuery
