@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 import sqlite3
 import sys
+from urllib.parse import quote
 
 
 class ErroComparacaoCapturas(ValueError):
@@ -104,7 +105,7 @@ def comparar_capturas_sqlite(*, arquivo_sqlite: str | Path,
     if path.is_symlink() or not path.is_file() or path.stat().st_size > 50_000_000:
         raise ErroComparacaoCapturas("SQLite ausente, symlink ou excessivo")
     try:
-        uri="file:"+path.resolve().as_posix()+"?mode=ro"
+        uri="file:"+quote(path.resolve().as_posix(), safe="/")+"?mode=ro"
         with sqlite3.connect(uri,uri=True,timeout=3) as db:
             db.execute("PRAGMA query_only=ON")
             rows=db.execute(
