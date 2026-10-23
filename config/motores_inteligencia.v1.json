@@ -397,7 +397,8 @@
         "nivon.confronto_janelas_fisicas:confrontar_chuva_janelas_equivalentes",
         "nivon.historico_vintages:normalizar_edicao",
         "nivon.pipeline_medicoes_horarias:consultar_medicoes_asof",
-        "nivon.pipeline_medicoes_horarias:auditar_acervo_medicoes"
+        "nivon.pipeline_medicoes_horarias:auditar_acervo_medicoes",
+        "nivon.pipeline_medicoes_horarias:relatorio_revisoes_medicoes"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -633,7 +634,8 @@
         "nivon.pipeline_medicoes_horarias:auditar_acervo_medicoes",
         "nivon.pipeline_medicoes_cli:executar_manifesto_medicoes",
         "nivon.pipeline_medicoes_cli:exportar_backup_medicoes",
-        "nivon.pipeline_medicoes_cli:validar_backup_medicoes"
+        "nivon.pipeline_medicoes_cli:validar_backup_medicoes",
+        "nivon.pipeline_medicoes_horarias:relatorio_revisoes_medicoes"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -678,7 +680,8 @@
         "nivon.chuva_areal_ensemble:agregar_ensemble_chuva_areal",
         "nivon.verificacao_vazao_asof:avaliar_hidrograma_asof",
         "nivon.pipeline_medicoes_horarias:importar_ciclo_medicoes",
-        "nivon.pipeline_medicoes_horarias:consultar_medicoes_asof"
+        "nivon.pipeline_medicoes_horarias:consultar_medicoes_asof",
+        "nivon.pipeline_medicoes_horarias:relatorio_revisoes_medicoes"
       ],
       "data_dependencies": [
         "ANA_HIDRO",
