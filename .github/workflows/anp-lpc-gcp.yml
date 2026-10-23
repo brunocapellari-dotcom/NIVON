@@ -144,6 +144,7 @@ jobs:
           PYTHONPATH: src
           NIVON_BUCKET: ${{ vars.NIVON_GCS_BUCKET }}
         run: |
-          python -m nivon.cli_coletar_anp_lpc --modo ciclo-gcs --ano 2026 \
+          ANO="$(date -u +%Y)"
+          python -m nivon.cli_coletar_anp_lpc --modo ciclo-gcs --ano "$ANO" \
             --ultimas 3 --bucket "$NIVON_BUCKET" \
             --prefixo nivon/anp/lpc/v1
