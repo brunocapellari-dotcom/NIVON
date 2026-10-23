@@ -4,6 +4,8 @@ on:
     paths:
       - 'nivon/imea_publico.py'
       - 'tests/test_imea_publico.py'
+      - 'nivon/imea_lotes.py'
+      - 'tests/test_imea_lotes.py'
       - '.github/workflows/imea-validacao.yml'
   workflow_dispatch:
 permissions:
@@ -17,7 +19,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: python -m unittest discover -s tests -p 'test_imea_publico.py' -v
+      - run: |
+          python -m unittest discover -s tests -p 'test_imea_publico.py' -v
+          python -m unittest discover -s tests -p 'test_imea_lotes.py' -v
   consulta-publica:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -32,7 +36,7 @@ jobs:
           python - <<'PY'
           import asyncio,json
           from agrobr import imea
-          from nivon.imea_publico import normalize
+          from nivon.imea_lotes import prepare
           async def main():
               for chain,source_id in (('soja','4'),('milho','3')):
                   df,meta=await imea.cotacoes(chain,return_meta=True)
@@ -41,18 +45,16 @@ jobs:
                       not url.startswith('https://api1.imea.com.br/api/v2/mobile/cadeias/'+source_id+'/cotacoes')):
                       raise SystemExit('IMEA_FONTE_PRIMARIA_INVALIDA_'+chain)
                   rows=df.to_dict(orient='records')
-                  usable=[];rejected={}
-                  for row in rows:
-                      try: usable.append(normalize(row))
-                      except (ValueError,TypeError) as e:
-                          k=str(e)[:60];rejected[k]=rejected.get(k,0)+1
-                  latest=max((r['published_at'][:10] for r in usable),default=None)
+                  pacote=prepare(rows,meta,chain,batch_size=80)
                   print('NIVON_IMEA_DIAGNOSTICO='+json.dumps({
-                    'source':'imea','chain':chain,'received':len(rows),
-                    'candidate_rows':len(usable),'latest_publication':latest,
-                    'rejected':rejected,'source_url':url[:160],
+                    'source':'imea','chain':chain,'received':pacote['received'],
+                    'candidate_rows':pacote['validated'],'latest_publication':pacote['last_publication'],
+                    'discarded':pacote['discarded'],'quarantine_by_reason':pacote['discard_reasons'],
+                    'batches':len(pacote['batches']),
+                    'source_url':pacote['source_url'],
                     'persisted':False,'reference_dates_available':0
                   },ensure_ascii=False))
-                  if not usable: raise SystemExit('IMEA_NENHUMA_OBSERVACAO_HOMOLOGADA_'+chain)
+                  if pacote['validated']<1:
+                      raise SystemExit('IMEA_NENHUMA_OBSERVACAO_HOMOLOGADA_'+chain)
           asyncio.run(main())
           PY
