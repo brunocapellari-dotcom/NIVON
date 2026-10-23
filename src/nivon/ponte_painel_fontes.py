@@ -125,6 +125,7 @@ def analisar_fontes(
             project_id=cfg["project_id"], dataset_id=cfg["dataset_id"],
             fonte=cfg["fonte"], inicio=cfg["inicio"], fim=cfg["fim"],
             as_of=as_of, limite=limite,
+            classe=cfg["classe"],serie_id=cfg["serie_id"],
         )
         meta = {"fonte": cfg["fonte"], "classe": cfg["classe"],
                 "serie_id": cfg["serie_id"], "executado": False}
@@ -134,6 +135,7 @@ def analisar_fontes(
                 project_id=cfg["project_id"], dataset_id=cfg["dataset_id"],
                 fonte=cfg["fonte"], inicio=cfg["inicio"], fim=cfg["fim"],
                 as_of=as_of, limite=limite, executar=True, client=cliente_bigquery,
+                classe=cfg["classe"],serie_id=cfg["serie_id"],
             )
             if not isinstance(resposta, dict) or resposta.get("executado") is not True:
                 raise ErroMotor("consulta BigQuery nao comprovada")
@@ -146,12 +148,17 @@ def analisar_fontes(
             if total >= limite:
                 meta["status"] = "LIMITE_ATINGIDO_SERIE_NAO_AVALIADA"
             else:
-                observacoes = [
-                    o for o in dados
-                    if isinstance(o, dict) and isinstance(o.get("campos"), dict)
-                    and o["campos"].get("classe") == cfg["classe"]
-                    and o["campos"].get("serie_id") == cfg["serie_id"]
-                ]
+                if (resposta.get("classe") not in (None, cfg["classe"])
+                    or resposta.get("serie_id") not in (None, cfg["serie_id"])):
+                    raise ErroMotor("escopo de serie divergente no BigQuery")
+                if not all(
+                    isinstance(o, dict) and isinstance(o.get("campos"), dict)
+                    and o["campos"].get("classe")==cfg["classe"]
+                    and o["campos"].get("serie_id")==cfg["serie_id"]
+                    for o in dados
+                ):
+                    raise ErroMotor("consulta retornou linhas de outra serie economica")
+                observacoes = dados
                 meta["status"] = "LIDA_NAO_HOMOLOGADA" if observacoes else "SEM_DADOS_COMPATIVEIS"
                 meta["linhas_filtradas"] = len(observacoes)
             meta["executado"] = True
