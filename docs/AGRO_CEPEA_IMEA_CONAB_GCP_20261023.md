@@ -157,3 +157,29 @@ associada ao snapshot, o sistema arquiva o RAW e registra
 **Ainda pendente de confirmação real:** existência da tabela staging,
 escrita no bucket, execução de MERGE, leitura posterior, limites/alertas
 de cobrança e comparação efetiva com dados Neon em duas datas diferentes.
+
+
+## Bootstrap sem Cloud Shell (novo)
+
+Foi criado o workflow manual
+`.github/workflows/bootstrap-agro-staging-gcp.yml`. Após o merge na
+`main`, a interface GitHub Actions oferece **NIVON - Validar ou criar tabela
+staging agro**, com a opção `aplicar` desligada por padrão.
+
+- `aplicar=false`: autentica por WIF, consulta o dataset e tabela, não
+  cria recursos. A ausência da tabela é sinalizada.
+- `aplicar=true`: somente com as variáveis
+  `NIVON_AGRO_STAGING_SCHEMA_APPROVED=true`,
+  `NIVON_AGRO_GCP_WRITE_APPROVED=true` e
+  `NIVON_ZERO_COST_BQ_APPROVED=true`, podendo criar **apenas**
+  `agro_publicacoes_staging` no dataset já existente.
+- Nenhum projeto, dataset, bucket, WIF ou service account são criados
+  por esse bootstrap. O esquema e o particionamento são validados
+  mesmo que a tabela já exista.
+- DDL permanece versionado em
+  `sql/bigquery/003_agro_publicacoes_staging.sql`.
+
+A suíte isolada do PR testou o bootstrap com cliente sintético: sem
+aprovação não cria tabela, com aprovação cria uma única vez, e detecta
+esquema incompatível. A verificação real de permissões de **escrita**
+e o primeiro MERGE seguem pendentes.
