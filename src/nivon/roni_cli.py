@@ -159,9 +159,14 @@ def main(argv=None):
         elif a.modo == "capturar":
             if not a.confirmar_gravacao_local or not a.banco or not a.raw_dir:
                 raise PermissionError("captura requer persistência local explicitamente autorizada")
-            from .roni_captura_manual import capturar_roni_manual
+            from .roni_captura_manual import (
+                capturar_roni_manual, exigir_direitos_catalogo_roni,
+            )
             if a.autorizar_http is not True:
                 raise PermissionError("HTTP da NOAA desabilitado até opt-in")
+            # Não criar SQLite vazio nem inicializar RAW antes de conferir
+            # direitos e estado operacional pelo catálogo mestre.
+            exigir_direitos_catalogo_roni()
             db = abrir_arquivo_roni(a.banco)
             try:
                 result = capturar_roni_manual(
