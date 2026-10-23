@@ -23,7 +23,7 @@ class ErroStageAgro(ValueError):
 
 _FIELDS=('source_id','dataset_id','indicador_id','pais','produto','safra',
          'regiao','competencia','unidade','valor','data_publicacao_original',
-         'coletado_utc','source_sha256','hash_natureza','classe',
+         'data_declaracao','coletado_utc','source_sha256','hash_natureza','classe',
          'qualidade','nivel_agregacao','status')
 
 
@@ -50,7 +50,7 @@ def _utc(v):
 
 
 def _r(**kw):
-    kw={'status':'QUARENTENA_NAO_PUBLICAVEL',**kw}
+    kw={'status':'QUARENTENA_NAO_PUBLICAVEL','data_declaracao':None,**kw}
     if set(kw)!=set(_FIELDS):
         raise ErroStageAgro('schema stage divergente')
     if kw['status']!='QUARENTENA_NAO_PUBLICAVEL':
@@ -149,23 +149,24 @@ def _conab(db, permitir_sintetico):
 def _sio(db):
     if not _exists(db,'sio_operacoes') or not _exists(db,'sio_edicoes'):
         return
-    sql="""SELECT s.sha256_raw,s.coletado_em,o.data_concertacao,o.produto,o.provincia_origem,
+    sql="""SELECT s.sha256_raw,s.coletado_em,o.data_concertacao,o.data_declaracao,o.produto,o.provincia_origem,
                   o.toneladas
            FROM sio_operacoes o JOIN sio_edicoes s ON s.sha256_raw=o.sha256_raw
            ORDER BY s.sha256_raw,o.data_concertacao,o.produto,o.provincia_origem,o.id_hmac"""
     grupos={}
     for r in db.execute(sql):
         k=(r['sha256_raw'],r['coletado_em'],r['data_concertacao'],
-           r['produto'],r['provincia_origem'] or 'NAO_INFORMADA')
+           r['data_declaracao'],r['produto'],r['provincia_origem'] or 'NAO_INFORMADA')
         grupos[k]=grupos.get(k,Decimal(0))+Decimal(r['toneladas'])
-    for (digest,coleta,data,produto,provincia),valor in sorted(grupos.items()):
+    for (digest,coleta,data,declaracao,produto,provincia),valor in sorted(grupos.items(),key=lambda kv: str(kv[0])):
         yield _r(source_id='ARG_SIO_GRANOS',dataset_id='ARG_SIO_OPERACOES_DECLARADAS',
             indicador_id='TONELADAS_REGISTRADAS',pais='ARG',produto=produto,safra=None,
             regiao=provincia,competencia=data,unidade='t',valor=valor,
-            data_publicacao_original=None,coletado_utc=coleta,
+            data_publicacao_original=None,data_declaracao=declaracao,coletado_utc=coleta,
             source_sha256=digest,hash_natureza='RAW_NAO_ARQUIVADO_AQUI',
             classe='DECLARADO_NAO_ENTREGUE',
-            qualidade='LAYOUT_DECLARADO_NAO_HOMOLOGADO_INDEPENDENTEMENTE',
+            qualidade='LAYOUT_DECLARADO_NAO_HOMOLOGADO_INDEPENDENTEMENTE' +
+                ('|SEM_DATA_DECLARACAO' if declaracao is None else '|COM_DATA_DECLARACAO'),
             nivel_agregacao='PROVINCIA_DIA_EDICAO')
 
 
