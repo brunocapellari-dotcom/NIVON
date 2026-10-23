@@ -1,21 +1,26 @@
 name: Inspecao pontual PAM/IBGE NIVON
 
-# Diagnostico de coleta REAL sob demanda; nao repetir a cada push do PR.
-# Uma cadencia automatica deve ser ativada junto ao storage persistente.
+# O agendamento em producao depende de PR aprovado e armazenamento duravel.
+# PR so executa coleta real ao MODIFICAR este workflow; demais commits rodam
+# testes offline, sem repetir consultas ao SIDRA.
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/ivo-pam-piloto.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
-  group: nivon-ivo-pam-piloto-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: nivon-pam-incremental-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  piloto-pam:
+  coleta-incremental-pam:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 6
     steps:
       - name: Checkout sem credenciais persistentes
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -25,72 +30,123 @@ jobs:
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.11'
-      - name: Consultar seis celulas publicas SIDRA/IBGE e preservar bytes
-        id: coleta
-        continue-on-error: true
+      - name: Restaurar ultima cadeia de backup aprovada
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PAM_BRANCH: ${{ github.head_ref || github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="${RUNNER_TEMP}/nivon-pam"
+          mkdir -p "$BASE/anterior"
+          echo "PAM_PRIOR=" >> "$GITHUB_ENV"
+          echo "PAM_LEGADO=" >> "$GITHUB_ENV"
+          # Somente execucoes SUCCESS da MESMA branch e mesmo workflow.
+          # Nao usar artifact de outra branch, de corrida ou falha parcial.
+          ids="$(gh run list --workflow ivo-pam-piloto.yml \
+            --repo "$GITHUB_REPOSITORY" --branch "$PAM_BRANCH" \
+            --status success --limit 30 --json databaseId \
+            --jq '.[].databaseId')"
+          # Depois do primeiro ciclo com manifesto, nunca voltar ao
+          # piloto legado apenas porque o backup mais recente expirou.
+          # A indisponibilidade do backup atual e BLOQUEIO de continuidade.
+          for run_id in $ids; do
+            if test "$run_id" -gt 39891299927; then
+              rm -rf "$BASE/anterior"
+              mkdir -p "$BASE/anterior"
+              if gh run download "$run_id" --repo "$GITHUB_REPOSITORY" \
+                  --name nivon-pam-estado --dir "$BASE/anterior" >/dev/null 2>&1 \
+                  && test -s "$BASE/anterior/estado_pam.zip"; then
+                echo "PAM_PRIOR=$BASE/anterior/estado_pam.zip" >> "$GITHUB_ENV"
+                echo "PAM_LEGADO=0" >> "$GITHUB_ENV"
+                echo "BACKUP_RECUPERADO=run-$run_id"
+                exit 0
+              fi
+              echo "::error::O ciclo $run_id foi concluido, mas seu backup atual nao esta disponivel."
+              exit 3
+            fi
+          done
+          for run_id in $ids; do
+            rm -rf "$BASE/anterior"
+            mkdir -p "$BASE/anterior"
+            if gh run download "$run_id" --repo "$GITHUB_REPOSITORY" \
+                --name nivon-pam-estado --dir "$BASE/anterior" >/dev/null 2>&1 \
+                && test -s "$BASE/anterior/estado_pam.zip"; then
+              echo "PAM_PRIOR=$BASE/anterior/estado_pam.zip" >> "$GITHUB_ENV"
+              echo "PAM_LEGADO=0" >> "$GITHUB_ENV"
+              echo "BACKUP_RECUPERADO=run-$run_id"
+              exit 0
+            fi
+          done
+          # Bootstrap UMA vez com o piloto real auditado de 23/10/2026.
+          # Este artifact eh temporario: falha se tiver expirado, sem
+          # apagar ou reiniciar historico silenciosamente.
+          rm -rf "$BASE/anterior"
+          mkdir -p "$BASE/anterior"
+          if ! gh run download 39890755981 --repo "$GITHUB_REPOSITORY" \
+              --name nivon-pam-piloto-inspecao --dir "$BASE/anterior"; then
+            echo "::error::Nenhum estado anterior restauravel. Bootstrap expirou."
+            exit 2
+          fi
+          python - <<'PY'
+          import os,pathlib,re,zipfile
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])/"nivon-pam"/"anterior"
+          arq=root/"legado_pam.zip"
+          aceitas={"pam.sqlite","resultado_coleta.json","auditoria.json"}
+          pattern=re.compile(r"cofre/(?:objetos_sha256/[a-f0-9]{64}\.bin|recibos/[a-f0-9]{64}\.json)")
+          caminhos=[p for p in root.rglob("*") if p.is_file()]
+          if not (root/"pam.sqlite").is_file():
+              raise SystemExit("piloto anterior sem SQLite: bloquear")
+          with zipfile.ZipFile(arq,"w",compression=zipfile.ZIP_DEFLATED) as z:
+              for file in sorted(caminhos):
+                  name=file.relative_to(root).as_posix()
+                  if name in aceitas or pattern.fullmatch(name):
+                      z.write(file,name)
+                  elif file != arq:
+                      raise SystemExit("arquivo anterior desconhecido: "+name)
+          PY
+          echo "PAM_PRIOR=$BASE/anterior/legado_pam.zip" >> "$GITHUB_ENV"
+          echo "PAM_LEGADO=1" >> "$GITHUB_ENV"
+          echo "BACKUP_RECUPERADO=piloto-2026-10-23"
+
+      - name: Atualizar mesmo historico e validar antes do proximo backup
+        shell: bash
         env:
           PYTHONPATH: src
         run: |
-          mkdir -p "${{ runner.temp }}/nivon-pam"
-          timeout 120s python -m nivon.ivo_pam_operacao \
+          set -euo pipefail
+          BASE="${RUNNER_TEMP}/nivon-pam"
+          flags=()
+          if test "$PAM_LEGADO" = "1"; then flags+=(--legado); fi
+          timeout 200s python -m nivon.ivo_pam_ciclo \
+            --anterior "$PAM_PRIOR" "${flags[@]}" \
             --modo PUBLICO_IBGE \
             --tarefas config/ivo_pam_piloto_mt.v1.json \
-            --db "${{ runner.temp }}/nivon-pam/pam.sqlite" \
-            --acervo "${{ runner.temp }}/nivon-pam/cofre" \
-            > "${{ runner.temp }}/nivon-pam/resultado_coleta.json"
-      - name: Resumo observavel sem afirmar falso sucesso de coleta
-        if: always()
-        env:
-          PYTHONPATH: src
-        run: |
+            --saida "$BASE/ciclo" \
+            | tee "$BASE/log_ciclo.json"
           python - <<'PY'
-          import json, pathlib, os
-          root=pathlib.Path(os.environ["RUNNER_TEMP"])/"nivon-pam"
-          path=root/"resultado_coleta.json"
-          if not path.exists():
-              print("BLOQUEADO: coleta nem gerou relatorio JSON.")
-          else:
-              try:
-                  data=json.loads(path.read_text())
-                  print("ESTADO:",data.get("estado"))
-                  print("CONSULTAS:",data.get("total"))
-                  print("SUCESSOS_REAIS:",data.get("aprovados",0))
-                  print("FALHAS:",data.get("falhas",0))
-                  for x in data.get("resultados",[]):
-                      print("TAREFA",x.get("ordem"),x.get("status"),
-                            x.get("motivo","")[:150])
-              except (ValueError,OSError) as exc:
-                  print("BLOQUEADO: relatorio nao decodificavel",str(exc))
+          import json,os,pathlib
+          base=pathlib.Path(os.environ["RUNNER_TEMP"])/"nivon-pam"/"ciclo"
+          r=json.loads((base/"resultado_ciclo.json").read_text())
+          antes=r["estado_anterior"]
+          agora=r["integridade"]
+          print("CAPTURAS_ANTES:",antes["capturas"])
+          print("CAPTURAS_DEPOIS:",agora["capturas_registradas"])
+          print("VINTAGES_ANTES:",antes["vintages"])
+          print("VINTAGES_DEPOIS:",agora["vintages_verificadas"])
+          print("ALTERACOES:",[x["alteracao"] for x in r["coleta"]["mudancas"]])
+          if (r["coleta"]["sucessos"]!=6 or r["coleta"]["falhas"]!=0
+                  or agora["capturas_registradas"]<antes["capturas"]+6
+                  or not agora["integridade_local_aprovada"]):
+              raise SystemExit("historico nao cresceu com 6 coletas auditadas")
           PY
-      - name: Conferir consistencia do SQLite e acervo local
-        if: always()
-        env:
-          PYTHONPATH: src
-        run: |
-          python - <<'PY'
-          import json, pathlib,os
-          from nivon.ivo_pam_operacao import abrir_operacao_pam
-          from nivon.ivo_pam_qualidade import auditar_operacao_pam
-          base=pathlib.Path(os.environ["RUNNER_TEMP"])/"nivon-pam"
-          if (base/"pam.sqlite").exists():
-              db=abrir_operacao_pam(base/"pam.sqlite")
-              try:
-                  rel=auditar_operacao_pam(db=db,raiz=base/"cofre")
-                  (base/"auditoria.json").write_text(
-                      json.dumps(rel,ensure_ascii=False,indent=2))
-                  print("INTEGRIDADE:",rel["estado"])
-                  print("CAPTURAS:",rel["capturas_registradas"])
-                  print("VINTAGES:",rel["vintages_verificadas"])
-              finally:
-                  db.close()
-          else:
-              print("SEM_BANCO: nao houve captura persistida.")
-          PY
-      - name: Preservar resultados temporarios de inspecao
-        if: always()
+      - name: Preservar backup validado e relatorios para proximo ciclo
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: nivon-pam-piloto-inspecao
-          path: ${{ runner.temp }}/nivon-pam/
-          retention-days: 3
-          if-no-files-found: warn
+          name: nivon-pam-estado
+          path: |
+            ${{ runner.temp }}/nivon-pam/ciclo/estado_pam.zip
+            ${{ runner.temp }}/nivon-pam/ciclo/resultado_ciclo.json
+            ${{ runner.temp }}/nivon-pam/ciclo/auditoria.json
+          retention-days: 30
+          if-no-files-found: error
