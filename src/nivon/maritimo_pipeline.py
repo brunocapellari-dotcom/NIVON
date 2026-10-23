@@ -61,7 +61,11 @@ def baixar_html(fonte, *, habilitar_rede=False, transporte=None, timeout=20):
         "User-Agent": "NIVON/0.1 (+coleta publica; contato via repositorio)",
         "Accept": "text/html,application/xhtml+xml;q=0.9",
     })
-    opener = transporte or build_opener(_SemRedirect())
+    # Mesmo com flag de rede, impedir egress implícito: o transporte injetado
+    # deve ser homologado em DNS/TLS/SNI, IP público e anti-redirect.
+    if transporte is None or not callable(getattr(transporte,"open",None)):
+        raise PermissionError("EGRESS_MARITIMO_NAO_HOMOLOGADO")
+    opener = transporte
     try:
         with opener.open(request, timeout=timeout) as response:
             if response.status != 200:
