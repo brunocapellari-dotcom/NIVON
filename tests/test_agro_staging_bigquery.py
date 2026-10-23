@@ -60,6 +60,9 @@ class FakeBQ:
         self.sql=None
         self.deleted=False
         self.lines=0
+        self.bytes_estimada=24
+        self.dry_runs=0
+        self.merges=0
     def get_dataset(self,ref):
         assert ref=="nivon-data.nivon_raw"
     def get_table(self,ref):
@@ -75,7 +78,11 @@ class FakeBQ:
     def query(self,sql,job_config):
         self.sql=sql
         assert "@inicio" in sql and "@fim" in sql
+        if getattr(job_config,"dry_run",False):
+            self.dry_runs+=1
+            return types.SimpleNamespace(total_bytes_processed=self.bytes_estimada)
         assert job_config.maximum_bytes_billed==100_000_000
+        self.merges+=1
         return Job()
     def delete_table(self,stage,not_found_ok=False):
         assert not_found_ok
@@ -189,8 +196,31 @@ class TestStagingBQ(unittest.TestCase):
         self.assertFalse(result["promocao_canonica"])
         self.assertTrue(bq.deleted)
         self.assertEqual(bq.lines,1)
+        self.assertEqual(bq.dry_runs,1)
+        self.assertEqual(bq.merges,1)
+        self.assertEqual(result["bytes_estimados"],24)
         self.assertIn("DATE(T.data_coleta) BETWEEN @inicio AND @fim",bq.sql)
         self.assertIn("agro_publicacoes_staging",bq.sql)
+
+    def test_merges_bloqueados_com_estimativa_ausente_ou_acima_limite(self):
+        self.inserir()
+        exportar_quarentena(
+            banco=self.db,destino=self.jsonl,
+            fonte_dataset="IMEA_PUBLICACOES_STAGING")
+        for estimativa in (None,100_000_001,-1):
+            with self.subTest(estimativa=estimativa):
+                bq=FakeBQ()
+                bq.bytes_estimada=estimativa
+                with patch.dict(sys.modules,fake_google()):
+                    with self.assertRaises(ErroStagingAgro):
+                        carregar_stage(
+                            arquivo=self.jsonl,
+                            fonte_dataset="IMEA_PUBLICACOES_STAGING",
+                            project_id="nivon-data",dataset_id="nivon_raw",
+                            executar=True,client=bq)
+                self.assertEqual(bq.dry_runs,1)
+                self.assertEqual(bq.merges,0)
+                self.assertTrue(bq.deleted)
 
     def test_bigquery_rejeita_linha_com_data_referencia(self):
         self.inserir()
