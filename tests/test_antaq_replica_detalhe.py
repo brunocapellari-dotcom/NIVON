@@ -31,6 +31,7 @@ class TestHidroviaProduto(unittest.TestCase):
                 "IDCarga": [101.0, 102.0, 103.0],
                 "Tipo Navegação": ["Interior", "Longo Curso", "Interior"],
                 "CDMercadoria": ["1201", "1005", "3105"],
+                "VLPesoCargaBruta": [100.0, 55.3, 40.0],
                 "Sentido": ["Embarcados", "Embarcados", "Desembarcados"]}), c)
             doc = resumo_parquets(h,c)
             self.assertEqual(doc["linhas_qualificadas"],3)
