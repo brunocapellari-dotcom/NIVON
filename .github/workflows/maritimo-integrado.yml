@@ -5,9 +5,12 @@ on:
       - 'src/nivon/lineup_portos.py'
       - 'src/nivon/maritimo_pipeline.py'
       - 'src/nivon/portwatch_fluxos.py'
+      - 'src/nivon/maritimo_neon.py'
+      - 'migrations/001_maritimo_neon.sql'
       - 'tests/test_lineup_portos.py'
       - 'tests/test_maritimo_integrado.py'
       - 'tests/test_portwatch_fluxos.py'
+      - 'tests/test_maritimo_neon.py'
       - '.github/workflows/maritimo-integrado.yml'
   workflow_dispatch:
     inputs:
@@ -65,6 +68,26 @@ jobs:
             *) exit 3 ;;
           esac
           mkdir -p .work
-          python -m nivon.maritimo_pipeline --fonte "$FONTE" --permitir-rede --banco .work/maritimo.sqlite
+          # Processar fontes independentes sem descartar dados bons por falha de uma.
+          SUCESSOS=0
+          for FONTE in suape imbituba santarem_cdp vila_conde_cdp; do
+            set +e
+            python -m nivon.maritimo_pipeline --fonte "$FONTE" --permitir-rede --banco .work/maritimo.sqlite
+            CODIGO=$?
+            set -e
+            if [ "$CODIGO" -eq 0 ] || [ "$CODIGO" -eq 2 ]; then SUCESSOS=$((SUCESSOS+1)); fi
+          done
+          if [ "$SUCESSOS" -eq 0 ]; then echo "SEM_COLETAS_VALIDAS"; exit 5; fi
+      - name: Sincronizar banco Neon com historico privado
+        env:
+          PYTHONPATH: src
+          NIVON_MARITIMO_DSN: ${{ secrets.NIVON_MARITIMO_DSN }}
+        run: |
+          if [ -z "${NIVON_MARITIMO_DSN:-}" ]; then
+            echo "NIVON_MARITIMO_DSN NAO CONFIGURADO; BLOQUEIO DE COLETA OPERACIONAL"
+            exit 4
+          fi
+          python -m pip install 'psycopg[binary]==3.2.10'
+          python -m nivon.maritimo_neon --banco .work/maritimo.sqlite
       # Banco do runner e efemero e NAO equivale a ingestao permanente.
       # Nao publicar raw HTML ou sqlite em repositorio publico.

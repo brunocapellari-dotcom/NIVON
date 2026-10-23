@@ -35,3 +35,9 @@ de erros/freshness, direitos de uso e verificacao de parsing ao vivo.
 A programacao CDP permanece em quarentena por politica mesmo atual;
 GPV Ponta da Madeira requer arquivo/acesso autorizado; o terminal publico
 de Itacoatiara e Amaggi sao entidades distintas.
+
+## Neon integrado
+
+Schema `nivon_maritimo` criado no projeto conectado NIVON (NIVON-PTAX-OPERACIONAL), sem tocar nas tabelas CEPEA, IMEA, CONAB ou PTAX. Migracao versionada em `migrations/001_maritimo_neon.sql`. Adaptador `maritimo_neon.py` faz UPSERT parametrizado por hash/revisao, na mesma transacao de cada sincronizacao; nao registra dados sinteticos no banco de producao.
+
+A coleta agendada so inicia quando a variavel `NIVON_MARITIMO_COLETA_HABILITADA` for habilitada e o secret `NIVON_MARITIMO_DSN` estiver configurado. Ate la, nao ha alimentacao online do banco. Nao imprimir DSN.
