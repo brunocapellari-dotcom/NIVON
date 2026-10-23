@@ -43,6 +43,15 @@ CREATE TABLE IF NOT EXISTS medidas_capturas (
  sha256 TEXT NOT NULL REFERENCES medidas_edicoes(sha256),
  visto_nivon_utc TEXT NOT NULL,
  PRIMARY KEY(sha256,visto_nivon_utc));
+CREATE TABLE IF NOT EXISTS medidas_containers_origem (
+ sha256 TEXT NOT NULL REFERENCES medidas_edicoes(sha256),
+ tipo TEXT NOT NULL CHECK(tipo='ZIP_INMET_ANUAL'),
+ parent_sha256 TEXT NOT NULL,
+ membro TEXT NOT NULL,
+ membro_sha256 TEXT NOT NULL,
+ pai_raw_arquivado INTEGER NOT NULL CHECK(pai_raw_arquivado=0),
+ PRIMARY KEY(sha256,parent_sha256,membro)
+);
 CREATE INDEX IF NOT EXISTS idx_medidas_tempo ON medidas_registros(medido_utc,metrica);
 CREATE INDEX IF NOT EXISTS idx_medidas_estacao ON medidas_edicoes(dataset_id,estacao_id,visto_nivon_utc);
 """
@@ -193,6 +202,23 @@ def importar_ciclo_medicoes(db, *, raw_dir, edicoes):
     for e in edicoes:
         if not isinstance(e, dict) or not isinstance(e.get("raw"),bytes) or sha256(e["raw"]).hexdigest()!=e.get("sha256"):
             raise ErroPipelineAmbiental("edição alterada após preflight")
+        origin=e.get("container_origem")
+        if origin is not None:
+            if (not isinstance(origin,dict) or
+                set(origin)!={"tipo","parent_sha256","membro","membro_sha256",
+                             "pai_raw_arquivado_no_acervo",
+                             "integridade_zip_externa_revalidada"} or
+                origin["tipo"]!="ZIP_INMET_ANUAL" or
+                e["dataset_id"]!="INMET_ESTACOES" or
+                not isinstance(origin["parent_sha256"],str) or
+                not _HASH.fullmatch(origin["parent_sha256"]) or
+                origin["membro_sha256"]!=e["sha256"] or
+                origin["pai_raw_arquivado_no_acervo"] is not False or
+                origin["integridade_zip_externa_revalidada"] is not True or
+                not isinstance(origin["membro"],str) or
+                not origin["membro"].endswith(".csv") or
+                len(origin["membro"])>260):
+                raise ErroPipelineAmbiental("proveniência do ZIP incompatível")
     folder = _pasta(raw_dir, criar=True)
     prior_paths = {p.name for p in folder.glob("*.raw")}
     events = []
@@ -208,7 +234,9 @@ def importar_ciclo_medicoes(db, *, raw_dir, edicoes):
                     "SELECT * FROM medidas_edicoes WHERE sha256=?", (sha,)
                 ).fetchone()
                 if existing is not None:
-                    identity = ("dataset_id","formato","estacao_id","ano","zona","classe","fonte_coletado_utc")
+                    # A mesma edição pode ser novamente observada com nova
+                    # data de coleta; edição mantém a primeira coleta.
+                    identity = ("dataset_id","formato","estacao_id","ano","zona","classe")
                     if any(existing[k] != item[k] for k in identity):
                         raise ErroPipelineAmbiental("mesmo RAW com metadados de outra origem")
                     old = [(r["medido_utc"],r["metrica"],r["valor"],r["unidade"],
@@ -237,6 +265,12 @@ def importar_ciclo_medicoes(db, *, raw_dir, edicoes):
                     db.executemany("INSERT INTO medidas_registros VALUES (?,?,?,?,?,?,?)",
                         [(sha,*row) for row in item["registros"]])
                 db.execute("INSERT INTO medidas_capturas VALUES (?,?)",(sha,when))
+                origin=item.get("container_origem")
+                if origin is not None:
+                    db.execute(
+                        "INSERT OR IGNORE INTO medidas_containers_origem VALUES (?,?,?,?,?,?)",
+                        (sha,origin["tipo"],origin["parent_sha256"],
+                         origin["membro"],origin["membro_sha256"],0))
                 events.append({
                     "sha256":sha,"dataset_id":dataset,
                     "estado":"NOVA_EDICAO" if existing is None else "NOVA_CAPTURA_EDICAO_EXISTENTE",
@@ -330,11 +364,24 @@ def auditar_acervo_medicoes(db, *, raw_dir):
         total+=len(stored)
     if {p.name for p in folder.glob("*.raw")} - seen:
         raise ErroPipelineAmbiental("RAW órfão deve ser reconciliado")
+    origens=db.execute(
+        "SELECT sha256,parent_sha256,membro_sha256,membro,tipo,pai_raw_arquivado "
+        "FROM medidas_containers_origem").fetchall()
+    for origin in origens:
+        if (not _HASH.fullmatch(origin["parent_sha256"]) or
+            origin["membro_sha256"]!=origin["sha256"] or
+            origin["tipo"]!="ZIP_INMET_ANUAL" or
+            origin["pai_raw_arquivado"]!=0 or
+            not origin["membro"].endswith(".csv")):
+            raise ErroPipelineAmbiental("integridade da proveniência de ZIP quebrada")
     return {
         "estado":"ACERVO_INMET_ANA_VERIFICADO_TECNICAMENTE",
         "edicoes_auditadas":len(versions),
         "medidas_auditadas":total,
         "capturas_auditadas":db.execute("SELECT COUNT(*) FROM medidas_capturas").fetchone()[0],
+        "origens_zip_registradas":len(origens),
+        "zip_pai_preservado_no_acervo":False,
+        "integridade_zip_pai_verificavel_pelo_acervo":False,
         "integridade_raw":True,"integridade_sqlite":True,
         "publicacao_fonte_autenticada":False,
         "qc_homologado":False,
