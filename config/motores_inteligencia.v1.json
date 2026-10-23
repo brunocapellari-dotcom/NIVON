@@ -619,7 +619,8 @@
         "nivon.roni_store:consultar_arquivo_roni",
         "nivon.roni_store:panorama_local_roni",
         "nivon.roni_cli:executar_manifesto_roni",
-        "nivon.roni_captura_manual:capturar_roni_manual"
+        "nivon.roni_captura_manual:capturar_roni_manual",
+        "nivon.roni_store:auditar_acervo_roni"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
