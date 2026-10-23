@@ -42,6 +42,15 @@ def preflight():
     result = command(["git", "status", "--porcelain", "--untracked-files=no"])
     if result.returncode or result.stdout.strip():
         raise RuntimeError("Checkout principal precisa estar limpo antes da execução")
+    # Testes executam código produzido por LLM: exigir Docker local offline.
+    if not shutil.which("docker"):
+        raise RuntimeError("Docker requerido para testes isolados sem rede")
+    image = os.environ.get("NIVON_PYTHON_IMAGE", "python:3.11-slim")
+    if not re.fullmatch(r"python:3\.11(?:-slim)?", image):
+        raise RuntimeError("Imagem Python fora da lista aprovada")
+    available = command(["docker", "image", "inspect", image], timeout=10)
+    if available.returncode:
+        raise RuntimeError("Imagem Docker local não encontrada; instalação/pull automático bloqueado")
     HOME.mkdir(exist_ok=True)
     (HOME / "worktrees").mkdir(exist_ok=True)
     (HOME / "logs").mkdir(exist_ok=True)
@@ -156,21 +165,29 @@ def do_task(agent, task, *, timeout_minutes=15):
         modified = within_scope(worktree, json.loads(task["scope"]))
         if not modified:
             return "blocked", f"{branch}; nenhuma alteração produzida"
-        env = os.environ.copy()
-        env["PYTHONPATH"] = str(worktree / "src")
+        image = os.environ.get("NIVON_PYTHON_IMAGE", "python:3.11-slim")
+        sandbox = ["docker", "run", "--rm", "--pull", "never", "--network", "none",
+                   "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
+                   "--pids-limit", "128", "--memory", "512m", "--cpus", "1",
+                   "--read-only", "--tmpfs", "/tmp:rw,noexec,nosuid,size=64m",
+                   "--mount", f"type=bind,src={worktree},dst=/workspace",
+                   "--workdir", "/workspace", "--env", "PYTHONPATH=/workspace/src",
+                   "--env", "PYTHONDONTWRITEBYTECODE=1"]
+        if hasattr(os, "getuid") and hasattr(os, "getgid"):
+            sandbox += ["--user", f"{os.getuid()}:{os.getgid()}"]
         checks = [
-            [sys.executable, "-m", "compileall", "-q", "src", "tests"],
-            [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-q"]
+            ["python", "-m", "compileall", "-q", "src", "tests"],
+            ["python", "-m", "unittest", "discover", "-s", "tests", "-q"]
         ]
         for check in checks:
-            tested = command(check, worktree, timeout=180, env=env)
+            tested = command([*sandbox, image, *check], worktree, timeout=180)
             if tested.returncode:
-                return "blocked", f"{branch}; testes falharam: {summarize(tested.stdout + tested.stderr, 1500)}"
-        # Ruff é opcional, nunca instalado automaticamente: execução determinística local.
+                return "blocked", f"{branch}; sandbox/testes falharam: {summarize(tested.stdout + tested.stderr, 1500)}"
+        # Ruff é opcional; pode rodar no host apenas como analisador de texto, sem importar o projeto.
         py_changed = [name for name in modified if name.endswith(".py")]
         if py_changed and shutil.which("ruff"):
             linted = command(["ruff", "check", "--output-format", "concise", "--", *py_changed],
-                             worktree, timeout=90, env=env)
+                             worktree, timeout=90)
             if linted.returncode:
                 return "blocked", f"{branch}; Ruff: {summarize(linted.stdout + linted.stderr, 1500)}"
         scope = json.loads(task["scope"])
