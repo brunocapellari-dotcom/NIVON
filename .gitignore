@@ -14,3 +14,6 @@ __pycache__/
 .env
 .env.*
 !.env.example
+
+# Credenciais temporárias do GitHub Actions OIDC (GCP)
+gha-creds-*.json
