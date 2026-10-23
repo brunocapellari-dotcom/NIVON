@@ -1,0 +1,38 @@
+[
+  {
+    "municipio_ibge": "5107958",
+    "ano": 2021,
+    "variavel": "214",
+    "categoria_c81": "2713"
+  },
+  {
+    "municipio_ibge": "5107958",
+    "ano": 2022,
+    "variavel": "214",
+    "categoria_c81": "2713"
+  },
+  {
+    "municipio_ibge": "5107958",
+    "ano": 2023,
+    "variavel": "214",
+    "categoria_c81": "2713"
+  },
+  {
+    "municipio_ibge": "5107958",
+    "ano": 2024,
+    "variavel": "214",
+    "categoria_c81": "2713"
+  },
+  {
+    "municipio_ibge": "5105259",
+    "ano": 2024,
+    "variavel": "214",
+    "categoria_c81": "2713"
+  },
+  {
+    "municipio_ibge": "5107925",
+    "ano": 2024,
+    "variavel": "214",
+    "categoria_c81": "2713"
+  }
+]
