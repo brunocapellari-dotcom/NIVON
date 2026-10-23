@@ -34,6 +34,7 @@ def project(name: str, version: str) -> bytes:
             "requires_python": ">=3.11",
         },
         "last_serial": 1234,
+        "vulnerabilities": ([{"id": "PYSEC-FAKE-PYPI"}] if name == "duckdb" else []),
         "urls": [{
             "filename": f"{name}-{version}-py3-none-any.whl",
             "packagetype": "bdist_wheel",
@@ -77,6 +78,11 @@ class RadarIntegradoTests(unittest.TestCase):
         result = self.executar_radar()
         self.assertEqual(result["queried_package_count"], 4)
         self.assertEqual(result["osv_total_ids_reported"], 1)
+        self.assertEqual(result["pypi_total_ids_reported"], 1)
+        self.assertEqual(result["pypi_packages_with_vulnerability_field"], 4)
+        self.assertFalse(result["pypi_responses_verified_https"])
+        self.assertFalse(result["osv_response_verified_https"])
+        self.assertEqual(result["source"], "MOCKED_OR_INJECTED_API_RESPONSE")
         self.assertEqual([p["name"] for p in result["packages"]],
                          sorted(VERSIONS))
         self.assertEqual(result["packages"][0]["version"], "2.0.0")
