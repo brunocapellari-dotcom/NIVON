@@ -163,3 +163,48 @@ Limitações que continuam abertas:
 3. A página de compras/DJVE do MAGyP tem dados públicos, mas layout para parser canônico ainda não validado: https://www.magyp.gob.ar/sitio/areas/ss_mercados_agropecuarios/areas/granos/_archivos/000058_Estad%C3%ADsticas/000020_Compras%20y%20DJVE%20de%20Granos.php .
 4. O staging não substitui RAW imutável em GCS; não há GCS, Cloud Scheduler, Cloud Run, BigQuery real ou monitor de freshness ativados.
 5. São necessárias validação da origem/datas e separação entre estimativas, registros de comércio, DJVE e embarques concluídos.
+
+
+## Rodada 23/10 — execução multibanco + correção SIO + MERGE seguro
+
+### SIO — corrigida a dimensão temporal
+
+O limite de 180 dias do filtro na página pública é aplicado à **Fecha Declaración en SioGranos**, não à data de concertação.
+- `argentina_sio_exportacoes.py` preserva agora `data_declaracao` (opcional) além de `data_concertacao` e valida a janela de consulta **somente contra data_declaracao se esta estiver de fato presente no CSV homologado**.
+- Se a coluna não existir, a cobertura temporal fica **não comprovada** (`janela_declaracao_verificada_no_csv=False`); jamais filtrar apenas por data de concertação.
+- O schema `sio_operacoes` exige a nova coluna; bases SQLite antigas são rejeitadas para migração auditada, sem conversão automática silenciosa.
+- O arquivo RAR oficial de especificação da API SIO permanece publicado no site, mas não foi possível baixar e inspecionar seus bytes neste ambiente. Endpoint e formato de exportação **ainda não homologados**.
+
+### Multibanco para Cloud
+
+O `agro_bigquery_stage.py` original aceita um SQLite por vez; os coletores reais costumam usar bancos distintos. A nova camada:
+- `src/nivon/agro_consolidar_multibancos.py` reúne até 30 bancos SQLite existentes em lotes JSONL privados, divididos por limite de linhas/bytes, com manifesto de SHA e contagem por fonte.
+- Deduplica apenas registros exatos, preserva vintages diferentes, interrompe em conflito de valor para a mesma chave/vintage e **não expõe IDs individuais de operação SIO**.
+- `src/nivon/agro_operacao.py` é o ponto de entrada único para **consolidar → verificar integridade de todos os lotes → preparar BigQuery → MERGE opcional**.
+- `src/nivon/agro_bigquery_merge.py` substitui o `WRITE_APPEND` direto da etapa live por `LOAD` em tabela intermediária de lote, seguida de `MERGE INSERT-only`, comparação `IS NOT DISTINCT FROM` para valores nulos, validação de schema e IDs de jobs determinísticos. Cada lote recebe limite de bytes faturáveis para query.
+- O destino é a tabela de **staging/quarentena** pré-existente, nunca o banco editorial ou os motores de preço. O loader não cria projeto/dataset e somente cria tabela intermediária na nuvem com flags de autorização/custo.
+
+**Contrato operacional de execução sem nuvem (preflight):**
+
+```bash
+PYTHONPATH=src python -m nivon.agro_operacao \
+  --banco /dados/privados/argentina.sqlite \
+  --banco /dados/privados/mercado.sqlite \
+  --banco /dados/privados/conab.sqlite \
+  --pasta-saida /dados/privados/lotes/2026-10-23 \
+  --projeto nivon-data --dataset nivon_stage
+```
+
+Pré-requisitos locais: os bancos e o diretório final devem existir e estar privados. Os identificadores `nivon-data` e `nivon_stage` acima são ilustrativos: **verificar os valores reais do projeto/dataset antes de tentar nuvem**. O diretório do lote deve estar vazio; a mesma execução nunca sobrescreve manifestos ou lotes já existentes.
+
+Para autorizar carga real exige-se `--executar-cloud --custos-autorizados --armazenamento-autorizado --licencas-conferidas`, além de ADC/IAM, schema BigQuery pronto e evidência por fonte. NÃO executar com autorização meramente presumida. Em caso de falha no meio de uma carga multishard, os shards anteriores permanecem no BigQuery; consultar jobs por ID antes de nova tentativa, e não reiniciar com outro prefixo sem reconciliação.
+
+O uso de `MERGE` é indicado pela documentação oficial do BigQuery como forma de inserir registros ausentes, e `IS NOT DISTINCT FROM` compara NULLs sem induzir duplicação. **Código e testes por mocks não significam integração cloud real concluída.**
+
+### Bloqueios de implantação e qualidade
+
+- O BigQuery, GCS, Cloud Run e agendamento ainda não foram validados com credenciais/recurso real. Nenhum job cloud de dados foi executado.
+- Dados do CEPEA e IMEA requerem verificação específica de licença por operação e canal de coleta; dados publicados no site/uso não comercial não equivalem a direito de redistribuição.
+- Dados de SAGyP no portal de dados abertos indicam CC BY 4.0; ainda falta validar bytes download/CKAN e data efetiva de disponibilidade, pois o portal retornou 403 ao navegador de pesquisa.
+- DJVE e monitor comercial precisam do esquema de fonte validado. SIO operação declarada não equivale a frete, entrega ou exportação realizada.
+- O workflow `.github/workflows/acessos-privados.yml` apresenta falhas em push sem jobs executados; seu diagnóstico permanece separado do job `Testes locais NIVON`. Não concluir integração a partir do resultado do segundo.
