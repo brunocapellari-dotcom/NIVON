@@ -62,13 +62,17 @@ jobs:
           python - <<'PY'
           import json
           from huggingface_hub import HfApi,hf_hub_download
-          from nivon.antaq_replica_detalhe import resumo_parquets,resumo_agro
+          from nivon.antaq_replica_detalhe import resumo_parquets,resumo_agro,soma_carga_unica_2025
           repo='vinicius-souza/antaq'
           rev=HfApi().dataset_info(repo_id=repo).sha
           def get(table):
               return hf_hub_download(repo_id=repo,repo_type='dataset',revision=rev,
                          filename='silver/'+table+'/ano=2025/data.parquet')
-          doc=resumo_parquets(get('Carga_Hidrovia'),get('Carga'))
+          hp=get('Carga_Hidrovia')
+          cp=get('Carga')
+          doc=resumo_parquets(hp,cp)
+          unico=soma_carga_unica_2025(hp,cp)
+          print("NAVEGACAO_INTERIOR_CARGA_UNICA",json.dumps(unico,ensure_ascii=False))
           agro=resumo_agro(doc)
           print("PROVENIENCIA",rev,"TERCEIRO_NAO_HOMOLOGADO")
           print("QUANTIDADE_LINHAS_HIDROVIA",doc["linhas_hidrovia"])
