@@ -41,9 +41,15 @@
 Links: [Termos de API do CEPEA](https://onetoone.cepea.org.br/termocontratacao-regulamentoapi/) · [Termo do IMEA](https://imea.com.br/imea-site/termo-de-uso.html) · [CONAB](https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras).
 
 ## Monitor de integridade operacional — 23/10/2026
-- Arquivos: `nivon/monitor_p0_workflows.py` e `tests/test_monitor_p0_workflows.py` (9 testes de regressão aprovados).
+- Arquivos: `nivon/monitor_p0_workflows.py` e `tests/test_monitor_p0_workflows.py` (10 testes de regressão aprovados).
 - GitHub Actions em **main**: `.github/workflows/monitor-p0-operacao.yml`, agenda em dias úteis 12h15 UTC (08h15 MT), leitura de histórico de execução no GitHub API e artefato `status_p0.json` com retenção de 14 dias.
-- Execução inicial https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39946868554 : **CEPEA=EXECUTION_FAILURE**, **IMEA=SCHEDULE_NOT_OBSERVED**, **CONAB=SCHEDULE_NOT_OBSERVED**. A falha do job é proposital quando existe problema operacional real e permanece visível no GitHub.
+- Execução inicial https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39947411726 : **CEPEA=EXECUTION_FAILURE**, **IMEA=SCHEDULE_NOT_OBSERVED**, **CONAB=SCHEDULE_NOT_OBSERVED**. A falha do job é proposital quando existe problema operacional real e permanece visível no GitHub.
 - `SCHEDULE_NOT_OBSERVED` significa que ainda não foi verificado disparo do evento `schedule`; `push` e `workflow_dispatch` não são contados como comprovação de recorrência.
 - **Visão operacional em Neon:** `nivon_p0_precos_operacionais_v` só mostra CEPEA com `reference_date` recente, `operational_status=CURRENT_AND_ACTIVE` e fonte original comprovada. Com CEPEA HTTP 522, retorna corretamente **0 preços elegíveis**, preservando os 30 históricos. IMEA permanece sem `reference_date`, e CONAB usa sua visão separada de safras.
 - **Bloqueio CEPEA:** repetidas falhas HTTP 522 e timeouts de origem em 23/10. Não alterar preciosidade nem tratar dados do Drive como novos. API CEPEA oficial tem autorização e condições específicas, ainda sem credencial/NIVON confirmada.
+
+### Política de alertas de cron
+- O watchdog está fixado no commit testado `12c47099651ccb2cb9479c87f13019535877045a` na `main`, com [10 testes aprovados](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39947347736).
+- Diferencia `SCHEDULE_NOT_OBSERVED` (ativação recente) de `SCHEDULE_MISSING` após **dois horários agendados vencidos** sem confirmação. Evita confundir uma execução manual de sucesso com agendamento funcional.
+- Verificação final no [GitHub](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39947411726): CEPEA `EXECUTION_FAILURE`, IMEA e CONAB `SCHEDULE_NOT_OBSERVED`; o job sinaliza intencionalmente erro enquanto o CEPEA permanecer indisponível.
+- Consulta no Neon após criar `nivon_p0_precos_operacionais_v`: **0 preços operacionais**, **30 preços CEPEA históricos preservados**, IMEA **1.012 registros de publicação sem data de referência**, CONAB **32 séries históricas**. Nenhuma observação antiga foi promovida como atual.
