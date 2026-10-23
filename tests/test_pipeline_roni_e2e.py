@@ -187,6 +187,46 @@ class TestPipelineRONIPersistente(unittest.TestCase):
         self.assertEqual(now["snapshot_sha256"], s["sha256"])
         self.assertFalse(now["disponibilidade_historica_noaa_comprovada"])
 
+    def test_retorno_de_edicao_antiga_reativa_vintage_sem_reescrever_raw(self):
+        db = abrir_arquivo_roni(self.dbpath)
+        self.addCleanup(db.close)
+        a = executar_lote_roni(
+            db, raw_dir=self.raw_dir, raw=fake_source(),
+            coletado_em=T1, instante_registro=T1)
+        b = executar_lote_roni(
+            db, raw_dir=self.raw_dir, raw=fake_source(1953, revised=True),
+            coletado_em=T2, instante_registro=T2)
+        c = executar_lote_roni(
+            db, raw_dir=self.raw_dir, raw=fake_source(),
+            coletado_em=T3, instante_registro=T3)
+        self.assertEqual(c["estado"], "RETORNO_EDICAO_ARQUIVADA")
+        self.assertEqual(c["sha256"], a["sha256"])
+        self.assertNotEqual(c["sha256"], b["sha256"])
+        latest = consultar_arquivo_roni(
+            db, raw_dir=self.raw_dir, corte_em="2026-10-22T13:00:00Z")
+        before = consultar_arquivo_roni(
+            db, raw_dir=self.raw_dir, corte_em="2026-10-21T13:00:00Z")
+        self.assertEqual(latest["snapshot_sha256"], a["sha256"])
+        self.assertEqual(latest["snapshot_ativo_desde"], "2026-10-22T12:00:00+00:00")
+        self.assertEqual(before["snapshot_sha256"], b["sha256"])
+        self.assertEqual(panorama_local_roni(
+            db, raw_dir=self.raw_dir)["total_edicoes"], 2)
+        self.assertEqual(panorama_local_roni(
+            db, raw_dir=self.raw_dir)["total_capturas"], 3)
+
+    def test_edicoes_conflitantes_no_mesmo_instante_nao_sao_ordenadas_pelo_sha(self):
+        db = abrir_arquivo_roni(self.dbpath)
+        self.addCleanup(db.close)
+        executar_lote_roni(
+            db, raw_dir=self.raw_dir, raw=fake_source(),
+            coletado_em=T1, instante_registro=T1)
+        with self.assertRaisesRegex(ErroRONI, "mesmo instante"):
+            executar_lote_roni(
+                db, raw_dir=self.raw_dir, raw=fake_source(1953),
+                coletado_em=T1, instante_registro=T1)
+        self.assertEqual(
+            panorama_local_roni(db, raw_dir=self.raw_dir)["total_edicoes"], 1)
+
     def test_manifesto_impede_caminhos_fora_do_diretorio(self):
         (self.p / "a.ascii").write_bytes(fake_source())
         man = manifest(self.p, [("../a.ascii", T1, "SINTETICO")])
