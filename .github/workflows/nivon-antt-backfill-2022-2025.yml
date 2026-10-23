@@ -5,6 +5,7 @@ on:
       - '.github/workflows/nivon-antt-backfill-2022-2025.yml'
       - 'src/nivon/antt_gcp_backfill_historico.py'
       - 'tests/test_antt_gcp_backfill_historico.py'
+      - 'tests/test_antt_single_run_workflow_policy.py'
   push:
     branches: [main]
     paths:
@@ -50,6 +51,7 @@ jobs:
           PYTHONPATH: src
         run: |
           python -m unittest discover -s tests -p 'test_antt_gcp_backfill_historico.py' -v
+          python -m unittest discover -s tests -p 'test_antt_single_run_workflow_policy.py' -v
           python -m unittest discover -s tests -p 'test_antt_bigquery.py' -v
           python -m unittest discover -s tests -p 'test_antt_gcs.py' -v
           python -m unittest discover -s tests -p 'test_coleta_antt.py' -v
