@@ -395,7 +395,9 @@
         "nivon.pacotes_chuva_asof:montar_e_verificar_pares_chuva",
         "nivon.adaptador_inmet_chuva:converter_dia_inmet_para_snapshot",
         "nivon.confronto_janelas_fisicas:confrontar_chuva_janelas_equivalentes",
-        "nivon.historico_vintages:normalizar_edicao"
+        "nivon.historico_vintages:normalizar_edicao",
+        "nivon.pipeline_medicoes_horarias:consultar_medicoes_asof",
+        "nivon.pipeline_medicoes_horarias:auditar_acervo_medicoes"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -624,7 +626,14 @@
         "nivon.roni_ciclo:processar_ciclo_roni",
         "nivon.roni_ciclo:relatorio_revisoes_roni",
         "nivon.roni_ciclo:gerar_backup_roni",
-        "nivon.roni_ciclo:validar_backup_roni"
+        "nivon.roni_ciclo:validar_backup_roni",
+        "nivon.pipeline_medicoes_horarias:preparar_arquivo_medicoes",
+        "nivon.pipeline_medicoes_horarias:importar_ciclo_medicoes",
+        "nivon.pipeline_medicoes_horarias:consultar_medicoes_asof",
+        "nivon.pipeline_medicoes_horarias:auditar_acervo_medicoes",
+        "nivon.pipeline_medicoes_cli:executar_manifesto_medicoes",
+        "nivon.pipeline_medicoes_cli:exportar_backup_medicoes",
+        "nivon.pipeline_medicoes_cli:validar_backup_medicoes"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -667,7 +676,9 @@
         "nivon.calibracao_cn_bacias:calibrar_cn_historico",
         "nivon.ensemble_hidrologico_bacia:cenario_ensemble_bacia",
         "nivon.chuva_areal_ensemble:agregar_ensemble_chuva_areal",
-        "nivon.verificacao_vazao_asof:avaliar_hidrograma_asof"
+        "nivon.verificacao_vazao_asof:avaliar_hidrograma_asof",
+        "nivon.pipeline_medicoes_horarias:importar_ciclo_medicoes",
+        "nivon.pipeline_medicoes_horarias:consultar_medicoes_asof"
       ],
       "data_dependencies": [
         "ANA_HIDRO",
