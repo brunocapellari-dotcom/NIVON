@@ -3,7 +3,7 @@ import hashlib
 import unittest
 from contextlib import contextmanager
 from dataclasses import replace
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from unittest.mock import patch
 
 from nivon.maritime.maritime_store import MaritimeStore
@@ -418,6 +418,43 @@ class OfflineMaritimeBatchTests(unittest.TestCase):
                     port_id="PARANAGUA", source_id="OFFICIAL_PARANAGUA_TEST",
                     series="EXPORT_OESTE", as_of="2026-10-20T17:00:00Z",
                     read_authorized=True, max_editions=1)
+
+    def test_new_pdf_batch_reconstructs_over_two_hundred_prior_editions(self):
+        from test_maritime_pdf_programme_ledger import edition as source_edition
+        latest = input_doc(
+            collected="2026-10-20T16:30:00Z",
+            published="2026-10-20T15:30:00Z", seed=b"LATEST",
+        )
+        baseline = source_edition()
+        start = datetime(2026, 10, 20, 12, tzinfo=timezone.utc)
+        previous = tuple(replace(
+            baseline,
+            source_id="OFFICIAL_PARANAGUA_TEST",
+            source_url=latest.contract.fonte.url,
+            collected_at=(start + timedelta(minutes=i)).isoformat(),
+            source_sha256=hashlib.sha256(f"HIST-{i}".encode()).hexdigest(),
+        ) for i in range(205))
+        with MaritimeStore() as store:
+            ledger = PdfProgrammeLedger(store)
+            for offset in range(0, len(previous), 100):
+                ledger.save_batch(previous[offset:offset + 100],
+                                  storage_authorized=True)
+            out = run(store, [latest], [programmed()], commit=True)
+            self.assertEqual(out["edition_writes"]["inserted"], 1)
+            self.assertEqual(len(out["revisions"]), 205)
+            readiness = out["source_readiness"][0]
+            self.assertEqual(readiness["documents_in_current_batch"], 1)
+            self.assertEqual(readiness["persisted_audit_editions_prior_to_batch"], 205)
+            self.assertEqual(readiness["documents_known_as_of"], 206)
+            self.assertEqual(readiness["distinct_edition_count_for_review"], 206)
+            self.assertFalse(readiness["release_allowed"])
+            self.assertIsNone(out["realized_tonnes"])
+            history = ledger.paged_history_asof(
+                port_id="PARANAGUA", source_id="OFFICIAL_PARANAGUA_TEST",
+                series="EXPORT_OESTE", as_of="2026-10-20T17:00:00Z",
+                read_authorized=True,
+            )
+            self.assertEqual(len(history), 206)
 
     def test_historic_doc_added_after_first_run_generates_one_revision(self):
         first = input_doc()
