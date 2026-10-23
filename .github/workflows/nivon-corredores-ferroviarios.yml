@@ -1,0 +1,97 @@
+name: NIVON - Corredores ferroviarios ANTT
+on:
+  pull_request:
+    paths:
+      - 'src/nivon/conciliacao_corredores_ferrovia.py'
+      - 'tests/test_conciliacao_corredores_ferrovia.py'
+      - 'scripts/ranking_ferrovias_antt.py'
+      - '.github/workflows/nivon-corredores-ferroviarios.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/nivon/conciliacao_corredores_ferrovia.py'
+      - 'tests/test_conciliacao_corredores_ferrovia.py'
+      - 'scripts/ranking_ferrovias_antt.py'
+      - '.github/workflows/nivon-corredores-ferroviarios.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '30 12 * * 2'
+permissions:
+  contents: read
+jobs:
+  testar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Testar reconciliacao de corredores
+        env:
+          PYTHONPATH: 'src:.'
+        run: python -m unittest discover -s tests -p 'test_conciliacao_corredores_ferrovia.py' -v
+  prova-fonte:
+    needs: testar
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Baixar ANTT SIADE real sem credenciais e sem log bruto
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m nivon.coleta_antt --inicio 2025 --fim 2026 --destino "$RUNNER_TEMP/antt-siade" --live
+      - name: Gerar rankings mensais de estacoes de origem
+        env:
+          PYTHONPATH: src
+        run: |
+          mkdir -p "$RUNNER_TEMP/relatorios"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          from nivon.conciliacao_corredores_ferrovia import analisar_staging
+          pasta = Path(os.environ["RUNNER_TEMP"]) / "antt-siade"
+          destino = Path(os.environ["RUNNER_TEMP"]) / "relatorios"
+          manifesto = json.loads((pasta / "manifesto-antt.json").read_text(encoding="utf-8"))
+          for ano in (2025, 2026):
+              m = manifesto["anos"][str(ano)]
+              comp = m["competencia_maxima"]
+              doc = analisar_staging(pasta, ano=ano, competencia=comp, uf_origem="MT", limite=15)
+              resumo = {"competencia":comp,"fonte":doc["fonte"],"sha256_fonte":doc["sha256_fonte"],
+                        "registros_origem_mt":doc["total_de_linhas_no_periodo"],
+                        "linhas_agrupadas":doc["linhas_agrupadas"],"rankings":doc["ranking"],
+                        "polos_por_nome_exato":doc["polos_ferroviarios"],
+                        "estado":"PESQUISA_FERROVIARIA_NAO_TRANSFERENCIA_MODAL",
+                        "data_publicacao":None}
+              (destino / f"antt-corredores-{ano}.json").write_text(
+                  json.dumps(resumo,ensure_ascii=False,indent=2),encoding="utf-8")
+              with open(os.environ["GITHUB_STEP_SUMMARY"],"a",encoding="utf-8") as f:
+                  f.write(f"### ANTT SIADE {comp} — Origem MT\n")
+                  f.write(f"Registros: {resumo['registros_origem_mt']}; arquivo SHA: {m['sha256'][:16]}…\n\n")
+                  f.write("| Estação de origem | Destino | Mercadoria fonte | TU ferroviárias |\n|---|---|---|---:|\n")
+                  for x in doc["ranking"][:10]:
+                      # CSV/HTML de terceiros é tratado como texto sem formatação ativa.
+                      a=[str(x[k]).replace("|","/").replace("<","").replace(">","")[:90]
+                         for k in ("estacao_origem","estacao_destino","mercadoria_fonte")]
+                      f.write(f"| {a[0]} | {a[1]} | {a[2]} | {x['toneladas_ferroviarias']} |\n")
+                  f.write("\n**A origem ferroviária observada NÃO prova transbordo rodoviário.**\n\n")
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: antt-corredores-ferroviarios-${{ github.run_id }}
+          path: ${{ runner.temp }}/relatorios/antt-corredores-*.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Limpeza de staging privado e provas locais
+        if: always()
+        run: |
+          rm -rf "$RUNNER_TEMP/antt-siade" "$RUNNER_TEMP/relatorios"
