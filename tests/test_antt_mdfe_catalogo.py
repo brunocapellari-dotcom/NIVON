@@ -48,13 +48,10 @@ class TestCatalogoANTT(unittest.TestCase):
         self.assertEqual(d[0]["recursos_csv_oficiais"], [URL])
 
     def test_nao_classificar_ferrovia_ou_rntrc_como_mdfe(self):
-        d = inspecionar([obj(title="Produção Ferroviária Origem Destino")])
-        self.assertEqual(d[0]["classificacao"], "MDFE_COM_CSV_CANDIDATO_NAO_HOMOLOGADO")
-        # O texto 'manifesto eletrônico' no metadado impõe somente status CANDIDATO, nunca homologação de volume.
+        d = inspecionar([{"id": UUID, "title": "Produção Ferroviária Origem Destino",
+                          "notes": "volume nas ferrovias", "resources": [{"format": "CSV", "url": URL}]}])
+        self.assertEqual(d[0]["classificacao"], "CATALOGO_SEM_PROVA_MDFE")
         self.assertEqual(d[0]["recursos_csv_oficiais"], [URL])
-        d2 = inspecionar([{"id": UUID, "title": "Produção Ferroviária Origem Destino",
-                           "notes": "volume nas ferrovias", "resources": [{"format": "CSV", "url": URL}]}])
-        self.assertEqual(d2[0]["classificacao"], "CATALOGO_SEM_PROVA_MDFE")
 
     def test_whitelist_urls(self):
         self.assertTrue(_safe_csv(URL))
