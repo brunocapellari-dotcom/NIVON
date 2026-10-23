@@ -22,8 +22,49 @@ from nivon.anp_lpc_staging_real import (
 )
 from nivon.cli_coletar_anp_lpc import main
 from nivon.anp_diesel_pressao_preview import impacto_diesel_anp_preliminar
+from nivon.anp_lpc_gcs import exportar_lpc_staging_gcs, ErroGCSANP
 from decimal import Decimal
 from test_anp_lpc_integracao import fixture, Workbook
+
+
+class FakeGCSBlob:
+    def __init__(self, bucket, key):
+        self.bucket=bucket
+        self.key=key
+        self.metadata=None
+
+    def exists(self):
+        return self.key in self.bucket.data
+
+    def reload(self):
+        self.metadata=dict(self.bucket.data[self.key]["metadata"])
+
+    def upload_from_string(self,payload,*,content_type,if_generation_match):
+        self._save(payload,content_type,if_generation_match)
+
+    def upload_from_filename(self,path,*,content_type,if_generation_match):
+        self._save(Path(path).read_bytes(),content_type,if_generation_match)
+
+    def _save(self,payload,content_type,if_generation_match):
+        assert if_generation_match == 0
+        if self.exists():
+            raise AssertionError("overwrite cloud indevido")
+        self.bucket.data[self.key] = {
+            "bytes":payload,"metadata":dict(self.metadata),
+            "tipo":content_type,
+        }
+
+
+class FakeGCSBucket:
+    name="fake-nivon-anp-private-bucket"
+    class iam_configuration:
+        public_access_prevention="enforced"
+
+    def __init__(self):
+        self.data={}
+
+    def blob(self,name):
+        return FakeGCSBlob(self,name)
 
 
 class Resposta:
@@ -341,6 +382,51 @@ class TestColetaANPLPCE2E(unittest.TestCase):
         self.assertEqual(auditoria["quantidade_falhas"],0)
         self.assertEqual(auditoria["arquivos_distintos_verificados"],5)
         self.assertEqual(auditoria["snapshots_de_indice_registrados"],2)
+
+    def test_gcs_privado_exporta_tres_edicoes_e_raw_sem_sobrescrever(self):
+        self.run_lote()
+        bucket=FakeGCSBucket()
+        saida=exportar_lpc_staging_gcs(
+            self.db, raiz_raw=str(self.root), bucket=bucket,
+            as_of="2026-11-01T00:00:00+00:00",
+        )
+        self.assertEqual(saida["status"],"EXPORTACAO_GCS_PRIVADA_CONCLUIDA")
+        self.assertEqual(saida["edicoes"],3)
+        self.assertEqual(saida["snapshots_indice"],1)
+        self.assertEqual(saida["objetos_novos"],7)
+        self.assertEqual(len(bucket.data),7)
+        for obj in bucket.data.values():
+            self.assertEqual(obj["metadata"]["publicavel"],"false")
+            self.assertEqual(sha256(obj["bytes"]).hexdigest(),
+                             obj["metadata"]["sha256"])
+        repeticao=exportar_lpc_staging_gcs(
+            self.db, raiz_raw=str(self.root),bucket=bucket,
+            as_of="2026-11-01T00:00:00+00:00",
+        )
+        self.assertEqual(repeticao["objetos_novos"],0)
+        self.assertEqual(repeticao["objetos_preexistentes"],7)
+        self.assertEqual(len(bucket.data),7)
+
+    def test_gcs_bloqueia_bucket_publico_e_raw_corrompido(self):
+        self.run_lote()
+        bucket=FakeGCSBucket()
+        bucket.iam_configuration=type(
+            "PublicIAM",(),{"public_access_prevention":"inherited"})()
+        with self.assertRaisesRegex(ErroGCSANP,"ENFORCED"):
+            exportar_lpc_staging_gcs(
+                self.db,raiz_raw=str(self.root),bucket=bucket,
+                as_of="2026-11-01T00:00:00+00:00",
+            )
+        self.assertFalse(bucket.data)
+        bucket.iam_configuration=type(
+            "PrivateIAM",(),{"public_access_prevention":"enforced"})()
+        next((self.root/"planilhas").glob("*.xlsx")).write_bytes(b"corrupt")
+        with self.assertRaisesRegex(ErroGCSANP,"RAW não íntegro"):
+            exportar_lpc_staging_gcs(
+                self.db,raiz_raw=str(self.root),bucket=bucket,
+                as_of="2026-11-01T00:00:00+00:00",
+            )
+        self.assertFalse(bucket.data)
 
     def test_recoleta_preserva_edicoes_e_cria_capturas(self):
         self.run_lote()
