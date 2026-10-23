@@ -136,26 +136,29 @@ def adquirir_fonte(
     """Obtém bytes com verificação e hash; SOMENTE quando autorizada.
 
     `abridor` é somente um adaptador de teste; não garante a rota/IP real.
-    A execução padrão valida TODOS os endereços DNS, fixa o socket no IP
-    aprovado e usa SNI/TLS para o domínio oficial. Egress/firewall independente
-    continua obrigatório em produção; `resolver` injeta apenas fixtures DNS.
+    O acesso HTTP real continua desligado sem abridor injetado. A política
+    de egress deve ser homologada fora deste módulo antes da conexão;
+    `_ip_publico_resolvido`, `_HTTPSHandlerFixado` e
+    `_ConexaoHTTPSFixada` são blocos técnicos para orquestração confiável,
+    nunca autorização operacional independente. `resolver` é fixture DNS.
     """
     fonte.verificar()
     instante = instante or datetime.now(timezone.utc)
     if instante.tzinfo is None:
         raise ErroAquisicao("instante sem timezone")
+    # Princípio de segurança R08: nem direitos de coleta aprovados, nem
+    # DNS público bastam para homologar a política de egress da infraestrutura.
+    # O transporte HTTP precisa ser INJETADO por um orquestrador confiável
+    # com firewall/controle de destino auditados; urllib padrão fica OFF.
     if abridor is None:
-        endereco = _ip_publico_resolvido(fonte.dominio_autorizado, resolver=resolver)
-        cliente = build_opener(
-            ProxyHandler({}), _SemRedirecionar(),
-            _HTTPSHandlerFixado(fonte.dominio_autorizado, endereco),
+        raise PermissionError(
+            "EGRESS_NAO_HOMOLOGADO: transporte HTTPS auditado obrigatório"
         )
-    else:
-        # Teste sintético: nunca aceitar abridor arbitrário como transporte
-        # comprovadamente seguro em produção.
-        if resolver is not None:
-            _ip_publico_resolvido(fonte.dominio_autorizado, resolver=resolver)
-        cliente = abridor
+    # Com resolução injetada, falhar fechado antes do primeiro HTTP.
+    # O transporte real deve impor pinning e TLS SNI no socket efetivo.
+    if resolver is not None:
+        _ip_publico_resolvido(fonte.dominio_autorizado, resolver=resolver)
+    cliente = abridor
     req = Request(fonte.url, headers={
         "Accept": "text/html,application/pdf,text/csv,application/json,application/rss+xml,application/atom+xml,application/xml",
         "User-Agent": "NIVON/0.1 (coleta oficial identificada)",
