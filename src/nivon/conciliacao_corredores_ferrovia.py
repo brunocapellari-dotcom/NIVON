@@ -30,6 +30,8 @@ CROSSWALK_MERCADORIAS = {
     "soja em graos":"SOJA_EM_GRAO",
     "soja em grao":"SOJA_EM_GRAO",
     "milho":"MILHO_EM_GRAO",
+    "graos milho":"MILHO_EM_GRAO",
+    "graos soja":"SOJA_EM_GRAO",
     "milho em graos":"MILHO_EM_GRAO",
     "milho em grao":"MILHO_EM_GRAO",
     "farelo de soja":"FARELO_SOJA",
