@@ -105,3 +105,11 @@ python scripts/operar_fontes_reais.py --canada
 **Custos:** o nome da variable `NIVON_ZERO_COST_BQ_APPROVED` representa uma autorização de controle operacional, **não** uma garantia de faturamento zero. BigQuery e Cloud Storage podem gerar custos de armazenamento, leitura e operações; configurar orçamento, limites e alertas antes da ativação.
 
 **Situação real:** o código de arquivamento, preflight e carga está registrado e testado com clientes simulados; nenhuma leitura/escrita real no Google Cloud foi confirmada nesta frente. As coletas reais de CCEE/Canadá/BCRA/granos.ar foram testadas no GitHub Actions, porém em ambiente temporário. O workflow só passa a ser executado pelo agendamento após integração na branch principal e preenchimento dos requisitos.
+
+## Histórico automatizável por safras e anos (adicionado 23/10/2026)
+- `scripts/backfill_fontes_reais.py`: planeja e coleta arquivos CCEE desde 2021, ou CSV da Canadian Grain Commission desde 2000, por safra/ano até a edição atual. Cada arquivo mantém hash e deduplicação, e cada falha de período aparece individualmente. Os anos antigos ainda não foram executados em nuvem.
+- `scripts/backfill_fontes_cloud.py`: opção de backfill manual, limitada a 5 anos por execução, com pré-voo GCP e **arquivamento RAW no GCS antes da carga BigQuery**. Divide a exportação por ano de referência ou competência da safra, preservando histórico e evitando lotes excessivos.
+- `.github/workflows/backfill-fontes-gcp.yml`: execução manual após merge na main; exige as mesmas variáveis e permissões da coleta recorrente, sem bypass de controle de custo.
+- `src/nivon/ingestao_fontes_reais.py` permite JSONL filtrado por competência e data de referência; consulta sempre SQL parametrizado.
+- Limites de linhas e bytes foram ampliados conforme crescimento das séries horárias e safras sem remover proteções de cardinalidade.
+- **Cuidado:** a licença e o esquema de cada edição histórica devem ser confirmados durante a coleta. Um ano indisponível não deve ser preenchido com zero ou com estimativa apresentada como observado.
