@@ -196,11 +196,24 @@ def main(argv=None):
     parser.add_argument("--banco")
     parser.add_argument("--consultar",action="store_true",
                         help="consulta historica read-only, sem rede e sem escrita")
+    parser.add_argument("--exportar-para",
+                        help="pacote local de quarentena; nao executa upload cloud")
     parser.add_argument("--especie",choices=("BOVINO","SUINO","FRANGO"))
     parser.add_argument("--corte",help="ISO 8601 com fuso, exigido em --consultar")
     args=parser.parse_args(argv)
     try:
-        if args.consultar:
+        if args.exportar_para:
+            if (not args.banco or not args.corte or not args.confirmar_direitos
+                or args.consultar or args.rede or args.gravar or args.especie):
+                raise DadoInvalido(
+                    "--exportar-para exige --banco --corte --confirmar-direitos"
+                    " e proibe consulta/rede/gravacao")
+            from .pecuaria_sidra_exportacao import exportar_quarentena_sidra
+            result = exportar_quarentena_sidra(
+                banco=args.banco, destino=args.exportar_para,
+                periodos=args.periodo, corte_asof=args.corte,
+                direitos_confirmados=True)
+        elif args.consultar:
             if (not args.banco or not args.especie or not args.corte
                 or args.rede or args.gravar):
                 raise DadoInvalido(
