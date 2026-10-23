@@ -17,7 +17,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Dependencia de fixtures ANTAQ Parquet
-        run: python -m pip install --quiet 'pyarrow>=18,<24'
+        run: python -m pip install --quiet 'pyarrow>=18,<24' 'duckdb>=1.2,<2'
       - name: Compilar modulos sem dependencias externas
         run: python -m compileall -q src tests
       - name: Validar apenas fixtures sinteticas, SEM secrets ou chamadas a API
