@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "project": "NIVON",
-  "updated_on": "2026-10-21",
+  "updated_on": "2026-10-23",
   "default_policy": "DENY_ALL_SCHEDULED_FETCHES_UNTIL_RIGHTS_AND_PARSER_HOMOLOGATED",
   "go_live_status": "NOT_READY",
   "dates_required": [
@@ -962,6 +962,30 @@
       "access": "PUBLIC_REST_JSON_STAT_NO_KEY",
       "rights": "ATTRIBUTION_REVIEW",
       "notes": "API gratuita; disponibiliza versão mais recente, não vintages históricos. Dataset derivado tag00100 de apro_cpsh1, área oleaginosas em milhares de hectares."
+    },
+    {
+      "id": "SAGYP_AR",
+      "provider": "Secretaría de Agricultura, Ganadería y Pesca — Argentina",
+      "official_url": "https://datos.magyp.gob.ar/",
+      "access": "PUBLIC_OPEN_DATA",
+      "rights": "ATTRIBUTION_REVIEW",
+      "notes": "Dataset de estimaciones CC BY 4.0 publicado; uso por recurso e acesso automatizado exigem verificacao operacional."
+    },
+    {
+      "id": "SIO_GRANOS_AR",
+      "provider": "SIO Granos — Argentina",
+      "official_url": "https://www.siogranos.com.ar/",
+      "access": "PUBLIC_PORTAL_API_DOC",
+      "rights": "REVIEW",
+      "notes": "Consulta pública e manual/API documentados; schema da exportação e direito de armazenamento ainda nao homologados. Operacoes declaradas nao comprovam entrega."
+    },
+    {
+      "id": "MAGYP_COMERCIAL_AR",
+      "provider": "MAGyP — Subsecretaría de Mercados Agroalimentarios",
+      "official_url": "https://www.magyp.gob.ar/",
+      "access": "OFFICIAL_PUBLIC_REPORTS",
+      "rights": "REVIEW",
+      "notes": "Compras e DJVE publicas, porém layout dos arquivos, unidade temporal, condicoes de reutilizacao e comprovacao de embarque exigem validação."
     }
   ],
   "datasets": [
@@ -1651,7 +1675,7 @@
       "cadence": "DAILY",
       "stage": "BLOCKED_RIGHTS",
       "priority": "P0",
-      "existing_module": null,
+      "existing_module": "cotacoes_agrobr_coletor.py (staging local sem licença homologada)",
       "notes": "",
       "enabled": false,
       "collection_authorized": false,
@@ -1962,7 +1986,7 @@
       "cadence": "WEEKLY",
       "stage": "CODE_PRESENT",
       "priority": "P0",
-      "existing_module": "conab_agrobr.py; progresso_conab_historico.py (normalizador e SQLite local com vintages)",
+      "existing_module": "conab_sync_metadados.py; conab_fila_publicacoes.py; captura_xlsx_conab.py; conab_ingestao_xlsx.py",
       "notes": "agrobr 2.0 facultativo; MEDIA_ESTADOS diferente de Brasil; coleta OFF",
       "enabled": false,
       "collection_authorized": false,
@@ -2487,7 +2511,7 @@
       "cadence": "DAILY",
       "stage": "BLOCKED_RIGHTS",
       "priority": "P0",
-      "existing_module": null,
+      "existing_module": "cotacoes_agrobr_coletor.py (staging local sem licença homologada)",
       "notes": "",
       "enabled": false,
       "collection_authorized": false,
@@ -6106,6 +6130,117 @@
       ],
       "downstream_contract": "OBSERVACAO_CANONICA_V1",
       "notes": "Apenas catálogo de versões de arquivos oficiais, sem ingesta do ZIP. FAOSTAT QCL REST legacy demorou mais que 20s na validação e fica contingenciado por esta rota."
+    },
+    {
+      "id": "ARG_SAGYP_ESTIMACIONES_AGRICOLAS",
+      "source_id": "SAGYP_AR",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO",
+        "SORGO",
+        "GIRASSOL"
+      ],
+      "topic": "producao_area_produtividade_safra_provincia_departamento",
+      "mode": "CKAN_CSV_SNAPSHOT",
+      "cadence": "SEASONAL",
+      "stage": "CODE_PRESENT",
+      "priority": "P0",
+      "existing_module": "argentina_agricultura.py; argentina_download_csv.py; argentina_pipeline_local.py",
+      "notes": "Portal indica CC BY 4.0 e atualizacao semestral. CKAN nao confirmado por GET real. Versoes/metadata segregados; sem publicação as-of homologada.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_SIO_OPERACOES_DECLARADAS",
+      "source_id": "SIO_GRANOS_AR",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO",
+        "SORGO"
+      ],
+      "topic": "operacoes_declaradas_compra_e_venda_graos_por_produto",
+      "mode": "PUBLIC_EXPORT_LAYOUT_REVIEW",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P0",
+      "existing_module": "argentina_sio_exportacoes.py",
+      "notes": "Limite consulta até 180 dias pela data de declaração; negociacao e declaração diferentes. Nenhum ID individual no stage. Layout CSV/API ainda não homologado.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_DJVE_DECLARACOES_EXPORTACAO",
+      "source_id": "MAGYP_COMERCIAL_AR",
+      "group": "COMEX",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "djve_declaracoes_juradas_vendas_ao_exterior_safra_produto",
+      "mode": "OFFICIAL_TABLE_OR_FILE",
+      "cadence": "WEEKLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "DJVE é registro de venda ao exterior, não embarque efetivo, não inferir realizado.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_MAGYP_COMPRAS_GRANOS",
+      "source_id": "MAGYP_COMERCIAL_AR",
+      "group": "BALANCO",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "compras_mercado_interno_e_exportador_por_safra",
+      "mode": "OFFICIAL_MARKET_REPORT",
+      "cadence": "WEEKLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Compras declaradas por indústria/exportador não provam recebimento físico ou liquidação.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
     }
   ]
 }
