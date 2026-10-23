@@ -251,3 +251,59 @@ def estagiar_raw_incremental(
             "bytes":manifest["bytes_total"],"executado":False,
         }
     return resultado
+
+
+
+def main(argv=None):
+    """CLI somente local: preparar RAW para arquivamento posterior, sem upload."""
+    import argparse
+    import json
+
+    from .operador_incremental_agro import _manifesto_json
+
+    parser = argparse.ArgumentParser(
+        description="NIVON R12: staged RAW privado, GCS apenas manifesto offline"
+    )
+    parser.add_argument("--stage-dir", required=True)
+    parser.add_argument("--stage-banco", required=True)
+    parser.add_argument("--bucket")
+    parser.add_argument("--argentina-manifesto")
+    parser.add_argument("--argentina-banco")
+    parser.add_argument("--argentina-raw-dir")
+    parser.add_argument("--conab-manifesto")
+    parser.add_argument("--conab-banco")
+    parser.add_argument("--conab-raw-dir")
+    parser.add_argument("--executar", action="store_true")
+    parser.add_argument("--direitos-arquivamento-verificados", action="store_true")
+    opts = parser.parse_args(argv)
+    arg = (opts.argentina_manifesto, opts.argentina_banco, opts.argentina_raw_dir)
+    con = (opts.conab_manifesto, opts.conab_banco, opts.conab_raw_dir)
+    if any(arg) and not all(arg):
+        parser.error("Argentina exige manifesto, banco e diretório RAW")
+    if any(con) and not all(con):
+        parser.error("CONAB exige manifesto, banco e diretório RAW")
+    if not all(arg) and not all(con):
+        parser.error("pelo menos uma fonte é obrigatória")
+    argentina = {
+        "catalogo":_manifesto_json(arg[0]),"banco":arg[1],"raw_dir":arg[2],
+    } if all(arg) else None
+    conab = {
+        "catalogo":_manifesto_json(con[0]),"banco":con[1],"raw_dir":con[2],
+    } if all(con) else None
+    try:
+        resultado = estagiar_raw_incremental(
+            banco_stage=opts.stage_banco, pasta_stage=opts.stage_dir,
+            conab=conab, argentina=argentina,
+            executar=opts.executar,
+            direitos_arquivamento_verificados=opts.direitos_arquivamento_verificados,
+            bucket=opts.bucket,
+        )
+    except (OSError, ValueError, PermissionError, sqlite3.Error) as exc:
+        parser.error(str(exc))
+    # Não imprimir caminhos privados nem RAWs; somente inventário de hashes.
+    print(json.dumps(resultado,ensure_ascii=False,sort_keys=True,indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
