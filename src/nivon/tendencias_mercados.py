@@ -140,6 +140,7 @@ def tendencia_preco_fisico(
 def tendencia_frete_anunciado(
     ofertas: Sequence[Mapping], *, origem_ibge: str, destino_ibge: str,
     produto: str, veiculo: str, pedagio: str, as_of: str,
+    descarga_entity_id: str, regime: str,
     janela: int = 6, minimo_lotes_dia: int = 2,
     tolerancia_absoluta: float = 0, tolerancia_relativa: float = 0,
 ) -> dict:
@@ -156,6 +157,9 @@ def tendencia_frete_anunciado(
         raise ErroTendencia("origem e destino iguais")
     produto = _identidade(produto, "produto", tamanho=60)
     veiculo = _identidade(veiculo, "veiculo", tamanho=60)
+    descarga_entity_id = _identidade(descarga_entity_id, "descarga_entity_id", tamanho=150)
+    if regime not in {"PF", "PJ", "NAO_INFORMADO"}:
+        raise ErroTendencia("regime PF/PJ obrigatório")
     if pedagio not in PEDAGIO:
         raise ErroTendencia("condição de pedágio precisa ser informada")
     if tolerancia_relativa != 0:
@@ -179,6 +183,8 @@ def tendencia_frete_anunciado(
             obs.get("produto") != produto,
             obs.get("veiculo") != veiculo,
             obs.get("pedagio") != pedagio,
+            obs.get("descarga_entity_id") != descarga_entity_id,
+            obs.get("regime") != regime,
             obs.get("natureza") != "OFERTA",
             obs.get("unidade") != "BRL/T",
         )):
@@ -270,6 +276,8 @@ def tendencia_frete_anunciado(
         **result, "segmento": "FRETE_ANUNCIADO",
         "origem_ibge": origem_ibge, "destino_ibge": destino_ibge,
         "produto": produto, "veiculo": veiculo, "pedagio": pedagio,
+        "descarga_entity_id": descarga_entity_id, "regime": regime,
+        "escopo_economico": "MESMA_DESCARGA_REGIME_PRODUTO_EQUIPAMENTO_PEDAGIO_BASE",
         "metrica_tendencia": "VARIACAO_PAREADA_POR_ESTABELECIMENTO_TRANSPORTADORA",
         "identidades_comparaveis": [
             {"pickup_entity_id": a, "transportadora_id": b} for a, b in pares
