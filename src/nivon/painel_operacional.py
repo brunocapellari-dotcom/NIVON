@@ -15,7 +15,8 @@ from typing import Any
 CLASSES_PRECO = {"FRETE_ANUNCIADO", "CBOT", "PRECO_FISICO"}
 CONTRATO_SERIE = (
     "produto", "origem", "destino", "transportadora", "equipamento",
-    "regime", "terminal", "contrato", "modal",
+    "regime", "terminal", "contrato", "modal", "ponto_embarque",
+    "pedagio", "tipo_preco", "mercado", "praca",
 )
 
 
@@ -106,10 +107,16 @@ def tendencia_precos(
         elif contrato != chave:
             raise ErroMotor("mistura de transportadora, contrato ou condicoes comerciais")
         if not c.get("produto") or (classe == "FRETE_ANUNCIADO" and
-            any(not c.get(f) for f in ("origem", "destino", "transportadora", "regime", "equipamento"))):
+            any(not c.get(f) for f in ("origem", "destino", "transportadora",
+                                       "regime", "equipamento", "ponto_embarque",
+                                       "terminal", "pedagio", "tipo_preco"))):
             return _bloqueio("condicoes_comerciais_incompletas", serie_id=serie_id, classe=classe)
         if classe == "CBOT" and not c.get("contrato"):
             return _bloqueio("contrato_futuro_ausente", serie_id=serie_id, classe=classe)
+        if classe == "CBOT" and any(not c.get(f) for f in ("mercado", "tipo_preco")):
+            return _bloqueio("mercado_ou_tipo_cbot_ausente", serie_id=serie_id, classe=classe)
+        if classe == "PRECO_FISICO" and any(not c.get(f) for f in ("praca", "tipo_preco")):
+            return _bloqueio("praca_ou_tipo_preco_fisico_ausente", serie_id=serie_id, classe=classe)
         if obs.get("natureza") not in ("OBSERVADO", "INFORMADO"):
             excluidos += 1
             continue
