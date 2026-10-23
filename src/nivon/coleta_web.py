@@ -48,9 +48,9 @@ class FonteWeb:
         except ValueError as exc:
             if isinstance(exc, ErroAquisicao):
                 raise
-        if self.formato not in ("HTML", "PDF", "CSV", "JSON"):
+        if self.formato not in ("HTML", "PDF", "CSV", "JSON", "XLSX"):
             raise ErroAquisicao("formato não suportado")
-        if not 0 < self.limite_bytes <= 20_000_000:
+        if not 0 < self.limite_bytes <= 25_000_000:
             raise ErroAquisicao("limite máximo inválido")
 
 
@@ -75,12 +75,16 @@ def adquirir_fonte(fonte: FonteWeb, *, abridor=None, instante: datetime | None =
             raise ErroAquisicao("resposta/redirect diferente da fonte autorizada")
         mime = str(response.headers.get("Content-Type", "")).lower().split(";", 1)[0].strip()
         tipos = {"HTML": {"text/html", "application/xhtml+xml"},
-                 "PDF": {"application/pdf"}, "JSON": {"application/json"}, "CSV": {"text/csv", "application/csv", "text/plain"}}
+                 "PDF": {"application/pdf"}, "JSON": {"application/json"},
+                 "XLSX": {"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},
+                 "CSV": {"text/csv", "application/csv", "text/plain"}}
         if mime not in tipos[fonte.formato]:
             raise ErroAquisicao("MIME divergente do contrato")
         dados = response.read(fonte.limite_bytes + 1)
         if len(dados) > fonte.limite_bytes or not dados:
             raise ErroAquisicao("payload vazio ou acima do limite")
+        if fonte.formato == "XLSX" and not dados.startswith(b"PK\x03\x04"):
+            raise ErroAquisicao("assinatura XLSX invalida")
         if fonte.formato == "PDF" and not dados.startswith(b"%PDF"):
             raise ErroAquisicao("assinatura PDF inválida")
         return {
