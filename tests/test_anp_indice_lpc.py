@@ -24,6 +24,45 @@ class TestIndiceLPC(unittest.TestCase):
         self.assertFalse(x["schema_homologado"])
         self.assertNotIn("revendas_lpc",x["url_pagina"])
 
+    def test_indice_oficial_2026_com_nomes_divergentes_sem_perder_ultima_semana(self):
+        # Os três hrefs reproduzem os nomes REALMENTE anunciados no índice
+        # em 23/10/2026. HTML ao redor é sintético.
+        root = (
+            "/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/"
+            "precos/arquivos-lpc/2026/"
+        )
+        names = (
+            "resumo_semanal_lpc_2026-09-27_2026-10-03.xlsx",
+            "resumo_semanal_lpc_2026-10-04_2026-10-10.xlsx",
+            "resumo_semanal_lpc_2026_10_11-2026_10_17.xlsx",
+        )
+        html = ("<html><body><h1>ANP LPC índice 2026</h1>" +
+                "".join(f'<a href="{root}{name}">Média municipal</a>'
+                        for name in names) + "</body></html>").encode()
+        saida = descobrir_semanas_lpc(html, ano=2026)
+        self.assertEqual(saida["total_semanas"], 3)
+        self.assertEqual(
+            [x["semana_fim"] for x in saida["semanas"]],
+            ["2026-10-03", "2026-10-10", "2026-10-17"],
+        )
+        self.assertTrue(saida["semanas"][-1]["url_pagina"].endswith(names[-1]))
+        self.assertFalse(saida["semanas"][-1]["baixado"])
+
+    def test_variante_data_invalida_ou_terceiro_semana_nao_fabricada(self):
+        root = (
+            "https://www.gov.br/anp/pt-br/assuntos/"
+            "precos-e-defesa-da-concorrencia/precos/arquivos-lpc/2026/"
+        )
+        nomes = (
+            "resumo_semanal_lpc_2026_10_11-2026_10_21.xlsx",
+            "resumo_semanal_lpc_2026_15_11-2026_15_17.xlsx",
+            "revendas_lpc_2026_10_11-2026_10_17.xlsx",
+        )
+        html = ("<html><body>Índice ANP - teste de nomes não oficiais" +
+                "".join(f'<a href="{root}{n}">XLSX</a>' for n in nomes) +
+                "</body></html>").encode()
+        self.assertEqual(descobrir_semanas_lpc(html, ano=2026)["semanas"], [])
+
     def test_semana_ainda_nao_publicada_nao_e_inventada(self):
         x=descobrir_semanas_lpc(("<html><body><a href='/outro'>index</a>" + "Descrição da pesquisa semanal"*5 + "</body></html>").encode(),ano=2026)
         self.assertEqual(x["semanas"],[])
