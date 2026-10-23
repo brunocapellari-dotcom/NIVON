@@ -11,10 +11,12 @@ from hashlib import sha256
 from pathlib import Path
 import json
 import os
+import re
 import sqlite3
 import tempfile
 
 from .noaa_roni import ErroRONI, importar_roni_ascii, classificar_episodios_roni
+from .transacoes_sqlite import savepoint_atomico
 
 _SCHEMA = """
 PRAGMA foreign_keys = ON;
@@ -75,6 +77,8 @@ def abrir_arquivo_roni(caminho=":memory:"):
 
 
 def _guard_raw(root, digest, raw=None):
+    if not isinstance(digest, str) or re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+        raise ErroRONI("hash RAW inválido no índice de snapshots")
     path = root / (digest + ".ascii")
     if path.is_symlink():
         raise ErroRONI("snapshot RAW symlink proibido")
@@ -207,7 +211,7 @@ def executar_lote_roni(
               "NOVA_EDICAO_COM_REVISÕES" if revisions else
               "NOVA_EDICAO_SEM_REVISÕES")
     events = classificar_episodios_roni(parsed)["eventos"]
-    with db:
+    with savepoint_atomico(db):
         if existing is None:
             db.execute(
                 "INSERT INTO roni_snapshots VALUES (?,?,?,?,?,?,?,?,?,?)",

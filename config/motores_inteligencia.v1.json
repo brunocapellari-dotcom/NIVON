@@ -620,7 +620,11 @@
         "nivon.roni_store:panorama_local_roni",
         "nivon.roni_cli:executar_manifesto_roni",
         "nivon.roni_captura_manual:capturar_roni_manual",
-        "nivon.roni_store:auditar_acervo_roni"
+        "nivon.roni_store:auditar_acervo_roni",
+        "nivon.roni_ciclo:processar_ciclo_roni",
+        "nivon.roni_ciclo:relatorio_revisoes_roni",
+        "nivon.roni_ciclo:gerar_backup_roni",
+        "nivon.roni_ciclo:validar_backup_roni"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
