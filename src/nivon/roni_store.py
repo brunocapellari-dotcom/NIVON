@@ -160,7 +160,12 @@ def executar_lote_roni(
     old_values = _valores(db, last["sha256"]) if last else {}
     new_values = {x["competencia_centro"]: x["anomalia_roni_c"]
                   for x in parsed["registros"]}
-    if last and set(old_values) - set(new_values):
+    # Reaplicar manifesto antigo é idempotente; devolver uma edição previamente
+    # arquivada é permitido, mas um SHA novo que trunca meses é rejeitado.
+    preliminary_existing = db.execute(
+        "SELECT * FROM roni_snapshots WHERE sha256=?", (digest,)
+    ).fetchone()
+    if last and set(old_values) - set(new_values) and preliminary_existing is None:
         raise ErroRONI("arquivo RONI truncou competências já conhecidas")
     revisions = [
         x for x in new_values if x in old_values and new_values[x] != old_values[x]
@@ -173,6 +178,29 @@ def executar_lote_roni(
     ).fetchone()
     if existing is not None and existing["classe"] != classe:
         raise ErroRONI("mesmo RAW classificado em contextos incompatíveis")
+    # Repetir o mesmo arquivo com a MESMA captura declarada é replay de lote,
+    # não uma nova observação do provedor. Não reativar versões antigas.
+    if existing is not None and db.execute(
+        "SELECT 1 FROM roni_capturas WHERE sha256=? AND capturado_em_utc=?",
+        (digest, capturado.isoformat()),
+    ).fetchone():
+        return {
+            "estado": "SEM_MUDANCA", "sha256": digest, "tipo": classe,
+            "quantidade_temporadas": existing["quantidade"],
+            "competencia_primeira": existing["primeiro_mes"],
+            "competencia_ultima": existing["ultimo_mes"],
+            "competencias_novas": 0, "competencias_revisadas": 0,
+            "primeiro_registro_nivon": existing["visto_nivon_em_utc"],
+            "capturas_registradas": db.execute(
+                "SELECT COUNT(*) FROM roni_capturas WHERE sha256=?",
+                (digest,)
+            ).fetchone()[0],
+            "numero_episodios_retrospectivos": existing["eventos"],
+            "origem_institucional_autenticada": False,
+            "disponibilidade_passada_certificada": False,
+            "pode_treinar_asof": False, "homologado": False,
+            "publicacao_individual": None,
+        }
     status = ("PRIMEIRA_EDICAO" if last is None else
               "SEM_MUDANCA" if last["sha256"] == digest else
               "RETORNO_EDICAO_ARQUIVADA" if existing else
