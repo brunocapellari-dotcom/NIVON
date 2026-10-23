@@ -133,6 +133,39 @@ def _planejar_argentina(info):
     return planos
 
 
+def _conferir_stage_existente(dbpath: Path):
+    """Evita herdar snapshots NORMALIZED ou registros analíticos de outro stage."""
+    if dbpath.stat().st_size == 0:
+        return
+    with _db_ro(dbpath) as db:
+        if db.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
+            raise ErroPonteRaw("integridade do estágio SQLite inválida")
+        if db.execute("PRAGMA foreign_key_check").fetchall():
+            raise ErroPonteRaw("chaves estrangeiras do estágio inválidas")
+        try:
+            linhas = db.execute(
+                "SELECT dataset_id,estado,url_publica FROM snapshots"
+            ).fetchall()
+            observacoes = db.execute(
+                "SELECT COUNT(*) FROM observacoes"
+            ).fetchone()[0]
+        except sqlite3.Error as exc:
+            raise ErroPonteRaw("estágio sem contrato RAW canônico") from exc
+        if observacoes:
+            raise ErroPonteRaw("estágio contaminado com observações analíticas")
+        for ds, estado, origem in linhas:
+            if ds not in _DATASETS.values() or estado != "QUARANTINED":
+                raise ErroPonteRaw("estágio promovido ou dataset não autorizado")
+            if ds == _DATASETS["CONAB_LAB"]:
+                if not origem.startswith(
+                    "https://raw.githubusercontent.com/bruno-portfolio/agrobr/"
+                ):
+                    raise ErroPonteRaw("origem CONAB terceiro não rastreável")
+            if ds == _DATASETS["ARG_SAGYP"]:
+                if not origem.startswith("https://datos.magyp.gob.ar/"):
+                    raise ErroPonteRaw("origem Argentina não autorizada")
+
+
 def estagiar_raw_incremental(
     *, banco_stage: str | Path, pasta_stage: str | Path,
     conab: dict | None = None, argentina: dict | None = None,
@@ -175,7 +208,10 @@ def estagiar_raw_incremental(
         fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL |
                      getattr(os, "O_NOFOLLOW", 0), 0o600)
         os.close(fd)
-    _arquivo_privado(target) if target.stat().st_size else None
+    # O estágio pode sobreviver a falhas/restarts: inspecionar TODA a base
+    # antes de incluir novos objetos e novamente após cada rodada.
+    _arquivo_privado(target)
+    _conferir_stage_existente(target)
     resultados = []
     for e in planos:
         # Não exportar observações: ausência de data comprovada de publicação
@@ -197,6 +233,7 @@ def estagiar_raw_incremental(
             "dataset":e["dataset"], "edicao":e["id"], "sha256":e["sha"],
             "snapshot_id":out["snapshot_id"],"estado":"QUARANTINED",
         })
+    _conferir_stage_existente(target)
     resultado = {"estado":"RAW_QUARENTENA_STAGE_LOCAL",
                  "executado":True,"quantidade":len(resultados),
                  "edicoes":resultados,
