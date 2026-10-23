@@ -224,6 +224,9 @@ def importar_ciclo_medicoes(db, *, raw_dir, edicoes):
                 raise ErroPipelineAmbiental("proveniência do ZIP incompatível")
     folder = _pasta(raw_dir, criar=True)
     prior_paths = {p.name for p in folder.glob("*.raw")}
+    origens_dir=folder/"origens"
+    origens_existentes=({p.name for p in origens_dir.glob("*.zip")}
+        if origens_dir.is_dir() and not origens_dir.is_symlink() else set())
     events = []
     try:
         with savepoint_atomico(db):
@@ -249,7 +252,20 @@ def importar_ciclo_medicoes(db, *, raw_dir, edicoes):
                     fresh = sorted(item["registros"],key=lambda r:(r[0],r[1]))
                     if old != fresh:
                         raise ErroPipelineAmbiental("mesmo RAW com normalização contraditória")
+                origin=item.get("container_origem")
+                if origin is not None:
+                    from .arquivo_zip_integral import arquivar_zip_inmet
+                    arquivar_zip_inmet(
+                        raw_dir=folder,caminho_zip=origin["arquivo_zip_local"],
+                        hash_esperado=origin["parent_sha256"])
                 if db.execute("SELECT 1 FROM medidas_capturas WHERE sha256=? AND visto_nivon_utc=?", (sha,when)).fetchone():
+                    # Reobservação idêntica pode trazer novo container ZIP
+                    # contendo o mesmo CSV. Guardar linhagem, não novo dado.
+                    if origin is not None:
+                        db.execute(
+                            "INSERT OR IGNORE INTO medidas_containers_origem VALUES (?,?,?,?,?,?)",
+                            (sha,origin["tipo"],origin["parent_sha256"],
+                             origin["membro"],origin["membro_sha256"],1))
                     events.append({"sha256":sha,"dataset_id":dataset,"estado":"REPLAY_SEM_MUDANCA",
                                    "medidas":len(item["registros"])})
                     continue
@@ -268,12 +284,11 @@ def importar_ciclo_medicoes(db, *, raw_dir, edicoes):
                     db.executemany("INSERT INTO medidas_registros VALUES (?,?,?,?,?,?,?)",
                         [(sha,*row) for row in item["registros"]])
                 db.execute("INSERT INTO medidas_capturas VALUES (?,?)",(sha,when))
-                origin=item.get("container_origem")
                 if origin is not None:
                     db.execute(
                         "INSERT OR IGNORE INTO medidas_containers_origem VALUES (?,?,?,?,?,?)",
                         (sha,origin["tipo"],origin["parent_sha256"],
-                         origin["membro"],origin["membro_sha256"],0))
+                         origin["membro"],origin["membro_sha256"],1))
                 events.append({
                     "sha256":sha,"dataset_id":dataset,
                     "estado":"NOVA_EDICAO" if existing is None else "NOVA_CAPTURA_EDICAO_EXISTENTE",
@@ -285,6 +300,13 @@ def importar_ciclo_medicoes(db, *, raw_dir, edicoes):
         for p in folder.glob("*.raw"):
             if p.name not in prior_paths and p.name not in live and p.is_file() and not p.is_symlink():
                 p.unlink()
+        if origens_dir.is_dir() and not origens_dir.is_symlink():
+            live_zip={r[0]+".zip" for r in db.execute(
+                "SELECT parent_sha256 FROM medidas_containers_origem")}
+            for file in origens_dir.glob("*.zip"):
+                if (file.name not in origens_existentes and file.name not in live_zip
+                    and file.is_file() and not file.is_symlink()):
+                    file.unlink()
         raise
     return {
         "estado":"CICLO_INMET_ANA_ATOMICO_LOCAL",
