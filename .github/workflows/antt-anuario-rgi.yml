@@ -1,0 +1,57 @@
+name: NIVON - ANTT RGI relatorio oficial
+on:
+  push:
+    branches:
+      - feat/antt-anuario-rgi-20261023
+    paths:
+      - src/nivon/antt_anuario_rgi.py
+      - scripts/ingest_antt_anuario_rgi.py
+      - tests/test_antt_anuario_rgi.py
+      - .github/workflows/antt-anuario-rgi.yml
+  pull_request:
+    paths:
+      - src/nivon/antt_anuario_rgi.py
+      - scripts/ingest_antt_anuario_rgi.py
+      - tests/test_antt_anuario_rgi.py
+      - .github/workflows/antt-anuario-rgi.yml
+  workflow_dispatch:
+  schedule:
+    - cron: '55 11 2 * *'
+permissions:
+  contents: read
+jobs:
+  testar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Testes sem rede
+        env:
+          PYTHONPATH: 'src:.'
+        run: python -m unittest discover -s tests -p 'test_antt_anuario_rgi.py' -v
+  extrair-oficial:
+    needs: testar
+    if: ${{ github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Conferir pdftotext
+        run: command -v pdftotext
+      - name: Baixar e extrair PDF oficial em armazenamento efemero
+        env:
+          PYTHONPATH: src
+        run: python scripts/ingest_antt_anuario_rgi.py --db "$RUNNER_TEMP/antt-relatorio-2025.sqlite"
+      - name: Excluir banco efemero sem publicar os dados
+        if: always()
+        run: rm -f "$RUNNER_TEMP/antt-relatorio-2025.sqlite"*
