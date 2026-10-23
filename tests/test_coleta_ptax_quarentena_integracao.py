@@ -20,6 +20,7 @@ from nivon.ptax_google_cloud import (
     preparar_objetos_gcs_ptax, enviar_objetos_gcs_ptax, ErroExportacaoPTAX,
 )
 from nivon.ptax_reconciliacao_gcs import reconciliar_gcs_ptax
+from nivon.ptax_sincronizacao_gcs import sincronizar_pacote_ptax_gcs
 from nivon.ptax_plano import planejar_consultas_ptax
 from nivon.registro_snapshots import abrir_registro
 
@@ -237,6 +238,65 @@ class TestColetaQuarentenaETL(unittest.TestCase):
                 pkg,cliente=cloud,permitir_leitura=True,
                 referencia_custo="ORCAMENTO_FICTICIO_CI",
             )
+
+    def test_sincronizacao_gcs_idempotente_com_retomada_parcial(self):
+        self.run_fake(planos=[P1])
+        eid=listar_amostras_ptax(self.db)[0]["evento_sha256"]
+        pkg=preparar_objetos_gcs_ptax(
+            self.db,evento_sha256=eid,bucket="nivon-ptax-arquivos",
+        )
+        cloud=GCS()
+        # Simula upload interrompido após o primeiro objeto.
+        cloud.files[pkg["objetos"][0]["chave"]]=pkg["objetos"][0]["bytes"]
+        opts=dict(
+            permitir_upload=True,
+            referencia_direitos="LICENCA_FICTICIA_CI",
+            referencia_custo="ORCAMENTO_FICTICIO_CI",
+            cliente=cloud,
+        )
+        retorno=sincronizar_pacote_ptax_gcs(pkg,**opts)
+        self.assertEqual(retorno["objetos_ja_presentes"],1)
+        self.assertEqual(retorno["objetos_novos"],1)
+        self.assertTrue(retorno["integridade_bytes_revalidada"])
+        self.assertFalse(retorno["publicavel"])
+        segunda=sincronizar_pacote_ptax_gcs(pkg,**opts)
+        self.assertEqual(segunda["objetos_novos"],0)
+        self.assertEqual(segunda["total_conferidos"],2)
+
+    def test_sincronizacao_rejeita_divergencia_sem_sobrescrever(self):
+        self.run_fake(planos=[P1])
+        eid=listar_amostras_ptax(self.db)[0]["evento_sha256"]
+        pkg=preparar_objetos_gcs_ptax(
+            self.db,evento_sha256=eid,bucket="nivon-ptax-arquivos",
+        )
+        cloud=GCS()
+        key=pkg["objetos"][0]["chave"]
+        cloud.files[key]=b"adulterado"
+        with self.assertRaisesRegex(ErroExportacaoPTAX,"divergente"):
+            sincronizar_pacote_ptax_gcs(
+                pkg,permitir_upload=True,
+                referencia_direitos="LICENCA_FICTICIA_CI",
+                referencia_custo="ORCAMENTO_FICTICIO_CI",
+                cliente=cloud,
+            )
+        self.assertEqual(cloud.files[key],b"adulterado")
+        self.assertEqual(len(cloud.files),1)
+
+    def test_sincronizacao_exige_aprovacoes_sem_acessar_nuvem(self):
+        self.run_fake(planos=[P1])
+        eid=listar_amostras_ptax(self.db)[0]["evento_sha256"]
+        pkg=preparar_objetos_gcs_ptax(
+            self.db,evento_sha256=eid,bucket="nivon-ptax-arquivos",
+        )
+        cloud=GCS()
+        with self.assertRaises(PermissionError):
+            sincronizar_pacote_ptax_gcs(pkg,cliente=cloud)
+        with self.assertRaises(PermissionError):
+            sincronizar_pacote_ptax_gcs(
+                pkg,cliente=cloud,permitir_upload=True,
+                referencia_direitos="LICENCA_FICTICIA_CI",
+            )
+        self.assertEqual(len(cloud.files),0)
 
 
 if __name__=="__main__":
