@@ -36,7 +36,6 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_antt_anuario_rgi.py' -v
   extrair-oficial:
     needs: testar
-    if: ${{ github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
