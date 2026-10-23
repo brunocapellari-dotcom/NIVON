@@ -99,10 +99,8 @@ def _contexto(db: sqlite3.Connection, rows: list[dict]) -> list[dict]:
     return result
 
 
-def planejar_migracao(db: sqlite3.Connection) -> dict:
-    """Read-only inclusive em bases sem tabelas canônicas."""
-    if db.in_transaction:
-        raise ErroControleEnvio("inventário exige conexão fora de transação")
+def _montar_plano(db: sqlite3.Connection) -> dict:
+    """Snapshot coerente; chamar de fora ou DENTRO de BEGIN IMMEDIATE."""
     rows=_contexto(db,_ler_legado(db))
     grupos=dict(sorted(Counter(r["motivo"] for r in rows).items()))
     return {"status":"QUARENTENA_SOMENTE_SEM_PROMOCAO",
@@ -110,9 +108,24 @@ def planejar_migracao(db: sqlite3.Connection) -> dict:
             "registros":rows,"envios_novos":0,
             "publicacao_autorizada":False}
 
+def planejar_migracao(db: sqlite3.Connection) -> dict:
+    """Read-only inclusive em bases sem tabelas canônicas."""
+    if db.in_transaction:
+        raise ErroControleEnvio("inventário exige conexão fora de transação")
+    return _montar_plano(db)
+
+
+def hash_snapshot_legado(db: sqlite3.Connection) -> str:
+    """Assina conteúdo dos legados sem expor PII; não é prova externa."""
+    rows=_ler_legado(db)
+    data=json.dumps(rows,sort_keys=True,ensure_ascii=False,
+                    separators=(",",":")).encode("utf-8")
+    import hashlib
+    return hashlib.sha256(data).hexdigest()
+
+
 
 def _preparar_quarentena(db: sqlite3.Connection) -> None:
-    preparar_recibos(db)
     db.execute("""CREATE TABLE IF NOT EXISTS nivon_quarentena_legado (
         registro_sha256 TEXT PRIMARY KEY,
         dia_local TEXT NOT NULL,
@@ -138,18 +151,25 @@ def _fingerprint(row: dict) -> str:
 
 def registrar_quarentena(
     db: sqlite3.Connection, *, autorizar_staging: bool = False,
-    registrado_em: str,
+    registrado_em: str, snapshot_legado_esperado: str | None = None,
 ) -> dict:
-    """Somente estágio reversível, sem transformação em aceite ou envio."""
+    """Captura legados SOB BEGIN IMMEDIATE; não promove nem envia."""
     if autorizar_staging is not True:
         raise PermissionError("quarentena exige autorização explícita do chamador")
     from .outbox_unificada import _tempo
     ts=_tempo(registrado_em)
-    plano=planejar_migracao(db)
-    _preparar_quarentena(db)
     db.execute("BEGIN IMMEDIATE")
     novos=0
     try:
+        if snapshot_legado_esperado is not None:
+            if (not isinstance(snapshot_legado_esperado,str)
+                    or not re.fullmatch(r"[a-f0-9]{64}",snapshot_legado_esperado)
+                    or hash_snapshot_legado(db)!=snapshot_legado_esperado):
+                raise ErroControleEnvio(
+                    "fontes legadas alteradas desde o backup pré-migração"
+                )
+        plano=_montar_plano(db)
+        _preparar_quarentena(db)  # DDL SQLite também reverte se falhar a migração.
         for row in plano["registros"]:
             fp=_fingerprint(row)
             existente=db.execute("""SELECT fingerprint_sha256

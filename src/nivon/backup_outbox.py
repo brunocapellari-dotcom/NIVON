@@ -53,9 +53,20 @@ def estado_logico(db: sqlite3.Connection) -> dict:
     fk=list(db.execute("PRAGMA foreign_key_check"))
     if fk:
         raise ErroBackup("foreign key órfã no backup")
+    # O digest anterior só cobria linhas: um schema adulterado de tabela
+    # vazia poderia passar. Atar também DDL, views, índices e triggers.
+    schema=[tuple(row) for row in db.execute("""SELECT type,name,tbl_name,sql
+        FROM sqlite_master WHERE sql IS NOT NULL AND name NOT LIKE 'sqlite_stat%'
+        ORDER BY type,name,tbl_name""")]
+    schema_blob=json.dumps(schema,ensure_ascii=False,sort_keys=True,
+                           separators=(",",":")).encode("utf-8")
+    esquema_sha256=hashlib.sha256(schema_blob).hexdigest()
     nomes=sorted(row[0] for row in db.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"))
+        "SELECT name FROM sqlite_master WHERE type='table' AND "
+        "(name NOT LIKE 'sqlite_%' OR name='sqlite_sequence')"))
     sha=hashlib.sha256()
+    sha.update(b"NIVON:OUTBOX:LOGICAL_BACKUP:V2\\n")
+    sha.update(esquema_sha256.encode("ascii"))
     counts={}
     for nome in nomes:
         colunas=db.execute(f"PRAGMA table_info({_ident(nome)})").fetchall()
@@ -74,6 +85,7 @@ def estado_logico(db: sqlite3.Connection) -> dict:
         sha.update(json.dumps({"tabela":nome,"linhas":n},
                               sort_keys=True).encode("utf-8"))
     return {"tabelas":counts,"total_linhas":sum(counts.values()),
+            "esquema_sha256":esquema_sha256,
             "conteudo_sha256":sha.hexdigest(),"integridade":"OK"}
 
 
