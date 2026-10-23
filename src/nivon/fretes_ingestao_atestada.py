@@ -73,9 +73,12 @@ def ingerir_lote_whatsapp_atestado(
     if con.in_transaction:
         raise ErroIngestaoFrete("transação SQLite pendente")
     # Cabeça recebida de cofre externo pelo chamador; não usar o próprio DB.
-    anterior=verificar_store_ofertas_frete(
-        con,cabeca_esperada_sha256=cabeca_anterior_sha256,
-    )
+    try:
+        anterior=verificar_store_ofertas_frete(
+            con,cabeca_esperada_sha256=cabeca_anterior_sha256,
+        )
+    except ErroStoreOfertaFrete as exc:
+        raise ErroIngestaoFrete("cabeça anterior não confere com o store") from exc
     existentes={
         r.registro_id:(_object(r),e)
         for r,e in zip(anterior["ofertas"],anterior["evidencias_declaradas"])
