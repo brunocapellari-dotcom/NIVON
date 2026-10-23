@@ -34,6 +34,8 @@ def planejar_carga(*,arquivo,project_id,dataset_id,max_bytes_billed=10_000_000):
         raise ErroCargaBigQuery("arquivo ausente, symlink ou acima do limite")
     n=0
     seen=set()
+    menor_referencia=None
+    maior_referencia=None
     with path.open(encoding="utf-8") as f:
         for row in f:
             n+=1
@@ -54,7 +56,13 @@ def planejar_carga(*,arquivo,project_id,dataset_id,max_bytes_billed=10_000_000):
             if obj["natureza"] not in ("OBSERVADO","INFORMADO","ESTIMADO","PROJETADO","INFERIDO"):
                 raise ErroCargaBigQuery("natureza invalida")
             try:
-                date.fromisoformat(obj["referencia"])
+                if not isinstance(obj["referencia"],str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}",obj["referencia"]):
+                    raise ValueError("data_referencia requer YYYY-MM-DD")
+                ref=date.fromisoformat(obj["referencia"])
+                if menor_referencia is None or ref<menor_referencia:
+                    menor_referencia=ref
+                if maior_referencia is None or ref>maior_referencia:
+                    maior_referencia=ref
                 dt = datetime.fromisoformat(obj["coletado_em"].replace("Z","+00:00"))
                 if dt.utcoffset() is None:
                     raise ValueError("coleta sem timezone")
@@ -66,6 +74,8 @@ def planejar_carga(*,arquivo,project_id,dataset_id,max_bytes_billed=10_000_000):
                 raise ErroCargaBigQuery("datas de referencia/publicacao/coleta invalidas") from exc
     return {"tabela":f"{project_id}.{dataset_id}.nivon_observacoes",
          "projeto":project_id,"dataset":dataset_id,"linhas":n,
+         "referencia_inicio":menor_referencia.isoformat() if menor_referencia else None,
+         "referencia_fim":maior_referencia.isoformat() if maior_referencia else None,
          "arquivo":str(path),"sha256":sha256(path.read_bytes()).hexdigest(),
          "max_bytes_billed":max_bytes_billed,
          "executado":False,"credencial_requerida":"GOOGLE_APPLICATION_CREDENTIALS ou Workload Identity"}
@@ -111,13 +121,36 @@ def executar_carga(*,arquivo,project_id,dataset_id,executar=False,
             "CAST(S.publicacao AS TIMESTAMP)",
             "CAST(S.coletado_em AS TIMESTAMP)",
         ])
+        # Particionamento no lado TARGET impede scan de anos fora do lote.
+        # Igualdade da referência protege também contra chave reaproveitada com data diversa.
         on=" AND ".join(f"T.{k}=S.{k}" for k in ("dataset_id","identidade","fingerprint"))
+        on+=(" AND T.data_referencia = CAST(S.referencia AS DATE)"
+             " AND T.data_referencia BETWEEN @ref_inicio AND @ref_fim")
         sql=(f"MERGE `{target}` T USING `{staging}` S ON {on} "
              f"WHEN NOT MATCHED THEN INSERT ({colunas}) VALUES ("+
              ", ".join(valores)+")")
-        cfg=bigquery.QueryJobConfig(maximum_bytes_billed=p["max_bytes_billed"])
-        done=cli.query(sql,job_config=cfg).result(timeout=150)
+        parametros=[
+            bigquery.ScalarQueryParameter("ref_inicio","DATE",date.fromisoformat(p["referencia_inicio"])),
+            bigquery.ScalarQueryParameter("ref_fim","DATE",date.fromisoformat(p["referencia_fim"])),
+        ]
+        # Dry-run BigQuery não modifica dados e deve estimar o custo antes do MERGE.
+        estimativa=bigquery.QueryJobConfig(
+            dry_run=True,use_query_cache=False,
+            query_parameters=parametros)
+        ensaio=cli.query(sql,job_config=estimativa)
+        bytes_estimados=getattr(ensaio,"total_bytes_processed",None)
+        if type(bytes_estimados) is not int or bytes_estimados<0:
+            raise ErroCargaBigQuery("dry-run sem estimativa de bytes; MERGE bloqueado")
+        if bytes_estimados>p["max_bytes_billed"]:
+            raise ErroCargaBigQuery(
+                f"MERGE bloqueado por custo: {bytes_estimados} bytes estimados")
+        cfg=bigquery.QueryJobConfig(
+            maximum_bytes_billed=p["max_bytes_billed"],
+            query_parameters=parametros)
+        cli.query(sql,job_config=cfg).result(timeout=150)
         p.update({"executado":True,"projeto":project_id,"linhas_enviadas":p["linhas"],
+                  "bytes_estimados":bytes_estimados,
+                  "particoes_referencia":[p["referencia_inicio"],p["referencia_fim"]],
                   "nuvem":"BIGQUERY","dados_publicados":False})
     finally:
         cli.delete_table(staging,not_found_ok=True)
