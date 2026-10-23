@@ -11,6 +11,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   coletar:
+    if: ${{ github.event_name == 'workflow_dispatch' || (vars.NIVON_ZERO_COST_BQ_APPROVED == 'true' && vars.NIVON_GCP_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && vars.NIVON_BQ_PROJECT != '' && vars.NIVON_BQ_DATASET != '') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -22,8 +23,13 @@ jobs:
           python-version: '3.11'
       - name: Instalar coletor
         run: python -m pip install -e .
-      - name: Coletar BCRA/granos.ar com Canada
-        run: python scripts/operar_fontes_reais.py --canada
+      - name: Coletar BCRA/granos diariamente e Canada/CCEE semanalmente
+        run: |
+          if [ "$(date -u +%u)" = '1' ]; then
+            python scripts/operar_fontes_reais.py --canada --ccee
+          else
+            python scripts/operar_fontes_reais.py
+          fi
       - name: Registrar modo sem nuvem
         if: ${{ vars.NIVON_ZERO_COST_BQ_APPROVED != 'true' || vars.NIVON_GCP_PROVIDER == '' || vars.NIVON_GCP_SERVICE_ACCOUNT == '' || vars.NIVON_BQ_PROJECT == '' || vars.NIVON_BQ_DATASET == '' }}
         run: echo 'COLETA TEMPORARIA. BIGQUERY NAO CONFIGURADO; HISTORICO NAO PERSISTENTE.'
