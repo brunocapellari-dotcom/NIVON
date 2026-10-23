@@ -130,6 +130,16 @@ def _head(db,sha_base):
     return last,len(rows)
 
 
+def _instante_utc(value):
+    try:
+        dt=datetime.fromisoformat(value.replace("Z","+00:00"))
+        if dt.tzinfo is None or dt.utcoffset() is None:
+            raise ValueError("sem timezone")
+        return dt.astimezone(timezone.utc)
+    except (AttributeError,ValueError) as exc:
+        raise ErroRetificacaoConab("instante de corte sem fuso ou inválido") from exc
+
+
 def _pairs(db,sha):
     if db.execute("SELECT 1 FROM lab_referencia_conab WHERE sha=?",(sha,)).fetchone():
         return dict(db.execute("SELECT chave,observacao_json FROM lab_observacao_conab WHERE sha=?",(sha,)))
@@ -277,6 +287,18 @@ def aplicar_retificacoes_lab(catalogo,manifesto,banco,pasta_raw,pasta_backups):
             h,n=heads[entry["sha_base"]]
             if entry["sha_anterior"]!=h:
                 raise ErroRetificacaoConab("revisão sem predecessor linear exato")
+            if h==entry["sha_base"]:
+                parent_time=_instante_utc(base["captura_declarada"])
+            elif h in new_ids:
+                parent_time=_instante_utc(next(
+                    item[1] for item in items if item[0]["sha256"]==h))
+            else:
+                prev=db.execute("SELECT coletado_utc FROM lab_retificacoes_conab WHERE sha=?",(h,)).fetchone()
+                if not prev:
+                    raise ErroRetificacaoConab("predecessor não possui horário de captura")
+                parent_time=_instante_utc(prev[0])
+            if _instante_utc(ts)<=parent_time:
+                raise ErroRetificacaoConab("retificação capturada antes ou junto à versão predecessora")
             original=db.execute("SELECT 1 FROM lab_referencia_conab WHERE sha=?",
                                 (entry["sha_base"],)).fetchone()
             if original is None:
@@ -359,6 +381,73 @@ def aplicar_retificacoes_lab(catalogo,manifesto,banco,pasta_raw,pasta_backups):
             "direitos_homologados":False,
             "publicacao_permitida":False,"migracao_permitida":False,
         }
+
+
+def consultar_versao_asof_lab(db, catalogo: dict, *, id_base: str,
+                              corte_coleta: str) -> dict:
+    """Visão histórica por COLETA, nunca por publicação presumida.
+
+    Apenas laboratório: permite comparar as versões preservadas sem
+    olhar uma retificação capturada após o corte.
+    """
+    cat=validar_catalogo_vintages(catalogo)
+    target=next((x for x in cat["edicoes"] if x["id"]==id_base),None)
+    if target is None:
+        raise ErroRetificacaoConab("ID de edição base inexistente")
+    cutoff=_instante_utc(corte_coleta)
+    root=target["sha256"]
+    base=db.execute("SELECT 1 FROM lab_referencia_conab WHERE sha=? AND referencia_id=?",
+                    (root,id_base)).fetchone()
+    if base is None:
+        return {
+            "estado":"EDICAO_NAO_PERSISTIDA_ATÉ_O_CORTE",
+            "observacoes":0,
+            "sha_versao":None,
+            "asof":"DATA_DE_COLETA_NAO_COMPROVA_PUBLICACAO",
+            "publicacao_permitida":False,
+        }
+    _auditar_historico_local(db)
+    rev_table=db.execute("""SELECT 1 FROM sqlite_master
+                            WHERE type='table' AND name='lab_retificacoes_conab'""").fetchone()
+    revisions=[]
+    if rev_table:
+        _audit_revisions(db)
+        revisions=list(db.execute("""SELECT sha,coletado_utc,revisao FROM lab_retificacoes_conab
+                                   WHERE sha_base=? ORDER BY revisao""",(root,)))
+    first=_instante_utc(target["captura_declarada"])
+    if cutoff<first:
+        return {
+            "estado":"AINDA_SEM_EVIDENCIA_DE_COLETA",
+            "observacoes":0,"sha_versao":None,
+            "asof":"DATA_DE_COLETA_NAO_COMPROVA_PUBLICACAO",
+            "publicacao_permitida":False,
+        }
+    last=first
+    sha=root
+    step=0
+    for rev_sha,ts,n in revisions:
+        instante=_instante_utc(ts)
+        if instante<=last:
+            raise ErroRetificacaoConab("revisões temporalmente fora de ordem")
+        last=instante
+        if instante<=cutoff:
+            sha=rev_sha
+            step=n
+    pairs=_pairs(db,sha)
+    if not pairs:
+        raise ErroRetificacaoConab("edição vigente sem observações")
+    return {
+        "estado":"VERSAO_LAB_ASOF_POR_COLETA_SEM_HOMOLOGACAO",
+        "id_base":id_base,
+        "competencia":target["competencia"],
+        "revisao":step,
+        "sha_versao":sha,
+        "observacoes":len(pairs),
+        "sha_semantico":_sha_observacoes(pairs.items()),
+        "asof":"DATA_DE_COLETA_NAO_COMPROVA_PUBLICACAO",
+        "origem_conab_direta":False,"publicacao_permitida":False,
+        "migracao_permitida":False,
+    }
 
 
 def main(argv=None):
