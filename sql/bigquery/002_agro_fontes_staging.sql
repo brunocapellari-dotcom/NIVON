@@ -13,11 +13,14 @@ CREATE TABLE IF NOT EXISTS `${PROJECT_ID}.${DATASET_ID}.agro_fonte_stage`
   safra STRING,
   regiao STRING,
   competencia STRING,
+  data_referencia STRING,
   unidade STRING NOT NULL,
   valor STRING NOT NULL,
   data_publicacao_original STRING,
+  data_publicacao STRING,
   data_declaracao STRING,
   coletado_utc TIMESTAMP NOT NULL,
+  data_coleta TIMESTAMP NOT NULL,
   source_sha256 STRING NOT NULL,
   hash_natureza STRING NOT NULL,
   classe STRING NOT NULL,
@@ -33,3 +36,6 @@ OPTIONS(description='Landing NIVON quarentena. Nao fonte validada para publicaca
 -- Nenhuma soma entre vintages da mesma operacao SIO: dupla contagem.
 -- Datas de publicacao desconhecidas NULL e nao inferidas de coleta.
 -- IDs individuais HMAC do SIO nao saem do SQLite local.
+
+-- Contrato temporal: referencia/publicacao/coleta/competencia separados;
+-- data_publicacao NULL quando nao comprovada. Nunca preencher com data_coleta.
