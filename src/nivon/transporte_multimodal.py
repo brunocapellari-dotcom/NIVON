@@ -97,15 +97,15 @@ def _numero(valor: str) -> Decimal:
 def _competencia(valor: str, ano: int) -> str:
     """SIADE documenta MM_AA; aceitar tambem variacoes ISO se houver."""
     v = valor.strip()
-    m = re.fullmatch(r"(20\\d{2})[-/](0?[1-9]|1[0-2])", v)
+    m = re.fullmatch(r"(20\d{2})[-/](0?[1-9]|1[0-2])", v)
     if m:
         y, mes = int(m[1]), int(m[2])
     else:
-        m = re.fullmatch(r"(20\\d{2})(0[1-9]|1[0-2])", v)
+        m = re.fullmatch(r"(20\d{2})(0[1-9]|1[0-2])", v)
         if m:
             y, mes = int(m[1]), int(m[2])
         else:
-            m = re.fullmatch(r"(0?[1-9]|1[0-2])[-/_](20\\d{2}|\\d{2})", v)
+            m = re.fullmatch(r"(0?[1-9]|1[0-2])[-/_](20\d{2}|\d{2})", v)
             if not m:
                 raise ErroTransporte("Mes_Ano nao reconhecido; validar arquivo real")
             mes, y = int(m[1]), int(m[2])
