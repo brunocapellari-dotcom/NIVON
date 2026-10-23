@@ -58,7 +58,7 @@ def sincronizar_indice_conab(db:sqlite3.Connection, *, executar:bool=False,
         url=item['pagina_oficial']
         paginas[url]=consulta_semana(url,executar=True,direitos_consulta=True,abridor=abridor)
     resultado=atualizar_fila(db,indice=indice,paginas=paginas)
-    return {**resultado,'arquivos_pendentes':len(proximos_arquivos(db,limite=100)),
+    return {**resultado,'arquivos_pendentes':db.execute("SELECT count(*) FROM conab_documentos_candidatos WHERE fase='PENDENTE_VALIDACAO'").fetchone()[0],
             'coleta_de_planilhas':False,'registro_de_publicacao_confirmado':False,
             'modo':'METADADOS_APENAS'}
 
