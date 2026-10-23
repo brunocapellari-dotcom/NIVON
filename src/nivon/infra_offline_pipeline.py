@@ -191,7 +191,10 @@ def _process(root: Path, *, interrupt: bool) -> dict:
             raw = _read(ins / (key + ".json"))
             if _digest(raw) != row["input_sha256"] or raw != _input(key):
                 raise PipelineBlocked("entrada alterada")
-            lease = reservar(db, chave=key, vencimento=DUE, agora=AT_RECOVER,
+            # Em reexecução, o instante nunca retrocede após a reconciliação.
+            now = _iso(max(_instante(AT_RECOVER),
+                           _instante(row["updated_utc"]) + timedelta(seconds=1)))
+            lease = reservar(db, chave=key, vencimento=DUE, agora=now,
                              lease_segundos=120)
             if not lease["reservado"]:
                 raise PipelineBlocked("reserva não obtida")
@@ -201,7 +204,7 @@ def _process(root: Path, *, interrupt: bool) -> dict:
             if not _write_once(outs / (key + ".json"), result):
                 raise PipelineBlocked("saída imutável divergiu")
             done = finalizar(db, chave=key, vencimento=DUE,
-                             token=lease["token"], agora=AT_RECOVER,
+                             token=lease["token"], agora=now,
                              sucesso=True, output_sha256=_digest(result))
             if done["estado"] != "SUCCEEDED":
                 raise PipelineBlocked("finalização do ledger falhou")
