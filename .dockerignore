@@ -12,6 +12,7 @@
 !infra/docker/Dockerfile.worker-trim
 !infra/docker/Dockerfile.worker-alpine
 !infra/docker/Dockerfile.analytics-experiment
+!infra/docker/Dockerfile.analytics-distroless
 
 # Nunca incluir segredos ou bancos mesmo se estiverem dentro de paths permitidos.
 **/.env*
