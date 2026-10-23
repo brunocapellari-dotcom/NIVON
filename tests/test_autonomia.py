@@ -15,6 +15,9 @@ class TestAutonomia(unittest.TestCase):
         task = {"id": "sample", "title": "Teste", "scope": '["src/x.py"]'}
         claude = autonomia.cli("claude", task)
         self.assertIn("--restricted", claude)
+        self.assertIn("--safe-mode", claude)
+        self.assertNotIn("--bare", claude)
+        self.assertIn("--no-session-persistence", claude)
         self.assertIn("--tools", claude)
         self.assertIn("--permission-prompts", claude)
         self.assertNotIn("Bash", claude)
@@ -166,6 +169,16 @@ class TestAutonomia(unittest.TestCase):
                         with autonomia.supervisor_lock():
                             pass
                 self.assertFalse((Path(tmp) / "supervisor.pid").exists())
+
+    def test_preflight_rejects_billed_or_missing_subscription(self):
+        from unittest.mock import MagicMock
+        with patch.object(autonomia.shutil, "which", return_value="/usr/bin/tool"), \
+             patch.object(autonomia, "check_tools",
+                          return_value={"ready_for_pilot": False}), \
+             patch.object(autonomia, "command") as cmd:
+            with self.assertRaisesRegex(RuntimeError, "Doctor rejeitou"):
+                autonomia.preflight()
+            cmd.assert_not_called()
 
     def test_run_limits_and_no_llm_on_preflight(self):
         with patch.object(autonomia, "preflight", side_effect=RuntimeError("sem CLI")):
