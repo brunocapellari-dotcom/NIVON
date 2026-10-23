@@ -3,7 +3,9 @@ on:
   push:
     paths:
       - 'scripts/ptax_neon_private_export.py'
+      - 'scripts/ptax_bigquery_incremental.py'
       - 'tests/test_ptax_neon_private_export.py'
+      - 'tests/test_ptax_bigquery_incremental.py'
       - '.github/workflows/ptax-neon-private-export.yml'
   workflow_dispatch:
 permissions:
@@ -25,6 +27,8 @@ jobs:
           python-version: '3.11'
       - name: Contratos de fonte privada e exportacao em lote
         run: python -m unittest discover -s tests -p 'test_ptax_neon_private_export.py' -v
+      - name: Testar contrato BigQuery sem gastar ou acessar GCP
+        run: python -m unittest discover -s tests -p 'test_ptax_bigquery_incremental.py' -v
       - name: Exportacao real somente leitura Neon para JSONL temporario
         env:
           NIVON_PTAX_PRIVATE_ENDPOINT: https://br-twilight-cell-b77ukd6x-ptaxbridge.compute.c-13.us-east-1.aws.neon.tech
@@ -38,6 +42,8 @@ jobs:
             --endpoint "$NIVON_PTAX_PRIVATE_ENDPOINT" \
             --source-jsonl "$src" \
             --target-jsonl "$dst"
+          # A etapa BigQuery so planeja e valida o lote neste workflow.
+          python -m scripts.ptax_bigquery_incremental --arquivo "$dst"
           python - <<'PY'
           from pathlib import Path
           import json,os
