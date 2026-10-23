@@ -266,11 +266,17 @@ def montar_painel(pacote: dict, *, as_of: str) -> dict:
         raise ErroMotor("lista de series invalida")
     if len({p.get("porto_id") for p in portos if isinstance(p, dict)}) != len(portos):
         raise ErroMotor("porto duplicado no pacote")
+    from .maritimo_painel_avancado import avaliar_porto_avancado
+
+    def avaliar_porto(p):
+        base = pressao_portuaria(p, as_of=as_of)
+        return {**base, "avancado": avaliar_porto_avancado(p, as_of=as_of, pressao=base)}
+
     return {
         "status": "ANALISE_SHADOW_NAO_HOMOLOGADA",
         "as_of": momento.isoformat(),
         "logistica": resumo_logistico(pacote.get("corredores")),
-        "maritimo": [pressao_portuaria(p, as_of=as_of) for p in portos],
+        "maritimo": [avaliar_porto(p) for p in portos],
         "quantitativo": [
             tendencia_precos(s.get("observacoes", []), classe=s["classe"],
                             serie_id=s["serie_id"], as_of=as_of)
