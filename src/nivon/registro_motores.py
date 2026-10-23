@@ -39,7 +39,7 @@ MODULOS=frozenset({
     "ensemble_hidrologico_bacia",
     "entrega_whatsapp",
     "dinamica_tendencias",
-    "fretes_dinamica_r01", "fretes_cobertura_horizontes", "fretes_previsoes_arquivadas", "fretes_ledger_persistente", "fretes_entrada_jsonl", "fretes_ofertas_store", "fretes_ingestao_atestada", "fretes_baseline_shadow",
+    "fretes_dinamica_r01", "fretes_cobertura_horizontes", "fretes_previsoes_arquivadas", "fretes_ledger_persistente", "fretes_entrada_jsonl", "fretes_ofertas_store", "fretes_ingestao_atestada", "fretes_baseline_shadow", "fretes_ciclo_shadow", "fretes_recibos_ancora", "fretes_recibos_gcs",
     "eventos_editoriais",
     "fertilizantes",
     "grade_meteorologica_store",
