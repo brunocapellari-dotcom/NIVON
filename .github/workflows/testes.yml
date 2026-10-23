@@ -110,7 +110,7 @@ jobs:
         run: docker build -f docker/Dockerfile.maritime-pdf-offline -t nivon-maritime-pdf-offline:local .
       - name: Gerar tres edicoes PDF sinteticas com SHA e manifesto
         env:
-          PYTHONPATH: src:tests
+          PYTHONPATH: .:src:tests
         run: |
           set -euo pipefail
           echo "MARITIME_E2E_ROOT=${RUNNER_TEMP}/nivon_pdf_smoke" >> "${GITHUB_ENV}"
@@ -138,7 +138,7 @@ jobs:
             input_manifest.json audit_replay.json 2026-10-20T18:00:00+00:00 --commit
       - name: Afirmar arquivos, relatorio, SQLite, diferencas e bloqueio de release
         env:
-          PYTHONPATH: src:tests
+          PYTHONPATH: .:src:tests
         run: |
           python tests/maritime_container_smoke.py verify "${MARITIME_E2E_ROOT}/outputs"
 
