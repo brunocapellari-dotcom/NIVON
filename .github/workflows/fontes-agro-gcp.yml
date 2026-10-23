@@ -36,6 +36,7 @@ jobs:
     env:
       NIVON_AGRO_FONTE_AUTORIZADA: 'true'
       NIVON_CEPEA_HOMOLOGACAO_APROVADA: ${{ vars.NIVON_CEPEA_HOMOLOGACAO_APROVADA }}
+      NIVON_AGRO_STAGING_BIGQUERY_APPROVED: ${{ vars.NIVON_AGRO_STAGING_BIGQUERY_APPROVED }}
       NIVON_CEPEA_FONTE_AUTORIZADA: ${{ vars.NIVON_CEPEA_FONTE_AUTORIZADA }}
       NIVON_IMEA_FONTE_AUTORIZADA: ${{ vars.NIVON_IMEA_FONTE_AUTORIZADA }}
       NIVON_CONAB_FONTE_AUTORIZADA: ${{ vars.NIVON_CONAB_FONTE_AUTORIZADA }}
@@ -94,5 +95,20 @@ jobs:
           if [[ "$NIVON_PROMOVER" == "true" ]]; then
             python -m nivon.preflight_gcp_fontes --projeto "$NIVON_BQ_PROJECT" --dataset "$NIVON_BQ_DATASET" --bucket "$NIVON_GCS_BUCKET"
             args+=(--homologar-cepea --bigquery)
+          elif [[ "$NIVON_FONTE" == "IMEA" || "$NIVON_FONTE" == "CONAB" ]]; then
+            if [[ "$NIVON_AGRO_STAGING_BIGQUERY_APPROVED" == "true" ]]; then
+              python - <<'PY'
+          import os
+          from google.cloud import bigquery
+          projeto=os.environ["NIVON_BQ_PROJECT"]
+          dataset=os.environ["NIVON_BQ_DATASET"]
+          tabela=bigquery.Client(project=projeto).get_table(
+              f"{projeto}.{dataset}.agro_publicacoes_staging")
+          if not tabela.time_partitioning or tabela.time_partitioning.field!="data_coleta":
+              raise SystemExit("AGRO_STAGING_SCHEMA_INVALIDO")
+          print("AGRO_STAGING_EXISTENTE_VALIDADO")
+          PY
+              args+=(--staging-bigquery)
+            fi
           fi
           python scripts/coletar_agro_google_cloud.py "${args[@]}"
