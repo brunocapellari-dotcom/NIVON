@@ -14,7 +14,8 @@ from nivon.proveniencia_rss_editorial import (
 )
 from nivon.registry_emissores import revogar_emissor
 from suporte_provas_outbox import provas_sinteticas, provisionar_teste, assinatura_administrativa, RAIZ_SINTETICA
-from test_editorial_pipeline_integrado import gerar, feed, XML
+from test_editorial_pipeline_integrado import gerar, feed, XML, AGORA
+from nivon.pipeline_briefing import gerar_edicao_offline
 
 URL="https://portal.example.org/noticias/plantio"
 HTML=("""<!DOCTYPE html><html><head><title>Plantio</title>
@@ -163,6 +164,47 @@ class TestProvenienciaRSSE2E(unittest.TestCase):
     def test_evento_sem_decisao_editorial_falha(self):
         del self.events[URL]
         with self.assertRaises(ErroProveniencia):self.conciliar()
+
+    def test_pipeline_oficial_liga_coleta_provas_preflight_e_ledger(self):
+        with sqlite3.connect(":memory:") as db:
+            provisionar_teste(db,self.keys)
+            edicao=gerar_edicao_offline(
+                gerado_em=AGORA,feeds=[feed()],
+                snapshots_xml={"PORTAL_EXEMPLO":XML},db=db,
+                paginas_artigos=self.pages,
+                atestados_publicacao=self.att,
+                eventos_editoriais=self.events,
+                chaves_emissores=self.keys,
+                registrar_proveniencia=True)
+            self.assertFalse(edicao["preflight_editorial"]["apto_revisao"])
+            self.assertFalse(edicao["evidencias_editoriais"]["noticias"][0][
+                "publicacao_original_verificada"])
+            self.assertTrue(edicao["evidencias_origem_verificadas"]["noticias"][0][
+                "publicacao_original_verificada"])
+            self.assertFalse(any("data original" in x
+                for x in edicao["preflight_com_origem"]["bloqueios"]))
+            self.assertFalse(edicao["preflight_com_origem"]["apto_revisao"])
+            self.assertFalse(edicao["enviado"])
+            self.assertEqual(db.execute(
+                "SELECT count(*) FROM nivon_proveniencia_editorial"
+            ).fetchone()[0],1)
+
+    def test_pipeline_nao_promove_rss_sem_comprovantes(self):
+        with sqlite3.connect(":memory:") as db:
+            result=gerar_edicao_offline(
+                gerado_em=AGORA,feeds=[feed()],
+                snapshots_xml={"PORTAL_EXEMPLO":XML},db=db)
+            self.assertIsNone(result["evidencias_origem_verificadas"])
+            self.assertIsNone(result["preflight_com_origem"])
+            self.assertFalse(result["preflight_editorial"]["apto_revisao"])
+
+    def test_pipeline_inputs_externos_incompletos_falham_fechados(self):
+        with sqlite3.connect(":memory:") as db:
+            with self.assertRaisesRegex(ValueError,"origem exige"):
+                gerar_edicao_offline(
+                    gerado_em=AGORA,feeds=[feed()],
+                    snapshots_xml={"PORTAL_EXEMPLO":XML},db=db,
+                    paginas_artigos=self.pages)
 
     def test_ledger_hash_only_registra_idempotente_e_preflight_coletado(self):
         primeiro=revisar_edicao_com_custodia_offline(
