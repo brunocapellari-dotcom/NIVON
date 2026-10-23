@@ -1,4 +1,4 @@
-name: NIVON - Backfill ANTT Historico 2022 a 2025
+name: NIVON - Backfill ANTT Historico Controlado
 on:
   pull_request:
     paths:
@@ -58,9 +58,11 @@ jobs:
     needs: validar-contratos
     if: >-
       github.ref == 'refs/heads/main' &&
-      (github.event_name == 'push' ||
-      (github.event_name == 'workflow_dispatch' &&
-      inputs.confirmar_lote_unico == true))
+      github.event_name == 'workflow_dispatch' &&
+      inputs.confirmar_lote_unico == true &&
+      vars.NIVON_ZERO_COST_BQ_APPROVED == 'true' &&
+      vars.NIVON_RAW_ARCHIVE_APPROVED == 'true' &&
+      vars.NIVON_ANTT_FERROVIA_WRITE_APPROVED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 22
     permissions:
@@ -71,8 +73,8 @@ jobs:
       NIVON_PROJETO: ${{ vars.NIVON_BQ_PROJECT }}
       NIVON_DATASET: ${{ vars.NIVON_BQ_DATASET }}
       NIVON_BUCKET: ${{ vars.NIVON_GCS_BUCKET }}
-      NIVON_INICIO: ${{ github.event_name == 'push' && '2022' || inputs.inicio }}
-      NIVON_FIM: ${{ github.event_name == 'push' && '2025' || inputs.fim }}
+      NIVON_INICIO: ${{ inputs.inicio }}
+      NIVON_FIM: ${{ inputs.fim }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
