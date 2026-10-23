@@ -126,7 +126,8 @@ def radar_erratas_pam(*, catalogo:dict, municipio_ibge:str,
             continue
         if ano not in e["years"] or variavel not in e["known_variable_codes"]:
             continue
-        # No replay as-of, metadados de aviso futuro nao eram conhecidos.
+        # Consultas as-of nao podem revelar a existencia, identidade ou URL
+        # de uma errata que so seria publicada DEPOIS do corte.
         if _dia(e["notice_date"],"notice_date") > corte:
             continue
         relev.append({

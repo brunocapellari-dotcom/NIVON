@@ -50,10 +50,17 @@ class TestIVORadarErratasPAM(unittest.TestCase):
         self.assertNotIn("2026-09-17", str(r))
 
     def test_aviso_surge_exatamente_na_data_oficial_do_catalogo(self):
-        self.assertEqual(avaliar(corte=date(2026,9,16))["erratas"], [])
+        antes=avaliar(corte=date(2026,9,16))
         dia=avaliar(corte=date(2026,9,17))
+        self.assertEqual(antes["erratas"], [])
         self.assertEqual(len(dia["erratas"]), 1)
         self.assertTrue(dia["erratas"][0]["aviso_ja_publicado_no_corte"])
+
+    def test_replay_asof_muito_antigo_nao_expoe_aviso_futuro(self):
+        r=avaliar(corte=date(2021,12,31))
+        self.assertEqual(r["erratas"], [])
+        self.assertFalse(r["publicacao_na_fonte_reconhecida"])
+        self.assertFalse(r["reconstrucao_valor_anterior_possivel"])
 
     def test_indicador_de_area_nao_e_producao_em_toneladas(self):
         with self.assertRaises(ErroRadarErrataPAM):
