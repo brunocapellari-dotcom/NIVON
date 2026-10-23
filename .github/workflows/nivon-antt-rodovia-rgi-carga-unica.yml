@@ -6,10 +6,6 @@ on:
       - '.github/workflows/nivon-antt-rodovia-rgi-carga-unica.yml'
       - 'src/nivon/antt_rodovia_rgi_gcp.py'
       - 'tests/test_antt_rodovia_rgi_gcp.py'
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/nivon-antt-rodovia-rgi-carga-unica.yml'
   workflow_dispatch:
     inputs:
       confirmar_carga_unica:
@@ -48,8 +44,7 @@ jobs:
     needs: validar-contratos
     if: >-
       github.ref == 'refs/heads/main' &&
-      (github.event_name == 'push' ||
-       (github.event_name == 'workflow_dispatch' && inputs.confirmar_carga_unica == true))
+      github.event_name == 'workflow_dispatch' && inputs.confirmar_carga_unica == true
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
