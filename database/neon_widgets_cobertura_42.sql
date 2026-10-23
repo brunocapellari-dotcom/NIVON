@@ -5,6 +5,8 @@ CREATE OR REPLACE VIEW public.nivon_widgets_imea_publicacoes_v AS
 SELECT CASE
         WHEN s.chain='soja' AND s.indicator_id='708192508838936580' THEN 199
         WHEN s.chain='milho' AND s.indicator_id='708192508838936581' THEN 198
+        WHEN s.chain='algodao' AND s.indicator_id='708192508935405570' THEN 131
+        WHEN s.chain='bovinocultura' AND s.indicator_id='708192508809576456' THEN 122
        END::integer AS id_widget,
        'IMEA'::text AS fonte_original,
        s.chain::text AS produto,
@@ -28,13 +30,14 @@ WHERE s.source_name='IMEA'
   AND s.quality_status='PUBLISHED_DATE_ONLY'
   AND s.reference_date IS NULL
   AND s.indicator_kind='PRECO'
-  AND s.unit='R$/sc'
   AND s.price > 0
   AND s.published_at IS NOT NULL
   AND s.source_url LIKE 'https://api1.imea.com.br/api/v2/mobile/cadeias/%/cotacoes'
   AND (
-    (s.chain='soja' AND s.indicator_id='708192508838936580' AND s.indicator_name='Preço soja disponível compra')
-    OR (s.chain='milho' AND s.indicator_id='708192508838936581' AND s.indicator_name='Preço milho disponível compra')
+    (s.chain='soja' AND s.indicator_id='708192508838936580' AND s.indicator_name='Preço soja disponível compra' AND s.unit='R$/sc')
+    OR (s.chain='milho' AND s.indicator_id='708192508838936581' AND s.indicator_name='Preço milho disponível compra' AND s.unit='R$/sc')
+    OR (s.chain='algodao' AND s.indicator_id='708192508935405570' AND s.indicator_name='Preço de pluma disponível' AND s.unit='R$/@')
+    OR (s.chain='bovinocultura' AND s.indicator_id='708192508809576456' AND s.indicator_name='Preço do boi gordo à vista' AND s.unit='R$/@')
   );
 
 CREATE OR REPLACE VIEW public.nivon_widgets_cobertura_v AS
