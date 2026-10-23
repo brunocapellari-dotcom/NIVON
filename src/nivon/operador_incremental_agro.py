@@ -71,6 +71,9 @@ def executar_fontes_incrementais(
     ):
         if item is not None and (not isinstance(item, dict) or set(item) != keys):
             raise ErroLoteAgro(f"{fonte}: configuração incompleta")
+    if (conab is not None and argentina is not None
+            and Path(conab["banco"]).resolve() == Path(argentina["banco"]).resolve()):
+        raise ErroLoteAgro("CONAB e Argentina precisam de bases SQLite independentes")
     for source, config in (("CONAB_LAB", conab), ("ARG_SAGYP", argentina)):
         if config is None:
             continue
