@@ -139,7 +139,7 @@ def gravar_lote(*, banco, diretorio_bruto, dataset_id, origem, raw, tipo,
         raise ErroIngestao("colisao ou raw corrompido")
     inseridos = 0
     with _abrir(banco) as db:
-        db.execute("""INSERT OR IGNORE INTO snapshots
+        snapshot_novo=db.execute("""INSERT OR IGNORE INTO snapshots
             (snapshot_id,dataset_id,url_publica,sha256,coletado_em,content_type,tamanho,arquivo,estado)
             VALUES(?,?,?,?,?,?,?,?,?)""",
             (snapshot,dataset_id,origem,sha,coletado_em,tipo,len(raw),str(target),estado))
@@ -173,7 +173,7 @@ def gravar_lote(*, banco, diretorio_bruto, dataset_id, origem, raw, tipo,
             "novas_observacoes":inseridos, "total_observacoes_no_lote":len(registros),
             "estado":estado,"coletado_em":coletado_em,"arquivo_raw":str(target),
             "captura_nova":bool(captura_nova),
-            "snapshot_ja_existente":not bool(captura_nova) or inseridos==0}
+            "snapshot_ja_existente":not bool(snapshot_novo)}
 
 
 def exportar_jsonl(*, banco, destino, dataset_id=None, competencia=None,
