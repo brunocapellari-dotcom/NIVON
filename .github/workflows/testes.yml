@@ -46,6 +46,26 @@ jobs:
           python -m nivon.auditoria_prontidao --resumo
           python -m nivon.orquestrador_fontes --prioridade P0 --resumo
           python -m nivon.auditoria_coletores --resumo
+      - name: Executar integracao ponta a ponta com evidencias sinteticas e adversariais
+        env:
+          PYTHONPATH: src
+        run: |
+          mkdir -p evidencias
+          python -m nivon.pipeline_evidencias_e2e \
+            --pyproject pyproject.toml \
+            --output evidencias/ci-e2e \
+            --source-sha "$GITHUB_SHA" \
+            --run-id "$GITHUB_RUN_ID"
+          python -m zipfile -t evidencias/ci-e2e/proveniencia_sintetica.zip
+          cd evidencias/ci-e2e
+          sha256sum -c sha256sums.txt
+      - name: Preservar evidencias integradas sinteticas da CI por tres dias
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nivon-integracao-e2e-sintetica
+          path: evidencias/ci-e2e/
+          retention-days: 3
+          if-no-files-found: error
       - name: Demonstracao deterministica
         env:
           PYTHONPATH: src
