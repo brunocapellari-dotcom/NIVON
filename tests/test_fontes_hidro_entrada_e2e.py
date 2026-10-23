@@ -97,7 +97,12 @@ class TestIntegracaoOrigensINMETANAE2E(unittest.TestCase):
         self.assertEqual(result["arquivos_processados"],2)
         self.assertEqual(result["auditoria"]["medidas_auditadas"],51)
         self.assertEqual(result["auditoria"]["origens_zip_registradas"],1)
-        self.assertFalse(result["auditoria"]["integridade_zip_pai_verificavel_pelo_acervo"])
+        self.assertTrue(result["auditoria"]["integridade_zip_pai_verificavel_pelo_acervo"])
+        self.assertEqual(result["auditoria"]["arquivos_zip_integrais_conferidos"],1)
+        self.assertEqual(
+            hashlib.sha256((self.raw/"origens"/(
+                station["container_origem"]["parent_sha256"]+".zip")).read_bytes()).hexdigest(),
+            station["container_origem"]["parent_sha256"])
         self.assertEqual(self.db.execute(
             "SELECT COUNT(*) FROM medidas_containers_origem").fetchone()[0],1)
         self.assertEqual(len(list(self.raw.glob("*.raw"))),2)
@@ -201,6 +206,57 @@ class TestIntegracaoOrigensINMETANAE2E(unittest.TestCase):
                 observado_nivon_em=T1)
         self.assertEqual(self.db.execute(
             "SELECT COUNT(*) FROM medidas_edicoes").fetchone()[0],0)
+
+    def test_corrupcao_do_zip_pai_e_detectada_mesmo_com_csv_raw_intacto(self):
+        package=self.zip_edition()
+        importar_ciclo_medicoes(self.db,raw_dir=self.raw,edicoes=[package])
+        parent=self.raw/"origens"/(package["container_origem"]["parent_sha256"]+".zip")
+        parent.write_bytes(b"FALSO_QUE_NAO_E_ZIP")
+        with self.assertRaises(ErroPipelineAmbiental):
+            auditar_acervo_medicoes(self.db,raw_dir=self.raw)
+        self.assertTrue((self.raw/(package["sha256"]+".raw")).exists())
+
+    def test_rollback_da_origem_zip_preserva_acervo_sem_residuos(self):
+        station=self.zip_edition()
+        wrong=dict(station)
+        wrong["visto_nivon_utc"]="2026-10-20T12:00:00+00:00"
+        wrong["raw"]=station["raw"]+b"adulterado"
+        # Falha detectada antes da cópia, não deixa arquivo original no acervo.
+        with self.assertRaises(ErroPipelineAmbiental):
+            importar_ciclo_medicoes(self.db,raw_dir=self.raw,edicoes=[station,wrong])
+        self.assertFalse(self.raw.exists())
+        self.assertEqual(self.db.execute(
+            "SELECT COUNT(*) FROM medidas_edicoes").fetchone()[0],0)
+
+    def test_backup_guarda_zip_original_e_rejeita_adulteracao(self):
+        station=self.zip_edition()
+        importar_ciclo_medicoes(self.db,raw_dir=self.raw,edicoes=[station])
+        folder=self.root/"backup_origem"
+        exportar_backup_medicoes(self.db,raw_dir=self.raw,destino=folder)
+        zips=list((folder/"raw"/"origens").glob("*.zip"))
+        self.assertEqual(len(zips),1)
+        self.assertEqual(validar_backup_medicoes(caminho=folder)["edicoes"],1)
+        zips[0].write_bytes(b"ZIP_ADULTERADO")
+        with self.assertRaises(ErroPipelineAmbiental):
+            validar_backup_medicoes(caminho=folder)
+
+    def test_replay_mesma_captura_registra_novo_zip_sem_duplicar_medicao(self):
+        original=self.zip_edition()
+        importar_ciclo_medicoes(self.db,raw_dir=self.raw,edicoes=[original])
+        with zipfile.ZipFile(self.zip,"a",compression=zipfile.ZIP_DEFLATED) as z:
+            z.writestr("complemento.txt","novo container mesma medicao")
+        later=preparar_inmet_zip_local(
+            caminho_zip=self.zip,ano=2025,membro_csv="A904_2025.csv",
+            estacao_id="A904",coletado_em=T1,
+            classe="SINTETICO",observado_nivon_em=T1)
+        replay=importar_ciclo_medicoes(self.db,raw_dir=self.raw,edicoes=[later])
+        self.assertEqual(replay["edicoes"][0]["estado"],"REPLAY_SEM_MUDANCA")
+        self.assertEqual(self.db.execute(
+            "SELECT COUNT(*) FROM medidas_containers_origem").fetchone()[0],2)
+        self.assertEqual(self.db.execute(
+            "SELECT COUNT(*) FROM medidas_capturas").fetchone()[0],1)
+        self.assertEqual(auditar_acervo_medicoes(
+            self.db,raw_dir=self.raw)["arquivos_zip_integrais_conferidos"],2)
 
     def test_ana_real_esta_desabilitada_mesmo_com_token_aparentemente_valido(self):
         with self.assertRaises(PermissionError):
