@@ -194,6 +194,8 @@ def main() -> int:
     parser.add_argument("--projeto", required=True)
     parser.add_argument("--dataset", required=True)
     parser.add_argument("--live", action="store_true")
+    parser.add_argument("--permitir-criar-tabela", action="store_true",
+                        help="autorizar bootstrap em dataset preexistente")
     a = parser.parse_args()
     try:
         resumo = gravar_bigquery(a.staging, a.anos, DestinoBQ(a.projeto, a.dataset),
