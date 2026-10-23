@@ -32,7 +32,18 @@ MODULOS=frozenset({
     "grade_meteorologica_store","chirps_v3_conservacao",
     "meteorologia_probabilistica","hidrograma_bacia","calibracao_cn_bacias",
     "ensemble_hidrologico_bacia",
-    "chuva_areal_ensemble",
+    "chuva_areal_ensemble","verificacao_vazao_asof",
+    "verificacao_chuva_ensemble_asof",
+    "pacotes_chuva_asof",
+    "adaptador_inmet_chuva",
+    "mjo_rmm", "contexto_mjo_asof",
+    "noaa_roni", "inspecao_roni_offline", "roni_store", "roni_cli",
+    "roni_captura_manual", "roni_ciclo",
+    "pipeline_medicoes_horarias", "pipeline_medicoes_cli",
+    "fontes_hidro_entrada",
+    "qualidade_cientifica", "historico_vintages",
+    "confronto_climatico_qc", "confronto_janelas_fisicas",
+    "analogos_historicos",
 })
 
 

@@ -1,0 +1,80 @@
+{
+  "project": "NIVON",
+  "schema_version": "1.0",
+  "data_referencia": "2026-10-21",
+  "parent_consolidation_pr": 68,
+  "upstream_pr": 9,
+  "status": "INTEGRACAO_CIENTIFICA_HISTORICA_SYNTHETIC_ONLY",
+  "upstream_git_blobs": [
+    {
+      "path": "src/nivon/noaa_roni.py",
+      "sha": "c93fbc1d93dc34663872e14d4cfa5fff5a915c16",
+      "modified_after_transplant": false
+    },
+    {
+      "path": "tests/test_noaa_roni.py",
+      "sha": "69be1950b964666985634ebd36c630cde50bf409",
+      "modified_after_transplant": false
+    },
+    {
+      "path": "src/nivon/historico_vintages.py",
+      "sha": "916fe1689c33cc59fa48acd1c21bc6c6e3a1b4ee",
+      "modified_after_transplant": true
+    },
+    {
+      "path": "tests/test_historico_vintages.py",
+      "sha": "4ead55bde6e04064e37c81d39b1f0a740c1b29e9",
+      "modified_after_transplant": true
+    },
+    {
+      "path": "src/nivon/qualidade_cientifica.py",
+      "sha": "085b488f44cfe9c99727632f484b5039b450111b",
+      "modified_after_transplant": false
+    },
+    {
+      "path": "tests/test_qualidade_cientifica.py",
+      "sha": "d0d4e6fe7066ad3353e5e9f7e613f19f9216bfb2",
+      "modified_after_transplant": false
+    },
+    {
+      "path": "src/nivon/confronto_climatico_qc.py",
+      "sha": "ee3bcfb0d2dcfee4ec3b2c27025254da2dfc2b99",
+      "modified_after_transplant": false
+    },
+    {
+      "path": "tests/test_confronto_climatico_qc.py",
+      "sha": "370709773584ac87631257f9e3300433a36d2752",
+      "modified_after_transplant": false
+    },
+    {
+      "path": "src/nivon/analogos_historicos.py",
+      "sha": "f50786614ca6c64357d48fc34b0ed9638e25de06",
+      "modified_after_transplant": false
+    },
+    {
+      "path": "tests/test_analogos_historicos.py",
+      "sha": "22ce1f677f4ad954545c381ed14d5d9cd1798fc5",
+      "modified_after_transplant": false
+    }
+  ],
+  "intentional_modifications": [
+    {
+      "file": "src/nivon/historico_vintages.py",
+      "reason": "Bloqueio de arquivo coletado depois do instante da decisão; os metadados declarados da fonte são insuficientes por si só."
+    },
+    {
+      "file": "tests/test_historico_vintages.py",
+      "reason": "Fixtures corrigidas para refletir aquisição real na época; regressões para coleta tardia e imutabilidade do primeiro arquivo."
+    }
+  ],
+  "not_integrated_from_pr9": "Todos os demais módulos de agricultura, logística, Hermes, FinOps, mensagens e relatórios da PR9 permanecem fora.",
+  "missing_rights_and_real_samples": true,
+  "collectors_operational": false,
+  "source_validated": false,
+  "forecast_skill_approved": false,
+  "evidence_caveat": "Hash declaratório de disponibilidade não prova que os bytes existiam no passado.",
+  "candidate_registered_offline": "NOAA_ENSO_RONI",
+  "candidate_metadata_checked_online": "2026-10-21",
+  "candidate_operational_authorization": false,
+  "candidate_real_vintage_validated": false
+}
