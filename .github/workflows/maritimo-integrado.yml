@@ -4,8 +4,10 @@ on:
     paths:
       - 'src/nivon/lineup_portos.py'
       - 'src/nivon/maritimo_pipeline.py'
+      - 'src/nivon/portwatch_fluxos.py'
       - 'tests/test_lineup_portos.py'
       - 'tests/test_maritimo_integrado.py'
+      - 'tests/test_portwatch_fluxos.py'
       - '.github/workflows/maritimo-integrado.yml'
   workflow_dispatch:
     inputs:
