@@ -72,3 +72,19 @@ python scripts/operar_fontes_reais.py --canada
 - Política R$0: workload de BigQuery só pode autenticar se `NIVON_ZERO_COST_BQ_APPROVED=true` e existir provider OIDC/service account/projeto/dataset. Sem esses gates a ação registra explicitamente histórico efêmero e não publica na nuvem.
 - Nenhuma credencial, série privada, preço proprietário ou dump bruto é publicado no GitHub.
 - Nunca afirmar que o fato de haver workflow agendado em branch torna o serviço ativo.
+
+
+## Resultado verificável do ensaio HTTP de 23/10/2026 UTC
+- CCEE 2026, recurso oficial `pld_horario_2026`, CSV recuperado de `pda-download.ccee.org.br` após consulta CKAN: **28.416 linhas normalizadas** em R$/MWh com submercado/período/hora. Snapshot RAW e séries gravados em SQLite efêmero GitHub Actions. Identificador anual agora descoberto automaticamente no catálogo oficial.
+- Canadian Grain Commission `2026-27`: **11.786 observações normalizadas** de soja, milho, trigo e canola com cultura/semana/descrição da métrica/região, Ktonnes convertidos em toneladas. Atenção: não somar métricas heterogêneas nem tratar movimentações acumuladas e semanais como iguais.
+- API secundária granos.ar /pizarra: **10 observações reais** e status HTTP saudável. Fonte não primária.
+- BCRA /Monetarias/1: **4 observações** na janela do ensaio. A série argentina genérica de câmbio retornou 0 e não entrou no conjunto normalizado.
+- Total observado dos testes: **40.216 observações** processadas. Não implica 40.216 linhas no banco NIVON de produção; armazenamento dos ensaios foi temporário.
+- Todos os processos acima permanecem separados do BigQuery, cujo dataset, IAM e política de custo devem ser comprovados antes da habilitação.
+
+## Orquestração recorrente preparada
+- `scripts/operar_fontes_reais.py` coleta BCRA/granos.ar por execução e aceita `--canada --ccee` para conjuntos semanais.
+- `.github/workflows/coleta-recorrente-fontes.yml`: segunda-feira inclui CCEE/Canadá, demais dias úteis BCRA/granos.ar; só roda automaticamente se a branch principal tiver workflow homologado **e** variables NIVON_ZERO_COST_BQ_APPROVED, NIVON_GCP_PROVIDER, NIVON_GCP_SERVICE_ACCOUNT, NIVON_BQ_PROJECT e NIVON_BQ_DATASET configuradas; execução manual é permitida.
+- `src/nivon/carga_bigquery_fontes.py`: JSONL -> BigQuery por carga temporária seguida de MERGE, exigindo tabela existente, ADC e limites de bytes; **não executado contra Cloud real**.
+- Snapshot RAW precisa de persistência durável adicional na infraestrutura NIVON; quando executado em GitHub Actions, o arquivo local é efêmero. **A operação contínua não está implantada.**
+- Demais fontes (mais de 90 fontes adicionais sem coleta homologada) continuam requerendo implementação individual de endpoint, esquema e direitos.
