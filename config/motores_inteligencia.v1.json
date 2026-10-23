@@ -870,7 +870,8 @@
         "nivon.inteligencia_temporal:custo_diesel_por_rota",
         "nivon.motor_tendencias:tendencia_observada",
         "nivon.motor_tendencias:tendencia_projetada",
-        "nivon.tendencias_mercados:tendencia_frete_anunciado"
+        "nivon.tendencias_mercados:tendencia_frete_anunciado",
+        "nivon.fretes_dinamica_r01:dinamica_ofertas_pareadas"
       ],
       "data_dependencies": [
         "FRETES_WHATSAPP_AUTORIZADO",
