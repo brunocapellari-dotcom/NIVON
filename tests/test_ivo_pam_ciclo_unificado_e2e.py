@@ -126,7 +126,7 @@ class TestIVOPAMCicloUnificadoE2E(unittest.TestCase):
 
     def test_falha_de_tarefa_nao_sobrescreve_backup_anterior(self):
         a=self.ciclo(1,iniciar_novo=True)
-        arquivo_zip=self.root/"ciclo1"/"estado_pam.zip"
+        arquivo=self.root/"ciclo1"/"estado_pam.zip"
         sha=a["backup"]["sha256_arquivo"]
         self.arquivo.write_bytes(b"nao-json")
         with self.assertRaises(ErroBackupPAM):
