@@ -29,6 +29,7 @@ class Policy(unittest.TestCase):
         self.assertIn("github.ref == 'refs/heads/main'",condicao)
         self.assertIn("vars.NIVON_ZERO_COST_BQ_APPROVED == 'true'",condicao)
         self.assertIn("vars.NIVON_RAW_ARCHIVE_APPROVED == 'true'",condicao)
+        self.assertIn("vars.NIVON_ANTT_FERROVIA_WRITE_APPROVED == 'true'",condicao)
         self.assertIn("inputs.modo == 'live'",condicao)
         self.assertNotIn("pull_request",texto)
         self.assertIn("NIVON_BOOTSTRAP_TABLE_APPROVED",job)
@@ -39,7 +40,10 @@ class Policy(unittest.TestCase):
         preflight=texto.split("  preflight:",1)[1].split("  coletar-e-persistir:",1)[0]
         self.assertNotIn("google-github-actions/auth",preflight)
         self.assertNotIn("id-token: write",preflight)
-        self.assertIn("GCP_PENDENTE_CONFIGURACAO_OU_APROVACAO",preflight)
+        self.assertIn("PREFLIGHT_APENAS_DIAGNOSTICO_SEM_AUTENTICACAO_OU_ESCRITA",preflight)
+        self.assertIn("FALTA_APROVACAO:NIVON_ANTT_FERROVIA_WRITE_APPROVED",preflight)
+        self.assertIn("TABELA_ANTT_AUSENTE_EXIGE_APROVACAO_BOOTSTRAP",preflight)
+        self.assertIn("FALTA_VARIAVEL:",preflight)
 
 
 if __name__=="__main__":
