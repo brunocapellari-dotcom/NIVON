@@ -92,7 +92,7 @@ jobs:
           }
           print(json.dumps(report, ensure_ascii=False))
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as f:
-              f.write('### Conexão NIVON → Google Cloud verificada\\n\\n')
-              f.write('Autenticação OIDC + leitura de metadados BigQuery e GCS concluídas.\\n\\n')
-              f.write('Nenhum objeto, tabela, dataset ou consulta SQL foi criado.\\n')
+              f.write('### Conexão NIVON → Google Cloud verificada\n\n')
+              f.write('Autenticação OIDC + leitura de metadados BigQuery e GCS concluídas.\n\n')
+              f.write('Nenhum objeto, tabela, dataset ou consulta SQL foi criado.\n')
           PY
