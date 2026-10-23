@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
-from urllib.request import Request, urlopen
+from urllib.request import Request, build_opener, HTTPRedirectHandler
 from urllib.parse import urlparse
 import re
 import ssl
@@ -42,9 +42,19 @@ def valor_real(texto):
     return format(n,"f")
 
 
-def consultar_pagina_primaria(url: str, *, open_url=urlopen):
+class _BloquearRedirecionamentos(HTTPRedirectHandler):
+    """Não contactar destinos 30x antes de validar o host da fonte."""
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def consultar_pagina_primaria(url: str, *, open_url=None):
     if url not in (URL_SOJA,URL_MILHO):
         raise CepeaNaoHomologado("Somente URL primária CEPEA homologada")
+    # urllib.urlopen segue 30x automaticamente, inclusive para outros hosts.
+    # A fonte é um endereço fixo: recusar qualquer redirecionamento.
+    if open_url is None:
+        open_url = build_opener(_BloquearRedirecionamentos()).open
     req=Request(url,headers={"User-Agent":"NIVON-Research/1.0 (personal noncommercial; one page per test)", "Accept":"text/html"})
     with open_url(req,timeout=18) as r:
         returned=r.geturl()
