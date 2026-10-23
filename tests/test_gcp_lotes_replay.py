@@ -170,7 +170,7 @@ class TestIsolamentoEReplay(unittest.TestCase):
             storage.obj.files[stage].size = len(storage.obj.files[stage].content)
             with self.assertRaises(ErroGoogleCloud):
                 reprocessar_bigquery_do_manifesto(
-                    bucket=DESTINO["bucket"], manifesto_sha256=sha,
+                    manifesto_sha256=sha,
                     storage_client=storage, bq_loader=lambda **kw: {"executado": True},
                     **DESTINO, **PERMISSOES)
 
