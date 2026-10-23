@@ -72,7 +72,7 @@ class TestBigQueryLoader(TestCase):
         self.root.mkdir(mode=0o700)
         self.file=self.root/'dados.jsonl'
         self.tabela='nivon-data.nivon_stage.agro_fonte_stage'
-        obj={k:('2026-10-22T20:00:00+00:00' if k=='coletado_utc'
+        obj={k:('2026-10-22T20:00:00+00:00' if k in {'coletado_utc','data_coleta'}
                 else 'b'*64 if k=='source_sha256'
                 else '12.5' if k=='valor'
                 else 'QUARENTENA_NAO_PUBLICAVEL' if k=='status'
