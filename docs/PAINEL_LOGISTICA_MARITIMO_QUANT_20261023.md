@@ -183,3 +183,102 @@ de preço futuro.
   trocar ponto de embarque, terminal, regime ou pedágio;
 - Backtest de previsão de filas por porto e de tendências de preços
   com vintages de dados reais, medidas de erro e gates de cobertura.
+
+
+## Lote 3 — leitura operacional existente, sem cópia de banco
+
+O novo `adaptadores_operacionais.py` entrega o primeiro contrato concreto
+entre os dados de fretes/AIS dos coletores existentes e o painel integrado.
+Não inclui pipeline de rede, scraping, acesso ao WhatsApp, chamada AISStream
+ou escrita Google Cloud. Lê apenas entradas já autorizadas e persistidas.
+
+### Dados de fretes anunciados
+
+O pacote da CLI pode conter `fretes_consolidados` com a **saída integral**
+de `fretes_registros.consolidar_ofertas` do ramo R09/#154. O adaptador:
+- valida estado `FRETE_ANUNCIADO_NAO_CONTRATADO`, número de registros e
+  identidade individual, e descarta publicações/coletas posteriores a `as_of`;
+- separa séries **por origem e destino IBGE, ponto de embarque, transportadora,
+  terminal, produto, equipamento, regime, pedágio, tipo base e provedor**;
+- preserva `frete_base_brl_t` como anúncio em BRL/t; não transforma
+  `frete_cheio_brl_t` em frete base nem remove pedágio;
+- nunca inventa `fingerprint` do RAW. Sem SHA original nem banda técnica
+  comprovada, a dinâmica histórica Theil–Sen fica **bloqueada**, embora a
+  tendência descritiva simples possa ser analisada em modo SHADOW;
+- preserva `fonte_id`, `provedor_id`, identificadores da oferta e
+  `publicacoes_origem` sem assumir negociação efetiva.
+
+Para não multiplicar dados, o consolidado é uma **entrada de processo**,
+não outra tabela canônica. O conector R09 ainda precisa ser mesclado,
+testado e conectado à persistência autorizada.
+
+### Replay AIS de fonte existente
+
+O pacote pode conter `replays_ais_sqlite`, uma lista de pedidos contendo
+`banco`, `porto_id`, `inicio`, `fim` e, opcionalmente, `limite`.
+Cada pedido abre o ledger `MaritimeStore` já existente em **mode=ro**,
+sem criar arquivos, gravações ou reprocessar posição AIS. A leitura:
+- é restrita a um único porto e janela de até 7 dias anterior a `as_of`;
+- valida SHA-256 do JSON bruto por evento, MMSI, identidade e cronologia,
+  e detecta truncamento antes de publicar contagens;
+- diferencia eventos coletados, eventos `CONFIRMED_SEQUENCE` e MMSIs
+  distintos nessas sequências;
+- devolve `navios_aguardando`, `navios_operados`, DUVs e tonelagem como
+  **nulos**, pois sequência AIS sozinha não comprova estado físico/serviço.
+
+Assim, `replays_ais` é auditoria de qualidade/identidade independente
+da matriz `portos`. Sem geocercas/reconciliação AIS × eventos oficiais,
+**não** alimentar automaticamente VQI, fila ou ETA com números do replay.
+
+### Exemplo do contrato de execução
+
+```json
+{
+  "fretes_consolidados": {
+    "natureza": "FRETE_ANUNCIADO_NAO_CONTRATADO",
+    "total_registros_individuais_deduplicados": 0,
+    "registros": []
+  },
+  "replays_ais_sqlite": [{
+    "banco": "/dados/privados/nivon_ais.sqlite",
+    "porto_id": "SANTOS",
+    "inicio": "2026-10-23T09:00:00Z",
+    "fim": "2026-10-23T11:00:00Z"
+  }]
+}
+```
+
+O trecho mostra apenas a **estrutura**: uma entrada vazia de fretes não
+é processável. O lote E2E de testes gera registros sintéticos reais do
+contrato de consolidado e um SQLite AIS temporário, executando
+`scripts/rodar_painel_operacional.py` como subprocesso.
+
+### Consulta econômica BigQuery escopada no servidor
+
+Em `consulta_analitica_bq`, se `classe` e `serie_id` forem indicados,
+ambos se tornam parâmetros de SQL. A consulta escolhe a versão admissível
+point-in-time, filtra `JSON_VALUE(campos, '$.classe')` e
+`JSON_VALUE(campos, '$.serie_id')` **antes de** `LIMIT`.
+Isso impede truncamento indevido de uma série econômica por séries
+diferentes armazenadas na mesma tabela de observações. O adaptador
+recusa linhas retornadas fora do contrato, em vez de excluí-las
+silenciosamente. Custo BigQuery limitado por `maximum_bytes_billed`
+no cliente existente; sem leitura GCP real comprovada neste PR.
+
+### Testes integrados
+
+`test_adaptadores_operacionais.py` gera anúncios por ponto e transportadora,
+um SQLite AIS com hashes reais de payload sintético, conferência RO,
+duplicidade, fonte divergente, dado futuro, corrompimento e limite de eventos.
+O E2E invoca a CLI de verdade, em um processo independente, e exige fretes
+anunciados, replay AIS separado e publicação desabilitada.
+`test_consulta_analitica_bq.py` comprova parametrização, posição do filtro
+antes do LIMIT, série divergente e proteção contra injeção.
+
+### Bloqueios restantes
+
+- Dados reais de fretes e AIS ainda precisam ser produzidos pelos coletores
+  com armazenamento e licenciamento autorizados, não por fixtures.
+- Não está comprovada persistência contínua GCS/BigQuery para AIS/fretes,
+  nem execução autenticada dessa leitura em projeto real.
+- Prévia de fila 6/24/48h ainda não foi calibrada em dados reais por porto.
