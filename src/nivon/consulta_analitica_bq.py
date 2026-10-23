@@ -15,6 +15,8 @@ from decimal import Decimal
 from .carga_bigquery_fontes import PROJECT, DATASET
 
 FONTE = re.compile(r"^[A-Z][A-Z0-9_]{2,90}$")
+SERIE = re.compile(r"^[A-Za-z0-9_:-]{3,150}$")
+CLASSES_SERIE = frozenset({"FRETE_ANUNCIADO", "CBOT", "PRECO_FISICO"})
 NATUREZAS = frozenset({"OBSERVADO","INFORMADO","ESTIMADO","PROJETADO","INFERIDO"})
 LIMITE_MAXIMO = 1000
 BYTES_MAXIMOS = 100_000_000
@@ -42,7 +44,8 @@ def _as_of(value):
 
 
 def planejar_consulta(*,project_id,dataset_id,fonte,inicio,fim,
-                     as_of=None,limite=500,max_bytes_billed=BYTES_MAXIMOS):
+                     as_of=None,limite=500,max_bytes_billed=BYTES_MAXIMOS,
+                     classe=None,serie_id=None):
     if not isinstance(project_id,str) or not PROJECT.fullmatch(project_id):
         raise ErroConsultaAnalitica("projeto nao autorizado")
     if not isinstance(dataset_id,str) or not DATASET.fullmatch(dataset_id):
@@ -60,6 +63,13 @@ def planejar_consulta(*,project_id,dataset_id,fonte,inicio,fim,
         raise ErroConsultaAnalitica("limite de linhas invalido")
     if type(max_bytes_billed)!=int or not 10_000_000<=max_bytes_billed<=BYTES_MAXIMOS:
         raise ErroConsultaAnalitica("limite maximo de leitura invalido")
+    if (classe is None) != (serie_id is None):
+        raise ErroConsultaAnalitica("classe e serie_id devem ser fornecidos juntos")
+    if classe is not None and (
+        classe not in CLASSES_SERIE or not isinstance(serie_id,str)
+        or not SERIE.fullmatch(serie_id)
+    ):
+        raise ErroConsultaAnalitica("serie de mercado invalida")
     momento=_as_of(as_of)
     tabela=f"{project_id}.{dataset_id}.nivon_observacoes"
     sql=(
@@ -76,18 +86,23 @@ def planejar_consulta(*,project_id,dataset_id,fonte,inicio,fim,
         f") SELECT dataset_id, identidade, fingerprint, data_referencia, competencia,"
         f" data_publicacao, data_coleta, natureza, valor, unidade, campos, snapshot_id"
         f" FROM versoes WHERE posicao = 1"
-        f" ORDER BY data_referencia ASC, identidade ASC LIMIT @limite"
+        + (f" AND JSON_VALUE(campos, '$.classe') = @classe"
+           f" AND JSON_VALUE(campos, '$.serie_id') = @serie_id"
+           if classe is not None else "")
+        + f" ORDER BY data_referencia ASC, identidade ASC LIMIT @limite"
     )
     return {"tabela":tabela,"fonte":fonte,"inicio":de,"fim":ate,
         "as_of":momento,"limite":limite,"max_bytes_billed":max_bytes_billed,
+        "classe":classe,"serie_id":serie_id,
         "sql":sql,"executado":False}
 
 
 def consultar(*,project_id,dataset_id,fonte,inicio,fim,as_of=None,limite=500,
-             max_bytes_billed=BYTES_MAXIMOS,executar=False,client=None):
+             max_bytes_billed=BYTES_MAXIMOS,executar=False,client=None,
+             classe=None,serie_id=None):
     plano=planejar_consulta(project_id=project_id,dataset_id=dataset_id,
         fonte=fonte,inicio=inicio,fim=fim,as_of=as_of,limite=limite,
-        max_bytes_billed=max_bytes_billed)
+        max_bytes_billed=max_bytes_billed,classe=classe,serie_id=serie_id)
     if executar is not True:
         return {k:v.isoformat() if isinstance(v,(date,datetime)) else v
              for k,v in plano.items() if k!="sql"} | {
@@ -106,7 +121,10 @@ def consultar(*,project_id,dataset_id,fonte,inicio,fim,as_of=None,limite=500,
             bigquery.ScalarQueryParameter("fim","DATE",plano["fim"]),
             bigquery.ScalarQueryParameter("as_of","TIMESTAMP",plano["as_of"]),
             bigquery.ScalarQueryParameter("limite","INT64",limite),
-        ])
+        ] + ([
+            bigquery.ScalarQueryParameter("classe","STRING",classe),
+            bigquery.ScalarQueryParameter("serie_id","STRING",serie_id),
+        ] if classe is not None else []))
     rows=bq.query(plano["sql"],job_config=job_cfg).result(timeout=120)
     observacoes=[]
     for row in rows:
@@ -121,6 +139,10 @@ def consultar(*,project_id,dataset_id,fonte,inicio,fim,as_of=None,limite=500,
                 raise ErroConsultaAnalitica("JSON de campos quebrado no BigQuery") from exc
         if not isinstance(campos,dict):
             raise ErroConsultaAnalitica("campos de observacao nao sao objeto")
+        if classe is not None and (
+            campos.get("classe") != classe or campos.get("serie_id") != serie_id
+        ):
+            raise ErroConsultaAnalitica("resposta BigQuery fora da serie economica requerida")
         if obj.get("natureza") not in NATUREZAS or obj.get("dataset_id")!=fonte:
             raise ErroConsultaAnalitica("fonte ou natureza divergente no retorno")
         data_ref=obj.get("data_referencia")
@@ -148,7 +170,8 @@ def consultar(*,project_id,dataset_id,fonte,inicio,fim,as_of=None,limite=500,
         "as_of":plano["as_of"].isoformat(),"quantidade":len(observacoes),
         "observacoes":observacoes,"status":"DADOS_INTERNOS_NAO_HOMOLOGADOS_EDITORIALMENTE",
         "limite":limite,"executado":True,
-        "sem_resultados":len(observacoes)==0}
+        "sem_resultados":len(observacoes)==0,
+        "classe":classe,"serie_id":serie_id}
 
 
 def main(argv=None):
