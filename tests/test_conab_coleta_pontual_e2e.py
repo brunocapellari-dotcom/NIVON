@@ -120,7 +120,7 @@ class TestColetaPontualE2E(TestCase):
             cat=dest/"cat.json"
             catalogo(cat)
             responses=respostas()
-            responses[RAW]["bytes"]=b"<html>não é XLSX</html>"
+            responses[RAW]["bytes"]="<html>não é XLSX</html>".encode("utf-8")
             with mock.patch("nivon.conab_coleta_pontual._baixar",
                             side_effect=simulate(responses,[])):
                 with self.assertRaises(ErroColetaPontualConab):
