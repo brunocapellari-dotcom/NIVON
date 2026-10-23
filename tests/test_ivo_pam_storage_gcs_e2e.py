@@ -12,6 +12,7 @@ from pathlib import Path
 from nivon.ivo_pam_operacao import (
     abrir_operacao_pam, executar_lote_pam)
 from nivon.ivo_pam_backup import criar_backup_pam, restaurar_backup_pam
+from nivon.ivo_pam_ciclo import executar_ciclo_pam
 from nivon.ivo_pam_storage_gcs import (
     ClienteGCS, ErroGCSState, _HTTPStatus,
     publicar_backup_gcs, baixar_backup_gcs)
@@ -107,6 +108,46 @@ class TestIVOSyncGCS(unittest.TestCase):
         finally:
             db.close()
         return arq
+
+    def test_dois_ciclos_completos_replicam_e_restauram_sem_promocao(self):
+        # Integra o ciclo de produção ao CAS GCS com servidor simulado.
+        # Nenhuma credencial, bucket ou chamada externa é usada.
+        self.inp.joinpath("pam.json").write_bytes(fixture(100))
+        first = executar_ciclo_pam(
+            saida=self.root/"ciclo_integrado_1",
+            tarefas=self.tarefa, modo="LOCAL", entrada=self.inp,
+            iniciar_novo=True,
+        )
+        self.assertEqual(first["backup"]["capturas"], 1)
+        b1 = self.root/"ciclo_integrado_1"/"estado_pam.zip"
+        remote1 = publicar_backup_gcs(
+            cliente=self.cloud, arquivo=b1, permitir_bootstrap=True)
+        self.assertEqual(remote1["capturas"], 1)
+        local = self.root/"recuperado_para_continuidade.zip"
+        baixar_backup_gcs(cliente=self.cloud, saida=local)
+        self.inp.joinpath("pam.json").write_bytes(fixture(180))
+        second = executar_ciclo_pam(
+            saida=self.root/"ciclo_integrado_2",
+            tarefas=self.tarefa, modo="LOCAL", entrada=self.inp,
+            arquivo_anterior=local,
+        )
+        self.assertEqual(second["backup"]["capturas"], 2)
+        self.assertEqual(second["backup"]["vintages"], 2)
+        self.assertEqual(second["coleta"]["mudancas"][0]["alteracao"], "VALOR_ALTERADO")
+        remote2 = publicar_backup_gcs(
+            cliente=self.cloud,
+            arquivo=self.root/"ciclo_integrado_2"/"estado_pam.zip",
+        )
+        self.assertEqual(remote2["capturas"], 2)
+        self.assertEqual(remote2["vintages"], 2)
+        self.assertFalse(remote2["treinamento_habilitado"])
+        recovered = self.root/"ultimo_integrado.zip"
+        baixar_backup_gcs(cliente=self.cloud, saida=recovered)
+        final = restaurar_backup_pam(
+            arquivo_zip=recovered, destino=self.root/"recuperacao_integrada")
+        self.assertEqual(final["capturas"], 2)
+        self.assertEqual(final["vintages"], 2)
+        self.assertFalse(final["registro_canonico_modificado"])
 
     def test_bootstrap_e_incremento_preservam_vintages_e_capturas(self):
         antigo=self.estado("100",1)
