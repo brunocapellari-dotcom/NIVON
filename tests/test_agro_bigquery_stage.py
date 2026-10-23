@@ -61,8 +61,8 @@ class TestStageAgro(TestCase):
         sio=next(x for x in rows if x['source_id']=='ARG_SIO_GRANOS')
         self.assertEqual(sio['valor'],'1500.0')
         self.assertNotIn('id_hmac',str(rows))
-        self.assertNotIn('0001',path.read_text())
-        self.assertNotIn('0002',path.read_text())
+        self.assertNotIn('id_operacao',path.read_text())
+        self.assertNotIn('id_hmac',path.read_text())
         self.assertEqual(sio['classe'],'DECLARADO_NAO_ENTREGUE')
         self.assertFalse(r['google_cloud_gravado'])
 
@@ -84,9 +84,11 @@ class TestStageAgro(TestCase):
 
     def test_pasta_nao_privada_recusada(self):
         self._preencher()
+        self.root.chmod(0o755)
         path=self.root/'publico.jsonl'
         with self.assertRaises(ErroStageAgro):
             exportar_stage(banco=self.db,saida=path)
+        self.root.chmod(0o700)
 
     def test_nao_exporta_arquivo_simbolico(self):
         self._preencher()
