@@ -37,18 +37,30 @@ jobs:
           NIVON_CEPEA_PRODUTO: ${{ github.event.schedule == '30 23 * * 1-5' && 'MILHO' || 'SOJA' }}
         run: |
           python - <<'PY'
-          import json, os
+          import json, os, time
           from urllib.parse import quote
           from urllib.request import Request, urlopen
-          from urllib.error import URLError
+          from urllib.error import HTTPError, URLError
           from nivon.cepea_web_primario import consultar_pagina_primaria,extrair_precos_html,URL_SOJA,URL_MILHO
+          # Somente pagina oficial; tentativas limitadas para falhas transitorias.
+          # Erro definitivo nunca gera registro no Neon nem fallback em widgets.
           def abrir_com_timeout(req,timeout):
-              return urlopen(req,timeout=30)
+              return urlopen(req,timeout=25)
           def ler_pagina(url):
-              try:
-                  return consultar_pagina_primaria(url,open_url=abrir_com_timeout)
-              except (TimeoutError,URLError):
-                  return consultar_pagina_primaria(url,open_url=abrir_com_timeout)
+              for tentativa in range(1,4):
+                  try:
+                      return consultar_pagina_primaria(url,open_url=abrir_com_timeout)
+                  except HTTPError as exc:
+                      if exc.code not in (408,425,429,500,502,503,504,520,522,524):
+                          raise
+                      classe='HTTP_'+str(exc.code)
+                  except (TimeoutError, URLError):
+                      classe='TIMEOUT_OU_REDE'
+                  print('::warning::CEPEA fonte oficial indisponivel tentativa='+str(tentativa)+'/3 classe='+classe)
+                  if tentativa==3:
+                      raise SystemExit('CEPEA_SOURCE_UNAVAILABLE_'+classe)
+                  time.sleep(6 if tentativa==1 else 18)
+              raise SystemExit('CEPEA_SOURCE_UNAVAILABLE')
           produto=os.environ['NIVON_CEPEA_PRODUTO']
           if produto=='MILHO':
               html=ler_pagina(URL_MILHO)
