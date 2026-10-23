@@ -101,7 +101,8 @@ def gravar_lote(*, banco, diretorio_bruto, dataset_id, origem, raw, tipo,
         raise ErroIngestao("origem insegura")
     if estado not in ("RAW_RECEIVED", "NORMALIZED", "QUARANTINED"):
         raise ErroIngestao("estado invalido")
-    if tipo not in ("text/csv", "application/json", "application/octet-stream", "application/vnd.ms-excel"):
+    if tipo not in ("text/csv", "application/json", "application/octet-stream", "application/vnd.ms-excel",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"):
         raise ErroIngestao("MIME nao permitido")
     if not isinstance(registros, (list, tuple)) or len(registros) > 150000:
         raise ErroIngestao("quantidade de observacoes invalida")
