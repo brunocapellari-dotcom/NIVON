@@ -27,6 +27,10 @@ def executar_job(*, env=None, storage_client=None, bigquery_client=None,
     projeto=variables.get("GOOGLE_CLOUD_PROJECT")
     dataset=variables.get("NIVON_MARITIMO_DATASET","nivon_maritimo")
     bucket=variables.get("NIVON_MARITIMO_BUCKET")
+    # Validar o projeto ANTES de arquivar qualquer evidencia no GCS:
+    # nunca executar coleta no projeto incorreto ou indeterminado.
+    from nivon.maritimo_bigquery import validar_destino
+    validar_destino(projeto,dataset)
     if not bucket:
         raise ValueError("NIVON_MARITIMO_BUCKET obrigatorio")
     armazenar=ArquivoMaritimoGCS(bucket,storage_client=storage_client)

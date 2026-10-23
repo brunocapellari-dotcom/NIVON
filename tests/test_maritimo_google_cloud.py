@@ -141,6 +141,34 @@ class TestCloud(unittest.TestCase):
         self.assertEqual(len(storage.bucket("bucket-nivon-123").blobs),6)
         self.assertIn("/_manifestos/",result["manifesto"])
 
+    def test_manifesto_corrompido_bloqueia_replay(self):
+        from nivon.maritimo_replay_gcp import reprocessar_manifesto
+        storage=FakeStorage()
+        result=executar_job(env={
+            "NIVON_MARITIMO_COLETA_HABILITADA":"true",
+            "GOOGLE_CLOUD_PROJECT":"nivon-exemplo-123",
+            "NIVON_MARITIMO_BUCKET":"bucket-nivon-123",
+        },storage_client=storage,bigquery_client=FakeBigQueryClient(),
+           bigquery_module=FakeBigQueryModule,fornecedor_html=lambda _:HTML)
+        bucket=storage.bucket("bucket-nivon-123")
+        name=next(k for k in bucket.blobs if "_manifestos/" in k)
+        bucket.blobs[name].content=b'{"schema_version": 1, "tampered": true}'
+        with self.assertRaisesRegex(ValueError,"hash"):
+            reprocessar_manifesto(bucket="bucket-nivon-123",uri=result["manifesto"],
+              projeto="nivon-exemplo-123",storage_client=storage,
+              bigquery_client=FakeBigQueryClient(),
+              bigquery_module=FakeBigQueryModule)
+
+    def test_projeto_ausente_bloqueia_antes_de_gcs(self):
+        storage=FakeStorage()
+        with self.assertRaises(ValueError):
+            executar_job(env={
+                "NIVON_MARITIMO_COLETA_HABILITADA":"true",
+                "NIVON_MARITIMO_BUCKET":"bucket-nivon-123",
+            },storage_client=storage,bigquery_client=FakeBigQueryClient(),
+               bigquery_module=FakeBigQueryModule,fornecedor_html=lambda _:HTML)
+        self.assertEqual(storage.buckets,{})
+
     def test_cloud_run_desabilitado_sem_qualquer_escrita(self):
         with self.assertRaises(PermissionError):
             executar_job(env={"GOOGLE_CLOUD_PROJECT":"nivon-exemplo-123"},

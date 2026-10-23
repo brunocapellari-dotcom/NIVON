@@ -51,6 +51,26 @@ jobs:
         env:
           PYTHONPATH: src
         run: python -m unittest discover -s tests -v
+  imagem-cloud-run:
+    # Exercicio real de build da imagem de producao; sem credenciais de cloud.
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Construir imagem Cloud Run com dependencias reais
+        run: docker build -f infra/google_cloud/Dockerfile.maritimo -t nivon-maritimo:ci .
+      - name: Verificar importacao SDK Google e contrato do job
+        run: |
+          docker run --rm nivon-maritimo:ci python -c "import google.cloud.bigquery, google.cloud.storage; from nivon.maritimo_gcp_job import executar_job; print('SDK_GCP_E_JOB_OK')"
+      - name: Comprovar que container nao coleta desabilitado
+        run: |
+          if docker run --rm nivon-maritimo:ci; then
+            echo "ERRO: job executou sem habilitacao"
+            exit 1
+          fi
+          echo "Job permaneceu desabilitado como esperado"
   smoke-publico-imbituba:
     # Diagnostico HTTP read-only em PR; nunca grava dados reais ou usa secrets.
     if: github.event_name == 'pull_request'

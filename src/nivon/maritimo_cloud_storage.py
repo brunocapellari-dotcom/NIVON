@@ -128,6 +128,10 @@ class ArquivoMaritimoGCS:
         raw=blob.download_as_bytes()
         if len(raw)>80000:
             raise ValueError("manifesto muito grande")
+        blob.reload()
+        actual=hashlib.sha256(raw).hexdigest()
+        if (blob.metadata or {}).get("sha256")!=actual:
+            raise ValueError("manifesto GCS adulterado; hash nao confere")
         manifest=json.loads(raw)
         if manifest.get("schema_version")!=1 or manifest.get("run_id")!=name[:-5]:
             raise ValueError("manifesto desconhecido ou id incorreto")
