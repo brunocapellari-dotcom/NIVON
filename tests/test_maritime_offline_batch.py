@@ -303,7 +303,7 @@ class OfflineMaritimeBatchTests(unittest.TestCase):
     def test_historical_read_failure_before_commit_leaves_ledger_empty(self):
         item = input_doc()
         with MaritimeStore() as store:
-            with patch("nivon.maritime.offline_pdf_batch.PdfProgrammeLedger.history_asof",
+            with patch("nivon.maritime.offline_pdf_batch.PdfProgrammeLedger.paged_history_asof",
                        side_effect=ValueError("historical scan unavailable")):
                 with self.assertRaisesRegex(ValueError, "historical scan unavailable"):
                     run(store, [item], [programmed()], commit=True)
