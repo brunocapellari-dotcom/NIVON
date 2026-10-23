@@ -2,7 +2,7 @@ name: NIVON - ANTT RGI relatorio oficial
 on:
   push:
     branches:
-      - feat/antt-anuario-rgi-20261023
+      - main
     paths:
       - 'src/nivon/antt_anuario*.py'
       - scripts/ingest_antt_anuario_rgi.py
