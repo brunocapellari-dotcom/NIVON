@@ -257,3 +257,44 @@ Fontes oficiais:
 - Contextos GitHub Actions: https://docs.github.com/en/actions/reference/workflows-and-actions/contexts
 
 Nao houve execucao real de GET CKAN/CSV, import de XLSX oficial, BigQuery/GCS, schedulers ou alteracao de permissoes comerciais. Proximos passos: validar bytes reais autorizados, registrar primeiro snapshot com provenance, testar carga Cloud apenas apos IAM/custos/licencas homologados e habilitar incremento por fonte.
+
+
+## 23/10 — Primeira coleta realmente comprovada: CONAB 2026, duas semanas e staging
+
+O NÍVEL DE EVIDÊNCIA DA CONAB PROGRESSO avançou de código sintético para `REAL_SNAPSHOT_TESTED`. **Não** passou a `LIVE`: o workflow é pontual, banco/RAW no runner são apagados após o job, sem Google Cloud/GCS/Scheduler, e os motores editoriais continuam bloqueados.
+
+### Diagnóstico do portal REAL e correção
+
+A execução #39952564543 inspecionou o HTML público da CONAB: o link do índice da semana 12–18/10/2026 continha slug aninhado da semana anterior (05–11/10), enquanto o documento de plantio/colheita era irmão do slug da semana 12–18/10. O coletor antigo exigia documento *filho do URL aninhado* e falhava. A rotina `conab_indice_progresso.extrair_edicoes_indice` passou a confrontar slug e data explícitos no título, normalizar a edição canônica e reter `url_observada_indice`. Os aliases são preservados na tabela `conab_url_indice_historico`.
+
+A URL do documento CONAB usa `/view` (HTML); o XLSX segue o link `@@download/file` explicitamente publicado. **Não** construir URL de bytes a partir de padrão ou tratar HTML como planilha. Módulo `conab_resolver_anexo.py` guarda página, data de publicação declarada, SHA do HTML e URL XLSX explícita; `auditoria_publicacao_conab.py` aceita agora página semanal canônica e somente URLs de anexo válidas. Mudanças HTML sem mudança de endereço são historizadas.
+
+### Evidência E2E real
+
+- [GitHub Actions #39952930172](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39952930172): página oficial 12–18/10/2026 → XLSX HTTP 200, SHA-256 `7ad55ada60a7887f61ddd9e922a99150daf6439d51030ad946de0a6600356c9a` → parser CONAB 58 observações.
+- [#39953359717](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39953359717): mesmas 58 observações extraídas do XLSX REAL e importadas à tabela `conab_real_observacoes_quarentena` após reverificação do arquivo; versão distinta registrada no SQLite.
+- [#39953661753](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39953661753): semana 05–11/10/2026, SHA-256 `65802307eaf23a2fccafcf37c683cdf9c5cabe3f2bca06858fe0006cc99ffe7a`, 58 observações reais.
+- [#39954034040](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39954034040): backfill de DUAS SEMANAS em UMA EXECUÇÃO e MESMO SQLite privado: **116 observações, 2 vintages novas**. Reimportação imediata dos dois pacotes registrou **0 novas vintages** (idempotente).
+- [#39954626324](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39954626324): os dois XLSX reais foram importados à quarentena, convertidos pelo `agro_bigquery_stage.py` em **464 registros normalizados de indicadores**, JSONL de **299.149 bytes**, SHA-256 `e5d7db8e2a2c2131e13f2bdd931b2fdec4d5dfd2643d1f3652ac1d1af1caeda8`. O `agro_bigquery_loader` passou no `PREFLIGHT_LOCAL_SEM_CLOUD`. Nenhuma escrita BQ, nenhuma cobrança GCP, nenhum dado publicado.
+
+**Atenção:** o SHA/volume acima é da V1 do JSONL ANTES de acrescentar os campos temporais canônicos. Após nova geração com o contrato de quatro datas, hash e bytes mudam naturalmente; o hash RAW das duas planilhas não muda. A suíte offline verifica as datas canônicas, mas não houve reexecução de download real apenas para regenerar essa exportação.
+
+### Operação por lote (em volume privado DURÁVEL, ainda não configurado)
+
+```bash
+PYTHONPATH=src python -m nivon.conab_incremental \
+  --banco /dados/privados/conab.sqlite \
+  --pasta-raw /dados/privados/conab_raw \
+  --quantidade 2 \
+  --executar --direitos-consulta --direitos-coleta --direitos-armazenamento
+```
+
+Isso faz uma consulta ao índice oficial, processa até quatro semanas por lote e importa para o SQLite **sem** publicar. O destino deve existir, ser 0700 e ter backups. O teste de produção usa somente acesso público a URLs oficiais, nunca cookies, sessão autenticada ou proxy externo. Este exemplo não foi configurado como cron.
+
+### Governança
+
+- `CONAB_PROGRESSO_SEMANAL`: `stage=REAL_SNAPSHOT_TESTED`, mas `enabled=false`, `collection_authorized=false`, `commercial_redistribution_authorized=false` e `scheduled_enabled=false`.
+- `conab_real_edicoes_quarentena` e `conab_real_observacoes_quarentena`: preservam id da edição, SHA RAW, versão, data informada de publicação e coleta UTC; 58 observações por edição do piloto. A tabela é **quarentena**, não fato oficial apto a briefing.
+- `agro_bigquery_stage` lê a quarentena real e produz JSONL SEM UPGRADE DE DIREITOS; `agro_prontidao_fontes` também lê a quarentena real sem declarar `go_live`.
+- Contrato de dados atualizado com `data_referencia`, `data_publicacao`, `data_coleta`, `competencia` como campos distintos, preservando a origem, os horários UTC verificados e valores ausentes.
+- O job pontual GitHub destrói explicitamente dados e arquivos temporários na finalização. Para atualização contínua, preparar GCS durável (RAW), BigQuery staging (indicadores), IAM mínimo, execução idempotente e monitoramento; ainda falta acesso real à infraestrutura autorizada.
