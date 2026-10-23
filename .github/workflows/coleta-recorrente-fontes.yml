@@ -45,7 +45,7 @@ jobs:
         shell: bash
         run: |
           if [[ "$(date -u +%u)" == "1" ]]; then
-            python scripts/operar_fontes_reais.py --canada --ccee --relatorio data/nivon/status_fontes.json
+            python scripts/operar_fontes_reais.py --canada --ccee --ibge-pam --wdi --relatorio data/nivon/status_fontes.json
           else
             python scripts/operar_fontes_reais.py --relatorio data/nivon/status_fontes.json
           fi
