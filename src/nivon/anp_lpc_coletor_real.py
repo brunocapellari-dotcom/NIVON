@@ -232,6 +232,7 @@ def coletar_lpc(
         "edicoes_integradas":len(resultados),
         "edicoes_novas":sum(x["edicao_nova"] for x in resultados),
         "capturas_novas":sum(x["captura_nova"] for x in resultados),
+        "indices_associados":sum(x["indice_registrado"] for x in resultados),
         "observacoes_integradas":sum(x["observacoes"] for x in resultados),
         "edicoes":resultados,"erros":erros,
         "indice_sha256":sha256(html).hexdigest(),
