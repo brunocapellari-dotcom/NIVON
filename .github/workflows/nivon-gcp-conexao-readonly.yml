@@ -160,6 +160,43 @@ jobs:
                   fp.write(f'- `{key}`: {val}\n')
               fp.write('\nNenhuma tabela foi criada nem foi realizada coleta marítima.\n')
           PY
+      - name: Conciliar primeiro lote maritimo BigQuery e Storage por metadados
+        run: |
+          python - <<'PY'
+          import json, os
+          from google.cloud import bigquery, storage
+          pid=os.environ['NIVON_PROJETO']
+          ds=os.environ['NIVON_DATASET']
+          bucket=os.environ['NIVON_BUCKET']
+          bq=bigquery.Client(project=pid,location='southamerica-east1')
+          gcs=storage.Client(project=pid)
+          tables=('maritimo_capturas','maritimo_escalas_revisoes',
+                  'maritimo_fluxos_passagens','maritimo_coleta_execucoes')
+          total={name:int(bq.get_table(f'{pid}.{ds}.{name}',timeout=25).num_rows)
+                 for name in tables}
+          prefix='nivon/maritimo/raw/'
+          files={}
+          for key in ('imbituba','fmi_portwatch','_manifestos'):
+              files[key]=sum(1 for _ in gcs.list_blobs(
+                  bucket,prefix=prefix+key+'/',max_results=30))
+          confirmed=(total['maritimo_capturas']>0 and
+                     total['maritimo_escalas_revisoes']>0 and
+                     total['maritimo_fluxos_passagens']>0 and
+                     total['maritimo_coleta_execucoes']>0 and
+                     all(x>0 for x in files.values()))
+          report={'estado':'CONFIRMADO_GCS_BQ' if confirmed else 'DADOS_INCOMPLETOS_OU_METADADOS_PENDENTES',
+                  'projeto':pid,'dataset':ds,'linhas_por_tabela':total,
+                  'objetos_gcs_amostra':files,'leitura_somente_metadados':True,
+                  'consultas_sql':0,'escritas':0}
+          print(json.dumps(report,ensure_ascii=False,sort_keys=True))
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as fp:
+              fp.write('### Verificação real do primeiro lote marítimo\n\n')
+              fp.write('Estado: '+report['estado']+'\n\n')
+              for name,count in total.items():
+                  fp.write(f'- {name}: {count} linhas (metadados)\n')
+              for name,count in files.items():
+                  fp.write(f'- GCS {name}: {count} objetos na amostra\n')
+          PY
       - name: Conferir tabela e view da ANTT exclusivamente por metadados
         env:
           PYTHONPATH: src
