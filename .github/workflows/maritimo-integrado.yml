@@ -9,6 +9,8 @@ on:
       - 'src/nivon/maritimo_bigquery.py'
       - 'src/nivon/maritimo_cloud_storage.py'
       - 'src/nivon/maritimo_gcp_job.py'
+      - 'src/nivon/maritimo_replay_gcp.py'
+      - 'src/nivon/maritimo_portwatch_backfill.py'
       - 'infra/google_cloud/**'
       - 'pyproject.toml'
       - 'tests/test_lineup_portos.py'
@@ -16,6 +18,8 @@ on:
       - 'tests/test_maritimo_lote.py'
       - 'tests/test_portwatch_fluxos.py'
       - 'tests/test_maritimo_google_cloud.py'
+      - 'tests/test_maritimo_portwatch_backfill.py'
+      - 'tests/test_maritimo_gcp_preflight.py'
       - '.github/workflows/maritimo-integrado.yml'
   workflow_dispatch:
     inputs:
