@@ -1,0 +1,252 @@
+name: Inspecao pontual PAM/IBGE NIVON
+
+# Agendamento so executa quando este workflow estiver no branch padrao,
+# apos integracao aprovada. Enquanto o PR e draft, nao roda por cada push.
+# GitHub Actions artifacts expiram em 30 dias: falhar, nunca reiniciar
+# um historico antigo se a cadeia de backup recente desaparecer.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 11 * * 1-5'
+
+permissions:
+  contents: read
+  actions: read
+  id-token: write
+
+concurrency:
+  group: nivon-pam-incremental-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  coleta-incremental-pam:
+    # No schedule sem destino GCS/WIF configurado, nao alocar runner.
+    if: github.event_name != 'schedule' || (vars.NIVON_PAM_GCS_BUCKET != '' && vars.NIVON_GCP_WIF_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '')
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Checkout sem credenciais persistentes
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Verificar infraestrutura GCS aprovada no branch principal
+        id: gcs
+        shell: bash
+        env:
+          GCS_BUCKET: ${{ vars.NIVON_PAM_GCS_BUCKET }}
+          GCS_PROVIDER: ${{ vars.NIVON_GCP_WIF_PROVIDER }}
+          GCS_SERVICE: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+        run: |
+          set -euo pipefail
+          if test "$GITHUB_REF" = "refs/heads/main" \
+             && test -n "$GCS_BUCKET" \
+             && test -n "$GCS_PROVIDER" \
+             && test -n "$GCS_SERVICE"; then
+            echo "active=true" >> "$GITHUB_OUTPUT"
+            echo "ARMAZENAMENTO_GCS=CONFIGURADO"
+          else
+            echo "active=false" >> "$GITHUB_OUTPUT"
+            echo "ARMAZENAMENTO_GCS=DESABILITADO_NESTE_BRANCH"
+          fi
+      - name: Identidade federada GCP sem chave persistente
+        if: steps.gcs.outputs.active == 'true'
+        id: auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          token_format: access_token
+          access_token_lifetime: 900s
+      - name: Recuperar ultimo backup GCS ou validar bootstrap explicitamente
+        if: steps.gcs.outputs.active == 'true'
+        shell: bash
+        env:
+          PYTHONPATH: src
+          NIVON_GCS_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+          BUCKET: ${{ vars.NIVON_PAM_GCS_BUCKET }}
+          BOOTSTRAP_AUTORIZADO: ${{ vars.NIVON_PAM_GCS_BOOTSTRAP }}
+        run: |
+          set -euo pipefail
+          BASE="${RUNNER_TEMP}/nivon-pam"
+          mkdir -p "$BASE/anterior"
+          set +e
+          python -m nivon.ivo_pam_storage_gcs estado --bucket "$BUCKET" \
+            > "$BASE/estado_gcs.json"
+          codigo=$?
+          set -e
+          if test "$codigo" = 0; then
+            python -m nivon.ivo_pam_storage_gcs recuperar --bucket "$BUCKET" \
+              --arquivo "$BASE/anterior/estado_pam.zip"
+            echo "PAM_PRIOR=$BASE/anterior/estado_pam.zip" >> "$GITHUB_ENV"
+            echo "PAM_LEGADO=0" >> "$GITHUB_ENV"
+            echo "BACKUP_RECUPERADO=GOOGLE_CLOUD_STORAGE"
+          elif test "$codigo" = 3 && test "$BOOTSTRAP_AUTORIZADO" = "true"; then
+            echo "PAM_CLOUD_BOOTSTRAP=1" >> "$GITHUB_ENV"
+            echo "BOOTSTRAP_GCS=USAR_GITHUB_EXISTENTE"
+          else
+            echo "::error::GCS inacessivel/corrompido ou bootstrap nao autorizado"
+            exit 2
+          fi
+      - name: Restaurar ultima cadeia de backup aprovada
+        if: steps.gcs.outputs.active != 'true' || env.PAM_CLOUD_BOOTSTRAP == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PAM_BRANCH: ${{ github.head_ref || github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="${RUNNER_TEMP}/nivon-pam"
+          mkdir -p "$BASE/anterior"
+          echo "PAM_PRIOR=" >> "$GITHUB_ENV"
+          echo "PAM_LEGADO=" >> "$GITHUB_ENV"
+          # Somente execucoes SUCCESS da MESMA branch e mesmo workflow.
+          # Nao usar artifact de outra branch, de corrida ou falha parcial.
+          ids="$(gh run list --workflow ivo-pam-piloto.yml \
+            --repo "$GITHUB_REPOSITORY" --branch "$PAM_BRANCH" \
+            --status success --limit 30 --json databaseId \
+            --jq '.[].databaseId')"
+          # Depois do primeiro ciclo com manifesto, nunca voltar ao
+          # piloto legado apenas porque o backup mais recente expirou.
+          # A indisponibilidade do backup atual e BLOQUEIO de continuidade.
+          for run_id in $ids; do
+            if test "$run_id" -gt 39891299927; then
+              rm -rf "$BASE/anterior"
+              mkdir -p "$BASE/anterior"
+              if gh run download "$run_id" --repo "$GITHUB_REPOSITORY" \
+                  --name nivon-pam-estado --dir "$BASE/anterior" >/dev/null 2>&1 \
+                  && test -s "$BASE/anterior/estado_pam.zip"; then
+                echo "PAM_PRIOR=$BASE/anterior/estado_pam.zip" >> "$GITHUB_ENV"
+                echo "PAM_LEGADO=0" >> "$GITHUB_ENV"
+                echo "BACKUP_RECUPERADO=run-$run_id"
+                exit 0
+              fi
+              echo "::error::O ciclo $run_id foi concluido, mas seu backup atual nao esta disponivel."
+              exit 3
+            fi
+          done
+          for run_id in $ids; do
+            rm -rf "$BASE/anterior"
+            mkdir -p "$BASE/anterior"
+            if gh run download "$run_id" --repo "$GITHUB_REPOSITORY" \
+                --name nivon-pam-estado --dir "$BASE/anterior" >/dev/null 2>&1 \
+                && test -s "$BASE/anterior/estado_pam.zip"; then
+              echo "PAM_PRIOR=$BASE/anterior/estado_pam.zip" >> "$GITHUB_ENV"
+              echo "PAM_LEGADO=0" >> "$GITHUB_ENV"
+              echo "BACKUP_RECUPERADO=run-$run_id"
+              exit 0
+            fi
+          done
+          # Migracao PARA main: nao reiniciar em 6 capturas por engano.
+          # Importar o ultimo pacote real auditado de 24 capturas da
+          # branch de origem. Bloquear se o artifact tiver expirado.
+          if test "$GITHUB_REF" = "refs/heads/main"; then
+            rm -rf "$BASE/anterior"
+            mkdir -p "$BASE/anterior"
+            if gh run download 39946796466 --repo "$GITHUB_REPOSITORY" \
+                --name nivon-pam-estado --dir "$BASE/anterior" >/dev/null 2>&1 \
+                && test -s "$BASE/anterior/estado_pam.zip"; then
+              echo "PAM_PRIOR=$BASE/anterior/estado_pam.zip" >> "$GITHUB_ENV"
+              echo "PAM_LEGADO=0" >> "$GITHUB_ENV"
+              echo "BACKUP_RECUPERADO=SEMENTE_MT_24_CAPTURAS"
+              exit 0
+            fi
+            echo "::error::Migracao sem a semente auditada de 24 capturas: restaure em GCS antes de iniciar."
+            exit 4
+          fi
+          # Bootstrap UMA vez com o piloto real auditado de 23/10/2026.
+          # Este artifact eh temporario: falha se tiver expirado, sem
+          # apagar ou reiniciar historico silenciosamente.
+          rm -rf "$BASE/anterior"
+          mkdir -p "$BASE/anterior"
+          if ! gh run download 39890755981 --repo "$GITHUB_REPOSITORY" \
+              --name nivon-pam-piloto-inspecao --dir "$BASE/anterior"; then
+            echo "::error::Nenhum estado anterior restauravel. Bootstrap expirou."
+            exit 2
+          fi
+          python - <<'PY'
+          import os,pathlib,re,zipfile
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])/"nivon-pam"/"anterior"
+          arq=root/"legado_pam.zip"
+          aceitas={"pam.sqlite","resultado_coleta.json","auditoria.json"}
+          pattern=re.compile(r"cofre/(?:objetos_sha256/[a-f0-9]{64}\.bin|recibos/[a-f0-9]{64}\.json)")
+          caminhos=[p for p in root.rglob("*") if p.is_file()]
+          if not (root/"pam.sqlite").is_file():
+              raise SystemExit("piloto anterior sem SQLite: bloquear")
+          with zipfile.ZipFile(arq,"w",compression=zipfile.ZIP_DEFLATED) as z:
+              for file in sorted(caminhos):
+                  name=file.relative_to(root).as_posix()
+                  if name in aceitas or pattern.fullmatch(name):
+                      z.write(file,name)
+                  elif file != arq:
+                      raise SystemExit("arquivo anterior desconhecido: "+name)
+          PY
+          echo "PAM_PRIOR=$BASE/anterior/legado_pam.zip" >> "$GITHUB_ENV"
+          echo "PAM_LEGADO=1" >> "$GITHUB_ENV"
+          echo "BACKUP_RECUPERADO=piloto-2026-10-23"
+
+      - name: Atualizar mesmo historico e validar antes do proximo backup
+        shell: bash
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          BASE="${RUNNER_TEMP}/nivon-pam"
+          flags=()
+          if test "$PAM_LEGADO" = "1"; then flags+=(--legado); fi
+          timeout 200s python -m nivon.ivo_pam_ciclo \
+            --anterior "$PAM_PRIOR" "${flags[@]}" \
+            --modo PUBLICO_IBGE \
+            --tarefas config/ivo_pam_piloto_mt.v1.json \
+            --saida "$BASE/ciclo" \
+            | tee "$BASE/log_ciclo.json"
+          python - <<'PY'
+          import json,os,pathlib
+          base=pathlib.Path(os.environ["RUNNER_TEMP"])/"nivon-pam"/"ciclo"
+          r=json.loads((base/"resultado_ciclo.json").read_text())
+          antes=r["estado_anterior"]
+          agora=r["integridade"]
+          print("CAPTURAS_ANTES:",antes["capturas"])
+          print("CAPTURAS_DEPOIS:",agora["capturas_registradas"])
+          print("VINTAGES_ANTES:",antes["vintages"])
+          print("VINTAGES_DEPOIS:",agora["vintages_verificadas"])
+          print("ALTERACOES:",[x["alteracao"] for x in r["coleta"]["mudancas"]])
+          print("ALERTAS_MATERIAIS:",r["alertas"]["alteracoes_relevantes"])
+          print("CELULAS_IVO:",r["entrega_ivo"]["celulas_unicas"])
+          if (r["coleta"]["sucessos"]!=6 or r["coleta"]["falhas"]!=0
+                  or agora["capturas_registradas"]<antes["capturas"]+6
+                  or not agora["integridade_local_aprovada"]):
+              raise SystemExit("historico nao cresceu com 6 coletas auditadas")
+          PY
+      - name: Publicar backup imutavel GCS com readback e ponteiro CAS
+        if: steps.gcs.outputs.active == 'true'
+        shell: bash
+        env:
+          PYTHONPATH: src
+          NIVON_GCS_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+          BUCKET: ${{ vars.NIVON_PAM_GCS_BUCKET }}
+        run: |
+          set -euo pipefail
+          parametros=()
+          if test "${PAM_CLOUD_BOOTSTRAP:-0}" = 1; then
+            parametros+=(--bootstrap)
+          fi
+          python -m nivon.ivo_pam_storage_gcs upload \
+            --bucket "$BUCKET" \
+            --arquivo "${RUNNER_TEMP}/nivon-pam/ciclo/estado_pam.zip" \
+            "${parametros[@]}"
+      - name: Preservar backup validado e relatorios para proximo ciclo
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nivon-pam-estado
+          path: |
+            ${{ runner.temp }}/nivon-pam/ciclo/estado_pam.zip
+            ${{ runner.temp }}/nivon-pam/ciclo/resultado_ciclo.json
+            ${{ runner.temp }}/nivon-pam/ciclo/auditoria.json
+            ${{ runner.temp }}/nivon-pam/ciclo/alertas_pam.json
+            ${{ runner.temp }}/nivon-pam/ciclo/entrega_ivo_pam.json
+          retention-days: 30
+          if-no-files-found: error
