@@ -18,6 +18,7 @@ from .pipeline_medicoes_horarias import (
     preparar_arquivo_medicoes, importar_ciclo_medicoes, auditar_acervo_medicoes,
     relatorio_revisoes_medicoes,
 )
+from .fontes_hidro_entrada import preparar_inmet_zip_local
 
 
 def _lotes(path):
@@ -37,9 +38,11 @@ def _lotes(path):
     editions=[]
     seen=set()
     for entry in obj["lotes"]:
-        if not isinstance(entry, dict) or set(entry) != {
+        default_keys={
             "arquivo","formato","estacao_id","ano","zona","coletado_em","classe"
-        }:
+        }
+        if (not isinstance(entry,dict) or
+            set(entry) not in (default_keys,default_keys|{"membro_csv"})):
             raise ErroPipelineAmbiental("entrada de manifesto incompleta")
         filename=entry["arquivo"]
         if (not isinstance(filename,str) or len(filename)>160 or
@@ -51,13 +54,22 @@ def _lotes(path):
         if file.is_symlink() or not file.is_file() or file.resolve().parent != base:
             raise ErroPipelineAmbiental("arquivo fora do diretório do manifesto")
         fmt=entry["formato"]
-        if fmt not in TIPOS or not 12<=file.stat().st_size<=MAX_RAW[fmt]:
-            raise ErroPipelineAmbiental("arquivo maior do que o limite por formato")
-        raw=file.read_bytes()
-        edition=preparar_arquivo_medicoes(
-            formato=fmt,raw=raw,estacao_id=entry["estacao_id"],
-            ano=entry["ano"],zona=entry["zona"],
-            coletado_em=entry["coletado_em"],classe=entry["classe"])
+        if fmt=="INMET_ANUAL_ZIP":
+            if set(entry)!=default_keys|{"membro_csv"} or entry["zona"] is not None:
+                raise ErroPipelineAmbiental("ZIP INMET requer membro CSV e fuso da origem")
+            edition=preparar_inmet_zip_local(
+                caminho_zip=file,ano=entry["ano"],
+                membro_csv=entry["membro_csv"],
+                estacao_id=entry["estacao_id"],
+                coletado_em=entry["coletado_em"],classe=entry["classe"])
+        else:
+            if set(entry)!=default_keys or fmt not in TIPOS or not 12<=file.stat().st_size<=MAX_RAW[fmt]:
+                raise ErroPipelineAmbiental("arquivo maior do que o limite por formato")
+            raw=file.read_bytes()
+            edition=preparar_arquivo_medicoes(
+                formato=fmt,raw=raw,estacao_id=entry["estacao_id"],
+                ano=entry["ano"],zona=entry["zona"],
+                coletado_em=entry["coletado_em"],classe=entry["classe"])
         editions.append(edition)
     return editions
 
@@ -105,6 +117,13 @@ def exportar_backup_medicoes(db, *, raw_dir, destino):
             copy.close()
         for row in db.execute("SELECT sha256 FROM medidas_edicoes"):
             shutil.copyfile(src / (row[0]+".raw"),temp/"raw"/(row[0]+".raw"))
+        pais=sorted(row[0] for row in db.execute(
+            "SELECT DISTINCT parent_sha256 FROM medidas_containers_origem"))
+        if pais:
+            (temp/"raw"/"origens").mkdir(mode=0o700)
+            for digest in pais:
+                shutil.copyfile(src/"origens"/(digest+".zip"),
+                                temp/"raw"/"origens"/(digest+".zip"))
         check=abrir_banco_medicoes(temp/"medicoes.sqlite")
         try:
             validation=auditar_acervo_medicoes(check,raw_dir=temp/"raw")
@@ -116,6 +135,7 @@ def exportar_backup_medicoes(db, *, raw_dir, destino):
             "schema":"1.0","tipo":"BACKUP_INMET_ANA",
             "db_sha256":sha256((temp/"medicoes.sqlite").read_bytes()).hexdigest(),
             "raw_shas":sorted(row[0] for row in db.execute("SELECT sha256 FROM medidas_edicoes")),
+            "zip_originais_sha256":pais,
             "edicoes":validation["edicoes_auditadas"],
             "medidas":validation["medidas_auditadas"],
             "homologado":False,
@@ -152,7 +172,11 @@ def validar_backup_medicoes(*, caminho):
     try:
         out=auditar_acervo_medicoes(db,raw_dir=root/"raw")
         names=sorted(r[0] for r in db.execute("SELECT sha256 FROM medidas_edicoes"))
-        if (names!=doc["raw_shas"] or out["edicoes_auditadas"]!=doc["edicoes"]
+        zip_parents=sorted(r[0] for r in db.execute(
+            "SELECT DISTINCT parent_sha256 FROM medidas_containers_origem"))
+        if (names!=doc["raw_shas"] or
+                zip_parents!=doc.get("zip_originais_sha256",[]) or
+                out["edicoes_auditadas"]!=doc["edicoes"]
                 or out["medidas_auditadas"]!=doc["medidas"]):
             raise ErroPipelineAmbiental("reconciliação do backup falhou")
     finally:
