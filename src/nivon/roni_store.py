@@ -51,11 +51,13 @@ def _tempo(value, label):
     return dt.astimezone(timezone.utc)
 
 
-def _safe_dir(root):
+def _safe_dir(root, *, criar=True):
     p = Path(root)
     if p.is_symlink() or (p.exists() and not p.is_dir()):
         raise ErroRONI("diretório RAW irregular ou symlink")
     if not p.exists():
+        if not criar:
+            raise ErroRONI("diretório RAW arquivado não encontrado")
         p.mkdir(parents=True, mode=0o700)
     if p.is_symlink():
         raise ErroRONI("diretório RAW symlink")
@@ -104,8 +106,11 @@ def _guard_raw(root, digest, raw=None):
 
 def _ultimo(db, tipo):
     return db.execute(
-        "SELECT * FROM roni_snapshots WHERE classe=? "
-        "ORDER BY visto_nivon_em_utc DESC, sha256 DESC LIMIT 1", (tipo,)
+        "SELECT s.* FROM roni_snapshots s "
+        "JOIN roni_capturas c ON c.sha256=s.sha256 "
+        "WHERE s.classe=? "
+        "ORDER BY c.visto_nivon_em_utc DESC, c.sha256 DESC LIMIT 1",
+        (tipo,)
     ).fetchone()
 
 
@@ -140,8 +145,18 @@ def executar_lote_roni(
     parsed = importar_roni_ascii(raw=raw, coletado_em=coletado_em)
     digest = parsed["sha256"]
     last = _ultimo(db, classe)
-    if last and registro.isoformat() < last["visto_nivon_em_utc"]:
-        raise ErroRONI("primeiro registro retroativo: preservar sequência de capturas")
+    last_capture = db.execute(
+        "SELECT MAX(c.visto_nivon_em_utc) FROM roni_capturas c "
+        "JOIN roni_snapshots s ON s.sha256=c.sha256 WHERE s.classe=?",
+        (classe,),
+    ).fetchone()[0]
+    if last_capture and registro.isoformat() < last_capture:
+        raise ErroRONI("captura retroativa: preservar sequência de revisões")
+    if db.execute(
+        "SELECT 1 FROM roni_capturas WHERE visto_nivon_em_utc=? AND sha256!=? "
+        "LIMIT 1", (registro.isoformat(), digest)
+    ).fetchone():
+        raise ErroRONI("duas revisões distintas no mesmo instante de observação")
     old_values = _valores(db, last["sha256"]) if last else {}
     new_values = {x["competencia_centro"]: x["anomalia_roni_c"]
                   for x in parsed["registros"]}
@@ -158,8 +173,9 @@ def executar_lote_roni(
     ).fetchone()
     if existing is not None and existing["classe"] != classe:
         raise ErroRONI("mesmo RAW classificado em contextos incompatíveis")
-    status = ("SEM_MUDANCA" if existing else
-              "PRIMEIRA_EDICAO" if last is None else
+    status = ("PRIMEIRA_EDICAO" if last is None else
+              "SEM_MUDANCA" if last["sha256"] == digest else
+              "RETORNO_EDICAO_ARQUIVADA" if existing else
               "NOVA_EDICAO_COM_REVISÕES" if revisions else
               "NOVA_EDICAO_SEM_REVISÕES")
     events = classificar_episodios_roni(parsed)["eventos"]
@@ -183,8 +199,8 @@ def executar_lote_roni(
         "quantidade_temporadas": parsed["quantidade"],
         "competencia_primeira": parsed["centro_primeiro"],
         "competencia_ultima": parsed["centro_ultimo"],
-        "competencias_novas": len(additions) if existing is None else 0,
-        "competencias_revisadas": len(revisions) if existing is None else 0,
+        "competencias_novas": len(additions) if status != "SEM_MUDANCA" else 0,
+        "competencias_revisadas": len(revisions) if status != "SEM_MUDANCA" else 0,
         "primeiro_registro_nivon": existing["visto_nivon_em_utc"]
         if existing else registro.isoformat(),
         "capturas_registradas": db.execute(
@@ -209,19 +225,22 @@ def consultar_arquivo_roni(db, *, raw_dir, corte_em, classe="SINTETICO"):
         raise ErroRONI("classe desconhecida")
     corte = _tempo(corte_em, "corte")
     row = db.execute(
-        "SELECT * FROM roni_snapshots WHERE classe=? AND visto_nivon_em_utc<=? "
-        "ORDER BY visto_nivon_em_utc DESC, sha256 DESC LIMIT 1",
+        "SELECT s.*, c.visto_nivon_em_utc AS snapshot_ativo_desde "
+        "FROM roni_snapshots s JOIN roni_capturas c ON c.sha256=s.sha256 "
+        "WHERE s.classe=? AND c.visto_nivon_em_utc<=? "
+        "ORDER BY c.visto_nivon_em_utc DESC, c.sha256 DESC LIMIT 1",
         (classe, corte.isoformat())
     ).fetchone()
     if row is None:
         return {"estado": "SEM_SNAPSHOT_CONHECIDO_ASOF", "snapshot_sha256": None,
                 "homologado": False, "pode_treinar_asof": False}
-    root = _safe_dir(raw_dir)
+    root = _safe_dir(raw_dir, criar=False)
     _guard_raw(root, row["sha256"])
     return {
         "estado": "SNAPSHOT_LOCAL_CONHECIDO_NAO_HOMOLOGADO",
         "snapshot_sha256": row["sha256"],
         "primeiro_registro_nivon": row["visto_nivon_em_utc"],
+        "snapshot_ativo_desde": row["snapshot_ativo_desde"],
         "arquivo_verificado": True,
         "quantidade_temporadas": row["quantidade"],
         "ultimo_mes": row["ultimo_mes"],
@@ -237,7 +256,7 @@ def panorama_local_roni(db, *, raw_dir, classe="SINTETICO"):
     if not last:
         return {"estado": "VAZIO", "total_edicoes": 0,
                 "homologado": False}
-    _guard_raw(_safe_dir(raw_dir), last["sha256"])
+    _guard_raw(_safe_dir(raw_dir, criar=False), last["sha256"])
     count = db.execute("SELECT COUNT(*) FROM roni_snapshots WHERE classe=?",
                        (classe,)).fetchone()[0]
     return {
