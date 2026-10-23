@@ -69,3 +69,12 @@ As páginas públicas da ANP foram pesquisadas e identificadas; **a extração d
 5. Integrar o estágio real homologado no produto final somente depois da aprovação operacional e avaliação de uso/atribuição; não contornar a política de atestações, chave e revogação existente.
 
 A `.gitignore` atual exclui `data/`, `*.sqlite*`, `*.xlsx` e credenciais. **Não versionar bytes RAW, preços municipais reais ou segredos em commits, logs ou discussões públicas.** Fonte mínima para qualquer publicação autorizada: *Agência Nacional do Petróleo, Gás Natural e Biocombustíveis (ANP), Levantamento de Preços de Combustíveis, edição e semana oficiais, com link à origem*.
+
+
+## Inventário adicional: compilação histórica do Google Drive
+
+Foi encontrado no Drive conectado o arquivo **`DIESEL ANP.xlsx`**, criado em 10/08/2026, com 299.565 bytes, localizado na pasta `ANP`. A leitura tabular permitiu inspecionar **4.286 linhas estruturadas** e **52 linhas não classificáveis pelo mesmo esquema** (aparentemente trechos de outras abas/resumos, sujeitos a confirmação no XLSX original). Cobertura identificada das linhas estruturadas: **02/01/2022 a 01/08/2026**, **55 meses de início de semana**, **1.615 linhas de Mato Grosso**, combustíveis `OLEO DIESEL` e `OLEO DIESEL S10`, sem duplicidade aparente na chave data inicial + data final + estado + município + produto. A planilha contém outras UFs e não serve como série municipal brasileira completa.
+
+Arquivo de origem: https://docs.google.com/spreadsheets/d/1cD1QFFgdA3NzaiFkupFRjHjlwxW3ElcJ/edit
+
+**Governança:** é uma **compilação derivada presente no Drive**, não um arquivo LPC semanal RAW validado diretamente contra a ANP. Não atribuir a ela atualidade outubro/2026, não promover a fonte canônica, nem incorporar os dados de 2022–2026 como se fossem registros comprovados pelo novo coletor. A nova coleta real identifica versões oficiais e poderá servir para reconciliação futura dessas amostras históricas. A planilha foi consultada, **não foi copiada integralmente para o repositório ou banco de produção**. A contagem acima é de linhas reconhecidas no conteúdo textual fornecido pelo Drive, não de XLSX bruto verificado por ZIP e openpyxl.
