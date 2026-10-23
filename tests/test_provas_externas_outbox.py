@@ -152,7 +152,9 @@ class TestCincoProvasIndependentes(unittest.TestCase):
 
     def test_persistir_so_hash_sem_comprovantes_brutos(self):
         conteudo = self.f.path.read_bytes()
-        self.assertNotIn(b"EMISSOR_REVISAO_EDITORIAL_SINTETICO", conteudo)
+        # O registry registra IDs públicos de emissores; não registra
+        # a chave HMAC nem os comprovantes de consentimento brutos.
+        self.assertNotIn(b"chave_independente_de_teste_REVISAO_EDITORIAL", conteudo)
         self.assertNotIn(b"REVISAO_SINTETICA_001", conteudo)
         self.assertEqual(self.f.con.execute(
             "SELECT count(*) FROM nivon_provas_externas").fetchone()[0], 1)
