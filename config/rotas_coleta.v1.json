@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "project": "NIVON",
-  "updated_on": "2026-10-21",
+  "updated_on": "2026-10-23",
   "description": "Rotas de coleta complementares ao catálogo mestre. Fonte/cadência/produto/estágio permanecem somente em fontes_nivon_master.v1.json; endpoints são documentados por dataset, não inferidos pela URL institucional.",
   "source_catalog": "config/fontes_nivon_master.v1.json",
   "policy": "DENY_ALL_UNTIL_PER_OPERATION_RIGHTS_TESTS_AND_PERSISTENCE",
@@ -759,7 +759,7 @@
         "url": null,
         "source_proof": null
       },
-      "implementation_scope": "NO_PARSER (código citado não implica coletor ativo)",
+      "implementation_scope": "cotacoes_agrobr_coletor.py (opt-in, cache e fonte alternativa identificados; sem dados em produção)",
       "authentication": "RIGHTS_APPROVAL_REQUIRED",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -1084,9 +1084,9 @@
       "locator": {
         "kind": "OFFICIAL_INDEX",
         "url": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/progresso-de-safra",
-        "source_proof": "https://github.com/bruno-portfolio/agrobr/blob/main/docs/api/conab_progresso.md"
+        "source_proof": "https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39954034040"
       },
-      "implementation_scope": "conab_agrobr.py + progresso_conab_historico.py (dados offline semanais, 27 UFs e MEDIA_ESTADOS; coleta desativada)",
+      "implementation_scope": "conab_incremental.py + conab_execucao_edicao.py + conab_quarentena_real.py + conab_replay_xlsx.py: backfill 2 semanas reais, SQLite efemero, 116 observacoes, coleta e cloud desativados",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -1103,8 +1103,8 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Média de estados CONAB não equivale índice Brasil; preserva vintages.",
-      "preliminary_evidence": "OPEN_SOURCE_ADAPTER_REVIEWED_NOT_LIVE_HOMOLOGATED"
+      "source_note": "2 semanas CONAB outubro/2026 testadas com planilhas XLSX oficiais, 116 observacoes no mesmo SQLite em CI, sem cloud. MEDIA_ESTADOS nao equivale Brasil. Exige armazenamento duravel, direitos de publicacao, agendamento e reconciliacao.",
+      "preliminary_evidence": "REAL_TWO_OFFICIAL_XLSX_VALIDATED_EPHEMERAL_58_EACH_IDEMPOTENT_RERUN"
     },
     {
       "dataset_id": "CPTEC_MERGE",
@@ -1655,7 +1655,7 @@
         "url": null,
         "source_proof": null
       },
-      "implementation_scope": "NO_PARSER (código citado não implica coletor ativo)",
+      "implementation_scope": "cotacoes_agrobr_coletor.py (opt-in, sem direito de reuso presumido)",
       "authentication": "RIGHTS_APPROVAL_REQUIRED",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -5196,6 +5196,123 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "O manifest é metadado de arquivo ZIP: não implica carga de milhões de registros. Para QCL ZIP 33 MB comprimido e milhões de linhas, priorizar leitura seletiva, checkpoint e validação de licenças, custo e frescor.",
       "preliminary_evidence": "FAO_OFFICIAL_BULK_MANIFEST_PUBLIC_WEB_2026_10_21"
+    },
+    {
+      "dataset_id": "ARG_SAGYP_ESTIMACIONES_AGRICOLAS",
+      "collector_class": "API_OR_FILE",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://datos.magyp.gob.ar/dataset/estimaciones-agricolas/archivo/95d066e6-8a0f-4a80-b59d-6f28f88eacd5",
+        "source_proof": "https://datos.magyp.gob.ar/dataset/estimaciones-agricolas"
+      },
+      "implementation_scope": "argentina_agricultura.py + argentina_pipeline_local.py; CKAN endpoint candidato não validado",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "EXACT_CSV_DOWNLOAD_NOT_VERIFIED"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "CC BY 4.0 geral; verificar licença do recurso e acesso HTTP real; registrar originais e revisões",
+      "preliminary_evidence": "PUBLIC_REFERENCE_FOUND_NOT_LIVE_HOMOLOGATED"
+    },
+    {
+      "dataset_id": "ARG_SIO_OPERACOES_DECLARADAS",
+      "collector_class": "DASHBOARD_MANUAL_EXPORT",
+      "locator": {
+        "kind": "OFFICIAL_DASHBOARD",
+        "url": "https://www.siogranos.com.ar/Consulta_publica/operaciones_informadas_exportar.aspx",
+        "source_proof": "https://www.siogranos.com.ar/"
+      },
+      "implementation_scope": "argentina_sio_exportacoes.py; importador condicionado ao CSV homologado",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "OFFICIAL_API_RAR_SCHEMA_UNREAD",
+        "EXPORT_COLUMNS_UNVERIFIED"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Janela de consulta refere-se à declaração e não à negociação; não equiparar negociação a entrega",
+      "preliminary_evidence": "PUBLIC_REFERENCE_FOUND_NOT_LIVE_HOMOLOGATED"
+    },
+    {
+      "dataset_id": "ARG_DJVE_DECLARACOES_EXPORTACAO",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.magyp.gob.ar/mercadosagropecuarios/DJVE.php",
+        "source_proof": "https://www.magyp.gob.ar/mercadosagropecuarios/DJVE.php"
+      },
+      "implementation_scope": "Sem parser homologado; identificar arquivo oficial antes de implementar",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "SCHEMA_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "FILE_LAYOUT_UNVERIFIED"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "DJVE registrada difere de embarque/aduana realizados; não publicar como toneladas exportadas",
+      "preliminary_evidence": "PUBLIC_REFERENCE_FOUND_NOT_LIVE_HOMOLOGATED"
+    },
+    {
+      "dataset_id": "ARG_MAGYP_COMPRAS_GRANOS",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.magyp.gob.ar/sitio/areas/ss_mercados_agropecuarios/",
+        "source_proof": "https://www.magyp.gob.ar/"
+      },
+      "implementation_scope": "Tabela oficial de compras pendente de layout e metadados homologados",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "SCHEMA_UNKNOWN",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "FILE_LAYOUT_UNVERIFIED"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Compras declaradas não são entrega física ou pagamento; preservar safra/produto/unidade",
+      "preliminary_evidence": "PUBLIC_REFERENCE_FOUND_NOT_LIVE_HOMOLOGATED"
     }
   ]
 }

@@ -26,7 +26,7 @@ class TestConabProgressoNaMatriz(unittest.TestCase):
     def test_fontes_nao_atuam_automaticamente(self):
         d=next(x for x in self.cat["datasets"] if x["id"]=="CONAB_PROGRESSO_SEMANAL")
         r=next(x for x in self.routes["entries"] if x["dataset_id"]==d["id"])
-        self.assertEqual(d["stage"],"CODE_PRESENT")
+        self.assertEqual(d["stage"],"REAL_SNAPSHOT_TESTED")
         self.assertFalse(d["collection_authorized"])
         self.assertFalse(d["enabled"])
         self.assertFalse(r["runtime_enabled"])

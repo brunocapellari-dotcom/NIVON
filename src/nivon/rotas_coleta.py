@@ -1,4 +1,4 @@
-"""Plano operacional das rotas de coleta NIVON: 86 datasets, fail-closed.
+"""Plano operacional das rotas de coleta NIVON: catálogo mestre, fail-closed.
 
 Combina catálogo mestre (um só cadastro de produto, estágio, prioridade, cadência,
 fonte) e rotas técnicas. Nenhum acesso HTTP ou execução de collector aqui.

@@ -101,7 +101,6 @@ jobs:
     env:
       PYTHONPATH: src
       NIVON_INMET_BDMEP_URL: ${{ secrets.NIVON_INMET_BDMEP_URL }}
-      NIVON_INMET_DIRETORIO_PRIVADO: ${{ runner.temp }}/nivon-bdmep
     steps:
       - name: Codigo homologado no branch principal
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -112,9 +111,12 @@ jobs:
         with:
           python-version: '3.11'
       - name: Preparar pasta privada temporaria
+        env:
+          NIVON_INMET_DIRETORIO_PRIVADO: ${{ runner.temp }}/nivon-bdmep
         run: mkdir -m 700 "$NIVON_INMET_DIRETORIO_PRIVADO"
       - name: Inspecionar um ZIP BDMEP sem publicar arquivos
         env:
+          NIVON_INMET_DIRETORIO_PRIVADO: ${{ runner.temp }}/nivon-bdmep
           NIVON_ACCESS_MODE: ${{ inputs.modo }}
         run: |
           if [ "$NIVON_ACCESS_MODE" = "preflight" ]; then
