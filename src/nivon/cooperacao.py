@@ -49,6 +49,20 @@ def connect(path):
         claimed_at TEXT, lease_until TEXT, finished_at TEXT,
         tokens_in INTEGER, tokens_out INTEGER,
         note TEXT NOT NULL DEFAULT '', attempts INTEGER NOT NULL DEFAULT 0)""")
+    db.execute("""CREATE TABLE IF NOT EXISTS attempt_metrics (
+        task_id TEXT NOT NULL,
+        attempt INTEGER NOT NULL,
+        agent TEXT NOT NULL,
+        started_at TEXT NOT NULL,
+        finished_at TEXT,
+        outcome TEXT NOT NULL DEFAULT 'running',
+        tokens_in INTEGER,
+        tokens_out INTEGER,
+        tokens_cached INTEGER,
+        note TEXT NOT NULL DEFAULT '',
+        PRIMARY KEY (task_id, attempt),
+        FOREIGN KEY (task_id) REFERENCES tasks(id)
+    )""")
     # Migração compatível: preserva tarefas e checkpoints de versões anteriores.
     columns = {x["name"] for x in db.execute("PRAGMA table_info(tasks)")}
     for name in ("acceptance", "source"):
@@ -126,6 +140,9 @@ def claim(db, agent, minutes=60):
             db.execute("""UPDATE tasks SET status='running', owner=?, claimed_at=?,
                 lease_until=?, attempts=attempts+1 WHERE id=?""",
                 (agent, at.isoformat(), (at + timedelta(minutes=minutes)).isoformat(), row["id"]))
+            db.execute("""INSERT INTO attempt_metrics
+                (task_id, attempt, agent, started_at) VALUES (?, ?, ?, ?)""",
+                (row["id"], row["attempts"] + 1, agent, at.isoformat()))
             db.commit()
             return dict(db.execute("SELECT * FROM tasks WHERE id=?", (row["id"],)).fetchone())
         db.commit()
@@ -135,13 +152,17 @@ def claim(db, agent, minutes=60):
         raise
 
 
-def change(db, task_id, agent, action, note="", tokens_in=None, tokens_out=None, next_agent=None):
+def change(db, task_id, agent, action, note="", tokens_in=None, tokens_out=None,
+           next_agent=None, tokens_cached=None):
     if agent not in AGENTS or action not in {"done", "blocked", "handoff", "heartbeat"}:
         raise ValueError("Ação/agente inválidos")
     if next_agent is not None and (action != "handoff" or next_agent not in AGENTS):
         raise ValueError("Destino de handoff inválido")
-    if (tokens_in is not None and tokens_in < 0) or (tokens_out is not None and tokens_out < 0):
+    if any(type(v) is not int or v < 0 for v in (tokens_in, tokens_out, tokens_cached)
+           if v is not None):
         raise ValueError("Tokens inválidos")
+    if tokens_cached is not None and tokens_in is not None and tokens_cached > tokens_in:
+        raise ValueError("Cached input não pode exceder input")
     db.execute("BEGIN IMMEDIATE")
     try:
         row = db.execute("SELECT * FROM tasks WHERE id=?", (task_id,)).fetchone()
@@ -162,6 +183,17 @@ def change(db, task_id, agent, action, note="", tokens_in=None, tokens_out=None,
                 note=?, tokens_in=COALESCE(?,tokens_in),
                 tokens_out=COALESCE(?,tokens_out) WHERE id=?""",
                 (action, utcnow().isoformat(), note[:3000], tokens_in, tokens_out, task_id))
+        db.execute("""UPDATE attempt_metrics
+           SET finished_at=CASE WHEN ? = 'heartbeat' THEN finished_at ELSE ? END,
+               outcome=CASE WHEN ? = 'heartbeat' THEN outcome ELSE ? END,
+               tokens_in=COALESCE(?, tokens_in),
+               tokens_out=COALESCE(?, tokens_out),
+               tokens_cached=COALESCE(?, tokens_cached),
+               note=CASE WHEN ? = 'heartbeat' THEN note ELSE ? END
+           WHERE task_id=? AND attempt=? AND agent=?""",
+           (action, utcnow().isoformat(), action, action,
+            tokens_in, tokens_out, tokens_cached, action, note[:3000],
+            task_id, row["attempts"], agent))
         db.commit()
         return dict(db.execute("SELECT * FROM tasks WHERE id=?", (task_id,)).fetchone())
     except Exception:
@@ -172,13 +204,34 @@ def change(db, task_id, agent, action, note="", tokens_in=None, tokens_out=None,
 def report(db):
     rows = [dict(r) for r in db.execute("SELECT * FROM tasks ORDER BY priority,id")]
     stamp = utcnow()
+    attempts = [dict(r) for r in db.execute(
+        "SELECT * FROM attempt_metrics ORDER BY task_id, attempt")]
+    agents = {}
+    for agent in sorted(AGENTS):
+        selected = [r for r in attempts if r["agent"] == agent]
+        agents[agent] = {
+            "attempts": len(selected),
+            "completed": sum(r["outcome"] == "done" for r in selected),
+            "blocked": sum(r["outcome"] == "blocked" for r in selected),
+            "handoffs": sum(r["outcome"] == "handoff" for r in selected),
+            "input_tokens_observed": sum(r["tokens_in"] or 0 for r in selected),
+            "output_tokens_observed": sum(r["tokens_out"] or 0 for r in selected),
+            "cached_input_tokens_observed": sum(r["tokens_cached"] or 0 for r in selected),
+            "attempts_without_token_data": sum(
+                r["tokens_in"] is None or r["tokens_out"] is None for r in selected),
+        }
     return {
         "counts": {state: sum(r["status"] == state for r in rows) for state in sorted(STATES)},
         "stale_needs_review": [r["id"] for r in rows if r["status"] == "running"
             and r["lease_until"] and datetime.fromisoformat(r["lease_until"]) < stamp],
         "tokens_reported": {
-            "input": sum(r["tokens_in"] or 0 for r in rows),
-            "output": sum(r["tokens_out"] or 0 for r in rows)},
+            "input": sum(r["tokens_in"] or 0 for r in attempts),
+            "output": sum(r["tokens_out"] or 0 for r in attempts),
+            "cached_input": sum(r["tokens_cached"] or 0 for r in attempts),
+            "missing_attempts": sum(
+                r["tokens_in"] is None or r["tokens_out"] is None for r in attempts)},
+        "agents": agents,
+        "attempts": attempts,
         "tasks": rows
     }
 
