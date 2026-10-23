@@ -89,3 +89,36 @@ não utiliza a totalidade de linhas em CI e não declara autenticação do XLSX 
 3. Para operacionalização: integrar staging ao banco de dados autorizado
    com custeio e acesso verificados; não promover automaticamente a
    tabelas de séries canônicas, modelos ou dashboards.
+
+## Lote ampliado — 23/10/2026: execução isolada e comparação de capturas
+
+| Prioridade | Entrega integrada | Critério de aceite | Situação |
+|---|---|---|---|
+| P0 | RAW local, SHA HTML+XLSX, vínculo de URL, ZIP, OOXML e amostra de células | CLI E2E com XLSX sintético, teste de rejeição | Implementado |
+| P0 | Lote até 30 documentos, dossiê JSON e SQLite staging | Execução integral via CLI, idempotência e persistência de hash | Implementado |
+| P0 | Processo Linux filho com limites de CPU/memória/tempo e ambiente restrito | E2E worker com dossiê, SQLite, erro e flags OFF | Implementado |
+| P1 | Comparação automática entre capturas do mesmo levantamento | Dois SHAs distintos e diferença de célula, sem alegar revisão oficial | Implementado |
+| P1 | Histórico auxiliar de semeadura e colheita do Drive | Adaptador offline de CSV, sem confundir fração e produção | Implementado apenas em staging |
+| P2 | XLSX oficial mensal com direitos, checksum, fonte/edição comprovados | RAW real com histórico temporal auditado | **Pendente** |
+| P2 | Normalização da produção por cultura/UF/unidade e backtest | Confronto de edições reais e vintages as-of independentes | **Bloqueado** |
+
+### Comando único preferencial para inspecionar RAWs no Linux
+
+    PYTHONPATH=src python -m nivon.conab_lote_isolado --manifest jobs.json --base-dir capturas --out dossie.json --sqlite staging.sqlite --timeout 75
+
+O módulo conab_lote_isolado.py cria subprocesso de conab_lote_offline.py com limite CPU 45s, memória virtual 1,5 GiB, arquivo 32 MiB, 64 descritores e timeout de 75s, além de não herdar variáveis arbitrárias de ambiente. O executor NÃO é sandbox de rede, não impede código nativo malicioso nem protege contra vazamento de dados caso o processo seja comprometido. Processar RAW externo em contêiner/VM sem rede, sem credenciais e com acesso restrito ao filesystem. Fora de Linux, o wrapper falha fechado. Não executar em modo produção.
+
+Saída 0 significa inspeção offline concluída; saída 2 significa que um ou mais documentos foram rejeitados (sem persistência SQLite do lote); saída 3 é erro de contrato/ambiente. Nenhum destes códigos autoriza treino, publicação, predição ou armazenamento canônico.
+
+### Comparação posterior em um comando
+
+    PYTHONPATH=src python -m nivon.conab_comparar_capturas --sqlite staging.sqlite --out comparacao.json
+
+O comparador lê SQLite em modo read-only, detecta pares de SHAs distintos dentro da mesma safra/levantamento, confere abas e diferenças das **células amostradas**; não avalia todas as células nem compara unidades/indicadores ainda não identificados. IDs seguem ordem de inserção, não cronologia da CONAB. O arquivo JSON preserva revisao_oficial_conab_comprovada=false, disponibilidade_historica_comprovada=false, habilita_treino=false, habilita_backtest=false e habilita_publicacao=false.
+
+### Testes e próximo bloqueio real
+
+Testes de integração abrangem os dois comandos, leitura de células reais de workbook sintético, SHA divergente, arquivo inválido, persistência SQLite, idempotência, dados mudados com mesmo levantamento, proteção de flags, processo filho limitado e leitura somente do banco. **Não foi integrado nenhum documento mensal oficial completo neste lote**. O arquivo auxiliar CONAB_Plantio_Colheita_Historico.xlsx acessível no Drive contém progresso até julho de 2026 e não substitui atualização contínua oficial ou prova temporal.
+
+Próximo P0: adquirir de fonte oficial e direito confirmado um RAW de edição mensal com HTML/XLSX, hash e comprovante independente de disponibilidade; rodar o pipeline e homologar abas, cultura, UF e unidades. Somente então avançar para confrontar revisões históricas, backtesting e previsão. Nenhum merge, deploy, cron, gasto ou publicação foi autorizado ou realizado.
+
