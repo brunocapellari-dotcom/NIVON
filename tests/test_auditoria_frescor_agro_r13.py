@@ -7,6 +7,8 @@ from tempfile import TemporaryDirectory
 
 from nivon.auditoria_frescor_agro import auditar_fontes_agro, ErroFrescorAgro
 from nivon.ingestao_fontes_reais import gravar_lote
+from nivon.cepea_web_primario import consultar_pagina_primaria, URL_SOJA
+from nivon.maritimo_pipeline import baixar_html
 
 NOW=datetime(2026,10,23,18,tzinfo=timezone.utc)
 DATASET="CEPEA_PRECOS_FISICOS"
@@ -39,6 +41,12 @@ class TestAuditoriaFrescorR13(unittest.TestCase):
 
     def audit(self):
         return auditar_fontes_agro(banco=self.db,agora=NOW,diretorio_raw=self.raw)
+
+    def test_egress_cepea_e_maritimo_bloqueados_sem_gateway(self):
+        with self.assertRaisesRegex(PermissionError,"EGRESS_CEPEA_NAO_HOMOLOGADO"):
+            consultar_pagina_primaria(URL_SOJA)
+        with self.assertRaisesRegex(PermissionError,"EGRESS_MARITIMO_NAO_HOMOLOGADO"):
+            baixar_html("suape",habilitar_rede=True)
 
     def test_sem_banco_nao_inventa_dado_ou_cria_sqlite(self):
         result=self.audit()
