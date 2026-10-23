@@ -70,6 +70,14 @@ def avaliar_relatorios(scan: dict, sbom: dict, *, imagem: str) -> dict:
         raise ErroSupplyChain("SBOM não é CycloneDX")
     if not isinstance(sbom.get("specVersion"), str) or not sbom["specVersion"]:
         raise ErroSupplyChain("versão CycloneDX ausente")
+    # Lista de pacotes pode vir de outra imagem mesmo com formato CycloneDX
+    # válido. Exigir identificação explícita do próprio artefato inspecionado.
+    metadata = sbom.get("metadata")
+    principal = metadata.get("component") if isinstance(metadata, dict) else None
+    if (not isinstance(principal, dict)
+            or principal.get("name") != imagem
+            or principal.get("type") != "container"):
+        raise ErroSupplyChain("SBOM não identifica a mesma imagem do Trivy")
     componentes = sbom.get("components")
     if not isinstance(componentes, list) or not componentes:
         raise ErroSupplyChain("SBOM sem componentes: cobertura não comprovada")
