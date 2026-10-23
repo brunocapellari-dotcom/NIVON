@@ -54,8 +54,8 @@ jobs:
             if test "$run_id" -gt 39891299927; then
               rm -rf "$BASE/anterior"
               mkdir -p "$BASE/anterior"
-              if gh run download "$run_id" --repo "$GITHUB_REPOSITORY" \\
-                  --name nivon-pam-estado --dir "$BASE/anterior" >/dev/null 2>&1 \\
+              if gh run download "$run_id" --repo "$GITHUB_REPOSITORY" \
+                  --name nivon-pam-estado --dir "$BASE/anterior" >/dev/null 2>&1 \
                   && test -s "$BASE/anterior/estado_pam.zip"; then
                 echo "PAM_PRIOR=$BASE/anterior/estado_pam.zip" >> "$GITHUB_ENV"
                 echo "PAM_LEGADO=0" >> "$GITHUB_ENV"
