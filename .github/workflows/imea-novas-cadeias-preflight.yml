@@ -1,0 +1,46 @@
+name: NIVON IMEA - preflight algodao e bovinos (somente leitura)
+on:
+  push:
+    paths:
+      - '.github/workflows/imea-novas-cadeias-preflight.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: nivon-imea-novas-cadeias-preflight
+  cancel-in-progress: false
+jobs:
+  analisar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --disable-pip-version-check agrobr==2.0.0
+      - name: Validar contratos das duas novas cadeias na fonte oficial, sem salvar precos
+        run: |
+          python - <<'PY'
+          import asyncio,json
+          from collections import Counter
+          from agrobr import imea
+          from nivon.imea_lotes import prepare
+          async def main():
+              result={}
+              for chain in ('algodao','bovinocultura'):
+                  data,meta=await imea.cotacoes(chain,return_meta=True)
+                  batch=prepare(data.to_dict(orient='records'),meta,chain)
+                  rows=[r for lot in batch['batches'] for r in lot]
+                  indicators=Counter((r['indicator_id'],r['indicator'],r['unit'],r['indicator_kind']) for r in rows)
+                  result[chain]={'source':str(meta.source),'endpoint':batch['source_url'],
+                    'source_rows':batch['received'],'validated':batch['validated'],
+                    'latest_publication':batch['last_publication'],
+                    'reference_dates_verified':0,
+                    'indicators':[{'id':i,'name':n,'unit':u,'kind':k,'rows':v}
+                                  for (i,n,u,k),v in sorted(indicators.items())]}
+              print('IMEA_CHAIN_PREFLIGHT='+json.dumps(result,ensure_ascii=False))
+          asyncio.run(main())
+          PY
