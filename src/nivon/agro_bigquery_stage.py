@@ -146,6 +146,51 @@ def _conab(db, permitir_sintetico):
                 nivel_agregacao='UF_OU_MEDIA_ESTADOS')
 
 
+def _conab_real_quarentena(db):
+    """Lê snapshots XLSX REAL do capturador; não os declara publicáveis."""
+    if (not _exists(db,'conab_real_edicoes_quarentena')
+            or not _exists(db,'conab_real_observacoes_quarentena')):
+        return
+    sql="""SELECT s.id_edicao,s.sha256_raw,s.publicacao_data,s.competencia,
+                  s.coletado_utc,r.registro_json
+           FROM conab_real_edicoes_quarentena s
+           JOIN conab_real_observacoes_quarentena r
+             ON s.id_edicao=r.id_edicao AND s.sha256_raw=r.sha256_raw
+           ORDER BY s.id_edicao,s.sha256_raw,r.chave_semantica"""
+    for item in db.execute(sql):
+        obs=json.loads(item['registro_json'])
+        if not isinstance(obs,dict) or obs.get('dataset_id')!='CONAB_PROGRESSO_SEMANAL':
+            raise ErroStageAgro('registro CONAB real fora do contrato')
+        if obs.get('competencia')!=item['competencia']:
+            raise ErroStageAgro('semana CONAB do parser diverge do XLSX')
+        for campo,ind in [('pct_semana_atual','PROGRESSO_SEMANAL_ATUAL'),
+                          ('pct_semana_anterior','PROGRESSO_SEMANAL_ANTERIOR'),
+                          ('pct_ano_anterior','PROGRESSO_ANO_ANTERIOR'),
+                          ('pct_media_5_anos','PROGRESSO_MEDIA_5_ANOS')]:
+            val=obs.get(campo)
+            if val is None:
+                continue
+            try:
+                pct=Decimal(str(val))
+            except Exception as exc:
+                raise ErroStageAgro('percentual CONAB real inválido') from exc
+            if not pct.is_finite() or not 0<=pct<=1:
+                raise ErroStageAgro('percentual CONAB real fora de 0-1')
+            qualidade='XLSX_REAL_REVALIDADO_SEM_PUBLICACAO_HOMOLOGADA'
+            if obs.get('uf')=='MEDIA_ESTADOS':
+                qualidade+='|MEDIA_ESTADOS_NAO_BRASIL'
+            yield _r(source_id='CONAB',dataset_id='CONAB_PROGRESSO_SEMANAL',
+                indicador_id=obs['operacao']+'_'+ind,pais='BRA',
+                produto=obs['cultura'],safra=obs['safra'],
+                regiao=obs['uf'],competencia=obs['competencia'],
+                unidade='fracao_0_1',valor=pct,
+                data_publicacao_original=item['publicacao_data'],
+                coletado_utc=item['coletado_utc'],
+                source_sha256=item['sha256_raw'],hash_natureza='RAW_VERIFICADO_LOCAL',
+                classe='INFORMADO_QUARENTENA',qualidade=qualidade,
+                nivel_agregacao='UF_OU_MEDIA_ESTADOS')
+
+
 def _sio(db):
     if not _exists(db,'sio_operacoes') or not _exists(db,'sio_edicoes'):
         return
@@ -194,7 +239,7 @@ def exportar_stage(*,banco:str|Path,saida:str|Path,permitir_sintetico:bool=False
         if os.name=='posix':os.fchmod(fd,0o600)
         with os.fdopen(fd,'wb') as out:
             h=sha256()
-            for gen in (_argentina_sagyp(db),_cotacoes(db),_conab(db,permitir_sintetico),_sio(db)):
+            for gen in (_argentina_sagyp(db),_cotacoes(db),_conab_real_quarentena(db),_conab(db,permitir_sintetico),_sio(db)):
                 for r in gen:
                     count+=1
                     if count>max_linhas:
