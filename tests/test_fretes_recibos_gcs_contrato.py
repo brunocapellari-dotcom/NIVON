@@ -119,7 +119,7 @@ class TestAdaptadorCloudStorage(unittest.TestCase):
         b=BucketFalso()
         r=recibo()
         r["sequencia"]=18
-        with self.assertRaisesRegex(ValueError,"MAC inválido"):
+        with self.assertRaisesRegex(ErroReciboGCS,"upload bloqueado"):
             escrever(b,r)
         self.assertEqual(len(b.uploads),0)
 
