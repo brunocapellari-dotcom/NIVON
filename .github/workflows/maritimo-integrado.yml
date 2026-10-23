@@ -38,7 +38,7 @@ jobs:
       - name: Testes de fluxo integrado sem rede
         env:
           PYTHONPATH: src
-        run: python -m unittest discover -s tests -p 'test_maritimo_integrado.py' -v
+        run: python -m unittest discover -s tests -v
   coleta:
     needs: qa
     if: ${{ github.event_name != 'pull_request' && vars.NIVON_MARITIMO_COLETA_HABILITADA == 'true' }}

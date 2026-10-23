@@ -88,6 +88,9 @@ def baixar_html(fonte, *, habilitar_rede=False, transporte=None, timeout=20):
 
 def _identidade(r):
     """DUV tem prioridade; sem DUV, a chave de escala e PROVISORIA."""
+    if r.get("natureza") == "INFERIDO_AIS" and r.get("primeira_posicao"):
+        key = [r.get("porto"), r.get("imo"), r["primeira_posicao"]]
+        return "VISITA_AIS:" + hashlib.sha256(json.dumps(key).encode()).hexdigest()[:24], True
     duv = str(r.get("duv") or "").strip()
     if duv:
         return "DUV:" + duv, False
