@@ -12,14 +12,22 @@ from __future__ import annotations
 
 import hashlib
 import io
+import json
+import tempfile
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
 from datetime import date
+from pathlib import Path
+from scripts import maritime_pdf_batch as batch_cli
 
 from nivon.coleta_web import FonteWeb
 from nivon.portos_automaticos import ContratoPorto, ErroPorto, processar_documento_porto
 from nivon.maritime.official_lineup_bridge import bridge_official_pdf_document
 from nivon.maritime.lineup_history import vintage_from_official_bridge
 from nivon.maritime.maritime_store import MaritimeStore
+from nivon.maritime.offline_pdf_batch import (
+    OfflinePdfEdition, OfflineRightsAttestation, run_offline_pdf_batch,
+)
 from nivon.maritime.pdf_programme_ledger import (
     PdfProgrammeLedger, edition_from_pdf_bridge,
 )
@@ -114,6 +122,35 @@ def document(port, payload, *, stamp=STAMP):
         "fonte_id": "FIXTURE_" + port, "url": URLS[port],
         "capturado_em": stamp,
     }
+
+
+def local_manifest(folder, docs, *, rights_override=None):
+    """Build a machine-readable manifest with synthetic local PDFs only."""
+    items = []
+    for idx, (port, content, stamp, pub) in enumerate(docs, 1):
+        filename = f"fixture_{idx}.pdf"
+        (Path(folder) / filename).write_bytes(content)
+        rights = {
+            "rights_status": "ATTESTED",
+            "evidence_reference": "SYNTHETIC_TEST_ONLY_NO_LEGAL_LICENCE",
+            "reviewed_by": "SYNTHETIC_REVIEWER",
+            "offline_processing": True,
+            "store_derived": True,
+            "read_derived": True,
+        }
+        rights.update(rights_override or {})
+        items.append({
+            "port_id": port, "source_id": "FIXTURE_" + port,
+            "source_url": URLS[port], "series": "EXPORT_OESTE" if port == "PARANAGUA" else None,
+            "reference_date": "2026-10-20", "file": filename,
+            "sha256": hashlib.sha256(content).hexdigest(),
+            "collected_at": stamp, "published_at": pub,
+            "publication_evidence_id": "SYNTHETIC_PUBLICATION" if pub else None,
+            "rights": rights,
+        })
+    path = Path(folder) / "input_manifest.json"
+    path.write_text(json.dumps({"documents": items}), encoding="utf-8")
+    return path
 
 
 @unittest.skipUnless(canvas is not None and pdfplumber is not None,
@@ -286,6 +323,152 @@ class PdfPlumberE2ETests(unittest.TestCase):
             self.assertEqual(revision["changes"][0]["field"], "unidentified_rows_not_reconciled")
             self.assertIsNone(revision["confirmed_port_calls"])
             self.assertIsNone(revision["confirmed_departures"])
+
+    def test_batch_multiple_pdf_bytes_to_sqlite_and_revision_report(self):
+        p1 = paranagua_pdf(duv="", clock="09:00")
+        p2 = paranagua_pdf(duv="", clock="11:30")
+        it = itaqui_pdf(duv="")
+        rights = OfflineRightsAttestation(
+            "SYNTHETIC_ONLY", "TESTER", True, True, True, "ATTESTED"
+        )
+        docs = (
+            OfflinePdfEdition(contract("PARANAGUA"), document("PARANAGUA", p1),
+                              rights, published_at="2026-10-20T11:00:00+00:00",
+                              publication_evidence_id="TEST_1"),
+            OfflinePdfEdition(
+                contract("PARANAGUA"),
+                document("PARANAGUA", p2, stamp="2026-10-20T16:00:00+00:00"),
+                rights, published_at="2026-10-20T15:00:00+00:00",
+                publication_evidence_id="TEST_2"),
+            OfflinePdfEdition(
+                contract("ITAQUI"), document("ITAQUI", it),
+                rights, published_at="2026-10-20T11:00:00+00:00",
+                publication_evidence_id="TEST_3"),
+        )
+        with MaritimeStore() as store:
+            report = run_offline_pdf_batch(
+                docs, store=store, as_of="2026-10-20T18:00:00+00:00",
+                commit=True,
+            )
+            self.assertEqual(report["documents_processed"], 3)
+            self.assertEqual(report["edition_writes"]["inserted"], 3)
+            self.assertEqual(len(report["revisions"]), 1)
+            self.assertEqual(report["revisions"][0]["changes"][0]["field"],
+                             "eta_text_declared")
+            self.assertFalse(report["publication_allowed"])
+            self.assertIsNone(report["port_call_count"])
+            self.assertIsNone(report["realized_tonnes"])
+            again = run_offline_pdf_batch(
+                docs, store=store, as_of="2026-10-20T18:00:00+00:00",
+                commit=True,
+            )
+            self.assertEqual(again["edition_writes"]["already_present"], 3)
+
+    def test_one_command_cli_default_dryrun_does_not_create_sqlite_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = local_manifest(tmp, [
+                ("PARANAGUA", paranagua_pdf(duv=""),
+                 STAMP, "2026-10-20T11:00:00+00:00")
+            ])
+            output = io.StringIO()
+            with redirect_stdout(output):
+                exit_code = batch_cli.main([
+                    str(manifest), "--as-of", "2026-10-20T18:00:00Z"
+                ])
+            report = json.loads(output.getvalue())
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(report["execution_mode"], "DRY_RUN_NO_STORAGE")
+            self.assertEqual(report["edition_writes"]["inserted"], 0)
+            self.assertFalse(any(Path(tmp).glob("*.sqlite")))
+
+    def test_cli_commit_two_editions_then_repeat_is_idempotent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = local_manifest(tmp, [
+                ("PARANAGUA", paranagua_pdf(duv="", clock="09:00"),
+                 STAMP, "2026-10-20T11:00:00+00:00"),
+                ("PARANAGUA", paranagua_pdf(duv="", clock="12:00"),
+                 "2026-10-20T16:00:00+00:00", "2026-10-20T15:00:00+00:00"),
+            ])
+            db = Path(tmp) / "run.sqlite"
+            output = io.StringIO()
+            command = [str(manifest), "--as-of", "2026-10-20T18:00:00Z",
+                       "--commit", "--ack-rights", "--db", str(db)]
+            with redirect_stdout(output):
+                self.assertEqual(batch_cli.main(command), 0)
+            result = json.loads(output.getvalue())
+            self.assertEqual(result["edition_writes"]["inserted"], 2)
+            self.assertEqual(result["revisions"][0]["change_count"], 1)
+            self.assertTrue(db.exists())
+            output = io.StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(batch_cli.main(command), 0)
+            self.assertEqual(json.loads(output.getvalue())["edition_writes"],
+                             {"inserted": 0, "already_present": 2})
+
+    def test_cli_refuses_storage_without_explicit_rights_acknowledgement(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = local_manifest(tmp, [
+                ("PARANAGUA", paranagua_pdf(), STAMP,
+                 "2026-10-20T11:00:00Z")
+            ])
+            db = Path(tmp) / "dont_write.sqlite"
+            output = io.StringIO()
+            with redirect_stderr(output):
+                code = batch_cli.main([
+                    str(manifest), "--as-of", "2026-10-20T18:00:00Z",
+                    "--commit", "--db", str(db),
+                ])
+            self.assertEqual(code, 2)
+            self.assertIn("BLOCKED", output.getvalue())
+            self.assertFalse(db.exists())
+
+    def test_cli_rejects_path_escape_from_manifest_root(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = local_manifest(tmp, [
+                ("PARANAGUA", paranagua_pdf(), STAMP,
+                 "2026-10-20T11:00:00Z")
+            ])
+            content = json.loads(manifest.read_text())
+            content["documents"][0]["file"] = "../elsewhere.pdf"
+            manifest.write_text(json.dumps(content))
+            error = io.StringIO()
+            with redirect_stderr(error):
+                code = batch_cli.main([str(manifest), "--as-of",
+                                       "2026-10-20T18:00:00Z"])
+            self.assertEqual(code, 2)
+            self.assertIn("must stay inside", error.getvalue())
+
+    def test_cli_rejects_wrong_manifest_hash_without_persistence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = local_manifest(tmp, [
+                ("ITAQUI", itaqui_pdf(), STAMP,
+                 "2026-10-20T11:00:00Z")
+            ])
+            content = json.loads(manifest.read_text())
+            content["documents"][0]["sha256"] = "f" * 64
+            manifest.write_text(json.dumps(content))
+            error = io.StringIO()
+            db = Path(tmp) / "not_created.sqlite"
+            with redirect_stderr(error):
+                code = batch_cli.main([str(manifest), "--as-of",
+                                       "2026-10-20T18:00:00Z", "--commit",
+                                       "--ack-rights", "--db", str(db)])
+            self.assertEqual(code, 2)
+            self.assertIn("SHA-256 differs", error.getvalue())
+            self.assertFalse(db.exists())
+
+    def test_cli_missing_rights_blocks_without_network(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = local_manifest(tmp, [
+                ("PARANAGUA", paranagua_pdf(), STAMP,
+                 "2026-10-20T11:00:00Z")
+            ], rights_override={"rights_status": "PENDING"})
+            error = io.StringIO()
+            with redirect_stderr(error):
+                code = batch_cli.main([str(manifest), "--as-of",
+                                       "2026-10-20T18:00:00Z"])
+            self.assertEqual(code, 2)
+            self.assertIn("rights attestation", error.getvalue())
 
     def test_itaqui_physical_status_never_promoted_to_schedule(self):
         payload = itaqui_pdf(status="ATRACADO")
