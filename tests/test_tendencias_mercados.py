@@ -52,6 +52,7 @@ def fretes(valores=None):
                 "origem_ibge": ORIGEM, "destino_ibge": DESTINO,
                 "produto": "MILHO", "veiculo": "RODOTREM",
                 "pedagio": "ADICIONAL", "natureza": "OFERTA",
+                "descarga_entity_id": "TERMINAL-1", "regime": "PJ",
                 "unidade": "BRL/T", "lote_id": f"FAZENDA-{i}",
                 "pickup_entity_id": f"PONTO-{i}",
                 "transportadora_id": f"TRANSPORTADORA-{i}",
@@ -65,6 +66,7 @@ def analisar_frete(linhas, **extras):
         linhas, origem_ibge=ORIGEM, destino_ibge=DESTINO,
         produto="MILHO", veiculo="RODOTREM", pedagio="ADICIONAL",
         as_of="2026-10-20", janela=6, tolerancia_absoluta=2,
+        descarga_entity_id="TERMINAL-1", regime="PJ",
         **extras,
     )
 
@@ -170,6 +172,7 @@ class TestTendenciasPrioritarias(unittest.TestCase):
                     **obs(dia, preco), "origem_ibge": ORIGEM,
                     "destino_ibge": DESTINO, "produto": "MILHO",
                     "veiculo": "RODOTREM", "pedagio": "ADICIONAL",
+                    "descarga_entity_id": "TERMINAL-1", "regime": "PJ",
                     "natureza": "OFERTA", "unidade": "BRL/T",
                     "lote_id": "LOTE-" + fazenda,
                     "pickup_entity_id": fazenda,
@@ -215,6 +218,29 @@ class TestTendenciasPrioritarias(unittest.TestCase):
                 lines[0].pop(campo)
                 with self.assertRaises(ErroTendencia):
                     analisar_frete(lines)
+
+    def test_r01_rejeita_condicoes_comerciais_de_descarga_e_regime(self):
+        for campo, novo in (("descarga_entity_id", "TERMINAL-2"),
+                            ("regime", "PF")):
+            with self.subTest(campo=campo):
+                linhas = fretes()
+                linhas[0][campo] = novo
+                with self.assertRaisesRegex(ErroTendencia, "mistura"):
+                    analisar_frete(linhas)
+                # A condição não pode se tornar parte do mesmo painel sem
+                # explicitação da identidade econômica.
+        r = analisar_frete(fretes())
+        self.assertEqual(r["descarga_entity_id"], "TERMINAL-1")
+        self.assertEqual(r["regime"], "PJ")
+        self.assertEqual(r["escopo_economico"],
+                         "MESMA_DESCARGA_REGIME_PRODUTO_EQUIPAMENTO_PEDAGIO_BASE")
+
+    def test_r01_campos_comerciais_ausentes_bloqueiam(self):
+        for campo in ("regime", "descarga_entity_id"):
+            linhas = fretes()
+            linhas[3].pop(campo)
+            with self.subTest(campo=campo), self.assertRaises(ErroTendencia):
+                analisar_frete(linhas)
 
     def test_frete_20_reposts_nao_viram_lotes(self):
         linhas = fretes()
