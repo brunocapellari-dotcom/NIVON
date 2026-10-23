@@ -11,8 +11,8 @@ import sys
 
 REQUIRED = ("git", "claude", "codex", "docker")
 OPTIONAL = ("gh", "ruff", "ty", "rg", "ast-grep", "sg", "serena", "codebase-memory-mcp", "rtk", "uv", "gitleaks", "semgrep", "osv-scanner", "ollama", "pytest")
-CLAUDE_FLAGS = ("--restricted", "--bare", "--no-session-persistence", "--permission-prompts", "--tools")
-CODEX_FLAGS = ("--sandbox", "--json")
+CLAUDE_FLAGS = ("--restricted", "--safe-mode", "--no-session-persistence", "--permission-prompts", "--tools")
+CODEX_FLAGS = ("--sandbox", "--json", "--ask-for-approval")
 
 
 def call(args):
@@ -33,6 +33,30 @@ def doctor():
         run = call(["codex", "exec", "--help"])
         desc = ((run.stdout or "") + "\n" + (run.stderr or "")) if run else ""
         flags["codex"] = {flag: flag in desc for flag in CODEX_FLAGS}
+    # Login de assinatura: sem ligar contas/API com cobrança automática.
+    # O doctor nunca publica tokens ou a resposta completa de auth.
+    authentication = {"claude": "unknown", "codex": "unknown"}
+    if found["claude"]:
+        authenticated = call(["claude", "auth", "status"])
+        if authenticated and authenticated.returncode == 0:
+            try:
+                details = json.loads(authenticated.stdout)
+                method = details.get("authMethod") if isinstance(details, dict) else None
+                if method in ("claude.ai", "oauth_token"):
+                    authentication["claude"] = "subscription"
+                elif method in ("api_key", "api_key_helper", "third_party"):
+                    authentication["claude"] = "external_billing_blocked"
+            except (TypeError, ValueError):
+                pass
+    if found["codex"]:
+        authenticated = call(["codex", "login", "status"])
+        if authenticated and authenticated.returncode == 0:
+            output = (authenticated.stdout + authenticated.stderr).casefold()
+            if "logged in using chatgpt" in output:
+                authentication["codex"] = "subscription"
+            elif "api key" in output or "api_key" in output:
+                authentication["codex"] = "external_billing_blocked"
+
     image = os.environ.get("NIVON_PYTHON_IMAGE", "python:3.11-slim")
     image_ok = bool(re.fullmatch(r"python:3\.11(?:-slim)?", image))
     local_image = False
@@ -43,15 +67,17 @@ def doctor():
         "required": {k: found[k] for k in REQUIRED},
         "optional": {k: found[k] for k in OPTIONAL},
         "supported_flags": flags,
+        "authentication": authentication,
         "docker_image_local": local_image,
         "docker_image_allowed": image_ok,
         "ready_for_pilot": (
             all(found[x] for x in REQUIRED) and image_ok and local_image
             and all(all(v.values()) for v in flags.values())
+            and all(value == "subscription" for value in authentication.values())
         ),
         "local_model_option": ("ollama_available_manual_configuration"
                                 if found.get("ollama") else "ollama_not_installed"),
-        "limits": "Não verifica login, franquia da assinatura, VRAM/RAM, licenças de modelos, isolamento real do host ou cobrança.",
+        "limits": "Verifica tipo aparente do login, não a cota disponível, RAM/VRAM, licença, isolamento efetivo ou cobrança futura.",
     }
 
 
