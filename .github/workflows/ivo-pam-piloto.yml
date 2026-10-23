@@ -214,6 +214,7 @@ jobs:
           print("VINTAGES_ANTES:",antes["vintages"])
           print("VINTAGES_DEPOIS:",agora["vintages_verificadas"])
           print("ALTERACOES:",[x["alteracao"] for x in r["coleta"]["mudancas"]])
+          print("ALERTAS_MATERIAIS:",r["alertas"]["alteracoes_relevantes"])
           if (r["coleta"]["sucessos"]!=6 or r["coleta"]["falhas"]!=0
                   or agora["capturas_registradas"]<antes["capturas"]+6
                   or not agora["integridade_local_aprovada"]):
@@ -244,5 +245,6 @@ jobs:
             ${{ runner.temp }}/nivon-pam/ciclo/estado_pam.zip
             ${{ runner.temp }}/nivon-pam/ciclo/resultado_ciclo.json
             ${{ runner.temp }}/nivon-pam/ciclo/auditoria.json
+            ${{ runner.temp }}/nivon-pam/ciclo/alertas_pam.json
           retention-days: 30
           if-no-files-found: error
