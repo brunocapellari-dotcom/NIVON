@@ -38,6 +38,14 @@ def iniciar_staging(db: sqlite3.Connection) -> None:
       sha256 TEXT NOT NULL REFERENCES anp_lpc_staging_edicoes(sha256),
       capturado_em TEXT NOT NULL, PRIMARY KEY(sha256,capturado_em)
     );
+    CREATE TABLE IF NOT EXISTS anp_lpc_staging_indices (
+      sha256 TEXT NOT NULL REFERENCES anp_lpc_staging_edicoes(sha256),
+      indice_sha256 TEXT NOT NULL,
+      capturado_indice_em TEXT NOT NULL,
+      PRIMARY KEY(sha256,indice_sha256,capturado_indice_em)
+    );
+    CREATE INDEX IF NOT EXISTS idx_anp_lpc_staging_indices_digesto
+      ON anp_lpc_staging_indices(indice_sha256);
     CREATE TABLE IF NOT EXISTS anp_lpc_staging_observacoes (
       sha256 TEXT NOT NULL REFERENCES anp_lpc_staging_edicoes(sha256),
       uf TEXT NOT NULL CHECK(uf='MT'), municipio TEXT NOT NULL,
@@ -125,6 +133,14 @@ def integrar_real_preliminar(
             if raw_arquivado and not existing["raw_arquivado"]:
                 db.execute("""UPDATE anp_lpc_staging_edicoes
                   SET raw_arquivado=1 WHERE sha256=?""", (file_sha,))
+        # Um XLSX pode aparecer em vários snapshots do índice, sem
+        # alterar os preços. Registrar a evidência por captura, não
+        # sobrescrever o primeiro índice atribuído à edição.
+        indice_novo = db.execute(
+            """INSERT OR IGNORE INTO anp_lpc_staging_indices
+               (sha256,indice_sha256,capturado_indice_em) VALUES (?,?,?)""",
+            (file_sha,index_sha,index_time.isoformat()),
+        ).rowcount == 1
         nova = db.execute("""INSERT OR IGNORE INTO anp_lpc_staging_capturas
            (sha256,capturado_em) VALUES (?,?)""",
            (file_sha,file_time.isoformat())).rowcount == 1
@@ -134,6 +150,7 @@ def integrar_real_preliminar(
         "semana_inicio": week["semana_inicio"], "semana_fim": week["semana_fim"],
         "observacoes": len(dados), "municipios": len({d[2] for d in dados}),
         "captura_nova": nova, "edicao_nova": existing is None,
+        "indice_registrado": indice_novo,
         "raw_arquivado": raw_arquivado, "publicavel": False,
         "homologado": False, "fonte": "ANP_LEVANTAMENTO_PRECOS_COMBUSTIVEIS",
     }
@@ -162,6 +179,13 @@ def auditar_arquivos_origem_lpc(
             SELECT 1 FROM anp_lpc_staging_capturas c
             WHERE c.sha256=e.sha256 AND c.capturado_em<=?
         ) ORDER BY e.sha256""", (corte.isoformat(),)).fetchall()
+    # Verificar todos os índices associados, inclusive os novos
+    # snapshots do HTML que conservam o mesmo XLSX de semanas passadas.
+    snapshots = db.execute("""
+        SELECT DISTINCT indice_sha256
+        FROM anp_lpc_staging_indices
+        WHERE capturado_indice_em<=? ORDER BY indice_sha256
+    """, (corte.isoformat(),)).fetchall()
     cache = {}
     falhas = []
     verificacoes = 0
@@ -199,10 +223,13 @@ def auditar_arquivos_origem_lpc(
             continue
         validar("planilhas",e["sha256"],"XLSX")
         validar("indices",e["indice_sha256"],"INDICE_HTML")
+    for index_row in snapshots:
+        validar("indices",index_row["indice_sha256"],"INDICE_HTML")
     return {
         "status":"RAW_VERIFICADO_LOCALMENTE" if not falhas else "RAW_NAO_CONFIAVEL",
         "as_of":corte.isoformat(), "edicoes_consultadas":len(linhas),
         "arquivos_distintos_verificados":verificacoes,
+        "snapshots_de_indice_registrados":len(snapshots),
         "quantidade_falhas":len(falhas), "falhas":falhas,
         "precos_expostos":False, "publicavel":False,
         "autenticidade_externa_comprovada":False,
