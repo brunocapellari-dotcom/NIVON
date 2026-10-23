@@ -21,7 +21,7 @@ class TestArgentina(unittest.TestCase):
             'url':'https://dados.exemplo.org.ar/soja.csv','format':'CSV'}}).encode()
         r=interpretar_metadados(payload,recurso='soja',coletado_em=AGORA)
         self.assertIn('SEM_DOWNLOAD',r['estado'])
-        self.assertNotIn('autorizado',r['url_candidata_nao_autorizada'])
+        self.assertEqual(r['url_candidata_nao_autorizada'],'https://dados.exemplo.org.ar/soja.csv')
         with self.assertRaises(ErroArgentina):
             interpretar_metadados(json.dumps({'success':True,'result':{'id':'outro','url':'https://x/soja.csv','format':'CSV'}}).encode(),recurso='soja',coletado_em=AGORA)
 
@@ -54,7 +54,7 @@ class TestArgentina(unittest.TestCase):
             self.assertEqual(importar_csv_autorizado(**kw,direitos_armazenamento_verificados=True)['status'],'DUPLICATA_IDEMPOTENTE')
             with sqlite3.connect(p) as db:
                 self.assertEqual(db.execute('select count(*) from ar_estimaciones').fetchone()[0],1)
-                self.assertEqual(db.execute('select disponibilidade_verificada from ar_ediciones').fetchone()[0],0)
+                self.assertEqual(db.execute('select disponibilidad_verificada from ar_ediciones').fetchone()[0],0)
             with self.assertRaises(ErroArgentina):
                 importar_csv_autorizado(**{**kw,'conteudo':CSV.replace(b'270,3000',b'280,3000')},direitos_armazenamento_verificados=True)
             # Falha de duplicata nao persiste edicao parcial
