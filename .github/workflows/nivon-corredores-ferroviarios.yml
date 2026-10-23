@@ -71,6 +71,16 @@ jobs:
                         "polos_por_nome_exato":doc["polos_ferroviarios"],
                         "estado":"PESQUISA_FERROVIARIA_NAO_TRANSFERENCIA_MODAL",
                         "data_publicacao":None}
+              print("TOP_ESTACOES_ORIGEM_MT", comp, json.dumps([
+                  {"origem": str(x["estacao_origem"])[:80],
+                   "destino": str(x["estacao_destino"])[:80],
+                   "mercadoria_fonte": str(x["mercadoria_fonte"])[:80],
+                   "TU": x["toneladas_ferroviarias"]}
+                  for x in doc["ranking"][:8]], ensure_ascii=False))
+              print("POLOS_EXATOS",comp, json.dumps([
+                  {"polo_id":x["polo"]["id"],"TU":x["toneladas_ferroviarias"],
+                   "status":x["status"]}
+                  for x in doc["polos_ferroviarios"]],ensure_ascii=False))
               (destino / f"antt-corredores-{ano}.json").write_text(
                   json.dumps(resumo,ensure_ascii=False,indent=2),encoding="utf-8")
               with open(os.environ["GITHUB_STEP_SUMMARY"],"a",encoding="utf-8") as f:
