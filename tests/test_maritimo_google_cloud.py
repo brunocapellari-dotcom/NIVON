@@ -33,6 +33,9 @@ class FakeBlob:
         assert if_generation_match==0
         self.content=raw
     def reload(self):pass
+    def download_as_bytes(self):
+        if self.content is None:raise FileNotFoundError(self.name)
+        return self.content
 
 class FakeBucket:
     def __init__(self):self.blobs={}
@@ -135,7 +138,8 @@ class TestCloud(unittest.TestCase):
         self.assertEqual(result["estados"],{"OK":2,"QUARENTENA":2,"FALHA":0})
         self.assertEqual(result["persistencia"]["contagens"]["fluxos_passagens"],1)
         self.assertEqual(len(client.sql),4)
-        self.assertEqual(len(storage.bucket("bucket-nivon-123").blobs),5)
+        self.assertEqual(len(storage.bucket("bucket-nivon-123").blobs),6)
+        self.assertIn("/_manifestos/",result["manifesto"])
 
     def test_cloud_run_desabilitado_sem_qualquer_escrita(self):
         with self.assertRaises(PermissionError):

@@ -35,32 +35,43 @@ def executar_job(*, env=None, storage_client=None, bigquery_client=None,
         db_path=Path(dirname)/"capturas.sqlite"
         pw_path=Path(dirname)/"portwatch.sqlite"
         db=HistoricoMaritimo(db_path)
+        snapshots=[]
+        execucoes=[]
         try:
             def snapshot(fonte,html,data):
-                armazenar.arquivar(fonte,html,coletado_em=data)
+                item=armazenar.arquivar(fonte,html,coletado_em=data)
+                snapshots.append({"fonte":fonte,"coletado_em":data,**item})
             result=executar_lote(FONTES,db,fornecedor_html=fornecedor_html,
                  permitir_rede=fornecedor_html is None,on_snapshot=snapshot)
+            execucoes.extend(result["fontes"])
             if variables.get("NIVON_PORTWATCH_COLETA_HABILITADA")=="true":
                 start=(today-timedelta(days=8)).isoformat()
                 end=(today-timedelta(days=1)).isoformat()
                 def archive_pw(url,payload,offset):
-                    armazenar.arquivar("fmi_portwatch",payload,
-                       coletado_em=datetime.now(timezone.utc).isoformat())
+                    at=datetime.now(timezone.utc).isoformat()
+                    item=armazenar.arquivar("fmi_portwatch",payload,coletado_em=at)
+                    snapshots.append({"fonte":"fmi_portwatch","coletado_em":at,**item})
                 portwatch=executar_portwatch(PASSAGENS,start,end,
                    banco_lineups=db,banco_portwatch=pw_path,
                    fornecer_json=fornecer_portwatch,
                    permitir_rede=fornecer_portwatch is None,
                    archivador_pagina=archive_pw)
                 result["portwatch_estado"]=portwatch["estado"]
+                # PortWatch gera seu proprio run_id e a execucao real
+                # deve ser preservada no manifesto.
+                execucoes.append(portwatch)
         finally:
             db.fechar()
+        manifesto=armazenar.gravar_manifesto(
+            run_id=result["run_id"],snapshots=snapshots,
+            execucoes=execucoes,portwatch_estado=result.get("portwatch_estado"))
         bigquery=sincronizar_bigquery(db_path,
             portwatch_banco=pw_path if pw_path.is_file() else None,
             projeto=projeto,dataset=dataset,
             client=bigquery_client,bigquery_module=bigquery_module)
         # Erros recuperaveis por reprocessamento dos objetos GCS.
         return {"estados":result["estados"],"portwatch":result.get("portwatch_estado"),
-                "persistencia":bigquery,"apto_operacao":
+                "persistencia":bigquery,"manifesto":manifesto,"apto_operacao":
                  result["apto_operacao"] and result.get("portwatch_estado","OK")=="OK"}
 
 def main():
