@@ -41,7 +41,7 @@ class TestWheelLock(unittest.TestCase):
 
     def test_constraints_respeitam_59_versoes_e_proibem_drift(self):
         for arch in ("amd64","arm64"):
-            locked=ROOT / f"infra/locks/analytics-{arch}.json"
+            locked=Path(__file__).resolve().parents[1] / f"infra/locks/analytics-{arch}.json"
             lines=constraints_from_lock(locked,arch).splitlines()
             self.assertEqual(len(lines),59)
             self.assertIn("certifi==2026.10.19",lines)
