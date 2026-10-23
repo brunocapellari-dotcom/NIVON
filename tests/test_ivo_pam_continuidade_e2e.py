@@ -64,7 +64,7 @@ class TestIVOContinuidadeE2E(unittest.TestCase):
 
     def report(self, cutoff=T+timedelta(days=1), **kwargs):
         return planejar_continuidade_pam(
-            db=self.db, tarefas=self.tasks, corte=cutoff, **kwargs,
+            db=self.db, tarefas=self.tasks, corte=cutoff, raiz=self.cofre, **kwargs,
         )
 
     def test_sem_capturas_gera_backlog_estruturado(self):
@@ -172,7 +172,21 @@ class TestIVOContinuidadeE2E(unittest.TestCase):
         for tasks in ([P1, P1], [dict(P1, variavel="999")],
                       [dict(P1, municipio_ibge="123")], []):
             with self.subTest(tasks=tasks), self.assertRaises(ErroContinuidadePAM):
-                planejar_continuidade_pam(db=self.db, tarefas=tasks, corte=T)
+                planejar_continuidade_pam(db=self.db, tarefas=tasks, corte=T, raiz=self.cofre)
+
+    def test_hash_do_objeto_corrompido_bloqueia_planejamento(self):
+        row = self.store()
+        original = self.cofre / "objetos_sha256" / (row["sha256"] + ".bin")
+        original.write_bytes(b"corrupcao intencional")
+        with self.assertRaises(ErroContinuidadePAM):
+            self.report()
+
+    def test_valor_sqlite_alterado_bloqueia_alertas(self):
+        self.store()
+        self.db.execute("UPDATE pam_vintages SET valor=777777")
+        self.db.commit()
+        with self.assertRaises(ErroContinuidadePAM):
+            self.report()
 
     def test_corte_timezone_invalido_e_idade_fora_do_limite(self):
         with self.assertRaises(ErroContinuidadePAM):
@@ -187,7 +201,8 @@ class TestIVOContinuidadeE2E(unittest.TestCase):
         taskpath = self.base / "tarefas.json"
         taskpath.write_text(json.dumps(self.tasks), encoding="utf-8")
         dest = self.base / "continuidade.json"
-        args = ["--db", str(self.dbpath), "--tarefas", str(taskpath),
+        args = ["--db", str(self.dbpath), "--acervo", str(self.cofre),
+                "--tarefas", str(taskpath),
                 "--saida", str(dest),
                 "--corte", (T+timedelta(days=1)).isoformat()]
         buf = io.StringIO()
@@ -208,7 +223,8 @@ class TestIVOContinuidadeE2E(unittest.TestCase):
         tasks.write_text(json.dumps(self.tasks))
         with contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(main([
-                "--db", str(path), "--tarefas", str(tasks),
+                "--db", str(path), "--acervo", str(self.cofre),
+                "--tarefas", str(tasks),
                 "--saida", str(self.base / "report.json"),
                 "--corte", T.isoformat(),
             ]), 2)
