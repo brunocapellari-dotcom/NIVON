@@ -18,7 +18,7 @@ from nivon.carga_bigquery_fontes import executar_carga
 
 
 def executar_lote(*, fonte, base, executar=False, enviar_gcs=False,
-                  homologar_cepea=False, bigquery=False, projeto=None,
+                  homologar_cepea=False, bigquery=False, staging_bigquery=False, projeto=None,
                   dataset=None, bucket=None, cliente=None):
     if fonte not in FONTES:
         raise ValueError("fonte não homologada")
@@ -32,12 +32,17 @@ def executar_lote(*, fonte, base, executar=False, enviar_gcs=False,
     if homologar_cepea and fonte not in ("CEPEA_SOJA","CEPEA_MILHO"):
         raise PermissionError("somente CEPEA tem data de referência conferida")
     if bigquery and not (enviar_gcs and homologar_cepea):
-        raise PermissionError("BigQuery requer CEPEA homologado e GCS confirmado")
-    if (enviar_gcs or bigquery) and (
+        raise PermissionError("BigQuery canônico requer CEPEA homologado e GCS")
+    if staging_bigquery and (not enviar_gcs or bigquery or homologar_cepea
+                             or fonte not in ("IMEA","CONAB")):
+        raise PermissionError("staging BQ exige IMEA/CONAB em GCS; sem promoção")
+    if (enviar_gcs or bigquery or staging_bigquery) and (
         os.getenv("NIVON_RAW_ARCHIVE_APPROVED")!="true"
         or os.getenv("NIVON_ZERO_COST_BQ_APPROVED")!="true"
         or not (projeto and dataset and bucket)):
         raise PermissionError("Cloud IAM/custos/destino ainda não aprovados")
+    if staging_bigquery and os.getenv("NIVON_AGRO_STAGING_BIGQUERY_APPROVED")!="true":
+        raise PermissionError("tabela staging BigQuery sem gate de gravação")
     if homologar_cepea and os.getenv("NIVON_CEPEA_HOMOLOGACAO_APROVADA")!="true":
         raise PermissionError("CEPEA sem gate explícito de homologação/licença")
     raiz=Path(base)
@@ -56,6 +61,21 @@ def executar_lote(*, fonte, base, executar=False, enviar_gcs=False,
     result={"coleta":saida,"gcs":arquivo,"gcs_executado":True,
             "bigquery_executado":False,
             "estado":"GCS_RAW_QUARENTENA" if not bigquery else "GCS_STAGE_ARQUIVADO"}
+    if staging_bigquery:
+        from nivon.agro_staging_bigquery import (
+            exportar_quarentena, arquivar_stage_quarentena, carregar_stage)
+        stage=raiz/(ds.lower()+"_staging.jsonl")
+        exportado=exportar_quarentena(
+            banco=raiz/"fontes_reais.sqlite",destino=stage,fonte_dataset=ds)
+        recibo=arquivar_stage_quarentena(
+            arquivo=stage,bucket=bucket,project_id=projeto)
+        result["staging_recibo_gcs"]=recibo
+        carga=carregar_stage(
+            arquivo=stage,fonte_dataset=ds,project_id=projeto,
+            dataset_id=dataset,executar=True)
+        result["staging_bigquery"]=carga
+        result["estado"]="BIGQUERY_STAGING_NAO_CANONICO"
+        result["bigquery_executado"]=True
     if bigquery:
         stage=raiz/(ds.lower()+"_normalized.jsonl")
         exportado=exportar_jsonl(
@@ -82,11 +102,13 @@ def main(argv=None):
     p.add_argument("--executar",action="store_true")
     p.add_argument("--gcs",action="store_true")
     p.add_argument("--bigquery",action="store_true")
+    p.add_argument("--staging-bigquery",action="store_true")
     p.add_argument("--homologar-cepea",action="store_true")
     args=p.parse_args(argv)
     resultado=executar_lote(
         fonte=args.fonte,base=args.base,executar=args.executar,
         enviar_gcs=args.gcs,bigquery=args.bigquery,
+        staging_bigquery=args.staging_bigquery,
         homologar_cepea=args.homologar_cepea,
         projeto=os.getenv("NIVON_BQ_PROJECT"),
         dataset=os.getenv("NIVON_BQ_DATASET"),
