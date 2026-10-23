@@ -81,10 +81,16 @@ def _dia_coleta(value):
     return dt.astimezone(timezone.utc).date().isoformat()
 
 
-def exportar_quarentena(*, banco, destino, fonte_dataset):
+def exportar_quarentena(*, banco, destino, fonte_dataset, snapshot_ids=None):
     """Somente QUARANTINED dos datasets permitidos, registro a registro."""
     if fonte_dataset not in FONTES:
         raise ErroStagingAgro("fonte fora da quarentena homologada")
+    if snapshot_ids is not None:
+        if (not isinstance(snapshot_ids,(list,tuple,frozenset))
+                or not 1 <= len(snapshot_ids) <= 200
+                or len(set(snapshot_ids))!=len(snapshot_ids)
+                or any(not isinstance(x,str) or not SHA.fullmatch(x) for x in snapshot_ids)):
+            raise ErroStagingAgro("snapshots de staging invalidos")
     path = Path(banco)
     target = Path(destino)
     if path.is_symlink() or not path.is_file() or target.is_symlink():
@@ -92,14 +98,18 @@ def exportar_quarentena(*, banco, destino, fonte_dataset):
     target.parent.mkdir(parents=True, exist_ok=True)
     db = sqlite3.connect(f"file:{path.resolve().as_posix()}?mode=ro", uri=True)
     try:
-        cur = db.execute(
-            """SELECT o.dataset_id, o.snapshot_id, o.identidade,
+        sql="""SELECT o.dataset_id, o.snapshot_id, o.identidade,
                       o.fingerprint, s.url_publica, o.referencia,
                       o.publicacao, o.coletado_em, o.competencia,
                       o.natureza, o.unidade, o.valor, o.campos_json, s.estado
                FROM observacoes o JOIN snapshots s USING(snapshot_id)
-               WHERE o.dataset_id=? ORDER BY o.referencia,o.identidade,o.fingerprint""",
-            (fonte_dataset,))
+               WHERE o.dataset_id=?"""
+        parametros=[fonte_dataset]
+        if snapshot_ids is not None:
+            sql += " AND o.snapshot_id IN (" + ",".join("?" for _ in snapshot_ids) + ")"
+            parametros.extend(snapshot_ids)
+        sql += " ORDER BY o.referencia,o.identidade,o.fingerprint"
+        cur=db.execute(sql,parametros)
         quantidade = 0
         inicio = fim = None
         with target.open("w",encoding="utf-8") as out:
