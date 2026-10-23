@@ -55,3 +55,7 @@ O ranking identifica **mercado potencial de captação rodoviária** para cada p
 - O módulo não contém DB migrator nem cloud deployment: base pública completa de MDF-e por produto/município/mês segue dependente de publicação oficial estruturada (issue #142).
 
 **Desenvolvimento e testes usam somente valores sintéticos; nenhuma tonelagem real foi gravada por este módulo.**
+
+## Ranking agregado por polo
+
+O JSON também expõe `resumo_polos`: toneladas por polo geográfico e **sentido separado** (entrada/saída), produtos identificados e até dez principais origens do polo, dentro do recorte único. O cálculo ocorre **antes** do limite de linhas do detalhamento, evitando ranking de polos truncado. Um polo de destino não representa necessariamente terminal utilizado. Os dados de municípios/regionais próximos mas distintos não são fundidos. Se a mesma carga aparecer posteriormente em ANTT SIADE e ANTAQ, essas observações permanecem em outras camadas, sem soma automática.
