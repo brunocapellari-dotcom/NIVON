@@ -109,6 +109,8 @@ def processar_captura_pam(*, db, raiz, plano, payload, coletado_em,
            (c.municipio,c.ano,c.variavel,c.produto,c.sha256)
         WHERE v.municipio=? AND v.ano=? AND v.variavel=? AND v.produto=?
         ORDER BY c.coletado_em DESC,c.sha256 DESC LIMIT 1""",chave).fetchone()
+    if anterior is not None and data < anterior["coletado_em"]:
+        raise ErroOperacaoPAM("captura retroativa: histórico não pode ser reescrito como coleta antiga")
     if anterior is None:
         mudou="PRIMEIRA_CAPTURA"
     elif anterior["sha256"]==digest:
@@ -137,6 +139,7 @@ def processar_captura_pam(*, db, raiz, plano, payload, coletado_em,
         "valor_candidato":item["valor"] if item["estado_valor"]=="OBSERVADO_NUMERICO" else None,
         "estado_valor":item["estado_valor"],"origem":origem,
         "publicacao_oficial_conhecida":False,"treinamento_habilitado":False,
+        "http_declarado_nao_autenticado": origem=="HTTP_PUBLICO",
         "ledger_canonico_modificado":False,
     }
 
