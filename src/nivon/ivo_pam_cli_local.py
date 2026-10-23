@@ -165,7 +165,7 @@ def executar_importacao_local_pam(*, config: dict, origem: str | Path,
                               allow_nan=False, indent=2) + "\n").encode("utf-8")
         _escrever_uma_vez(output / nome, content)
     return {
-        "estado": "QUARENTENA_LOCAL_AUDITADA_SEM_HOMOLOGACAO",
+        "estado": ("QUARENTENA_LOCAL_COM_FALHAS" if manifest["falhas"]\n                   else "QUARENTENA_LOCAL_AUDITADA_SEM_HOMOLOGACAO"),
         "lote_sha256": manifest["manifesto_sha256"],
         "fila_sha256": fila["fila_sha256"],
         "recebidos": manifest["solicitados"], "auditados": manifest["auditorias"],
