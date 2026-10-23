@@ -18,10 +18,10 @@ CAB=["DATA INICIAL","DATA FINAL","ESTADO","MUNICÍPIO","PRODUTO",
 
 @unittest.skipIf(Workbook is None,"openpyxl opcional não disponível")
 class TestANPResumoLPC(unittest.TestCase):
-    def workbook(self,rows=None,headers=None):
+    def workbook(self,rows=None,headers=None,prefixo_linhas=6):
         wb=Workbook();meta=wb.active;meta.title="BRASIL"
         ws=wb.create_sheet("MUNICIPIOS")
-        for _ in range(6):ws.append(["METADADOS ANP"])
+        for _ in range(prefixo_linhas):ws.append(["METADADOS ANP"])
         ws.append(headers if headers is not None else CAB)
         rows=rows if rows is not None else [
             [date(2026,10,4),date(2026,10,10),"MATO GROSSO","SINOP",
@@ -41,6 +41,16 @@ class TestANPResumoLPC(unittest.TestCase):
             self.workbook() if payload is None else payload,
             coletado_em=kwargs.pop("coletado_em","2026-10-20T10:00:00-03:00"),
             origem_url=kwargs.pop("origem_url",URL),**kwargs)
+
+    def test_layout_real_2026_auto_detecta_cabecalho_na_linha_10(self):
+        payload=self.workbook(prefixo_linhas=9)
+        result=self.run_parse(payload)
+        self.assertEqual(result["linha_cabecalho"],10)
+        self.assertEqual(result["municipios_distintos"],3)
+        self.assertEqual(result["semanas_distintas"],1)
+        self.assertFalse(result["publicavel"])
+        with self.assertRaisesRegex(ErroResumoANP,"colunas divergentes"):
+            self.run_parse(payload,cabecalho_linha=7)
 
     def test_tres_municipios_mt_com_semana_observada(self):
         x=self.run_parse()
@@ -79,6 +89,8 @@ class TestANPResumoLPC(unittest.TestCase):
     def test_cabecalho_diferente_falha_fechado(self):
         h=list(CAB);h[7]="MÉDIA GERAL"
         with self.assertRaisesRegex(ErroResumoANP,"colunas divergentes"):
+            self.run_parse(self.workbook(headers=h), cabecalho_linha=7)
+        with self.assertRaisesRegex(ErroResumoANP,"não localizado"):
             self.run_parse(self.workbook(headers=h))
 
     def test_duplicata_mesma_semana_mesmo_municipio_produto(self):
