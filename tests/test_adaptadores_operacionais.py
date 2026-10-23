@@ -153,6 +153,19 @@ class AdaptadoresTests(unittest.TestCase):
                     inicio="2026-10-23T09:00:00Z",fim="2026-10-23T11:00:00Z",
                     as_of=AS_OF)
 
+    def test_fonte_adulterada_nao_valida_evento_mesmo_com_payload_intacto(self):
+        with tempfile.TemporaryDirectory() as d:
+            arq=str(Path(d)/"ais.sqlite")
+            abrir_ais(arq)
+            with sqlite3.connect(arq) as conn:
+                conn.execute("UPDATE maritime_ais SET source_id='OUTRO_COLETOR' "
+                             "WHERE mmsi='234567890'")
+            with self.assertRaisesRegex(ErroMotor,"identidade AIS"):
+                ler_replay_ais_sqlite(
+                    banco=arq,porto_id="SANTOS",
+                    inicio="2026-10-23T09:30:00Z",
+                    fim="2026-10-23T11:00:00Z",as_of=AS_OF)
+
     def test_integracao_duas_fontes_em_um_unico_comando(self):
         with tempfile.TemporaryDirectory() as d:
             pasta=Path(d)
