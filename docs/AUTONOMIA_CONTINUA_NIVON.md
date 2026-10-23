@@ -108,3 +108,27 @@ git log --oneline autonomo/integracao -15
 git diff main..autonomo/integracao --stat
 \`\`\`
 O push e a PR ampla de integração são decisões separadas; o processo não muda repositórios remotos automaticamente. Isso evita conflitos com as dezenas de PRs existentes do NIVON ainda não reconciliadas com \`main\`.
+
+
+## Medição real de tokens e retomadas (23/10/2026)
+
+A fila SQLite conserva **uma linha por tentativa** na tabela `attempt_metrics`, incluindo agente, horário de início/fim, estado (done/blocked/handoff), tokens observados e leitura de cache quando a CLI disponibiliza o campo. Transferir uma tarefa de Claude para Codex **não apaga** o consumo da primeira tentativa.
+
+As origens são `claude --output-format json` e `codex exec --json`, com interpretação distinta:
+- Claude: `input_tokens` representa entrada não cacheada; a métrica de entrada processada agrega `cache_read_input_tokens` e `cache_creation_input_tokens`, quando disponíveis.
+- Codex: `input_tokens` já inclui `cached_input_tokens`; os eventos `turn.completed` são agregados sem contar as mensagens `item.*` novamente.
+- Quando não houver dados, o relatório mantém `null` e contabiliza a tentativa como **métrica ausente**, não como zero consumo.
+- Tokens cacheados **não são economia comprovada de tokens da assinatura**; análise de preço/cota depende do provedor e da modalidade de acesso.
+
+Consultas permitidas durante o dia, sem usar modelos de IA:
+
+```bash
+bash scripts/nivon-autonomo.sh metrics
+bash scripts/nivon-autonomo.sh integration-check
+```
+
+O primeiro oferece apenas indicadores consolidados por agente, sem anexar logs gigantes. O segundo verifica divergências entre a `main` local e a branch do checkout, sem `git fetch`, `merge`, `rebase` ou `push`. **Uma main local antiga não representa necessariamente a atual no GitHub**; comparar no GitHub antes de integração final.
+
+### Próxima validação antes de ampliar a autonomia
+
+Executar um piloto noturno real e confrontar as métricas com as saídas das CLIs. Medir: tarefas aprovadas por 100 mil tokens de entrada+saída, proporção de reexecução, duração das tentativas e tempo total até integração. Não atribuir economia percentual sem comparação de tarefas equivalentes. A branch `autonomo/integracao` segue estritamente local; nunca fazer merge remoto automático por causa de um relatório de divergências.
