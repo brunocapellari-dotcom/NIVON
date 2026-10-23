@@ -248,9 +248,9 @@ def adaptar_evento_whatsapp(
             raise ErroAdaptadorFrete("data da revisão divergente do evento")
 
     return OfertaFrete(
-        publicacao_id="wa:" + _hash(chave_hmac, "source", tenant, source_id),
-        registro_id="wa:" + _hash(chave_hmac, "record", tenant, f"{ev_id}:{versao}"),
-        oferta_id="wa:" + _hash(chave_hmac, "offer", tenant, ev_id),
+        publicacao_id="wa:" + _hash(chave_hmac, "source", tenant, fonte_provider + "\x00" + source_id),
+        registro_id="wa:" + _hash(chave_hmac, "record", tenant, fonte_provider + "\x00" + f"{ev_id}:{versao}"),
+        oferta_id="wa:" + _hash(chave_hmac, "offer", tenant, fonte_provider + "\x00" + ev_id),
         municipio_ibge=municipio,
         pickup_entity_id=ponto, transportadora_id=transp,
         destino_ibge=destino_id, descarga_entity_id=descarga,
@@ -259,4 +259,5 @@ def adaptar_evento_whatsapp(
         frete_cheio_brl_t=cheio,
         data_referencia=pub.astimezone(_MT).date(),
         data_publicacao=pub, data_coleta=coleta, fonte_id=fonte,
+        provedor_id=fonte_provider,
     )

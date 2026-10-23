@@ -87,6 +87,30 @@ class TestFretesRegistros(unittest.TestCase):
                 with self.assertRaises(ErroRegistroFrete):
                     oferta(**kw)
 
+    def test_referencia_do_dia_comercial_mt_em_publicacao_utc(self):
+        # 01h UTC ainda é o dia anterior no Mato Grosso (21h UTC-4).
+        pub = datetime(2026, 10, 20, 1, tzinfo=timezone.utc)
+        anterior = oferta(
+            data_referencia=date(2026, 10, 19),
+            data_publicacao=pub,
+            data_coleta=datetime(2026, 10, 20, 2, tzinfo=timezone.utc),
+        )
+        self.assertEqual(anterior.data_referencia, date(2026, 10, 19))
+        with self.assertRaisesRegex(ErroRegistroFrete, "referência futura"):
+            oferta(
+                data_referencia=date(2026, 10, 20),
+                data_publicacao=datetime(2026, 10, 19, 23, tzinfo=timezone.utc),
+                data_coleta=pub,
+            )
+
+    def test_fontes_diferentes_nao_viram_mesmo_anuncio(self):
+        a = oferta(fonte_id="FONTE_A", provedor_id="PROVEDOR_A")
+        b = oferta(
+            fonte_id="FONTE_B", provedor_id="PROVEDOR_B",
+            registro_id="registro-outro", publicacao_id="publicacao-outra",
+        )
+        self.assertEqual(consolidar_ofertas([a,b])["total_registros_individuais_deduplicados"], 2)
+
     def test_tku_somente_com_distancia_validada(self):
         with self.assertRaises(ErroRegistroFrete):
             distancia_e_custo(frete_cheio_brl_t=Decimal("200"),
