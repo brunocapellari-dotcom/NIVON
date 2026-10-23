@@ -39,9 +39,9 @@ def preparar_inmet_zip_local(
 ):
     """ZIP oficial local -> membro CSV -> parser horário -> pacote para SQLite.
 
-    O SHA do ZIP pai é preservado no índice, mas o arquivo ZIP pai fica sob
-    custódia do operador; somente os bytes do membro CSV são guardados no
-    acervo RAW padrão. A falta de ZIP original bloqueia auditoria do container.
+    O ZIP pai será copiado de forma imutável para o arquivo RAW pelo pipeline
+    transacional, com seu SHA e vínculo de membro preservados no SQLite.
+    A função de preparo sozinha nunca grava bytes no disco.
     """
     original = Path(caminho_zip)
     if original.suffix.lower()!=".zip":
@@ -62,7 +62,8 @@ def preparar_inmet_zip_local(
     result["container_origem"]={
         "tipo":"ZIP_INMET_ANUAL","parent_sha256":zip_sha,
         "membro":membro_csv,"membro_sha256":result["sha256"],
-        "pai_raw_arquivado_no_acervo":False,
+        "pai_raw_arquivado_no_acervo":True,
+        "arquivo_zip_local":str(original.resolve()),
         "integridade_zip_externa_revalidada":True,
     }
     return result
