@@ -20,6 +20,8 @@ concurrency:
 
 jobs:
   coleta-incremental-pam:
+    # No schedule sem destino GCS/WIF configurado, nao alocar runner.
+    if: github.event_name != 'schedule' || (vars.NIVON_PAM_GCS_BUCKET != '' && vars.NIVON_GCP_WIF_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '')
     runs-on: ubuntu-latest
     timeout-minutes: 6
     steps:
