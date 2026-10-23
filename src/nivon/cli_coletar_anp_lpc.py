@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import argparse
 from contextlib import closing
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 import json
 from pathlib import Path
 import sqlite3
@@ -35,13 +35,23 @@ def _db_seguro(path: Path) -> sqlite3.Connection:
     return conn
 
 
-def _local_files(index_html: bytes, pasta: Path, *, ano: int, limite: int):
+def _local_files(
+    index_html: bytes, pasta: Path, *, ano: int, limite: int,
+    desde: str | None = None, ate: str | None = None,
+):
     if pasta.is_symlink() or not pasta.is_dir():
         raise ErroColetaANP("pasta de arquivos local ausente/insegura")
     oficial = descobrir_semanas_lpc(index_html, ano=ano)
     weeks = sorted(
         oficial["semanas"], key=lambda x: x["semana_inicio"], reverse=True
-    )[:limite]
+    )
+    if desde:
+        start = date.fromisoformat(desde)
+        weeks = [x for x in weeks if date.fromisoformat(x["semana_inicio"]) >= start]
+    if ate:
+        end = date.fromisoformat(ate)
+        weeks = [x for x in weeks if date.fromisoformat(x["semana_fim"]) <= end]
+    weeks = weeks[:limite]
     files = {}
     for entry in weeks:
         name = urlsplit(entry["url_pagina"]).path.rsplit("/", 1)[-1]
@@ -61,6 +71,8 @@ def main(argv=None) -> int:
     parser.add_argument("--raw-dir", type=Path)
     parser.add_argument("--ano", type=int, default=datetime.now(timezone.utc).year)
     parser.add_argument("--ultimas", type=int, default=3)
+    parser.add_argument("--desde", help="Backfill: início mínimo da semana YYYY-MM-DD")
+    parser.add_argument("--ate", help="Backfill: fim máximo da semana YYYY-MM-DD")
     parser.add_argument("--indice", type=Path)
     parser.add_argument("--pasta-arquivos", type=Path)
     parser.add_argument("--municipio", type=str)
@@ -110,11 +122,14 @@ def main(argv=None) -> int:
                         "arquivos_locais": _local_files(
                             indice, args.pasta_arquivos,
                             ano=args.ano, limite=args.ultimas,
+                            desde=args.desde, ate=args.ate,
                         ),
                     }
                 data = coletar_lpc(
                     db, ano=args.ano, limite_semanas=args.ultimas,
-                    raw_dir=args.raw_dir, **options
+                    raw_dir=args.raw_dir,
+                    semana_desde=args.desde, semana_ate=args.ate,
+                    **options
                 )
                 data["qualidade_staging"] = painel_qualidade_lpc(
                     db, as_of=datetime.now(timezone.utc).isoformat())
