@@ -31,7 +31,7 @@ def doctor(image=None):
     if found["claude"]:
         version = call(["claude", "--version"])
         raw = (version.stdout or "") if version and version.returncode == 0 else ""
-        version_match = re.search(r"\\b(\\d+)\\.(\\d+)\\.(\\d+)\\b", raw)
+        version_match = re.search(r"\b(\d+)\.(\d+)\.(\d+)\b", raw)
         if version_match:
             claude_version = tuple(map(int, version_match.groups()))
         run = call(["claude", "--help"])
