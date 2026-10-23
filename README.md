@@ -41,3 +41,5 @@ Diagnóstico sem usar tokens: `bash scripts/nivon-autonomo.sh doctor`. Planejame
 **Janela autônoma:** somente 20h–6h no horário de Cuiabá, sem agendamento automático; `night-status` exibe o próximo intervalo. Para ferramentas opcionais de código e capacidade independente via modelos locais, consultar [Catálogo de engenharia](docs/FERRAMENTAS_ENGENHARIA_20261023.md). Testes gerados exigem contêiner Docker local sem rede; não há execução do host autorizada por esta PR.
 
 A execução autônoma acumula entregas em `autonomo/integracao` **local**, com cherry-pick serializado e nova rodada de testes offline. Não publica nem mescla na `main` automaticamente.
+
+**Compatibilidade Claude OAuth:** o executor usa `--restricted --safe-mode`, não `--bare`, que não recupera a sessão de assinatura. O `doctor` rejeita credenciais de API potencialmente faturadas. Testes no Docker mantêm o checkout montado somente para leitura. Para testes Parquet adicionados na `main`, o ambiente isolado precisa da dependência PyArrow previamente instalada.
