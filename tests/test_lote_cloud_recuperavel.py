@@ -12,6 +12,7 @@ from nivon.arquivo_raw_gcs import arquivar_gcs, preparar_manifesto
 from nivon.ingestao_fontes_reais import gravar_lote, exportar_jsonl
 from nivon.lote_cloud_recuperavel import (
     ErroLoteCloud, preparar_lote, arquivar_stage, reprocessar_manifesto,
+    _upload_imutavel,
 )
 
 DESTINO = {"bucket": "nivon-raw-archive", "projeto": "nivon-data", "dataset": "agro"}
@@ -174,6 +175,16 @@ class TestLoteCloudE2E(unittest.TestCase):
                 manifesto_sha256=sha,client=self.client,
                 loader=lambda **kw: {"executado":True},
                 executar=True,**DESTINO)
+
+    def test_upload_rejeita_stage_alterado_apos_plano(self):
+        arquivo=self.root/"race.jsonl"
+        arquivo.write_bytes(b"original")
+        with self.assertRaisesRegex(ErroLoteCloud,"alterado"):
+            _upload_imutavel(
+                self.client.storage,arquivo=arquivo,
+                nome="nivon/staging/v1/"+"a"*64+".jsonl",
+                sha="a"*64,mime="application/x-ndjson")
+        self.assertFalse(self.client.storage.objects)
 
     def test_replay_sem_execucao_nao_consulta_cloud(self):
         r=reprocessar_manifesto(manifesto_sha256="a"*64,
