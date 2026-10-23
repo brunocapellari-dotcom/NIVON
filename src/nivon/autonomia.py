@@ -168,8 +168,9 @@ def integrate_local(commit_sha, image):
                    "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
                    "--pids-limit", "128", "--memory", "512m", "--cpus", "1",
                    "--read-only", "--tmpfs", "/tmp:rw,noexec,nosuid,size=64m",
-                   "--mount", f"type=bind,src={integration},dst=/workspace",
-                   "--workdir", "/workspace", "--env", "PYTHONPATH=/workspace/src"]
+                   "--mount", f"type=bind,src={integration},dst=/workspace,readonly",
+                   "--workdir", "/workspace", "--env", "PYTHONPATH=/workspace/src",
+                   "--env", "PYTHONDONTWRITEBYTECODE=1"]
         if hasattr(os, "getuid") and hasattr(os, "getgid"):
             sandbox += ["--user", f"{os.getuid()}:{os.getgid()}"]
         tests = command([*sandbox, image, "python", "-m", "unittest",
@@ -227,13 +228,13 @@ def do_task(agent, task, *, timeout_minutes=15):
                    "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
                    "--pids-limit", "128", "--memory", "512m", "--cpus", "1",
                    "--read-only", "--tmpfs", "/tmp:rw,noexec,nosuid,size=64m",
-                   "--mount", f"type=bind,src={worktree},dst=/workspace",
+                   "--mount", f"type=bind,src={worktree},dst=/workspace,readonly",
                    "--workdir", "/workspace", "--env", "PYTHONPATH=/workspace/src",
                    "--env", "PYTHONDONTWRITEBYTECODE=1"]
         if hasattr(os, "getuid") and hasattr(os, "getgid"):
             sandbox += ["--user", f"{os.getuid()}:{os.getgid()}"]
         checks = [
-            ["python", "-m", "compileall", "-q", "src", "tests"],
+            ["python", "-m", "nivon.qualidade", "--json"],
             ["python", "-m", "unittest", "discover", "-s", "tests", "-q"]
         ]
         for check in checks:
