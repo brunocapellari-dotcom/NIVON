@@ -86,6 +86,27 @@ class TestAuditoriaFrescorR13(unittest.TestCase):
         self.assertFalse(result["referencia_verificada"])
         self.assertFalse(result["publicavel"])
 
+    def test_recoleta_de_mesmo_raw_atualiza_frescor_sem_inventar_precos_novos(self):
+        antigo=self.store(coletado="2026-10-11T12:00:00+00:00",
+                          referencia="2026-10-10")
+        self.assertEqual(self.audit()["datasets"][DATASET]["estado"],"SOURCE_LAG")
+        novo=self.store(coletado="2026-10-23T16:00:00+00:00",
+                        referencia="2026-10-10")
+        self.assertEqual(antigo["snapshot_id"],novo["snapshot_id"])
+        self.assertTrue(novo["captura_nova"])
+        self.assertTrue(novo["snapshot_ja_existente"])
+        self.assertEqual(novo["novas_observacoes"],0)
+        again=self.store(coletado="2026-10-23T16:00:00+00:00",
+                         referencia="2026-10-10")
+        self.assertFalse(again["captura_nova"])
+        z=self.audit()["datasets"][DATASET]
+        self.assertEqual(z["snapshots"],1)
+        self.assertEqual(z["observacoes"],1)
+        self.assertEqual(z["capturas_verificadas"],2)
+        self.assertTrue(z["coleta_recente"])
+        self.assertEqual(z["estado"],"REFERENCIA_DEFASADA_OU_FUTURA")
+        self.assertFalse(z["publicavel"])
+
     def test_coleta_antiga_e_sinal_lag(self):
         self.store(coletado="2026-10-11T12:00:00+00:00")
         self.assertEqual(self.audit()["datasets"][DATASET]["estado"],"SOURCE_LAG")
