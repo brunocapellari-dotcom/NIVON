@@ -18,6 +18,7 @@ from nivon.catalogo_fontes import carregar_catalogo
 from nivon.zarc_stream_mt import COLUNAS
 from nivon.zarc_staging import abrir_zarc_staging, importar_zarc_local
 from nivon.zarc_raw_vault import guardar_raw_zarc, verificar_raw_zarc
+from nivon.zarc_postgres_bridge import plano_migracao_zarc, iterar_lotes_postgres
 
 N = 27_918
 MUNICIPIOS_FICTICIOS = 142
@@ -75,6 +76,12 @@ def executar():
             if (qtd!=N or snap!=1 or capturas!=2 or fk or integridade!="ok"
                 or not primeira["nova_versao"] or segunda["nova_versao"]):
                 raise RuntimeError("STAGING_SINTETICO_INCONSISTENTE")
+            migracao=plano_migracao_zarc(db=db,raiz=vault,sha256=primeira["sha256"])
+            linhas_para_migracao=sum(len(lote) for lote in iterar_lotes_postgres(
+                db=db,raiz=vault,sha256=primeira["sha256"],tamanho_lote=500))
+            if (linhas_para_migracao!=N or migracao["conexao_externa_realizada"]
+                    or migracao["gravacao_postgres_executada"]):
+                raise RuntimeError("EXPORTACAO_STAGE_INCOMPLETA")
             backup_path=Path(d)/"stage_backup.sqlite"
             with sqlite3.connect(str(backup_path)) as target:
                 db.backup(target)
@@ -112,6 +119,8 @@ def executar():
                 "raw_integridade":verificado["integridade"],
                 "raw_arquivo_recriado_no_restore":raw_restaurado["novo_arquivo"],
                 "raw_backup_integridade":conferir_restaurado["integridade"],
+                "linhas_lotes_postgres_offline":linhas_para_migracao,
+                "postgres_gravado":False,
                 "sqlite_integrity_check":integridade,
                 "chaves_estrangeiras": "OK",
                 "duracao_segundos":elapsed,
