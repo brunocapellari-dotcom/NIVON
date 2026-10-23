@@ -1,5 +1,13 @@
 # NIVON — Execucao dos blocos maritimos
 
+> **ARQUITETURA ATIVA A PARTIR DE 23/10/2026: GOOGLE CLOUD.** O plano de
+> persistencia Neon descrito abaixo pertence ao historico anterior e foi
+> substituido. A arquitetura atual esta documentada em
+> infra/google_cloud/README.md, com o gravador BigQuery, Cloud Storage,
+> Cloud Run Jobs e Cloud Scheduler. O workflow de coleta/Neon foi removido
+> do GitHub Actions. Recursos GCP nao foram implantados nesta rodada.
+> Nao habilitar NIVON_MARITIMO_DSN ou o cron antigo.
+
 Estado: implementacao de persistencia LOCAL versionada e fluxo de QA. Nao significa
 coleta homologada, continuidade do banco no cloud ou AIS real operacional.
 
