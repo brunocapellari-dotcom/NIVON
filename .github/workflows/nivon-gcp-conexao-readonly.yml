@@ -152,7 +152,7 @@ jobs:
           with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as fp:
               fp.write('### Inventário marítimo NIVON (somente leitura)\n\n')
               for key,val in state.items():
-                  fp.write(f'- \`{key}\`: {val}\n')
+                  fp.write(f'- `{key}`: {val}\n')
               fp.write('\nNenhuma tabela foi criada nem foi realizada coleta marítima.\n')
           PY
       - name: Conferir tabela e view da ANTT exclusivamente por metadados
