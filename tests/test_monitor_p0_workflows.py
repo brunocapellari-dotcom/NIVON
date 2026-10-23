@@ -53,4 +53,23 @@ class TestMonitorP0(unittest.TestCase):
         self.assertIn("não garante a atualização",text)
         self.assertIn("Neon",text)
 
+
+    def test_workflow_p0_usa_codigos_main_sem_sha_antigo(self):
+        from pathlib import Path
+        texto=(Path(__file__).resolve().parents[1]/".github/workflows/monitor-p0-operacao.yml").read_text(encoding="utf-8")
+        self.assertIn("  pull_request:",texto)
+        self.assertIn("  validar:",texto)
+        self.assertIn("  monitorar:",texto)
+        self.assertIn("    needs: validar",texto)
+        self.assertIn("github.ref == 'refs/heads/main'",texto)
+        self.assertNotIn("12c47099651ccb2cb9479c87f13019535877045a",texto)
+        self.assertNotIn("ref: 12c470",texto)
+        self.assertIn("PYTHONPATH: src",texto)
+        self.assertIn("GITHUB_TOKEN: ${{ github.token }}",texto)
+
+    def test_nao_converte_sucesso_em_frescor_de_mercado(self):
+        resultado=assess("IMEA",[run(99,NOW-timedelta(minutes=5),"success")],now=NOW)
+        self.assertFalse(resultado["data_freshness_evaluated"])
+        self.assertNotIn("DADO_ATUAL",resultado["status"])
+
 if __name__=="__main__":unittest.main()
