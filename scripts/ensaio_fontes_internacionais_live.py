@@ -76,9 +76,13 @@ def main():
             out=executar_coleta(fonte="BR_CCEE_PLD",executar=True,
                recurso_id="3f279d6b-1069-42f7-9b0a-217b084729c4",
                banco=base/"smoke.sqlite",raw_dir=base/"raw")
+            dado_csv=Path(out["arquivo_raw"]).read_bytes()[:5000]
+            csv_txt=dado_csv.decode("utf-8-sig",errors="replace").splitlines()
             resultado.append({"fonte":"BR_CCEE_PLD_CSV_2026","http":"SUCESSO",
                  "estado":out.get("estado"),"observacoes":out.get("novas_observacoes"),
-                 "bytes_raw":out.get("arquivo_raw") is not None})
+                 "bytes_raw":out.get("arquivo_raw") is not None,
+                 "cabecalho_amostra":csv_txt[0][:600] if csv_txt else None,
+                 "linha_dados_amostra":csv_txt[1][:400] if len(csv_txt)>1 else None})
         except Exception as exc:
             diagnostico={}
             try:
