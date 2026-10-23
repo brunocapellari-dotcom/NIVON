@@ -13,6 +13,7 @@ from urllib.parse import urlsplit
 from urllib.request import Request, HTTPRedirectHandler, build_opener
 import json
 import os
+import re
 import time
 
 from .anp_indice_lpc import URL_INDICE, descobrir_semanas_lpc, _PREFIX, _PATTERN
@@ -134,7 +135,7 @@ def coletar_lpc(
         if corte is None:
             return None
         if (not isinstance(corte, str) or len(corte) != 10
-                or not __import__("re").fullmatch(r"\\d{4}-\\d{2}-\\d{2}", corte)):
+                or not re.fullmatch(r"\\d{4}-\\d{2}-\\d{2}", corte)):
             raise ErroColetaANP(f"{campo}: data ISO YYYY-MM-DD obrigatória")
         try:
             return date.fromisoformat(corte)
