@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+from importlib.util import find_spec
 from pathlib import Path
 
 from nivon.antaq_replica_detalhe import (
@@ -17,6 +18,8 @@ class TestHidroviaProduto(unittest.TestCase):
         self.assertIn("NAO_SO_DIESEL", classificar_sh4("2710"))
         self.assertEqual(normalizar_texto("NavegaÃ§Ã£o Interior"), "Navegação Interior")
 
+    @unittest.skipUnless(find_spec("pyarrow") is not None,
+        "pyarrow opcional: teste Parquet executado no workflow ANTAQ dedicado")
     def test_join_e_grupos_agro(self):
         import pyarrow as pa
         import pyarrow.parquet as pq
@@ -54,6 +57,8 @@ class TestHidroviaProduto(unittest.TestCase):
             self.assertEqual(unico_repetido["cargas_unicas"], 2)
 
 
+    @unittest.skipUnless(find_spec("pyarrow") is not None,
+        "pyarrow opcional: teste Parquet executado no workflow ANTAQ dedicado")
     def test_duplicacao_de_id_impede_soma_dupla(self):
         import pyarrow as pa
         import pyarrow.parquet as pq

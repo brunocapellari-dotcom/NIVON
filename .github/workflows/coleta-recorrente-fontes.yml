@@ -55,5 +55,8 @@ jobs:
       - name: Carregar observacoes com MERGE historico no BigQuery
         run: |
           python -m nivon.carga_bigquery_fontes --arquivo data/nivon/staging_fontes_reais.jsonl --projeto "$NIVON_BQ_PROJECT" --dataset "$NIVON_BQ_DATASET" --executar
+      - name: Conferir dados por leitura GCS e BigQuery
+        run: |
+          python -m nivon.verificacao_cloud_fontes --banco data/nivon/fontes_reais.sqlite --raw-dir data/nivon/raw --bucket "$NIVON_GCS_BUCKET" --arquivo data/nivon/staging_fontes_reais.jsonl --projeto "$NIVON_BQ_PROJECT" --dataset "$NIVON_BQ_DATASET" --executar
       - name: Reprovar coleta parcial apos arquivamento e carga
         run: python scripts/verificar_status_fontes.py data/nivon/status_fontes.json
