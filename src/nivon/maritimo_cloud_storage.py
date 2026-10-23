@@ -70,8 +70,14 @@ class ArquivoMaritimoGCS:
         for e in execucoes:
             if e.get("estado") not in ("OK","QUARENTENA","FALHA"):
                 raise ValueError("estado de execucao desconhecido")
-            if str(e.get("run_id")) not in (run_id,str(uuid.uuid5(uuid.UUID(run_id),"portwatch"))):
-                raise ValueError("execucao fora do lote")
+            try:
+                uuid.UUID(str(e["run_id"]))
+            except (KeyError,ValueError,TypeError) as exc:
+                raise ValueError("execucao sem UUID valido") from exc
+            if e.get("fonte")=="FMI_PORTWATCH":
+                continue
+            if e.get("run_id")!=run_id:
+                raise ValueError("execucao nao pertence ao lote")
         if portwatch_estado not in (None,"OK","QUARENTENA","FALHA"):
             raise ValueError("estado PortWatch invalido")
         manifest={"schema_version":1,"run_id":run_id,
