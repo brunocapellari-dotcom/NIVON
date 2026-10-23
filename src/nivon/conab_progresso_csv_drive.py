@@ -134,6 +134,7 @@ def main(argv=None):
     p.add_argument("--sha256",required=True)
     p.add_argument("--adquirido-em",required=True)
     p.add_argument("--out",required=True)
+    p.add_argument("--auditoria-out",help="relatório de qualidade temporal sem vintage")
     args=p.parse_args(argv)
     try:
         inp,out=Path(args.input),Path(args.out)
@@ -142,8 +143,21 @@ def main(argv=None):
         raw=inp.read_bytes()
         result=normalizar_csv_progresso_conab(
             raw_csv=raw,sha256_esperado=args.sha256,adquirido_em=args.adquirido_em)
+        audit=None
+        if args.auditoria_out:
+            from .conab_progresso_auditoria import auditar_progresso_conab_drive
+            audit_path=Path(args.auditoria_out)
+            if (audit_path.exists() or audit_path.is_symlink() or
+                    audit_path.resolve()==out.resolve() or
+                    not audit_path.parent.is_dir()):
+                raise ErroConabProgressoDrive("caminho da auditoria indisponível")
+            audit=auditar_progresso_conab_drive(normalizado=result)
         with out.open("x",encoding="utf-8") as f:
             json.dump(result,f,ensure_ascii=False,indent=2)
+        if audit is not None:
+            with audit_path.open("x",encoding="utf-8") as af:
+                json.dump(audit,af,ensure_ascii=False,indent=2,allow_nan=False)
+                af.write("\n")
         print(f"NORMALIZADOS={result['total']} ASOF=NAO")
         return 0
     except (ErroConabProgressoDrive,OSError,ValueError) as exc:
