@@ -401,7 +401,7 @@
         "url": "https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/serie-historica-de-precos-de-combustiveis",
         "source_proof": "https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/arquivos/shpc/dsan/2026"
       },
-      "implementation_scope": "anp_indice_lpc.py descobre arquivos semanais; anp_resumo_lpc.py extrai preços de diesel por município MT; anp_semanal_municipios.py historico XLSX; anp_diesel.py microdados CSV mensais",
+      "implementation_scope": "anp_indice_lpc.py; anp_resumo_lpc.py; anp_semanal_municipios.py; anp_diesel_briefing.py; anp_monitor_atualizacao.py; scripts/auditar_atualizacao_anp.py (offline, sem download)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -424,8 +424,8 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Arquivo LPC semanal municipal oficial é candidato prioritário; URL deve vir do índice de cada semana, não ser inferida. Parser estruturado e testes sintéticos não homologam dado real nem direito de redistribuição.",
-      "preliminary_evidence": "OFFICIAL_ANP_WEEKLY_FILES_EXIST_AND_PUBLIC_RESEARCH_SCHEMA_CANDIDATE_REAL_DOWNLOAD_NOT_TESTED",
+      "source_note": "Em 20/10/2026, ANP lista resumo 11–17/10. Página anual XLSX 2026 indica atualização em 20/10/2026 14h34. Data da página ≠ linha do arquivo. Download/layout/redistribuição continuam pendentes. Monitor offline compara alterações de índice, sem lançar preços não coletados.",
+      "preliminary_evidence": "ANP_WEEKLY_INDEX_2026_10_11_TO_2026_10_17_LISTED__YEARLY_FILE_PAGE_UPDATED_2026_10_20__XLSX_BYTES_NOT_OBTAINED",
       "recurso_prioritario_semanal": {
         "url_pagina": "https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/precos-revenda-e-de-distribuicao-combustiveis/shlp/semanal/semanal-municipios-2026.xlsx/view",
         "indice": "https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/precos-revenda-e-de-distribuicao-combustiveis/shlp/semanal/",
@@ -436,7 +436,13 @@
         "download_url_real": "PENDENTE_CAPTURA",
         "schema_real": "NAO_HOMOLOGADO",
         "parser_modulo": "anp_semanal_municipios.py",
-        "parser_estado": "CODIGO_TESTE_LAYOUT_SINTETICO_SEM_HOMOLOGACAO_REAL"
+        "parser_estado": "CODIGO_TESTE_LAYOUT_SINTETICO_SEM_HOMOLOGACAO_REAL",
+        "latest_observed_page": {
+          "last_modified_at": "2026-10-20T14:34:00-03:00",
+          "page_url": "https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/precos-revenda-e-de-distribuicao-combustiveis/shlp/semanal/semanal-municipios-2026.xlsx/view",
+          "file_sha256": null,
+          "file_verified": false
+        }
       },
       "candidate_official_weekly_summary": {
         "indice_url": "https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/levantamento-de-precos-de-combustiveis-ultimas-semanas-pesquisadas",
@@ -448,8 +454,18 @@
         "parser": "anp_resumo_lpc.py",
         "nature": "AMOSTRA_PRECO_MEDIO_REVENDA_R$/L_NAO_PPI",
         "canary": "DIESEL_S10_MT",
-        "daily_briefing_enabled": false
-      }
+        "daily_briefing_enabled": false,
+        "latest_observed_listing": {
+          "period_start": "2026-10-11",
+          "period_end": "2026-10-17",
+          "index_page_updated_at": "2026-10-20T13:05:00-03:00",
+          "proof": "https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/levantamento-de-precos-de-combustiveis-ultimas-semanas-pesquisadas",
+          "index_html_snapshot_stored": false,
+          "price_file_downloaded": false,
+          "latest_week_data_extracted": false
+        }
+      },
+      "monitoramento_documentado": "docs/ANP_MONITOR_PUBLICACOES_20261020.md"
     },
     {
       "dataset_id": "ANTAQ_MOVIMENTACAO",

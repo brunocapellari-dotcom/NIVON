@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 from nivon.entrega_whatsapp import (
     preparar_template, enviar_cloud_api, ErroEnvio,
 )
@@ -34,6 +35,33 @@ class TestCanalWhatsApp(unittest.TestCase):
         with self.assertRaises(PermissionError):
             enviar_cloud_api(self.preparar(),phone_number_id="1234567890",
                              abridor=forbidden)
+
+    def test_flag_positiva_nao_ignora_reserva_transacional_outbox(self):
+        chamadas = []
+
+        class RespostaSimulada:
+            status = 200
+            def __enter__(self):
+                return self
+            def __exit__(self, *args):
+                return False
+            def read(self, *args):
+                return b'{"messages":[{"id":"RESPOSTA_SINTETICA"}]}'
+
+        def rede_ficticia(*args, **kwargs):
+            chamadas.append(True)
+            return RespostaSimulada()
+
+        with patch.dict("os.environ", {
+            "NIVON_WHATSAPP_ACCESS_TOKEN": "TOKEN_APENAS_TESTE",
+            "NIVON_WHATSAPP_GRAPH_VERSION": "v24.0",
+        }):
+            with self.assertRaisesRegex(PermissionError, "outbox"):
+                enviar_cloud_api(
+                    self.preparar(), phone_number_id="1234567890",
+                    permitir_cobranca_e_envio=True, abridor=rede_ficticia,
+                )
+        self.assertEqual(chamadas, [])
 
     def test_url_http_nao_aceita(self):
         with self.assertRaises(ErroEnvio):

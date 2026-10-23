@@ -110,13 +110,11 @@ class TestEditorialPipelineIntegrado(unittest.TestCase):
                           "publicacao_original_verificada": True}],
             "cotacoes": [], "fretes": [],
         }
-        with self.assertRaisesRegex(ValueError, "prova externa"):
+        with self.assertRaisesRegex(ValueError, "ID isolado"):
             conciliar_complementos(pacote, complemento)
         complemento["noticias"][0]["evidencia_publicacao_original_id"] = "FONTE_PUBLISHED_TESTE"
-        conciliado = conciliar_complementos(pacote, complemento)
-        self.assertTrue(conciliado["noticias"][0]["publicacao_original_verificada"])
-        self.assertEqual(conciliado["noticias"][0]["sha256_origem"],
-                         pacote["noticias"][0]["sha256_origem"])
+        with self.assertRaisesRegex(ValueError, "ID isolado"):
+            conciliar_complementos(pacote, complemento)
 
     def test_suplemento_nao_substitui_snapshot_de_noticia(self):
         pacote = gerar()["evidencias_editoriais"]

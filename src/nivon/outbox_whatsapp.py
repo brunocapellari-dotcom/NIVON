@@ -17,6 +17,12 @@ from datetime import datetime, timezone
 from typing import Callable
 
 from .lineup_nacional import instante
+from .autorizacao_envio import verificar_autorizacao
+from .vigencia_editorial import calcular_vigencia_editorial, validar_reserva_editorial, _instante as _instante_vigencia
+from .provas_externas_envio import verificar_pacote_externo
+from .registry_emissores import (
+    _esquema as _esquema_registry, emissores_confiaveis,
+)
 
 
 class ErroOutbox(ValueError):
@@ -29,6 +35,11 @@ WEBHOOK_ESTADOS = {"sent": "ENVIADO", "delivered": "ENTREGUE",
                    "read": "LIDO", "failed": "FALHOU"}
 ORDEM = {"ENVIO_INDETERMINADO": 0, "ACEITO_PROVEDOR": 1,
          "ENVIADO": 2, "ENTREGUE": 3, "LIDO": 4}
+
+
+def _agora_reserva_utc() -> datetime:
+    """Relógio não controlado pelo payload; substituído SOMENTE por mocks de teste."""
+    return datetime.now(timezone.utc)
 
 
 def _hora() -> str:
@@ -64,9 +75,58 @@ def _fingerprint(payload: dict) -> str:
                                     ensure_ascii=False).encode("utf-8")).hexdigest()
 
 
+def _evidencia_optout(evidencia: str) -> str:
+    if (not isinstance(evidencia, str)
+            or not re.fullmatch(r"[A-Za-z0-9._:-]{12,128}", evidencia)):
+        raise ErroOutbox("opt-out requer evidência identificável")
+    return hashlib.sha256(evidencia.encode("utf-8")).hexdigest()
+
+
+def _vincular_chave_destinatario(con: sqlite3.Connection, segredo: bytes) -> None:
+    """Evita bypass de opt-out por rotação silenciosa da chave HMAC.
+
+    Para bases legadas com envios já gravados e sem âncora, exige migração
+    manual supervisionada. Nunca presume que a nova chave é equivalente.
+    O fingerprint não substitui armazenamento seguro e versionamento de chave.
+    """
+    _secret(segredo)
+    if not con.in_transaction:
+        raise ErroOutbox("verificação de chave HMAC exige transação exclusiva")
+    fingerprint = hashlib.sha256(b"nivon:destinatario-hmac:v1:" + segredo).hexdigest()
+    atual = con.execute(
+        "SELECT fingerprint_sha256 FROM nivon_identidade_hmac WHERE id=1"
+    ).fetchone()
+    if atual:
+        if not hmac.compare_digest(atual[0], fingerprint):
+            raise PermissionError("chave HMAC do destinatário alterada sem migração auditada")
+        return
+    # No legado, um registro já existente pode ter sido produzido por outra
+    # chave. É inseguro estabelecer âncora retrospectivamente por suposição.
+    usado = con.execute("SELECT 1 FROM nivon_envios LIMIT 1").fetchone()
+    revogado = con.execute(
+        "SELECT 1 FROM nivon_optouts_destinatario LIMIT 1"
+    ).fetchone()
+    if usado or revogado:
+        raise PermissionError("chave HMAC de base legada exige migração auditada")
+    con.execute(
+        "INSERT INTO nivon_identidade_hmac (id,fingerprint_sha256,criado_em) "
+        "VALUES (1,?,?)", (fingerprint, _hora())
+    )
+
+
+def _bloquear_se_optout(con: sqlite3.Connection, destinatario_hmac: str) -> None:
+    # Exige ser chamado dentro de BEGIN IMMEDIATE antes de registrar/aprovar
+    # ou reservar tentativa. Não confundir com cancelamento do POST já feito.
+    if con.execute(
+            "SELECT 1 FROM nivon_optouts_destinatario WHERE destinatario_hmac=?",
+            (destinatario_hmac,)).fetchone() is not None:
+        raise PermissionError("opt-out ativo para destinatário: nenhum novo envio")
+
+
 def _esquema(con: sqlite3.Connection) -> None:
     if con.in_transaction:
         raise ErroOutbox("conexão deve estar sem transação antes de iniciar a outbox")
+    _esquema_registry(con)
     con.execute("""CREATE TABLE IF NOT EXISTS nivon_envios (
         idempotency_key TEXT PRIMARY KEY,
         edicao TEXT NOT NULL,
@@ -81,6 +141,37 @@ def _esquema(con: sqlite3.Connection) -> None:
         UNIQUE(edicao,destinatario_hmac,template))""")
     con.execute("CREATE INDEX IF NOT EXISTS idx_nivon_envios_provider ON nivon_envios(provider_message_id)")
     con.execute("CREATE INDEX IF NOT EXISTS idx_nivon_envios_estado ON nivon_envios(estado)")
+    con.execute("""CREATE TABLE IF NOT EXISTS nivon_autorizacoes (
+        idempotency_key TEXT PRIMARY KEY REFERENCES nivon_envios(idempotency_key),
+        documento_sha256 TEXT NOT NULL,
+        sha256_editorial TEXT NOT NULL,
+        valido_ate TEXT NOT NULL,
+        revogado_em TEXT,
+        criado_em TEXT NOT NULL)""")
+    con.execute("""CREATE TABLE IF NOT EXISTS nivon_revogacoes (
+        idempotency_key TEXT PRIMARY KEY REFERENCES nivon_envios(idempotency_key),
+        evidencia_sha256 TEXT NOT NULL,
+        revogado_em TEXT NOT NULL)""")
+    con.execute("""CREATE TABLE IF NOT EXISTS nivon_optouts_destinatario (
+        destinatario_hmac TEXT PRIMARY KEY,
+        evidencia_sha256 TEXT NOT NULL,
+        revogado_em TEXT NOT NULL)""")
+    con.execute("""CREATE TABLE IF NOT EXISTS nivon_identidade_hmac (
+        id INTEGER PRIMARY KEY CHECK (id=1),
+        fingerprint_sha256 TEXT NOT NULL,
+        criado_em TEXT NOT NULL)""")
+    con.execute("""CREATE TABLE IF NOT EXISTS nivon_provas_externas (
+        idempotency_key TEXT PRIMARY KEY REFERENCES nivon_envios(idempotency_key),
+        comprovantes_sha256 TEXT NOT NULL,
+        registrado_em TEXT NOT NULL)""")
+    con.execute("""CREATE TABLE IF NOT EXISTS nivon_vigencia_editorial (
+        idempotency_key TEXT PRIMARY KEY REFERENCES nivon_envios(idempotency_key),
+        gerado_em_utc TEXT NOT NULL,
+        noticia_mais_antiga_utc TEXT NOT NULL,
+        valido_ate_utc TEXT NOT NULL,
+        sha256_editorial TEXT NOT NULL,
+        sha256_noticias TEXT NOT NULL,
+        registrado_em TEXT NOT NULL)""")
 
 
 def registrar_edicao(con: sqlite3.Connection, preparado: dict, *,
@@ -100,6 +191,8 @@ def registrar_edicao(con: sqlite3.Connection, preparado: dict, *,
     _esquema(con)
     con.execute("BEGIN IMMEDIATE")
     try:
+        _vincular_chave_destinatario(con, chave_destinatario)
+        _bloquear_se_optout(con, digest)
         existe=con.execute("""SELECT idempotency_key, payload_sha256, estado
             FROM nivon_envios WHERE edicao=? AND destinatario_hmac=? AND template=?""",
             (edicao,digest,template)).fetchone()
@@ -133,9 +226,180 @@ def consultar_envio(con: sqlite3.Connection, chave: str) -> dict:
                      "atualizado_em"),result))
 
 
+def registrar_autorizacao(con: sqlite3.Connection, preparado: dict, *, 
+                           edicao_editorial: dict, documento: dict,
+                           assinatura: str, chave_auditoria: bytes,
+                           comprovantes: list[dict] | None = None,
+                           emissores: dict | None = None,
+                           noticias_editoriais: list[dict] | None = None) -> dict:
+    """Persiste apenas o SHA do documento assinado, nunca o texto/telefone.
+
+    O documento e a edição são insumos de governança EXTERNOS: a verificação
+    criptográfica não demonstra que o aprovador de fato tinha autoridade.
+    """
+    if not isinstance(edicao_editorial, dict) or (
+            edicao_editorial.get("estado") != "EDICAO_OFFLINE_PREPARADA_SEM_ENVIO"
+            or edicao_editorial.get("enviado") is not False):
+        raise ErroOutbox("edição editorial ainda não preparada para revisão")
+    texto = edicao_editorial.get("texto")
+    if not isinstance(texto, str):
+        raise ErroOutbox("texto editorial ausente")
+    sha = hashlib.sha256(texto.encode("utf-8")).hexdigest()
+    if (edicao_editorial.get("sha256") != sha
+            or documento.get("sha256_editorial") != sha):
+        raise ErroOutbox("edição editorial diverge do hash da aprovação")
+    vigencia = calcular_vigencia_editorial(
+        preparado.get("gerado_em"), noticias_editoriais, sha)
+    relatorio = edicao_editorial.get("preflight_editorial")
+    if (not isinstance(relatorio, dict)
+            or relatorio.get("apto_revisao") is not True
+            or relatorio.get("sha256_texto") != sha
+            or relatorio.get("bloqueios") != []
+            or relatorio.get("modo") != "OFFLINE_SEM_ENVIO"
+            or relatorio.get("noticia_mais_antiga_em") != vigencia["noticia_mais_antiga_utc"]):
+        raise ErroOutbox("revisão editorial independente não comprovada no pacote")
+    digest_doc = verificar_autorizacao(documento, assinatura, chave_auditoria=chave_auditoria)
+    digest_provas = verificar_pacote_externo(
+        documento, comprovantes, emissores, chave_auditoria=chave_auditoria)
+    destino, template, chave = _revisar_preparado(preparado)
+    del destino, template  # não salvar telefone nem template nesta tabela
+    _esquema(con)
+    con.execute("BEGIN IMMEDIATE")
+    try:
+        row = con.execute("""SELECT edicao,destinatario_hmac,payload_sha256,estado
+                            FROM nivon_envios WHERE idempotency_key=?""", (chave,)).fetchone()
+        if row is None or row[3] != "PREPARADO":
+            raise ErroOutbox("reserva editorial requer registro PREPARADO sem tentativas")
+        _bloquear_se_optout(con, row[1])
+        # Não aceitar chaves/roles recebidos no payload sem cadastro
+        # raiz externo previamente persistido; confirmar sob lock.
+        confiaveis = emissores_confiaveis(con, emissores)
+        if verificar_pacote_externo(documento, comprovantes, confiaveis,
+                 chave_auditoria=chave_auditoria) != digest_provas:
+            raise PermissionError("registry diverge do pacote aprovado")
+        if (documento["idempotency_key"] != chave
+                or documento["edicao"] != row[0]
+                or documento["destinatario_hmac"] != row[1]
+                or documento["payload_sha256"] != row[2]
+                or _fingerprint(preparado["payload"]) != row[2]):
+            raise ErroOutbox("autorização não corresponde a edição, destino ou payload")
+        existente = con.execute("""SELECT documento_sha256,revogado_em
+                                   FROM nivon_autorizacoes WHERE idempotency_key=?""",
+                                (chave,)).fetchone()
+        if existente and (existente[0] != digest_doc or existente[1] is not None):
+            raise ErroOutbox("aprovação anterior divergente/revogada; nova revisão obrigatória")
+        if not existente:
+            con.execute("""INSERT INTO nivon_autorizacoes
+                           (idempotency_key,documento_sha256,sha256_editorial,
+                            valido_ate,revogado_em,criado_em)
+                           VALUES (?,?,?,?,NULL,?)""",
+                        (chave, digest_doc, sha, documento["valido_ate"], _hora()))
+        anterior = con.execute(
+            "SELECT comprovantes_sha256 FROM nivon_provas_externas WHERE idempotency_key=?",
+            (chave,)).fetchone()
+        if anterior is not None and anterior[0] != digest_provas:
+            raise ErroOutbox("pacote de provas externas diverge do registro anterior")
+        if anterior is None:
+            con.execute("""INSERT INTO nivon_provas_externas
+                           (idempotency_key,comprovantes_sha256,registrado_em)
+                           VALUES (?,?,?)""", (chave, digest_provas, _hora()))
+        anterior_vigencia = con.execute("""SELECT gerado_em_utc,noticia_mais_antiga_utc,
+            valido_ate_utc,sha256_editorial,sha256_noticias FROM nivon_vigencia_editorial
+            WHERE idempotency_key=?""", (chave,)).fetchone()
+        campos_vigencia = (vigencia["gerado_em_utc"],vigencia["noticia_mais_antiga_utc"],
+                          vigencia["valido_ate_utc"],vigencia["sha256_editorial"],
+                          vigencia["sha256_noticias"])
+        if anterior_vigencia and tuple(anterior_vigencia) != campos_vigencia:
+            raise ErroOutbox("vigência editorial divergente de edição já auditada")
+        if anterior_vigencia is None:
+            con.execute("""INSERT INTO nivon_vigencia_editorial
+                (idempotency_key,gerado_em_utc,noticia_mais_antiga_utc,valido_ate_utc,
+                 sha256_editorial,sha256_noticias,registrado_em)
+                VALUES (?,?,?,?,?,?,?)""", (chave,*campos_vigencia,_hora()))
+        con.commit()
+    except Exception:
+        con.rollback()
+        raise
+    return {"chave": chave, "estado": "AUTORIZACAO_REGISTRADA_SEM_ENVIO",
+            "documento_sha256": digest_doc}
+
+
+def revogar_destinatario(con: sqlite3.Connection, *, destino: str,
+                        chave_destinatario: bytes, evidencia_revogacao: str) -> dict:
+    """Aplica opt-out permanente por identidade pseudonimizada de destinatário.
+
+    Pode anteceder qualquer edição. A reativação exige procedimento EXTERNO
+    auditado de novo opt-in; esta API nunca desfaz a revogação.
+    """
+    _secret(chave_destinatario)
+    if not isinstance(destino, str) or not re.fullmatch(r"[0-9]{10,15}", destino):
+        raise ErroOutbox("destinatário do opt-out inválido")
+    prova = _evidencia_optout(evidencia_revogacao)
+    digest = hmac.new(chave_destinatario, destino.encode(), hashlib.sha256).hexdigest()
+    _esquema(con)
+    con.execute("BEGIN IMMEDIATE")
+    try:
+        _vincular_chave_destinatario(con, chave_destinatario)
+        now = _hora()
+        con.execute("""INSERT OR IGNORE INTO nivon_optouts_destinatario
+                       (destinatario_hmac,evidencia_sha256,revogado_em)
+                       VALUES (?,?,?)""", (digest, prova, now))
+        # Revogar aprovações ainda não executadas; status posterior à reserva
+        # não pode ser cancelado por supressão local.
+        con.execute("""UPDATE nivon_autorizacoes SET revogado_em=?
+                       WHERE revogado_em IS NULL AND idempotency_key IN
+                       (SELECT idempotency_key FROM nivon_envios
+                        WHERE destinatario_hmac=?)""", (now, digest))
+        con.commit()
+    except Exception:
+        con.rollback()
+        raise
+    return {"destinatario_hmac": digest, "estado": "OPT_OUT_DESTINATARIO_ATIVO",
+            "envio_realizado": False}
+
+
+def revogar_autorizacao(con: sqlite3.Connection, *, chave: str,
+                       evidencia_revogacao: str) -> dict:
+    """Revoga somente a aprovação desta edição; não presume opt-out.
+
+    O cancelamento do consentimento em TODAS as edições deve usar
+    revogar_destinatario com prova específica e chave HMAC estável.
+    """
+    prova = _evidencia_optout(evidencia_revogacao)
+    _esquema(con)
+    con.execute("BEGIN IMMEDIATE")
+    try:
+        r = con.execute("""SELECT e.estado,a.revogado_em
+                           FROM nivon_envios e JOIN nivon_autorizacoes a
+                           ON e.idempotency_key=a.idempotency_key
+                           WHERE e.idempotency_key=?""", (chave,)).fetchone()
+        if not r:
+            raise ErroOutbox("aprovação a revogar não encontrada")
+        if r[1] is None:
+            instante = _hora()
+            con.execute("UPDATE nivon_autorizacoes SET revogado_em=? WHERE idempotency_key=?",
+                        (instante, chave))
+            # Manter prova pseudonimizada e imutável de opt-out em transação
+            # conjunta à revogação; não persistir documentos pessoais brutos.
+            con.execute("""INSERT INTO nivon_revogacoes
+                           (idempotency_key,evidencia_sha256,revogado_em)
+                           VALUES (?,?,?)""",
+                        (chave, prova, instante))
+        con.commit()
+    except Exception:
+        con.rollback()
+        raise
+    return {"chave": chave, "estado": "AUTORIZACAO_REVOGADA",
+            "envio_em_andamento_ou_anterior": r[0] != "PREPARADO"}
+
+
 def despachar_registrado(con: sqlite3.Connection, preparado: dict, *,
                         autorizar_envio: bool = False, custos_aprovados: bool = False,
-                        remetente: Callable[[dict],dict] | None = None) -> dict:
+                        remetente: Callable[[dict],dict] | None = None,
+                        documento: dict | None = None, assinatura: str | None = None,
+                        chave_auditoria: bytes | None = None,
+                        comprovantes: list[dict] | None = None,
+                        emissores: dict | None = None) -> dict:
     """Reserva atomicamente a primeira e ÚNICA tentativa. Nada é repetido.
 
     A conexão deve apontar para disco durável com backup; teste não é prova de
@@ -145,18 +409,58 @@ def despachar_registrado(con: sqlite3.Connection, preparado: dict, *,
         raise PermissionError("envio e orçamento não autorizados")
     if remetente is None:
         raise ErroOutbox("provedor WhatsApp não conectado")
+    # Assinatura e documento são condição necessária, não autorização isolada.
+    # Mesmo um callback injetado só é chamado após prova persistida na outbox.
+    if documento is None or assinatura is None or chave_auditoria is None:
+        raise PermissionError("autorização editorial registrada e assinada obrigatória")
+    digest_doc = verificar_autorizacao(documento, assinatura,
+                                     chave_auditoria=chave_auditoria)
+    digest_provas = verificar_pacote_externo(
+        documento, comprovantes, emissores, chave_auditoria=chave_auditoria)
     _,_,chave=_revisar_preparado(preparado)
     _esquema(con)
     con.execute("BEGIN IMMEDIATE")
     try:
-        d=con.execute("SELECT estado,payload_sha256 FROM nivon_envios WHERE idempotency_key=?",
-                      (chave,)).fetchone()
+        # Revalidar sob o mesmo lock que reserva a única tentativa,
+        # inclusive revogação de emissor entre cadastro e despacho.
+        verificar_autorizacao(documento, assinatura, chave_auditoria=chave_auditoria)
+        confiaveis = emissores_confiaveis(con, emissores)
+        if verificar_pacote_externo(documento, comprovantes, confiaveis,
+                 chave_auditoria=chave_auditoria) != digest_provas:
+            raise PermissionError("pacote externo diferente do aprovado")
+        d=con.execute("""SELECT e.estado,e.payload_sha256,e.edicao,e.destinatario_hmac,
+                           a.documento_sha256,a.sha256_editorial,a.revogado_em
+                           FROM nivon_envios e LEFT JOIN nivon_autorizacoes a
+                           ON e.idempotency_key=a.idempotency_key
+                           WHERE e.idempotency_key=?""", (chave,)).fetchone()
         if not d:
             raise ErroOutbox("envio não registrado antes do POST")
         if d[0]!="PREPARADO":
             raise ErroOutbox("envio já reservado/realizado: sem retry automático")
         if d[1]!=_fingerprint(preparado["payload"]):
             raise ErroOutbox("conteúdo divergente do registrado")
+        _bloquear_se_optout(con, d[3])
+        prazo = con.execute("""SELECT gerado_em_utc,noticia_mais_antiga_utc,
+            valido_ate_utc,sha256_editorial,sha256_noticias FROM nivon_vigencia_editorial
+            WHERE idempotency_key=?""", (chave,)).fetchone()
+        if prazo is None:
+            raise PermissionError("vigência editorial ausente; edição legada bloqueada")
+        validar_reserva_editorial(dict(zip(
+            ("gerado_em_utc","noticia_mais_antiga_utc","valido_ate_utc",
+             "sha256_editorial","sha256_noticias"), prazo)),
+            gerado_em=preparado.get("gerado_em"),sha256_editorial=d[5],
+            agora=_agora_reserva_utc())
+        prova_registrada = con.execute(
+            "SELECT comprovantes_sha256 FROM nivon_provas_externas WHERE idempotency_key=?",
+            (chave,)).fetchone()
+        if not prova_registrada or prova_registrada[0] != digest_provas:
+            raise PermissionError("provas externas inexistentes ou divergentes da outbox")
+        if (d[4] != digest_doc or d[5] != documento.get("sha256_editorial")
+                or d[6] is not None or d[2] != documento.get("edicao")
+                or d[3] != documento.get("destinatario_hmac")
+                or chave != documento.get("idempotency_key")
+                or d[1] != documento.get("payload_sha256")):
+            raise PermissionError("outbox sem aprovação válida, vinculada ou não revogada")
         con.execute("""UPDATE nivon_envios
                        SET estado='ENVIO_INDETERMINADO',tentativas=1,atualizado_em=?
                        WHERE idempotency_key=?""",(_hora(),chave))

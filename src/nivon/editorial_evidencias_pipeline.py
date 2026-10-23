@@ -205,8 +205,7 @@ def conciliar_complementos(candidatos: dict, complemento: dict) -> dict:
                     novo[chave] = valor
             if categoria == "noticias":
                 if novo.get("publicacao_original_verificada") is True:
-                    if not isinstance(novo.get("evidencia_publicacao_original_id"), str) or len(novo["evidencia_publicacao_original_id"]) < 8:
-                        raise ValueError("publicação original marcada sem ID da prova externa")
+                    raise ValueError("ID isolado não comprova publicação original; exige RSS, página e atestados assinados")
                 if novo.get("evento_id") and not novo.get("evidencia_evento_id"):
                     raise ValueError("evento editorial não vinculado a decisão documentada")
             if categoria == "cotacoes" and novo.get("fechamento_confirmado") is True:
