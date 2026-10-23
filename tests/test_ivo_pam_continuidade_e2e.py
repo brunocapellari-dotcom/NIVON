@@ -217,6 +217,35 @@ class TestIVOContinuidadeE2E(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(main(args), 2)
 
+    def test_cli_exporta_tarefas_pendentes_compatíveis_com_coletor(self):
+        self.store(P1)
+        self.db.commit()
+        tarefas = self.base / "selecionadas.json"
+        tarefas.write_text(json.dumps(self.tasks), encoding="utf-8")
+        relatorio = self.base / "monitor.json"
+        lista = self.base / "retomar.json"
+        args = [
+            "--db", str(self.dbpath), "--acervo", str(self.cofre),
+            "--tarefas", str(tarefas), "--saida", str(relatorio),
+            "--proximas-tarefas", str(lista),
+            "--corte", (T+timedelta(days=1)).isoformat(),
+        ]
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(main(args), 0)
+        retomada = json.loads(lista.read_text(encoding="utf-8"))
+        self.assertEqual(retomada, [P2, P3])
+        self.assertTrue(all(set(p) == set(P1) for p in retomada))
+        # O JSON exportado pode alimentar --tarefas do coletor existente,
+        # mas NAO concede permissao nem realiza a coleta.
+        self.assertEqual(len(json.loads(relatorio.read_text())["tarefas_pendentes"]), 2)
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(main(args), 0)
+        lista.write_text('{"adulterado":true}', encoding="utf-8")
+        anterior = relatorio.read_bytes()
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(main(args), 2)
+        self.assertEqual(relatorio.read_bytes(), anterior)
+
     def test_clI_sem_banco_nao_cria_sqlite(self):
         path = self.base / "no.db"
         tasks = self.base / "tasks.json"
