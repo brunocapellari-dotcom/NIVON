@@ -132,5 +132,33 @@ class TestColetorValuesQuarentena(unittest.TestCase):
         self.assertFalse(self.banco.exists())
 
 
+
+    def test_quarentena_legada_sem_unique_nao_migra(self):
+        with sqlite3.connect(self.banco) as cx:
+            cx.execute("""CREATE TABLE valores_pecuaria_quarentena(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                especie TEXT,tabela_sidra TEXT,periodo TEXT,territorio TEXT,
+                url_declarada TEXT,primeira_coleta_em TEXT,sha256_bruto TEXT,
+                bruto BLOB,estado TEXT)""")
+            antes=cx.execute("PRAGMA schema_version").fetchone()[0]
+        with self.assertRaisesRegex(DadoInvalido,"legada"):
+            self.executar_simulado(banco=self.banco,gravar=True)
+        with sqlite3.connect(self.banco) as cx:
+            self.assertEqual(cx.execute("PRAGMA schema_version").fetchone()[0],antes)
+            self.assertEqual(cx.execute(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='trigger'").fetchone()[0],0)
+            self.assertEqual(cx.execute(
+                "SELECT COUNT(*) FROM valores_pecuaria_quarentena").fetchone()[0],0)
+
+    def test_trigger_ausente_no_banco_existente_bloqueia_sem_ddl(self):
+        self.executar_simulado(banco=self.banco,gravar=True)
+        with sqlite3.connect(self.banco) as cx:
+            cx.execute("DROP TRIGGER pecuaria_quarentena_sem_update")
+            antes=cx.execute("PRAGMA schema_version").fetchone()[0]
+        with self.assertRaisesRegex(DadoInvalido,"legada"):
+            self.executar_simulado(banco=self.banco,gravar=True)
+        with sqlite3.connect(self.banco) as cx:
+            self.assertEqual(cx.execute("PRAGMA schema_version").fetchone()[0],antes)
+
 if __name__=="__main__":
     unittest.main()
