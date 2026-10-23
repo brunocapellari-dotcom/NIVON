@@ -96,3 +96,9 @@ jobs:
               f.write('Autenticação OIDC + leitura de metadados BigQuery e GCS concluídas.\n\n')
               f.write('Nenhum objeto, tabela, dataset ou consulta SQL foi criado.\n')
           PY
+      - name: Conferir tabela e view da ANTT exclusivamente por metadados
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m nivon.antt_gcp_preflight \
+            --projeto "$NIVON_PROJETO" --dataset "$NIVON_DATASET"
