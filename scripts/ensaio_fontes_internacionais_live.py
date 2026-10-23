@@ -10,6 +10,8 @@ from pathlib import Path
 from nivon.coletores_dados_reais import executar_coleta
 from nivon.coletor_bcra_v4 import coletar_bcra
 from nivon.coletor_granos_ar import coletar_granos_ar
+from nivon.coletores_dados_reais import CCEE_PACKAGE, _get, _parse_ckan
+from urllib.parse import urlsplit
 
 def main():
     # Data antiga e delimitada, sem depender de uma cotação no dia corrente.
@@ -61,8 +63,20 @@ def main():
                  "estado":out.get("estado"),"observacoes":out.get("novas_observacoes"),
                  "bytes_raw":out.get("arquivo_raw") is not None})
         except Exception as exc:
+            diagnostico={}
+            try:
+                payload, _ = _get(CCEE_PACKAGE,max_bytes=1_500_000,
+                                tipos={"application/json","text/json"})
+                _, recursos = _parse_ckan(payload)
+                alvo=next((v for v in recursos if v.get("id")=="3f279d6b-1069-42f7-9b0a-217b084729c4"),{})
+                uri=urlsplit(str(alvo.get("url","")))
+                diagnostico={"host":uri.hostname,"path_prefix":uri.path[:120],
+                    "has_query":bool(uri.query),"format":alvo.get("format")}
+            except Exception as sub_exc:
+                diagnostico={"erro_inspecao":type(sub_exc).__name__}
             resultado.append({"fonte":"BR_CCEE_PLD_CSV_2026","http":"FALHOU",
-                 "tipo_erro":type(exc).__name__,"mensagem":str(exc)[:150]})
+                 "tipo_erro":type(exc).__name__,"mensagem":str(exc)[:150],
+                 "locator":diagnostico})
     print(json.dumps({"ensaios":resultado,"homologacao":"NAO","dados_fora_do_banco":True},
           ensure_ascii=False,indent=2))
     return 0 if all(x["http"]=="SUCESSO" for x in resultado) else 2
