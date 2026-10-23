@@ -91,6 +91,20 @@ class RadarIntegradoTests(unittest.TestCase):
             with self.subTest(k=k):
                 self.assertIs(result[k], False)
 
+    def test_realistic_latest_outside_range_is_explicitly_flagged(self):
+        def version2(url):
+            name = url.split("/")[4]
+            if name == "duckdb":
+                return project(name, "2.0.0")
+            return self.fetch_pypi(url)
+        data = self.executar_radar(fetch_pypi=version2)
+        self.assertEqual(data["latest_outside_declared_range"], ["duckdb"])
+        self.assertEqual(data["latest_range_not_evaluable"], [])
+        item = next(p for p in data["packages"] if p["name"] == "duckdb")
+        self.assertIs(item["latest_satisfies_supported_numeric_requirement"], False)
+        self.assertEqual(item["constraint_status"], "LATEST_OUTSIDE_DECLARED_NUMERIC_RANGE")
+        self.assertFalse(data["approved_for_install"])
+
     def test_reject_missing_wheel_digest_from_pypi(self):
         def bad(url):
             obj = json.loads(self.fetch_pypi(url))
