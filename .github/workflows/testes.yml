@@ -87,6 +87,61 @@ jobs:
               raise SystemExit(f'Expected 27 PDF byte tests, got {count}')
           PY
 
+  validar-pdf-maritimo-em-conteiner:
+    # Docker build may fetch PUBLIC dependency images at build time; the
+    # subsequent 3 actual container executions are strictly --network none.
+    # Synthetic data ONLY, no real PDFs, no cloud services or deployment.
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    permissions:
+      contents: read
+    steps:
+      - name: Obter codigo sem credenciais persistidas
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Preparar Python de fixture
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Instalar apenas gerador sintético de PDFs no runner
+        run: python -m pip install --disable-pip-version-check reportlab==4.4.9
+      - name: Construir imagem local offline sem push nem deploy
+        run: docker build -f docker/Dockerfile.maritime-pdf-offline -t nivon-maritime-pdf-offline:local .
+      - name: Gerar tres edicoes PDF sinteticas com SHA e manifesto
+        env:
+          PYTHONPATH: src:tests
+        run: |
+          set -euo pipefail
+          echo "MARITIME_E2E_ROOT=${RUNNER_TEMP}/nivon_pdf_smoke" >> "${GITHUB_ENV}"
+          python tests/maritime_container_smoke.py prepare \
+            "${RUNNER_TEMP}/nivon_pdf_smoke/inputs" \
+            "${RUNNER_TEMP}/nivon_pdf_smoke/outputs"
+      - name: Processar lote completo dry-run SEM rede e sem SQLite
+        run: |
+          set -euo pipefail
+          bash scripts/run_maritime_pdf_container.sh \
+            "${MARITIME_E2E_ROOT}/inputs" "${MARITIME_E2E_ROOT}/outputs" \
+            input_manifest.json audit_dryrun.json 2026-10-20T18:00:00+00:00
+          test ! -e "${MARITIME_E2E_ROOT}/outputs/maritime.sqlite"
+      - name: Persistir edicoes derivadas e gerar auditoria SEM rede
+        run: |
+          set -euo pipefail
+          bash scripts/run_maritime_pdf_container.sh \
+            "${MARITIME_E2E_ROOT}/inputs" "${MARITIME_E2E_ROOT}/outputs" \
+            input_manifest.json audit_commit.json 2026-10-20T18:00:00+00:00 --commit
+      - name: Repetir mesmo lote e verificar idempotencia SEM rede
+        run: |
+          set -euo pipefail
+          bash scripts/run_maritime_pdf_container.sh \
+            "${MARITIME_E2E_ROOT}/inputs" "${MARITIME_E2E_ROOT}/outputs" \
+            input_manifest.json audit_replay.json 2026-10-20T18:00:00+00:00 --commit
+      - name: Afirmar arquivos, relatorio, SQLite, diferencas e bloqueio de release
+        env:
+          PYTHONPATH: src:tests
+        run: |
+          python tests/maritime_container_smoke.py verify "${MARITIME_E2E_ROOT}/outputs"
+
   conferir-schema-mapa:
     # Diagnóstico de fonte real somente manual. Não repetir downloads em todo PR.
     if: github.event_name == 'workflow_dispatch'
