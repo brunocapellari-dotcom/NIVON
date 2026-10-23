@@ -21,6 +21,10 @@ class Programacao:
     fonte: str
     coletado_em: str
     status: str = "PROGRAMADO"
+    eta_programado: str | None = None
+    terminal: str | None = None
+    call_id: str | None = None
+    serie: str | None = None
 
     def __post_init__(self):
         if self.porto not in PORTOS_BR:

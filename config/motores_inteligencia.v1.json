@@ -17,7 +17,17 @@
         "nivon.inteligencia_temporal:comparar_progresso_safra",
         "nivon.inteligencia_temporal:benchmark_sazonal_mensal",
         "nivon.conab_agrobr:normalizar_progresso",
-        "nivon.previsoes_bibliotecas:backtest_mensal"
+        "nivon.previsoes_bibliotecas:backtest_mensal",
+        "nivon.verificacao_probabilistica:pontuacao_quantis",
+        "nivon.analogos_historicos:encontrar_anos_analogos",
+        "nivon.unidades_mercado:referencia_bolsa_cbot_usd_t",
+        "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
+        "nivon.agregacao_pam_ibge:agregar_municipios_pam",
+        "nivon.composicao_pam_sidra:montar_pam_municipal",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada",
+        "nivon.tendencias_mercados:tendencia_cbot",
+        "nivon.tendencias_mercados:tendencia_preco_fisico"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -31,7 +41,10 @@
         "BCB_PTAX",
         "CONAB_ARMAZENS_CAPACIDADE",
         "IMEA_COMERCIALIZACAO_MT",
-        "CONAB_PROGRESSO_SEMANAL"
+        "CONAB_PROGRESSO_SEMANAL",
+        "USDA_WASDE_RELEASE_VINTAGES",
+        "CFTC_COT_WEEKLY",
+        "FAO_FAOSTAT_LONG_RUN"
       ],
       "indicators_planned": 18,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -51,7 +64,17 @@
         "nivon.inteligencia_temporal:comparar_progresso_safra",
         "nivon.inteligencia_temporal:benchmark_sazonal_mensal",
         "nivon.conab_agrobr:normalizar_progresso",
-        "nivon.previsoes_bibliotecas:backtest_mensal"
+        "nivon.previsoes_bibliotecas:backtest_mensal",
+        "nivon.verificacao_probabilistica:pontuacao_quantis",
+        "nivon.analogos_historicos:encontrar_anos_analogos",
+        "nivon.unidades_mercado:referencia_bolsa_cbot_usd_t",
+        "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
+        "nivon.agregacao_pam_ibge:agregar_municipios_pam",
+        "nivon.composicao_pam_sidra:montar_pam_municipal",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada",
+        "nivon.tendencias_mercados:tendencia_cbot",
+        "nivon.tendencias_mercados:tendencia_preco_fisico"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -67,7 +90,10 @@
         "LINEUP_PARANAGUA",
         "CONAB_ARMAZENS_CAPACIDADE",
         "IMEA_COMERCIALIZACAO_MT",
-        "CONAB_PROGRESSO_SEMANAL"
+        "CONAB_PROGRESSO_SEMANAL",
+        "USDA_WASDE_RELEASE_VINTAGES",
+        "CFTC_COT_WEEKLY",
+        "FAO_FAOSTAT_LONG_RUN"
       ],
       "indicators_planned": 16,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -83,7 +109,14 @@
         "nivon.motores_agro_estrategicos:safra_comercializacao",
         "nivon.inteligencia_temporal:decompor_mudanca_safra",
         "nivon.inteligencia_temporal:comparar_progresso_safra",
-        "nivon.conab_agrobr:normalizar_progresso"
+        "nivon.conab_agrobr:normalizar_progresso",
+        "nivon.unidades_mercado:referencia_ice_centavos_libra_usd_t",
+        "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
+        "nivon.agregacao_pam_ibge:agregar_municipios_pam",
+        "nivon.composicao_pam_sidra:montar_pam_municipal",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada",
+        "nivon.tendencias_mercados:tendencia_preco_fisico"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
@@ -93,7 +126,9 @@
         "CEPEA_FISICO",
         "LINEUP_SANTOS",
         "IMEA_COMERCIALIZACAO_MT",
-        "CONAB_PROGRESSO_SEMANAL"
+        "CONAB_PROGRESSO_SEMANAL",
+        "CFTC_COT_WEEKLY",
+        "USDA_WASDE_RELEASE_VINTAGES"
       ],
       "indicators_planned": 11,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -105,7 +140,11 @@
     {
       "front_id": "BOI",
       "entrypoints": [
-        "nivon.motores_agro_estrategicos:boi_rendimento_carcaca"
+        "nivon.motores_agro_estrategicos:boi_rendimento_carcaca",
+        "nivon.modelos_fisicos:reconciliar_rebanho",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada",
+        "nivon.tendencias_mercados:tendencia_preco_fisico"
       ],
       "data_dependencies": [
         "IBGE_PPM",
@@ -114,7 +153,9 @@
         "CEPEA_BOI",
         "SCOT_PECUARIA",
         "MDIC_COMEX_NCM",
-        "B3_FUTUROS"
+        "B3_FUTUROS",
+        "CFTC_COT_WEEKLY",
+        "FAO_FAOSTAT_LONG_RUN"
       ],
       "indicators_planned": 7,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -126,7 +167,10 @@
     {
       "front_id": "BEZERRO",
       "entrypoints": [
-        "nivon.motores_agro_estrategicos:relacao_troca_bezerro"
+        "nivon.motores_agro_estrategicos:relacao_troca_bezerro",
+        "nivon.modelos_fisicos:reconciliar_rebanho",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "IBGE_PPM",
@@ -144,7 +188,10 @@
       "front_id": "ACUCAR",
       "entrypoints": [
         "nivon.motores_agro_estrategicos:referencia_acucar_ice",
-        "nivon.motores_cadeias:simular_atr_cana"
+        "nivon.motores_cadeias:simular_atr_cana",
+        "nivon.unidades_mercado:referencia_ice_centavos_libra_usd_t",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "CONAB_CANA",
@@ -168,7 +215,15 @@
         "nivon.motores_agro_estrategicos:paridade_importacao_trigo",
         "nivon.motores_agro_estrategicos:safra_comercializacao",
         "nivon.inteligencia_temporal:decompor_mudanca_safra",
-        "nivon.conab_agrobr:normalizar_progresso"
+        "nivon.conab_agrobr:normalizar_progresso",
+        "nivon.unidades_mercado:referencia_bolsa_cbot_usd_t",
+        "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
+        "nivon.agregacao_pam_ibge:agregar_municipios_pam",
+        "nivon.composicao_pam_sidra:montar_pam_municipal",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada",
+        "nivon.tendencias_mercados:tendencia_cbot",
+        "nivon.tendencias_mercados:tendencia_preco_fisico"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
@@ -177,7 +232,9 @@
         "MDIC_COMEX_NCM",
         "USDA_PSD",
         "CME_FUTUROS",
-        "CONAB_PROGRESSO_SEMANAL"
+        "CONAB_PROGRESSO_SEMANAL",
+        "CFTC_COT_WEEKLY",
+        "USDA_WASDE_RELEASE_VINTAGES"
       ],
       "indicators_planned": 9,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -191,7 +248,12 @@
       "entrypoints": [
         "nivon.motores_agro_estrategicos:sorgo_substituicao_racao",
         "nivon.motores_agro_estrategicos:safra_comercializacao",
-        "nivon.inteligencia_temporal:decompor_mudanca_safra"
+        "nivon.inteligencia_temporal:decompor_mudanca_safra",
+        "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
+        "nivon.agregacao_pam_ibge:agregar_municipios_pam",
+        "nivon.composicao_pam_sidra:montar_pam_municipal",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
@@ -212,7 +274,9 @@
         "nivon.motores_agro_estrategicos:paridade_fertilizante",
         "nivon.motores_integracao_estrategica:demanda_fertilizante_cenario",
         "nivon.fertilizantes:classificar_ncm",
-        "nivon.fertilizantes:consolidar_importacoes"
+        "nivon.fertilizantes:consolidar_importacoes",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "MDIC_COMEX_FERT",
@@ -236,7 +300,10 @@
         "nivon.inteligencia_temporal:decompor_variacao_preco",
         "nivon.inteligencia_temporal:custo_diesel_por_rota",
         "nivon.anp_ppi:ler_ppi_xlsx",
-        "nivon.anp_ppi:comparar_ppi_com_produtor"
+        "nivon.anp_ppi:comparar_ppi_com_produtor",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada",
+        "nivon.tendencias_mercados:tendencia_preco_fisico"
       ],
       "data_dependencies": [
         "ANP_PRECO_REVENDA_DIESEL",
@@ -263,7 +330,9 @@
       "entrypoints": [
         "nivon.motores_agro_estrategicos:simulacao_etanol_ddg",
         "nivon.motores:verificar_teto_materia_seca",
-        "nivon.motores:estimar_milho_por_etanol"
+        "nivon.motores:estimar_milho_por_etanol",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "ETANOL_MILHO_ANP",
@@ -285,7 +354,9 @@
       "entrypoints": [
         "nivon.motores_integracao_estrategica:comparacao_intermodal",
         "nivon.destinos:analisar_destinos",
-        "nivon.lineup_nacional:consolidar"
+        "nivon.lineup_nacional:consolidar",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "ANTT_MDFE_RODOVIARIO",
@@ -313,7 +384,9 @@
         "nivon.inteligencia_temporal:benchmark_sazonal_mensal",
         "nivon.lineup_nacional:normalizar_linha",
         "nivon.lineup_nacional:consolidar",
-        "nivon.portos_automaticos:processar_documento_porto"
+        "nivon.portos_automaticos:processar_documento_porto",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "LINEUP_SANTOS",
@@ -389,7 +462,16 @@
         "nivon.meteorologia_probabilistica:avaliar_ensemble",
         "nivon.hidrograma_bacia:hidrograma_evento_cn",
         "nivon.ensemble_hidrologico_bacia:cenario_ensemble_bacia",
-        "nivon.chuva_areal_ensemble:agregar_ensemble_chuva_areal"
+        "nivon.chuva_areal_ensemble:agregar_ensemble_chuva_areal",
+        "nivon.modelos_fisicos:eto_fao56_penman_monteith",
+        "nivon.modelos_fisicos:avaliar_vazao_hidrologica",
+        "nivon.inmet_horario_qc:extrair_horarios_inmet",
+        "nivon.inmet_horario_qc:agregar_dias_inmet",
+        "nivon.confronto_climatico_qc:confronto_diario_inmet_power",
+        "nivon.noaa_roni:importar_roni_ascii",
+        "nivon.noaa_roni:classificar_episodios_roni",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -402,7 +484,8 @@
         "NASA_POWER_AG",
         "CHIRPS_V3_CHUVA",
         "ERA5_LAND_CDS",
-        "NASA_GPM_IMERG"
+        "NASA_GPM_IMERG",
+        "NOAA_ENSO_RONI"
       ],
       "indicators_planned": 7,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -416,7 +499,12 @@
       "entrypoints": [
         "nivon.motores_integracao_estrategica:sensibilidade_macro",
         "nivon.bcb_ptax:normalizar_ptax_odata",
-        "nivon.inteligencia_temporal:decompor_variacao_preco"
+        "nivon.inteligencia_temporal:decompor_variacao_preco",
+        "nivon.previsoes_bibliotecas:prever_mensal",
+        "nivon.verificacao_probabilistica:pontuacao_quantis",
+        "nivon.verificacao_probabilistica:brier_probabilidade",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "BCB_PTAX",
@@ -425,7 +513,8 @@
         "WORLD_BANK_COMMODITIES",
         "MDIC_COMEX_NCM",
         "USDA_PSD",
-        "EPE_BEN_SERIES_HISTORICAS"
+        "EPE_BEN_SERIES_HISTORICAS",
+        "CFTC_COT_WEEKLY"
       ],
       "indicators_planned": 8,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -468,7 +557,12 @@
         "nivon.motores_cadeias:simular_atr_cana",
         "nivon.motores_agro_estrategicos:referencia_acucar_ice",
         "nivon.inteligencia_temporal:decompor_mudanca_safra",
-        "nivon.inteligencia_temporal:comparar_progresso_safra"
+        "nivon.inteligencia_temporal:comparar_progresso_safra",
+        "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
+        "nivon.agregacao_pam_ibge:agregar_municipios_pam",
+        "nivon.composicao_pam_sidra:montar_pam_municipal",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "CONAB_CANA",
@@ -478,7 +572,8 @@
         "ANP_ETANOL",
         "MDIC_COMEX_NCM",
         "MAPA_AGROSTAT_CADEIAS",
-        "BCB_PTAX"
+        "BCB_PTAX",
+        "FAO_FAOSTAT_LONG_RUN"
       ],
       "indicators_planned": 12,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -493,7 +588,12 @@
         "nivon.motores_cadeias:paridade_gergelim",
         "nivon.cadeias_adicionais:analisar_cadeia",
         "nivon.inteligencia_temporal:decompor_mudanca_safra",
-        "nivon.inteligencia_temporal:concentracao_fluxos"
+        "nivon.inteligencia_temporal:concentracao_fluxos",
+        "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
+        "nivon.agregacao_pam_ibge:agregar_municipios_pam",
+        "nivon.composicao_pam_sidra:montar_pam_municipal",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "CONAB_GERGELIM_SERIES",
@@ -502,7 +602,8 @@
         "MDIC_COMEX_NCM",
         "MAPA_AGROSTAT_CADEIAS",
         "BCB_PTAX",
-        "ANTAQ_MOVIMENTACAO"
+        "ANTAQ_MOVIMENTACAO",
+        "FAO_FAOSTAT_LONG_RUN"
       ],
       "indicators_planned": 11,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -516,7 +617,10 @@
       "entrypoints": [
         "nivon.motores_cadeias:margem_proteina",
         "nivon.motores_cadeias:peso_medio_carcaca",
-        "nivon.motores_cadeias:classificar_risco"
+        "nivon.motores_cadeias:classificar_risco",
+        "nivon.modelos_fisicos:reconciliar_rebanho",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "IBGE_ABATE_FRANGO_1094",
@@ -530,7 +634,8 @@
         "IBGE_CODIGOS_MUNICIPIOS",
         "ABPA_FRANGO_SETOR",
         "MAPA_SANIDADE_PROTEINAS",
-        "WOAH_ALERTAS_PROTEINAS"
+        "WOAH_ALERTAS_PROTEINAS",
+        "FAO_FAOSTAT_LONG_RUN"
       ],
       "indicators_planned": 13,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -544,7 +649,10 @@
       "entrypoints": [
         "nivon.motores_cadeias:margem_proteina",
         "nivon.motores_cadeias:peso_medio_carcaca",
-        "nivon.motores_cadeias:classificar_risco"
+        "nivon.motores_cadeias:classificar_risco",
+        "nivon.modelos_fisicos:reconciliar_rebanho",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "IBGE_ABATE_SUINO_1093",
@@ -558,7 +666,8 @@
         "IBGE_CODIGOS_MUNICIPIOS",
         "ABPA_SUINO_SETOR",
         "MAPA_SANIDADE_PROTEINAS",
-        "WOAH_ALERTAS_PROTEINAS"
+        "WOAH_ALERTAS_PROTEINAS",
+        "FAO_FAOSTAT_LONG_RUN"
       ],
       "indicators_planned": 13,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -594,7 +703,18 @@
         "nivon.chirps_v3_conservacao:reconciliar_chirps_pentada",
         "nivon.meteorologia_probabilistica:crps_ensemble",
         "nivon.meteorologia_probabilistica:avaliar_ensemble",
-        "nivon.chuva_areal_ensemble:agregar_ensemble_chuva_areal"
+        "nivon.chuva_areal_ensemble:agregar_ensemble_chuva_areal",
+        "nivon.modelos_fisicos:eto_fao56_penman_monteith",
+        "nivon.verificacao_probabilistica:brier_probabilidade",
+        "nivon.verificacao_probabilistica:cobertura_intervalos",
+        "nivon.analogos_historicos:encontrar_anos_analogos",
+        "nivon.inmet_horario_qc:extrair_horarios_inmet",
+        "nivon.inmet_horario_qc:agregar_dias_inmet",
+        "nivon.confronto_climatico_qc:confronto_diario_inmet_power",
+        "nivon.noaa_roni:importar_roni_ascii",
+        "nivon.noaa_roni:classificar_episodios_roni",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -606,7 +726,8 @@
         "NASA_POWER_AG",
         "CHIRPS_V3_CHUVA",
         "ERA5_LAND_CDS",
-        "NASA_GPM_IMERG"
+        "NASA_GPM_IMERG",
+        "NOAA_ENSO_RONI"
       ],
       "indicators_planned": 21,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -636,7 +757,11 @@
         "nivon.hidrograma_bacia:hidrograma_evento_cn",
         "nivon.calibracao_cn_bacias:calibrar_cn_historico",
         "nivon.ensemble_hidrologico_bacia:cenario_ensemble_bacia",
-        "nivon.chuva_areal_ensemble:agregar_ensemble_chuva_areal"
+        "nivon.chuva_areal_ensemble:agregar_ensemble_chuva_areal",
+        "nivon.modelos_fisicos:avaliar_vazao_hidrologica",
+        "nivon.verificacao_probabilistica:cobertura_intervalos",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "ANA_HIDRO",
@@ -661,7 +786,9 @@
       "entrypoints": [
         "nivon.motores_integracao_estrategica:pressao_armazenagem",
         "nivon.inteligencia_temporal:benchmark_sazonal_mensal",
-        "nivon.previsoes_bibliotecas:backtest_mensal"
+        "nivon.previsoes_bibliotecas:backtest_mensal",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "CONAB_ARMAZENS_CAPACIDADE",
@@ -686,7 +813,9 @@
         "nivon.mdic_importacao:resumir_importacao_csv",
         "nivon.inteligencia_temporal:concentracao_fluxos",
         "nivon.inteligencia_temporal:benchmark_sazonal_mensal",
-        "nivon.fertilizantes:consolidar_importacoes"
+        "nivon.fertilizantes:consolidar_importacoes",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "MDIC_COMEX_NCM",
@@ -710,7 +839,9 @@
         "nivon.motores_agro_estrategicos:paridade_diesel",
         "nivon.motores_integracao_estrategica:sensibilidade_macro",
         "nivon.inteligencia_temporal:decompor_variacao_preco",
-        "nivon.anp_ppi:ler_ppi_xlsx"
+        "nivon.anp_ppi:ler_ppi_xlsx",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "EIA_OIL",
@@ -736,7 +867,10 @@
       "entrypoints": [
         "nivon.motores_integracao_estrategica:custo_frete_rodoviario",
         "nivon.motores_integracao_estrategica:comparacao_intermodal",
-        "nivon.inteligencia_temporal:custo_diesel_por_rota"
+        "nivon.inteligencia_temporal:custo_diesel_por_rota",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada",
+        "nivon.tendencias_mercados:tendencia_frete_anunciado"
       ],
       "data_dependencies": [
         "FRETES_WHATSAPP_AUTORIZADO",
@@ -771,7 +905,8 @@
         "BCB_PTAX",
         "WORLD_BANK_COMMODITIES",
         "MDIC_COMEX_NCM",
-        "WOAH_ALERTAS_PROTEINAS"
+        "WOAH_ALERTAS_PROTEINAS",
+        "NOAA_ENSO_RONI"
       ],
       "indicators_planned": 10,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
@@ -786,7 +921,9 @@
         "nivon.motores_integracao_estrategica:margem_processamento",
         "nivon.motores_agro_estrategicos:esmagamento_soja",
         "nivon.inteligencia_temporal:benchmark_sazonal_mensal",
-        "nivon.previsoes_bibliotecas:backtest_mensal"
+        "nivon.previsoes_bibliotecas:backtest_mensal",
+        "nivon.motor_tendencias:tendencia_observada",
+        "nivon.motor_tendencias:tendencia_projetada"
       ],
       "data_dependencies": [
         "ABIOVE_SOJA_ESMAGAMENTO",

@@ -38,7 +38,7 @@ class ErroRota(ValueError):
 
 def carregar_rotas(path: str | Path = ROTAS) -> dict:
     p = Path(path)
-    if p.suffix != ".json" or not p.is_file() or p.is_symlink() or p.stat().st_size > 175_000:
+    if p.suffix != ".json" or not p.is_file() or p.is_symlink() or p.stat().st_size > 250_000:
         raise ErroRota("arquivo de rotas ausente, inválido ou grande demais")
     try:
         o = json.loads(p.read_text(encoding="utf-8"))
@@ -110,6 +110,7 @@ def validar_rotas(rotas: dict, catalogo: dict) -> dict:
                 "ANP": {"www.gov.br", "gov.br"},
                 "MDIC": {"www.gov.br", "gov.br"},
                 "IBGE": {"servicodados.ibge.gov.br", "apisidra.ibge.gov.br"},
+                "NOAA": {"www.cpc.ncep.noaa.gov"},
             }
             if parsed.hostname != fonte_host and parsed.hostname not in homologados.get(d["source_id"], set()):
                 raise ErroRota(f"{id_}: host não demonstrado como domínio oficial da fonte")

@@ -141,7 +141,7 @@ async def descobrir_semanas(*, direitos_confirmados: bool = False,
                             max_pages: int = 4, agrobr_api=None) -> list[dict]:
     if direitos_confirmados is not True:
         raise PermissionError("CONAB: descoberta não autorizada")
-    if not 1 <= max_pages <= 52:
+    if not isinstance(max_pages,int) or not 1 <= max_pages <= 260:
         raise ErroProgresso("limite de páginas inválido")
     if agrobr_api is None:
         try:

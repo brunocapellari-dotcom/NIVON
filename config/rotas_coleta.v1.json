@@ -1527,7 +1527,7 @@
         "url": "https://apisidra.ibge.gov.br/values/t/1612",
         "source_proof": "https://apisidra.ibge.gov.br/home/ajuda"
       },
-      "implementation_scope": "sidra_pam.py + pipeline_api_dados.py (schema real 1612 verificado, consultas planejadas, sem agendamento)",
+      "implementation_scope": "sidra_pam.py + pipeline_api_dados.py (schema real 1612 verificado, consultas planejadas, sem agendamento) + agregacao_pam_ibge.py (métricas municipais com Decimal, produto específico, comparação UF somente com comprovação de universo completo; testes offline) + composicao_pam_sidra.py (combina três observações SIDRA 1612 em uma linha municipal sob comprovação externa)",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -1540,11 +1540,15 @@
         "HISTORICAL_BACKFILL",
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
-        "LICENSED_PUBLICATION_GATE"
+        "LICENSED_PUBLICATION_GATE",
+        "MUNICIPAL_COVERAGE_AND_EDITION_PROOF",
+        "COTTON_SEED_VS_LINT_AND_CROP_DEFINITIONS",
+        "VERIFY_VARIABLE_CODES_216_214_112_ON_REAL_SIDRA_SAMPLE",
+        "SAME_RELEASE_EVIDENCE_FOR_THREE_VARIABLES"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "API SIDRA 1612 verificada no formato municipal; URL base parametrizada, valores/total/vigencia/licenca ainda não homologados.",
+      "source_note": "API SIDRA 1612 verificada no formato municipal; URL base parametrizada, valores/total/vigencia/licenca ainda não homologados. IBGE PAM 2025 incluiu gergelim, sem série homóloga histórica pré-2025. Algodão herbáceo em caroço não é pluma, milho não discrimina safra; evitar soma de produtividade. SIDRA 839 identifica 1ª/2ª safras de milho; SIDRA 1612 é total do ano. Código de variável 216 área colhida, 214 quantidade, 112 rendimento requer verificação final de metadados reais e unidade da tabela.",
       "preliminary_evidence": "OFFICIAL_API_SCHEMA_OBSERVED_20261019_MUNICIPIO_C81_ANUAL"
     },
     {
@@ -1708,12 +1712,12 @@
         "url": "https://portal.inmet.gov.br/dadoshistoricos/",
         "source_proof": "https://portal.inmet.gov.br/dadoshistoricos/"
       },
-      "implementation_scope": "inmet_historico.py planeja ZIPs anuais oficiais de 2000–2026 e faz inspeção offline; series_ambientais.py guarda medições já normalizadas; falta validação do CSV real, direitos, download e coleta diária",
+      "implementation_scope": "inmet_historico.py (ZIP anual), inmet_bdmep.py (link privado), inmet_horario_qc.py (CSV horário, 24/24, zero vs faltante, UTC e QC), series_ambientais.py (edições) e confronto_climatico_qc.py (INMET × NASA POWER, min 30 pares e QC externo); SEM coleta recorrente ou dados reais homologados",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
       "scheduled_enabled": false,
-      "primary_blocker": "OPERATIONS_EVIDENCE",
+      "primary_blocker": "REAL_CSV_SAMPLE_INSTRUMENT_QC_AND_RIGHTS",
       "gates_missing": [
         "VERIFY_COLLECTION_RIGHTS",
         "VERIFY_STORAGE_RIGHTS",
@@ -1723,7 +1727,10 @@
         "HISTORICAL_BACKFILL",
         "SCHEDULE_AND_FRESHNESS",
         "DURABLE_PERSISTENCE_AND_RESTORE",
-        "LICENSED_PUBLICATION_GATE"
+        "LICENSED_PUBLICATION_GATE",
+        "INMET_HOURLY_REAL_SCHEMA_VALIDATION",
+        "INMET_UTC_INTERVAL_END_CONVENTION_PROOF",
+        "STATION_QC_EXTERNAL_AND_GEOLOCATION"
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
@@ -4031,6 +4038,130 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Não presumir que a página de referência ofereça endpoint de coleta.",
       "preliminary_evidence": "CATALOG_ONLY"
+    },
+    {
+      "dataset_id": "NOAA_ENSO_RONI",
+      "collector_class": "STRUCTURED_FILE",
+      "locator": {
+        "kind": "DIRECT_PUBLIC_FILE",
+        "url": "https://www.cpc.ncep.noaa.gov/data/indices/RONI.ascii.txt",
+        "source_proof": "https://www.cpc.ncep.noaa.gov/data/indices/index.shtml"
+      },
+      "implementation_scope": "noaa_roni.py (leitura ASCII SEAS YR ANOM, ERSSTv6, SHA/versão, temporadas móveis, regras de 5 sequências) — offline e sem coleta; histórico disponível hoje não reconstitui publicações anteriores",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "OLD_VINTAGES_SOURCE_RIGHTS_AND_HISTORICAL_PUBLICATION",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "POINT_IN_TIME_VINTAGE_AUDIT",
+        "MODEL_BENCHMARK_AND_PHYSICAL_IDENTITY",
+        "RONI_HISTORICAL_RELEASE_VINTAGES",
+        "RONI_REAL_RAW_INGEST_AND_QA"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "NOAA CPC oficial ERSSTv6 RONI; histórico retrospectivo desde 1950. Comparar ONI apenas como índice diferente. Dados recentes revisáveis em até dois meses e publicação efetiva exige prova.",
+      "preliminary_evidence": "OFFICIAL_CPC_RONI_ASCII_V6_URL_VERIFIED_20261020"
+    },
+    {
+      "dataset_id": "CFTC_COT_WEEKLY",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://publicreporting.cftc.gov/",
+        "source_proof": "https://publicreporting.cftc.gov/"
+      },
+      "implementation_scope": "NO_PARSER; reuso AgroLog sujeito a auditoria de dependência e teste com snapshot real",
+      "authentication": "PUBLIC_SOCRATA_RIGHTS_REVIEW",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "SOURCE_RIGHTS_AND_REAL_SAMPLE_VALIDATION",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "POINT_IN_TIME_VINTAGE_AUDIT",
+        "MODEL_BENCHMARK_AND_PHYSICAL_IDENTITY"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Selecionar datasets Socrata  por versão/tipo de relatório, mapear contrato e família.",
+      "preliminary_evidence": "OFFICIAL_DOCUMENTATION_RESEARCH_ONLY"
+    },
+    {
+      "dataset_id": "USDA_WASDE_RELEASE_VINTAGES",
+      "collector_class": "PUBLISHED_DOCUMENT",
+      "locator": {
+        "kind": "NOT_VERIFIED_PER_DATASET",
+        "url": null,
+        "source_proof": null
+      },
+      "implementation_scope": "NO_PARSER; reuso AgroLog sujeito a auditoria de dependência e teste com snapshot real",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "SOURCE_RIGHTS_AND_REAL_SAMPLE_VALIDATION",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "POINT_IN_TIME_VINTAGE_AUDIT",
+        "MODEL_BENCHMARK_AND_PHYSICAL_IDENTITY",
+        "EXACT_ENDPOINT_UNKNOWN",
+        "DISCOVER_OFFICIAL_DATA_RESOURCE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Arquivo de edições USDA 1973+, CSV consolidado 2010+; preservar cada data de publicação.",
+      "preliminary_evidence": "OFFICIAL_DOCUMENTATION_RESEARCH_ONLY"
+    },
+    {
+      "dataset_id": "FAO_FAOSTAT_LONG_RUN",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "OFFICIAL_INDEX",
+        "url": "https://www.fao.org/faostat/en/#data",
+        "source_proof": "https://www.fao.org/faostat/en/#data"
+      },
+      "implementation_scope": "NO_PARSER; reuso AgroLog sujeito a auditoria de dependência e teste com snapshot real",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "SOURCE_RIGHTS_AND_REAL_SAMPLE_VALIDATION",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE",
+        "POINT_IN_TIME_VINTAGE_AUDIT",
+        "MODEL_BENCHMARK_AND_PHYSICAL_IDENTITY"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "API/tabulação/versão e períodos por domínio ainda a homologar.",
+      "preliminary_evidence": "OFFICIAL_DOCUMENTATION_RESEARCH_ONLY"
     }
   ]
 }
