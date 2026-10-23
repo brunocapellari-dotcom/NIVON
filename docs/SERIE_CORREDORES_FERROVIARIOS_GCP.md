@@ -56,3 +56,13 @@ A view só será publicada automaticamente no fim de `antt-ferrovia-gcp.yml` se 
 5. Matriz rodoviária MDF-e por origem–destino e NCM completo: issue #142.
 
 Fonte primária ferroviária: https://dados.antt.gov.br/dataset/sistema-de-acompanhamento-do-desempenho-operacional-das-concessionarias-siade
+
+## Atualização operacional — 23/10/2026
+
+**Atenção: as instruções anteriores deste documento descrevem o estado antes do primeiro deploy.** A primeira carga real ANTT/SIADE 2026 **já aconteceu** e foi reconciliada no BigQuery/GCS; a view de corredores também foi publicada e consultada com dados reais.
+
+- Carga 2026: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39983416188 (tentativa 2, sucesso).
+- Primeira view: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39984168784 (sucesso).
+- Base carregada: 5.081 linhas e 353.466.337 TU, jan–ago/2026.
+- Detalhes metodológicos, hash e rankings: docs/ANTT_GCP_EXECUCAO_REAL_20261023.md.
+- A ativação **recorrente** e o **backfill** dos anos anteriores ainda não foram realizados.
