@@ -17,11 +17,11 @@ concurrency:
 jobs:
   ingestar:
     runs-on: ubuntu-latest
-    timeout-minutes: 14
+    timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 165ea961ffd36a17f4e718eaa400da1efe52dceb
+          ref: 3ece3362d3c30d804d713e2656c5f156f92884fc
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
@@ -43,7 +43,7 @@ jobs:
               with urlopen(req,timeout=20) as res:
                   jwt=json.load(res)['value']
               summary={'source':'IMEA','chains':{},'received':0,'inserted':0,'duplicates':0,'canonical_quotes_inserted':0}
-              for chain in ('soja','milho'):
+              for chain in ('soja','milho','algodao','bovinocultura'):
                   df,meta=await imea.cotacoes(chain,return_meta=True)
                   p=prepare(df.to_dict(orient='records'),meta,chain,batch_size=80)
                   count=0;new=0;dupes=0
