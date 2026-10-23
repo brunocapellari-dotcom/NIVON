@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sqlite3
 from pathlib import Path
 
 from nivon.agro_origem_gcp import FONTES, executar as coletar
@@ -15,6 +16,19 @@ from nivon.arquivo_raw_gcs import arquivar_gcs
 from nivon.ingestao_fontes_reais import exportar_jsonl
 from nivon.lote_cloud_recuperavel import arquivar_stage
 from nivon.carga_bigquery_fontes import executar_carga
+
+
+def _tem_observacoes_deste_lote(banco, snapshots):
+    # O registro permanece ligado ao primeiro snapshot que introduziu
+    # aquele fingerprint; novos RAWs sem delta não geram stage vazio.
+    banco=Path(banco)
+    if banco.is_symlink() or not banco.is_file():
+        raise ValueError("ledger ausente")
+    uri=f"file:{banco.resolve().as_posix()}?mode=ro"
+    with sqlite3.connect(uri,uri=True) as db:
+        sql="SELECT COUNT(*) FROM observacoes WHERE snapshot_id IN (" + (
+            ",".join("?" for _ in snapshots)) + ")"
+        return db.execute(sql,snapshots).fetchone()[0] > 0
 
 
 def executar_lote(*, fonte, base, executar=False, enviar_gcs=False,
@@ -69,6 +83,10 @@ def executar_lote(*, fonte, base, executar=False, enviar_gcs=False,
     result={"coleta":saida,"gcs":arquivo,"gcs_executado":True,
             "bigquery_executado":False,
             "estado":"GCS_RAW_QUARENTENA" if not bigquery else "GCS_STAGE_ARQUIVADO"}
+    if not _tem_observacoes_deste_lote(
+            raiz/"fontes_reais.sqlite",selecionados):
+        result["estado"]="GCS_RAW_SEM_DELTA_ANALITICO"
+        return result
     if staging_bigquery:
         from nivon.agro_staging_bigquery import (
             exportar_quarentena, arquivar_stage_quarentena, carregar_stage)
