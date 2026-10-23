@@ -465,3 +465,74 @@ class PdfProgrammeLedger:
         if len(rows) > max_editions:
             raise ValueError("audit history exceeds max_editions: explicit pagination required")
         return tuple(self._decode(row) for row in rows)
+
+    def paged_history_asof(
+        self, *, port_id: str, source_id: str, series: str | None,
+        as_of: str | datetime, read_authorized: bool = False,
+        audit_only: bool = False, page_size: int = 100,
+        max_total_editions: int = 2000,
+        max_payload_bytes: int = 48_000_000,
+    ) -> tuple[PdfProgrammeEdition, ...]:
+        """Read historical editions in ordered keyset pages, with hard quotas.
+
+        Unknown-publication editions are included ONLY with audit_only=True.
+        They cannot enter operational revision/backtest queries. The method
+        refuses missing permissions, future data, silent truncation, excessive
+        raw JSON bytes, and unsupported source scopes.
+        """
+        if not read_authorized:
+            raise PermissionError("PDF paged history reading not authorized")
+        if type(page_size) is not int or not 1 <= page_size <= 200:
+            raise ValueError("invalid history page size")
+        if type(max_total_editions) is not int or not 1 <= max_total_editions <= 2000:
+            raise ValueError("invalid history total edition quota")
+        if type(max_payload_bytes) is not int or not 1 <= max_payload_bytes <= 48_000_000:
+            raise ValueError("invalid history total byte quota")
+        if type(audit_only) is not bool:
+            raise ValueError("invalid audit flag")
+        if port_id not in PDF_PORTS or not source_id or not source_id.strip():
+            raise ValueError("invalid port or source")
+        if port_id == "PARANAGUA" and series not in PARANAGUA_SERIES:
+            raise ValueError("Paranagua programme series required")
+        if port_id == "ITAQUI" and series is not None:
+            raise ValueError("Itaqui has no programme series")
+        cutoff = _aware_utc(as_of, "as_of").isoformat()
+        publication_filter = (
+            "(published_at IS NULL OR published_at<=?)"
+            if audit_only else "published_at IS NOT NULL AND published_at<=?"
+        )
+        statement = f"""
+            SELECT edition_id,port_id,source_id,series_key,collected_at,published_at,
+                   source_sha256,payload_sha256,payload_json
+            FROM maritime_pdf_programme_editions
+            WHERE port_id=? AND source_id=? AND series_key=?
+              AND collected_at>? AND collected_at<=?
+              AND {publication_filter}
+            ORDER BY collected_at ASC LIMIT ?
+        """
+        cursor = ""
+        results: list[PdfProgrammeEdition] = []
+        total_bytes = 0
+        while True:
+            rows = self.db.execute(
+                statement,
+                (port_id, source_id, series or "", cursor, cutoff, cutoff,
+                 page_size),
+            ).fetchall()
+            if not rows:
+                break
+            for row in rows:
+                raw = row[8]
+                if not isinstance(raw, str):
+                    raise ValueError("invalid paged history document payload")
+                total_bytes += len(raw.encode("utf-8"))
+                if (len(results) >= max_total_editions
+                        or total_bytes > max_payload_bytes):
+                    raise ValueError(
+                        "paged history exceeds explicit document/byte quota"
+                    )
+                results.append(self._decode(row))
+                cursor = row[4]
+            if len(rows) < page_size:
+                break
+        return tuple(results)
