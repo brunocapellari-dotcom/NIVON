@@ -44,7 +44,7 @@ def _conectar(banco, *, criar=False):
     if not isinstance(banco, (str, Path)) or type(criar) is not bool:
         raise DadoInvalido("caminho e modo obrigatorios")
     path = Path(banco).expanduser()
-    if (path.is_symlink() or path.parent.is_symlink()
+    if (any(p.is_symlink() for p in (path, *path.parents))
         or not path.parent.is_dir() or (path.exists() and not path.is_file())):
         raise DadoInvalido("caminho SQLite inseguro")
     if not criar and not path.is_file():
@@ -65,6 +65,26 @@ def _conectar(banco, *, criar=False):
                         "bruto","estado"}
             if columns != expected:
                 raise DadoInvalido("quarentena com schema incompatível")
+            # Nunca reconstruir indices/triggers faltantes silenciosamente.
+            idx_esperado = ("especie","tabela_sidra","periodo",
+                            "territorio","sha256_bruto")
+            tem_unico = False
+            for idx in conn.execute("PRAGMA index_list(valores_pecuaria_quarentena)"):
+                if not idx[2]:
+                    continue
+                nome = idx[1].replace('"','""')
+                cols = tuple(row[2] for row in conn.execute(
+                    'PRAGMA index_info("' + nome + '")'))
+                if cols == idx_esperado:
+                    tem_unico = True
+            triggers = {row[0] for row in conn.execute(
+                """SELECT name FROM sqlite_master WHERE type='trigger'
+                   AND tbl_name='valores_pecuaria_quarentena'""")}
+            if (not tem_unico or not {
+                "pecuaria_quarentena_sem_update",
+                "pecuaria_quarentena_sem_delete"}.issubset(triggers)):
+                raise DadoInvalido(
+                    "quarentena legada sem unicidade/triggers; migracao auditada necessaria")
         elif not criar:
             raise DadoInvalido("tabela de quarentena inexistente")
         if criar:
