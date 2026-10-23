@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import sys
 from hashlib import sha256
 from pathlib import Path
 import sqlite3
@@ -102,6 +105,32 @@ class TestComparacaoCapturasConab(TestCase):
             with sqlite3.connect(dbfile) as db:
                 n=db.execute("SELECT COUNT(*) FROM nivon_conab_staging_documentos").fetchone()[0]
             self.assertEqual(n,2)
+
+    def test_cli_em_lote_gera_diff_uma_vez_sem_atualizar_sqlite(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder=Path(tmp)
+            raw=folder/"raw"
+            raw.mkdir()
+            dbfile=folder/"auditoria #1?.sqlite"
+            duas_capturas(dbfile,raw)
+            target=folder/"comparacoes.json"
+            project=Path(__file__).resolve().parents[1]
+            env=os.environ.copy()
+            env["PYTHONPATH"]=str(project/"src")+os.pathsep+env.get("PYTHONPATH","")
+            command=[sys.executable,"-m","nivon.conab_comparar_capturas",
+                     "--sqlite",str(dbfile),"--out",str(target)]
+            before=dbfile.stat().st_size
+            p=subprocess.run(command,env=env,cwd=project,text=True,
+                             capture_output=True,timeout=15)
+            self.assertEqual(p.returncode,0,p.stderr)
+            out=json.loads(target.read_text(encoding="utf-8"))
+            self.assertEqual(out["pares_comparados"],1)
+            self.assertFalse(out["revisao_oficial_conab_comprovada"])
+            self.assertFalse(out["habilita_treino"])
+            self.assertEqual(dbfile.stat().st_size,before)
+            again=subprocess.run(command,env=env,cwd=project,text=True,
+                                 capture_output=True,timeout=15)
+            self.assertEqual(again.returncode,3)
 
     def test_comparacao_limite_rejeita_booleano(self):
         with tempfile.TemporaryDirectory() as tmp:
