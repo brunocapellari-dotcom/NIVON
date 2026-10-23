@@ -18,6 +18,7 @@ from urllib.parse import quote
 
 from nivon.fretes_cobertura_horizontes import auditar_cobertura_horizontes_frete
 from nivon.fretes_entrada_jsonl import carregar_ofertas_frete_jsonl
+from nivon.fretes_ofertas_store import verificar_store_ofertas_frete
 from nivon.fretes_ledger_persistente import (
     ErroLedgerFrete, verificar_ledger_frete, avaliar_ledger_frete,
 )
@@ -30,6 +31,9 @@ CAMPOS_CONFIG={
     "as_of", "emissor_esperado", "modelo_versao", "fonte_id",
     "horizontes_dias", "condicoes",
 }
+CAMPOS_CONFIG_STORE=(CAMPOS_CONFIG-{"arquivo_ofertas"}) | {
+    "arquivo_ofertas_sqlite", "cabeca_ofertas_sha256",
+}
 CAMPOS_CONDICOES={
     "origem_ibge","destino_ibge","descarga_entity_id",
     "produto","equipamento","regime","pedagio",
@@ -38,8 +42,10 @@ CAMPOS_CONDICOES={
 
 def executar(config: dict, *, segredo_hex: str) -> dict:
     """É apenas interface para dados previamente exportados e autorizados."""
-    if not isinstance(config,dict) or set(config)!=CAMPOS_CONFIG:
-        raise ValueError("configuração não contém todos os campos requeridos")
+    if not isinstance(config,dict) or set(config) not in (
+            CAMPOS_CONFIG,CAMPOS_CONFIG_STORE):
+        raise ValueError("configuração incompleta ou mistura de fontes JSONL/SQLite")
+    usa_store=set(config)==CAMPOS_CONFIG_STORE
     if (not isinstance(config["condicoes"],dict)
             or set(config["condicoes"])!=CAMPOS_CONDICOES
             or any(not isinstance(v,str) or not v for v in config["condicoes"].values())):
@@ -64,7 +70,22 @@ def executar(config: dict, *, segredo_hex: str) -> dict:
     if (path.is_symlink() or not path.is_file()
             or path.stat().st_size>100_000_000):
         raise ValueError("SQLite local ausente, link ou excessivo")
-    ofertas=carregar_ofertas_frete_jsonl(config["arquivo_ofertas"])
+    if usa_store:
+        p=Path(config["arquivo_ofertas_sqlite"])
+        if p.is_symlink() or not p.is_file() or p.stat().st_size>100_000_000:
+            raise ValueError("SQLite de ofertas local inválido")
+        uri_ofertas="file:"+quote(str(p.resolve()),safe="/")+"?mode=ro"
+        with sqlite3.connect(uri_ofertas,uri=True) as con_ofertas:
+            con_ofertas.execute("PRAGMA query_only=ON")
+            dados=verificar_store_ofertas_frete(
+                con_ofertas,
+                cabeca_esperada_sha256=config["cabeca_ofertas_sha256"],
+            )
+            ofertas=dados["ofertas"]
+        cabeca_ofertas=dados["cabeca_sha256"]
+    else:
+        ofertas=carregar_ofertas_frete_jsonl(config["arquivo_ofertas"])
+        cabeca_ofertas=None
     args=dict(config["condicoes"])
     cobertura=auditar_cobertura_horizontes_frete(
         ofertas,as_of=asof,horizontes_dias=tuple(hs),**args,
@@ -105,6 +126,8 @@ def executar(config: dict, *, segredo_hex: str) -> dict:
         "status":"RELATORIO_OFFLINE_DADOS_DECLARADOS_NAO_HOMOLOGADOS",
         "cabeca_ledger_conferida":ver["cabeca_sha256"],
         "registros_ledger":ver["quantidade"],
+        "origem_ofertas":"SQLITE_STORE" if usa_store else "JSONL_EXPORTADO",
+        "cabeca_store_ofertas_conferida":cabeca_ofertas,
         "dias_com_ofertas":cobertura["dias_observados"],
         "cobertura_horizontes":[{
             "dias":x["horizonte_dias_corridos"],
