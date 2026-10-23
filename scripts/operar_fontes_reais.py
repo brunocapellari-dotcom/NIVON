@@ -14,12 +14,14 @@ from nivon.coletor_bcra_v4 import coletar_bcra
 from nivon.coletor_granos_ar import coletar_granos_ar
 from nivon.coletores_dados_reais import executar_coleta, descobrir_recurso_ccee_ano
 from nivon.ingestao_fontes_reais import exportar_jsonl
+from nivon.coletores_agro_ibge_wdi import coletar_ibge_pam, coletar_wdi
 
 def safra_canadense(hoje):
     inicio=hoje.year if hoje.month>=8 else hoje.year-1
     return f"{inicio}-{(inicio+1)%100:02d}"
 
-def operar(*,base="data/nivon",hoje=None,coletar_canada=False,coletar_ccee=False,publicar_bigquery=False,
+def operar(*,base="data/nivon",hoje=None,coletar_canada=False,coletar_ccee=False,
+           coletar_ibge=False,coletar_banco_mundial=False,publicar_bigquery=False,
            projeto=None,dataset=None):
     hoje=date.today() if hoje is None else hoje
     if not isinstance(hoje,date):
@@ -46,6 +48,19 @@ def operar(*,base="data/nivon",hoje=None,coletar_canada=False,coletar_ccee=False
             return executar_coleta(fonte="BR_CCEE_PLD",banco=db,raw_dir=raw,
                        recurso_id=id_recurso,executar=True)
         jobs.append(("BR_CCEE_PLD", _buscar_ccee))
+    # Fontes anuais: não chamar de previsão de safra nem sinal intradiário.
+    # Requests pontuais e explícitos, sem varrer todos os municípios.
+    if coletar_ibge:
+        for uf in ("MT","PR"):
+            jobs.append((f"BR_IBGE_PAM_{uf}", lambda uf=uf:coletar_ibge_pam(
+                ano=hoje.year-1,uf=uf,banco=db,raw_dir=raw,executar=True)))
+    if coletar_banco_mundial:
+        for country in ("BRA","ARG"):
+            for metric in ("AG.YLD.CREL.KG","AG.CON.FERT.ZS"):
+                jobs.append((f"WDI_{country}_{metric}",
+                    lambda country=country,metric=metric:coletar_wdi(
+                    pais=country,indicador=metric,inicio=hoje.year-7,
+                    fim=hoje.year-1,banco=db,raw_dir=raw,executar=True)))
     respostas=[]
     for nome,fn in jobs:
         try:
@@ -78,6 +93,8 @@ def main(argv=None):
     p.add_argument("--base",default="data/nivon")
     p.add_argument("--canada",action="store_true")
     p.add_argument("--ccee",action="store_true")
+    p.add_argument("--ibge-pam",action="store_true")
+    p.add_argument("--wdi",action="store_true")
     p.add_argument("--bigquery",action="store_true")
     p.add_argument("--projeto")
     p.add_argument("--dataset")
@@ -85,6 +102,8 @@ def main(argv=None):
     args=p.parse_args(argv)
     result=operar(base=args.base,coletar_canada=args.canada,
           coletar_ccee=args.ccee,
+          coletar_ibge=args.ibge_pam,
+          coletar_banco_mundial=args.wdi,
           publicar_bigquery=args.bigquery,projeto=args.projeto,dataset=args.dataset)
     output=json.dumps(result,ensure_ascii=False,indent=2)
     if args.relatorio:
