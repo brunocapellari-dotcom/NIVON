@@ -15,7 +15,7 @@ import json
 import os
 import time
 
-from .anp_indice_lpc import URL_INDICE, descobrir_semanas_lpc
+from .anp_indice_lpc import URL_INDICE, descobrir_semanas_lpc, _PREFIX, _PATTERN
 from .anp_lpc_staging_real import integrar_real_preliminar, iniciar_staging
 
 
@@ -38,11 +38,14 @@ def _permitir_url(url: str, *, tipo: str) -> None:
         raise ErroColetaANP("URL não está na origem ANP/HTTPS permitida")
     if tipo == "HTML" and url != URL_INDICE:
         raise ErroColetaANP("URL do índice não autorizada")
-    if tipo == "XLSX" and (
-        "/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/arquivos-lpc/"
-        not in p.path or not p.path.endswith(".xlsx/@@download/file")
-    ):
-        raise ErroColetaANP("URL XLSX não decorre do índice oficial")
+    if tipo == "XLSX":
+        # O índice oficial disponibiliza o XLSX diretamente. Usar
+        # exatamente a URL anunciada, sem acrescentar endpoints presumidos.
+        partes = p.path.removeprefix(_PREFIX).split("/")
+        if (not p.path.startswith(_PREFIX) or len(partes) != 2
+                or not partes[0].isdigit() or len(partes[0]) != 4
+                or not _PATTERN.fullmatch(partes[1])):
+            raise ErroColetaANP("URL XLSX não corresponde a resumo oficial reconhecido")
 
 
 def obter_documento(
@@ -163,8 +166,9 @@ def coletar_lpc(
                 # tenta adivinhar novos arquivos nem contornar bloqueios.
                 if esperar_segundos:
                     time.sleep(esperar_segundos)
-                download = url + "/@@download/file"
-                blob = obter_documento(download,tipo="XLSX",abridor=abridor)
+                # Link direto publicado no índice: alternativa mais segura
+                # que compor uma rota de download não anunciada.
+                blob = obter_documento(url,tipo="XLSX",abridor=abridor)
             capture_time = datetime.now(timezone.utc).isoformat()
             # Parser e período verificados antes de arquivar.
             from .anp_resumo_lpc import ler_resumo_semanal_lpc
