@@ -10,6 +10,8 @@ from __future__ import annotations
 import sqlite3
 from datetime import datetime, timezone
 
+from .sidra_pam import planejar_pam_1612
+
 from .ivo_pam_semantica import conferir_semantica_pam_1612
 
 
@@ -26,6 +28,9 @@ def _corte(value, nome):
 def alertas_revisoes_pam(
     db: sqlite3.Connection, *, desde_exclusivo: datetime,
     ate_inclusivo: datetime | None = None, limite_capturas: int = 5000,
+    municipio_ibge: str | None = None, categoria_c81: str | None = None,
+    variavel: str | None = None, ano_inicio: int | None = None,
+    ano_fim: int | None = None,
 ) -> dict:
     """Reconstrói mudanças no intervalo sem confiar em 'mudanca' do staging.
 
@@ -41,6 +46,28 @@ def alertas_revisoes_pam(
         raise ErroAlertasPAM("intervalo temporal invertido")
     if type(limite_capturas) is not int or not 1 <= limite_capturas <= 10000:
         raise ErroAlertasPAM("limite de capturas inválido")
+
+    # Painel IVO usa escopo EXATO; execução de ciclo usa escopo global.
+    # O filtro é aplicado DEPOIS de LAG, preservando a edição anterior
+    # mesmo que sua captura esteja fora do período solicitado.
+    dims = (municipio_ibge,categoria_c81,variavel,ano_inicio,ano_fim)
+    if any(d is not None for d in dims):
+        if any(d is None for d in dims):
+            raise ErroAlertasPAM("filtro PAM exige município, produto, variável e anos completos")
+        if (type(ano_inicio) is not int or type(ano_fim) is not int or
+                not 1974 <= ano_inicio <= ano_fim <= 2100 or ano_fim-ano_inicio>30):
+            raise ErroAlertasPAM("anos de alerta inválidos")
+        # Planejador oficial valida códigos e município antes do SQLite.
+        planejar_pam_1612(municipio_ibge=municipio_ibge,ano=ano_inicio,
+            codigo_variavel=variavel,codigo_produto_c81=categoria_c81)
+        sem = conferir_semantica_pam_1612(
+            variavel=variavel,categoria_c81=categoria_c81,
+            unidade="Toneladas" if variavel=="214" else "Hectares")
+        filtro={"municipio_ibge":municipio_ibge,"categoria_c81":categoria_c81,
+                "variavel":variavel,"anos":[ano_inicio,ano_fim],
+                "produto":sem["produto"]}
+    else:
+        filtro=None
 
     rows = db.execute("""
       WITH sequencia AS (
@@ -58,8 +85,17 @@ def alertas_revisoes_pam(
       )
       SELECT * FROM sequencia
       WHERE coletado_em > ? AND (? IS NULL OR coletado_em <= ?)
+        AND (? IS NULL OR municipio = ?)
+        AND (? IS NULL OR produto = ?)
+        AND (? IS NULL OR variavel = ?)
+        AND (? IS NULL OR ano >= ?)
+        AND (? IS NULL OR ano <= ?)
       ORDER BY coletado_em,municipio,ano,variavel,produto,sha256 LIMIT ?
-      """, (inicio, fim, fim, limite_capturas+1)).fetchall()
+      """, (inicio, fim, fim,
+             municipio_ibge,municipio_ibge,
+             categoria_c81,categoria_c81,
+             variavel,variavel,ano_inicio,ano_inicio,ano_fim,ano_fim,
+             limite_capturas+1)).fetchall()
     if len(rows) > limite_capturas:
         raise ErroAlertasPAM("excesso de capturas: dividir intervalo para não ocultar alertas")
     contagens = dict.fromkeys((
@@ -105,6 +141,7 @@ def alertas_revisoes_pam(
     return {
         "estado":"RADAR_PAM_CALCULADO_SOBRE_CAPTURAS",
         "fonte":"IBGE_PAM","inicio_exclusivo":inicio,"fim_inclusivo":fim,
+        "escopo":filtro,
         "capturas_analisadas":len(rows),"contagens":contagens,
         "alteracoes_relevantes":len(eventos),"eventos":eventos,
         "captura_equivale_a_publicacao":False,
