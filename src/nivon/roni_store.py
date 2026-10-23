@@ -15,6 +15,7 @@ import sqlite3
 import tempfile
 
 from .noaa_roni import ErroRONI, importar_roni_ascii, classificar_episodios_roni
+from .transacoes_sqlite import savepoint_atomico
 
 _SCHEMA = """
 PRAGMA foreign_keys = ON;
@@ -207,7 +208,7 @@ def executar_lote_roni(
               "NOVA_EDICAO_COM_REVISÕES" if revisions else
               "NOVA_EDICAO_SEM_REVISÕES")
     events = classificar_episodios_roni(parsed)["eventos"]
-    with db:
+    with savepoint_atomico(db):
         if existing is None:
             db.execute(
                 "INSERT INTO roni_snapshots VALUES (?,?,?,?,?,?,?,?,?,?)",
