@@ -50,8 +50,15 @@ class FakeGCSBlob:
     def time_created(self):
         return self.bucket.data[self.key]["criado_em"]
 
-    def download_as_bytes(self):
-        return self.bucket.data[self.key]["bytes"]
+    @property
+    def size(self):
+        return len(self.bucket.data[self.key]["bytes"])
+
+    def download_as_bytes(self,start=None,end=None):
+        data=self.bucket.data[self.key]["bytes"]
+        if start is None and end is None:
+            return data
+        return data[start or 0:None if end is None else end+1]
 
     def upload_from_string(self,payload,*,content_type,if_generation_match):
         self._save(payload,content_type,if_generation_match)
@@ -515,19 +522,48 @@ class TestColetaANPLPCE2E(unittest.TestCase):
                 arquivos_locais=self.planilhas,esperar_segundos=0,
             )
 
-    def test_ciclo_gcs_rejeita_dados_orfaos_sem_commit(self):
+    def test_ciclo_gcs_retoma_upload_orfao_sem_confiar_nos_bytes(self):
         bucket=FakeGCSBucket()
         bucket.data["nivon/anp/lpc/v1/indices/"+"a"*64+".html"]={
-            "bytes":b"<html>fixture</html>",
+            "bytes":b"<html>fixture orfã</html>",
             "metadata":{"sha256":"a"*64},
             "tipo":"text/html",
             "criado_em":datetime.now(timezone.utc),
         }
-        with self.assertRaisesRegex(ErroGCSANP,"órfãos"):
+        realizado=executar_ciclo_lpc_gcs(
+            bucket=bucket,ano=2026,indice_bytes=self.html,
+            arquivos_locais=self.planilhas,esperar_segundos=0,
+        )
+        self.assertEqual(realizado["status"],"CICLO_GCS_COMPLETO")
+        self.assertEqual(realizado["restauracao"]["status"],
+                         "STAGING_NOVO_COM_UPLOAD_ANTERIOR_INCOMPLETO")
+        self.assertEqual(realizado["restauracao"]["objetos_anteriores_sem_snapshot"],1)
+        self.assertEqual(realizado["coleta"]["edicoes_novas"],3)
+        # Órfã sem SHA de snapshot não entrou nos dados nem na consulta.
+        with tempfile.TemporaryDirectory() as p:
+            root=Path(p)
+            (root/"raw").mkdir()
+            restaurado=restaurar_ultimo_staging_gcs(
+                bucket=bucket,db_path=root/"restaurado.sqlite",
+                raw_dir=root/"raw",
+            )
+            self.assertEqual(restaurado["edicoes_restauradas"],3)
+
+    def test_ciclo_gcs_orfao_colisao_SHA_remota_corrompida_bloqueia(self):
+        bucket=FakeGCSBucket()
+        key="nivon/anp/lpc/v1/indices/"+sha256(self.html).hexdigest()+".html"
+        bucket.data[key]={
+            "bytes":b"<html>dados remotos incorretos</html>",
+            "metadata":{"sha256":sha256(self.html).hexdigest()},
+            "tipo":"text/html",
+            "criado_em":datetime.now(timezone.utc),
+        }
+        with self.assertRaisesRegex(ErroGCSANP,"não passa"):
             executar_ciclo_lpc_gcs(
                 bucket=bucket,ano=2026,indice_bytes=self.html,
                 arquivos_locais=self.planilhas,esperar_segundos=0,
             )
+        self.assertFalse(any("/snapshots/" in k for k in bucket.data))
 
     def test_recoleta_preserva_edicoes_e_cria_capturas(self):
         self.run_lote()
