@@ -60,3 +60,32 @@ Este procedimento **NÃO foi executado contra o Google Cloud** nesta rodada. Nã
 - Rodar primeira coleta persistente e segunda captura incremental, checando idempotência, correções de edições e divergência de preço por município/produto sem inventar valores faltantes.
 - Conectar observações de diesel ao painel e motores de sensibilidade, **sem medir nem inferir repasse real ao frete**.
 - Evoluir a coleta oficial para estágio homologado com fonte validada, governo de direitos e auditoria temporal, mantendo monitoramento de revisões.
+
+
+## Continuidade 23/10/2026 — ciclo de recuperação durável sem servidor fixo
+
+**Problema resolvido:** o modo GCS original exportava arquivos e JSON, mas um processo efêmero sem SSD persistente não conseguia retomar o estado de capturas e revisões do SQLite após reinício.
+
+**Implementação:** `src/nivon/anp_lpc_ciclo_gcs.py` fornece um ciclo único `restaurar -> coletar -> auditar -> exportar -> confirmar snapshot` num diretório privado temporário, com término limpo. O commit durável do lote é o **snapshot SQLite com nome derivado de SHA-256**, registrado somente após os objetos de RAW e edições normalizadas terem sido enviados. Na próxima execução, o GCS fornece o instante de criação confiável para identificar o snapshot mais recente; a restauração verifica SHA, integridade SQLite, relacionamentos, todos os XLSX e todos os HTML de índice antes de liberar nova coleta. Snapshot mais recente corrompido **bloqueia**, sem fallback silencioso a um snapshot antigo.
+
+A operação preserva o registro de capturas, alterações do índice e revisões de planilhas, evitando duplicação de edições sob SHA idêntico. Se a primeira exportação foi interrompida antes do snapshot, arquivos órfãos em formatos conhecidos **não são promovidos automaticamente**, mas a execução pode recompor o estágio a partir de nova leitura da fonte e confirmar um primeiro snapshot. Arquivo órfão remoto cujo conteúdo não corresponde ao hash esperado bloqueia. Objetos desconhecidos no namespace bloqueiam. O GCS preserva todas as versões por identidade de conteúdo; novas capturas podem criar novos JSON e snapshots, consumindo operações/armazenamento adicionais.
+
+**Exemplo de comando único** para uso futuro em ambiente com bucket/identidade já configurados, sem instalar ou provisionar serviços:
+
+```bash
+python -m pip install --no-input -e '.[excel,gcs]'
+PYTHONPATH=src python -m nivon.cli_coletar_anp_lpc \
+  --modo ciclo-gcs --ano 2026 --ultimas 3 \
+  --bucket NOME_BUCKET_PRIVADO_EXISTENTE \
+  --prefixo nivon/anp/lpc/v1
+```
+
+Backfill por recorte pode usar `--desde AAAA-MM-DD --ate AAAA-MM-DD --ultimas 12`. A CLI usa ADC do ambiente autorizado e `bucket.reload()` antes de coletar. Não aceita `--db` ou `--raw-dir` no ciclo: estes ficam privados e temporários; o **único estado durável** é o bucket privado GCS. O `ciclo-gcs` não é cron e não foi acionado em nuvem real nesta rodada.
+
+**Permissões mínimas a estudar no Google Cloud:** `storage.buckets.get`, `storage.objects.list`, `storage.objects.get`, `storage.objects.create`, todas restritas ao bucket privado já existente. Evitar permissões de exclusão, atualização de ACL, criação de bucket ou owner; autenticar via identidade da execução e credenciais de curta duração. Exigir `public_access_prevention=enforced`. Uma invocação real pode **gerar operações/armazenamento cobrados**, ainda que não crie recursos; checar billing/quota efetivos antes de habilitar. Nenhuma quota grátis foi presumida.
+
+**Concorrência:** operar com **um único escritor por prefixo** até existir lease distribuído com fencing/revisões transacionais. Duas execuções independentes simultâneas podem persistir snapshots concorrentes; esse cenário não está homologado e não deve ser agendado. O snapshot é a confirmação durável do processo, não substitui backup em domínio de falha independente nem retenção auditável do GCS.
+
+**Testes E2E sintéticos:** três ciclos consecutivos com bucket simulado: ingestão de três semanas, restauração de 3 edições em novo processo, reprocessamento sem novas edições e revisão posterior de uma planilha resultando em 4 edições; também snapshot adulterado, primeira exportação incompleta e colisão de SHA remoto. Em instância GCS real, listagem, leitura e criação exigem credenciais e custeio prévios; por isso os testes automáticos continuam offline.
+
+**Gates restantes:** provar operação em bucket real com acesso e custo monitorados; implementar exclusão mútua/lease por prefixo e política de retenção/backup independente; confirmar atualidade da fonte em execuções recorrentes; integrar relatórios sob governança de dados e direitos. Não foi feita promoção para `REAL_AUTORIZADO`, merge nem deploy.
