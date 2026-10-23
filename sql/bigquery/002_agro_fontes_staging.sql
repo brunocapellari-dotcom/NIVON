@@ -3,7 +3,7 @@
 -- Nao ha implantacao automatica nem habilitacao de billing por este arquivo.
 -- Valores decimais sao STRING na landing para preservar precisao.
 -- SAFE_CAST/NUMERIC somente apos validacao de esquema e valores.
-CREATE TABLE IF NOT EXISTS \`${PROJECT_ID}.${DATASET_ID}.agro_fonte_stage\`
+CREATE TABLE IF NOT EXISTS `${PROJECT_ID}.${DATASET_ID}.agro_fonte_stage`
 (
   source_id STRING NOT NULL,
   dataset_id STRING NOT NULL,
