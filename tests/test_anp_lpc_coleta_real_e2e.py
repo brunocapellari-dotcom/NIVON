@@ -227,6 +227,75 @@ class TestColetaANPLPCE2E(unittest.TestCase):
                 _permitir_url(ruim, tipo="XLSX")
         _permitir_url(URL_INDICE, tipo="HTML")
 
+    def test_backfill_12_semanas_cap_e_recorte_sem_burla_de_indice(self):
+        html, arquivos = lote(
+            semanas=(date(2026,9,20),date(2026,9,27),
+                     date(2026,10,4),date(2026,10,11)),
+            precos=("5,70","5,80","5,90","6,05"),
+        )
+        parcial=coletar_lpc(
+            self.db, indice_bytes=html, arquivos_locais=arquivos,
+            ano=2026, limite_semanas=2, esperar_segundos=0,
+            semana_desde="2026-09-20", semana_ate="2026-10-10",
+        )
+        self.assertEqual(parcial["status"], "LOTE_COMPLETO")
+        self.assertEqual(parcial["semanas_catalogadas"],4)
+        self.assertEqual(parcial["semanas_elegiveis_periodo"],3)
+        self.assertEqual(parcial["ainda_pendentes_recorte"],1)
+        self.assertEqual(parcial["edicoes_integradas"],2)
+        self.assertEqual(self.db.execute(
+            "SELECT COUNT(*) FROM anp_lpc_staging_edicoes").fetchone()[0],2)
+        anterior=coletar_lpc(
+            self.db, indice_bytes=html, arquivos_locais=arquivos,
+            ano=2026, limite_semanas=2, esperar_segundos=0,
+            semana_desde="2026-09-20", semana_ate="2026-09-26",
+        )
+        self.assertEqual(anterior["edicoes_novas"],1)
+        self.assertEqual(anterior["semanas_elegiveis_periodo"],1)
+        self.assertEqual(self.db.execute(
+            "SELECT COUNT(*) FROM anp_lpc_staging_edicoes").fetchone()[0],3)
+        self.assertFalse(any(
+            x["semana_fim"]=="2026-10-17"
+            for x in self.db.execute(
+                "SELECT semana_fim FROM anp_lpc_staging_edicoes")))
+        with self.assertRaisesRegex(ErroColetaANP,"limite"):
+            coletar_lpc(
+                self.db,indice_bytes=html,arquivos_locais=arquivos,
+                ano=2026, limite_semanas=13,
+            )
+        with self.assertRaisesRegex(ErroColetaANP,"invertido"):
+            coletar_lpc(
+                self.db,indice_bytes=html,arquivos_locais=arquivos,
+                ano=2026,semana_desde="2026-10-11",
+                semana_ate="2026-09-26",
+            )
+
+    def test_cli_arquivos_seleciona_apenas_o_backfill_requisitado(self):
+        pasta=self.root/"xlsx_recorte"
+        pasta.mkdir()
+        index=self.root/"indice_recorte.html"
+        index.write_bytes(self.html)
+        for url,payload in self.planilhas.items():
+            (pasta/url.rsplit("/",1)[-1]).write_bytes(payload)
+        db_path=self.root/"recorte.sqlite"
+        out=io.StringIO()
+        with redirect_stdout(out):
+            rc=main([
+                "--modo","arquivos","--db",str(db_path),
+                "--ano","2026","--ultimas","12",
+                "--indice",str(index),"--pasta-arquivos",str(pasta),
+                "--desde","2026-09-27","--ate","2026-10-10",
+            ])
+        self.assertEqual(rc,0)
+        result=json.loads(out.getvalue())
+        self.assertEqual(result["semanas_catalogadas"],3)
+        self.assertEqual(result["edicoes_integradas"],2)
+        self.assertEqual(result["ainda_pendentes_recorte"],0)
+        with sqlite3.connect(db_path) as persistido:
+            semanas={s[0] for s in persistido.execute(
+                "SELECT semana_fim FROM anp_lpc_staging_edicoes")}
+        self.assertEqual(semanas,{"2026-10-03","2026-10-10"})
+
     def test_recoleta_preserva_edicoes_e_cria_capturas(self):
         self.run_lote()
         resultado=self.run_lote()
