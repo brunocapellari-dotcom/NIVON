@@ -52,12 +52,20 @@ def executar_lote(*, fonte, base, executar=False, enviar_gcs=False,
     saida=coletar(fonte=fonte,base=raiz,cliente=cliente,
                   homologacao_referencia=homologar_cepea)
     ds=saida["dataset"]
+    if fonte.startswith("CEPEA_"):
+        selecionados=[saida["snapshot_id"]]
+    elif fonte=="IMEA":
+        selecionados=[item["snapshot_id"] for item in saida["cadeias"]]
+    else:
+        selecionados=[item["snapshot_id"] for item in saida["edicoes"]]
+    if not selecionados or len(set(selecionados))!=len(selecionados):
+        raise ValueError("snapshots da coleta ausentes ou duplicados")
     if not enviar_gcs:
         return {"coleta":saida,"estado":"PERSISTIDO_LOCALMENTE",
                 "gcs_executado":False,"bigquery_executado":False}
     arquivo=arquivar_gcs(
         banco=raiz/"fontes_reais.sqlite",raw_dir=raiz/"raw",bucket=bucket,
-        fonte_dataset=ds,executar=True)
+        fonte_dataset=ds,snapshot_ids=selecionados,executar=True)
     result={"coleta":saida,"gcs":arquivo,"gcs_executado":True,
             "bigquery_executado":False,
             "estado":"GCS_RAW_QUARENTENA" if not bigquery else "GCS_STAGE_ARQUIVADO"}
@@ -66,7 +74,8 @@ def executar_lote(*, fonte, base, executar=False, enviar_gcs=False,
             exportar_quarentena, arquivar_stage_quarentena, carregar_stage)
         stage=raiz/(ds.lower()+"_staging.jsonl")
         exportado=exportar_quarentena(
-            banco=raiz/"fontes_reais.sqlite",destino=stage,fonte_dataset=ds)
+            banco=raiz/"fontes_reais.sqlite",destino=stage,
+            fonte_dataset=ds,snapshot_ids=selecionados)
         recibo=arquivar_stage_quarentena(
             arquivo=stage,bucket=bucket,project_id=projeto)
         result["staging_recibo_gcs"]=recibo
@@ -79,7 +88,8 @@ def executar_lote(*, fonte, base, executar=False, enviar_gcs=False,
     if bigquery:
         stage=raiz/(ds.lower()+"_normalized.jsonl")
         exportado=exportar_jsonl(
-            banco=raiz/"fontes_reais.sqlite",destino=stage,dataset_id=ds)
+            banco=raiz/"fontes_reais.sqlite",destino=stage,
+            dataset_id=ds,snapshot_ids=selecionados)
         if exportado["observacoes"]<1:
             raise ValueError("fonte homologada sem observações")
         recibo=arquivar_stage(
