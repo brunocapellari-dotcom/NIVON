@@ -7,6 +7,7 @@ on:
 permissions:
   contents: read
   id-token: write
+# Reexecução de homologação: dados já existentes não devem gerar novas linhas.
 concurrency:
   group: nivon-imea-staging
   cancel-in-progress: false
