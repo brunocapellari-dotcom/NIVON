@@ -135,7 +135,7 @@ def coletar_lpc(
         if corte is None:
             return None
         if (not isinstance(corte, str) or len(corte) != 10
-                or not re.fullmatch(r"\\d{4}-\\d{2}-\\d{2}", corte)):
+                or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", corte)):
             raise ErroColetaANP(f"{campo}: data ISO YYYY-MM-DD obrigatória")
         try:
             return date.fromisoformat(corte)
