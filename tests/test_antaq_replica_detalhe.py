@@ -4,7 +4,7 @@ from pathlib import Path
 
 from nivon.antaq_replica_detalhe import (
     ErroReplicaANTAQ, classificar_sh4, normalizar_texto,
-    resumo_parquets, resumo_agro
+    resumo_parquets, resumo_agro, soma_carga_unica_2025
 )
 
 
@@ -39,6 +39,18 @@ class TestHidroviaProduto(unittest.TestCase):
             self.assertEqual(len(agro["recortes_agro"]),3)
             self.assertEqual(agro["recortes_agro"][0]["grupo_produto"], "SOJA")
             self.assertEqual(agro["recortes_agro"][1]["hidrovia"],"Hidrovia do Tapajós")
+            unico = soma_carga_unica_2025(h,c)
+            self.assertEqual(unico["total_ton"], 140.0)
+            self.assertEqual(unico["cargas_unicas"],2)
+            pq.write_table(pa.table({
+                "IDCarga": [101.0, 101.0, 102.0, 103.0],
+                "Hidrovia": ["Hidrovia do Madeira","Hidrovia do Tapajós",
+                             "Hidrovia do Tapajós","Hidrovia do Madeira"],
+                "ValorMovimentado": [100.0, 100.0, 55.3, 40.0]}), h)
+            unico_repetido = soma_carga_unica_2025(h,c)
+            self.assertEqual(unico_repetido["total_ton"], 140.0)
+            self.assertEqual(unico_repetido["cargas_unicas"], 2)
+
 
     def test_duplicacao_de_id_impede_soma_dupla(self):
         import pyarrow as pa
