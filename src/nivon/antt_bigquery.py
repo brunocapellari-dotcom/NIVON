@@ -125,17 +125,20 @@ def gravar_bigquery(pasta: str | Path, anos: list[int], destino: DestinoBQ, *,
     if cliente is None:
         try:
             from google.cloud import bigquery as sdk
+            from google.api_core.exceptions import NotFound as not_found
         except ImportError:
             raise ErroTransporte("google-cloud-bigquery nao instalado") from None
         cliente = sdk.Client(project=destino.projeto)
     elif sdk is None:
         raise ErroTransporte("SDK de testes ausente")
+    else:
+        not_found = sdk.NotFound
     # Deliberadamente NAO cria projeto ou dataset, exige escopo autorizado.
     cliente.get_dataset(f"{destino.projeto}.{destino.dataset}")
     ref = destino.tabela_completa
     try:
         t = cliente.get_table(ref)
-    except sdk.NotFound:
+    except not_found:
         t = sdk.Table(ref, schema=[sdk.SchemaField(k, typ) for k, typ in _FIELDS.items()])
         t.time_partitioning = sdk.TimePartitioning(type_=sdk.TimePartitioningType.MONTH,
                                                    field="data_referencia")
