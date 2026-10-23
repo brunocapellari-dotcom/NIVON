@@ -1,0 +1,33 @@
+name: NIVON - ANTT RGI CI
+on:
+  push:
+    branches: [main, fix/p0-antt-rgi-ci-separado-20261023]
+    paths:
+      - '.github/workflows/antt-anuario-rgi.yml'
+      - 'src/nivon/antt_anuario_rgi.py'
+      - 'tests/test_antt_anuario_rgi.py'
+  pull_request:
+    paths:
+      - '.github/workflows/antt-anuario-rgi.yml'
+      - 'src/nivon/antt_anuario_rgi.py'
+      - 'tests/test_antt_anuario_rgi.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  testar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Testar sem rede
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -p 'test_antt_anuario_rgi.py' -v

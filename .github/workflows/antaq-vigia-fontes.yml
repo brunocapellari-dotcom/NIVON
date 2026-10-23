@@ -1,0 +1,64 @@
+name: NIVON - Vigia de fontes hidroviarias ANTAQ
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '45 12 * * *'
+  push:
+    branches: [main, feat/antaq-monitor-disponibilidade-20261023]
+    paths:
+      - '.github/workflows/antaq-vigia-fontes.yml'
+      - 'src/nivon/antaq_fonte_saude.py'
+      - 'tests/test_antaq_fonte_saude.py'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-antaq-vigia-fontes
+  cancel-in-progress: true
+
+jobs:
+  observar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Testar classificacao e bloqueios offline
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -p 'test_antaq_fonte_saude.py' -v
+      - name: Consultar metadados oficiais e revisao secundaria
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m nivon.antaq_fonte_saude --arquivo "${RUNNER_TEMP}/status_antaq.json"
+      - name: Resumo do sinal sem declarar coleta
+        if: always()
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"status_antaq.json"
+          lines=["## ANTAQ: sinais de disponibilidade (nao ingestao)"]
+          if p.is_file():
+              doc=json.loads(p.read_text(encoding="utf-8"))
+              for x in doc["sinais"]:
+                  lines.append("- `"+x["estado"]+"` — "+x["url"])
+              lines.append("Nenhum status HTTP prova microdados oficiais homologados.")
+          else:
+              lines.append("Execucao sem arquivo de status.")
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a",encoding="utf-8") as f:
+              f.write("\n".join(lines)+"\n")
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: status-antaq-${{ github.run_id }}
+          path: ${{ runner.temp }}/status_antaq.json
+          if-no-files-found: warn
+          retention-days: 30

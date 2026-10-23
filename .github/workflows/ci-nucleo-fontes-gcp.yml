@@ -1,0 +1,62 @@
+name: NIVON - Nucleo de coletores e nuvem
+on:
+  pull_request:
+    paths:
+      - 'pyproject.toml'
+      - 'src/nivon/arquivo_raw_gcs.py'
+      - 'src/nivon/verificacao_cloud_fontes.py'
+      - '.github/workflows/coleta-recorrente-fontes.yml'
+      - 'src/nivon/carga_bigquery_fontes.py'
+      - 'src/nivon/consulta_analitica_bq.py'
+      - 'tests/test_consulta_analitica_bq.py'
+      - 'src/nivon/preflight_gcp_fontes.py'
+      - 'src/nivon/ingestao_fontes_reais.py'
+      - 'src/nivon/coletores_dados_reais.py'
+      - 'src/nivon/coletor_bcra_v4.py'
+      - 'src/nivon/coletor_granos_ar.py'
+      - 'scripts/operar_fontes_reais.py'
+      - 'scripts/verificar_status_fontes.py'
+      - 'scripts/backfill_fontes_reais.py'
+      - 'scripts/backfill_fontes_cloud.py'
+      - 'tests/test_*fontes*.py'
+      - 'tests/test_*gcs.py'
+      - 'tests/test_bigquery_merge_simulado.py'
+      - 'tests/test_coletor*.py'
+      - '.github/workflows/ci-nucleo-fontes-gcp.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  integracao-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Install
+        run: python -m pip install -e .
+      - name: Compile and check imports
+        run: python -m compileall -q src/nivon/arquivo_raw_gcs.py src/nivon/verificacao_cloud_fontes.py src/nivon/carga_bigquery_fontes.py src/nivon/consulta_analitica_bq.py src/nivon/preflight_gcp_fontes.py src/nivon/ingestao_fontes_reais.py src/nivon/coletores_dados_reais.py scripts
+      - name: Testes completos dos coletores e persistencia simulada
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in \
+            test_arquivo_raw_gcs.py \
+            test_backfill_fontes_reais.py \
+            test_bigquery_merge_simulado.py \
+            test_carga_bigquery_fontes.py \
+            test_coletor_bcra_v4.py \
+            test_coletor_granos_ar.py \
+            test_coletores_dados_reais.py \
+            test_exportacao_historico_filtrado.py \
+            test_preflight_gcp_fontes.py \
+            test_verificacao_cloud_fontes.py \
+            test_consulta_analitica_bq.py
+          do
+            python -m unittest discover -s tests -p "$name" -v
+          done

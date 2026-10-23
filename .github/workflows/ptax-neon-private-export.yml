@@ -1,0 +1,68 @@
+# NIVON: copy PTAX Neon -> BigQuery. Sem variaveis de aprovacao, SOMENTE leitura privada.
+# Nenhuma credencial, cotacao ou artifact enviado ao repositório publico.
+# O codigo vem de commit imutavel na main; GCP permanece desabilitado por padrao.
+name: NIVON PTAX - ponte privada para Google Cloud
+on:
+  push:
+    paths:
+      - '.github/workflows/ptax-neon-private-export.yml'
+  workflow_dispatch:
+  schedule:
+    # Dias uteis 19:45 em America/Cuiaba, apos janela usual BCB.
+    - cron: '45 23 * * 1-5'
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: nivon-ptax-neon-bigquery
+  cancel-in-progress: false
+jobs:
+  exportar-e-sincronizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    env:
+      NIVON_PTAX_PRIVATE_ENDPOINT: https://br-twilight-cell-b77ukd6x-ptaxbridge.compute.c-13.us-east-1.aws.neon.tech
+      NIVON_GCP_WRITE_APPROVED: ${{ vars.NIVON_GCP_WRITE_APPROVED }}
+      NIVON_GCP_COST_REVIEWED: ${{ vars.NIVON_GCP_COST_REVIEWED }}
+      NIVON_GCP_ENABLED: ${{ vars.NIVON_GCP_WRITE_APPROVED == 'true' && vars.NIVON_GCP_COST_REVIEWED == 'true' && vars.NIVON_GCP_WIF_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && 'true' || 'false' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 31ce2bd7b83f1356efa15159a55e564125eb7b95
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Credencial GCP efemera somente depois dos gates
+        if: ${{ env.NIVON_GCP_ENABLED == 'true' }}
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+      - name: Instalar cliente BigQuery somente quando habilitado
+        if: ${{ env.NIVON_GCP_ENABLED == 'true' }}
+        run: python -m pip install --disable-pip-version-check google-cloud-bigquery==3.38.0
+      - name: Extrair PTAX real, validar BigQuery e sincronizar se autorizado
+        shell: bash
+        run: |
+          set -euo pipefail
+          src="$RUNNER_TEMP/nivon-ptax-source-${{ github.run_id }}.jsonl"
+          dst="$RUNNER_TEMP/nivon-ptax-bigquery-${{ github.run_id }}.jsonl"
+          trap 'rm -f "$src" "$dst"' EXIT
+          umask 077
+          if [ "$NIVON_GCP_ENABLED" = "true" ]; then
+            # O BigQuery determina o cursor, com rewind de 5.000 IDs.
+            after_id="$(python -m scripts.ptax_bigquery_incremental --cursor)"
+          else
+            after_id=0
+            echo 'GCP_OFF: exportacao/validacao sem escrita na nuvem'
+          fi
+          python -m scripts.ptax_neon_private_export \
+            --endpoint "$NIVON_PTAX_PRIVATE_ENDPOINT" \
+            --source-jsonl "$src" --target-jsonl "$dst" --after-id "$after_id"
+          python -m scripts.ptax_bigquery_incremental --arquivo "$dst"
+          if [ "$NIVON_GCP_ENABLED" = "true" ]; then
+            python -m scripts.ptax_bigquery_incremental --arquivo "$dst" --executar
+          else
+            echo 'BIGQUERY_WRITE_BLOCKED_BY_DEFAULT=true'
+          fi

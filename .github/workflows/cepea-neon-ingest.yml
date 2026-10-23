@@ -1,0 +1,121 @@
+# Fluxo estável da branch principal. Código-fonte pinado; não depende de PR draft.
+name: NIVON - CEPEA coleta primaria para Neon
+on:
+  push:
+    paths:
+      - '.github/workflows/cepea-neon-ingest.yml'
+  workflow_dispatch:
+  schedule:
+    # Soja 23:00 UTC (19h MT), milho 23:45 UTC (19h45 MT), dias uteis.
+    # Depois do horario indicativo de fechamento CEPEA; nao presume dado novo.
+    # Rotina operacional isolada da PR; checkout em commit imutável e homologado.
+    - cron: '0 23 * * 1-5'
+    # Milho separado duas horas depois para reduzir carga e isolar falhas.
+    - cron: '45 23 * * 1-5'
+permissions:
+  contents: read
+  id-token: write
+# Funcao Neon CEPEA OIDC verificada; repetir teste E2E apos deploy.
+concurrency:
+  group: nivon-cepea-ingest
+  cancel-in-progress: false
+jobs:
+  ingestar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 8d56fc697beb0672044a6f1479215681264e5f88
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install --disable-pip-version-check beautifulsoup4==4.12.3
+      - name: CEPEA fonte original, validar e gravar sob OIDC
+        env:
+          NIVON_CEPEA_INGEST_URL: https://br-twilight-cell-b77ukd6x-cepeaingest.compute.c-13.us-east-1.aws.neon.tech/ingest
+          NIVON_CEPEA_PRODUTO: ${{ github.event.schedule == '45 23 * * 1-5' && 'MILHO' || 'SOJA' }}
+        run: |
+          python - <<'PY'
+          import json, os, time
+          from urllib.parse import quote
+          from urllib.request import Request, urlopen
+          from urllib.error import HTTPError, URLError
+          from nivon.cepea_web_primario import consultar_pagina_primaria,extrair_precos_html,URL_SOJA,URL_MILHO
+          # Somente pagina oficial; tentativas limitadas para falhas transitorias.
+          # Erro definitivo nunca gera registro no Neon nem fallback em widgets.
+          def abrir_com_timeout(req,timeout):
+              return urlopen(req,timeout=25)
+          def ler_pagina(url):
+              for tentativa in range(1,4):
+                  try:
+                      return consultar_pagina_primaria(url,open_url=abrir_com_timeout)
+                  except HTTPError as exc:
+                      if exc.code not in (408,425,429,500,502,503,504,520,522,524):
+                          raise
+                      classe='HTTP_'+str(exc.code)
+                  except (TimeoutError, URLError):
+                      classe='TIMEOUT_OU_REDE'
+                  print('::warning::CEPEA fonte oficial indisponivel tentativa='+str(tentativa)+'/3 classe='+classe)
+                  if tentativa==3:
+                      raise SystemExit('CEPEA_SOURCE_UNAVAILABLE_'+classe)
+                  time.sleep(6 if tentativa==1 else 18)
+              raise SystemExit('CEPEA_SOURCE_UNAVAILABLE')
+          produto=os.environ['NIVON_CEPEA_PRODUTO']
+          if produto=='MILHO':
+              html=ler_pagina(URL_MILHO)
+              observacoes=extrair_precos_html(html,('milho_esalq_b3',))
+          elif produto=='SOJA':
+              html=ler_pagina(URL_SOJA)
+              observacoes=extrair_precos_html(html,('soja_paranagua','soja_parana'))
+          else:
+              raise SystemExit('CEPEA_PRODUTO_INVALIDO')
+          if len(observacoes)<1:
+              raise SystemExit('CEPEA_POUCAS_OBSERVACOES')
+          audience='urn:nivon:cepea:ingest'
+          token_url=os.environ['ACTIONS_ID_TOKEN_REQUEST_URL']+'&audience='+quote(audience,safe='')
+          token_req=Request(token_url,headers={'Authorization':'Bearer '+os.environ['ACTIONS_ID_TOKEN_REQUEST_TOKEN']})
+          with urlopen(token_req,timeout=20) as r:
+              jwt=json.load(r)['value']
+          url=os.environ['NIVON_CEPEA_INGEST_URL']
+          data=json.dumps({'source':'CEPEA','rows':observacoes},ensure_ascii=False).encode('utf8')
+          req=Request(url,data=data,method='POST',headers={
+              'Content-Type':'application/json','Authorization':'Bearer '+jwt})
+          with urlopen(req,timeout=45) as r:
+              result=json.load(r)
+          if result.get('status') not in ('OK','NO_UPDATE','SOURCE_LAG') or result.get('received')!=len(observacoes):
+              raise SystemExit('CEPEA_PERSISTENCIA_NAO_CONFIRMADA')
+          print('CEPEA_SERIE='+produto)
+          print(json.dumps({'fonte':'CEPEA','status':result['status'],
+              'recebidos':result['received'],'inseridos':result['inserted'],
+              'duplicados':result['duplicates'],'referencia':result['latest_reference']},
+              ensure_ascii=False))
+          PY
+      - name: Registrar falha de coleta no Neon sem alterar preços
+        if: ${{ failure() }}
+        continue-on-error: true
+        env:
+          NIVON_CEPEA_INGEST_URL: https://br-twilight-cell-b77ukd6x-cepeaingest.compute.c-13.us-east-1.aws.neon.tech/ingest
+          NIVON_CEPEA_PRODUTO: ${{ github.event.schedule == '45 23 * * 1-5' && 'MILHO' || 'SOJA' }}
+        run: |
+          python - <<'PY'
+          import json,os
+          from urllib.parse import quote
+          from urllib.request import Request,urlopen
+          audience='urn:nivon:cepea:ingest'
+          oidc_url=os.environ['ACTIONS_ID_TOKEN_REQUEST_URL']+'&audience='+quote(audience,safe='')
+          req=Request(oidc_url,headers={'Authorization':'Bearer '+os.environ['ACTIONS_ID_TOKEN_REQUEST_TOKEN']})
+          with urlopen(req,timeout=20) as response:
+              jwt=json.load(response)['value']
+          url=os.environ['NIVON_CEPEA_INGEST_URL'].removesuffix('/ingest')+'/report-failure'
+          data=json.dumps({'source':'CEPEA','product':os.environ['NIVON_CEPEA_PRODUTO'],
+                           'event':'WORKFLOW_FAILED'}).encode('utf8')
+          req=Request(url,data=data,method='POST',headers={
+              'Authorization':'Bearer '+jwt,'Content-Type':'application/json'})
+          with urlopen(req,timeout=25) as response:
+              result=json.load(response)
+          if result.get('status')!='RECORDED' or result.get('canonical_quotes_inserted')!=0:
+              raise SystemExit('CEPEA_FAILURE_LOG_UNCONFIRMED')
+          print('CEPEA_FAILURE_LOGGED='+result['product'])
+          PY

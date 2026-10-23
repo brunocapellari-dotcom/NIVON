@@ -1,0 +1,40 @@
+name: NIVON P0 - Saude das fontes
+on:
+  push:
+    paths:
+      - '.github/workflows/monitor-p0-operacao.yml'
+  workflow_dispatch:
+  schedule:
+    # Dias úteis 12:15 UTC / 08:15 em Mato Grosso.
+    - cron: '15 12 * * 1-5'
+permissions:
+  actions: read
+  contents: read
+concurrency:
+  group: nivon-p0-health
+  cancel-in-progress: false
+jobs:
+  monitorar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 12c47099651ccb2cb9479c87f13019535877045a
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Testes determinísticos do monitor
+        run: python -m unittest discover -s tests -p 'test_monitor_p0_workflows.py' -v
+      - name: Consultar execuções oficiais do próprio GitHub
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python -m nivon.monitor_p0_workflows
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nivon-status-fontes-p0
+          path: status_p0.json
+          if-no-files-found: ignore
+          retention-days: 14

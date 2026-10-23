@@ -1,0 +1,49 @@
+name: NIVON IMEA - vigiar publicacoes oficiais
+on:
+  push:
+    paths:
+      - '.github/workflows/imea-publicacoes-monitor.yml'
+  # Diagnostico manual/read-only. A agenda efetiva esta em imea-neon-stage.yml.
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: nivon-imea-publications-monitor
+  cancel-in-progress: false
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 12de9f0e327df33c0b9467d3634b97ec370e8a95
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install --disable-pip-version-check agrobr==2.0.0
+      - name: Consultar soja e milho oficiais sem publicar valores
+        run: |
+          python - <<'PY'
+          import asyncio, json
+          from datetime import date
+          from agrobr import imea
+          from nivon.imea_lotes import prepare
+          async def main():
+              report=[]
+              for chain in ("soja","milho"):
+                  df,meta=await imea.cotacoes(chain,return_meta=True)
+                  p=prepare(df.to_dict(orient="records"),meta,chain,batch_size=80)
+                  age=(date.today()-date.fromisoformat(p['last_publication'])).days
+                  report.append({'chain':chain,'received':p['received'],
+                      'candidates':p['validated'],'batches':len(p['batches']),
+                      'publication':p['last_publication'],'age_days':age,
+                      'reference_date_verified':False,'stored_in_neon':False})
+                  if age<0 or age>14:
+                      print('::warning::IMEA '+chain+' com publicacao defasada; nao tornar cotacao atual')
+              print("IMEA_PUBLICATION_MONITOR="+json.dumps(report,ensure_ascii=False))
+              if any(x['candidates']==0 for x in report):
+                  raise SystemExit("IMEA_EMPTY_CANDIDATES")
+          asyncio.run(main())
+          PY
