@@ -350,3 +350,82 @@ class PdfProgrammeLedger:
             SELECT COUNT(*) FROM maritime_pdf_programme_editions
             WHERE port_id=? AND source_id=? AND series_key=?
         """, (port_id, source_id, series or "")).fetchone()[0]
+
+    def save_batch(
+        self, editions: tuple[PdfProgrammeEdition, ...], *,
+        storage_authorized: bool = False,
+    ) -> dict[str, int]:
+        """Preflight all editions and commit ALL or NONE.
+
+        A failure in the middle of an SQLite write transaction rolls back
+        earlier inserts. Exact repeated editions are idempotent; another
+        payload at the same source/series/collection instant is a conflict.
+        """
+        if not storage_authorized:
+            raise PermissionError("PDF batch history storage not authorized")
+        if not isinstance(editions, tuple) or not 1 <= len(editions) <= 100:
+            raise ValueError("batch requires 1..100 programme editions")
+        prepared = []
+        for edition in editions:
+            key, checksum, raw = self._canonical(edition)
+            scope = (edition.port_id, edition.source_id, edition.series or "",
+                     edition.collected_utc.isoformat())
+            prepared.append((key, checksum, raw, scope, edition))
+        inserted = 0
+        duplicates = 0
+        with self.db:
+            for key, checksum, raw, scope, edition in prepared:
+                existing = self.db.execute("""
+                    SELECT payload_sha256, payload_json
+                    FROM maritime_pdf_programme_editions
+                    WHERE port_id=? AND source_id=? AND series_key=? AND collected_at=?
+                """, scope).fetchone()
+                if existing is not None:
+                    if existing != (checksum, raw):
+                        raise ValueError("conflicting PDF programme edition at same collection instant")
+                    duplicates += 1
+                    continue
+                self.db.execute("""
+                    INSERT INTO maritime_pdf_programme_editions
+                    (edition_id,port_id,source_id,series_key,collected_at,published_at,
+                     source_sha256,payload_sha256,payload_json)
+                    VALUES (?,?,?,?,?,?,?,?,?)
+                """, (key, *scope,
+                      edition.published_utc.isoformat() if edition.published_utc else None,
+                      edition.source_sha256.lower(), checksum, raw))
+                inserted += 1
+        return {"inserted": inserted, "already_present": duplicates}
+
+    def history_asof(
+        self, *, port_id: str, source_id: str, series: str | None,
+        as_of: str | datetime, read_authorized: bool = False,
+        max_editions: int = 200,
+    ) -> tuple[PdfProgrammeEdition, ...]:
+        """Return all known editions, never silently truncate a history.
+
+        Unknown publication times stay stored for audit but are not visible
+        to historical as-of comparisons. No pagination, maximum 200 editions
+        per scope to prevent unbounded memory use in offline batches.
+        """
+        if not read_authorized:
+            raise PermissionError("PDF programme history reading not authorized")
+        if not isinstance(max_editions, int) or not 1 <= max_editions <= 200:
+            raise ValueError("invalid history limit")
+        if port_id not in PDF_PORTS or not source_id or not source_id.strip():
+            raise ValueError("invalid port or source")
+        if port_id == "PARANAGUA" and series not in PARANAGUA_SERIES:
+            raise ValueError("Paranagua programme series required")
+        if port_id == "ITAQUI" and series is not None:
+            raise ValueError("Itaqui has no programme series")
+        cutoff = _aware_utc(as_of, "as_of").isoformat()
+        rows = self.db.execute("""
+            SELECT edition_id,port_id,source_id,series_key,collected_at,published_at,
+                   source_sha256,payload_sha256,payload_json
+            FROM maritime_pdf_programme_editions
+            WHERE port_id=? AND source_id=? AND series_key=? AND collected_at<=?
+              AND published_at IS NOT NULL AND published_at<=?
+            ORDER BY collected_at ASC LIMIT ?
+        """, (port_id, source_id, series or "", cutoff, cutoff, max_editions + 1)).fetchall()
+        if len(rows) > max_editions:
+            raise ValueError("historical window exceeds max_editions: explicit pagination required")
+        return tuple(self._decode(row) for row in rows)
