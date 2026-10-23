@@ -135,3 +135,24 @@ antes da errata. Não publicar falsa métrica de performance preditiva
 **Decisões sensíveis ainda não realizadas:** ativação de serviços pagos,
 deploy, merge do PR, compartilhamento público de arquivo privado, mudança
 de política de outras fontes ou substituição de fontes de verdade.
+
+
+## Reconferência em segunda coleta real
+
+Em uma segunda execução curta [GitHub Actions 39891299927](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39891299927),
+seis consultas públicas retornaram com sucesso e a nova auditoria
+SQLite/quarentena também terminou com `INTEGRIDADE_LOCAL_VERIFICADA`.
+Os **seis hashes SHA-256 e os seis valores** corresponderam exatamente
+à primeira execução, sem mudança da edição visível nesse curto intervalo.
+Essa verificação foi feita sobre os dois arquivos ZIP efetivamente
+descarregados e comparados por município, ano, SHA e valor.
+
+O segundo job gerou **outra base efêmera**, não reabriu a base da primeira
+execução. Portanto: duas capturas reais consistentes foram demonstradas;
+recoleta incremental **no mesmo banco real permanente** ainda é uma
+pendência de implantação. Os testes E2E locais já exercitam esse contrato.
+
+Para não disparar novas consultas reais a cada commit em um PR que ainda
+está em construção, o job piloto passou a ser `workflow_dispatch`
+somente. O agendamento de atualizações deve acompanhar a conexão com
+armazenamento persistente e a política de atualização do NIVON.
