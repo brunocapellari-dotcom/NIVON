@@ -24,6 +24,7 @@ from .anp_indice_lpc import descobrir_semanas_lpc
 from .anp_lpc_coletor_real import coletar_lpc, ErroColetaANP
 from .anp_lpc_staging_real import (iniciar_staging, tendencia_diesel_preliminar,
     painel_qualidade_lpc, auditar_arquivos_origem_lpc)
+from .anp_lpc_gcs import exportar_lpc_staging_gcs
 
 
 def _db_seguro(path: Path) -> sqlite3.Connection:
@@ -67,7 +68,7 @@ def _local_files(
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Lote ANP/LPC isolado, não comercial")
-    parser.add_argument("--modo", choices=["rede", "arquivos", "consulta", "status", "integridade"], required=True)
+    parser.add_argument("--modo", choices=["rede", "arquivos", "consulta", "status", "integridade", "gcs"], required=True)
     parser.add_argument("--db", type=Path, required=True)
     parser.add_argument("--raw-dir", type=Path)
     parser.add_argument("--ano", type=int, default=datetime.now(timezone.utc).year)
@@ -79,6 +80,8 @@ def main(argv=None) -> int:
     parser.add_argument("--municipio", type=str)
     parser.add_argument("--produto", choices=["DIESEL", "DIESEL S10"])
     parser.add_argument("--as-of", type=str)
+    parser.add_argument("--bucket", help="Bucket GCS privado já existente")
+    parser.add_argument("--prefixo", default="nivon/anp/lpc/v1")
     args = parser.parse_args(argv)
     try:
         if args.modo == "rede" and (
@@ -96,6 +99,8 @@ def main(argv=None) -> int:
             raise ErroColetaANP("consulta exige --municipio e --produto")
         if args.modo == "integridade" and args.raw_dir is None:
             raise ErroColetaANP("auditoria de integridade exige --raw-dir")
+        if args.modo == "gcs" and (args.raw_dir is None or not args.bucket):
+            raise ErroColetaANP("exportação GCS exige --bucket e --raw-dir")
         if args.raw_dir is not None and (
             args.raw_dir.is_symlink() or not args.raw_dir.is_dir()
         ):
@@ -112,6 +117,23 @@ def main(argv=None) -> int:
                     as_of=args.as_of or datetime.now(timezone.utc).isoformat(),
                 )
                 code = 0 if data["status"] == "RAW_VERIFICADO_LOCALMENTE" else 2
+            elif args.modo == "gcs":
+                # Nunca criar bucket/credenciais/billing implicitamente.
+                try:
+                    from google.cloud import storage
+                except ImportError as exc:
+                    raise ErroColetaANP(
+                        "biblioteca opcional google-cloud-storage necessária"
+                    ) from exc
+                client=storage.Client()
+                bucket=client.bucket(args.bucket)
+                bucket.reload()  # exige bucket existente e identidade ADC
+                data=exportar_lpc_staging_gcs(
+                    db, raiz_raw=str(args.raw_dir), bucket=bucket,
+                    as_of=args.as_of or datetime.now(timezone.utc).isoformat(),
+                    prefixo=args.prefixo,
+                )
+                code=0
             elif args.modo == "consulta":
                 data = tendencia_diesel_preliminar(
                     db, municipio=args.municipio.upper().strip(),
