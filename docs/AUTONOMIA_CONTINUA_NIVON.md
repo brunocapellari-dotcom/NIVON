@@ -150,3 +150,14 @@ bash scripts/nivon-autonomo.sh efficiency
 O indicador informa tarefas finalizadas por 100 mil tokens de entrada+saída, separando Claude, Codex e total. Se **qualquer** tentativa no recorte não possuir consumo confiável, a taxa é `null` e aparece `comparability: incomplete` — não interpreta medição ausente como uso zero. O consumo anterior a um handoff permanece contabilizado. Cache indica reaproveitamento de contexto, não aumento de franquia nem economia de custo comprovada.
 
 Para comparar versões, executar tarefas equivalentes antes/depois e analisar qualidade, retrabalho e conclusão. Sem log real das duas CLIs, não há estimativa de percentuais.
+
+
+## Encerramento obrigatório da árvore de processos (atualizado em 23/10/2026)
+
+O módulo `nivon.processos` inicia cada CLI em grupo/sessão de processos independente e aplica timeout por tarefa. Em Linux/macOS/WSL2, encerra o grupo inteiro com SIGTERM seguido de SIGKILL e verifica se ele continua acessível. Isso se aplica **inclusive quando o processo principal termina com código 0**, mas deixa descendentes em execução. Logs das CLIs são arquivos privados com criação exclusiva, para não sobrescrever evidências anteriores.
+
+Se o supervisor **não conseguir confirmar** o encerramento da árvore, registra tarefa bloqueada e cria o arquivo `.nivon-local/STOP`, impedindo novas tarefas até revisão humana. A ordem STOP emitida imediatamente depois de um `start` é preservada pelo supervisor filho: somente um **novo comando explícito de início** a limpa antes de executar. O comando `stop` continua cooperativo e não mata de forma abrupta tarefas em andamento; estas são limitadas pelos timeouts.
+
+**Atenção ao sistema operacional:** o mecanismo de confirmação de árvore de processos está homologado apenas no caminho POSIX. O `doctor` recusa piloto autônomo no **Windows nativo** até existir isolamento verificável para processos filhos. Em PCs Windows, usar WSL2 com Git, Python, Docker e ambas as CLIs dentro do Linux. Não habilitar modos sem sandbox para contornar esse bloqueio.
+
+A CI testa encerramento real de subprocessos locais e simula STOP durante a inicialização; isso ainda não substitui o piloto noturno com as duas CLIs autenticadas. A CI também não confirma o consumo de tokens do provedor, que depende do host.
