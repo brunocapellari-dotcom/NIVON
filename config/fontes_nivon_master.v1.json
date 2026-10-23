@@ -1690,6 +1690,14 @@
       "access": "TO_VERIFY_PER_DATASET",
       "rights": "REVIEW",
       "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "ARG_GRANOS_AR",
+      "provider": "granos.ar — API pública secundária de mercado argentino",
+      "official_url": "https://granos.ar/api-docs/",
+      "access": "PUBLIC_JSON_API",
+      "rights": "ATTRIBUTION_REVIEW",
+      "notes": "API gratuita sem token; atribuir granos.ar. Fonte secundaria de cotacoes; nenhum numero homologado como preco oficial."
     }
   ],
   "datasets": [
@@ -9274,6 +9282,330 @@
       "priority": "P0",
       "existing_module": null,
       "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_PIZARRA",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_pizarra",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P0",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_PIZARRA_HISTORICO",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_pizarra_historico",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P0",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_DOLAR",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "MACRO",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_dolar",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P1",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_RIESGO_PAIS",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "MACRO",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_riesgo-pais",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P1",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_CLIMA",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_clima",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P1",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_LLUVIAS",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_lluvias",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P1",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_CBOT_DIFERENCIAL",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_cbot_diferencial",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P0",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_CBOT_HISTORICO",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_cbot_historico",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P0",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_WASDE",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "BALANCO",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_wasde",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "MONTHLY",
+      "stage": "CODE_PRESENT",
+      "priority": "P1",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_INDICADORES",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "RADAR",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_indicadores",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P1",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_ALERTAS",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "RADAR",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_alertas",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P1",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_STATUS",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "RADAR",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_status",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P1",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
