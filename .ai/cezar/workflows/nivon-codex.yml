@@ -1,0 +1,14 @@
+name: nivon-codex-implement
+description: Codex implementa sua propria tarefa em paralelo ao Claude, sem auditoria cruzada.
+steps:
+  - id: implement
+    name: Implementar com Codex
+    runner: codex
+    skill: nivon-cooperative-dev
+    prompt: "{{task}}"
+  - id: verify
+    name: Validar offline
+    command: "python -m compileall -q src tests && PYTHONPATH=src python -m unittest discover -s tests -q"
+    onFail:
+      retry: implement
+      max: 2

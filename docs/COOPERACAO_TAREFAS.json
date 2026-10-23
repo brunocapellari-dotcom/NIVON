@@ -1,0 +1,42 @@
+[
+  {
+    "id": "nivon-inmet-01",
+    "title": "Fortalecer validacoes offline do historico INMET, sem rede",
+    "priority": 10,
+    "preferred_agent": "claude",
+    "scope": [
+      "src/nivon/inmet_historico.py",
+      "tests/test_inmet_historico.py"
+    ]
+  },
+  {
+    "id": "nivon-cptec-01",
+    "title": "Fortalecer testes de frescor e datas CPTEC/ BrasilAPI",
+    "priority": 10,
+    "preferred_agent": "codex",
+    "scope": [
+      "src/nivon/cptec_previsao_brasilapi.py",
+      "tests/test_meteo_publica_inmet_cptec.py"
+    ]
+  },
+  {
+    "id": "nivon-ana-01",
+    "title": "Casos adversariais sinteticos na normalizacao ANA",
+    "priority": 20,
+    "preferred_agent": "claude",
+    "scope": [
+      "src/nivon/ana_hidrowebservice.py",
+      "tests/test_ana_hidrowebservice.py"
+    ]
+  },
+  {
+    "id": "nivon-cemaden-01",
+    "title": "Testes offline de limites e erros no adaptador CEMADEN",
+    "priority": 20,
+    "preferred_agent": "codex",
+    "scope": [
+      "src/nivon/cemaden_ped.py",
+      "tests/test_cemaden_ped.py"
+    ]
+  }
+]

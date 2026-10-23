@@ -28,3 +28,22 @@ O trabalho de implementação inicial ficará em uma branch e em PR para revisã
 ## Licenciamento do código
 
 **Ainda não foi concedida uma licença aberta para este código.** A visibilidade pública do repositório não deve ser interpretada como permissão genérica de cópia ou sublicenciamento. Componentes de terceiros só serão incorporados após exame das respectivas licenças.
+
+## Desenvolvimento autônomo local (Claude Code + Codex)
+
+A PR de cooperação fornece o comando Claude Code \`/nivon-autonomo\` e o script local \`bash scripts/nivon-autonomo.sh\`.
+Ambos operam com **tarefas delimitadas**, worktrees separadas, testes offline, limites de duração e commits **somente locais**. Não fazem deploy, push ou merge automático. A operação real requer um host com as duas CLIs autenticadas; não está ativada pelo simples merge dos arquivos.
+
+Instruções: [docs/AUTONOMIA_CONTINUA_NIVON.md](docs/AUTONOMIA_CONTINUA_NIVON.md).
+
+Diagnóstico sem usar tokens: `bash scripts/nivon-autonomo.sh doctor`. Planejamento sem modificar fila: `bash scripts/nivon-autonomo.sh plan`. Qualidade estrutural diurna: `bash scripts/nivon-autonomo.sh quality`.
+
+**Janela autônoma:** somente 20h–6h no horário de Cuiabá, sem agendamento automático; `night-status` exibe o próximo intervalo. Para ferramentas opcionais de código e capacidade independente via modelos locais, consultar [Catálogo de engenharia](docs/FERRAMENTAS_ENGENHARIA_20261023.md). Testes gerados exigem contêiner Docker local sem rede; não há execução do host autorizada por esta PR.
+
+A execução autônoma acumula entregas em `autonomo/integracao` **local**, com cherry-pick serializado e nova rodada de testes offline. Não publica nem mescla na `main` automaticamente.
+
+**Compatibilidade Claude OAuth:** o executor usa `--restricted --safe-mode`, não `--bare`, que não recupera a sessão de assinatura. O `doctor` rejeita credenciais de API potencialmente faturadas. Testes no Docker mantêm o checkout montado somente para leitura. Para testes Parquet adicionados na `main`, o ambiente isolado precisa da dependência PyArrow previamente instalada.
+
+**Dueto de desenvolvimento:** `bash scripts/nivon-autonomo.sh dueto` (estado local em JSON) e `bash scripts/nivon-autonomo.sh painel` (HTML privado, sem rede). [Procedimento de operação](docs/DUETO_DESENVOLVIMENTO_NIVON.md).
+
+Painel local opcional com atualização a cada 15 segundos e duração de até 120 minutos: `bash scripts/nivon-autonomo.sh painel-live`. Ele consulta só o SQLite, sem chamadas aos agentes e sem servidor.

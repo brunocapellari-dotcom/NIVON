@@ -1,0 +1,86 @@
+[
+  {
+    "id": "roadmap-inmet-quality",
+    "title": "Evoluir qualidade de dados e erros observáveis do histórico INMET",
+    "scope": [
+      "src/nivon/inmet_historico.py",
+      "tests/test_inmet_historico.py"
+    ],
+    "priority": 10,
+    "preferred_agent": "claude",
+    "risk": "low",
+    "acceptance": "Casos adversariais e qualidade temporal explícita. Não coletar dados reais, sem mudar schema sem testes."
+  },
+  {
+    "id": "roadmap-cptec-freshness",
+    "title": "Fortalecer semântica de referência e frescor das previsões CPTEC",
+    "scope": [
+      "src/nivon/cptec_previsao_brasilapi.py",
+      "tests/test_meteo_publica_inmet_cptec.py"
+    ],
+    "priority": 10,
+    "preferred_agent": "codex",
+    "risk": "low",
+    "acceptance": "Datas observadas/projetadas coerentes, preservação de nulos e regressões offline."
+  },
+  {
+    "id": "roadmap-hidromet-e2e",
+    "title": "Construir ensaio integrado e sintético das fontes meteorológicas públicas",
+    "scope": [
+      "src/nivon/hidromet_publico_global.py",
+      "tests/test_hidromet_publico_global.py"
+    ],
+    "priority": 20,
+    "preferred_agent": "claude",
+    "risk": "low",
+    "depends_on": [
+      "roadmap-inmet-quality"
+    ],
+    "acceptance": "Ensaiar ponta a ponta transformações sem rede; relatar falhas e preservar provenance."
+  },
+  {
+    "id": "roadmap-ana-validation",
+    "title": "Ampliar validação estrutural e diagnósticos ANA HidroWebService",
+    "scope": [
+      "src/nivon/ana_hidrowebservice.py",
+      "tests/test_ana_hidrowebservice.py"
+    ],
+    "priority": 20,
+    "preferred_agent": "codex",
+    "risk": "low",
+    "depends_on": [
+      "roadmap-cptec-freshness"
+    ],
+    "acceptance": "Garantir erros determinísticos e impedir leitura de dados sem origem e horário confiáveis."
+  },
+  {
+    "id": "roadmap-cemaden-error",
+    "title": "Padronizar diagnósticos offline CEMADEN e erros de autenticação",
+    "scope": [
+      "src/nivon/cemaden_ped.py",
+      "tests/test_cemaden_ped.py"
+    ],
+    "priority": 30,
+    "preferred_agent": "claude",
+    "risk": "low",
+    "depends_on": [
+      "roadmap-ana-validation"
+    ],
+    "acceptance": "Cobrir falhas com fixtures, não acessar JWT real, sem criar credenciais."
+  },
+  {
+    "id": "roadmap-access-e2e",
+    "title": "Consolidar diagnósticos de acesso offline sem vazamento de credenciais",
+    "scope": [
+      "src/nivon/acessos_smoke_privado.py",
+      "tests/test_acessos_smoke_privado.py"
+    ],
+    "priority": 30,
+    "preferred_agent": "codex",
+    "risk": "low",
+    "depends_on": [
+      "roadmap-hidromet-e2e"
+    ],
+    "acceptance": "Validar formatos e status redigidos; proteger segredos e evitar conexões reais."
+  }
+]
