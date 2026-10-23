@@ -36,7 +36,8 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Painel NIVON logistica + AIS + tendencias (shadow)")
     parser.add_argument("--entrada", required=True, help="pacote JSON local")
     parser.add_argument("--as-of", required=True, help="timestamp ISO UTC ou com offset")
-    parser.add_argument("--executar-bigquery", action="store_true",\n                        help="autoriza leitura BigQuery via ADC/WIF; pode gerar custo")
+    parser.add_argument("--executar-bigquery", action="store_true",
+                        help="autoriza leitura BigQuery via ADC/WIF; pode gerar custo")
     a = parser.parse_args(argv)
     try:
         saida = executar(a.entrada, as_of=a.as_of, executar_bigquery=a.executar_bigquery)
