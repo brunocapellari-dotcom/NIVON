@@ -141,6 +141,24 @@ class TestAgroBRContrato(TestCase):
         with self.assertRaisesRegex(ErroAgroBRSafras,"MetaInfo"):
             normalize(source=SimpleNamespace(source_details={}))
 
+    def test_milho_1_2_3_sao_produtos_separados(self):
+        for p in ("milho","milho_1","milho_2","milho_3"):
+            with self.subTest(produto=p):
+                result=normalizar_safras_agrobr(
+                    frame=linhas(produto=p),meta=meta(),produto=p,
+                    safra="2024/25",levantamento=5,uf="MT",
+                    coletado_em="2026-10-23T13:00:00-04:00",
+                )
+                self.assertEqual(result["registros"][0]["produto"],p)
+                self.assertFalse(result["habilita_publicacao"])
+
+    def test_lote_nao_aceita_produto_duplicado(self):
+        with self.assertRaisesRegex(ErroAgroBRSafras,"lista de culturas"):
+            consultar_lote_agrobr(
+                safra="2024/25",levantamento=5,uf="MT",
+                produtos=("milho","milho"),direitos_confirmados=True
+            )
+
     def test_sqlite_isola_staging_de_capturas_raw(self):
         p=normalize()
         milho=normalizar_safras_agrobr(
