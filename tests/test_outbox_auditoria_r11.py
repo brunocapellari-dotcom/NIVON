@@ -132,8 +132,27 @@ class TestAuditoriaOutboxR11(unittest.TestCase):
                 self.con,registrado_em=AGORA,autorizar_staging=True,
                 snapshot_legado_esperado=snapshot,
             )
-        self.assertEqual(self.con.execute(
-            "SELECT COUNT(*) FROM nivon_quarentena_legado").fetchone()[0],0)
+        self.assertIsNone(self.con.execute(
+            "SELECT name FROM sqlite_master WHERE name='nivon_quarentena_legado'"
+        ).fetchone())
+
+    def test_backup_logical_detecta_schema_drift_sem_mudar_dados(self):
+        # DDL de tabela vazia e trigger adicional devem mudar assinatura,
+        # mesmo quando nenhuma linha foi adicionada ou alterada.
+        antes=estado_logico(self.con)
+        self.con.execute("CREATE TABLE nivon_tabela_vazia_R11 (flag INTEGER)")
+        self.con.commit()
+        depois=estado_logico(self.con)
+        self.assertNotEqual(antes["esquema_sha256"],depois["esquema_sha256"])
+        self.assertNotEqual(antes["conteudo_sha256"],depois["conteudo_sha256"])
+        self.assertEqual(antes["total_linhas"],depois["total_linhas"])
+        self.con.execute("""CREATE TRIGGER nivon_trigger_r11
+            AFTER INSERT ON nivon_tabela_vazia_R11
+            BEGIN SELECT 1; END""")
+        self.con.commit()
+        terceira=estado_logico(self.con)
+        self.assertNotEqual(depois["esquema_sha256"],terceira["esquema_sha256"])
+        self.assertEqual(depois["total_linhas"],terceira["total_linhas"])
 
     def test_outro_processo_executa_lote_local_sem_reenviar(self):
         self.entregue()
