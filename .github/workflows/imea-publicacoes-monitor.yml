@@ -1,5 +1,8 @@
 name: NIVON IMEA - vigiar publicacoes oficiais
 on:
+  push:
+    paths:
+      - '.github/workflows/imea-publicacoes-monitor.yml'
   schedule:
     # Dias uteis 14:00 UTC. Monitoramento read-only; nao faz persistencia de cotacoes.
     - cron: '0 14 * * 1-5'
