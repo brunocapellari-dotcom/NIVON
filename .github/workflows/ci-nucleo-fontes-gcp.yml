@@ -4,10 +4,15 @@ on:
     paths:
       - 'pyproject.toml'
       - 'src/nivon/arquivo_raw_gcs.py'
+      - 'src/nivon/piloto_gcp_wdi.py'
+      - 'tests/test_piloto_gcp_wdi.py'
+      - '.github/workflows/piloto-wdi-gcp-e2e.yml'
       - 'src/nivon/agro_origem_gcp.py'
       - 'src/nivon/agro_staging_bigquery.py'
       - 'sql/bigquery/003_agro_publicacoes_staging.sql'
       - 'tests/test_agro_staging_bigquery.py'
+      - 'tests/test_agro_stage_replay_gcs.py'
+      - 'scripts/replay_agro_staging_gcp.py'
       - 'tests/test_bootstrap_agro_staging_gcp.py'
       - 'scripts/bootstrap_agro_staging_gcp.py'
       - '.github/workflows/bootstrap-agro-staging-gcp.yml'
@@ -66,7 +71,7 @@ jobs:
           python -m pip install -e .
           python -m pip install 'beautifulsoup4==4.12.3'
       - name: Compile and check imports
-        run: python -m compileall -q src/nivon/arquivo_raw_gcs.py src/nivon/agro_staging_bigquery.py src/nivon/lote_cloud_recuperavel.py src/nivon/verificacao_cloud_fontes.py src/nivon/carga_bigquery_fontes.py src/nivon/consulta_analitica_bq.py src/nivon/preflight_gcp_fontes.py src/nivon/ingestao_fontes_reais.py src/nivon/coletores_dados_reais.py scripts
+        run: python -m compileall -q src/nivon/arquivo_raw_gcs.py src/nivon/piloto_gcp_wdi.py src/nivon/agro_staging_bigquery.py src/nivon/lote_cloud_recuperavel.py src/nivon/verificacao_cloud_fontes.py src/nivon/carga_bigquery_fontes.py src/nivon/consulta_analitica_bq.py src/nivon/preflight_gcp_fontes.py src/nivon/ingestao_fontes_reais.py src/nivon/coletores_dados_reais.py scripts
       - name: Testes completos dos coletores e persistencia simulada
         shell: bash
         run: |
@@ -76,6 +81,7 @@ jobs:
             test_lote_cloud_recuperavel.py \
             test_agro_origem_gcp.py \
             test_agro_staging_bigquery.py \
+            test_agro_stage_replay_gcs.py \
             test_bootstrap_agro_staging_gcp.py \
             test_agro_incremental_pipeline.py \
             test_cepea_web_primario.py \
@@ -90,7 +96,8 @@ jobs:
             test_exportacao_historico_filtrado.py \
             test_preflight_gcp_fontes.py \
             test_verificacao_cloud_fontes.py \
-            test_consulta_analitica_bq.py
+            test_consulta_analitica_bq.py \
+            test_piloto_gcp_wdi.py
           do
             python -m unittest discover -s tests -p "$name" -v
           done

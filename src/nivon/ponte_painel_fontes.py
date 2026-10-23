@@ -13,6 +13,7 @@ from .conciliacao_corredores_ferrovia import analisar_staging, quadro_intermodal
 from .painel_operacional import ErroMotor, montar_painel
 from .adaptadores_operacionais import adaptar_fretes_consolidados, ler_replay_ais_sqlite
 from .ferrovia_painel_bq import consultar_ferrovia
+from .maritimo_painel_bigquery import consultar_maritimo
 
 
 def analisar_fontes(
@@ -20,6 +21,7 @@ def analisar_fontes(
     cliente_bigquery=None, leitor_bq=consultar, leitor_corredores=consultar_corredores,
     leitor_ferrovia=analisar_staging, conciliador_intermodal=quadro_intermodal,
     leitor_ferrovia_bq=consultar_ferrovia, cliente_ferrovia_bq=None, sdk_ferrovia_bq=None,
+    leitor_maritimo_bq=consultar_maritimo, cliente_maritimo_bq=None, sdk_maritimo_bq=None,
 ) -> dict:
     """Produz uma resposta independente por fonte, sem silenciar truncamentos."""
     if not isinstance(config, dict):
@@ -140,6 +142,39 @@ def analisar_fontes(
             inicio=entrada["inicio"], fim=entrada["fim"],
             as_of=as_of, limite=entrada.get("limite", 2000)
         ))
+    # Mesmas tabelas maritimas canônicas do coletor GCS/BigQuery.
+    # Nao alimente automaticamente o score AIS com programacao ou PortWatch.
+    consultas_maritimas = config.get("consultas_maritimas_bigquery", [])
+    if not isinstance(consultas_maritimas,list) or len(consultas_maritimas)>8:
+        raise ErroMotor("maximo 8 consultas maritimas no mesmo lote")
+    maritimo_bq=[]
+    consultas_unicas=set()
+    for consulta in consultas_maritimas:
+        if not isinstance(consulta,dict) or any(
+            not isinstance(consulta.get(k),str) or not consulta[k]
+            for k in ("projeto","dataset","inicio","fim")
+        ):
+            raise ErroMotor("consulta maritima sem janela ou destino")
+        id_ref=consulta.get("fonte") or consulta.get("passagem")
+        chave=(consulta["projeto"],consulta["dataset"],consulta.get("fonte"),
+               consulta.get("passagem"),consulta["inicio"],consulta["fim"])
+        if not isinstance(id_ref,str) or chave in consultas_unicas:
+            raise ErroMotor("fonte maritima ausente ou consulta duplicada")
+        consultas_unicas.add(chave)
+        resultado=leitor_maritimo_bq(
+            projeto=consulta["projeto"],dataset=consulta["dataset"],
+            inicio=consulta["inicio"],fim=consulta["fim"],as_of=as_of,
+            fonte=consulta.get("fonte"),passagem=consulta.get("passagem"),
+            executar=executar_bigquery is True,
+            client=cliente_maritimo_bq,sdk=sdk_maritimo_bq,
+            limite=consulta.get("limite",500),
+        )
+        if not isinstance(resultado,dict) or resultado.get("executado") is not (executar_bigquery is True):
+            raise ErroMotor("leitura maritima nao respeitou contrato de execucao")
+        if (resultado.get("fonte")!=consulta.get("fonte") or
+            resultado.get("passagem")!=consulta.get("passagem")):
+            raise ErroMotor("retorno do BigQuery maritimo com fonte divergente")
+        maritimo_bq.append(resultado)
     for cfg in config_queries:
         if not isinstance(cfg, dict):
             raise ErroMotor("consulta BigQuery invalida")
@@ -209,8 +244,9 @@ def analisar_fontes(
         {k:v for k,v in fretes_meta.items() if k!="series"} if fretes_meta else None
     )
     painel["replays_ais"] = replays
+    painel["fontes_maritimas_bigquery"] = maritimo_bq
     painel["fontes_bigquery"] = fontes
     painel["executou_bigquery"] = executar_bigquery is True and bool(
-        config_queries or config_bq_ferrovia is not None
+        config_queries or config_bq_ferrovia is not None or consultas_maritimas
     )
     return painel

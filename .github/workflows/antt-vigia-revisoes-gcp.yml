@@ -1,0 +1,163 @@
+name: NIVON - Vigia de revisoes ferroviarias ANTT
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/antt-vigia-revisoes-gcp.yml'
+      - 'src/nivon/antt_vigia_revisoes.py'
+      - 'tests/test_antt_vigia_revisoes.py'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/antt-vigia-revisoes-gcp.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '30 13 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-antt-vigia-revisoes
+  cancel-in-progress: false
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Testar comparacao de revisoes sem rede nem GCP
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -p 'test_antt_vigia_revisoes.py' -v
+
+  comparar_fonte:
+    needs: testes
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      PYTHONPATH: src
+      NIVON_PROJETO: ${{ vars.NIVON_BQ_PROJECT }}
+      NIVON_DATASET: ${{ vars.NIVON_BQ_DATASET }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Limitar escopo antes da autenticacao
+        run: |
+          set -euo pipefail
+          test "$NIVON_PROJETO" = 'nivon-data'
+          test "$NIVON_DATASET" = 'nivon_raw'
+      - name: Credencial de curta duracao para leitura
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ vars.NIVON_BQ_PROJECT }}
+          create_credentials_file: true
+      - name: Biblioteca de consulta BigQuery
+        run: python -m pip install --disable-pip-version-check --quiet 'google-cloud-bigquery>=3,<4'
+      - name: Coletar apenas anos atuais oficiais em staging descartavel
+        run: |
+          python - <<'PY'
+          import os,subprocess,time,json
+          from datetime import datetime,timezone
+          ano=datetime.now(timezone.utc).year
+          if ano < 2026 or ano > 2100:
+              raise RuntimeError('ano fora da janela esperada')
+          anos=[ano-1,ano]
+          root=os.path.join(os.environ['RUNNER_TEMP'],'antt-vigia')
+          cmd=['python','-m','nivon.coleta_antt',
+              '--inicio',str(anos[0]),'--fim',str(anos[-1]),
+              '--destino',root,'--live','--usar-url-verificada-contingencia']
+          fonte_indisponivel=None
+          for tentativa in range(1,4):
+              proc=subprocess.run(cmd,text=True,capture_output=True,check=False)
+              try:
+                  resposta=json.loads(proc.stdout.strip().splitlines()[-1])
+              except (ValueError,IndexError):
+                  fonte_indisponivel='RESPOSTA_COLETOR_NAO_INTERPRETAVEL'
+                  break
+              if proc.returncode == 0:
+                  print('COLETA_ANTT_OK_TENTATIVA',tentativa,resposta.get('estado'))
+                  break
+              erro=resposta.get('erro')
+              recuperaveis={'catalogo CKAN invalido','ANTT_FALHA_TRANSITORIA',
+                             'schema ANTT inesperado'}
+              if erro not in recuperaveis:
+                  fonte_indisponivel='ACESSO_OU_CONTRATO_BLOQUEADO'
+                  break
+              if tentativa == 3:
+                  fonte_indisponivel='CSV_OU_CKAN_INVALIDO_APOS_TRES_TENTATIVAS'
+                  break
+              print('ANTT_TENTATIVA_LIMITADA',tentativa,erro,flush=True)
+              time.sleep(2*tentativa)
+          if fonte_indisponivel:
+              from pathlib import Path
+              path=Path(os.environ['RUNNER_TEMP'])/'antt-revisoes-status.json'
+              path.write_text(json.dumps({
+                  'estado':'FONTE_ANTT_INDISPONIVEL_PARA_COMPARACAO',
+                  'motivo':fonte_indisponivel,
+                  'anos':anos,
+                  'fonte':'ANTT_SIADE_FERROVIARIO',
+                  'escrita_cloud_executada':False,
+                  'bigquery_verificado_nesta_rodada':False,
+                  'alerta':'Nao considerar erro como volume zero ou revisao confirmada',
+              },ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+              print('ANTT_FONTE_NAO_VERIFICAVEL_SEM_CARGA',fonte_indisponivel)
+              raise SystemExit(0)
+          resultado=subprocess.run(['python','-m','nivon.antt_vigia_revisoes',
+              '--staging',root,'--anos',*[str(x) for x in anos],
+              '--projeto',os.environ['NIVON_PROJETO'],
+              '--dataset',os.environ['NIVON_DATASET'],
+              '--saida',os.path.join(os.environ['RUNNER_TEMP'],'antt-revisoes-status.json')],
+              text=True,capture_output=True,check=False)
+          if resultado.returncode not in (0,3):
+              raise RuntimeError('VIGIA_BQ_FALHOU_SEM_COMPROVANTE')
+          print('VIGIA_BQ_EXECUTADA_STATUS',resultado.returncode)
+          PY
+      - name: Classificar divergencias e registrar evidencia
+        run: |
+          python - <<'PY'
+          import os,json
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'])/'antt-revisoes-status.json'
+          if not p.is_file():
+              raise RuntimeError('VIGIA_SEM_RELATORIO; possivel erro de fonte ou permissao')
+          r=json.loads(p.read_text(encoding='utf-8'))
+          print('ESTADO_VIGIA_ANTT',r['estado'])
+          if r['estado']=='FONTE_ANTT_INDISPONIVEL_PARA_COMPARACAO':
+              with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as f:
+                  f.write('### ANTT — fonte oficial temporariamente não verificável\n')
+                  f.write('Motivo: '+str(r['motivo'])+'; **nenhuma comparação BQ ou escrita**.\n')
+              raise RuntimeError('ANTT_FONTE_NAO_VERIFICAVEL_ALERTA')
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as f:
+              f.write('### ANTT: comparacao de revisoes com BigQuery (sem escrita)\n\n')
+              f.write('| Ano | Resultado | SHA fonte | SHA BQ | Competencia fonte |\n|---|---|---|---|---|\n')
+              for x in r['resultados']:
+                  f.write(f"| {x['ano']} | {x['estado']} | {x['arquivo_sha256_fonte'][:12]} | {(x['arquivo_sha256_bq'] or '')[:12]} | {x['competencia_fonte']} |\n")
+          if r['estado']!='FONTES_SEM_REVISAO_PENDENTE':
+              raise RuntimeError('ANTT_REVISAO_OU_DIVERGENCIA_EXIGE_AVALIACAO_SEM_CARGA')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: nivon-antt-vigia-revisoes-${{ github.run_id }}
+          path: ${{ runner.temp }}/antt-revisoes-status.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Apagar CSV bruto temporario
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/antt-vigia" "$RUNNER_TEMP/antt-revisoes-status.json"

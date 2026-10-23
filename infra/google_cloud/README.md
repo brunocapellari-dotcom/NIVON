@@ -43,3 +43,33 @@ A migração é aditiva e requer `--aplicar`. Não há nova base nem bucket.
 
 **Não habilitar o job antes do E2E real**. A CI não tem acesso GCP de produção
 em PRs. Documentação mais abrangente da frente marítima continua no PR #141.
+
+## Cloud Run — implantação sem agendamento
+
+O fluxo marítimo já gravou dados reais em `nivon-data.nivon_raw`. Para
+publicar o container, o projeto precisa ter **APIs Cloud Run, Artifact
+Registry e Cloud Build habilitadas**, um repositório Docker existente e
+permissões estritamente necessárias.
+
+O workflow `.github/workflows/maritimo-gcp-cloudrun-deploy.yml` é
+**manual, restrito à main e sem Scheduler**. Ele reutiliza o dataset e
+bucket existentes, inspeciona a existência de quatro tabelas,
+seleciona somente um repositório Docker já existente, faz build com
+hash do commit, publica o job `nivon-maritimo` e pode executar um lote
+de Imbituba e PortWatch. Não cria novas identidades, não ativa APIs,
+não cria repositórios e não concede permissões IAM.
+
+A tentativa real de habilitar APIs com a identidade GitHub existente
+falhou por ausência de `serviceusage.services.enable`. Não conferir
+como deploy concluído. A conta humana administradora do projeto
+precisa habilitar as APIs ou autorizar um papel temporário específico,
+sem tornar a identidade de ingestão Owner/Editor.
+
+Permissões típicas do **deployer** (não confundir com runtime):
+Cloud Run Developer para criar o job, Service Account User sobre a
+identidade de execução, Cloud Build Builds Editor e acesso ao repositório
+Artifact Registry (writer para build, reader para deploy). A service
+account de runtime precisa de BigQuery jobs + escrita apenas no dataset
+e de escrita/leitura controlada no bucket. Verificar o papel efetivamente
+usado por Cloud Build antes de ampliar grants. Ativar Cloud Scheduler
+apenas depois de um job Cloud Run real com dados GCS e BQ verificados.
