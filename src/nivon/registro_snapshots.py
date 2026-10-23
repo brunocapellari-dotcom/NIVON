@@ -25,6 +25,8 @@ _TIPOS = {"SINTETICO", "REAL_AUTORIZADO"}
 _LIMITE_PADRAO = 20_000_000
 _LIMITE_POR_DATASET = {
     "CONAB_ARMAZENS_CAPACIDADE": 120_000_000,
+    # Somente metadados/hash do CSV oficial ZARC (211.652.014 B medidos).
+    "ZARC_JANELAS": 230_000_000,
     # CSV MDIC publicado por ano pode ultrapassar o limite padrão;
     # ledger armazena somente metadados e hashes, jamais os CSVs.
     "MDIC_COMEX_NCM": 1_500_000_000,
