@@ -23,7 +23,7 @@ RE_SKIPPED = re.compile(r"skipped=(\d+)")
 
 
 def sandbox_arguments(root=ROOT, image=None):
-    image = image or os.environ.get("NIVON_PYTHON_IMAGE", "python:3.11-slim")
+    image = image or os.environ.get("NIVON_PYTHON_IMAGE", "nivon-agentes:test-py311")
     if image not in DOCKER_IMAGES:
         raise ValueError("Imagem fora da lista homologável")
     root = Path(root).resolve(strict=True)
@@ -84,7 +84,7 @@ def smoke(*, root=ROOT, image=None, allow_skips=False):
 
 
 def readiness(*, root=ROOT, image=None, allow_skips=False):
-    target = image or os.environ.get("NIVON_PYTHON_IMAGE", "python:3.11-slim")
+    target = image or os.environ.get("NIVON_PYTHON_IMAGE", "nivon-agentes:test-py311")
     host = doctor(image=target)
     output = {
         "host": host,
