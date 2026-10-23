@@ -48,7 +48,6 @@ class TestRankingEstacoes(unittest.TestCase):
         self.assertEqual(r["polos_ferroviarios"][0]["mercadorias"][0]["produto_normalizado"],
                          "SOJA_EM_GRAO")
         self.assertEqual(r["ranking"][0]["estacao_origem"],"Terminal Itiquira Norte")
-        self.assertIsNone(r["ranking"][0]["produto_normalizado"]) if False else None
 
     def test_nome_oficial_graos_milho_classificado(self):
         x=analisar_estacoes([linha(1,"Rondonópolis","Grãos - Milho")],
