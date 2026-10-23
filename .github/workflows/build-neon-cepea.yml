@@ -27,9 +27,11 @@ jobs:
           node --check functions/cepea_neon/dist/index.mjs
           node --input-type=module - <<'NODE'
           import fn from './functions/cepea_neon/dist/index.mjs'
-          const req=new Request('https://testing.local/ingest',{method:'POST',body:'{}'})
-          const resp=await fn.fetch(req)
-          if(resp.status!==401)throw new Error('Expected no-auth 401')
+          for(const path of ['/ingest','/report-failure']){
+            const req=new Request('https://testing.local'+path,{method:'POST',body:'{}'})
+            const resp=await fn.fetch(req)
+            if(resp.status!==401)throw new Error(path+': Expected no-auth 401')
+          }
           const health=await fn.fetch(new Request('https://testing.local/health'))
           if(health.status!==200)throw new Error('Health check failed')
           console.log('CEPEA OIDC guard: OK')
