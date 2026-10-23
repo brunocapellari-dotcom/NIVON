@@ -133,10 +133,15 @@ def interpretar_csv_antt(raw: bytes, *, ano: int, coleta_utc: str,
         raise ErroTransporte("CSV ausente ou excede limite")
     if not isinstance(coleta_utc, str) or not re.fullmatch(r"20\d\d-\d\d-\d\dT\d\d:\d\d:\d\dZ", coleta_utc):
         raise ErroTransporte("coleta_utc deve ser ISO UTC")
-    try:
-        txt = raw.decode("utf-8-sig")
-    except UnicodeDecodeError:
-        raise ErroTransporte("CSV nao UTF-8; revisar codificacao") from None
+    # A base SIADE pode usar codificacao legada. O schema valida o decode.
+    for codec in ("utf-8-sig", "cp1252"):
+        try:
+            txt = raw.decode(codec)
+            break
+        except UnicodeDecodeError:
+            continue
+    else:
+        raise ErroTransporte("CSV ANTT com codificacao desconhecida")
     if "\x00" in txt:
         raise ErroTransporte("CSV contem byte nulo")
     separador = ";" if txt.splitlines()[0].count(";") >= 8 else ","
