@@ -91,14 +91,29 @@ def extrair_edicoes_indice(raw: bytes, *, origem: str = INDICE,
         m = _SEMANA.fullmatch(titulo)
         if not m or not isinstance(href, str):
             continue
-        url = urljoin(origem+'/', href)
-        if not _url_valida(url) or url in vistos:
+        url_indice = urljoin(origem+'/', href)
+        if not _url_valida(url_indice):
+            continue
+        # O portal da CONAB pode ter um href de listagem aninhado:
+        # /acompanhamento-12-10-.../acompanhamento-05-10-...
+        # embora o rótulo seja 12/10 a 18/10. Selecionar APENAS o slug
+        # que coincide com as datas EXPLICITAS do texto oficial.
+        inicio=m.group(1).replace('/','-')
+        fim=m.group(2).replace('/','-')
+        slug='acompanhamento-das-lavouras-'+inicio+'-a-'+fim
+        partes=urlsplit(url_indice).path.removeprefix(_CAMINHO+'/').strip('/').split('/')
+        if len(partes) not in (1,2) or partes[0]!=slug:
+            # Nenhum fallback para URLs arbitrárias ou semana diferente.
+            continue
+        url=INDICE+'/'+slug
+        if url in vistos:
             continue
         vistos.add(url)
         edicoes.append({
             'titulo': titulo,
             'periodo_rotulo': m.group(1)+' a '+m.group(2),
             'pagina_oficial': url,
+            'url_observada_indice': url_indice,
             'publicado_em': None,
             'arquivo_xlsx': None,
             'estado': 'PAGINA_IDENTIFICADA_NAO_ARQUIVO_VALIDADO',
