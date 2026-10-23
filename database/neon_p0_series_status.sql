@@ -17,7 +17,8 @@ SELECT e.source,e.series_id,e.product,e.location,
  WHEN e.source='CONAB' THEN
   (SELECT max(published_on) FROM public.nivon_conab_safras q WHERE q.product=e.product AND q.uf='MT')
  ELSE NULL END AS last_reference_date,
- CASE WHEN s.auth_state='PENDING_WRITTEN_PERMISSION' THEN 'BLOCKED_RIGHTS'
+ CASE WHEN e.source='IMEA' AND s.ingest_state='ACTIVE' AND EXISTS(SELECT 1 FROM public.nivon_imea_prices_staging p WHERE p.chain=e.product) THEN 'STAGING_PUBLICATION_ONLY'
+ WHEN s.auth_state='PENDING_WRITTEN_PERMISSION' THEN 'BLOCKED_RIGHTS'
  WHEN e.source='CEPEA' AND NOT EXISTS(SELECT 1 FROM public.nivon_cepea_prices q WHERE q.series_id=e.series_id) THEN 'NOT_INTEGRATED'
  WHEN e.source='CONAB' AND NOT EXISTS(SELECT 1 FROM public.nivon_conab_safras q WHERE q.product=e.product AND q.uf='MT') THEN 'NOT_INTEGRATED'
  WHEN (SELECT status FROM public.nivon_p0_source_checks c WHERE c.source=e.source ORDER BY c.id DESC LIMIT 1)='ERROR' THEN 'COLLECTOR_ERROR'
