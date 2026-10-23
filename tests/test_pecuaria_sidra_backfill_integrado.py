@@ -1,5 +1,6 @@
 """Fluxo integrado do backfill SIDRA com exemplos sintéticos, sem rede."""
 import json
+from hashlib import sha256
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
@@ -8,6 +9,7 @@ import unittest
 from unittest.mock import patch
 
 from nivon.motores import DadoInvalido
+from nivon.pecuaria_sidra_exportacao import exportar_quarentena_sidra
 from nivon.pecuaria_sidra_backfill import (
     executar_backfill_quarentena, consultar_backfill_quarentena,
 )
@@ -322,6 +324,86 @@ class TestBackfillSidra(unittest.TestCase):
         with sqlite3.connect(self.banco) as cx:
             self.assertEqual(cx.execute(
                 "SELECT COUNT(*) FROM valores_pecuaria_quarentena").fetchone()[0],6)
+
+
+    def test_exportacao_atomica_verifica_todos_hashes_sem_upload(self):
+        self.executar(gravar=True,banco=self.banco)
+        destino=Path(self.t.name)/"entrega-cloud-futura"
+        resumo=exportar_quarentena_sidra(
+            banco=self.banco,destino=destino,
+            periodos=["202502","202601"],
+            corte_asof="2026-10-24T00:00:00+00:00",
+            direitos_confirmados=True)
+        self.assertEqual(resumo["n_capturas"],12)
+        self.assertFalse(resumo["transferencia_cloud_executada"])
+        manifesto_bruto=(destino/"manifesto.json").read_bytes()
+        self.assertEqual(sha256(manifesto_bruto).hexdigest(),resumo["sha256_manifesto"])
+        manifesto=json.loads(manifesto_bruto)
+        self.assertFalse(manifesto["publicacao_permitida"])
+        self.assertFalse(manifesto["dados_homologados"])
+        self.assertEqual(len(manifesto["capturas"]),12)
+        for item in manifesto["capturas"]:
+            blob=(destino/item["arquivo"]).read_bytes()
+            self.assertEqual(sha256(blob).hexdigest(),item["sha256_bruto"])
+            self.assertEqual(len(blob),item["tamanho_bytes"])
+        self.assertFalse(any(p.name.startswith(".nivon-sidra-export-")
+                             for p in destino.parent.iterdir()))
+        with self.assertRaisesRegex(DadoInvalido,"NOVO"):
+            exportar_quarentena_sidra(
+                banco=self.banco,destino=destino,
+                periodos=["202502"],corte_asof="2026-10-24T00:00:00+00:00",
+                direitos_confirmados=True)
+
+    def test_exportacao_sem_direito_ou_antes_da_coleta_nao_cria_pasta(self):
+        self.executar(gravar=True,banco=self.banco)
+        destino=Path(self.t.name)/"nao-criar"
+        with self.assertRaises(PermissionError):
+            exportar_quarentena_sidra(
+                banco=self.banco,destino=destino,
+                periodos=["202502"],corte_asof="2026-10-24T00:00:00+00:00")
+        with self.assertRaisesRegex(DadoInvalido,"nenhuma captura"):
+            exportar_quarentena_sidra(
+                banco=self.banco,destino=destino,
+                periodos=["202502"],corte_asof="2026-01-01T00:00:00+00:00",
+                direitos_confirmados=True)
+        self.assertFalse(destino.exists())
+
+    def test_exportacao_recusa_bytes_corrompidos_antes_de_escrever(self):
+        self.executar(gravar=True,banco=self.banco)
+        with sqlite3.connect(self.banco) as cx:
+            cx.execute("DROP TRIGGER pecuaria_quarentena_sem_update")
+            cx.execute("UPDATE valores_pecuaria_quarentena SET bruto=? WHERE id=1",
+                       (b"[]",))
+            cx.execute("""CREATE TRIGGER pecuaria_quarentena_sem_update
+              BEFORE UPDATE ON valores_pecuaria_quarentena
+              BEGIN SELECT RAISE(ABORT,'append_only'); END""")
+        destino=Path(self.t.name)/"export-nao-autorizado"
+        with self.assertRaisesRegex(DadoInvalido,"integridade"):
+            exportar_quarentena_sidra(
+                banco=self.banco,destino=destino,
+                periodos=["202502"],corte_asof="2026-10-24T00:00:00+00:00",
+                direitos_confirmados=True)
+        self.assertFalse(destino.exists())
+
+    def test_cli_exportacao_readonly_e_bloqueio_com_rede(self):
+        from contextlib import redirect_stdout,redirect_stderr
+        from io import StringIO
+        from nivon.pecuaria_sidra_backfill import main
+        self.executar(gravar=True,banco=self.banco)
+        destino=Path(self.t.name)/"pacote"
+        args=["--periodo","202502","--banco",str(self.banco),
+              "--corte","2026-10-24T00:00:00+00:00",
+              "--confirmar-direitos","--exportar-para",str(destino)]
+        output=StringIO()
+        with redirect_stdout(output):
+            self.assertEqual(main(args),0)
+        resposta=json.loads(output.getvalue())
+        self.assertEqual(resposta["n_capturas"],6)
+        self.assertFalse(resposta["transferencia_cloud_executada"])
+        erro=StringIO()
+        with redirect_stderr(erro):
+            self.assertEqual(main(args+["--rede"]),2)
+        self.assertEqual(json.loads(erro.getvalue())["status"],"BLOQUEADO")
 
 if __name__=="__main__":
     unittest.main()
