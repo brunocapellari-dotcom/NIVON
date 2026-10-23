@@ -263,3 +263,83 @@ def avaliar_ledger_frete(
         "ancora_temporal_independente_comprovada": False,
         "publicavel": False,
     }
+
+
+def anexar_lote_previsoes_frete(
+    con: sqlite3.Connection, previsoes: Sequence[Mapping], *,
+    recebimentos: Sequence[datetime], cabeca_anterior_sha256: str,
+    chave_verificacao: bytes, emissor_esperado: str,
+) -> dict:
+    """Grava todos os forecasts numa única transação ou não grava nenhum."""
+    _conexao(con)
+    if (not isinstance(previsoes, (list, tuple))
+            or not isinstance(recebimentos, (list, tuple))
+            or not 1 <= len(previsoes) <= 500 or len(previsoes) != len(recebimentos)):
+        raise ErroLedgerFrete("lote e recebimentos inconsistentes")
+    _digest(cabeca_anterior_sha256, "cabeca_anterior_sha256")
+    if con.in_transaction:
+        raise ErroLedgerFrete("transação já pendente")
+    try:
+        con.execute("BEGIN IMMEDIATE")
+        estado = verificar_ledger_frete(
+            con, cabeca_esperada_sha256=cabeca_anterior_sha256,
+            chave_verificacao=chave_verificacao, emissor_esperado=emissor_esperado,
+        )
+        ids = {p["previsao_id"] for p in estado["previsoes"]}
+        series = {(p["modelo_versao"], _escopo_hash(p), p["data_origem"],
+                   p["horizonte_dias_corridos"]) for p in estado["previsoes"]}
+        anterior_instante = None
+        if estado["quantidade"]:
+            anterior_instante = _hora(con.execute(
+                "SELECT recebido_em FROM nivon_frete_previsoes_v1 "
+                "ORDER BY sequencia DESC LIMIT 1"
+            ).fetchone()[0], "recebido_em_anterior")
+        from .fretes_previsoes_arquivadas import MT
+        anterior = cabeca_anterior_sha256
+        comprovantes = []
+        for p, recebido in zip(previsoes, recebimentos):
+            _validar_previsao(p, chave_verificacao, emissor_esperado)
+            if (not isinstance(recebido, datetime) or recebido.tzinfo is None
+                    or recebido.utcoffset() is None):
+                raise ErroLedgerFrete("recebimento exige instante timezone-aware")
+            instante = recebido.astimezone(timezone.utc)
+            registro = _hora(p["registrado_em"], "registrado_em")
+            if (not registro <= instante <= registro + timedelta(minutes=5)
+                    or instante.astimezone(MT).date() != _dia(p["data_origem"], "data_origem")
+                    or anterior_instante is not None and instante < anterior_instante):
+                raise ErroLedgerFrete("recebimento retroativo, futuro ou tardio")
+            escopo = _escopo_hash(p)
+            chave = (p["modelo_versao"], escopo, p["data_origem"],
+                     p["horizonte_dias_corridos"])
+            if p["previsao_id"] in ids or chave in series:
+                raise ErroLedgerFrete("previsão ou combinação modelo/origem/horizonte repetida")
+            proximo = _hash_registro(anterior, p, instante.isoformat())
+            con.execute(
+                "INSERT INTO nivon_frete_previsoes_v1 "
+                "(previsao_id, modelo_versao, escopo_sha256, data_origem, "
+                "horizonte_dias, recebido_em, anterior_sha256, "
+                "registro_sha256, previsao_json) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (p["previsao_id"], p["modelo_versao"], escopo, p["data_origem"],
+                 p["horizonte_dias_corridos"], instante.isoformat(),
+                 anterior, proximo, _canonico(dict(p))),
+            )
+            comprovantes.append({
+                "previsao_id": p["previsao_id"], "registro_sha256": proximo,
+            })
+            anterior, anterior_instante = proximo, instante
+            ids.add(p["previsao_id"])
+            series.add(chave)
+        con.commit()
+        return {
+            "status": "LOTE_SQLITE_ATOMICO_AGUARDA_ANCORA_INDEPENDENTE",
+            "adicionados": len(previsoes),
+            "total": estado["quantidade"] + len(previsoes),
+            "cabeca_sha256": anterior, "comprovantes": comprovantes,
+            "ancora_temporal_externa_autenticada": False, "publicavel": False,
+        }
+    except (sqlite3.Error, ValueError, TypeError, KeyError) as exc:
+        con.rollback()
+        if isinstance(exc, ErroLedgerFrete):
+            raise
+        raise ErroLedgerFrete("erro transacional; lote inteiro revertido") from exc
