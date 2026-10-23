@@ -55,7 +55,7 @@ class ErroCotacoes(ValueError):
 
 
 def _data(v, *, nome):
-    if v is None:
+    if v is None or str(v) in ('NaT','nan','NaN','None'):
         return None
     if isinstance(v,datetime):
         return v.isoformat()
@@ -75,7 +75,7 @@ def _data(v, *, nome):
 
 
 def _num(v):
-    if v is None:
+    if v is None or str(v) in ('NaT','nan','NaN','None'):
         return None
     if type(v) not in (int,float,Decimal,str):
         raise ErroCotacoes('numero de tipo nao permitido')
@@ -155,6 +155,8 @@ def _norm(fonte,produto,linhas):
             value=_num(r['valor'])
             variacao=_num(r.get('variacao'))
             alerta='ZERO_COM_SIGNIFICADO_NAO_COMPROVADO' if value is not None and Decimal(value)==0 else None
+            if value is None:
+                alerta='VALOR_NAO_PUBLICADO' if alerta is None else alerta+'|VALOR_NAO_PUBLICADO'
             if r.get('indicador') is None:
                 alerta='NOME_INDICADOR_AUSENTE' if alerta is None else alerta+'|NOME_INDICADOR_AUSENTE'
         unidade=str(r.get('unidade') or '')
