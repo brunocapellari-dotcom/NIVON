@@ -10,6 +10,7 @@ from nivon.coleta_web import FonteWeb, adquirir_fonte
 from nivon.editorial_preflight import avaliar_previa_editorial
 from nivon.proveniencia_rss_editorial import (
     ErroProveniencia, conteudo_assinado, conciliar_rss_com_pagina_e_atestados,
+    revisar_edicao_com_custodia_offline,
 )
 from nivon.registry_emissores import revogar_emissor
 from suporte_provas_outbox import provas_sinteticas, provisionar_teste, assinatura_administrativa, RAIZ_SINTETICA
@@ -162,6 +163,61 @@ class TestProvenienciaRSSE2E(unittest.TestCase):
     def test_evento_sem_decisao_editorial_falha(self):
         del self.events[URL]
         with self.assertRaises(ErroProveniencia):self.conciliar()
+
+    def test_ledger_hash_only_registra_idempotente_e_preflight_coletado(self):
+        primeiro=revisar_edicao_com_custodia_offline(
+            self.con,edicao=self.ed,feeds=self.feeds,snapshots_xml=self.xml,
+            paginas=self.pages,atestados=self.att,eventos=self.events,
+            chaves_emissores=self.keys,registrar_hashes=True)
+        self.assertEqual(primeiro["estado"],"BLOQUEADO_POR_OUTRAS_EVIDENCIAS")
+        self.assertFalse(primeiro["envio_habilitado"])
+        self.assertEqual(primeiro["evidencias"]["rastreios_gravados"],1)
+        segunda=revisar_edicao_com_custodia_offline(
+            self.con,edicao=self.ed,feeds=self.feeds,snapshots_xml=self.xml,
+            paginas=self.pages,atestados=self.att,eventos=self.events,
+            chaves_emissores=self.keys,registrar_hashes=True)
+        self.assertEqual(segunda["sha256_edicao"],self.ed["sha256"])
+        rows=self.con.execute("SELECT * FROM nivon_proveniencia_editorial").fetchall()
+        self.assertEqual(len(rows),1)
+        self.assertEqual(rows[0][3],hashlib.sha256(XML).hexdigest())
+        self.assertEqual(rows[0][4],self.page["sha256"])
+        self.assertFalse(any(isinstance(x,str) and URL in x for x in rows))
+        self.assertFalse(any(isinstance(x,bytes) and HTML in x for x in rows))
+
+    def test_ledger_rejeita_atestado_substituido_apos_custodia(self):
+        self.conciliar_registrando()
+        d=self.att[URL]["PUBLICACAO_ORIGINAL"]["documento"]
+        d["id_evidencia"]="OUTRA_PROVA_ORIGINAL_SINTETICA_20261020"
+        self.att[URL]["PUBLICACAO_ORIGINAL"]["assinatura"]=self.assinar(d)
+        with self.assertRaisesRegex(PermissionError,"não pode ser substituída"):
+            self.conciliar_registrando()
+        self.assertEqual(self.con.execute(
+            "SELECT COUNT(*) FROM nivon_proveniencia_editorial").fetchone()[0],1)
+
+    def test_sem_direitos_assinados_nao_cria_ledger_nem_parcial(self):
+        del self.att[URL]["DIREITOS_PUBLICACAO"]
+        with self.assertRaises(PermissionError):self.conciliar_registrando()
+        self.assertEqual(self.con.execute(
+            "SELECT COUNT(*) FROM sqlite_master WHERE name='nivon_proveniencia_editorial'"
+        ).fetchone()[0],0)
+
+    def test_ledger_alteracao_de_hash_editorial_falha_fechada(self):
+        self.ed["evidencias_editoriais"]["sha256_edicao"]="b"*64
+        with self.assertRaisesRegex(ErroProveniencia,"SHA"):
+            revisar_edicao_com_custodia_offline(
+                self.con,edicao=self.ed,feeds=self.feeds,snapshots_xml=self.xml,
+                paginas=self.pages,atestados=self.att,eventos=self.events,
+                chaves_emissores=self.keys,registrar_hashes=True)
+        self.assertEqual(self.con.execute(
+            "SELECT COUNT(*) FROM sqlite_master WHERE name='nivon_proveniencia_editorial'"
+        ).fetchone()[0],0)
+
+    def conciliar_registrando(self):
+        return conciliar_rss_com_pagina_e_atestados(
+            self.con,candidatos=self.candidatos,feeds=self.feeds,
+            snapshots_xml=self.xml,paginas=self.pages,atestados=self.att,
+            eventos=self.events,chaves_emissores=self.keys,
+            registrar_hashes=True)
 
     def test_operacao_somente_leitura_nao_persiste_html(self):
         self.assertTrue(self.conciliar()["noticias"])
