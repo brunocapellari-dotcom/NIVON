@@ -60,7 +60,24 @@ jobs:
               try:
                   r=subprocess.run(cmd,capture_output=True,text=True,timeout=40)
                   if r.returncode:
-                      result[key]={'estado':'NAO_VERIFICADO','codigo':'PERMISSAO_OU_API_INDISPONIVEL'}
+                      msg=(r.stderr or '').lower()
+                      if ('service_disabled' in msg or 'api has not been used' in msg
+                          or 'api is not enabled' in msg or 'has not been used' in msg):
+                          reason='API_NAO_HABILITADA'
+                      elif ('permission_denied' in msg or 'permission denied' in msg
+                            or 'does not have permission' in msg or '403' in msg
+                            or 'forbidden' in msg):
+                          reason='PERMISSAO_NEGADA'
+                      elif ('not found' in msg or '404' in msg):
+                          reason='NAO_LOCALIZADO'
+                      elif ('invalid choice' in msg or 'unrecognized arguments' in msg):
+                          reason='CLI_INCOMPATIVEL'
+                      elif 'unauthenticated' in msg:
+                          reason='AUTENTICACAO_FALHOU'
+                      else:
+                          reason='FALHA_NAO_CLASSIFICADA'
+                      result[key]={'estado':'NAO_VERIFICADO','codigo':reason,
+                                   'exit_code':int(r.returncode)}
                       continue
                   rows=json.loads(r.stdout or '[]')
                   if key=='apis':
