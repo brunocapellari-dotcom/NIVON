@@ -122,6 +122,9 @@ def guardar_raw_zarc(*,db:sqlite3.Connection,arquivo,raiz):
             os.link(temp,final,follow_symlinks=False)
         except FileExistsError:
             novo=False
+        # Ao criar via link atômico, existe uma segunda ligação temporária:
+        # removê-la ANTES de impor st_nlink == 1 à cópia canônica.
+        temp.unlink(missing_ok=True)
         if not novo:
             # Detecta corrupção e nunca sobrescreve RAW existente.
             verificar_raw_zarc(db=db,raiz=root,sha256=sha)
