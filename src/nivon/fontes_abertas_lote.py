@@ -158,11 +158,13 @@ def normalizar(payload, *, fonte, coletado_em):
             if f in ("CSV", "JSON", "ZIP", "XLSX", "SHP", "GEOJSON"):
                 recursos.append({"id": r["id"], "formato": f, "nome": str(r.get("name") or "")[:150],
                                  "atualizado_em": r.get("last_modified"),
+                                 "revision_id": r.get("revision_id") if isinstance(r.get("revision_id"),str) and len(r["revision_id"]) <= 90 else None,
                                  "tamanho_declarado_bytes": r.get("size") if type(r.get("size")) is int and 0 <= r["size"] <= 10_000_000_000 else None,
                                  "url_somente_referencia": _referencia(r.get("url"), CKAN[fonte][0])})
         out.update({"tipo": "CKAN_METADATA", "total_recursos": len(d["resources"]),
                     "recursos": recursos, "licenca_declarada": d.get("license_id"),
-                    "atualizado_em": d.get("metadata_modified")})
+                    "atualizado_em": d.get("metadata_modified"),
+                    "revision_id": d.get("revision_id") if isinstance(d.get("revision_id"),str) and len(d["revision_id"]) <= 90 else None})
     elif fonte == "COPERNICUS_STAC_CATALOG":
         if obj.get("id") != "sentinel-2-l2a" or obj.get("type") != "Collection":
             raise ErroFonteAberta("colecao STAC Sentinel-2 L2A divergente")
