@@ -1,4 +1,4 @@
-name: NIVON - Maritimo integracao e capturas verificadas
+name: NIVON - Maritimo CI Google Cloud (sem ingestao)
 on:
   pull_request:
     paths:
@@ -6,14 +6,16 @@ on:
       - 'src/nivon/maritimo_pipeline.py'
       - 'src/nivon/maritimo_lote.py'
       - 'src/nivon/portwatch_fluxos.py'
-      - 'src/nivon/maritimo_neon.py'
-      - 'migrations/001_maritimo_neon.sql'
-      - 'migrations/002_maritimo_coletas.sql'
+      - 'src/nivon/maritimo_bigquery.py'
+      - 'src/nivon/maritimo_cloud_storage.py'
+      - 'src/nivon/maritimo_gcp_job.py'
+      - 'infra/google_cloud/**'
+      - 'pyproject.toml'
       - 'tests/test_lineup_portos.py'
       - 'tests/test_maritimo_integrado.py'
       - 'tests/test_maritimo_lote.py'
       - 'tests/test_portwatch_fluxos.py'
-      - 'tests/test_maritimo_neon.py'
+      - 'tests/test_maritimo_google_cloud.py'
       - '.github/workflows/maritimo-integrado.yml'
   workflow_dispatch:
     inputs:
@@ -23,8 +25,6 @@ on:
         default: suape
         type: choice
         options: [suape, imbituba, santarem_cdp, vila_conde_cdp]
-  schedule:
-    - cron: '12 */6 * * *'
 permissions:
   contents: read
 concurrency:
@@ -113,68 +113,3 @@ jobs:
               'datas':[min(r['data_referencia'] for r in records),max(r['data_referencia'] for r in records)],
               'sem_persistencia_publica':True}))
           PY
-  coleta:
-    needs: qa
-    if: ${{ github.event_name != 'pull_request' && vars.NIVON_MARITIMO_COLETA_HABILITADA == 'true' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 8
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
-        with:
-          python-version: '3.11'
-      - name: Coletar em lote com isolamento de falhas
-        env:
-          PYTHONPATH: src
-          NIVON_FONTE_MANUAL: ${{ inputs.fonte }}
-          NIVON_PORTWATCH_HABILITADO: ${{ vars.NIVON_PORTWATCH_COLETA_HABILITADA }}
-        run: |
-          set -euo pipefail
-          mkdir -p .work
-          FONTES="suape,imbituba,santarem_cdp,vila_conde_cdp"
-          if [ -n "${NIVON_FONTE_MANUAL:-}" ]; then
-            case "$NIVON_FONTE_MANUAL" in
-              suape|imbituba|santarem_cdp|vila_conde_cdp) FONTES="$NIVON_FONTE_MANUAL";;
-              *) exit 3;;
-            esac
-          fi
-          EXTRA=()
-          if [ "${NIVON_PORTWATCH_HABILITADO:-false}" = "true" ]; then
-            INICIO="$(date -u -d '8 days ago' +%Y-%m-%d)"
-            FIM="$(date -u -d 'yesterday' +%Y-%m-%d)"
-            EXTRA+=(--passagens hormuz,bab_el_mandeb,suez,panama)
-            EXTRA+=(--inicio "$INICIO" --fim "$FIM" --portwatch-banco .work/portwatch.sqlite)
-          fi
-          set +e
-          python -m nivon.maritimo_lote --fontes "$FONTES" --permitir-rede \
-            --banco .work/maritimo.sqlite --relatorio .work/coleta.json "${EXTRA[@]}"
-          STATUS=$?
-          set -e
-          echo "NIVON_MARITIMO_STATUS=$STATUS" >> "$GITHUB_ENV"
-          if [ "$STATUS" -ne 0 ] && [ "$STATUS" -ne 2 ]; then exit "$STATUS"; fi
-      - name: Sincronizar banco Neon com historico privado
-        env:
-          PYTHONPATH: src
-          NIVON_MARITIMO_DSN: ${{ secrets.NIVON_MARITIMO_DSN }}
-        run: |
-          if [ -z "${NIVON_MARITIMO_DSN:-}" ]; then
-            echo "NIVON_MARITIMO_DSN NAO CONFIGURADO; BLOQUEIO DE COLETA OPERACIONAL"
-            exit 4
-          fi
-          python -m pip install 'psycopg[binary]==3.2.10'
-          if [ -s .work/portwatch.sqlite ]; then
-            python -m nivon.maritimo_neon --banco .work/maritimo.sqlite --portwatch-banco .work/portwatch.sqlite
-          else
-            python -m nivon.maritimo_neon --banco .work/maritimo.sqlite
-          fi
-      - name: Validar resultado final do lote
-        run: |
-          if [ "${NIVON_MARITIMO_STATUS:-3}" != "0" ]; then
-            echo "FALHA_DE_FONTE_OU_QUARENTENA_TOTAL; consultar metadados no Neon"
-            exit 2
-          fi
-
-      # Banco do runner e efemero e NAO equivale a ingestao permanente.
-      # Nao publicar raw HTML ou sqlite em repositorio publico.
