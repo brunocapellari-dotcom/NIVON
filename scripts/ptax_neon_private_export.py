@@ -20,7 +20,7 @@ from urllib.parse import urlencode, urlsplit
 from urllib.request import Request, urlopen
 from typing import Callable, Any
 
-from ptax_neon_to_bigquery_jsonl import normalize, InvalidQuote, SOURCE_FIELDS
+from scripts.ptax_neon_to_bigquery_jsonl import normalize, InvalidQuote, SOURCE_FIELDS
 
 ROOT=Path(__file__).resolve().parents[1]
 AUDIENCE="urn:nivon:ptax:export:v1"
