@@ -23,6 +23,7 @@ from nivon.planejador import get_issues, refresh as refresh_plan
 from nivon.contexto_codigo import capsule
 from nivon.token_guard import summarize
 from nivon.metricas import parse_file
+from nivon.ferramentas import doctor as check_tools
 from nivon.janela_noturna import may_begin, status as night_status
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -43,6 +44,10 @@ def preflight():
     for tool in ("git", "claude", "codex"):
         if not shutil.which(tool):
             raise RuntimeError(f"CLI não encontrada: {tool}; sem execução/cobrança iniciada")
+    # Confirma flags da CLI e login de assinatura sem chamar nenhum modelo.
+    readiness = check_tools()
+    if not readiness["ready_for_pilot"]:
+        raise RuntimeError("Doctor rejeitou CLI, autenticação, flags ou sandbox Docker; execute bash scripts/nivon-autonomo.sh doctor")
     result = command(["git", "status", "--porcelain", "--untracked-files=no"])
     if result.returncode or result.stdout.strip():
         raise RuntimeError("Checkout principal precisa estar limpo antes da execução")
@@ -197,7 +202,11 @@ def do_task(agent, task, *, timeout_minutes=15):
         if key.startswith(("AWS_", "GOOGLE_", "GCP_", "AZURE_", "VERCEL_", "NEON_", "SUPABASE_")) or key in (
             "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "CODEX_API_KEY",
             "ANTHROPIC_AUTH_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN",
-            "CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT"
+            "CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT",
+            "CODEX_ACCESS_TOKEN", "OPENAI_FEDERATION_RULE_ID",
+            "OPENAI_IDENTITY_TOKEN_FILE", "OPENAI_WORKLOAD_IDENTITY_CONTEXT",
+            "CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CODE_USE_VERTEX",
+            "CLAUDE_CODE_USE_FOUNDRY"
         ):
             runtime_env.pop(key, None)
     try:
