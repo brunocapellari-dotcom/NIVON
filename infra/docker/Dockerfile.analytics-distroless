@@ -7,6 +7,8 @@ FROM nivon-analytics:ci AS analytics-source
 # Do not copy /usr/lib wholesale: each added ABI library must have
 # independent runtime proof and CVE re-scan.
 FROM nivon-analytics:ci AS sqlite3-runtime-libs
+# Root somente no estágio de cópia do build; runtime final é 65532.
+USER 0:0
 ARG TARGETARCH
 RUN set -eu; \
     case "$TARGETARCH" in \
