@@ -47,6 +47,13 @@ def executar_lote_fretes_quant(
         raise ErroRegistroFrete("modo RAW exige recibos, bytes e emissor/chave confiáveis")
     base = consolidar_ofertas(ofertas)
     registros = base["registros"]
+    if proved:
+        esperados = {row["registro_id"] for row in registros}
+        if set(raws) != esperados or set(recibos) != esperados:
+            raise ErroRegistroFrete(
+                "cobertura RAW deve corresponder exatamente ao lote consolidado; "
+                "não aceitar arquivos extras, omissões nem rebroadcast sem prova"
+            )
     # P0: chaves completas. Nunca usar município isolado para preços.
     por_identidade: dict[tuple, list] = defaultdict(list)
     por_corredor_estrito: dict[tuple, list[OfertaFrete]] = defaultdict(list)
