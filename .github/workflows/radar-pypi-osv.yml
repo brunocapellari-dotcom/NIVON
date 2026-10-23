@@ -68,6 +68,28 @@ jobs:
             --output evidencias-pypi/compatibilidade_cp311_glibc228.json \
             --glibc-minor 28
           python -c 'import json; a=json.load(open("evidencias-pypi/compatibilidade_cp311_glibc217.json")); b=json.load(open("evidencias-pypi/compatibilidade_cp311_glibc228.json")); assert a["packages_examined"]==b["packages_examined"]==9 and a["target_glibc_minor"]==17 and b["target_glibc_minor"]==28; assert a["approved_for_install"] is False and b["approved_for_production"] is False and a["full_pep508_dependency_resolution"] is False and b["glibc_abi_runtime_verified"] is False'
+      - name: Registrar versao e glibc do runner desta CI, sem afirmar que e Google Cloud
+        run: |
+          python - <<'PY'
+          import json, os, platform, sys, sysconfig
+          info = {
+              "scope": "GITHUB_ACTIONS_RUNNER_ONLY_NOT_GCP_RUNTIME",
+              "python_implementation": sys.implementation.name,
+              "python_version": ".".join(map(str, sys.version_info[:3])),
+              "machine": platform.machine(),
+              "platform": sysconfig.get_platform(),
+              "libc": platform.libc_ver()[0],
+              "libc_version": platform.libc_ver()[1],
+              "run_id": os.environ.get("GITHUB_RUN_ID"),
+              "tested_checkout_sha": os.environ.get("GITHUB_SHA"),
+              "gcp_runtime_verified": False,
+              "wheel_bytes_inspected": False,
+              "approved_for_production": False,
+          }
+          with open("evidencias-pypi/runner_python_glibc.json", "w", encoding="utf-8") as out:
+              json.dump(info, out, indent=2, sort_keys=True)
+          print(json.dumps(info))
+          PY
       - name: Validar cobertura total de extras e avisos antes de publicar
         run: |
           python -c 'import json; d=json.load(open("evidencias-pypi/candidatos_nove_extras.json")); assert d["direct_distributions_covered"] == 9 and len(d["optional_extras_covered"]) == 7; assert d["pypi_release_json_requests"] == 9 and d["pypi_index_json_requests"] == 8 and d["osv_batch_queries"] == 9; assert d["source"] == "LIVE_PUBLIC_PYPI_AND_OSV_METADATA" and d["approved_for_install"] is False and d["approved_for_production"] is False and d["full_pep440_pep508_resolved"] is False'
@@ -83,7 +105,7 @@ jobs:
         run: |
           python -c 'import json; p="evidencias-pypi/radar_pypi_osv.json"; d=json.load(open(p)); assert d["queried_package_count"] == 4 and d["approved_for_production"] is False and d["approved_for_install"] is False and d["full_dependency_resolution"] is False; assert len(d["packages"]) == len(d["osv"]) == 4'
           cd evidencias-pypi
-          sha256sum radar_pypi_osv.json candidatos_nove_extras.json compatibilidade_cp311_glibc217.json compatibilidade_cp311_glibc228.json > sha256sums.txt
+          sha256sum radar_pypi_osv.json candidatos_nove_extras.json compatibilidade_cp311_glibc217.json compatibilidade_cp311_glibc228.json runner_python_glibc.json > sha256sums.txt
           sha256sum -c sha256sums.txt
       - name: Publicar somente inventario normalizado de APIs publicas
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
