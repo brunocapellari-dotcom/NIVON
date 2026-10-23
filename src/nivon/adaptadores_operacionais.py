@@ -189,6 +189,13 @@ def ler_replay_ais_sqlite(*, banco: str, porto_id: str, inicio: str,
                 or not isinstance(raw_json, str) or len(raw_json.encode("utf-8"))>2_000_000
                 or hashlib.sha256(raw_json.encode("utf-8")).hexdigest()!=raw_sha):
             raise ErroMotor("hash ou payload do evento AIS corrompido")
+        if not isinstance(source_id, str) or not source_id:
+            raise ErroMotor("AIS sem fonte")
+        identidade_esperada = hashlib.sha256(
+            (source_id + "|" + raw_sha).encode("utf-8")
+        ).hexdigest()
+        if event_id != identidade_esperada:
+            raise ErroMotor("identidade AIS não corresponde à fonte e ao payload")
         if event_id in identidades:
             raise ErroMotor("evento AIS duplicado")
         identidades.add(event_id)
