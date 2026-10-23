@@ -30,6 +30,8 @@ def main():
             out.append({"endpoint":label,"http":"SUCESSO","bytes":len(b),
                 "tipo_raiz":type(doc).__name__,
                 "chaves_primeira_linha":list(first)[:20] if isinstance(first,dict) else [],
+                "cabecalho":{str(k):str(v)[:100] for k,v in first.items()} if isinstance(first,dict) else {},
+                "primeira_observacao":{str(k):str(v)[:80] for k,v in doc[1].items()} if isinstance(doc,list) and len(doc)>1 and isinstance(doc[1],dict) else {},
                 "indicacao_fonte_valida":True})
         except Exception as exc:
             out.append({"endpoint":label,"http":"FALHOU",
