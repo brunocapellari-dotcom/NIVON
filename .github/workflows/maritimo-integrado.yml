@@ -18,6 +18,7 @@ on:
       - 'tests/test_maritimo_lote.py'
       - 'tests/test_portwatch_fluxos.py'
       - 'tests/test_maritimo_google_cloud.py'
+      - 'tests/test_maritimo_migracao_gcp.py'
       - 'tests/test_maritimo_portwatch_backfill.py'
       - 'tests/test_maritimo_gcp_preflight.py'
       - '.github/workflows/maritimo-integrado.yml'
