@@ -1,0 +1,7 @@
+# Imagem exclusiva para testes offline do supervisor NIVON.
+# Instalação/build apenas pelo operador, nunca pelo loop autônomo.
+FROM python:3.11-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
+RUN python -m pip install --no-input --only-binary=:all: "pyarrow==21.0.0"
+# Não copiar projeto, credenciais ou pasta do usuário para a imagem.
+# O supervisor monta uma worktree individual somente leitura, sem rede.
