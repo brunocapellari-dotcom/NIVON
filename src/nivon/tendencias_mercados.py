@@ -254,7 +254,8 @@ def tendencia_frete_anunciado(
                     "orientacao": "OBSERVADA", "publicavel": False,
                     "motivo": "dia com poucos lotes econômicos independentes",
                     "dia": periodo, "lotes_distintos": len(lotes),
-                    "minimo_lotes_dia": minimo_lotes_dia}
+                    "minimo_lotes_dia": minimo_lotes_dia,
+                    "motor_r01_canonico": "LEGADO_LOTES_INTRAPAR_ISOLADO"}
         preco_mediano = median(x["preco"] for x in lotes.values())
         provas = sorted((k, str(v["preco"]), sorted(v["sha"]), sorted(v["fontes"]))
                         for k, v in lotes.items())
