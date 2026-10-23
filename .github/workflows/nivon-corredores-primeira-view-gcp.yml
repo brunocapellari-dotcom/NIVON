@@ -1,0 +1,145 @@
+name: NIVON - Primeira Analise Real Corredores ANTT BQ
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/nivon-corredores-primeira-view-gcp.yml'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/nivon-corredores-primeira-view-gcp.yml'
+  workflow_dispatch:
+    inputs:
+      confirmar_view:
+        description: 'Autorizo a view analitica de corredores, com consulta limitada a 50 MB'
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-primeira-view-corredores
+  cancel-in-progress: false
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Testar view e limites
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m unittest discover -s tests -p 'test_corredores_bigquery.py' -v
+          python -m unittest discover -s tests -p 'test_antt_single_run_workflow_policy.py' -v
+
+  publicar-e-medir:
+    needs: validar
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.confirmar_view == true &&
+      vars.NIVON_CORREDORES_VIEW_APPROVED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      NIVON_PROJETO: ${{ vars.NIVON_BQ_PROJECT }}
+      NIVON_DATASET: ${{ vars.NIVON_BQ_DATASET }}
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Limitar escopo a dados ja carregados no NIVON
+        run: |
+          set -eu
+          test "$NIVON_PROJETO" = 'nivon-data'
+          test "$NIVON_DATASET" = 'nivon_raw'
+      - name: Autenticacao temporaria por OIDC
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ vars.NIVON_BQ_PROJECT }}
+          create_credentials_file: true
+      - name: Preparar SDK BigQuery
+        run: |
+          python -m pip install --disable-pip-version-check --quiet 'google-cloud-bigquery>=3,<4'
+      - name: Validar tabela base existente e publicar apenas a view
+        run: |
+          python -m nivon.corredores_bigquery --projeto "$NIVON_PROJETO" \
+            --dataset "$NIVON_DATASET" --live
+      - name: Consultar volume por polo e mercadoria por periodo — 2026
+        run: |
+          python - <<'PY'
+          import json,os
+          from decimal import Decimal
+          from pathlib import Path
+          from google.cloud import bigquery
+          projeto=os.environ["NIVON_PROJETO"]
+          dataset=os.environ["NIVON_DATASET"]
+          view=f"{projeto}.{dataset}.vw_nivon_corredores_ferrovia_mensal"
+          cliente=bigquery.Client(project=projeto)
+          # O ano 2026 foi previamente conciliado no BQ, não se mistura com MDF-e.
+          sql1=("SELECT polo_id, SUM(toneladas_uteis) AS tu, COUNT(*) AS linhas "
+                f"FROM `{view}` WHERE competencia BETWEEN '2026-01' AND '2026-08' "
+                "GROUP BY polo_id ORDER BY tu DESC LIMIT 20")
+          conf=bigquery.QueryJobConfig(maximum_bytes_billed=50_000_000)
+          polo_rows=list(cliente.query(sql1,job_config=conf).result(timeout=75))
+          if not polo_rows:
+              raise RuntimeError("SEM_POLOS_ANTT_2026_VIEW_NAO_HOMOLOGADA")
+          sql2=("SELECT polo_id, mercadoria_antt, produto_normalizado, "
+                "SUM(toneladas_uteis) AS tu FROM "
+                f"`{view}` WHERE competencia BETWEEN '2026-01' AND '2026-08' "
+                "GROUP BY polo_id, mercadoria_antt, produto_normalizado "
+                "ORDER BY tu DESC LIMIT 35")
+          itens=list(cliente.query(sql2,job_config=conf).result(timeout=75))
+          doc={
+              "estado":"CORREDORES_SIADE_2026_BQ_CONSULTA_REAL",
+              "projeto":projeto,"dataset":dataset,"view":view,
+              "fonte":"ANTT_SIADE_FERROVIAS_FEDERAIS",
+              "periodo":"2026-01 a 2026-08",
+              "natureza":"TONELADAS_UTEIS_FERROVIARIAS",
+              "polos":[{
+                  "polo_id":x.polo_id,"toneladas_uteis":str(x.tu),
+                  "linhas_agregadas":int(x.linhas)} for x in polo_rows],
+              "mercadorias":[{
+                  "polo_id":x.polo_id,"mercadoria_antt":x.mercadoria_antt,
+                  "produto_normalizado":x.produto_normalizado,
+                  "toneladas_uteis":str(x.tu)} for x in itens],
+              "transbordo_rodoviario_confirmado":False,
+              "soma_rodovia_ferrovia_permitida":False,
+          }
+          p=Path(os.environ["RUNNER_TEMP"])/"nivon-corredores-2026-real.json"
+          p.write_text(json.dumps(doc,ensure_ascii=False,indent=2),encoding="utf-8")
+          print("RANKING_POLOS_REAL",json.dumps(doc["polos"],ensure_ascii=False))
+          print("MERCADORIAS_REAL",json.dumps(doc["mercadorias"][:12],ensure_ascii=False))
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a",encoding="utf-8") as f:
+              f.write("### NIVON — corredores ferroviários ANTT 2026 carregados do BigQuery\n\n")
+              f.write("| Polo (estação) | Toneladas úteis jan–ago/2026 | Linhas agregadas |\n|---|---:|---:|\n")
+              for row in doc["polos"]:
+                  f.write(f"| {row['polo_id']} | {row['toneladas_uteis']} | {row['linhas_agregadas']} |\n")
+              f.write("\nVolumes ferroviários oficiais; não comprovam transbordo.\n")
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: success()
+        with:
+          name: nivon-corredores-antt-2026-real-${{ github.run_id }}
+          path: ${{ runner.temp }}/nivon-corredores-2026-real.json
+          retention-days: 90
+      - name: Descartar resumo temporario
+        if: always()
+        run: rm -f "$RUNNER_TEMP/nivon-corredores-2026-real.json"
