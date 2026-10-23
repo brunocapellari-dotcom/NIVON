@@ -186,12 +186,14 @@ class HistoricoPortWatch:
         self.con.close()
 
 
-def consultar_janela(passagens, inicio, fim, *, permitir_rede=False, transporte=None):
+def consultar_janela(passagens, inicio, fim, *, permitir_rede=False, transporte=None, on_page=None):
     """Paginar apenas uma janela curta; falha em paginas inesperadas."""
     records = []
     for offset in range(0, 6000, MAX_REGISTROS):
         url = consulta_url(passagens=passagens, inicio=inicio, fim=fim, offset=offset)
         content = baixar_pagina(url, permitir_rede=permitir_rede, transporte=transporte)
+        if on_page is not None:
+            on_page(url,content,offset)
         daily, more = normalizar(content, consultadas=passagens, coletado_em=datetime.now(timezone.utc).isoformat())
         records.extend(daily)
         if not more:

@@ -58,7 +58,7 @@ def _motivo_excecao(exc):
 
 def executar_lote(fontes, db: HistoricoMaritimo, *, coletado_em=None,
                   fornecedor_html: Callable[[str], str] | None = None,
-                  permitir_rede=False, on_result=None):
+                  permitir_rede=False, on_result=None, on_snapshot=None):
     """Um lote, historico atomico POR FONTE e resultado resumido por execucao.
 
     fornecedor_html e injetavel para replay autorizado; rede exige opt-in.
@@ -84,6 +84,8 @@ def executar_lote(fontes, db: HistoricoMaritimo, *, coletado_em=None,
                 fonte, habilitar_rede=permitir_rede)
             if not isinstance(html, str) or len(html.encode("utf-8")) > 2_000_000:
                 raise ValueError("html invalido ou acima do limite")
+            if on_snapshot is not None:
+                on_snapshot(fonte,html,at)
             result = processar_html(fonte, html, db, coletado_em=at)
             flags = result["qualidade"].get("flags", ())
             record.update({
@@ -105,7 +107,7 @@ def executar_lote(fontes, db: HistoricoMaritimo, *, coletado_em=None,
 
 
 def executar_portwatch(passagens, inicio, fim, *, banco_lineups, banco_portwatch,
-                       coletado_em=None, fornecer_json=None, permitir_rede=False):
+                       coletado_em=None, fornecer_json=None, permitir_rede=False, archivador_pagina=None):
     """Ingere PortWatch em lote sem confundir passagens com escalas portuarias.
 
     Replay de uma pagina JSON; para serie real usa paginacao oficial limitada.
@@ -127,11 +129,14 @@ def executar_portwatch(passagens, inicio, fim, *, banco_lineups, banco_portwatch
                 "captura_sha256":None, "motivo":"NAO_EXECUTADO", "duracao_ms":0}
     try:
         if fornecer_json is not None:
+            if archivador_pagina is not None:
+                archivador_pagina(None,fornecer_json,0)
             rows, more = normalizar(fornecer_json, consultadas=names, coletado_em=collected)
             if more:
                 raise ValueError("snapshot incompleto: paginacao requerida")
         else:
-            rows = consultar_janela(names, inicio, fim, permitir_rede=True)
+            rows = consultar_janela(names, inicio, fim, permitir_rede=True,
+                                   on_page=archivador_pagina)
         if not rows:
             registro.update(estado="QUARENTENA", motivo="SEM_REGISTROS_VALIDOS")
         else:
