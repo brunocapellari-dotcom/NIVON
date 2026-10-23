@@ -49,10 +49,12 @@ def auditar_integridade_ptax(db: sqlite3.Connection) -> dict:
         fk = db.execute("PRAGMA foreign_key_check").fetchone()
         if fk is not None:
             raise ErroContinuidadePTAX("chave estrangeira violada")
-        needs = ("nivon_snapshots", "nivon_coletas",
-                 "nivon_ptax_raw_capturas", "nivon_ptax_raw_blobs")
-        if not all(_tab(db, n) for n in needs):
-            raise ErroContinuidadePTAX("tabelas PTAX RAW obrigatórias ausentes")
+        if not (_tab(db, "nivon_snapshots") and _tab(db, "nivon_coletas")):
+            raise ErroContinuidadePTAX("ledger de snapshots obrigatório ausente")
+        raw_capturas = _tab(db, "nivon_ptax_raw_capturas")
+        raw_blobs = _tab(db, "nivon_ptax_raw_blobs")
+        if raw_capturas != raw_blobs:
+            raise ErroContinuidadePTAX("tabelas PTAX RAW parcialmente ausentes")
         snapshots = db.execute(
             "SELECT id,sha256,schema_versao,tipo FROM nivon_snapshots "
             "WHERE dataset_id='BCB_PTAX' ORDER BY id"
@@ -65,7 +67,7 @@ def auditar_integridade_ptax(db: sqlite3.Connection) -> dict:
             "JOIN nivon_ptax_raw_blobs b ON b.sha256=c.sha256 "
             "JOIN nivon_snapshots s ON s.id=c.snapshot_id "
             "ORDER BY c.id LIMIT 10001"
-        ).fetchall()
+        ).fetchall() if raw_capturas else []
         if len(captura) > MAX_CAPTURAS:
             raise ErroContinuidadePTAX("limite de capturas excedido")
         ligados = set()
@@ -108,11 +110,11 @@ def auditar_integridade_ptax(db: sqlite3.Connection) -> dict:
                 raise ErroContinuidadePTAX("parser ou observações legadas divergentes") from exc
             ligados.add(sid)
         # Blobs órfãos (sem captura) podem indicar gravação parcial manual.
-        orfaos = db.execute(
+        orfaos = (db.execute(
             "SELECT COUNT(*) FROM nivon_ptax_raw_blobs b "
             "WHERE NOT EXISTS (SELECT 1 FROM nivon_ptax_raw_capturas c "
             "WHERE c.sha256=b.sha256)"
-        ).fetchone()[0]
+        ).fetchone()[0] if raw_blobs else 0)
         if orfaos:
             raise ErroContinuidadePTAX("blobs RAW sem captura")
         schemas = {name: sum(s[2] == name for s in snapshots)
