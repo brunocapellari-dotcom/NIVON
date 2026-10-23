@@ -44,7 +44,7 @@ def carregar_catalogo(caminho: str | Path = DEFAULT) -> dict:
     arq = Path(caminho)
     if arq.is_symlink() or not arq.is_file() or arq.suffix.lower() != ".json":
         raise ErroCatalogo("arquivo do catálogo deve ser JSON local regular")
-    if arq.stat().st_size > 250_000:
+    if arq.stat().st_size > 400_000:
         raise ErroCatalogo("catálogo excessivo")
     try:
         obj = json.loads(arq.read_text(encoding="utf-8"))
