@@ -27,29 +27,32 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install --disable-pip-version-check agrobr==2.0.0
-      - name: Consulta pontual IMEA de soja, sem gravacao
+      - name: Consulta pontual IMEA de soja e milho, sem gravacao
         run: |
           python - <<'PY'
           import asyncio,json
           from agrobr import imea
           from nivon.imea_publico import normalize
           async def main():
-              df,meta=await imea.cotacoes('soja',return_meta=True)
-              if str(getattr(meta,'source','')).lower()!='imea':
-                  raise SystemExit('IMEA_FONTE_PRIMARIA_INVALIDA')
-              rows=df.to_dict(orient='records')
-              usable=[];rejected={}
-              for row in rows:
-                  try: usable.append(normalize(row))
-                  except (ValueError,TypeError) as e:
-                      k=str(e)[:60];rejected[k]=rejected.get(k,0)+1
-              latest=max((r['published_at'][:10] for r in usable),default=None)
-              print('NIVON_IMEA_DIAGNOSTICO='+json.dumps({
-                'source':'imea','received':len(rows),
-                'candidate_rows':len(usable),'latest_publication':latest,
-                'rejected':rejected,'source_url':str(getattr(meta,'source_url',''))[:160],
-                'persisted':False,'reference_dates_available':0
-              },ensure_ascii=False))
-              if not usable: raise SystemExit('IMEA_NENHUMA_OBSERVACAO_HOMOLOGADA')
+              for chain,source_id in (('soja','4'),('milho','3')):
+                  df,meta=await imea.cotacoes(chain,return_meta=True)
+                  url=str(getattr(meta,'source_url',''))
+                  if str(getattr(meta,'source','')).lower()!='imea' or (
+                      not url.startswith('https://api1.imea.com.br/api/v2/mobile/cadeias/'+source_id+'/cotacoes')):
+                      raise SystemExit('IMEA_FONTE_PRIMARIA_INVALIDA_'+chain)
+                  rows=df.to_dict(orient='records')
+                  usable=[];rejected={}
+                  for row in rows:
+                      try: usable.append(normalize(row))
+                      except (ValueError,TypeError) as e:
+                          k=str(e)[:60];rejected[k]=rejected.get(k,0)+1
+                  latest=max((r['published_at'][:10] for r in usable),default=None)
+                  print('NIVON_IMEA_DIAGNOSTICO='+json.dumps({
+                    'source':'imea','chain':chain,'received':len(rows),
+                    'candidate_rows':len(usable),'latest_publication':latest,
+                    'rejected':rejected,'source_url':url[:160],
+                    'persisted':False,'reference_dates_available':0
+                  },ensure_ascii=False))
+                  if not usable: raise SystemExit('IMEA_NENHUMA_OBSERVACAO_HOMOLOGADA_'+chain)
           asyncio.run(main())
           PY
