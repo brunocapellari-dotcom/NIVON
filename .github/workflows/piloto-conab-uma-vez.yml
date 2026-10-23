@@ -37,6 +37,7 @@ jobs:
           python -m nivon.conab_execucao_edicao \
             --banco "$WORK_DIR/coleta.sqlite" \
             --pasta-raw "$WORK_DIR/raw" \
+            --semana-fim 2026-10-11 \
             --executar \
             --direitos-consulta \
             --direitos-coleta \
