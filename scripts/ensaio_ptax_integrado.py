@@ -21,6 +21,9 @@ from nivon.ptax_migracao_reversa import materializar_visao_legada_em_copia
 from nivon.ptax_plano import planejar_consultas_ptax
 from nivon.ptax_raw_sqlite import guardar_raw_ptax
 from nivon.registro_snapshots import abrir_registro
+from nivon.ptax_cobertura_mercados import diagnosticar_cobertura_ptax
+from nivon.indicadores_historicos import compor_pacote_historico
+from nivon.rotina_diaria import preparar_rotina
 
 
 T = datetime(2026,10,20,18,0,tzinfo=timezone.utc)
@@ -70,6 +73,29 @@ def executar() -> dict:
         assert antigo["linhas"] == 1
         assert antigo["registros"][0]["observacao"][
             "cotacao_compra_brl_por_moeda"] == 5.1
+        cobertura = diagnosticar_cobertura_ptax(
+            restaurado,corte=T.isoformat(),incluir_sinteticos=True,
+        )
+        assert cobertura["status"] == "SEM_FECHAMENTO_EXPLICITO_NO_CORTE"
+        assert cobertura["boletins_sem_tipo"] == 1
+        assert cobertura["pode_informar_motor_preditivo"] is False
+        pacote_auditoria = compor_pacote_historico(
+            db_conab=None,db_portos=None,
+            db_mercados=restaurado,db_ptax_raw=restaurado,
+            incluir_ptax_usd=True,modo_ptax="AUDITAR_RAW",
+            fontes={},gerado_em=T.isoformat(),
+        )
+        assert pacote_auditoria["resultados"][0]["status"] == (
+            "AUDITORIA_PTAX_RAW_SEM_LIBERACAO_EDITORIAL")
+        assert pacote_auditoria["resultados"][0]["paridade"]["status"] == (
+            "BLOQUEADO_DIREITOS")
+        assert not pacote_auditoria["pacote"]["indicadores"]
+        ensaio_editorial = preparar_rotina(
+            pacote=pacote_auditoria["pacote"],gerado_em=T.isoformat(),
+            obrigatorias=frozenset({"CAMBIO"}),auditor=lambda _:True,
+        )
+        assert ensaio_editorial["status"] == "BLOQUEADO_INDICADORES_ESSENCIAIS"
+        assert ensaio_editorial["agendado"] is False
 
         # Exercita a direção inversa RAW-first, sem escrever no banco-fonte.
         isolado=abrir_registro(":memory:")
@@ -99,6 +125,9 @@ def executar() -> dict:
                 "backup_sqlite","restauracao_sqlite",
                 "leitura_decimal_asof","leitura_legada_asof",
                 "migracao_reversa_em_copia",
+                "cobertura_boletins_com_identidade_explicita",
+                "modo_ptax_paralelo_no_compositor",
+                "bloqueio_briefing_na_falta_de_homologacao",
                 "bloqueio_promocao_editorial",
             ],
             "capturas":lote["consultas_concluidas"],
