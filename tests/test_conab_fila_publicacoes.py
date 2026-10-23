@@ -72,7 +72,7 @@ class TestFILAConab(TestCase):
                 SEMANA:PAGINA_HTML,
                 segunda['pagina_oficial']:b'<html>erro do provedor</html>'
             })
-        self.assertEqual(db.execute('SELECT count(*) FROM conab_semanas_descobertas').fetchone()[0],0)
+        self.assertIsNone(db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='conab_semanas_descobertas'").fetchone())
         db.close()
 
     def test_ignora_payload_externo_e_rejeita_outros(self):
