@@ -4,6 +4,9 @@ on:
     paths:
       - 'pyproject.toml'
       - 'src/nivon/arquivo_raw_gcs.py'
+      - 'src/nivon/lote_cloud_recuperavel.py'
+      - 'scripts/lote_cloud_recuperavel.py'
+      - 'tests/test_lote_cloud_recuperavel.py'
       - 'src/nivon/verificacao_cloud_fontes.py'
       - '.github/workflows/coleta-recorrente-fontes.yml'
       - 'src/nivon/carga_bigquery_fontes.py'
@@ -40,13 +43,14 @@ jobs:
       - name: Install
         run: python -m pip install -e .
       - name: Compile and check imports
-        run: python -m compileall -q src/nivon/arquivo_raw_gcs.py src/nivon/verificacao_cloud_fontes.py src/nivon/carga_bigquery_fontes.py src/nivon/consulta_analitica_bq.py src/nivon/preflight_gcp_fontes.py src/nivon/ingestao_fontes_reais.py src/nivon/coletores_dados_reais.py scripts
+        run: python -m compileall -q src/nivon/arquivo_raw_gcs.py src/nivon/lote_cloud_recuperavel.py src/nivon/verificacao_cloud_fontes.py src/nivon/carga_bigquery_fontes.py src/nivon/consulta_analitica_bq.py src/nivon/preflight_gcp_fontes.py src/nivon/ingestao_fontes_reais.py src/nivon/coletores_dados_reais.py scripts
       - name: Testes completos dos coletores e persistencia simulada
         shell: bash
         run: |
           set -euo pipefail
           for name in \
             test_arquivo_raw_gcs.py \
+            test_lote_cloud_recuperavel.py \
             test_backfill_fontes_reais.py \
             test_bigquery_merge_simulado.py \
             test_carga_bigquery_fontes.py \
