@@ -144,7 +144,7 @@ def gravar_lote(*, banco, diretorio_bruto, dataset_id, origem, raw, tipo,
             if not isinstance(campos, dict):
                 raise ErroIngestao("campos nao mapeados")
             referencia = str(row["referencia"])
-            if not re.fullmatch(r"\\d{4}-\\d{2}(-\\d{2})?", referencia):
+            if not re.fullmatch(r"\d{4}-\d{2}(-\d{2})?", referencia):
                 raise ErroIngestao("referencia invalida")
             texto = json.dumps(campos,sort_keys=True,ensure_ascii=False,allow_nan=False,separators=(",",":"))
             fingerprint = hashlib.sha256((identidade+"|"+referencia+"|"+texto).encode()).hexdigest()
