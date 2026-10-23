@@ -17,7 +17,7 @@ class TestFerramentas(unittest.TestCase):
     def test_pilot_requires_supported_flags_and_local_image(self):
         def fake(args):
             return subprocess.CompletedProcess(args, 0,
-                  "--restricted --permission-prompts --tools --sandbox --json", "")
+                  "--restricted --bare --no-session-persistence --permission-prompts --tools --sandbox --json", "")
         with patch.object(ferramentas.shutil, "which", return_value="/bin/tool"), \
              patch.object(ferramentas, "call", side_effect=fake):
             state = ferramentas.doctor()
