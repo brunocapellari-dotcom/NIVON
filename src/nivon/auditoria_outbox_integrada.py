@@ -63,6 +63,10 @@ def auditar_integridade_envios(db: sqlite3.Connection) -> dict:
         "SELECT id,dia_local,destinatario_hmac,status,provider_message_id FROM briefing_outbox"):
         counts["briefings"]+=1
         k=(day,h); ident=("BRIEFING",str(id_))
+        if h not in consent:
+            flag["LEGADO_SEM_CONSENTIMENTO"]+=1
+        elif consent[h]=="REVOGADO" and status in ATIVOS:
+            flag["LEGADO_ATIVO_COM_OPTOUT"]+=1
         legacy[ident]=(k,status,pid)
         by_day[k].append(ident)
         if pid: providers[pid].append(ident)
@@ -77,6 +81,10 @@ def auditar_integridade_envios(db: sqlite3.Connection) -> dict:
         "SELECT idempotency_key,edicao,destinatario_hmac,estado,provider_message_id FROM nivon_envios"):
         counts["whatsapp"]+=1
         k=(day,h); ident=("WHATSAPP",chave)
+        if h not in consent:
+            flag["LEGADO_SEM_CONSENTIMENTO"]+=1
+        elif consent[h]=="REVOGADO" and status in WHATSAPP_POS:
+            flag["LEGADO_ATIVO_COM_OPTOUT"]+=1
         legacy[ident]=(k,status,pid)
         by_day[k].append(ident)
         if pid: providers[pid].append(ident)
