@@ -87,6 +87,22 @@ class TestPainelDueto(unittest.TestCase):
         self.assertIn("Dueto de Desenvolvimento", output.read_text(encoding="utf-8"))
         self.assertTrue(output.is_file())
 
+    def test_live_panel_refresh_is_bounded_and_does_not_call_models(self):
+        from nivon import dueto_painel
+        output = self.root / "live.html"
+        with patch.object(dueto_painel, "night_status", return_value=self.night), \
+             patch.object(dueto_painel.time, "monotonic", side_effect=[0, 1, 62]), \
+             patch.object(dueto_painel.time, "sleep") as sleep:
+            result = dueto_painel.watch(db=self.database, output=output,
+                                       interval=2, minutes=1)
+        self.assertEqual(result["updates"], 2)
+        self.assertEqual(sleep.call_count, 1)
+        self.assertIn('http-equiv="refresh"', output.read_text(encoding="utf-8"))
+        with self.assertRaises(ValueError):
+            dueto_painel.watch(db=self.database, output=output, interval=0)
+        with self.assertRaises(ValueError):
+            dueto_painel.watch(db=self.database, output=output, minutes=1000)
+
     def test_no_synthetic_tokens_masquerading_as_measured(self):
         seed(self.db, [{
             "id": "metric", "title": "Medir consumo real",
