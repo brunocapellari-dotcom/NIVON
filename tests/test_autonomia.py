@@ -65,6 +65,8 @@ class TestAutonomia(unittest.TestCase):
             with patch.object(autonomia, "preflight"), \
                  patch.object(autonomia, "default_db", return_value=dbpath), \
                  patch.object(autonomia, "HOME", Path(tmp)), \
+                 patch.object(autonomia, "refresh_plan", return_value={"added": 0}), \
+                 patch.object(autonomia, "get_issues", return_value=([], None)), \
                  patch.object(autonomia, "do_task", side_effect=lambda agent,task,**kwargs:
                               ("done", f"{agent}: local fake")):
                 result = autonomia.run(max_tasks=2, minutes=2, per_task=2)
@@ -85,6 +87,8 @@ class TestAutonomia(unittest.TestCase):
             with patch.object(autonomia, "preflight"), \
                  patch.object(autonomia, "default_db", return_value=dbpath), \
                  patch.object(autonomia, "HOME", Path(tmp)), \
+                 patch.object(autonomia, "refresh_plan", return_value={"added": 0}), \
+                 patch.object(autonomia, "get_issues", return_value=([], None)), \
                  patch.object(autonomia, "do_task", side_effect=fake):
                 result = autonomia.run(max_tasks=2, minutes=2, per_task=2)
             self.assertEqual(result["counts"]["running"], 0)
