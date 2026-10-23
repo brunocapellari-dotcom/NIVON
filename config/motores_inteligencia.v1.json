@@ -613,7 +613,12 @@
         "nivon.historico_vintages:normalizar_edicao",
         "nivon.confronto_janelas_fisicas:confrontar_chuva_janelas_equivalentes",
         "nivon.analogos_historicos:encontrar_anos_analogos",
-        "nivon.inspecao_roni_offline:inspecionar_amostra_roni_offline"
+        "nivon.inspecao_roni_offline:inspecionar_amostra_roni_offline",
+        "nivon.roni_store:abrir_arquivo_roni",
+        "nivon.roni_store:executar_lote_roni",
+        "nivon.roni_store:consultar_arquivo_roni",
+        "nivon.roni_store:panorama_local_roni",
+        "nivon.roni_cli:executar_manifesto_roni"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
