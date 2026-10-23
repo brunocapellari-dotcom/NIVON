@@ -145,7 +145,8 @@ def _checar_semantica_extrato(*, bruto, especie, periodo):
             continue
         nome_campo = mapa["dimensoes"][dim]
         real = cabecalho.get(nome_campo)
-        if not isinstance(real, str) or rotulo not in sem_acentos(real):
+        if not isinstance(real, str) or sem_acentos(real) not in (
+                rotulo, rotulo + " (codigo)"):
             raise DadoInvalido("header de dimensao diverge do mapa observado")
     for linha in doc[1:]:
         if not isinstance(linha, dict):
