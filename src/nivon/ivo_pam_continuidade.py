@@ -15,6 +15,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import quote
 
+from .ivo_pam_qualidade import auditar_operacao_pam
 from .ivo_pam_semantica import conferir_semantica_pam_1612
 from .sidra_pam import planejar_pam_1612
 
@@ -110,6 +111,7 @@ def _falhas_comprovadas(resultado, total):
 
 def planejar_continuidade_pam(
     *, db: sqlite3.Connection, tarefas: list[dict], corte: datetime,
+    raiz: str | Path,
     idade_maxima_dias: int = 7, resultado_anterior: dict | None = None,
 ) -> dict:
     """Retorna recortes vencidos, falhos, novos e alertas de revisão observada.
@@ -124,7 +126,17 @@ def planejar_continuidade_pam(
     data = _utc(corte)
     plans = _tarefas_validas(tarefas)
     retry = _falhas_comprovadas(resultado_anterior, len(plans))
+    if not isinstance(raiz, (str, Path)):
+        raise ErroContinuidadePAM("raiz de quarentena necessaria")
     db.row_factory = sqlite3.Row
+    # Auditoria integral ANTES de calcular alertas. Sem a cadeia SQL,
+    # recibos e bytes verificados, o plano operacional nao e confiavel.
+    try:
+        check = auditar_operacao_pam(db=db, raiz=raiz, max_vintages=3000)
+    except (ValueError, TypeError, OSError, sqlite3.Error, KeyError) as exc:
+        raise ErroContinuidadePAM("integridade operacional indisponivel") from exc
+    if check.get("integridade_local_aprovada") is not True:
+        raise ErroContinuidadePAM("staging e quarentena divergentes")
     itens = []
     alertas = []
     for index, p in enumerate(plans):
@@ -203,6 +215,7 @@ def planejar_continuidade_pam(
         "alertas": len(alertas),
         "requisicoes_externas_executadas": 0,
         "escrita_no_sqlite": False,
+        "integridade_local_verificada": True,
         "homologacao_de_fonte": False,
         "autoriza_coleta": False,
         "autoriza_treinamento": False,
@@ -217,6 +230,7 @@ def main(argv=None):
         description="Plano PAM incremental sem rede, com falhas e revisoes"
     )
     parser.add_argument("--db", type=Path, required=True)
+    parser.add_argument("--acervo", type=Path, required=True)
     parser.add_argument("--tarefas", type=Path, required=True)
     parser.add_argument("--saida", type=Path, required=True)
     parser.add_argument("--corte", required=True)
@@ -240,6 +254,7 @@ def main(argv=None):
             db.execute("PRAGMA query_only=ON")
             result = planejar_continuidade_pam(
                 db=db, tarefas=tasks, corte=_utc(args.corte),
+                raiz=args.acervo,
                 idade_maxima_dias=args.idade_dias, resultado_anterior=previous,
             )
         raw = (json.dumps(result, ensure_ascii=False, sort_keys=True,
