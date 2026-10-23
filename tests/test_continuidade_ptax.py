@@ -152,8 +152,15 @@ class TestContinuidadePTAX(unittest.TestCase):
 
     def test_backup_recusa_transacao_aberta(self):
         self.armazenar()
-        with self.assertRaisesRegex(ErroContinuidadePTAX,"transação aberta"):
-            criar_pacote_backup_ptax(self.db)
+        # savepoint_atomico confirma sua própria operação, então abrir
+        # explicitamente uma transação externa em curso.
+        self.db.execute("SAVEPOINT transacao_externa")
+        try:
+            with self.assertRaisesRegex(ErroContinuidadePTAX,"transação aberta"):
+                criar_pacote_backup_ptax(self.db)
+        finally:
+            self.db.execute("ROLLBACK TO SAVEPOINT transacao_externa")
+            self.db.execute("RELEASE SAVEPOINT transacao_externa")
 
     def test_integridade_detecta_blobs_orfaos(self):
         self.armazenar()
