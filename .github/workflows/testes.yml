@@ -56,6 +56,14 @@ jobs:
             --output evidencias/ci-e2e \
             --source-sha "$GITHUB_SHA" \
             --run-id "$GITHUB_RUN_ID"
+          python -m nivon.auditoria_artefatos_pacotes \
+            --root . \
+            --lock evidencias/ci-e2e/requirements-sinteticos.lock \
+            --report evidencias/ci-e2e/pip-audit-sintetico.json \
+            --metadata evidencias/ci-e2e/metadata-sinteticos.json \
+            --wheelhouse evidencias/ci-e2e/wheelhouse \
+            > evidencias/ci-e2e/resultado_cli_auditoria.json
+          python -c 'import json; r=json.load(open("evidencias/ci-e2e/resultado_cli_auditoria.json")); assert r["wheels_hash_verified"] == 2 and r["approved_for_production"] is False and r["approved_for_install"] is False'
           python -m zipfile -t evidencias/ci-e2e/proveniencia_sintetica.zip
           cd evidencias/ci-e2e
           sha256sum -c sha256sums.txt
