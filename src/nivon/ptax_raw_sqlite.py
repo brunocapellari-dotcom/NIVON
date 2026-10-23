@@ -16,6 +16,7 @@ from .ptax_odata_bruta_mercados import verificar_ptax_odata_bruta
 from .qualidade_mercados import _momento
 from .registro_snapshots import registrar_snapshot
 from .transacoes_sqlite import savepoint_atomico
+from .ptax_coexistencia import identificar_schema_snapshot_ptax
 
 
 class ErroRawPTAX(ValueError):
@@ -97,10 +98,15 @@ def guardar_raw_ptax(
                       separators=(",", ":"))
     preparar_tabelas_raw_ptax(db)
     with savepoint_atomico(db):
+        coexistencia = identificar_schema_snapshot_ptax(
+            db, catalogo=catalogo, sha256=digest, tamanho=len(raw),
+            tipo=tipo, evidencia_direitos=evidencia_direitos,
+            payload=raw, plano=plano, coletado_em=coleta,
+        )
         snapshot = registrar_snapshot(
             db, catalogo, dataset_id="BCB_PTAX", sha256=digest,
             tamanho=len(raw), mime="application/json",
-            schema_versao="PTAX_ODATA_RAW_V1", coletado_em=coleta,
+            schema_versao=coexistencia["schema_versao"], coletado_em=coleta,
             tipo=tipo, autorizacoes=autorizacoes,
             evidencia_direitos=evidencia_direitos,
         )
@@ -144,6 +150,8 @@ def guardar_raw_ptax(
         "boletins": prova["boletins_distintos"],
         "nova_captura": antes is None,
         "nova_versao_snapshot": snapshot["nova_versao"],
+        "adotou_snapshot_legado": coexistencia["adotou_snapshot_legado"],
+        "schema_snapshot_preservado": coexistencia["schema_versao"],
         "raw_preservado": True, "publicavel": False,
     }
 
@@ -161,30 +169,62 @@ def consultar_raw_ptax_asof(
     instante = _momento(corte, "corte").isoformat()
     preparar_tabelas_raw_ptax(db)
     linha = db.execute(
-        "SELECT c.sha256, c.coletado_em, c.consulta_url, c.tipo, c.headers_json, "
-        "b.dados FROM nivon_ptax_raw_capturas c "
+        "SELECT c.sha256, c.coletado_em, c.consulta_url, c.tipo, "
+        "c.headers_json, b.dados, s.schema_versao, s.id "
+        "FROM nivon_ptax_raw_capturas c "
         "JOIN nivon_ptax_raw_blobs b ON b.sha256=c.sha256 "
+        "JOIN nivon_snapshots s ON s.id=c.snapshot_id "
+        "JOIN nivon_coletas v ON v.snapshot_id=s.id "
+        "AND v.coletado_utc=c.coletado_em "
         "WHERE c.coletado_em<=? AND c.moeda=? "
+        "AND s.dataset_id='BCB_PTAX' AND s.sha256=c.sha256 "
+        "AND s.tipo=c.tipo "
+        "AND s.schema_versao IN ('PTAX_ODATA_RAW_V1','PTAX_ODATA_1') "
+        "AND ((c.tipo='SINTETICO' AND "
+        "c.origem_execucao='TRANSPORTE_INJETADO_SINTETICO') "
+        "OR (c.tipo='REAL_AUTORIZADO' "
+        "AND c.origem_execucao='HTTP_HTTPS_BCB_REAL_NAO_HOMOLOGADO' "
+        "AND s.evidencia_direitos IS NOT NULL)) "
         "AND (?=1 OR c.tipo='REAL_AUTORIZADO') "
         "ORDER BY c.coletado_em DESC,c.id DESC LIMIT 1",
         (instante, moeda, int(incluir_sinteticos)),
     ).fetchone()
     if linha is None:
         return {"status": "SEM_RAW_PTAX_ATE_CORTE", "publicavel": False}
-    digest, coleta, url, tipo, headers, raw = linha
-    if sha256(raw).hexdigest() != digest:
+    digest, coleta, url, tipo, headers, raw, schema, snapshot_id = linha
+    if type(raw) is not bytes or sha256(raw).hexdigest() != digest:
         raise ErroRawPTAX("arquivo bruto persistido foi adulterado")
     from .ptax_odata_bruta_mercados import _consulta
-    _consulta(url, moeda)
-    validado = verificar_ptax_odata_bruta(
-        raw, consulta_url=url, moeda=moeda, coletado_em=coleta,
-        as_of=instante, raw_sha256_esperado=digest,
-    )
+    from .ptax_plano import planejar_consultas_ptax
+    try:
+        start, end = _consulta(url, moeda)
+        if schema == "PTAX_ODATA_1":
+            from .ptax_coexistencia import conferir_observacoes_legadas
+            plano = planejar_consultas_ptax(
+                moeda=moeda, inicio=start.isoformat(), fim=end.isoformat(),
+                dias_janela=(end-start).days+1,
+            )[0]
+            conferir_observacoes_legadas(
+                db, snapshot_id=snapshot_id, payload=raw,
+                plano=plano, coletado_em=coleta,
+            )
+        validado = verificar_ptax_odata_bruta(
+            raw, consulta_url=url, moeda=moeda, coletado_em=coleta,
+            as_of=instante, raw_sha256_esperado=digest,
+        )
+        cabecalhos = json.loads(headers)
+        if not isinstance(cabecalhos, dict) or set(cabecalhos) != {
+            "content-type", "date", "etag", "last-modified", "content-length"
+        }:
+            raise ErroRawPTAX("cabeçalhos persistidos inválidos")
+    except (TypeError, ValueError, sqlite3.Error, IndexError) as exc:
+        raise ErroRawPTAX("integridade do snapshot RAW PTAX comprometida") from exc
     return {
         "status": "RAW_PTAX_ASOF_RECONFERIDO_LOCAL",
         "sha256": digest, "coleta": coleta,
         "tipo": tipo, "boletins": validado["boletins"],
-        "headers": json.loads(headers),
+        "headers": cabecalhos,
+        "schema_snapshot_preservado": schema,
         "apto_backtest_por_publicacao": False,
         "publicavel": False,
     }

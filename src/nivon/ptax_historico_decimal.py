@@ -56,7 +56,8 @@ def selecionar_ptax_decimal_asof(
     # Leitura nunca cria tabela (inclusive quando o banco está vazio).
     try:
         rows = db.execute(
-            "SELECT c.sha256, c.coletado_em, c.consulta_url, c.tipo, b.dados "
+            "SELECT c.sha256, c.coletado_em, c.consulta_url, c.tipo, b.dados, "
+            "s.schema_versao, s.id "
             "FROM nivon_ptax_raw_capturas c "
             "JOIN nivon_ptax_raw_blobs b ON b.sha256=c.sha256 "
             "JOIN nivon_snapshots s ON s.id=c.snapshot_id "
@@ -64,7 +65,7 @@ def selecionar_ptax_decimal_asof(
             "AND v.coletado_utc=c.coletado_em "
             "WHERE c.coletado_em<=? AND c.moeda=? "
             "AND s.dataset_id='BCB_PTAX' AND s.sha256=c.sha256 "
-            "AND s.schema_versao='PTAX_ODATA_RAW_V1' "
+            "AND s.schema_versao IN ('PTAX_ODATA_RAW_V1','PTAX_ODATA_1') "
             "AND s.tipo=c.tipo "
             "AND ((c.tipo='SINTETICO' "
             "AND c.origem_execucao='TRANSPORTE_INJETADO_SINTETICO') "
@@ -84,9 +85,27 @@ def selecionar_ptax_decimal_asof(
 
     boletins = {}
     lidos = 0
-    for digest, coleta, url, tipo, raw in rows:
+    for digest, coleta, url, tipo, raw, schema, snapshot_id in rows:
         if type(raw) is not bytes or sha256(raw).hexdigest() != digest:
             raise ErroHistoricoPTAX("bytes originais divergentes do ledger")
+        if schema == "PTAX_ODATA_1":
+            # A adoção do raw não prova, por si só, que a tabela legada
+            # permaneceu íntegra após a gravação; reconferir a cada leitura.
+            from .ptax_coexistencia import conferir_observacoes_legadas
+            from .ptax_plano import planejar_consultas_ptax
+            from .ptax_odata_bruta_mercados import _consulta
+            try:
+                start, end = _consulta(url, moeda)
+                plano = planejar_consultas_ptax(
+                    moeda=moeda, inicio=start.isoformat(), fim=end.isoformat(),
+                    dias_janela=(end-start).days+1,
+                )[0]
+                conferir_observacoes_legadas(
+                    db, snapshot_id=snapshot_id, payload=raw,
+                    plano=plano, coletado_em=coleta,
+                )
+            except (TypeError, ValueError, sqlite3.Error, IndexError) as exc:
+                raise ErroHistoricoPTAX("snapshot PTAX legado divergente do RAW") from exc
         try:
             resultado = verificar_ptax_odata_bruta(
                 raw, consulta_url=url, moeda=moeda, coletado_em=coleta,
