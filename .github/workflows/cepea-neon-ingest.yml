@@ -6,11 +6,12 @@ on:
       - '.github/workflows/cepea-neon-ingest.yml'
   workflow_dispatch:
   schedule:
-    # Dias uteis, apos horario de fechamento do mercado brasileiro.
+    # Soja 23:00 UTC (19h MT), milho 23:45 UTC (19h45 MT), dias uteis.
+    # Depois do horario indicativo de fechamento CEPEA; nao presume dado novo.
     # Rotina operacional isolada da PR; checkout em commit imutável e homologado.
-    - cron: '30 21 * * 1-5'
+    - cron: '0 23 * * 1-5'
     # Milho separado duas horas depois para reduzir carga e isolar falhas.
-    - cron: '30 23 * * 1-5'
+    - cron: '45 23 * * 1-5'
 permissions:
   contents: read
   id-token: write
@@ -34,7 +35,7 @@ jobs:
       - name: CEPEA fonte original, validar e gravar sob OIDC
         env:
           NIVON_CEPEA_INGEST_URL: https://br-twilight-cell-b77ukd6x-cepeaingest.compute.c-13.us-east-1.aws.neon.tech/ingest
-          NIVON_CEPEA_PRODUTO: ${{ github.event.schedule == '30 23 * * 1-5' && 'MILHO' || 'SOJA' }}
+          NIVON_CEPEA_PRODUTO: ${{ github.event.schedule == '45 23 * * 1-5' && 'MILHO' || 'SOJA' }}
         run: |
           python - <<'PY'
           import json, os, time
@@ -96,7 +97,7 @@ jobs:
         continue-on-error: true
         env:
           NIVON_CEPEA_INGEST_URL: https://br-twilight-cell-b77ukd6x-cepeaingest.compute.c-13.us-east-1.aws.neon.tech/ingest
-          NIVON_CEPEA_PRODUTO: ${{ github.event.schedule == '30 23 * * 1-5' && 'MILHO' || 'SOJA' }}
+          NIVON_CEPEA_PRODUTO: ${{ github.event.schedule == '45 23 * * 1-5' && 'MILHO' || 'SOJA' }}
         run: |
           python - <<'PY'
           import json,os
