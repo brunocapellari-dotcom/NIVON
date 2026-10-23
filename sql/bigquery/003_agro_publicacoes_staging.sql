@@ -25,5 +25,6 @@ CREATE TABLE IF NOT EXISTS `${PROJECT_ID}.${DATASET_ID}.agro_publicacoes_staging
 PARTITION BY DATE(data_coleta)
 CLUSTER BY dataset_id, identidade, snapshot_id
 OPTIONS (
+  require_partition_filter = TRUE,
   description = 'NIVON: observacoes IMEA/CONAB QUARANTINED, sem referencia verdadeira; nao promover ao dado canonico'
 );
