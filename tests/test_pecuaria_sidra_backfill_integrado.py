@@ -162,5 +162,66 @@ class TestBackfillSidra(unittest.TestCase):
         self.assertFalse(self.banco.exists())
 
 
+
+    def test_revisao_registrada_em_datas_diferentes_so_afeta_corte_posterior(self):
+        class PrimeiraColeta(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return cls(2026,10,1,10,0,tzinfo=tz)
+        class SegundaColeta(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return cls(2026,10,23,10,0,tzinfo=tz)
+        with patch("nivon.pecuaria_sidra_quarentena.datetime", PrimeiraColeta):
+            a=self.executar(banco=self.banco,gravar=True)
+        def revisado(*,url,timeout,limite):
+            x=fake_transport(url=url,timeout=timeout,limite=limite)
+            rows=json.loads(x["corpo"])
+            for row in rows[1:]:
+                if row["D3C"]=="284":
+                    row["V"]="115"
+            x["corpo"]=json.dumps(rows,ensure_ascii=False).encode()
+            return x
+        with patch("nivon.pecuaria_sidra_quarentena.datetime", SegundaColeta):
+            b=self.executar(banco=self.banco,gravar=True,
+                            transporte=revisado)
+        self.assertNotEqual(a["ids_capturas"],b["ids_capturas"])
+        original=consultar_backfill_quarentena(
+            banco=self.banco,especie="BOVINO",periodos=["202502"],
+            corte_asof="2026-10-02T00:00:00+00:00")
+        atualizado=consultar_backfill_quarentena(
+            banco=self.banco,especie="BOVINO",periodos=["202502"],
+            corte_asof="2026-10-24T00:00:00+00:00")
+        hashes_original={x["sha256_bruto"] for x in original["capturas_conhecidas_no_corte"]}
+        hashes_atual={x["sha256_bruto"] for x in atualizado["capturas_conhecidas_no_corte"]}
+        self.assertEqual(len(hashes_original),2)
+        self.assertEqual(len(hashes_atual),2)
+        self.assertFalse(hashes_original & hashes_atual)
+        self.assertFalse(original["publicacao_historica_conhecida"])
+        self.assertFalse(atualizado["publicacao_permitida"])
+
+    def test_cli_consulta_restrita_sem_rede_ou_escrita(self):
+        from io import StringIO
+        from contextlib import redirect_stdout, redirect_stderr
+        from nivon.pecuaria_sidra_backfill import main
+        self.executar(banco=self.banco,gravar=True)
+        out=StringIO()
+        with redirect_stdout(out):
+            rc=main(["--periodo","202502","--periodo","202601",
+                     "--consultar","--banco",str(self.banco),
+                     "--especie","SUINO","--corte",
+                     "2026-10-24T00:00:00+00:00"])
+        self.assertEqual(rc,0)
+        r=json.loads(out.getvalue())
+        self.assertEqual(len(r["capturas_conhecidas_no_corte"]),4)
+        self.assertFalse(r["publicacao_permitida"])
+        error=StringIO()
+        with redirect_stderr(error):
+            rc=main(["--periodo","202502","--consultar","--rede",
+                     "--banco",str(self.banco),"--especie","SUINO",
+                     "--corte","2026-10-24T00:00:00+00:00"])
+        self.assertEqual(rc,2)
+        self.assertEqual(json.loads(error.getvalue())["status"],"BLOQUEADO")
+
 if __name__=="__main__":
     unittest.main()
