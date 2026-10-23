@@ -3,10 +3,6 @@ on:
   pull_request:
     paths:
       - '.github/workflows/nivon-antt-backfill-2006-2021.yml'
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/nivon-antt-backfill-2006-2021.yml'
   workflow_dispatch:
     inputs:
       confirmar_execucao_unica:
@@ -47,9 +43,8 @@ jobs:
     needs: testes-antes-da-carga
     if: >-
       github.ref == 'refs/heads/main' &&
-      (github.event_name == 'push' ||
-      (github.event_name == 'workflow_dispatch' &&
-      inputs.confirmar_execucao_unica == true))
+      github.event_name == 'workflow_dispatch' &&
+      inputs.confirmar_execucao_unica == true
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
