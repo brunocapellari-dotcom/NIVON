@@ -79,7 +79,7 @@ class IntegracaoMaritima(unittest.TestCase):
     def test_gpv_importa_arquivo_autorizado_no_historico(self):
         from nivon.maritimo_pipeline import processar_gpv
         repo=HistoricoMaritimo()
-        csv_content="Navio,IMO,Status,BERÇO,Produto,Toneladas\\nNAVIO SIMULADO,1234567,Esperado,1,Minério,1200"
+        csv_content="Navio,IMO,Status,BERÇO,Produto,Toneladas\nNAVIO SIMULADO,1234567,Esperado,1,Minério,1200"
         result=processar_gpv(csv_content,repo,acesso_autorizado=True,coletado_em=NOW)
         self.assertEqual(result["revisoes_novas"],1)
         self.assertEqual(len(repo.atuais("ponta_madeira")),1)

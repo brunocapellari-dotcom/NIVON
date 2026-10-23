@@ -297,8 +297,8 @@ def normalizar_eventos_ais_nivon(eventos):
             continue
         if not (-90 <= lat <= 90 and -180 <= lon <= 180):
             continue
-        if not (re.fullmatch(r"\\d{7}",str(record.get("imo") or "")) or
-                re.fullmatch(r"\\d{9}",str(record.get("mmsi") or ""))):
+        if not (re.fullmatch(r"\d{7}",str(record.get("imo") or "")) or
+                re.fullmatch(r"\d{9}",str(record.get("mmsi") or ""))):
             continue
         normalized.append(record)
     return normalized
