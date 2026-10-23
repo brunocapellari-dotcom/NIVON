@@ -206,7 +206,7 @@ def importar_ciclo_medicoes(db, *, raw_dir, edicoes):
         if origin is not None:
             if (not isinstance(origin,dict) or
                 set(origin)!={"tipo","parent_sha256","membro","membro_sha256",
-                             "pai_raw_arquivado_no_acervo",
+                             "arquivar_zip_pai_obrigatorio",
                              "integridade_zip_externa_revalidada",
                              "arquivo_zip_local"} or
                 origin["tipo"]!="ZIP_INMET_ANUAL" or
@@ -214,7 +214,7 @@ def importar_ciclo_medicoes(db, *, raw_dir, edicoes):
                 not isinstance(origin["parent_sha256"],str) or
                 not _HASH.fullmatch(origin["parent_sha256"]) or
                 origin["membro_sha256"]!=e["sha256"] or
-                origin["pai_raw_arquivado_no_acervo"] is not True or
+                origin["arquivar_zip_pai_obrigatorio"] is not True or
                 origin["integridade_zip_externa_revalidada"] is not True or
                 not isinstance(origin["membro"],str) or
                 not origin["membro"].endswith(".csv") or
