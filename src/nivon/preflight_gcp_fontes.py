@@ -45,7 +45,10 @@ def verificar_nuvem(*, projeto, dataset, bucket, criar_tabela=False,
     bq=client_bq if client_bq is not None else bigquery.Client(project=projeto)
     gcs=client_storage if client_storage is not None else storage.Client(project=projeto)
     # Preflight somente: projeto, dataset e bucket devem ter sido provisionados.
-    bq.get_dataset(f"{projeto}.{dataset}")
+    destino_dataset=bq.get_dataset(f"{projeto}.{dataset}")
+    if (str(destino_dataset.location or "").lower()!="southamerica-east1"
+            or destino_dataset.project!=projeto or destino_dataset.dataset_id!=dataset):
+        raise ErroCargaBigQuery("dataset fora da regiao/destino NIVON")
     if not gcs.bucket(bucket).exists(client=gcs):
         raise ErroCargaBigQuery("bucket GCS nao existente/sem permissao")
     try:
@@ -63,6 +66,7 @@ def verificar_nuvem(*, projeto, dataset, bucket, criar_tabela=False,
         tabela.time_partitioning=bigquery.TimePartitioning(
             type_=bigquery.TimePartitioningType.DAY,field="data_referencia")
         tabela.clustering_fields=["dataset_id","identidade","fingerprint"]
+        tabela.require_partition_filter=True
         tabela.description="NIVON: observacoes versionadas com origem RAW no GCS, nenhuma publicacao automatica"
         tabela=bq.create_table(tabela,exists_ok=True)
         criado=True
@@ -71,8 +75,11 @@ def verificar_nuvem(*, projeto, dataset, bucket, criar_tabela=False,
     if any(schema.get(nome)!=tipo for nome,tipo in campos_necessarios.items()):
         raise ErroCargaBigQuery("schema BigQuery divergente")
     partition=tabela.time_partitioning
-    if partition is None or partition.field!="data_referencia":
-        raise ErroCargaBigQuery("tabela BigQuery sem particionamento")
+    if (partition is None or partition.field!="data_referencia"
+            or getattr(tabela,"require_partition_filter",False) is not True
+            or list(getattr(tabela,"clustering_fields",None) or [])
+               != ["dataset_id","identidade","fingerprint"]):
+        raise ErroCargaBigQuery("tabela BigQuery sem contrato de particionamento e filtro")
     return {**args,"dataset_existe":True,"bucket_existe":True,
         "tabela_criada":criado,"tabela_validada":True,
         "auth":"OIDC_ADC","coleta_executada":False}
