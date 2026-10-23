@@ -35,7 +35,7 @@ class TestFonte(unittest.TestCase):
         c=Transporte({
             (OFFICIAL_PAGE,"GET"):(200,"text/html",b"Estatistico Aquaviario em manutencao"),
             (OFFICIAL_ZIP,"HEAD"):(200,"application/zip",b""),
-            (OFFICIAL_NOTICE,"GET"):(200,"text/html",b"aviso publicado"),
+            (OFFICIAL_NOTICE,"HEAD"):(200,"text/html",b""),
             (SECONDARY_API,"GET"):(200,"application/json",
                 json.dumps({"sha":KNOWN_SECONDARY}).encode()),
         })
@@ -55,6 +55,15 @@ class TestFonte(unittest.TestCase):
         self.assertEqual(sondar(OFFICIAL_PAGE,transport=c)["estado"],"ACESSO_BLOQUEADO")
         self.assertEqual(sondar(SECONDARY_API,transport=c)["estado"],"REPLICA_NOVA_REVISAO_AVALIAR")
         self.assertEqual(len(c.calls),2)
+
+    def test_redirecionamento_para_aviso_institucional(self):
+        redirect = HTTPError(OFFICIAL_ZIP,301,"Moved",
+                             {"Location":OFFICIAL_NOTICE},None)
+        c=Transporte({(OFFICIAL_ZIP,"HEAD"):redirect})
+        self.assertEqual(sondar(OFFICIAL_ZIP,metodo="HEAD",
+                              transport=c)["estado"],
+                         "REDIRECIONAMENTO_PARA_AVISO_OFICIAL")
+        self.assertEqual(len(c.calls),1)
 
     def test_url_fora_lista_nega_antes_da_rede(self):
         with self.assertRaises(ValueError):
