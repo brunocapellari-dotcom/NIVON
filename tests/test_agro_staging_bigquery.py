@@ -66,7 +66,8 @@ class FakeBQ:
         assert ref=="nivon-data.nivon_raw.agro_publicacoes_staging"
         return types.SimpleNamespace(
             schema=[types.SimpleNamespace(name=k,field_type=v) for k,v in TIPOS.items()],
-            time_partitioning=types.SimpleNamespace(field="data_coleta"))
+            time_partitioning=types.SimpleNamespace(field="data_coleta"),
+            require_partition_filter=True)
     def load_table_from_file(self,fp,stage,job_config):
         assert "_agro_stage_" in stage
         self.lines=len(fp.read().splitlines())
