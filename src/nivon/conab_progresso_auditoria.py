@@ -79,7 +79,7 @@ def auditar_progresso_conab_drive(*, normalizado: dict, limite_alertas: int=40) 
     if normalizado.get("data_min")!=first or normalizado.get("data_max")!=last:
         raise ErroAuditoriaProgresso("extremos temporais incompatíveis com dados")
     alerts=[]
-    descidas=grandes=hiatos=0
+    descidas=grandes=hiatos=eventos=0
     semanas_por_grupo={}
     for key, values in sorted(groups.items()):
         values.sort(key=lambda d:d[0])
@@ -96,8 +96,10 @@ def auditar_progresso_conab_drive(*, normalizado: dict, limite_alertas: int=40) 
             if change<0:
                 descidas+=1
                 reasons.append("PERCENTUAL_MENOR_SEM_SAFRA_IDENTIFICADA")
-                if change<=Decimal("-0.25"):
+                if change<Decimal("-0.25"):
                     grandes+=1
+            if reasons:
+                eventos+=1
             if reasons and len(alerts)<limite_alertas:
                 alerts.append({
                     "uf":key[0],"operacao":key[1],"cultura_segmento":key[2],
@@ -125,7 +127,7 @@ def auditar_progresso_conab_drive(*, normalizado: dict, limite_alertas: int=40) 
         "reducoes_de_fracao_sem_ciclo_validado":descidas,
         "reducoes_de_25pp_ou_mais_sem_ciclo_validado":grandes,
         "eventos_amostrados":alerts,
-        "alertas_limitados":(hiatos+descidas)>len(alerts),
+        "alertas_limitados":eventos>len(alerts),
         "disponibilidade_historica_comprovada":False,
         "safras_ano_ciclo_identificadas":False,
         "habilita_backtest":False,"habilita_treino":False,
