@@ -145,7 +145,7 @@ class DataRealTest(unittest.TestCase):
                     cliente=fake,instante=T)
         self.assertEqual(out["estado"],"NORMALIZED")
         self.assertEqual(out["novas_observacoes"],1)
-        self.assertEqual(len(fake.seen),2)
+        self.assertEqual(len(fake.seen),3)  # 1 discovery + catalog + CSV
         self.assertEqual(out["notas"]["licenca"],"cc-by")
         meta["result"]["resources"][0]["url"]="http://127.0.0.1/private.csv"
         with self.assertRaises(ErroColetor):
