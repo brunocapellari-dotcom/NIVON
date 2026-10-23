@@ -20,7 +20,7 @@ from .conab_indice_progresso import ErroIndiceConab,_url_valida
 _MAX_HTML=2_000_000
 _DOC_RE=re.compile(r'^plantio-e-colheita-\d{2}-\d{2}-a-\d{2}-\d{2}(?:\.xlsx)?$')
 _DATE_RE=re.compile(r'Publicado em\s+(\d{2}/\d{2}/\d{4})\s+\d{1,2}h\d{2}',re.I)
-_SPAN=re.compile(r'^(\d{2})[-/](\d{2})\s+a\s+(\d{2})[-/](\d{2})(?:[-/](\d{2}))?$')
+_SPAN=re.compile(r'^(\d{2})[-/](\d{2})(?:\s+a\s+|-a-)(\d{2})[-/](\d{2})(?:[-/](\d{2}))?$')
 _SCHEMA="""
 CREATE TABLE IF NOT EXISTS conab_anexos_resolvidos(
  pagina_semana TEXT NOT NULL,
