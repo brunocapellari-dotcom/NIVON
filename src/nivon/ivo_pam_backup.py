@@ -204,6 +204,7 @@ def restaurar_backup_pam(
                     or "operacional.sqlite" not in hashes):
                 raise ErroBackupPAM("inventario ZIP divergente")
             chunks = {}
+            tamanho_de_dados = 0
             for name in hashes:
                 expected = hashes[name]
                 if (not isinstance(expected, dict)
@@ -212,6 +213,11 @@ def restaurar_backup_pam(
                         or type(expected.get("bytes")) is not int):
                     raise ErroBackupPAM("checksum ausente")
                 raw = z.read(name)
+                tamanho_de_dados += len(raw)
+                # A margem de 100 KiB acima e reservada EXCLUSIVAMENTE ao
+                # inventario JSON: bytes SQLite + arquivos obedecem a quota.
+                if tamanho_de_dados > max_bytes:
+                    raise ErroBackupPAM("restauracao excede quota de dados")
                 if len(raw) != expected["bytes"] or _hash(raw) != expected["sha256"]:
                     raise ErroBackupPAM("conteudo de backup adulterado")
                 chunks[name] = raw
