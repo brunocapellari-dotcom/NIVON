@@ -140,10 +140,12 @@ def tendencia_preco_fisico(
 def tendencia_frete_anunciado(
     ofertas: Sequence[Mapping], *, origem_ibge: str, destino_ibge: str,
     produto: str, veiculo: str, pedagio: str, as_of: str,
+    descarga_entity_id: str, regime: str,
     janela: int = 6, minimo_lotes_dia: int = 2,
     tolerancia_absoluta: float = 0, tolerancia_relativa: float = 0,
+    incluir_serie_pareada: bool = False,
 ) -> dict:
-    """Tendência de variações PAREADAS por ponto de embarque e transportadora.
+    """Motor R01 canônico #30 + controles comerciais #18; variações PAREADAS.
 
     Não agrega níveis de frete por município/corredor. Compara somente
     identidade econômica presente em TODOS os dias da janela e mesmas
@@ -156,10 +158,15 @@ def tendencia_frete_anunciado(
         raise ErroTendencia("origem e destino iguais")
     produto = _identidade(produto, "produto", tamanho=60)
     veiculo = _identidade(veiculo, "veiculo", tamanho=60)
+    descarga_entity_id = _identidade(descarga_entity_id, "descarga_entity_id", tamanho=150)
+    if regime not in {"PF", "PJ", "NAO_INFORMADO"}:
+        raise ErroTendencia("regime PF/PJ deve ser explícito")
     if pedagio not in PEDAGIO:
         raise ErroTendencia("condição de pedágio precisa ser informada")
     if tolerancia_relativa != 0:
         raise ErroTendencia("limiar relativo de frete exige normalização pareada própria; usar tolerância absoluta em BRL/T")
+    if type(incluir_serie_pareada) is not bool:
+        raise ErroTendencia("incluir_serie_pareada deve ser booleano explícito")
     if type(minimo_lotes_dia) is not int or not 2 <= minimo_lotes_dia <= 100:
         raise ErroTendencia("minimo_lotes_dia fora do intervalo")
     if not isinstance(ofertas, (tuple, list)) or len(ofertas) > 10000:
@@ -179,6 +186,8 @@ def tendencia_frete_anunciado(
             obs.get("produto") != produto,
             obs.get("veiculo") != veiculo,
             obs.get("pedagio") != pedagio,
+            obs.get("descarga_entity_id") != descarga_entity_id,
+            obs.get("regime") != regime,
             obs.get("natureza") != "OFERTA",
             obs.get("unidade") != "BRL/T",
         )):
@@ -270,12 +279,16 @@ def tendencia_frete_anunciado(
         **result, "segmento": "FRETE_ANUNCIADO",
         "origem_ibge": origem_ibge, "destino_ibge": destino_ibge,
         "produto": produto, "veiculo": veiculo, "pedagio": pedagio,
+        "descarga_entity_id": descarga_entity_id, "regime": regime,
+        "escopo_economico": "MESMA_DESCARGA_REGIME_PRODUTO_EQUIPAMENTO_PEDAGIO_BASE",
         "metrica_tendencia": "VARIACAO_PAREADA_POR_ESTABELECIMENTO_TRANSPORTADORA",
         "identidades_comparaveis": [
             {"pickup_entity_id": a, "transportadora_id": b} for a, b in pares
         ],
         "observacoes_brutas": len(ofertas), "reenvios_deduplicados": repetidos,
         "lotes_distintos_total_por_dia": sum(x["identidades_observadas"] for x in coverage),
-        "cobertura_amostral": coverage, "direitos_publicacao_verificados": False,
+        "cobertura_amostral": coverage,
+        **({"serie_pareada": samples} if incluir_serie_pareada else {}),
+        "direitos_publicacao_verificados": False,
         "alerta": "Variação pareada de FRETES ANUNCIADOS; não é média municipal, preço de mercado, contrato, embarque ou volume realizado.",
     }
