@@ -1,5 +1,6 @@
 """R13: prova de frescor, RAW imutável e quarantine para CEPEA/IMEA/CONAB."""
 import json
+import sqlite3
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
@@ -106,6 +107,16 @@ class TestAuditoriaFrescorR13(unittest.TestCase):
         self.assertTrue(z["coleta_recente"])
         self.assertEqual(z["estado"],"REFERENCIA_DEFASADA_OU_FUTURA")
         self.assertFalse(z["publicavel"])
+
+    def test_base_legada_sem_eventos_de_captura_ainda_e_auditavel(self):
+        self.store()
+        with sqlite3.connect(self.db) as con:
+            con.execute("DELETE FROM capturas_fonte")
+        z=self.audit()["datasets"][DATASET]
+        self.assertEqual(z["snapshots"],1)
+        self.assertEqual(z["capturas_verificadas"],0)
+        self.assertTrue(z["raw_sha256_confere"])
+        self.assertEqual(z["estado"],"CANDIDATO_RECENTE_SEM_LICENCA_HOMOLOGADA")
 
     def test_coleta_antiga_e_sinal_lag(self):
         self.store(coletado="2026-10-11T12:00:00+00:00")
