@@ -20,9 +20,18 @@ def conexao_neon():
     return psycopg.connect(dsn, connect_timeout=12, sslmode="require")
 
 
-def _ler_sqlite(caminho, tabela):
+def _ler_sqlite(caminho, tabela, *, opcional=False):
+    if tabela not in {"capturas", "revisoes", "portwatch_diario", "lote_execucoes"}:
+        raise ValueError("tabela nao autorizada")
+    if not Path(caminho).is_file():
+        raise FileNotFoundError("arquivo SQLite de ingestao nao existe")
     with sqlite3.connect(str(caminho)) as con:
         con.row_factory = sqlite3.Row
+        exists = con.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (tabela,)).fetchone()
+        if not exists:
+            if opcional:
+                return []
+            raise ValueError("tabela de historico obrigatoria ausente")
         return [dict(row) for row in con.execute("SELECT * FROM " + tabela)]
 
 
@@ -31,6 +40,7 @@ def sincronizar(destino, banco_lineup, *, banco_portwatch=None):
     fontes = _ler_sqlite(banco_lineup, "capturas")
     escalas = _ler_sqlite(banco_lineup, "revisoes")
     fluxos = _ler_sqlite(banco_portwatch, "portwatch_diario") if banco_portwatch else []
+    execucoes = _ler_sqlite(banco_lineup, "lote_execucoes", opcional=True)
     with destino.transaction():
         for r in fontes:
             destino.execute("""
@@ -53,6 +63,15 @@ def sincronizar(destino, banco_lineup, *, banco_portwatch=None):
             """, (r["fonte"],r["escala"],r["revisao"],r["primeiro_visto"],
                   data.get("natureza","DESCONHECIDO"),data.get("status"),is_public,
                   r["conteudo_json"]))
+        for r in execucoes:
+            destino.execute("""
+                INSERT INTO nivon_maritimo.coleta_execucoes
+                (run_id,fonte,coletado_em,estado,quantidade,revisoes,
+                 captura_sha256,motivo,duracao_ms)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                ON CONFLICT(run_id,fonte) DO NOTHING
+            """, (r["run_id"],r["fonte"],r["coletado_em"],r["estado"],
+                  r["quantidade"],r["revisoes"],r["captura_sha256"],r["motivo"],r["duracao_ms"]))
         for r in fluxos:
             data = json.loads(r["dados_json"])
             if data.get("volume_realizado_t") is not None:
@@ -66,8 +85,11 @@ def sincronizar(destino, banco_lineup, *, banco_portwatch=None):
             """, ("FMI_PORTWATCH",r["passagem"],r["data_referencia"],r["revisao_sha256"],
                   r["coletado_em"],data["transitos_ais"],data.get("volume_transito_estimado_t"),
                   r["dados_json"]))
-    return {"capturas_processadas":len(fontes),"revisoes_processadas":len(escalas),
-            "passagens_processadas":len(fluxos)}
+    report = {"capturas_processadas":len(fontes),"revisoes_processadas":len(escalas),
+              "passagens_processadas":len(fluxos)}
+    if execucoes:
+        report["execucoes_processadas"] = len(execucoes)
+    return report
 
 
 def main(argv=None):

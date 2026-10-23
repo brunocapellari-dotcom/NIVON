@@ -42,5 +42,26 @@ class TestReplicacao(unittest.TestCase):
             self.assertEqual(fake.calls[2][1][5],10)
             self.assertEqual(fake.calls[2][1][6],200)
 
+    def test_lote_sincroniza_estados_sem_divulgar_conteudo(self):
+        from nivon.maritimo_lote import executar_lote
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/"hist.sqlite"
+            repo=HistoricoMaritimo(path)
+            html=("<table><tr><th>Navio</th><th>Berco</th><th>Situacao</th></tr>"
+                  "<tr><td>NAVIO TESTE</td><td>2</td><td>Esperado</td></tr></table>")
+            executar_lote(("suape","santarem_cdp"),repo,
+                coletado_em="2026-10-23T07:00:00-04:00",fornecedor_html=lambda _:html)
+            repo.fechar()
+            fake=FakePg()
+            result=sincronizar(fake,path)
+            self.assertEqual(result["execucoes_processadas"],2)
+            writes=[x for x in fake.calls if "coleta_execucoes" in x[0]]
+            self.assertEqual(len(writes),2)
+            self.assertEqual(writes[0][1][3],"OK")
+            self.assertEqual(writes[1][1][3],"QUARENTENA")
+            self.assertNotIn("NAVIO TESTE", str(writes))
+            with self.assertRaises(FileNotFoundError):
+                sincronizar(FakePg(),Path(tmp)/"nao-existe.sqlite")
+
 if __name__=="__main__":
     unittest.main()
