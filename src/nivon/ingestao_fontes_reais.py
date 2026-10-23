@@ -101,7 +101,7 @@ def gravar_lote(*, banco, diretorio_bruto, dataset_id, origem, raw, tipo,
         raise ErroIngestao("origem insegura")
     if estado not in ("RAW_RECEIVED", "NORMALIZED", "QUARANTINED"):
         raise ErroIngestao("estado invalido")
-    if tipo not in ("text/csv", "application/json", "application/octet-stream", "application/vnd.ms-excel"):
+    if tipo not in ("text/html","text/csv", "application/json", "application/octet-stream", "application/vnd.ms-excel"):
         raise ErroIngestao("MIME nao permitido")
     if not isinstance(registros, (list, tuple)) or len(registros) > 150000:
         raise ErroIngestao("quantidade de observacoes invalida")
@@ -160,10 +160,18 @@ def gravar_lote(*, banco, diretorio_bruto, dataset_id, origem, raw, tipo,
             "estado":estado,"coletado_em":coletado_em,"arquivo_raw":str(target)}
 
 
-def exportar_jsonl(*, banco, destino, dataset_id=None, competencia=None, referencia_inicio=None, referencia_fim=None):
+def exportar_jsonl(*, banco, destino, dataset_id=None, competencia=None,
+                  referencia_inicio=None, referencia_fim=None, snapshot_ids=None):
     """Gera arquivo para estágio BigQuery, sem afirmar carga no BigQuery."""
     if dataset_id is not None:
         _identificador(dataset_id)
+    if snapshot_ids is not None:
+        if (not isinstance(snapshot_ids,(list,tuple,frozenset))
+                or not 1 <= len(snapshot_ids) <= 200
+                or len(set(snapshot_ids)) != len(snapshot_ids)
+                or any(not isinstance(x,str) or
+                       not re.fullmatch(r"[0-9a-f]{64}",x) for x in snapshot_ids)):
+            raise ErroIngestao("snapshot_ids invalidos")
     if competencia is not None and (not isinstance(competencia,str) or len(competencia)>20):
         raise ErroIngestao("competencia fora do contrato")
     for v in (referencia_inicio,referencia_fim):
@@ -178,16 +186,20 @@ def exportar_jsonl(*, banco, destino, dataset_id=None, competencia=None, referen
     path.parent.mkdir(parents=True,exist_ok=True)
     con=_abrir(banco)
     try:
-        rows=con.execute("""SELECT dataset_id,identidade,fingerprint,referencia,
+        sql="""SELECT dataset_id,identidade,fingerprint,referencia,
                     competencia,publicacao,coletado_em,unidade,valor,
                     campos_json,snapshot_id,natureza FROM observacoes
                     WHERE (? IS NULL OR dataset_id=?)
                       AND (? IS NULL OR competencia=?)
                       AND (? IS NULL OR referencia>=?)
-                      AND (? IS NULL OR referencia<=?)
-                    ORDER BY dataset_id,referencia,identidade,fingerprint""",
-                    (dataset_id,dataset_id,competencia,competencia,
-                     referencia_inicio,referencia_inicio,referencia_fim,referencia_fim))
+                      AND (? IS NULL OR referencia<=?)"""
+        parametros=[dataset_id,dataset_id,competencia,competencia,
+                    referencia_inicio,referencia_inicio,referencia_fim,referencia_fim]
+        if snapshot_ids is not None:
+            sql += " AND snapshot_id IN (" + ",".join("?" for _ in snapshot_ids) + ")"
+            parametros.extend(snapshot_ids)
+        sql += " ORDER BY dataset_id,referencia,identidade,fingerprint"
+        rows=con.execute(sql,parametros)
         n=0
         with path.open("w",encoding="utf-8") as fp:
             for x in rows:

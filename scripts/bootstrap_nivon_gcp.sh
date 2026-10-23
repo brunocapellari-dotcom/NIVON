@@ -4,10 +4,10 @@
 set -euo pipefail
 
 PROJECT="nivon-data"
-REGION="us-central1"
+REGION="southamerica-east1"
 POOL="nivon-github"
-PROVIDER="nivon-workflows"
-SA_NAME="nivon-github-loader"
+PROVIDER="github-actions"
+SA_NAME="nivon-coletor-de-dados"
 SA_EMAIL="${SA_NAME}@${PROJECT}.iam.gserviceaccount.com"
 REPO="brunocapellari-dotcom/NIVON"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -19,6 +19,8 @@ PTAX_DIRECT_WORKFLOW="${REPO}/.github/workflows/ptax-bcb-direto-gcp.yml@refs/hea
 command -v gcloud >/dev/null || { echo 'FALTA_GCLOUD'; exit 3; }
 command -v bq >/dev/null || { echo 'FALTA_BQ'; exit 3; }
 
+# A SA e o provider sao os mesmos usados no primeiro lote real da ANTT.
+# Este script so cria novos datasets/tabelas com --aplicar; nao configura WIF.
 # Nada e criado enquanto o projeto/billing nao puderem ser lidos.
 PROJECT_NUMBER="$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')"
 [[ -n "$PROJECT_NUMBER" ]] || { echo 'PROJETO_GCP_NAO_VERIFICADO'; exit 3; }
@@ -38,42 +40,28 @@ gcloud services enable --project "$PROJECT" \
     bigquery.googleapis.com iam.googleapis.com \
     iamcredentials.googleapis.com sts.googleapis.com
 
-if ! gcloud iam service-accounts describe "$SA_EMAIL" --project "$PROJECT" >/dev/null 2>&1; then
-  gcloud iam service-accounts create "$SA_NAME" --project "$PROJECT" \
-      --display-name="NIVON CI BigQuery loader"
-fi
+# A identidade ja foi validada por GitHub Actions com leitura GCS/BigQuery
+# e carga real de ANTT 2026. Nao criar outra SA nem outro WIF no NIVON.
+gcloud iam service-accounts describe "$SA_EMAIL" --project "$PROJECT" >/dev/null 2>&1 ||
+  { echo 'SERVICE_ACCOUNT_EXISTENTE_AUSENTE; revisar IAM, sem criar identidade paralela'; exit 3; }
+gcloud iam workload-identity-pools describe "$POOL" --location=global --project "$PROJECT" >/dev/null 2>&1 ||
+  { echo 'POOL_EXISTENTE_AUSENTE; nao criar outro WIF'; exit 3; }
+EXISTING="$(gcloud iam workload-identity-pools providers describe "$PROVIDER" \
+  --workload-identity-pool="$POOL" --location=global --project="$PROJECT" \
+  --format='value(attributeCondition)')" || {
+    echo 'PROVEDOR_EXISTENTE_AUSENTE; nao criar outro WIF'; exit 3;
+  }
+# Nao alargar a condicao nem conceder novo Workload Identity User.
+# Se a condicao atual nao garante repo+main, exigir revisao humana em IAM.
+[[ "$EXISTING" == *"assertion.repository"* &&
+   "$EXISTING" == *"$REPO"* &&
+   "$EXISTING" == *"assertion.ref"* &&
+   "$EXISTING" == *"refs/heads/main"* ]] ||
+  { echo 'PROVEDOR_EXISTENTE_SEM_ESCOPO_VERIFICAVEL: revisar WIF'; exit 3; }
+
 gcloud projects add-iam-policy-binding "$PROJECT" \
     --member="serviceAccount:$SA_EMAIL" \
     --role="roles/bigquery.jobUser" --quiet >/dev/null
-
-if ! gcloud iam workload-identity-pools describe "$POOL" \
-        --location=global --project "$PROJECT" >/dev/null 2>&1; then
-  gcloud iam workload-identity-pools create "$POOL" \
-      --project "$PROJECT" --location=global \
-      --display-name="NIVON GitHub OIDC"
-fi
-
-CONDITION="assertion.repository=='${REPO}' && assertion.ref=='refs/heads/main' && (assertion.workflow_ref=='${MAIN_WORKFLOW}' || assertion.workflow_ref=='${PTAX_WORKFLOW}' || assertion.workflow_ref=='${ZARC_WORKFLOW}' || assertion.workflow_ref=='${PTAX_DIRECT_WORKFLOW}')"
-if ! gcloud iam workload-identity-pools providers describe "$PROVIDER" \
-        --workload-identity-pool="$POOL" --project="$PROJECT" \
-        --location=global >/dev/null 2>&1; then
-  gcloud iam workload-identity-pools providers create-oidc "$PROVIDER" \
-      --project="$PROJECT" --location=global \
-      --workload-identity-pool="$POOL" \
-      --issuer-uri="https://token.actions.githubusercontent.com" \
-      --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.ref=assertion.ref,attribute.workflow_ref=assertion.workflow_ref" \
-      --attribute-condition="$CONDITION"
-else
-  EXISTING="$(gcloud iam workload-identity-pools providers describe "$PROVIDER" \
-      --workload-identity-pool="$POOL" --project="$PROJECT" \
-      --location=global --format='value(attributeCondition)')"
-  [[ "$EXISTING" == "$CONDITION" ]] ||
-    { echo 'PROVEDOR_PREEXISTENTE_COM_CONDICAO_DIFERENTE: revisar antes de conceder IAM'; exit 3; }
-fi
-gcloud iam service-accounts add-iam-policy-binding "$SA_EMAIL" \
-    --project="$PROJECT" \
-    --member="principalSet://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL}/attribute.repository/${REPO}" \
-    --role="roles/iam.workloadIdentityUser" --quiet >/dev/null
 
 for dataset in nivon_stage nivon_core; do
   if ! bq --project_id="$PROJECT" show --dataset "${PROJECT}:${dataset}" >/dev/null 2>&1; then
@@ -113,7 +101,7 @@ sed "s/\${PROJECT_ID}/${PROJECT}/g" "$ROOT/database/bigquery/nivon_ptax_schema.s
   bq --project_id="$PROJECT" --location="$REGION" query --use_legacy_sql=false
 
 WIF_NAME="projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL}/providers/${PROVIDER}"
-echo "NIVON_GCP_WIF_PROVIDER=$WIF_NAME"
+echo "NIVON_GCP_PROVIDER=$WIF_NAME"
 echo "NIVON_GCP_SERVICE_ACCOUNT=$SA_EMAIL"
 echo 'GCP_DATASETS_PTAX_LEGADO_ZARC_CRIADOS'
 echo 'IMPORTANTE: ainda configurar no GitHub as variaveis acima e revisar limite de faturamento.'

@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from unittest.mock import patch
 
 from nivon.coleta_antt import CATALOGO, _ler_catalogo, catalogo_antt, coletar
 from nivon.resumo_antt import consolidar_staging
@@ -122,6 +123,61 @@ class TestCatalogo(unittest.TestCase):
 
 
 class TestColetor(unittest.TestCase):
+    def test_fallback_csv_oficial_somente_opt_in_com_sha_e_proveniencia(self):
+        class CatalogoHTML(Transporte):
+            def open(self, req, timeout):
+                if req.full_url == CATALOGO:
+                    return Resposta(b"<html>Servico CKAN temporariamente invalido</html>")
+                return super().open(req, timeout)
+        with tempfile.TemporaryDirectory() as pasta:
+            client = CatalogoHTML()
+            with patch("nivon.coleta_antt.time.sleep", return_value=None):
+                with self.assertRaisesRegex(ErroTransporte, "catalogo CKAN invalido"):
+                    coletar(destino=pasta, anos=[2026], habilitar_rede=True,
+                           transporte=client)
+                dados = coletar(destino=pasta, anos=[2026], habilitar_rede=True,
+                               transporte=client,
+                               permitir_url_verificada_contingencia=True)
+            self.assertEqual(dados[0]["descoberta_fonte"],
+                             "URL_OFICIAL_PREVALIDADA_SEM_CKAN_ATUAL")
+            self.assertEqual(dados[0]["estado"], "STAGING_NAO_HOMOLOGADO")
+            self.assertEqual(client.csv_calls, 1)
+            manifest=json.loads(Path(pasta, "manifesto-antt.json").read_text())
+            info=manifest["anos"]["2026"]
+            self.assertEqual(info["descoberta_fonte"],
+                             "URL_OFICIAL_PREVALIDADA_SEM_CKAN_ATUAL")
+            self.assertEqual(info["url"], CSV_URL)
+            self.assertIsNone(info["revision_id"])
+            self.assertEqual(info["registros"], 1)
+            self.assertEqual(len(info["sha256"]), 64)
+
+    def test_fallback_nao_permite_ano_sem_url_oficial_verificada(self):
+        class CatalogoHTML(Transporte):
+            def open(self, req, timeout):
+                if req.full_url == CATALOGO:
+                    return Resposta(b"<html>erro</html>")
+                return super().open(req, timeout)
+        with tempfile.TemporaryDirectory() as pasta:
+            with patch("nivon.coleta_antt.time.sleep", return_value=None):
+                with self.assertRaisesRegex(ErroTransporte, "sem URL/SHA historico validado"):
+                    coletar(destino=pasta, anos=[2035], habilitar_rede=True,
+                           transporte=CatalogoHTML(),
+                           permitir_url_verificada_contingencia=True)
+            self.assertFalse(Path(pasta, "manifesto-antt.json").exists())
+
+    def test_fallback_nunca_contorna_403(self):
+        from urllib.error import HTTPError
+        class SemAcesso(Transporte):
+            def open(self, req, timeout):
+                if req.full_url == CATALOGO:
+                    raise HTTPError(req.full_url,403,"Proibido",{},None)
+                raise AssertionError("nao tentar URL direta se CKAN bloqueado 403")
+        with tempfile.TemporaryDirectory() as pasta:
+            with self.assertRaisesRegex(ErroTransporte, "ANTT_ACESSO_BLOQUEADO"):
+                coletar(destino=pasta,anos=[2026],habilitar_rede=True,
+                       transporte=SemAcesso(),
+                       permitir_url_verificada_contingencia=True)
+
     def test_coleta_incremental_revalidacao_e_revisao(self):
         transport = Transporte()
         inicio = datetime(2026, 10, 22, tzinfo=timezone.utc)

@@ -104,6 +104,31 @@ class ConsultaTemporalTest(unittest.TestCase):
             with self.subTest(invalido=invalido), self.assertRaises(ErroConsultaAnalitica):
                 planejar_consulta(**{**ARGS,**invalido})
 
+    def test_serie_filtrada_no_sql_depois_da_revisao_asof(self):
+        args = {**ARGS,"classe":"FRETE_ANUNCIADO","serie_id":"FRETE_EXEMPLO"}
+        plano=planejar_consulta(**args)
+        sql=plano["sql"]
+        self.assertIn("FROM versoes WHERE posicao = 1 AND JSON_VALUE",sql)
+        self.assertIn("JSON_VALUE(campos, '$.serie_id') = @serie_id",sql)
+        self.assertLess(sql.index("JSON_VALUE(campos"),sql.index("LIMIT @limite"))
+        x=dict(ROW,campos={"classe":"FRETE_ANUNCIADO","serie_id":"FRETE_EXEMPLO"})
+        r,cliente=self.testar(client=Client([x]),classe="FRETE_ANUNCIADO",serie_id="FRETE_EXEMPLO")
+        self.assertEqual(r["quantidade"],1)
+        self.assertEqual(r["serie_id"],"FRETE_EXEMPLO")
+        self.assertEqual(len(cliente.queries[0][1].query_parameters),7)
+        with self.assertRaises(ErroConsultaAnalitica):
+            self.testar(client=Client([ROW]),classe="FRETE_ANUNCIADO",serie_id="FRETE_EXEMPLO")
+
+    def test_escopo_serie_obrigatorio_parametrizado(self):
+        for extra in (
+            {"classe":"FRETE_ANUNCIADO"},
+            {"serie_id":"TESTE"},
+            {"classe":"FRETE_ANUNCIADO","serie_id":"x' OR TRUE --"},
+            {"classe":"FRETE_INDEVIDO","serie_id":"TESTE"},
+        ):
+            with self.subTest(extra=extra),self.assertRaises(ErroConsultaAnalitica):
+                planejar_consulta(**{**ARGS,**extra})
+
     def test_sem_usar_fonte_errada(self):
         falso=dict(ROW,dataset_id="OUTRA_FONTE")
         with self.assertRaises(ErroConsultaAnalitica):

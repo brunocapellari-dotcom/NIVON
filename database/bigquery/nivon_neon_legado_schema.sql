@@ -1,8 +1,8 @@
 -- NIVON: staging de migracao historica do Neon, sem alterar dados de origem.
--- BigQuery na regiao us-central1; codigo principal nunca infere data_referencia a partir de data_publicacao.
+-- BigQuery na regiao southamerica-east1; codigo principal nunca infere data_referencia a partir de data_publicacao.
 -- Executar apos gcloud verificar projeto, faturamento e permissoes.
 CREATE SCHEMA IF NOT EXISTS `nivon-data.nivon_stage`
-OPTIONS(location="us-central1",description="NIVON: rastreabilidade das migracoes e entradas nao canonicas");
+OPTIONS(location="southamerica-east1",description="NIVON: rastreabilidade das migracoes e entradas nao canonicas");
 
 CREATE TABLE IF NOT EXISTS `nivon-data.nivon_stage.neon_legado` (
   id_registro STRING NOT NULL OPTIONS(description="SHA256 identificador logico da linha e vintage"),

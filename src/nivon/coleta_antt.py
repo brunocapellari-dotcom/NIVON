@@ -18,8 +18,9 @@ from urllib.parse import urlsplit
 from urllib.request import Request, build_opener
 
 from .transporte_multimodal import (
-    _SemRedirecionamento, ErroTransporte, interpretar_csv_antt
+    _SemRedirecionamento, ErroTransporte, interpretar_csv_antt, link_antt
 )
+from .antt_historico_verificado import referencia_antt_verificada
 
 CATALOGO = "https://dados.antt.gov.br/api/3/action/package_show?id=438a5184-09db-49a3-88c8-0bad418b4409"
 _CSV = re.compile(r"/dataset/438a5184-09db-49a3-88c8-0bad418b4409/resource/"
@@ -144,7 +145,8 @@ def _manifest(path: Path) -> dict:
 
 
 def coletar(*, destino: str | Path, anos: list[int], habilitar_rede=False,
-            transporte=None, revalidar_dias=7, agora: datetime | None = None) -> list[dict]:
+            transporte=None, revalidar_dias=7, agora: datetime | None = None,
+            permitir_url_verificada_contingencia=False) -> list[dict]:
     if not habilitar_rede:
         raise PermissionError("coleta bloqueada sem --live")
     if type(revalidar_dias) is not int or not 1 <= revalidar_dias <= 365:
@@ -155,7 +157,34 @@ def coletar(*, destino: str | Path, anos: list[int], habilitar_rede=False,
     if agora.tzinfo is None:
         raise ErroTransporte("agora precisa de fuso")
     stamp = agora.astimezone(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-    recursos = catalogo_antt(habilitar_rede=True, transporte=transporte)
+    try:
+        recursos = catalogo_antt(habilitar_rede=True, transporte=transporte)
+        descoberta = "CKAN_LIVE"
+    except ErroTransporte as exc:
+        # Contingencia EXPLICITA e limitada a URLs anuais da ANTT ja verificadas
+        # em execucoes anteriores (2025 e 2026). Nunca ignora HTTP 403/401,
+        # recursos desconhecidos ou divergencias de schema/host. A URL direta
+        # deve retornar CSV de estrutura esperada, validado e hasheado abaixo.
+        recuperaveis = {"catalogo CKAN invalido", "ANTT_FALHA_TRANSITORIA"}
+        if (not permitir_url_verificada_contingencia
+                or str(exc) not in recuperaveis):
+            raise
+        recursos = {}
+        for ano in anos:
+            try:
+                url = link_antt(ano)  # 2025/2026 ja verificadas
+                recursos[ano] = {
+                    "url": url, "id": None, "last_modified": None,
+                    "revision_id": None,
+                }
+            except ErroTransporte:
+                # 2006-2024: URL e SHA preservados do CKAN oficial.
+                # Nao aceita arquivo alterado sem catalogo atualizado.
+                recursos[ano] = {
+                    **referencia_antt_verificada(ano),
+                    "last_modified": None, "revision_id": None,
+                }
+        descoberta = "URL_OFICIAL_PREVALIDADA_SEM_CKAN_ATUAL"
     if any(a not in recursos for a in anos):
         raise ErroTransporte("ano nao publicado no CKAN")
     destino = Path(destino)
@@ -178,17 +207,23 @@ def coletar(*, destino: str | Path, anos: list[int], habilitar_rede=False,
             saida.append({"ano": ano, "estado": "SEM_REVISAO", "registros": prev["registros"]})
             continue
         bruto = _http(recurso["url"], transporte=transporte)
+        sha_real = hashlib.sha256(bruto).hexdigest()
+        sha_anterior = recurso.get("sha_anterior")
+        if descoberta != "CKAN_LIVE" and sha_anterior and sha_real != sha_anterior:
+            raise ErroTransporte("ANTT_SHA_DIVERGENTE_SEM_CKAN_ATUAL")
         linhas, meta = interpretar_csv_antt(bruto, ano=ano, coleta_utc=stamp, fonte_url=recurso["url"])
         jsonl = b"".join((json.dumps(x, ensure_ascii=False, sort_keys=True) + "\n").encode() for x in linhas)
         _atomic(destino / f"antt-od-{ano}.csv", bruto)
         _atomic(destino / f"antt-od-{ano}.jsonl", jsonl)
         manifesto["anos"][str(ano)] = {
-            **recurso, "sha256": hashlib.sha256(bruto).hexdigest(),
+            **recurso, "descoberta_fonte": descoberta,
+            "sha256": sha_real,
             "verificado_utc": stamp, "competencia_maxima": meta.referencia_maxima,
             "registros": meta.registros, "status": "STAGING_NAO_HOMOLOGADO"
         }
         _atomic(path, json.dumps(manifesto, ensure_ascii=False, sort_keys=True, indent=2).encode())
         saida.append({"ano": ano, "estado": "STAGING_NAO_HOMOLOGADO",
+                      "descoberta_fonte": descoberta,
                       "competencia_maxima": meta.referencia_maxima,
                       "registros": meta.registros, "sha256": meta.arquivo_sha256})
     return saida
@@ -200,12 +235,14 @@ def main() -> int:
     p.add_argument("--fim", type=int, default=2026)
     p.add_argument("--destino", required=True)
     p.add_argument("--live", action="store_true")
+    p.add_argument("--usar-url-verificada-contingencia", action="store_true")
     a = p.parse_args()
     if a.inicio > a.fim or a.fim - a.inicio > 30:
         p.error("periodo invalido")
     try:
         resultados = coletar(destino=a.destino, anos=list(range(a.inicio, a.fim + 1)),
-                            habilitar_rede=a.live)
+                            habilitar_rede=a.live,
+                            permitir_url_verificada_contingencia=a.usar_url_verificada_contingencia)
     except (ErroTransporte, PermissionError) as e:
         print(json.dumps({"estado": "NAO_VALIDADO", "erro": str(e)}, ensure_ascii=False))
         return 2

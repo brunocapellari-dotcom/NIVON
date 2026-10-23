@@ -1,0 +1,60 @@
+name: NIVON - Primeiro lote maritimo real GCS + BigQuery
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/maritimo-gcp-primeiro-lote.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: nivon-primeiro-lote-maritimo-gcp
+  cancel-in-progress: false
+
+jobs:
+  piloto-imbituba-e-portwatch:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    env:
+      GOOGLE_CLOUD_PROJECT: ${{ vars.NIVON_BQ_PROJECT }}
+      NIVON_BQ_DATASET: ${{ vars.NIVON_BQ_DATASET }}
+      NIVON_GCS_BUCKET: ${{ vars.NIVON_GCS_BUCKET }}
+      NIVON_MARITIMO_COLETA_HABILITADA: 'true'
+      NIVON_MARITIMO_FONTES: imbituba
+      NIVON_PORTWATCH_COLETA_HABILITADA: 'true'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Verificar projeto, dataset, bucket e modo restrito
+        run: |
+          set -euo pipefail
+          test "$GOOGLE_CLOUD_PROJECT" = "nivon-data" || exit 3
+          test "$NIVON_BQ_DATASET" = "nivon_raw" || exit 3
+          test "$NIVON_GCS_BUCKET" = "nivon-data-raw-2026" || exit 3
+          test "$NIVON_MARITIMO_FONTES" = "imbituba" || exit 3
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ vars.NIVON_BQ_PROJECT }}
+          create_credentials_file: true
+      - name: Instalar coleta e SDKs Google Cloud
+        run: python -m pip install --disable-pip-version-check -e '.[gcp]'
+      - name: Executar Imbituba e quatro passagens PortWatch com persistencia real
+        run: |
+          set -euo pipefail
+          python -m nivon.maritimo_gcp_job
+      - name: Confirmar metadados sem despejar cargas
+        if: always()
+        run: |
+          echo '### NIVON — Primeiro lote marítimo' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Execução limitada a Imbituba e PortWatch; consultar status e objetos via logs protegidos do job.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Nenhum cron nem Cloud Run Job foram criados.' >> "$GITHUB_STEP_SUMMARY"

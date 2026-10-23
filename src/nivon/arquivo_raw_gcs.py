@@ -32,9 +32,19 @@ def _validar_bucket(nome):
     return nome
 
 
-def preparar_manifesto(*, banco, raw_dir, bucket, limite=MAX_OBJECTS):
+def preparar_manifesto(*, banco, raw_dir, bucket, limite=MAX_OBJECTS,
+                       fonte_dataset=None, snapshot_ids=None):
     """Valida todos os objetos sem abrir cliente Google nem conexão de rede."""
     _validar_bucket(bucket)
+    if fonte_dataset is not None and (not isinstance(fonte_dataset,str)
+                                      or not DATASET.fullmatch(fonte_dataset)):
+        raise ErroArquivoCloud("fonte_dataset inválido")
+    if snapshot_ids is not None:
+        if (not isinstance(snapshot_ids,(list,tuple,frozenset)) or
+                not 1 <= len(snapshot_ids) <= MAX_OBJECTS or
+                len(set(snapshot_ids)) != len(snapshot_ids) or
+                not all(isinstance(x,str) and SHA.fullmatch(x) for x in snapshot_ids)):
+            raise ErroArquivoCloud("snapshot_ids fora do contrato")
     if type(limite) is not int or not 1 <= limite <= MAX_OBJECTS:
         raise ErroArquivoCloud("limite de objetos invalido")
     path = Path(banco)
@@ -44,9 +54,17 @@ def preparar_manifesto(*, banco, raw_dir, bucket, limite=MAX_OBJECTS):
     base = root.resolve(strict=True)
     db = sqlite3.connect(f"file:{path.resolve().as_posix()}?mode=ro", uri=True)
     try:
-        registros = db.execute("""SELECT dataset_id, snapshot_id, sha256, coletado_em,
+        sql = """SELECT dataset_id, snapshot_id, sha256, coletado_em,
                          content_type, tamanho, arquivo, url_publica FROM snapshots
-                         ORDER BY dataset_id, sha256""").fetchall()
+                         WHERE (? IS NULL OR dataset_id=?)"""
+        args = [fonte_dataset, fonte_dataset]
+        if snapshot_ids is not None:
+            sql += " AND snapshot_id IN (" + ",".join("?" for _ in snapshot_ids) + ")"
+            args.extend(snapshot_ids)
+        sql += " ORDER BY dataset_id, sha256"
+        registros = db.execute(sql, args).fetchall()
+        if snapshot_ids is not None and len(registros) != len(snapshot_ids):
+            raise ErroArquivoCloud("um ou mais snapshots selecionados inexistentes")
     finally:
         db.close()
     if not registros or len(registros) > limite:
@@ -72,7 +90,7 @@ def preparar_manifesto(*, banco, raw_dir, bucket, limite=MAX_OBJECTS):
             raise ErroArquivoCloud("origem do snapshot invalida")
         if not isinstance(dt,str) or len(dt)>45:
             raise ErroArquivoCloud("timestamp de coleta invalido")
-        if mime not in ("text/csv","application/json","application/octet-stream","application/vnd.ms-excel"):
+        if mime not in ("text/html","text/csv","application/json","application/octet-stream","application/vnd.ms-excel"):
             raise ErroArquivoCloud("MIME de arquivo invalido")
         itens.append({
             "dataset": ds, "snapshot_id": sid, "sha256": sha,
@@ -85,8 +103,11 @@ def preparar_manifesto(*, banco, raw_dir, bucket, limite=MAX_OBJECTS):
             "bytes_total":sum(x["bytes"] for x in itens), "executado":False}
 
 
-def arquivar_gcs(*, banco, raw_dir, bucket, executar=False, client=None):
-    manifest = preparar_manifesto(banco=banco, raw_dir=raw_dir, bucket=bucket)
+def arquivar_gcs(*, banco, raw_dir, bucket, executar=False, client=None,
+                 fonte_dataset=None, snapshot_ids=None):
+    manifest = preparar_manifesto(banco=banco, raw_dir=raw_dir, bucket=bucket,
+                                   fonte_dataset=fonte_dataset,
+                                   snapshot_ids=snapshot_ids)
     if executar is not True:
         raise PermissionError("UPLOAD_GCS_RAW_OFF")
     if client is None:

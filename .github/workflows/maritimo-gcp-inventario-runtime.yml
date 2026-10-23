@@ -1,0 +1,112 @@
+name: NIVON - Inventario Cloud Run Maritimo
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/maritimo-gcp-inventario-runtime.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: nivon-maritimo-runtime-inventario
+  cancel-in-progress: false
+jobs:
+  inventario:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    env:
+      NIVON_PROJETO: ${{ vars.NIVON_BQ_PROJECT }}
+      NIVON_DATASET: ${{ vars.NIVON_BQ_DATASET }}
+      NIVON_BUCKET: ${{ vars.NIVON_GCS_BUCKET }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Contrato do ambiente existente
+        run: |
+          test "$NIVON_PROJETO" = "nivon-data"
+          test "$NIVON_DATASET" = "nivon_raw"
+          test "$NIVON_BUCKET" = "nivon-data-raw-2026"
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ vars.NIVON_BQ_PROJECT }}
+          create_credentials_file: true
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ vars.NIVON_BQ_PROJECT }}
+      - name: Inspecionar APIs, Artifact Registry, Jobs e Scheduler em modo read-only
+        run: |
+          python - <<'PY'
+          import json, os, subprocess
+          project=os.environ['NIVON_PROJETO']
+          base=['--project='+project, '--format=json']
+          commands={
+              'apis':['gcloud','services','list','--enabled',*base],
+              'artifact_registry':['gcloud','artifacts','repositories','list',
+                                   '--location=southamerica-east1',*base],
+              'cloud_run_jobs':['gcloud','run','jobs','list',
+                                '--region=southamerica-east1',*base],
+              'cloud_scheduler':['gcloud','scheduler','jobs','list',
+                                 '--location=southamerica-east1',*base],
+              'service_account':['gcloud','iam','service-accounts','describe',
+                 'nivon-coletor-de-dados@nivon-data.iam.gserviceaccount.com',*base]
+          }
+          result={}
+          for key,cmd in commands.items():
+              try:
+                  r=subprocess.run(cmd,capture_output=True,text=True,timeout=40)
+                  if r.returncode:
+                      msg=(r.stderr or '').lower()
+                      if ('service_disabled' in msg or 'api has not been used' in msg
+                          or 'api is not enabled' in msg or 'has not been used' in msg):
+                          reason='API_NAO_HABILITADA'
+                      elif ('permission_denied' in msg or 'permission denied' in msg
+                            or 'does not have permission' in msg or '403' in msg
+                            or 'forbidden' in msg):
+                          reason='PERMISSAO_NEGADA'
+                      elif ('not found' in msg or '404' in msg):
+                          reason='NAO_LOCALIZADO'
+                      elif ('invalid choice' in msg or 'unrecognized arguments' in msg):
+                          reason='CLI_INCOMPATIVEL'
+                      elif 'unauthenticated' in msg:
+                          reason='AUTENTICACAO_FALHOU'
+                      else:
+                          reason='FALHA_NAO_CLASSIFICADA'
+                      result[key]={'estado':'NAO_VERIFICADO','codigo':reason,
+                                   'exit_code':int(r.returncode)}
+                      continue
+                  rows=json.loads(r.stdout or '[]')
+                  if key=='apis':
+                      names={item.get('config',{}).get('name','').split('/')[-1]
+                             for item in rows}
+                      result[key]={n:(n in names) for n in
+                        ('artifactregistry.googleapis.com','cloudbuild.googleapis.com',
+                         'run.googleapis.com','cloudscheduler.googleapis.com')}
+                  elif key=='artifact_registry':
+                      result[key]=[{'nome':item.get('name','').rsplit('/',1)[-1],
+                                    'formato':item.get('format'),'local':item.get('name','')}
+                                   for item in rows if item.get('format')=='DOCKER']
+                  elif key=='cloud_run_jobs':
+                      result[key]=[{'nome':item.get('metadata',{}).get('name') or
+                                    item.get('name','').rsplit('/',1)[-1]}
+                                   for item in rows]
+                  elif key=='cloud_scheduler':
+                      result[key]=[{'nome':item.get('name','').rsplit('/',1)[-1],
+                                    'estado':item.get('state','UNKNOWN')}
+                                   for item in rows]
+                  else:
+                      result[key]={'existe':True,'email':rows.get('email')}
+              except Exception:
+                  result[key]={'estado':'NAO_VERIFICADO','codigo':'CLIENTE_OU_FORMATO'}
+          print(json.dumps({'projeto':project,'regiao':'southamerica-east1',
+                            'escritas':0,'inventario':result},ensure_ascii=False,sort_keys=True))
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as f:
+              f.write('### NIVON — Inventário de implantação marítima (somente leitura)\n\n')
+              for key,value in result.items():
+                  f.write(f'- **{key}**: `{str(value)[:500]}`\n')
+              f.write('\nNenhum recurso foi criado, alterado ou agendado.\n')
+          PY

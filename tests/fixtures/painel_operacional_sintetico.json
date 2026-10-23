@@ -1,0 +1,223 @@
+{
+  "corredores": {
+    "estado": "RECORTE_IMPORTADO_NAO_HOMOLOGADO",
+    "recorte": "mdfe_sintetico",
+    "competencia": "2026-09",
+    "sha256_origem": "FIXTURE_SEM_RAW_REAL",
+    "resumo_polos": [
+      {
+        "polo": {
+          "id": "MT_RONDONOPOLIS_FERRO"
+        },
+        "sentido": "DESTINO",
+        "toneladas_no_recorte": "11.5",
+        "transbordo_confirmado": false
+      }
+    ]
+  },
+  "portos": [
+    {
+      "porto_id": "SANTOS",
+      "data_referencia": "2026-10-23T10:00:00Z",
+      "fonte_ais": "AIS_SINTETICO",
+      "navios_aguardando": 3,
+      "navios_aproximando": 2,
+      "navios_atracados": 1,
+      "historico_navios_aguardando": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "geocercas_validadas": true,
+      "mmsi_unicos": true,
+      "conciliacao_ais_operacao": "0.96",
+      "lineup_validado": false,
+      "lineup_72h": 16
+    }
+  ],
+  "series": [
+    {
+      "classe": "FRETE_ANUNCIADO",
+      "serie_id": "MT_SANTOS_SOJA_OPERADOR_A",
+      "observacoes": [
+        {
+          "identidade": "fix-10",
+          "data_referencia": "2026-10-10",
+          "data_publicacao": "2026-10-10T09:00:00Z",
+          "data_coleta": "2026-10-10T10:00:00Z",
+          "valor": "100",
+          "unidade": "R$/t",
+          "natureza": "INFORMADO",
+          "campos": {
+            "serie_id": "MT_SANTOS_SOJA_OPERADOR_A",
+            "classe": "FRETE_ANUNCIADO",
+            "produto": "SOJA",
+            "origem": "RONDONOPOLIS",
+            "destino": "SANTOS",
+            "transportadora": "OPERADOR_A",
+            "equipamento": "GRANELEIRO",
+            "regime": "PJ",
+            "terminal": "TERMINAL_X",
+            "contrato": null,
+            "modal": "RODOVIARIO",
+            "ponto_embarque": "SILO_UNICO",
+            "pedagio": "ADICIONAL",
+            "tipo_preco": "BASE"
+          }
+        },
+        {
+          "identidade": "fix-11",
+          "data_referencia": "2026-10-11",
+          "data_publicacao": "2026-10-11T09:00:00Z",
+          "data_coleta": "2026-10-11T10:00:00Z",
+          "valor": "100",
+          "unidade": "R$/t",
+          "natureza": "INFORMADO",
+          "campos": {
+            "serie_id": "MT_SANTOS_SOJA_OPERADOR_A",
+            "classe": "FRETE_ANUNCIADO",
+            "produto": "SOJA",
+            "origem": "RONDONOPOLIS",
+            "destino": "SANTOS",
+            "transportadora": "OPERADOR_A",
+            "equipamento": "GRANELEIRO",
+            "regime": "PJ",
+            "terminal": "TERMINAL_X",
+            "contrato": null,
+            "modal": "RODOVIARIO",
+            "ponto_embarque": "SILO_UNICO",
+            "pedagio": "ADICIONAL",
+            "tipo_preco": "BASE"
+          }
+        },
+        {
+          "identidade": "fix-12",
+          "data_referencia": "2026-10-12",
+          "data_publicacao": "2026-10-12T09:00:00Z",
+          "data_coleta": "2026-10-12T10:00:00Z",
+          "valor": "100",
+          "unidade": "R$/t",
+          "natureza": "INFORMADO",
+          "campos": {
+            "serie_id": "MT_SANTOS_SOJA_OPERADOR_A",
+            "classe": "FRETE_ANUNCIADO",
+            "produto": "SOJA",
+            "origem": "RONDONOPOLIS",
+            "destino": "SANTOS",
+            "transportadora": "OPERADOR_A",
+            "equipamento": "GRANELEIRO",
+            "regime": "PJ",
+            "terminal": "TERMINAL_X",
+            "contrato": null,
+            "modal": "RODOVIARIO",
+            "ponto_embarque": "SILO_UNICO",
+            "pedagio": "ADICIONAL",
+            "tipo_preco": "BASE"
+          }
+        },
+        {
+          "identidade": "fix-17",
+          "data_referencia": "2026-10-17",
+          "data_publicacao": "2026-10-17T09:00:00Z",
+          "data_coleta": "2026-10-17T10:00:00Z",
+          "valor": "105",
+          "unidade": "R$/t",
+          "natureza": "INFORMADO",
+          "campos": {
+            "serie_id": "MT_SANTOS_SOJA_OPERADOR_A",
+            "classe": "FRETE_ANUNCIADO",
+            "produto": "SOJA",
+            "origem": "RONDONOPOLIS",
+            "destino": "SANTOS",
+            "transportadora": "OPERADOR_A",
+            "equipamento": "GRANELEIRO",
+            "regime": "PJ",
+            "terminal": "TERMINAL_X",
+            "contrato": null,
+            "modal": "RODOVIARIO",
+            "ponto_embarque": "SILO_UNICO",
+            "pedagio": "ADICIONAL",
+            "tipo_preco": "BASE"
+          }
+        },
+        {
+          "identidade": "fix-18",
+          "data_referencia": "2026-10-18",
+          "data_publicacao": "2026-10-18T09:00:00Z",
+          "data_coleta": "2026-10-18T10:00:00Z",
+          "valor": "110",
+          "unidade": "R$/t",
+          "natureza": "INFORMADO",
+          "campos": {
+            "serie_id": "MT_SANTOS_SOJA_OPERADOR_A",
+            "classe": "FRETE_ANUNCIADO",
+            "produto": "SOJA",
+            "origem": "RONDONOPOLIS",
+            "destino": "SANTOS",
+            "transportadora": "OPERADOR_A",
+            "equipamento": "GRANELEIRO",
+            "regime": "PJ",
+            "terminal": "TERMINAL_X",
+            "contrato": null,
+            "modal": "RODOVIARIO",
+            "ponto_embarque": "SILO_UNICO",
+            "pedagio": "ADICIONAL",
+            "tipo_preco": "BASE"
+          }
+        },
+        {
+          "identidade": "fix-20",
+          "data_referencia": "2026-10-20",
+          "data_publicacao": "2026-10-20T09:00:00Z",
+          "data_coleta": "2026-10-20T10:00:00Z",
+          "valor": "110",
+          "unidade": "R$/t",
+          "natureza": "INFORMADO",
+          "campos": {
+            "serie_id": "MT_SANTOS_SOJA_OPERADOR_A",
+            "classe": "FRETE_ANUNCIADO",
+            "produto": "SOJA",
+            "origem": "RONDONOPOLIS",
+            "destino": "SANTOS",
+            "transportadora": "OPERADOR_A",
+            "equipamento": "GRANELEIRO",
+            "regime": "PJ",
+            "terminal": "TERMINAL_X",
+            "contrato": null,
+            "modal": "RODOVIARIO",
+            "ponto_embarque": "SILO_UNICO",
+            "pedagio": "ADICIONAL",
+            "tipo_preco": "BASE"
+          }
+        }
+      ]
+    }
+  ]
+}

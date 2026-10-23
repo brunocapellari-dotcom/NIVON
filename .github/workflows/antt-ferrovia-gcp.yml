@@ -37,12 +37,25 @@ jobs:
           S: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
           A: ${{ vars.NIVON_ZERO_COST_BQ_APPROVED }}
           R: ${{ vars.NIVON_RAW_ARCHIVE_APPROVED }}
+          F: ${{ vars.NIVON_ANTT_FERROVIA_WRITE_APPROVED }}
+          T: ${{ vars.NIVON_BQ_BOOTSTRAP_TABLE_APPROVED }}
+        shell: bash
         run: |
-          if [ -n "$P" ] && [ -n "$D" ] && [ -n "$B" ] && [ -n "$W" ] && [ -n "$S" ] && [ "$A" = "true" ] && [ "$R" = "true" ]; then
-            echo 'GCP_VARIAVEIS_E_APROVACOES_PRESENTES_NAO_EQUIVALE_AUTENTICACAO'
-          else
-            echo 'GCP_PENDENTE_CONFIGURACAO_OU_APROVACAO; nenhuma autenticacao ou escrita'
-          fi
+          set -euo pipefail
+          # Mostrar somente nomes de requisitos faltantes, nunca valores de WIF/IAM.
+          for entry in "NIVON_BQ_PROJECT:P" "NIVON_BQ_DATASET:D" \
+                       "NIVON_GCS_BUCKET:B" "NIVON_GCP_PROVIDER:W" \
+                       "NIVON_GCP_SERVICE_ACCOUNT:S"; do
+            nome="${entry%%:*}"; variavel="${entry##*:}"
+            if [[ -z "${!variavel}" ]]; then
+              echo "FALTA_VARIAVEL:$nome"
+            fi
+          done
+          [[ "$A" = "true" ]] || echo 'FALTA_APROVACAO:NIVON_ZERO_COST_BQ_APPROVED'
+          [[ "$R" = "true" ]] || echo 'FALTA_APROVACAO:NIVON_RAW_ARCHIVE_APPROVED'
+          [[ "$F" = "true" ]] || echo 'FALTA_APROVACAO:NIVON_ANTT_FERROVIA_WRITE_APPROVED'
+          [[ "$T" = "true" ]] || echo 'TABELA_ANTT_AUSENTE_EXIGE_APROVACAO_BOOTSTRAP:NIVON_BQ_BOOTSTRAP_TABLE_APPROVED'
+          echo 'PREFLIGHT_APENAS_DIAGNOSTICO_SEM_AUTENTICACAO_OU_ESCRITA'
   coletar-e-persistir:
     needs: preflight
     if: >-
@@ -55,6 +68,7 @@ jobs:
       vars.NIVON_GCP_SERVICE_ACCOUNT != '' &&
       vars.NIVON_ZERO_COST_BQ_APPROVED == 'true' &&
       vars.NIVON_RAW_ARCHIVE_APPROVED == 'true'
+      && vars.NIVON_ANTT_FERROVIA_WRITE_APPROVED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:

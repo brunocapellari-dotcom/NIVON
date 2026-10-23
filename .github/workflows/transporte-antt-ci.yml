@@ -2,6 +2,11 @@ name: NIVON — CI transporte ANTT e ANTAQ
 on:
   push:
     branches: [main, fix/antt-bq-readiness-20261023]
+  pull_request:
+    paths:
+      - '.github/workflows/antt-ferrovia-gcp.yml'
+      - '.github/workflows/transporte-antt-ci.yml'
+      - 'tests/test_antt_gcp_workflow_policy.py'
   workflow_dispatch:
 
 permissions:

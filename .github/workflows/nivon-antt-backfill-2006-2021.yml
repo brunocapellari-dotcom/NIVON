@@ -1,0 +1,145 @@
+name: NIVON - Backfill Historico ANTT 2006 a 2021
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/nivon-antt-backfill-2006-2021.yml'
+  workflow_dispatch:
+    inputs:
+      confirmar_execucao_unica:
+        type: boolean
+        required: true
+        default: false
+        description: 'Confirmo cinco lotes limitados para completar 2006-2021'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-antt-backfill-historico-unico
+  cancel-in-progress: false
+
+jobs:
+  testes-antes-da-carga:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Validar limites e regressao ferroviaria
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m unittest discover -s tests -p 'test_antt_gcp_backfill_historico.py' -v
+          python -m unittest discover -s tests -p 'test_antt_historico_verificado.py' -v
+          python -m unittest discover -s tests -p 'test_coleta_antt.py' -v
+          python -m unittest discover -s tests -p 'test_antt_bigquery.py' -v
+          python -m unittest discover -s tests -p 'test_antt_gcs.py' -v
+
+  cinco-lotes-ate-2021:
+    needs: testes-antes-da-carga
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.confirmar_execucao_unica == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      PYTHONPATH: src
+      NIVON_PROJETO: ${{ vars.NIVON_BQ_PROJECT }}
+      NIVON_DATASET: ${{ vars.NIVON_BQ_DATASET }}
+      NIVON_BUCKET: ${{ vars.NIVON_GCS_BUCKET }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Conferir escopo de dados e limites antes de autenticar
+        run: |
+          set -euo pipefail
+          test "$NIVON_PROJETO" = 'nivon-data'
+          test "$NIVON_DATASET" = 'nivon_raw'
+          test "$NIVON_BUCKET" = 'nivon-data-raw-2026'
+          python - <<'PY'
+          import sys
+          sys.path.insert(0,'src')
+          from nivon.antt_gcp_backfill_historico import verificar_anos
+          for a,b in ((2018,2021),(2014,2017),(2010,2013),(2007,2009),(2006,2006)):
+              verificar_anos(list(range(a,b+1)))
+          PY
+      - name: Autenticar por identidade temporaria GitHub OIDC
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ vars.NIVON_BQ_PROJECT }}
+          create_credentials_file: true
+      - name: Instalar SDKs Google Cloud
+        run: |
+          python -m pip install --disable-pip-version-check --quiet 'google-cloud-bigquery>=3,<4' 'google-cloud-storage>=3,<4'
+      - name: Executar cinco lotes independentes de ate quatro anos
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/antt-historico-evidencias"
+          # Ordem decrescente dos anos; nao sobrepor 2022-2026 ja gravados.
+          for intervalo in "2018:2021" "2014:2017" "2010:2013" "2007:2009" "2006:2006"; do
+            ini="${intervalo%%:*}"
+            fim="${intervalo##*:}"
+            echo "INICIO_BACKFILL_ANTT_ANOS=${ini}-${fim}"
+            stage="$RUNNER_TEMP/antt-stage-${ini}-${fim}"
+            salvo="$RUNNER_TEMP/antt-historico-evidencias/antt-${ini}-${fim}.json"
+            # Retry SOMENTE se o coletor validado rejeitar CKAN/CSV; nao
+            # fallback opt-in exige SHA anteriormente comprovado, e nunca ignora 403.
+            for tentativa in 1 2; do
+              if python -m nivon.coleta_antt \
+                  --inicio "$ini" --fim "$fim" --destino "$stage" --live --usar-url-verificada-contingencia; then
+                break
+              fi
+              if [ "$tentativa" = "2" ]; then
+                echo "ERRO_FONTE_ANTT_${ini}_${fim}:PARAR_SEM_OUTRAS_ESCRITAS"
+                exit 2
+              fi
+              sleep 5
+            done
+            python -m nivon.antt_gcp_backfill_historico \
+              --staging "$stage" --inicio "$ini" --fim "$fim" \
+              --saida "$salvo" --live --confirmar-historico
+            python - "$salvo" <<'PY'
+          import json,sys,os
+          from decimal import Decimal
+          from pathlib import Path
+          r=json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+          if r['estado']!='BACKFILL_HISTORICO_CONCILIADO':
+              raise RuntimeError("lote nao conciliado")
+          linhas=sum(x['linhas'] for x in r['anos_conciliados'])
+          tu=sum((Decimal(x['toneladas_uteis']) for x in r['anos_conciliados']),Decimal(0))
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as f:
+              f.write(f"### ANTT/SIADE — lote {r['anos_planejados'][0]}–{r['anos_planejados'][-1]} conciliado\n\n")
+              f.write(f"{len(r['anos_conciliados'])} anos, {linhas} registros OD, {tu} TU ferroviárias acumuladas.\n\n")
+              f.write("| Ano | Registros | TU | SHA-256 |\n|---|---:|---:|---|\n")
+              for x in r['anos_conciliados']:
+                  f.write(f"| {x['ano']} | {x['linhas']} | {x['toneladas_uteis']} | {x['sha256']} |\n")
+              f.write("\nDados ferroviários declarados. Não equivalem a transbordos rodoviários.\n")
+          PY
+            rm -rf "$stage"
+          done
+      - name: Guardar evidencias de lotes concluidos, inclusive em falha parcial
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nivon-antt-backfill-2006-2021-${{ github.run_id }}
+          path: ${{ runner.temp }}/antt-historico-evidencias/*.json
+          if-no-files-found: ignore
+          retention-days: 90
+      - name: Remover CSVs temporarios e relatorios do runner
+        if: always()
+        run: |
+          rm -rf "$RUNNER_TEMP"/antt-stage-20* "$RUNNER_TEMP/antt-historico-evidencias"
