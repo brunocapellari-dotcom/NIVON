@@ -12,6 +12,7 @@ from datetime import datetime
 from typing import Any
 
 from nivon.portos_automaticos import ContratoPorto
+from nivon._agrolog_portos_pdf import PdfTable
 from .lineup_history import _aware_utc
 from .maritime_store import MaritimeStore
 from .official_lineup_bridge import bridge_official_pdf_document
@@ -58,6 +59,7 @@ class OfflinePdfEdition:
     publication_evidence_id: str | None = None
     crosswalk_claims: tuple[ProgrammeDuvEvidence, ...] = ()
     independent_crosswalk_reviewed: bool = False
+    pdf_tables: tuple[PdfTable, ...] | None = None
 
 
 def run_offline_pdf_batch(
@@ -94,6 +96,7 @@ def run_offline_pdf_batch(
             raise ValueError("PDF bytes exceed offline batch resource limit")
         bridge = bridge_official_pdf_document(
             contract=entry.contract, document=entry.document,
+            pdf_tables=entry.pdf_tables,
         )
         version = edition_from_pdf_bridge(
             bridge, reference_date=entry.contract.data_referencia.isoformat(),
@@ -123,6 +126,10 @@ def run_offline_pdf_batch(
             ),
             "evidence_class": "PROGRAMME_REFERENCE_NOT_PORT_CALL",
             "publishable": False,
+            "pdf_extraction_mode": (
+                "ISOLATED_TABLES_PREVALIDATED"
+                if entry.pdf_tables is not None else "IN_PROCESS_LIBRARY_CALL"
+            ),
         }
         if entry.crosswalk_claims:
             crosswalk = assess_programme_duv_evidence(
