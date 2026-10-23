@@ -52,5 +52,6 @@ jobs:
           print("TONELADAS_POR_MES", json.dumps(r["por_mes"], ensure_ascii=False))
           print("TONELADAS_UF_ORIGEM_MT", r["por_uf_origem"].get("MT", "NAO_ENCONTRADO"))
           print("MERCADORIAS_TOP_10", json.dumps(list(r["por_mercadoria"].items())[:10], ensure_ascii=False))
+          print("VOLUMES_ANUAIS_MT_SOJA_MILHO_FARELO", json.dumps(r["por_ano"], ensure_ascii=False))
           print("ESTADO", r["estado"], "NAO_PUBLICADO_NO_BANCO")
           PY
