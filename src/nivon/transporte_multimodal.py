@@ -115,9 +115,20 @@ def _competencia(valor: str, ano: int) -> str:
         raise ErroTransporte("competencia fora do ano declarado")
     return f"{y:04d}-{mes:02d}"
 
-def interpretar_csv_antt(raw: bytes, *, ano: int, coleta_utc: str) -> tuple[list[dict], MetadadosFonte]:
-    """Importa CSV anual OD; teste LIVE + conciliacao antes de publicar."""
-    link = link_antt(ano)
+def interpretar_csv_antt(raw: bytes, *, ano: int, coleta_utc: str,
+                         fonte_url: str | None = None) -> tuple[list[dict], MetadadosFonte]:
+    """Importa CSV OD; fonte_url validada permite recursos anteriores a 2025."""
+    if fonte_url is None:
+        link = link_antt(ano)
+    else:
+        from urllib.parse import urlsplit
+        part = urlsplit(fonte_url)
+        pat = r"/dataset/438a5184-09db-49a3-88c8-0bad418b4409/resource/[0-9a-f-]{36}/download/producao_origem_destino_(20[0-9]{2})\.csv"
+        m = re.fullmatch(pat, part.path)
+        if (part.scheme != "https" or part.netloc != "dados.antt.gov.br"
+                or part.query or part.fragment or not m or int(m[1]) != ano):
+            raise ErroTransporte("fonte_url anual ANTT invalida")
+        link = fonte_url
     if not isinstance(raw, bytes) or not 1 <= len(raw) <= 16_000_000:
         raise ErroTransporte("CSV ausente ou excede limite")
     if not isinstance(coleta_utc, str) or not re.fullmatch(r"20\d\d-\d\d-\d\dT\d\d:\d\d:\d\dZ", coleta_utc):
