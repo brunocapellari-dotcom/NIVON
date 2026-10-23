@@ -7830,6 +7830,342 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
       "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "ARG_GRANOS_AR_PIZARRA",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://granos.ar/api-docs/",
+        "source_proof": null
+      },
+      "implementation_scope": "SOURCE_ADAPTER_PRESENT; HTTP live nao homologado; coleta manual",
+      "authentication": "PUBLIC_NO_TOKEN",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "LIVE_SAMPLE_AND_SOURCE_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Preço de fonte secundaria não é execução de negócio nem cotação oficial; preservar moeda/unidade e freshness.",
+      "preliminary_evidence": "PUBLIC_API_DOCUMENTATION"
+    },
+    {
+      "dataset_id": "ARG_GRANOS_AR_PIZARRA_HISTORICO",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://granos.ar/api-docs/",
+        "source_proof": null
+      },
+      "implementation_scope": "SOURCE_ADAPTER_PRESENT; HTTP live nao homologado; coleta manual",
+      "authentication": "PUBLIC_NO_TOKEN",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "LIVE_SAMPLE_AND_SOURCE_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Preço de fonte secundaria não é execução de negócio nem cotação oficial; preservar moeda/unidade e freshness.",
+      "preliminary_evidence": "PUBLIC_API_DOCUMENTATION"
+    },
+    {
+      "dataset_id": "ARG_GRANOS_AR_DOLAR",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://granos.ar/api-docs/",
+        "source_proof": null
+      },
+      "implementation_scope": "SOURCE_ADAPTER_PRESENT; HTTP live nao homologado; coleta manual",
+      "authentication": "PUBLIC_NO_TOKEN",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "LIVE_SAMPLE_AND_SOURCE_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Preço de fonte secundaria não é execução de negócio nem cotação oficial; preservar moeda/unidade e freshness.",
+      "preliminary_evidence": "PUBLIC_API_DOCUMENTATION"
+    },
+    {
+      "dataset_id": "ARG_GRANOS_AR_RIESGO_PAIS",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://granos.ar/api-docs/",
+        "source_proof": null
+      },
+      "implementation_scope": "SOURCE_ADAPTER_PRESENT; HTTP live nao homologado; coleta manual",
+      "authentication": "PUBLIC_NO_TOKEN",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "LIVE_SAMPLE_AND_SOURCE_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Preço de fonte secundaria não é execução de negócio nem cotação oficial; preservar moeda/unidade e freshness.",
+      "preliminary_evidence": "PUBLIC_API_DOCUMENTATION"
+    },
+    {
+      "dataset_id": "ARG_GRANOS_AR_CLIMA",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://granos.ar/api-docs/",
+        "source_proof": null
+      },
+      "implementation_scope": "SOURCE_ADAPTER_PRESENT; HTTP live nao homologado; coleta manual",
+      "authentication": "PUBLIC_NO_TOKEN",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "LIVE_SAMPLE_AND_SOURCE_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Preço de fonte secundaria não é execução de negócio nem cotação oficial; preservar moeda/unidade e freshness.",
+      "preliminary_evidence": "PUBLIC_API_DOCUMENTATION"
+    },
+    {
+      "dataset_id": "ARG_GRANOS_AR_LLUVIAS",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://granos.ar/api-docs/",
+        "source_proof": null
+      },
+      "implementation_scope": "SOURCE_ADAPTER_PRESENT; HTTP live nao homologado; coleta manual",
+      "authentication": "PUBLIC_NO_TOKEN",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "LIVE_SAMPLE_AND_SOURCE_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Preço de fonte secundaria não é execução de negócio nem cotação oficial; preservar moeda/unidade e freshness.",
+      "preliminary_evidence": "PUBLIC_API_DOCUMENTATION"
+    },
+    {
+      "dataset_id": "ARG_GRANOS_AR_CBOT_DIFERENCIAL",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://granos.ar/api-docs/",
+        "source_proof": null
+      },
+      "implementation_scope": "SOURCE_ADAPTER_PRESENT; HTTP live nao homologado; coleta manual",
+      "authentication": "PUBLIC_NO_TOKEN",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "LIVE_SAMPLE_AND_SOURCE_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Preço de fonte secundaria não é execução de negócio nem cotação oficial; preservar moeda/unidade e freshness.",
+      "preliminary_evidence": "PUBLIC_API_DOCUMENTATION"
+    },
+    {
+      "dataset_id": "ARG_GRANOS_AR_CBOT_HISTORICO",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://granos.ar/api-docs/",
+        "source_proof": null
+      },
+      "implementation_scope": "SOURCE_ADAPTER_PRESENT; HTTP live nao homologado; coleta manual",
+      "authentication": "PUBLIC_NO_TOKEN",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "LIVE_SAMPLE_AND_SOURCE_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Preço de fonte secundaria não é execução de negócio nem cotação oficial; preservar moeda/unidade e freshness.",
+      "preliminary_evidence": "PUBLIC_API_DOCUMENTATION"
+    },
+    {
+      "dataset_id": "ARG_GRANOS_AR_WASDE",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://granos.ar/api-docs/",
+        "source_proof": null
+      },
+      "implementation_scope": "SOURCE_ADAPTER_PRESENT; HTTP live nao homologado; coleta manual",
+      "authentication": "PUBLIC_NO_TOKEN",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "LIVE_SAMPLE_AND_SOURCE_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Preço de fonte secundaria não é execução de negócio nem cotação oficial; preservar moeda/unidade e freshness.",
+      "preliminary_evidence": "PUBLIC_API_DOCUMENTATION"
+    },
+    {
+      "dataset_id": "ARG_GRANOS_AR_INDICADORES",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://granos.ar/api-docs/",
+        "source_proof": null
+      },
+      "implementation_scope": "SOURCE_ADAPTER_PRESENT; HTTP live nao homologado; coleta manual",
+      "authentication": "PUBLIC_NO_TOKEN",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "LIVE_SAMPLE_AND_SOURCE_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Preço de fonte secundaria não é execução de negócio nem cotação oficial; preservar moeda/unidade e freshness.",
+      "preliminary_evidence": "PUBLIC_API_DOCUMENTATION"
+    },
+    {
+      "dataset_id": "ARG_GRANOS_AR_ALERTAS",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://granos.ar/api-docs/",
+        "source_proof": null
+      },
+      "implementation_scope": "SOURCE_ADAPTER_PRESENT; HTTP live nao homologado; coleta manual",
+      "authentication": "PUBLIC_NO_TOKEN",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "LIVE_SAMPLE_AND_SOURCE_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Preço de fonte secundaria não é execução de negócio nem cotação oficial; preservar moeda/unidade e freshness.",
+      "preliminary_evidence": "PUBLIC_API_DOCUMENTATION"
+    },
+    {
+      "dataset_id": "ARG_GRANOS_AR_STATUS",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://granos.ar/api-docs/",
+        "source_proof": null
+      },
+      "implementation_scope": "SOURCE_ADAPTER_PRESENT; HTTP live nao homologado; coleta manual",
+      "authentication": "PUBLIC_NO_TOKEN",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "LIVE_SAMPLE_AND_SOURCE_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Preço de fonte secundaria não é execução de negócio nem cotação oficial; preservar moeda/unidade e freshness.",
+      "preliminary_evidence": "PUBLIC_API_DOCUMENTATION"
     }
   ]
 }
