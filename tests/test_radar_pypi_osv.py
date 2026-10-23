@@ -68,13 +68,13 @@ class RadarIntegradoTests(unittest.TestCase):
                             if name == "duckdb" else []})
         return json.dumps({"results": results}).encode()
 
-    def run(self, fetch_pypi=None, fetch_osv=None):
+    def executar_radar(self, fetch_pypi=None, fetch_osv=None):
         return executar(PROJECT, pypi_fetch=fetch_pypi or self.fetch_pypi,
                         osv_fetch=fetch_osv or self.fetch_osv,
                         now=datetime(2026, 10, 23, tzinfo=timezone.utc))
 
     def test_full_four_release_pipeline_and_security_boundaries(self):
-        result = self.run()
+        result = self.executar_radar()
         self.assertEqual(result["queried_package_count"], 4)
         self.assertEqual(result["osv_total_ids_reported"], 1)
         self.assertEqual([p["name"] for p in result["packages"]],
@@ -97,7 +97,7 @@ class RadarIntegradoTests(unittest.TestCase):
             obj["urls"][0]["digests"] = {}
             return json.dumps(obj).encode()
         with self.assertRaisesRegex(BloqueioRadar, "hash"):
-            self.run(fetch_pypi=bad)
+            self.executar_radar(fetch_pypi=bad)
 
     def test_osv_pagination_blocks_incomplete_live_report(self):
         def incomplete(url, raw):
@@ -106,13 +106,13 @@ class RadarIntegradoTests(unittest.TestCase):
                 {"vulns": []}, {"vulns": []}, {"vulns": []}
             ]}).encode()
         with self.assertRaisesRegex(BloqueioRadar, "paginou"):
-            self.run(fetch_osv=incomplete)
+            self.executar_radar(fetch_osv=incomplete)
 
     def test_osv_wrong_cardinality_blocks_all_results(self):
         def incomplete(url, raw):
             return json.dumps({"results": [{"vulns": []}]}).encode()
         with self.assertRaisesRegex(BloqueioRadar, "cardinalidade"):
-            self.run(fetch_osv=incomplete)
+            self.executar_radar(fetch_osv=incomplete)
 
     def test_pypi_version_substitution_is_rejected_for_fixed_agrobr(self):
         def wrong(url):
@@ -121,7 +121,7 @@ class RadarIntegradoTests(unittest.TestCase):
                 obj["info"]["version"] = "1.0.0"
             return json.dumps(obj).encode()
         with self.assertRaisesRegex(BloqueioRadar, "versão"):
-            self.run(fetch_pypi=wrong)
+            self.executar_radar(fetch_pypi=wrong)
 
 
 if __name__ == "__main__":
