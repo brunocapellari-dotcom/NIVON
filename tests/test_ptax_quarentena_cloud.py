@@ -1,5 +1,6 @@
 """E2E PTAX: arquivos externos em quarentena e objetos GCS fictícios."""
 from hashlib import sha256
+import copy
 import json
 from pathlib import Path
 import sqlite3
@@ -218,6 +219,28 @@ class TestQuarentenaPTAX(unittest.TestCase):
             self.assertEqual(r["status"],"AMOSTRA_EXTERNA_NAO_HOMOLOGADA")
             with sqlite3.connect(banco) as db:
                 self.assertEqual(len(listar_amostras_ptax(db)),1)
+
+    def test_gate_upload_rejeita_destino_e_chave_adulterados(self):
+        e=self.armazenar()
+        pacote=preparar_objetos_gcs_ptax(
+            self.db,evento_sha256=e["evento_sha256"],
+            bucket="nivon-arquivo",
+        )
+        for field in ("bucket","prefixo","chave"):
+            mod=copy.deepcopy(pacote)
+            if field=="bucket":
+                mod["bucket"]="malicioso/fora"
+            elif field=="prefixo":
+                mod["prefixo"]="../fora"
+            else:
+                mod["objetos"][0]["chave"]="../segredo"
+            with self.subTest(field=field),self.assertRaises(ErroExportacaoPTAX):
+                enviar_objetos_gcs_ptax(
+                    mod,cliente=FalsoGCS(),
+                    permitir_upload=True,
+                    referencia_direitos="ODBL_TESTE_FICTICIO",
+                    referencia_custo="CUSTO_TESTE_FICTICIO",
+                )
 
     def test_gcs_prefixo_inseguro(self):
         e=self.armazenar()
