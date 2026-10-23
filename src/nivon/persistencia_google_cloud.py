@@ -12,6 +12,8 @@ import hashlib
 import json
 import re
 import sqlite3
+import tempfile
+from urllib.parse import urlsplit,parse_qs
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -24,6 +26,7 @@ _SHA = re.compile(r"^[a-f0-9]{64}$")
 _STATES = frozenset({"NORMALIZED", "RAW_RECEIVED", "QUARANTINED"})
 _OPS = frozenset({"COLETA", "ARMAZENAMENTO", "PROCESSAMENTO"})
 _MAX_RAW = 25_000_000
+_MAX_SICARM = 120_000_000
 
 
 class ErroGoogleCloud(ValueError):
@@ -46,7 +49,7 @@ def _pack(banco: Path, raw_dir: Path) -> list[dict]:
     try:
         rows = db.execute(
             """SELECT dataset_id,sha256,snapshot_id,estado,arquivo,
-                      tamanho,content_type,coletado_em
+                      tamanho,content_type,coletado_em,url_publica
                  FROM snapshots ORDER BY dataset_id,sha256"""
         ).fetchall()
     finally:
@@ -69,8 +72,14 @@ def _pack(banco: Path, raw_dir: Path) -> list[dict]:
                 not arquivo.resolve(strict=True).is_relative_to(real_root)):
             raise ErroGoogleCloud("path RAW nao pertence ao dataset ou foi manipulado")
         n=arquivo.stat().st_size
-        if not 0<n<=_MAX_RAW or n!=row["tamanho"] or _hash_file(arquivo)!=sha:
+        limite = _MAX_SICARM if ds=="CONAB_ARMAZENS_CAPACIDADE" else _MAX_RAW
+        if not 0<n<=limite or n!=row["tamanho"] or _hash_file(arquivo)!=sha:
             raise ErroGoogleCloud("RAW alterado/perdido ou excedeu limite")
+        uri=urlsplit(row["url_publica"])
+        secret_keys={"token","key","api_key","password","secret","access_token","signature"}
+        if (uri.scheme!="https" or not uri.hostname or uri.username or uri.password
+                or uri.fragment or secret_keys.intersection(k.lower() for k in parse_qs(uri.query))):
+            raise ErroGoogleCloud("origem RAW nao auditavel ou possui segredo na URL")
         if (ds,sha) in vistos:
             raise ErroGoogleCloud("snapshot duplicado")
         vistos.add((ds,sha))
@@ -79,6 +88,7 @@ def _pack(banco: Path, raw_dir: Path) -> list[dict]:
             "estado":estado,"arquivo":str(arquivo),"bytes":n,
             "content_type":row["content_type"],
             "coletado_em":row["coletado_em"],
+            "origem_url":row["url_publica"],
             "objeto":f"nivon/raw/{ds}/{sha}.raw",
         })
     return items
@@ -165,6 +175,20 @@ def executar_envio(*, base: str | Path, bucket: str, project_id: str,
         resultados.append({"dataset_id":item["dataset_id"],
                            "snapshot_id":item["snapshot_id"],"estado":estado,
                            "gcs":f'gs://{bucket}/{item["objeto"]}'})
+    # Proveniencia persiste no GCS mesmo quando o SQLite local e efemero.
+    # O manifesto e content-addressed, reproduzivel e armazenado no bucket privado.
+    manifest_items=[{k:v for k,v in item.items() if k!="arquivo"} for item in plano["raw"]]
+    manifest_bytes=(json.dumps(
+        {"schema_version":"1.0.0","fontes":manifest_items},
+        ensure_ascii=False,sort_keys=True,separators=(",",":"))+"\n").encode("utf-8")
+    manifest_sha=hashlib.sha256(manifest_bytes).hexdigest()
+    manifest_name=f"nivon/manifests/{manifest_sha}.json"
+    with tempfile.TemporaryDirectory() as temp_dir:
+        manifest_file=Path(temp_dir)/"manifest.json"
+        manifest_file.write_bytes(manifest_bytes)
+        manifest_status=_enviar_unico(
+            remote,arquivo=manifest_file,objeto=manifest_name,sha=manifest_sha,
+            content_type="application/json")
     stage=None
     envio_bq=None
     if bigquery:
@@ -185,6 +209,8 @@ def executar_envio(*, base: str | Path, bucket: str, project_id: str,
     return {
         "estado":"GCS_E_BIGQUERY" if bigquery else "GCS_RAW_APENAS",
         "bucket":bucket,"raw_enviados":resultados,
+        "manifesto_gcs":f"gs://{bucket}/{manifest_name}",
+        "manifesto_status":manifest_status,
         "staging_jsonl":stage,"bigquery":envio_bq,
         "gcs_executado":True,"bq_executado":bool(envio_bq),
         "direitos_evidencia_informada":True,
