@@ -35,6 +35,27 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_transporte_multimodal.py' -v
           python -m unittest discover -s tests -p 'test_coleta_antt.py' -v
+      - name: Diagnostico de esquema numerico real (amostra publica limitada)
+        env:
+          PYTHONPATH: src
+        run: |
+          python - <<'PY'
+          import csv, io
+          from nivon.coleta_antt import catalogo_antt, _http
+          url = catalogo_antt(habilitar_rede=True)[2026]["url"]
+          b = _http(url)
+          try:
+              t = b.decode("utf-8-sig")
+              codec = "utf-8-sig"
+          except UnicodeDecodeError:
+              t = b.decode("cp1252")
+              codec = "cp1252"
+          r = csv.DictReader(io.StringIO(t), delimiter=";" if t.splitlines()[0].count(";")>=8 else ",")
+          print("ENCODING", codec, "CAMPOS", r.fieldnames)
+          for i, row in zip(range(6), r):
+              print("SAMPLE", i, "TU", repr(row.get("TU")), "TKU", repr(row.get("TKU")),
+                    "MES_ANO", repr(row.get("Mes_Ano")))
+          PY
       - name: Prova LIVE pontual ANTT 2026 (nao publica)
         env:
           PYTHONPATH: src
