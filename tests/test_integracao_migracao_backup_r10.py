@@ -21,6 +21,7 @@ from nivon.outbox_unificada import (
 )
 from nivon.outbox_recibos import consultar_recibo
 from nivon.migracao_outbox_legada import planejar_migracao, registrar_quarentena
+from nivon.lote_recuperacao_outbox import executar_lote, main as lote_main
 from nivon.backup_outbox import (
     criar_backup_validado, restaurar_backup_validado, verificar_backup,
     estado_logico, ErroBackup,
@@ -197,6 +198,46 @@ class TestMigracaoBackupR10(unittest.TestCase):
                 sha256_esperado=m["arquivo_sha256"],
                 autorizar_restauracao=True)
         self.assertFalse((self.root/"restore-denied.sqlite").exists())
+
+    def test_pipeline_unico_planeja_sem_criar_tabelas_e_restaura_em_lote(self):
+        root=self.root/"recuperacao"
+        root.mkdir()
+        estado_antes=estado_logico(self.db)
+        result=executar_lote(banco=self.path)
+        self.assertEqual(result["modo"],"SOMENTE_LEITURA")
+        self.assertEqual(result["auditoria"]["total"],3)
+        self.assertFalse(result["envio_executado"])
+        self.assertEqual(estado_antes,estado_logico(self.db))
+        self.assertFalse((root/"nivon-antes-migracao.sqlite").exists())
+        with self.assertRaises(PermissionError):
+            executar_lote(banco=self.path,aplicar_quarentena=True)
+        after=executar_lote(
+            banco=self.path,pasta_segura=root,
+            aplicar_quarentena=True,agora=TS,
+        )
+        self.assertEqual(after["modo"],"QUARENTENA_E_BACKUP_LOCAL")
+        self.assertTrue(after["restauracao_validada"])
+        self.assertEqual(after["quarentena"]["registrados"],3)
+        self.assertEqual(len(list(root.glob("*.sqlite"))),3)
+        self.assertEqual(after["conteudo_sha256"],estado_logico(self.db)["conteudo_sha256"])
+        with self.assertRaises(FileExistsError):
+            executar_lote(
+                banco=self.path,pasta_segura=root,aplicar_quarentena=True,agora=TS,
+            )
+
+    def test_cli_auditoria_somente_leitura_sem_rede(self):
+        from unittest.mock import patch
+        import io
+        stream=io.StringIO()
+        with patch("sys.stdout",stream):
+            code=lote_main(["--banco",str(self.path)])
+        self.assertEqual(code,0)
+        obj=json.loads(stream.getvalue())
+        self.assertEqual(obj["modo"],"SOMENTE_LEITURA")
+        self.assertEqual(obj["auditoria"]["total"],3)
+        self.assertFalse(obj["envio_executado"])
+        self.assertNotIn(PHONE,stream.getvalue())
+        self.assertNotIn(SHA_WPP,stream.getvalue())
 
     def test_backup_restauracao_tem_flags_e_nao_sobrescreve(self):
         target=self.root/"backup.sqlite"
