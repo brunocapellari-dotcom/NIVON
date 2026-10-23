@@ -47,9 +47,12 @@ jobs:
     needs: testar
     if: >-
       github.ref == 'refs/heads/main' &&
-      (github.event_name == 'push' ||
-      (github.event_name == 'workflow_dispatch' &&
-      inputs.confirmar_piloto_2026 == true))
+      github.event_name == 'workflow_dispatch' &&
+      inputs.confirmar_piloto_2026 == true &&
+      vars.NIVON_ZERO_COST_BQ_APPROVED == 'true' &&
+      vars.NIVON_RAW_ARCHIVE_APPROVED == 'true' &&
+      vars.NIVON_ANTT_FERROVIA_WRITE_APPROVED == 'true' &&
+      vars.NIVON_BQ_BOOTSTRAP_TABLE_APPROVED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
