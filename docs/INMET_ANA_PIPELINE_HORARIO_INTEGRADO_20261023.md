@@ -75,3 +75,14 @@ PYTHONPATH=src python -m nivon.pipeline_medicoes_cli validar-backup --destino-ba
 | P2 | Janelas diárias, grade e modelos hidrológicos | Mapear intervalos físicos; backtest OOS e skill com vintages reais |
 
 Esta PR é **módulo de trabalho reversível**, baseada na PR #152. Não realizar merge em duplicidade com #9/#11 e nenhuma das PRs empilhadas.
+
+
+## Diagnóstico de revisões integrado ao fluxo
+
+A rotina `relatorio_revisoes_medicoes` compara as **duas edições diferentes mais recentes capturadas pelo NIVON** até um corte explícito por estação e fonte, sem agrupar postos distintos. Retorna número de medidas novas, valores ou QC alterados, dados que sumiram em uma reedição, SHA da edição atual/anterior e até 20 exemplos. Uma revisão do RAW é alteração de arquivo, **não é tendência climática, hidrológica, previsão nem sinal de variação efetiva de nível/vazão**. Limites continuam `homologado=false`, `tendencia_clima_ou_vazao_inferida=false` e `reconstrucao_publicacao_historica=false`.
+
+```bash
+PYTHONPATH=src python -m nivon.pipeline_medicoes_cli relatorio --banco ambiental.sqlite --raw-dir arquivo_raw --dataset-id INMET_ESTACOES --estacao-id A904 --corte-em 2026-10-23T16:00:00Z
+```
+
+O comando exige banco previamente existente e não faz rede. Testes E2E cobrem um arquivo INMET com valor de chuva revisado, mudança de status QC ANA de SUSPEITO para APROVADO (conforme a fonte, sem homologação NIVON) e invocação de relatório pelo CLI.
