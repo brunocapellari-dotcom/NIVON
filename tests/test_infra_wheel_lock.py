@@ -11,7 +11,8 @@ from nivon.infra_supplychain import ErroSupplyChain
 class TestWheelLock(unittest.TestCase):
     def test_hash_todas_as_wheels_e_nomeacao(self):
         with TemporaryDirectory() as tmp:
-            root = Path(tmp)
+            root = Path(tmp) / "wheels"
+            root.mkdir()
             for name in ("agrobr-2.0.0-py3-none-any.whl", "pandas-2.3.0-cp311-cp311-manylinux.whl",
                          "statsforecast-2.0.0-py3-none-any.whl"):
                 (root / name).write_bytes(b"synthetic-" + name.encode())
