@@ -13,6 +13,7 @@ REPO="brunocapellari-dotcom/NIVON"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MAIN_WORKFLOW="${REPO}/.github/workflows/nivon-gcp-migracao.yml@refs/heads/main"
 PTAX_WORKFLOW="${REPO}/.github/workflows/ptax-neon-private-export.yml@refs/heads/main"
+ZARC_WORKFLOW="${REPO}/.github/workflows/nivon-gcp-zarc.yml@refs/heads/main"
 
 command -v gcloud >/dev/null || { echo 'FALTA_GCLOUD'; exit 3; }
 command -v bq >/dev/null || { echo 'FALTA_BQ'; exit 3; }
@@ -51,7 +52,7 @@ if ! gcloud iam workload-identity-pools describe "$POOL" \
       --display-name="NIVON GitHub OIDC"
 fi
 
-CONDITION="assertion.repository=='${REPO}' && assertion.ref=='refs/heads/main' && (assertion.workflow_ref=='${MAIN_WORKFLOW}' || assertion.workflow_ref=='${PTAX_WORKFLOW}')"
+CONDITION="assertion.repository=='${REPO}' && assertion.ref=='refs/heads/main' && (assertion.workflow_ref=='${MAIN_WORKFLOW}' || assertion.workflow_ref=='${PTAX_WORKFLOW}' || assertion.workflow_ref=='${ZARC_WORKFLOW}')"
 if ! gcloud iam workload-identity-pools providers describe "$PROVIDER" \
         --workload-identity-pool="$POOL" --project="$PROJECT" \
         --location=global >/dev/null 2>&1; then
@@ -103,6 +104,8 @@ PY
 
 bq --project_id="$PROJECT" --location="$REGION" query \
     --use_legacy_sql=false < "$ROOT/database/bigquery/nivon_neon_legado_schema.sql"
+bq --project_id="$PROJECT" --location="$REGION" query \
+    --use_legacy_sql=false < "$ROOT/database/bigquery/nivon_zarc_schema.sql"
 
 # O modelo PTAX canonico ja esta versionado no main.
 sed "s/\${PROJECT_ID}/${PROJECT}/g" "$ROOT/database/bigquery/nivon_ptax_schema.sql" | \
@@ -111,6 +114,6 @@ sed "s/\${PROJECT_ID}/${PROJECT}/g" "$ROOT/database/bigquery/nivon_ptax_schema.s
 WIF_NAME="projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL}/providers/${PROVIDER}"
 echo "NIVON_GCP_WIF_PROVIDER=$WIF_NAME"
 echo "NIVON_GCP_SERVICE_ACCOUNT=$SA_EMAIL"
-echo 'GCP_DATASETS_PTAX_E_LEGADO_CRIADOS'
+echo 'GCP_DATASETS_PTAX_LEGADO_ZARC_CRIADOS'
 echo 'IMPORTANTE: ainda configurar no GitHub as variaveis acima e revisar limite de faturamento.'
 echo 'NAO desligar nem excluir Neon ate carga e verificacao de integridade no BigQuery.'
