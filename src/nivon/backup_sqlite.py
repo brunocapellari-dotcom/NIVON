@@ -66,6 +66,13 @@ def _snapshot_para(conn: sqlite3.Connection, destino: Path) -> str:
 
 def criar_backup(conn: sqlite3.Connection, destino: str | Path) -> dict:
     """Cópia coerente, mesmo se o banco estiver em WAL; arquivo com permissão 0600."""
+    # sqlite3.Connection.backup() na MESMA conexão escritora que possui
+    # transação aberta pode bloquear indefinidamente. O chamador deve
+    # finalizar a transação ou abrir conexão leitora separada.
+    if conn.in_transaction:
+        raise ErroBackup(
+            "transação aberta: concluir ou fazer backup por conexão leitora separada"
+        )
     _integridade(conn)
     path = Path(destino)
     hash_arquivo = _snapshot_para(conn, path)
