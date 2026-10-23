@@ -53,7 +53,7 @@ def resumo_parquets(hidrovia: str | Path, carga: str | Path, *, ano: int = 2025)
             "SELECT COUNT(*) AS n, COUNT(*) FILTER (WHERE IDCarga IS NULL OR ValorMovimentado IS NULL OR ValorMovimentado < 0) AS invalidos "
             "FROM read_parquet(?)", [hr]).fetchone()
         meta_c = db.execute(
-            "SELECT COUNT(*) n, COUNT(DISTINCT IDCarga) ids, COUNT(*) FILTER (WHERE IDCarga IS NULL) nulls "
+            "SELECT COUNT(*) n, COUNT(DISTINCT IDCarga) ids, COUNT(*) FILTER (WHERE IDCarga IS NULL) ids_nulos "
             "FROM read_parquet(?)", [cr]).fetchone()
         if not meta_h or not meta_c or meta_h[0] <= 0 or meta_c[0] <= 0:
             raise ErroReplicaANTAQ("parquets vazios")
