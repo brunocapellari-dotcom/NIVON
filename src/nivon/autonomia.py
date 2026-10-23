@@ -22,6 +22,7 @@ from nivon.cooperacao import change, claim, connect, default_db, report
 from nivon.planejador import get_issues, refresh as refresh_plan
 from nivon.contexto_codigo import capsule
 from nivon.token_guard import summarize
+from nivon.janela_noturna import may_begin, status as night_status
 
 ROOT = Path(__file__).resolve().parents[2]
 HOME = ROOT / ".nivon-local"
@@ -282,6 +283,8 @@ def supervisor_lock():
 
 
 def run(*, max_tasks=8, minutes=120, per_task=15):
+    if not may_begin(per_task_minutes=per_task):
+        raise RuntimeError("Desenvolvimento autônomo permitido somente 20:00–06:00 em America/Cuiaba; reserva de tempo para testes")
     preflight()
     with supervisor_lock():
         return _run_locked(max_tasks=max_tasks, minutes=minutes, per_task=per_task)
@@ -306,8 +309,11 @@ def _run_locked(*, max_tasks=8, minutes=120, per_task=15):
     events = []
 
     def worker(agent):
-        while not (HOME / "STOP").exists() and time.monotonic() < deadline:
+        while (not (HOME / "STOP").exists() and time.monotonic() < deadline
+               and may_begin(per_task_minutes=per_task)):
             with guard:
+                if not may_begin(per_task_minutes=per_task):
+                    return
                 if count["value"] >= max_tasks:
                     return
                 with connect(dbpath) as db:
@@ -363,8 +369,8 @@ def main(argv=None):
     if args.action == "status":
         with connect(default_db()) as db:
             data = report(db)
-        print(json.dumps({"counts": data["counts"], "stale": data["stale_needs_review"]},
-                         ensure_ascii=False))
+        print(json.dumps({"counts": data["counts"], "stale": data["stale_needs_review"],
+                          "janela_noturna": night_status()}, ensure_ascii=False))
         return 0
     if args.action == "stop":
         HOME.mkdir(exist_ok=True)
@@ -374,6 +380,8 @@ def main(argv=None):
     if not 1 <= args.max_tasks <= 30 or not 1 <= args.minutes <= 480 or not 2 <= args.per_task <= 60:
         parser.error("Limites inválidos")
     try:
+        if not may_begin(per_task_minutes=args.per_task):
+            raise RuntimeError("Execução autônoma somente no período noturno de Mato Grosso (20:00–06:00), com margem de conclusão")
         preflight()
         if args.action == "start":
             HOME.mkdir(exist_ok=True)
