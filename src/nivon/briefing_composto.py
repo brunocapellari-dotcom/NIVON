@@ -13,6 +13,7 @@ from .briefing_diario import gerar_texto, ErroBriefing
 
 CORREDORES = {
     ("SORRISO", "MT", "RONDONOPOLIS", "MT"),
+    ("SORRISO", "MT", "DOM AQUINO", "MT"),
     ("SINOP", "MT", "MIRITITUBA", "PA"),
 }
 
@@ -34,6 +35,17 @@ def _normalizar_rota(f: dict) -> tuple[str, str, str, str]:
     return rota
 SECOES = ("BOLSAS", "CAMBIO", "PRECOS", "SAFRA", "PORTOS", "DIESEL",
            "FERTILIZANTES", "CLIMA", "LOGISTICA", "GEOPOLITICA")
+
+# Limites conservadores trazidos da PR #30: impedem tratar indicadores
+# históricos como atualidade, sem alegar validação de calendário oficial.
+LIMITES_FRESCURA = {
+    "BOLSAS": timedelta(hours=96), "CAMBIO": timedelta(hours=96),
+    "PRECOS": timedelta(days=7), "SAFRA": timedelta(days=45),
+    "PORTOS": timedelta(hours=48), "DIESEL": timedelta(days=16),
+    "FERTILIZANTES": timedelta(days=45), "CLIMA": timedelta(hours=48),
+    "LOGISTICA": timedelta(hours=72), "GEOPOLITICA": timedelta(hours=72),
+}
+assert set(LIMITES_FRESCURA) == set(SECOES)
 
 
 def montar_briefing(*, noticias: list[dict], fontes: dict,
@@ -69,6 +81,8 @@ def montar_briefing(*, noticias: list[dict], fontes: dict,
             agora = datetime.fromisoformat(data.replace("Z", "+00:00"))
             if agora.tzinfo is None or d > agora:
                 raise ErroBriefing("referência futura ou geração sem fuso")
+            if agora - d > LIMITES_FRESCURA[secao]:
+                raise ErroBriefing("indicador vencido: referência fora da janela da seção")
             itens.append({
                 "secao": secao, "titulo": titulo[:100],
                 "valor": valor[:100], "referencia": referencia,

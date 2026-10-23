@@ -1,0 +1,29 @@
+# Build offline/auditoria: negar todo o contexto, permitir apenas código e contrato.
+*
+!src/
+!src/**
+!config/
+!config/**
+!infra/
+!infra/inventory.v1.json
+!infra/docker/
+!infra/docker/Dockerfile.audit
+
+# Nunca incluir segredos ou bancos mesmo se estiverem dentro de paths permitidos.
+**/.env*
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/*.sqlite*
+**/*.db
+**/*.csv
+**/*.xlsx
+**/*.parquet
+**/*.zip
+**/__pycache__/
+**/*.pyc
+**/secrets/**
+**/private/**
+**/dados/**
+**/data/**
