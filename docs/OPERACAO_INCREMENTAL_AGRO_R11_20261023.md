@@ -9,7 +9,8 @@
 
 1. **CONAB, LAB somente:** reaproveita `sincronizacao_incremental_conab_lab.py` e suas dependências comprovadas da PR #157; histórico por SHA, delta de edições, revisão de semana bloqueada sem versionamento, integridade semântica e backup SQLite conferido. Os XLSX da referência são de terceiro/agrobr, **não** captura diretamente comprovada da CONAB; migração/publicação proibidas.
 2. **Argentina/SAGyP, arquivo autorizado:** `sincronizacao_incremental_argentina_local.py` exige RAW CSV privados endereçados por SHA e catálogo de recursos. Lê e valida TODAS as novas entradas antes de qualquer inserção; insere o lote numa transação SQLite única, com SHA semântico das linhas, verifica integridade referencial e bloqueia alteração de edição já persistida. Uma segunda execução sem delta não reprocessa RAW; nova versão preserva a edição anterior.
-3. **Operador unificado:** `operador_incremental_agro.py` aceita as duas fontes em **bancos diferentes**, bloqueia execução por padrão e uso argentino sem confirmação explícita de direito de armazenamento. Não faz rede, nem credenciais, nem writes Google Cloud. Retorna status `LOTE_PARCIAL_FALHOU_FECHADO` quando a segunda fonte falha após a primeira ter concluído — **sem alegar transação distribuída entre bancos independentes**.
+3. **Validação da cultura por recurso:** um arquivo classificado como `soja`, `milho` ou `trigo` precisa conter a cultura correspondente (`Soja`, `Maíz`/`Maiz`, `Trigo` após normalização de acentos). O recurso `todos` permite múltiplas culturas. Mistura de culturas é rejeitada ANTES da transação.
+4. **Operador unificado:** `operador_incremental_agro.py` aceita as duas fontes em **bancos diferentes**, bloqueia execução por padrão e uso argentino sem confirmação explícita de direito de armazenamento. Não faz rede, nem credenciais, nem writes Google Cloud. Retorna status `LOTE_PARCIAL_FALHOU_FECHADO` quando a segunda fonte falha após a primeira ter concluído — **sem alegar transação distribuída entre bancos independentes**.
 
 ## Manifesto local SAGyP
 
@@ -52,7 +53,7 @@ Para execução **somente local e somente após autorizações externas de armaz
 ## Qualidade e governança
 
 - **Testes CONAB:** delta, no-op sem download/backup, atomicidade, revisão conflitante, adulteração, backup corrompido/ausente e proteção de diretórios.
-- **Testes Argentina:** três ciclos de versão, idempotência, rollback por RAW inválido ou duplicata econômica, adulteração histórica, bloqueio de diretórios hostis e negativa de publicação.
+- **Testes Argentina:** três ciclos de versão, idempotência, rollback por RAW inválido ou duplicata econômica, recusa de cultura divergente do recurso, aceitação de `Maíz` sob `milho`, adulteração histórica, bloqueio de diretórios hostis e negativa de publicação.
 - **Testes do operador:** sem execução por padrão, falta de direitos, separação das bases, zero promoção e status fiel de falha parcial.
 - **Persistência:** bases SQLite locais de laboratório/quarentena; a verdade editorial e as fontes atuais continuam fora desses bancos. **Nenhuma conexão GCS/BigQuery comprovada por esta PR.**
 - **Próxima integração:** reconciliar os contratos de RAW, proveniência, datas e QUARANTINED com as pipelines Google Cloud existentes da [PR #174](https://github.com/brunocapellari-dotcom/NIVON/pull/174). Não duplicar infraestrutura GCS e não promover arquivos SAGyP/CONAB para BigQuery analítico sem data de publicação, direitos e proveniência verificados.
