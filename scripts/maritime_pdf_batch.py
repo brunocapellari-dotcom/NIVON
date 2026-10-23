@@ -124,6 +124,16 @@ def main(argv: list[str] | None = None) -> int:
         manifest_path = args.manifest.resolve(strict=True)
         data = _manifest(manifest_path)
         entries = tuple(_one(manifest_path.parent, item) for item in data["documents"])
+        # Deny before creating the SQLite file. A claimed licence is still
+        # an external attestation, never independently certified by this CLI.
+        if args.commit:
+            for entry in entries:
+                entry.rights.require("write")
+        if args.report:
+            if args.report.exists() or not args.report.parent.is_dir():
+                raise ValueError("JSON audit output must be a new path in an existing directory")
+            if args.db is not None and args.report.resolve() == args.db.resolve():
+                raise ValueError("audit output cannot overwrite SQLite database")
         target = args.db if args.commit else ":memory:"
         with MaritimeStore(target) as store:
             report = run_offline_pdf_batch(
@@ -138,7 +148,7 @@ def main(argv: list[str] | None = None) -> int:
         else:
             sys.stdout.write(formatted)
         return 0
-    except (OSError, KeyError, TypeError, ValueError, PermissionError) as exc:
+    except (OSError, KeyError, TypeError, ValueError, PermissionError, RuntimeError) as exc:
         print(json.dumps({
             "status": "BLOCKED_NO_PUBLICATION",
             "reason": str(exc),
