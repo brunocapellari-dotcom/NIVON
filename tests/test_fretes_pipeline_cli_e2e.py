@@ -14,6 +14,12 @@ from nivon.fretes_ledger_persistente import (
     GENESIS, inicializar_ledger_frete, anexar_lote_previsoes_frete,
 )
 from test_fretes_ledger_persistente import recebido
+from nivon.fretes_ofertas_store import (
+    GENESIS as OFERTAS_GENESIS, inicializar_store_ofertas_frete,
+    anexar_lote_ofertas_frete,
+)
+from test_fretes_ofertas_store import evidencias
+
 from test_fretes_previsoes_arquivadas import (
     KEY, CUTOFF, PARAMS, SOURCE, MODEL, historico, emissao,
 )
@@ -116,6 +122,42 @@ class TestPipelineRealistaOffline(unittest.TestCase):
         r=self.rodar()
         self.assertEqual(r.returncode,2)
         self.assertFalse(json.loads(r.stderr)["publicavel"])
+
+    def test_cli_usa_store_sqlite_de_ofertas_sem_jsonl(self):
+        with sqlite3.connect(self.db) as db:
+            inicializar_store_ofertas_frete(db)
+            a=anexar_lote_ofertas_frete(
+                db,self.rows,evidencias=evidencias(self.rows),
+                cabeca_anterior_sha256=OFERTAS_GENESIS,
+            )
+        del self.settings["arquivo_ofertas"]
+        self.settings["arquivo_ofertas_sqlite"]=str(self.db)
+        self.settings["cabeca_ofertas_sha256"]=a["cabeca_sha256"]
+        self.config.write_text(json.dumps(self.settings),encoding="utf-8")
+        r=self.rodar()
+        self.assertEqual(r.returncode,0,r.stderr)
+        info=json.loads(r.stdout)
+        self.assertEqual(info["origem_ofertas"],"SQLITE_STORE")
+        self.assertEqual(info["cabeca_store_ofertas_conferida"],a["cabeca_sha256"])
+        self.assertEqual(info["dias_com_ofertas"],110)
+        self.assertEqual(info["avaliacoes"]["90"]["mae"],0)
+        self.assertFalse(info["dados_originais_autenticados"])
+        self.assertFalse(info["publicavel"])
+
+    def test_cli_cabeca_store_ofertas_adulterada_bloqueia(self):
+        with sqlite3.connect(self.db) as db:
+            inicializar_store_ofertas_frete(db)
+            anexar_lote_ofertas_frete(
+                db,self.rows,evidencias=evidencias(self.rows),
+                cabeca_anterior_sha256=OFERTAS_GENESIS,
+            )
+        del self.settings["arquivo_ofertas"]
+        self.settings["arquivo_ofertas_sqlite"]=str(self.db)
+        self.settings["cabeca_ofertas_sha256"]="0"*64
+        self.config.write_text(json.dumps(self.settings),encoding="utf-8")
+        r=self.rodar()
+        self.assertEqual(r.returncode,2)
+        self.assertEqual(json.loads(r.stderr)["status"],"BLOQUEADO")
 
     def test_jsonl_com_numero_float_rejeita(self):
         obj=oferta_exportada(self.rows[0])
