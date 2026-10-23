@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS `${PROJECT_ID}.${DATASET_ID}.agro_fonte_stage`
   unidade STRING NOT NULL,
   valor STRING NOT NULL,
   data_publicacao_original STRING,
+  data_declaracao STRING,
   coletado_utc TIMESTAMP NOT NULL,
   source_sha256 STRING NOT NULL,
   hash_natureza STRING NOT NULL,
