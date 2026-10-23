@@ -46,6 +46,8 @@ def _parse_num(raw: str, *, inteiro: bool = False) -> str | int | None:
         return None
     if not re.fullmatch(r"[+-]?[0-9.,]+", raw):
         raise DadosANTTInvalidos("valor numérico inválido")
+    if re.fullmatch(r"\d{1,3}[.,]\d{3}", raw):
+        raise DadosANTTInvalidos("formato numérico ambíguo; declarar padrão antes de ingerir")
     if "." in raw and "," in raw:
         raw = raw.replace(".", "").replace(",", ".") if raw.rfind(",") > raw.rfind(".") else raw.replace(",", "")
     elif "," in raw:
