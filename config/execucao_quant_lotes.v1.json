@@ -55,9 +55,9 @@
     {
       "id": "Q-MARKETS",
       "priority": "P0",
-      "status": "INTEGRATED_AT_FROZEN_SHA",
-      "source_ref": "687ce367ca5f88fa07f0e050440812f4c5451d7b",
-      "acceptance": "maintain PTAX migration + continuity, reconcile newer commits only after SHA comparison"
+      "status": "INTEGRATED_AT_FROZEN_SHA_AND_TEN_STAGE_PTAX_E2E",
+      "source_ref": "cfbea57b89f6e2eaaa3958ca1f482c3e048daa07",
+      "acceptance": "PTAX continuity, coexistence, RAW SQLite backup/restore and reverse migration test with 10 synthetic stages at each PR push"
     },
     {
       "id": "Q-SOURCE-PARSER",
@@ -96,7 +96,23 @@
     {
       "id": "REAL-SOURCE-OPTIONAL",
       "status": "SKIPPED_UNTIL_SOURCE_AUTHORIZATION"
+    },
+    {
+      "id": "PTAX-10-STAGE",
+      "script": "PYTHONPATH=src python scripts/ensaio_ptax_integrado.py",
+      "workflow": "validar-nucleo",
+      "status": "SUCCESS_OFFLINE_ONLY",
+      "evidence": "https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39890911522"
     }
   ],
-  "source_of_truth": "docs/NIVON_QUANT_PLANO_LOTES_EXECUCAO_20261022.md"
+  "source_of_truth": "docs/NIVON_QUANT_PLANO_LOTES_EXECUCAO_20261022.md",
+  "last_verified": {
+    "quant_head_before_manifest_sync": "5a840abab6ed78e933df565f6d20bf030931c04a",
+    "ci_run": "39890911522",
+    "tests": 1666,
+    "failures": 0,
+    "skipped": 5,
+    "status": "SUCCESS",
+    "limitations": "ONLY_SYNTHETIC_OFFLINE"
+  }
 }

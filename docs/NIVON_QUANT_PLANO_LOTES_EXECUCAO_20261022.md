@@ -68,3 +68,33 @@ workflows de CI associados a novos commits validam automaticamente a árvore.
   custo, credencial ou risco irreversível.
 - Não afirmar que dados reais estão integrados nem que um modelo
   é apto a publicação por suíte sintética aprovada.
+
+## Evidência de CI de integração ampliada — 22/10/2026
+
+A PR #20 incorporou **por SHA** o conjunto Mercados
+`cfbea57b89f6e2eaaa3958ca1f482c3e048daa07`, incluindo a etapa
+adicional de testes de ponta a ponta PTAX no workflow existente:
+`.github/workflows/testes.yml`, com `permissions: contents: read`,
+nenhum novo disparo de rede/fonte real e execução apenas com fixtures
+sintéticas. O script
+`scripts/ensaio_ptax_integrado.py` executou dez etapas,
+incluindo `backup`, `restore`, leitura decimal/legada e migração
+reversa em banco SQLite em memória, impedindo promoção editorial.
+
+- Merge de corte Mercados: `5a840abab6ed78e933df565f6d20bf030931c04a`.
+- [CI 39890911522](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39890911522):
+  **SUCCESS, 1.666 testes, 0 falhas, 5 skipped**, etapa adicional
+  `ENSAIO_PTAX_E2E_APROVADO_APENAS_SINTETICO` com as dez etapas;
+  `fonte_real_coletada=false` e `publicavel=false`.
+- Na mesma frente Quant, os testes de orquestração em lote dos anúncios,
+  de recibos RAW e de separação econômica foram executados como parte da
+  suíte e bloqueiam documentação/prova incompleta ou adulterada.
+- Na PR #30, o HEAD `8b351202e9ead030dd862dd45e8e6afd86ecc378`
+  foi validado em [39889891470](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39889891470):
+  1.314 testes, 0 falhas, 5 skipped, exigindo descarga e PF/PJ.
+
+**Corte congelado:** a PR #21 pode continuar recebendo novas alterações.
+O fato de um HEAD novo surgir não invalida o CI de um corte anterior,
+mas seus commits adicionais não estão auditados por esta suíte.
+Não adicionar automaticamente novos workflows, serviços de rede ou
+mudanças de licenciamento sem inspecionar os deltas.
