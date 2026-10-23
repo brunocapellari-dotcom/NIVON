@@ -47,9 +47,12 @@ class VigiaTest(unittest.TestCase):
         workflow=(Path(__file__).resolve().parents[1]/
                   ".github/workflows/antt-vigia-revisoes-gcp.yml").read_text()
         self.assertIn("for tentativa in range(1,4)",workflow)
-        self.assertIn("ANTT_FONTE_INVALIDA_APOS_TRES_TENTATIVAS",workflow)
-        self.assertIn("erro not in {'catalogo CKAN invalido'",workflow)
-        self.assertIn("ANTT_ERRO_NAO_RECUPERAVEL_SEM_CARGA",workflow)
+        self.assertIn("CSV_OU_CKAN_INVALIDO_APOS_TRES_TENTATIVAS",workflow)
+        self.assertIn("FONTE_ANTT_INDISPONIVEL_PARA_COMPARACAO",workflow)
+        self.assertIn("ANTT_FONTE_NAO_VERIFICAVEL_ALERTA",workflow)
+        self.assertIn("'bigquery_verificado_nesta_rodada':False",workflow)
+        self.assertIn("if erro not in recuperaveis:",workflow)
+        self.assertIn("ACESSO_OU_CONTRATO_BLOQUEADO",workflow)
         self.assertNotIn("ANTT_ACESSO_BLOQUEADO','schema",workflow)
         self.assertIn("VIGIA_BQ_FALHOU_SEM_COMPROVANTE",workflow)
         self.assertIn("maximum_bytes_billed",__import__(

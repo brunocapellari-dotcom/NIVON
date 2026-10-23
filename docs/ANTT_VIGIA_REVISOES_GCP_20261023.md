@@ -21,3 +21,7 @@ Em https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39999355921 o his
 ## Gate para incremento em produção
 
 Após revisão oficial confirmada e QA de metodologia, produzir plano diferencial por ano; comparar contagens/hash, custos e permissões, exigir gate exclusivo ANTT e só então executar uma carga idempotente versionada. Revalidar a view após carregar. Essa etapa de **escrita incremental não é ativada por este vigia**.
+
+## Fonte temporariamente indisponível
+
+Em 23/10/2026, a primeira prova autenticada da vigia retornou `schema ANTT inesperado` em três tentativas de download de CSV oficial (https://github.com/brunocapellari-dotcom/NIVON/actions/runs/40009107458). O sucesso da carga histórica já provada no BQ permanece válido, mas **não foi possível conferir novamente a revisão da fonte** nessa tentativa. O monitor registra `FONTE_ANTT_INDISPONIVEL_PARA_COMPARACAO` com evidência JSON, em vez de confundir falha de origem com revisão detectada ou publicar zeros. Em HTTP 401/403 não há retentativa nem contorno. O status alerta (job falha), mas não atualiza o BigQuery.
