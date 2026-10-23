@@ -25,7 +25,7 @@ concurrency:
 
 jobs:
   coletar:
-    if: ${{ github.ref == 'refs/heads/main' && vars.NIVON_AGRO_GCP_WRITE_APPROVED == 'true' && vars.NIVON_RAW_ARCHIVE_APPROVED == 'true' && vars.NIVON_ZERO_COST_BQ_APPROVED == 'true' && vars.NIVON_GCP_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && vars.NIVON_BQ_PROJECT != '' && vars.NIVON_BQ_DATASET != '' && vars.NIVON_GCS_BUCKET != '' }}
+    if: ${{ github.ref == 'refs/heads/main' && (github.event_name != 'schedule' || vars.NIVON_AGRO_E2E_VERIFIED == 'true') && vars.NIVON_AGRO_GCP_WRITE_APPROVED == 'true' && vars.NIVON_RAW_ARCHIVE_APPROVED == 'true' && vars.NIVON_ZERO_COST_BQ_APPROVED == 'true' && vars.NIVON_GCP_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && vars.NIVON_BQ_PROJECT != '' && vars.NIVON_BQ_DATASET != '' && vars.NIVON_GCS_BUCKET != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 35
     environment: nivon-gcp-producao
