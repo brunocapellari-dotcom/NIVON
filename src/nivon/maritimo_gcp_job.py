@@ -36,6 +36,13 @@ def executar_job(*, env=None, storage_client=None, bigquery_client=None,
     validar_destino(projeto,dataset)
     if not bucket:
         raise ValueError("NIVON_MARITIMO_BUCKET obrigatorio")
+    # Primeiros lotes podem homologar 1 fonte por vez; nunca aceitar
+    # nomes livres ou extrapolar o conjunto de coletores auditados.
+    from nivon.maritimo_pipeline import HTML_AUTORIZADO
+    selected=variables.get("NIVON_MARITIMO_FONTES","").strip()
+    fontes=tuple(v.strip() for v in selected.split(",")) if selected else FONTES
+    if not fontes or len(fontes)!=len(set(fontes)) or any(f not in HTML_AUTORIZADO for f in fontes):
+        raise ValueError("lista de fontes para homologacao nao autorizada")
     armazenar=ArquivoMaritimoGCS(bucket,storage_client=storage_client)
     today=datetime.now(timezone.utc).date()
     with tempfile.TemporaryDirectory(prefix="nivon-maritimo-") as dirname:
@@ -48,7 +55,7 @@ def executar_job(*, env=None, storage_client=None, bigquery_client=None,
             def snapshot(fonte,html,data):
                 item=armazenar.arquivar(fonte,html,coletado_em=data)
                 snapshots.append({"fonte":fonte,"coletado_em":data,**item})
-            result=executar_lote(FONTES,db,fornecedor_html=fornecedor_html,
+            result=executar_lote(fontes,db,fornecedor_html=fornecedor_html,
                  permitir_rede=fornecedor_html is None,on_snapshot=snapshot)
             execucoes.extend(result["fontes"])
             if variables.get("NIVON_PORTWATCH_COLETA_HABILITADA")=="true":

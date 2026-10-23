@@ -200,6 +200,32 @@ class TestCloud(unittest.TestCase):
         self.assertEqual(report["persistencia"]["destino"],"nivon-data.nivon_raw")
         self.assertTrue(storage.bucket("nivon-data-raw-2026").blobs)
 
+    def test_piloto_apenas_imbituba_sem_demais_fontes(self):
+        storage=FakeStorage()
+        client=FakeBigQueryClient()
+        calls=[]
+        def fonte(nome):
+            calls.append(nome)
+            return HTML
+        report=executar_job(env={
+            "NIVON_MARITIMO_COLETA_HABILITADA":"true",
+            "NIVON_MARITIMO_FONTES":"imbituba",
+            "GOOGLE_CLOUD_PROJECT":"nivon-data",
+            "NIVON_MARITIMO_DATASET":"nivon_raw",
+            "NIVON_MARITIMO_BUCKET":"nivon-data-raw-2026",
+        },storage_client=storage,bigquery_client=client,
+          bigquery_module=FakeBigQueryModule,fornecedor_html=fonte)
+        self.assertEqual(calls,["imbituba"])
+        self.assertEqual(report["estados"],{"OK":1,"QUARENTENA":0,"FALHA":0})
+        with self.assertRaises(ValueError):
+            executar_job(env={
+                "NIVON_MARITIMO_COLETA_HABILITADA":"true",
+                "NIVON_MARITIMO_FONTES":"desconhecido",
+                "GOOGLE_CLOUD_PROJECT":"nivon-data",
+                "NIVON_MARITIMO_BUCKET":"nivon-data-raw-2026",
+            },storage_client=FakeStorage(),bigquery_client=FakeBigQueryClient(),
+              bigquery_module=FakeBigQueryModule,fornecedor_html=fonte)
+
     def test_cloud_run_desabilitado_sem_qualquer_escrita(self):
         with self.assertRaises(PermissionError):
             executar_job(env={"GOOGLE_CLOUD_PROJECT":"nivon-exemplo-123"},
