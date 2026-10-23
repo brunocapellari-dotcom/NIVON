@@ -1,0 +1,49 @@
+name: NIVON IMEA - build seguro do coletor
+on:
+  push:
+    paths:
+      - 'functions/imea_stage/index.mjs'
+      - '.github/workflows/imea-build.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Gerar bundle
+        run: |
+          npm install --no-audit --no-fund --no-save pg@8.13.0 jose@6.1.0 esbuild@0.25.0
+          mkdir -p functions/imea_stage/dist
+          ./node_modules/.bin/esbuild functions/imea_stage/index.mjs \
+            --bundle --platform=node --target=node24 --format=esm \
+            --banner:js="import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);" \
+            --outfile=functions/imea_stage/dist/index.mjs
+          node --check functions/imea_stage/dist/index.mjs
+      - name: Testar acesso nao autenticado
+        run: |
+          node --input-type=module - <<'NODE'
+          import fn from './functions/imea_stage/dist/index.mjs'
+          for (const path of ['/stage']) {
+            const res=await fn.fetch(new Request('https://stage.local'+path,
+              {method:'POST',body:'{"source":"IMEA","rows":[]}'}))
+            if (res.status!==401) throw Error('Auth gate failed '+res.status)
+          }
+          const res=await fn.fetch(new Request('https://stage.local/health'))
+          if(res.status!==200)throw Error('Health failed')
+          console.log('OIDC authentication is required; HTTP 401 verified')
+          NODE
+      - name: Versionar bundle para implantar
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f functions/imea_stage/dist/index.mjs
+          if ! git diff --cached --quiet; then
+            git commit -m "build(imea): empacotar endpoint staging [skip ci]"
+            git push origin HEAD:${{ github.ref_name }}
+          fi
