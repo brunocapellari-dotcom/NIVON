@@ -262,7 +262,7 @@ class OfflineMaritimeBatchTests(unittest.TestCase):
     def test_readiness_audit_history_failure_blocks_new_write(self):
         first = input_doc()
         with MaritimeStore() as store:
-            with patch("nivon.maritime.offline_pdf_batch.PdfProgrammeLedger.audit_history_asof",
+            with patch("nivon.maritime.offline_pdf_batch.PdfProgrammeLedger.paged_history_asof",
                        side_effect=ValueError("audit history corrupted")):
                 with self.assertRaisesRegex(ValueError, "audit history corrupted"):
                     run(store, [first], [programmed()], commit=True)
