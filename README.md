@@ -37,3 +37,5 @@ Ambos operam com **tarefas delimitadas**, worktrees separadas, testes offline, l
 Instruções: [docs/AUTONOMIA_CONTINUA_NIVON.md](docs/AUTONOMIA_CONTINUA_NIVON.md).
 
 Diagnóstico sem usar tokens: `bash scripts/nivon-autonomo.sh doctor`. Planejamento sem modificar fila: `bash scripts/nivon-autonomo.sh plan`. Testes gerados exigem contêiner Docker local sem rede; não há execução do host autorizada por esta PR.
+
+A execução autônoma acumula entregas em `autonomo/integracao` **local**, com cherry-pick serializado e nova rodada de testes offline. Não publica nem mescla na `main` automaticamente.
