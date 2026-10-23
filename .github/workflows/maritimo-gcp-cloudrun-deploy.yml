@@ -1,5 +1,9 @@
 name: NIVON - Deploy controlado Cloud Run maritimo
 on:
+  pull_request:
+    paths:
+      - 'scripts/nivon_maritimo_cloudrun_deploy.sh'
+      - '.github/workflows/maritimo-gcp-cloudrun-deploy.yml'
   workflow_dispatch:
     inputs:
       executar_piloto:
@@ -14,7 +18,34 @@ concurrency:
   group: nivon-maritimo-cloud-run-deploy
   cancel-in-progress: false
 jobs:
+  contrato:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Validar deploy fail-closed sem credenciais
+        run: |
+          bash -n scripts/nivon_maritimo_cloudrun_deploy.sh
+          if NIVON_PROJETO=nivon-data NIVON_DATASET=nivon_raw \
+             NIVON_BUCKET=nivon-data-raw-2026 \
+             NIVON_EXECUTION_SA=nivon-coletor-de-dados@nivon-data.iam.gserviceaccount.com \
+             GITHUB_REF=refs/pull/123/merge bash scripts/nivon_maritimo_cloudrun_deploy.sh; then
+             echo 'ERRO: DEFERIR EXECUCAO DE PR'
+             exit 1
+          fi
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('scripts/nivon_maritimo_cloudrun_deploy.sh').read_text()
+          assert 'gcloud run jobs deploy' in src
+          assert 'gcloud run jobs execute' in src
+          assert 'gcloud scheduler jobs create' not in src
+          assert 'set-iam-policy' not in src
+          print('CONTRATO_CLOUD_RUN_SEM_CRON_E_SEM_IAM=OK')
+          PY
   deploy:
+    needs: contrato
     if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     timeout-minutes: 35
