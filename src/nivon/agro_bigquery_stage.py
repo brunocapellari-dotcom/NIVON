@@ -213,3 +213,18 @@ def exportar_stage(*,banco:str|Path,saida:str|Path,permitir_sintetico:bool=False
     return {'linhas':count,'por_fonte':fontes,'sha256_jsonl':h.hexdigest(),
             'status':'STAGING_PRIVADO_NAO_PUBLICAVEL',
             'google_cloud_gravado':False,'dados_reais_homologados':False}
+
+
+def main():
+    import argparse
+    p=argparse.ArgumentParser(description='NIVON: gerar stage local JSONL sem cloud ou publicacao')
+    p.add_argument('--banco',required=True)
+    p.add_argument('--saida',required=True)
+    p.add_argument('--max-linhas',type=int,default=500000)
+    a=p.parse_args()
+    resultado=exportar_stage(banco=a.banco,saida=a.saida,max_linhas=a.max_linhas)
+    print(json.dumps(resultado,ensure_ascii=False,sort_keys=True))
+
+
+if __name__=='__main__':
+    main()
