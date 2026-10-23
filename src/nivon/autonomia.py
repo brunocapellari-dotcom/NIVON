@@ -22,6 +22,7 @@ from nivon.cooperacao import change, claim, connect, default_db, report
 from nivon.planejador import get_issues, refresh as refresh_plan
 from nivon.contexto_codigo import capsule
 from nivon.token_guard import summarize
+from nivon.metricas import parse_file
 from nivon.janela_noturna import may_begin, status as night_status
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -113,22 +114,11 @@ def cli(agent, task):
 
 
 def usage_from_log(logfile):
-    """Best-effort CLI-reported tokens; unknown means None, never invent zero."""
-    try:
-        raw = logfile.read_text(encoding="utf-8", errors="replace")
-        events = [json.loads(raw)] if raw.lstrip().startswith("{") and "\n{" not in raw else [
-            json.loads(line) for line in raw.splitlines() if line.lstrip().startswith("{")
-        ]
-        for obj in reversed(events):
-            usage = obj.get("usage") or obj.get("total_token_usage")
-            if not isinstance(usage, dict):
-                continue
-            ins, outs = usage.get("input_tokens"), usage.get("output_tokens")
-            if isinstance(ins, int) and isinstance(outs, int) and ins >= 0 and outs >= 0:
-                return ins, outs
-    except (OSError, ValueError, TypeError, AttributeError):
-        pass
-    return None, None
+    """Backward-compatible helper; new code also tracks cached tokens per CLI."""
+    metrics = parse_file(logfile, "claude") or parse_file(logfile, "codex")
+    if metrics is None:
+        return None, None
+    return metrics["input"], metrics["output"]
 
 
 def within_scope(worktree, allowed):
@@ -327,15 +317,20 @@ def _run_locked(*, max_tasks=8, minutes=120, per_task=15):
             except Exception as exc:
                 outcome, note = "blocked", f"Erro no executor: {type(exc).__name__}; ver logs locais"
             usage_path = HOME / "logs" / f"{task['id']}-{agent}-{task['attempts']}.log"
-            usage_in, usage_out = usage_from_log(usage_path)
+            usage = parse_file(usage_path, agent)
+            usage_in = usage["input"] if usage else None
+            usage_out = usage["output"] if usage else None
+            usage_cached = usage["cached_input"] if usage else None
             with connect(dbpath) as db:
                 if outcome == "quota":
                     next_agent = "codex" if agent == "claude" else "claude"
                     change(db, task["id"], agent, "handoff", note[:2500],
-                           tokens_in=usage_in, tokens_out=usage_out, next_agent=next_agent)
+                           tokens_in=usage_in, tokens_out=usage_out,
+                           tokens_cached=usage_cached, next_agent=next_agent)
                 else:
                     change(db, task["id"], agent, outcome, note[:2500],
-                           tokens_in=usage_in, tokens_out=usage_out)
+                           tokens_in=usage_in, tokens_out=usage_out,
+                           tokens_cached=usage_cached)
                 # Replanejar a partir das dependências que acabaram de ser entregues.
                 # Não invoca outro LLM e não reativa tarefas bloqueadas.
                 if outcome == "done":
@@ -343,6 +338,8 @@ def _run_locked(*, max_tasks=8, minutes=120, per_task=15):
             with guard:
                 events.append({"task": task["id"], "agent": agent, "status": outcome,
                                "tokens_input": usage_in, "tokens_output": usage_out,
+                               "tokens_cached_input": usage_cached,
+                               "usage_source": usage["source"] if usage else None,
                                "note": note[:300]})
     with ThreadPoolExecutor(max_workers=2, thread_name_prefix="nivon") as pool:
         futures = [pool.submit(worker, agent) for agent in ("claude", "codex")]
@@ -351,6 +348,8 @@ def _run_locked(*, max_tasks=8, minutes=120, per_task=15):
     with connect(dbpath) as db:
         result = report(db)
     payload = {"executions": events, "counts": result["counts"],
+               "token_metrics": result["tokens_reported"],
+               "agents": result["agents"],
                "stale_needs_review": result["stale_needs_review"]}
     (HOME / "last-run.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     return payload
