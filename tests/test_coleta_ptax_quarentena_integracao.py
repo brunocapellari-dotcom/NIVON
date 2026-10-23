@@ -239,6 +239,37 @@ class TestColetaQuarentenaETL(unittest.TestCase):
                 referencia_custo="ORCAMENTO_FICTICIO_CI",
             )
 
+    def test_cli_gcs_dry_run_nao_aciona_cloud(self):
+        from scripts.sincronizar_ptax_gcs import main
+        from nivon.ptax_quarentena_coleta import receber_amostra_ptax
+        with tempfile.TemporaryDirectory() as tmp:
+            banco=Path(tmp)/"arquivo.db"
+            with sqlite3.connect(banco) as conn:
+                man={
+                    "fonte_declarada":"BCB_PTAX",
+                    "moeda":"USD",
+                    "consulta_url":P1["url"],
+                    "coletado_em":T.isoformat(),
+                    "status_http":200,
+                    "cabecalhos_http":{"Content-Type":"application/json"},
+                    "raw_sha256":sha256(RAW).hexdigest(),
+                }
+                receber_amostra_ptax(conn,raw=RAW,manifesto=man)
+            r=main([
+                "--banco",str(banco),
+                "--bucket","nivon-arquivo-teste",
+                "--max-eventos","1",
+            ])
+            self.assertEqual(r["status"],"DRY_RUN_SEM_CLOUD")
+            self.assertFalse(r["upload_executado"])
+            self.assertEqual(r["total_eventos"],1)
+            self.assertEqual(len(r["eventos"][0]["objetos"]),2)
+            with self.assertRaises(PermissionError):
+                main([
+                    "--banco",str(banco),"--bucket","nivon-arquivo-teste",
+                    "--confirmar-upload",
+                ])
+
     def test_sincronizacao_gcs_idempotente_com_retomada_parcial(self):
         self.run_fake(planos=[P1])
         eid=listar_amostras_ptax(self.db)[0]["evento_sha256"]
