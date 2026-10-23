@@ -8,7 +8,7 @@ from __future__ import annotations
 import sqlite3
 from datetime import datetime, timezone
 
-from .registry_emissores import resumo_registry
+from .provas_externas_envio import TIPOS
 
 
 def _tabela(con: sqlite3.Connection, nome: str) -> bool:
@@ -45,7 +45,17 @@ def diagnosticar_outbox(con: sqlite3.Connection, *, agora: datetime | None = Non
             "pendencias": sorted(obrigatorias - presentes),
             "envio_habilitado": False,
         }
-    registry = resumo_registry(con)
+    root = bool(con.execute("SELECT 1 FROM nivon_registry_root WHERE id=1").fetchone())
+    e_rows = con.execute(
+        "SELECT tipo, revogado_em FROM nivon_registry_emissores").fetchall()
+    ativos = sum(rev is None for _, rev in e_rows)
+    registry = {
+        "provisionado": root, "total": len(e_rows), "ativos": ativos,
+        "revogados": len(e_rows) - ativos,
+        "apto_registry": root and len(e_rows) == len(TIPOS)
+                         and {t for t, _ in e_rows} == set(TIPOS)
+                         and ativos == len(TIPOS),
+    }
     rows = con.execute("""SELECT e.idempotency_key,e.edicao,e.estado,e.tentativas,
         e.provider_message_id, a.documento_sha256,a.valido_ate,a.revogado_em,
         p.comprovantes_sha256, o.destinatario_hmac
