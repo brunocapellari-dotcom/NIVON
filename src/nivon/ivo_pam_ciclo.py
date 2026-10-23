@@ -11,6 +11,9 @@ import argparse
 import json
 import sqlite3
 from pathlib import Path
+from datetime import datetime, timezone
+
+from .ivo_pam_alertas import alertas_revisoes_pam
 
 from .ivo_pam_backup import ErroBackupPAM, criar_backup_pam, restaurar_backup_pam
 from .ivo_pam_operacao import abrir_operacao_pam, executar_lote_pam
@@ -38,6 +41,11 @@ def executar_ciclo_pam(*,saida, tarefas, modo="PUBLICO_IBGE",
                "capturas":0,"vintages":0,"legado_sem_manifesto":False}
     db=abrir_operacao_pam(workspace/"pam.sqlite")
     try:
+        # Data de corte registrada ANTES da nova coleta; primeiras capturas
+        # entram no resumo, mas não são chamadas de revisão.
+        anterior_max=db.execute("SELECT MAX(coletado_em) FROM pam_capturas").fetchone()[0]
+        inicio_alertas=(datetime.fromisoformat(anterior_max) if anterior_max
+                         else datetime(1970,1,1,tzinfo=timezone.utc))
         rel=executar_lote_pam(db=db,raiz=workspace/"cofre",tarefas=tarefas,
              modo=modo,entrada=entrada,transporte=transporte)
         aud=auditar_operacao_pam(db=db,raiz=workspace/"cofre")
@@ -46,6 +54,7 @@ def executar_ciclo_pam(*,saida, tarefas, modo="PUBLICO_IBGE",
         if rel["falhas"] or rel["aprovados"] != len(tarefas):
             raise ErroBackupPAM(
                 f"{rel['falhas']} falhas de coleta; não substituir backup validado")
+        radar=alertas_revisoes_pam(db,desde_exclusivo=inicio_alertas)
         stats=criar_backup_pam(db=db,raiz=workspace/"cofre",
                               saida=destino/"estado_pam.zip")
     finally:
@@ -61,6 +70,7 @@ def executar_ciclo_pam(*,saida, tarefas, modo="PUBLICO_IBGE",
                               "ano_civil":r["resultado"]["ano_civil"]}
                              for r in rel["resultados"] if r["status"]=="OK"]},
         "integridade":aud,
+        "alertas":radar,
         "backup":stats,
         "persistencia_cloud_comprovada":False,
         "vintages_publicacao_historica_verificadas":False,
@@ -70,6 +80,8 @@ def executar_ciclo_pam(*,saida, tarefas, modo="PUBLICO_IBGE",
         json.dumps(payload,indent=2,ensure_ascii=False),encoding="utf-8")
     (destino/"auditoria.json").write_text(
         json.dumps(aud,indent=2,ensure_ascii=False),encoding="utf-8")
+    (destino/"alertas_pam.json").write_text(
+        json.dumps(radar,indent=2,ensure_ascii=False),encoding="utf-8")
     return payload
 
 
@@ -93,7 +105,8 @@ def main(argv=None):
                           "coleta":result["coleta"],
                           "backup_sha256":result["backup"]["sha256_arquivo"],
                           "capturas":result["integridade"]["capturas_registradas"],
-                          "vintages":result["integridade"]["vintages_verificadas"]},
+                          "vintages":result["integridade"]["vintages_verificadas"],
+                          "alertas_relevantes":result["alertas"]["alteracoes_relevantes"]},
                          ensure_ascii=False))
         return 0
     except (OSError,ValueError,KeyError,TypeError,sqlite3.Error) as exc:
