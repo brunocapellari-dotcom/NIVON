@@ -225,7 +225,7 @@ class TestLoteConabE2E(TestCase):
             b'r="A2"',b'r="XFE2"'
         )
         manifest,raw=_input(_zip(d))
-        with self.assertRaisesRegex(ErroDocumentoConab,"referência de célula"):
+        with self.assertRaisesRegex(ErroDocumentoConab,"fora da janela"):
             ler_amostra_celulas_conab(manifesto_vinculo=manifest,xlsx_raw=raw)
 
     def test_rejeita_celula_repetida(self):
