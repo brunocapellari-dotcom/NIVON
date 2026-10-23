@@ -55,6 +55,7 @@ jobs:
             --pyproject pyproject.toml \
             --output evidencias/ci-e2e \
             --source-sha "$GITHUB_SHA" \
+            --pr-head-sha "${{ github.event.pull_request.head.sha || github.sha }}" \
             --run-id "$GITHUB_RUN_ID"
           python -m nivon.auditoria_artefatos_pacotes \
             --root . \
