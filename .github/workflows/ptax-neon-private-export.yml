@@ -24,7 +24,7 @@ jobs:
       NIVON_PTAX_PRIVATE_ENDPOINT: https://br-twilight-cell-b77ukd6x-ptaxbridge.compute.c-13.us-east-1.aws.neon.tech
       NIVON_GCP_WRITE_APPROVED: ${{ vars.NIVON_GCP_WRITE_APPROVED }}
       NIVON_GCP_COST_REVIEWED: ${{ vars.NIVON_GCP_COST_REVIEWED }}
-      NIVON_GCP_ENABLED: ${{ vars.NIVON_GCP_WRITE_APPROVED == 'true' && vars.NIVON_GCP_COST_REVIEWED == 'true' && vars.NIVON_GCP_WIF_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && 'true' || 'false' }}
+      NIVON_GCP_ENABLED: ${{ vars.NIVON_GCP_WRITE_APPROVED == 'true' && vars.NIVON_GCP_COST_REVIEWED == 'true' && vars.NIVON_GCP_WIF_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && vars.NIVON_PTAX_DIRECT_WRITER_APPROVED != 'true' && 'true' || 'false' }}
     steps:
       - uses: actions/checkout@v4
         with:
