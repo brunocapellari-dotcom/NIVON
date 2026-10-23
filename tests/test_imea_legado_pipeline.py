@@ -5,7 +5,7 @@ import json
 import sqlite3
 import tempfile
 import unittest
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from pathlib import Path
 from xml.sax.saxutils import escape
 from zipfile import ZIP_DEFLATED, ZipFile
@@ -17,6 +17,7 @@ from nivon.imea_legado_pipeline import (
 from nivon.imea_operacional_xlsx import parse_workbook
 from nivon.ingestao_fontes_reais import exportar_jsonl
 from nivon.carga_bigquery_fontes import planejar_carga, executar_carga
+from nivon.coletor_imea_origem import coletar_imea, ErroImeaRemoto
 
 
 REGIOES = (
@@ -160,6 +161,44 @@ class TestImeaLegadoPipeline(unittest.TestCase):
             with self.assertRaises(PermissionError):
                 executar_carga(arquivo=jsonl, project_id="nivon-data",
                                dataset_id="staging", executar=False)
+
+    def test_imeа_fonte_oficial_http_mocked_staging(self):
+        raw=workbook_imea()
+        url="https://www.imea.com.br/arquivos/planilha-exemplo.xlsx"
+        class Response:
+            status=200
+            headers={"Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
+            def __enter__(self):return self
+            def __exit__(self,*exc):return False
+            def geturl(self):return url
+            def read(self,n):return raw[:n]
+        class Client:
+            def open(self,req,timeout):return Response()
+        with tempfile.TemporaryDirectory() as folder:
+            result=coletar_imea(
+                url=url,base=folder,
+                autorizacoes=frozenset({"COLETA","ARMAZENAMENTO","USO_INTERNO"}),
+                evidencia="Autorizacao de uso interno validada e registrada",
+                executar=True,abridor=Client(),
+                instante=datetime(2026,10,23,15,0,tzinfo=timezone.utc))
+            self.assertEqual(result["status"],"RAW_QUARENTENA_LOCAL")
+            self.assertEqual(result["observacoes"],19)
+            self.assertFalse(result["bigquery_canonico"])
+            with sqlite3.connect(Path(folder)/"fontes_reais.sqlite") as db:
+                self.assertEqual(db.execute("SELECT COUNT(*) FROM observacoes").fetchone()[0],19)
+
+    def test_imea_fonte_nao_oficial_ou_sem_evidencia_bloqueia(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with self.assertRaises(ErroImeaRemoto):
+                coletar_imea(
+                    url="https://example.com/roubo.xlsx",base=folder,
+                    autorizacoes=frozenset({"COLETA","ARMAZENAMENTO","USO_INTERNO"}),
+                    evidencia="Autorizacao previamente comprovada",
+                    executar=True)
+            with self.assertRaises(PermissionError):
+                coletar_imea(
+                    url="https://imea.com.br/pesquisa.xlsx",base=folder,
+                    autorizacoes=frozenset(),evidencia="",executar=True)
 
     def test_real_requires_explicit_rights(self):
         lote = preparar_lote(workbook_imea(), origem=ORIGEM, coletado_em=REF)
