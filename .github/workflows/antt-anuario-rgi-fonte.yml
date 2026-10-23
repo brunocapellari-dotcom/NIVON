@@ -14,7 +14,7 @@ permissions:
 jobs:
   validar:
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -26,3 +26,15 @@ jobs:
         env:
           PYTHONPATH: src
         run: python -m unittest discover -s tests -p 'test_antt_anuario_rgi.py' -v
+      - name: Verificar fonte oficial somente no agendamento ou acionamento manual
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_EVENT_NAME" = "push" ] || [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            echo "CI_OFFLINE_ONLY"
+            exit 0
+          fi
+          python -m pip install --no-deps --only-binary=:all: --require-hashes -r requirements/antt-rgi.txt
+          trap 'rm -f "$RUNNER_TEMP/antt-relatorio-2025.sqlite"*' EXIT
+          python scripts/ingest_antt_anuario_rgi.py --db "$RUNNER_TEMP/antt-relatorio-2025.sqlite"
