@@ -21,7 +21,13 @@ SELECT e.source,e.series_id,e.product,e.location,
  WHEN s.auth_state='PENDING_WRITTEN_PERMISSION' THEN 'BLOCKED_RIGHTS'
  WHEN e.source='CEPEA' AND NOT EXISTS(SELECT 1 FROM public.nivon_cepea_prices q WHERE q.series_id=e.series_id) THEN 'NOT_INTEGRATED'
  WHEN e.source='CONAB' AND NOT EXISTS(SELECT 1 FROM public.nivon_conab_safras q WHERE q.product=e.product AND q.uf='MT') THEN 'NOT_INTEGRATED'
- WHEN (SELECT status FROM public.nivon_p0_source_checks c WHERE c.source=e.source ORDER BY c.id DESC LIMIT 1)='ERROR' THEN 'COLLECTOR_ERROR'
+ WHEN e.source='CEPEA' AND (SELECT status FROM public.nivon_p0_source_checks c
+    WHERE c.source='CEPEA' AND c.provenance_uri=CASE WHEN e.product='soja'
+      THEN 'https://www.cepea.org.br/br/indicador/soja.aspx'
+      ELSE 'https://www.cepea.org.br/br/indicador/milho.aspx' END
+    ORDER BY c.id DESC LIMIT 1)='ERROR' THEN 'COLLECTOR_ERROR'
+ WHEN e.source<>'CEPEA' AND (SELECT status FROM public.nivon_p0_source_checks c
+    WHERE c.source=e.source ORDER BY c.id DESC LIMIT 1)='ERROR' THEN 'COLLECTOR_ERROR'
  WHEN e.source='CEPEA' AND (SELECT max(reference_date) FROM public.nivon_cepea_prices q WHERE q.series_id=e.series_id)<current_date-4 THEN 'SOURCE_LAG'
  WHEN e.source='CONAB' AND (SELECT max(published_on) FROM public.nivon_conab_safras q WHERE q.product=e.product AND q.uf='MT')<current_date-45 THEN 'SOURCE_LAG'
  WHEN s.ingest_state!='ACTIVE' THEN 'DATA_PRESENT_AUTOMATION_PENDING'
