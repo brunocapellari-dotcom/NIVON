@@ -108,6 +108,75 @@ class OfflineMaritimeBatchTests(unittest.TestCase):
                 port_id="PARANAGUA", source_id="OFFICIAL_PARANAGUA_TEST",
                 series="EXPORT_OESTE", read_authorized=True), 0)
 
+    def test_batch_reports_per_source_readiness_without_claiming_homologation(self):
+        first = input_doc()
+        second = input_doc(collected="2026-10-20T16:00:00Z",
+                           published="2026-10-20T15:00:00Z", seed=b"B")
+        with MaritimeStore() as store:
+            out = run(store, [first, second], [programmed(), programmed()],
+                      commit=False)
+            self.assertEqual(len(out["source_readiness"]), 1)
+            gate = out["source_readiness"][0]
+            self.assertEqual(gate["documents_known_as_of"], 2)
+            self.assertEqual(gate["distinct_edition_count_for_review"], 2)
+            self.assertIn("FEWER_THAN_THREE_DISTINCT_DATED_EDITIONS", gate["blockers"])
+            self.assertIn("NO_EXPLICIT_DUV_IN_KNOWN_PDF_EDITION", gate["blockers"])
+            self.assertEqual(gate["status"], "NOT_HOMOLOGATED_EXTERNAL_REVIEW_REQUIRED")
+            self.assertIsNone(gate["confirmed_port_call_count"])
+            self.assertFalse(gate["release_allowed"])
+
+    def test_three_distinct_editions_open_review_gate_but_never_release(self):
+        docs = [
+            input_doc(),
+            input_doc(collected="2026-10-20T14:00:00Z",
+                      published="2026-10-20T13:00:00Z", seed=b"B"),
+            input_doc(collected="2026-10-20T16:00:00Z",
+                      published="2026-10-20T15:00:00Z", seed=b"C"),
+        ]
+        with MaritimeStore() as store:
+            result = run(store, docs, [programmed(), programmed(), programmed()],
+                         commit=False)
+            gate = result["source_readiness"][0]
+            self.assertEqual(gate["distinct_edition_count_for_review"], 3)
+            self.assertTrue(gate["document_set_has_three_distinct_known_editions"])
+            self.assertNotIn("FEWER_THAN_THREE_DISTINCT_DATED_EDITIONS", gate["blockers"])
+            self.assertIn("ORIGINAL_PDF_VISUAL_PAGE_AUDIT_REQUIRED", gate["blockers"])
+            self.assertIn("EXTERNAL_RIGHTS_VERIFICATION_REQUIRED", gate["blockers"])
+            self.assertFalse(gate["release_allowed"])
+
+    def test_repeated_bytes_at_distinct_collection_times_not_three_editions(self):
+        docs = [
+            input_doc(),
+            input_doc(collected="2026-10-20T14:00:00Z",
+                      published="2026-10-20T13:00:00Z"),
+            input_doc(collected="2026-10-20T16:00:00Z",
+                      published="2026-10-20T15:00:00Z"),
+        ]
+        with MaritimeStore() as store:
+            report = run(store, docs, [programmed(), programmed(), programmed()],
+                         commit=False)
+            gate = report["source_readiness"][0]
+            self.assertEqual(gate["distinct_source_hashes_known_as_of"], 1)
+            self.assertEqual(gate["distinct_collection_instants_known_as_of"], 3)
+            self.assertEqual(gate["distinct_edition_count_for_review"], 1)
+            self.assertIn("REUSED_DOCUMENT_BYTES_NOT_INDEPENDENT", gate["blockers"])
+
+    def test_unknown_and_future_edition_are_not_counted_as_known_at_cutoff(self):
+        docs = [
+            input_doc(),
+            input_doc(collected="2026-10-20T16:00:00Z",
+                      published="2026-10-20T15:00:00Z", seed=b"B"),
+            input_doc(collected="2026-10-20T18:00:00Z",
+                      published=None, seed=b"C"),
+        ]
+        with MaritimeStore() as store:
+            out = run(store, docs, [programmed(), programmed(), programmed()],
+                      commit=False, asof="2026-10-20T17:00:00Z")
+            gate = out["source_readiness"][0]
+            self.assertEqual(gate["documents_supplied"], 3)
+            self.assertEqual(gate["documents_known_as_of"], 2)
+            self.assertIn("SOME_EDITIONS_UNKNOWN_OR_FUTURE_AT_ASOF", gate["blockers"])
+
     def test_invalid_second_pdf_prevents_any_write(self):
         first = input_doc()
         bad = input_doc(seed=b"B", collected="2026-10-20T16:00:00Z",
