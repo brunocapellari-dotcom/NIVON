@@ -108,3 +108,78 @@ não aciona coleta AIS/line-up, não publica sinais nem altera IAM.
 **Não considerar concluídas** tarefas desta tabela só por estarem descritas.
 A execução contínua depende de merges e credenciais/gates GCP que já existem
 na governança do projeto e não são ampliados nesta entrega.
+
+
+## Lote 2 — consolidação com a main e motores reaproveitados
+
+Atualização incorporada sem conflitos a partir da `main` em
+`f27a7eaf729ae7f5e979159c5b2a9b34c962ad76`. Os recursos novos da
+base (série de corredores ferroviários, view de BigQuery, política GCP e
+workflows associados) permanecem intactos. Esta branch acrescenta apenas
+componentes destinados ao painel, com testes próprios; **não mescla**
+a dependência Neon do PR #141 nem o histórico completo de PR #154.
+
+A leitura de `ferrovia_staging: {pasta, ano, competencia, uf_origem}`
+reaproveita `conciliacao_corredores_ferrovia.analisar_staging` e, junto
+de `corredores_sqlite` ou `corredores`, gera
+`conciliacao_intermodal` via `quadro_intermodal`. Também é permitido
+`ferrovia` como saída pré-calculada para ensaio offline. É proibido
+definir `ferrovia` e `ferrovia_staging` ao mesmo tempo. A comparação
+relata toneladas ferroviárias e rodoviárias lado a lado com
+`soma_entre_modais_permitida=false`; não converte registros em carga
+efetivamente transbordada.
+
+O pacote marítimo foi portado por hashes Git internos, preservando
+testes dos módulos puros existentes no PR #141:
+- `maritime_queue.py`: VQI e percentil local por porto;
+- `maritime_queue_forecast.py`: baseline 6/24/48h de balanço
+  chegada/atendimento com faixas de serviço, sem calibração probabilística;
+- `maritime_source_health.py`: saúde do coletor separada de frescor da fonte.
+
+O adaptador `maritimo_painel_avancado.py` não insere line-up
+no índice: a variável de lineup do motor original recebe zero
+exclusivamente como **neutralização de componente não validado**.
+A estimativa de fila exige `saude_coletor`, `horas_espera_observadas`,
+`taxas_atendimento_observadas_h` e
+`chegadas_acumuladas_previstas: {"6": 2, "24": 5, "48": 9}`
+(números ilustrativos, não dados reais); as chegadas são acumuladas
+e devem ser não decrescentes. Sem amostras suficientes, retorna
+`DATA_GATED` e previsões numéricas nulas. Qualquer índice, mesmo
+validado em teste, é `SHADOW`, sem autorização de publicação.
+
+Para tendência, os motores puros `motor_tendencias` e
+`dinamica_tendencias` foram reutilizados da frente R09.
+`dinamica_mercados_pit.py` valida identidade econômica e edição
+original por fingerprint SHA-256 antes de chamar o método robusto
+Theil–Sen, com duas janelas disjuntas, mínimo de 12 sessões e limiar
+comercial explícito na observação. Os campos econômicos obrigatórios
+incluem `ponto_embarque`, `pedagio`, `tipo_preco` e transportadora
+para fretes, contrato e tipo de cotação para CBOT e praça/tipo para
+preço físico. Metadados insuficientes não geram força nem reversão.
+`dinamica_historica` nunca contém probabilidade calibrada nem sinal
+de preço futuro.
+
+### Critérios verificáveis da segunda rodada
+
+1. Reutilização sem fork geral: Git blobs dos motores puros, sem
+   migrar armazenamento ou infraestrutura antiga.
+2. Testes de capacidade de filtro PIT, anomalias de preço, ausência
+   de telemetria, cobertura de AIS, divergência CDP e competências.
+3. Workflow `painel-operacional-ci.yml`: roda os testes dos módulos
+   originais e os adaptadores do novo painel num mesmo job, além de
+   executar a CLI E2E usando fixture sintética.
+4. Dados reais do Google Cloud **não** comprovados nesta entrega;
+   a flag `--executar-bigquery` somente autoriza leitura no destino
+   existente e sujeito a IAM, orçamento e qualidade da fonte.
+
+### Próximas entregas efetivas
+
+- Leitura da view `vw_nivon_corredores_ferrovia_mensal` por competência,
+  com filtro point-in-time, controles de bytes e reconciliacão mensal
+  SIADE contra fonte primária;
+- Ligar snapshots AIS/line-up de fonte autorizada ao adaptador, primeiro
+  por lote privado e depois por agendamento Google Cloud;
+- Importar e reconciliar o ledger de fretes pareados do PR #154 sem
+  trocar ponto de embarque, terminal, regime ou pedágio;
+- Backtest de previsão de filas por porto e de tendências de preços
+  com vintages de dados reais, medidas de erro e gates de cobertura.
