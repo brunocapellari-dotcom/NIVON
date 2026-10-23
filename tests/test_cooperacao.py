@@ -58,7 +58,41 @@ class TestLedger(unittest.TestCase):
         change(self.db, "x", "claude", "handoff", "Branch x, SHA abc, teste falhou")
         self.assertEqual(claim(self.db, "codex")["id"], "x")
         change(self.db, "x", "codex", "done", "SHA def, testes OK", tokens_in=100, tokens_out=20)
-        self.assertEqual(report(self.db)["tokens_reported"], {"input": 100, "output": 20})
+        counters = report(self.db)["tokens_reported"]
+        self.assertEqual((counters["input"], counters["output"]), (100, 20))
+        self.assertEqual(counters["missing_attempts"], 1)
+        self.assertEqual(report(self.db)["agents"]["codex"]["completed"], 1)
+
+    def test_usage_history_preserves_both_provider_attempts(self):
+        seed(self.db, [{"id": "handoff-usage", "title": "Validar consumo",
+                        "scope": ["src/nivon/a.py"], "preferred_agent": "claude"}])
+        first = claim(self.db, "claude")
+        self.assertEqual(first["attempts"], 1)
+        change(self.db, "handoff-usage", "claude", "handoff",
+               "base SHA and next step", tokens_in=900, tokens_out=100,
+               next_agent="codex", tokens_cached=700)
+        second = claim(self.db, "codex")
+        self.assertEqual(second["attempts"], 2)
+        change(self.db, "handoff-usage", "codex", "done", "tests and SHA",
+               tokens_in=500, tokens_out=50, tokens_cached=300)
+        state = report(self.db)
+        self.assertEqual(state["tokens_reported"]["input"], 1400)
+        self.assertEqual(state["tokens_reported"]["output"], 150)
+        self.assertEqual(state["tokens_reported"]["cached_input"], 1000)
+        self.assertEqual(state["tokens_reported"]["missing_attempts"], 0)
+        self.assertEqual(len(state["attempts"]), 2)
+        self.assertEqual(state["agents"]["claude"]["handoffs"], 1)
+        self.assertEqual(state["agents"]["codex"]["completed"], 1)
+        self.assertIsNotNone(state["attempts"][0]["finished_at"])
+
+    def test_invalid_cached_tokens_do_not_change_attempt(self):
+        seed(self.db, [{"id": "metric-invalid", "title": "Auditar métrica",
+                        "scope": ["src/nivon/a.py"]}])
+        claim(self.db, "claude")
+        with self.assertRaises(ValueError):
+            change(self.db, "metric-invalid", "claude", "done",
+                   tokens_in=20, tokens_out=5, tokens_cached=25)
+        self.assertEqual(report(self.db)["counts"]["running"], 1)
 
     def test_provider_handoff_preserves_checkpoint(self):
         seed(self.db, [{"id": "x", "title": "X", "scope": ["src/x.py"],
