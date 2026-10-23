@@ -24,6 +24,7 @@ from .fretes_recibos_ancora import (
     criar_recibo_local_frete, salvar_recibo_em_diretorio_local,
     ErroReciboFrete,
 )
+from .fretes_recibos_gcs import gravar_recibo_gcs_condicional, ErroReciboGCS
 from .fretes_registros import OfertaFrete
 
 
@@ -56,6 +57,7 @@ def executar_ciclo_shadow_frete_local(
     chave_previsao: bytes, emissor_recibo: str, chave_recibo: bytes,
     diretorio_recibos: str | Path,
     horizontes_dias: tuple[int,...] = (7,30,90),
+    bucket_recibo_gcs=None, autorizar_escrita_gcs: bool = False,
 ) -> dict:
     """Grava 3 previsões assinadas LOCALMENTE e devolve recibo separado.
 
@@ -69,6 +71,8 @@ def executar_ciclo_shadow_frete_local(
     if (not isinstance(recebido_em,datetime) or recebido_em.tzinfo is None
             or recebido_em.utcoffset() is None):
         raise ErroCicloShadowFrete("tempo de emissão exige timezone")
+    if type(autorizar_escrita_gcs) is not bool:
+        raise ErroCicloShadowFrete("ativação GCS deve ser booleana explícita")
     if (not isinstance(condicoes,dict) or set(condicoes)!={
             "origem_ibge","destino_ibge","descarga_entity_id",
             "produto","equipamento","regime","pedagio"
@@ -154,11 +158,39 @@ def executar_ciclo_shadow_frete_local(
             "recibo_local_emitido":False,
             "recuperacao_necessaria":True,
         }
-    return {
+    resultado={
         **comprovante,
         "status":"SHADOW_GRAVADO_COM_RECIBO_LOCAL_NAO_INDEPENDENTE",
         "recibo_local_emitido":True,
         "recibo_local_sha256":salvamento["sha256"],
         "recibo_local_caminho":salvamento["caminho_local"],
         "recuperacao_necessaria":False,
+        "gcs_upload_executado":False,
     }
+    if autorizar_escrita_gcs:
+        try:
+            gcs=gravar_recibo_gcs_condicional(
+                bucket_recibo_gcs,recibo,
+                chave_recibo=chave_recibo,emissor_esperado=emissor_recibo,
+                as_of=agora,autorizar_escrita=True,
+            )
+        except (ErroReciboGCS,ErroReciboFrete) as exc:
+            # Commit e recibo LOCAL já existem; Cloud não foi comprovada.
+            # O operador recebe a cabeça para reconciliar o upload depois.
+            return {
+                **resultado,
+                "status":"SHADOW_LEDGER_GRAVADO_GCS_NAO_CONFIRMADO",
+                "recuperacao_gcs_necessaria":True,
+                "recuperacao_necessaria":True,
+            }
+        return {
+            **resultado,
+            "status":"SHADOW_LEDGER_GCS_READBACK_CONFERIDO",
+            "gcs_upload_executado":True,
+            "gcs_objeto_nome":gcs["nome_objeto"],
+            "gcs_generation":gcs["generation"],
+            "gcs_sha256":gcs["sha256_bytes"],
+            "retencao_worm_comprovada":False,
+            "timestamp_independente_comprovado":False,
+        }
+    return resultado
