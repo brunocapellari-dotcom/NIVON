@@ -233,8 +233,7 @@ JSON **sintético**.
 - dados em quarentena não alimentam série/histórico CANÔNICO;
 - o horário da captura apenas informa a primeira observação, **não**
   a publicação original do IBGE;
-- somente \`202602\` está habilitado, pois é o único período cujo mapa foi
-  confrontado ao vivo;
+- o mapeamento foi observado em 2026-T2 e testado em 2025-T2/2026-T1; outros trimestres exigem confrontação dinâmica dos cabeçalhos, IDs e totais e não são homologados automaticamente;
 - o reprocessamento é idempotente por espécie/tabela/trimestre/geografia/
   SHA-256 do bruto e diferentes bytes são capturas distintas;
 - banco sem índices/triggers esperados é bloqueado; não há migração
@@ -246,3 +245,30 @@ Próximas frentes de maior impacto: obter metadados v3 autênticos ou
 documentação oficial equivalente; reconciliar cobertura efetiva por
 competência; definir regras de publicação de revisões; integrar quarentena
 ao banco transacional somente depois de validar direitos e proveniência.
+
+## Continuidade 23/10/2026 — backfill e consulta temporal
+
+**Evidência real:** https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39983108842
+GitHub Actions acessou 12 extratos oficiais SIDRA de 2025-T2 e 2026-T1, processando 266 registros numéricos e 62 marcações ausentes/inibidas. Nenhum payload real foi persistido. A data de publicação de cada edição histórica permanece não confirmada.
+
+**Nova implementação:** src/nivon/pecuaria_sidra_backfill.py suporta lotes de 1 a 4 trimestres (6 a 24 GETs quando expressamente habilitados), valida dimensão/variável/competência e faz uma única transação SQLite com rollback para o lote todo.
+**Consulta temporal:** recupera somente a última versão arquivada conhecida na data de corte informada; usa primeira coleta comprovada como limite conservador, NUNCA como data histórica da publicação oficial.
+**Proteção adicional:** a leitura rejeita resultados potencialmente truncados acima de 500 capturas selecionáveis; requer paginação antes de ampliar essa cota.
+
+### Comandos
+
+Prévia de URLS, sem rede e sem gravação:
+    PYTHONPATH=src python -m nivon.pecuaria_sidra_backfill --periodo 202502 --periodo 202601
+
+Consulta HTTPS e prévia, requer permissão de consulta:
+    PYTHONPATH=src python -m nivon.pecuaria_sidra_backfill --periodo 202502 --periodo 202601 --rede --confirmar-direitos
+
+Gravação de extratos oficiais em SQLite **somente mediante direitos efetivamente confirmados**:
+    PYTHONPATH=src python -m nivon.pecuaria_sidra_backfill --periodo 202502 --periodo 202601 --rede --confirmar-direitos --gravar --banco /dados/sidra/quarentena-values.sqlite
+
+Leitura por data de corte, sem rede e sem escrita:
+    PYTHONPATH=src python -m nivon.pecuaria_sidra_backfill --periodo 202502 --periodo 202601 --consultar --especie BOVINO --corte 2026-10-23T16:00:00+00:00 --banco /dados/sidra/quarentena-values.sqlite
+
+Testes E2E: tests/test_pecuaria_sidra_backfill_integrado.py, incluindo revisão capturada em datas diferentes, consulta CLI, ID de variável divergente, mapa temporal alterado, falha HTTP final e rollback SQL.
+
+**Estados:** funcionalidade implementada e testada; metadados v3, comprovação de licença e data histórica oficial continuam pendentes. Não ativado em produção, Google Cloud, WhatsApp ou agendamento.
