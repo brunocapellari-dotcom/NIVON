@@ -220,11 +220,16 @@ def publicar_backup_gcs(*,cliente:ClienteGCS,arquivo,permitir_bootstrap=False):
             a=sqlite3.connect(folder/"anterior"/"pam.sqlite")
             b=sqlite3.connect(folder/"novo"/"pam.sqlite")
             try:
-                qs="SELECT municipio,ano,variavel,produto,sha256,coletado_em FROM pam_capturas"
-                antigos=set(a.execute(qs))
-                atuais=set(b.execute(qs))
-                if not antigos.issubset(atuais):
-                    raise ErroGCSState("backup novo perdeu capturas antigas")
+                for tabela in ("pam_capturas","pam_vintages"):
+                    # Comparar linhas completas, não somente PKs: é
+                    # proibido reescrever valores, classificação, origem,
+                    # captura, recibo ou status de um registro histórico.
+                    consulta="SELECT * FROM "+tabela
+                    antigos={tuple(x) for x in a.execute(consulta)}
+                    atuais={tuple(x) for x in b.execute(consulta)}
+                    if not antigos.issubset(atuais):
+                        raise ErroGCSState(
+                            "backup novo perdeu ou alterou registros históricos: "+tabela)
             finally:
                 a.close()
                 b.close()
