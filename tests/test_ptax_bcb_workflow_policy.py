@@ -40,11 +40,16 @@ class PoliticaEscritorUnicoPTAX(unittest.TestCase):
         self.assertIn("trap 'rm -f",ingestao)
 
     def test_wif_bootstrap_restringe_repo_branch_e_workflow(self):
-        self.assertIn('PTAX_DIRECT_WORKFLOW="${REPO}/.github/workflows/ptax-bcb-direto-gcp.yml@refs/heads/main"',BOOT)
-        self.assertIn("assertion.workflow_ref=='${PTAX_DIRECT_WORKFLOW}'",BOOT)
-        self.assertIn("assertion.repository=='${REPO}'",BOOT)
-        self.assertIn("assertion.ref=='refs/heads/main'",BOOT)
-        self.assertIn("PROVEDOR_PREEXISTENTE_COM_CONDICAO_DIFERENTE",BOOT)
+        self.assertIn('PROVIDER="github-actions"',BOOT)
+        self.assertIn('SA_NAME="nivon-coletor-de-dados"',BOOT)
+        self.assertIn('NIVON_GCP_PROVIDER=$WIF_NAME',BOOT)
+        self.assertIn("assertion.repository",BOOT)
+        self.assertIn("assertion.ref",BOOT)
+        self.assertIn("refs/heads/main",BOOT)
+        self.assertIn("PROVEDOR_EXISTENTE_SEM_ESCOPO_VERIFICAVEL",BOOT)
+        self.assertNotIn("providers create-oidc",BOOT)
+        self.assertNotIn("service-accounts create",BOOT)
+        self.assertNotIn("iam.workloadIdentityUser",BOOT)
 
     def test_migracoes_reutilizam_provider_que_ja_autenticou_no_cloud(self):
         workflows = [
