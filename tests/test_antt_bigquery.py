@@ -119,7 +119,8 @@ class TestBigQuery(unittest.TestCase):
     def test_idempotencia_e_view_versao(self):
         client = FakeClient()
         first = gravar_bigquery(self.tmp.name, [2026], self.dest,
-                               habilitar_escrita=True, cliente=client, sdk=FakeSDK)
+                               habilitar_escrita=True, permitir_criar_tabela=True,
+                               cliente=client, sdk=FakeSDK)
         self.assertEqual(first[0]["estado"], "CARREGADO_PENDENTE_CONCILIACAO")
         self.assertEqual(len(client.records), 1)
         self.assertEqual(len(client.jobs), 1)
@@ -130,6 +131,14 @@ class TestBigQuery(unittest.TestCase):
         self.assertEqual(len(client.jobs), 1)
         self.assertEqual(client.table.time_partitioning.field, "data_referencia")
         self.assertIn("QUALIFY ROW_NUMBER()", client.views[0])
+
+    def test_tabela_nova_exige_bootstrap_aprovado(self):
+        client=FakeClient()
+        with self.assertRaisesRegex(ErroTransporte, "bootstrap explicito"):
+            gravar_bigquery(self.tmp.name, [2026], self.dest,
+                           habilitar_escrita=True, cliente=client, sdk=FakeSDK)
+        self.assertIsNone(client.table)
+        self.assertEqual(client.records, [])
 
     def test_manifesto_violado_bloqueia(self):
         Path(self.tmp.name, "antt-od-2026.csv").write_bytes(CSV + b"X")
