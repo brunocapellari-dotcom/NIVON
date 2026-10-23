@@ -177,7 +177,16 @@ def soma_carga_unica_2025(hidrovia: str | Path, carga: str | Path) -> dict:
     interior = totais.get("Interior")
     if interior is None:
         raise ErroReplicaANTAQ("navegacao interior ausente na fonte")
+    oficial_ton_referencia_aproximada = 91_300_000.0
+    cobertura = interior["toneladas_com_hidrovia"] / interior["toneladas"]
+    divergencia_oficial = (
+        interior["toneladas"] / oficial_ton_referencia_aproximada - 1
+    )
     return {
+        "referencia_oficial_arredondada_ton": oficial_ton_referencia_aproximada,
+        "desvio_total_vs_oficial_pct": round(divergencia_oficial*100, 3),
+        "cobertura_de_classificacao_hidrovia_pct": round(cobertura*100, 3),
+        "alerta": "NÃO USAR como total nacional oficial: fonte secundária, cobertura parcial por hidrovia e revisões possíveis",
         "estado": "DERIVADO_TERCEIRO_2025_NAO_HOMOLOGADO",
         "ano": 2025, "universo": "CARGA_NAVEGACAO_INTERIOR_IDCARGA_UNICA",
         "total_ton": round(interior["toneladas"],3),
