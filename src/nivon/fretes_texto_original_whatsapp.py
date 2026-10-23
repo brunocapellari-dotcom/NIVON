@@ -81,7 +81,7 @@ def _valor_entidade(evento: Mapping, campo: str) -> str:
 
 
 def _corpo_original(raw: bytes, signature: str, app_secret: str,
-                    evento: Mapping) -> str:
+                    evento: Mapping, autorizacao: Mapping) -> str:
     if not isinstance(raw, bytes) or len(raw) > 128_000:
         raise ErroAdaptadorFrete("RAW de webhook excessivo ou inválido")
     # Verificador reutilizado da saída do WhatsApp; precisa de segredo
@@ -100,6 +100,13 @@ def _corpo_original(raw: bytes, signature: str, app_secret: str,
     if not isinstance(root, Mapping) or root.get("object") != "whatsapp_business_account":
         raise ErroAdaptadorFrete("não é webhook WhatsApp Cloud API")
     entry = _somente_um(root.get("entry"), "entry")
+    # O ID da conta receptora só é aceito quando coberto pelo atestado
+    # de DIREITOS, assinado por agente externo com chave independente.
+    waba_autorizada = autorizacao.get("waba_id")
+    if not isinstance(waba_autorizada, str) or not _ID_WHATSAPP.fullmatch(waba_autorizada):
+        raise ErroAdaptadorFrete("WABA autorizada não atestada")
+    if entry.get("id") != waba_autorizada:
+        raise ErroAdaptadorFrete("webhook recebido por WABA diferente da autorização")
     change = _somente_um(entry.get("changes"), "changes")
     if change.get("field") != "messages":
         raise ErroAdaptadorFrete("webhook não contém mensagem")
@@ -170,7 +177,8 @@ def _campos_rotulados(body: str) -> tuple[dict[str, str], dict[str, dict]]:
 
 def conferir_webhook_frete_original(
     *, raw_webhook: bytes, signature: str, app_secret: str,
-    evento: Mapping, resolucao: Mapping, oferta: OfertaFrete,
+    evento: Mapping, resolucao: Mapping, autorizacao: Mapping,
+    oferta: OfertaFrete,
 ) -> dict:
     """Verifica correspondência entre mensagem Meta assinada e oferta.
 
@@ -178,11 +186,11 @@ def conferir_webhook_frete_original(
     adaptar_evento_whatsapp; esta prova liga a menção literal ao nome
     observado e à oferta. Não comprova cadastro empresarial ou geográfico.
     """
-    if not isinstance(evento, Mapping) or not isinstance(resolucao, Mapping) or (
-        not isinstance(oferta, OfertaFrete)
-    ):
+    if (not isinstance(evento, Mapping) or not isinstance(resolucao, Mapping)
+            or not isinstance(autorizacao, Mapping)
+            or not isinstance(oferta, OfertaFrete)):
         raise ErroAdaptadorFrete("evento/resolução/oferta sem contrato confiável")
-    body = _corpo_original(raw_webhook, signature, app_secret, evento)
+    body = _corpo_original(raw_webhook, signature, app_secret, evento, autorizacao)
     valores, spans = _campos_rotulados(body)
     checks = {
         "PRODUTO": evento.get("product"),
@@ -243,7 +251,8 @@ def adaptar_divulgacao_whatsapp_original(
     )
     prova = conferir_webhook_frete_original(
         raw_webhook=raw_webhook, signature=signature, app_secret=app_secret,
-        evento=evento, resolucao=resolucao, oferta=oferta,
+        evento=evento, resolucao=resolucao,
+        autorizacao=autorizacao, oferta=oferta,
     )
     return {"oferta": oferta, "evidencia_textual": prova, "publicavel": False}
 
@@ -257,9 +266,17 @@ def executar_lote_whatsapp_rotulado_offline(
     if not isinstance(amostras, (list, tuple)) or not 1 <= len(amostras) <= 1000:
         raise ErroAdaptadorFrete("lote de mensagens não é válido")
     ofertas, provas = [], []
+    ids_de_origem, raws_vistos = set(), set()
     for pacote in amostras:
         if not isinstance(pacote, Mapping):
             raise ErroAdaptadorFrete("pacote de mensagem inválido")
+        ev = pacote.get("evento")
+        source = ev.get("provenance") if isinstance(ev, Mapping) else None
+        origin_id = source.get("source_event_id") if isinstance(source, Mapping) else None
+        if not isinstance(origin_id, str) or not _ID_WHATSAPP.fullmatch(origin_id):
+            raise ErroAdaptadorFrete("ID da fonte ausente no lote")
+        if origin_id in ids_de_origem:
+            raise ErroAdaptadorFrete("republicação do mesmo source_event_id no lote")
         res = adaptar_divulgacao_whatsapp_original(
             raw_webhook=pacote["raw_webhook"],
             signature=pacote["signature"], app_secret=app_secret,
@@ -270,6 +287,11 @@ def executar_lote_whatsapp_rotulado_offline(
         )
         if res["oferta"].data_coleta > as_of:
             raise ErroAdaptadorFrete("observação ainda indisponível no corte")
+        raw_sha = res["evidencia_textual"]["webhook_raw_sha256"]
+        if raw_sha in raws_vistos:
+            raise ErroAdaptadorFrete("RAW original repetido com IDs de origem distintos")
+        ids_de_origem.add(origin_id)
+        raws_vistos.add(raw_sha)
         ofertas.append(res["oferta"])
         provas.append(res["evidencia_textual"])
     resumo = executar_lote_fretes_quant(ofertas, as_of=as_of)

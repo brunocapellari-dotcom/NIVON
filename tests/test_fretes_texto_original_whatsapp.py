@@ -119,6 +119,42 @@ class TestTextoWhatsAppOriginal(unittest.TestCase):
                 emissores_atestacao=EMISSORES,app_secret=META_SECRET,
             )
 
+    def test_waba_nao_atestada_ou_divergente_bloqueia(self):
+        p=gerar_fixture("PJ",0,1)
+        x=deepcopy(p)
+        x["autorizacao"].pop("waba_id")
+        with self.assertRaises(ErroAdaptadorFrete):
+            _adapter(x)
+        x=deepcopy(p)
+        x["autorizacao"]["waba_id"]="waba-outra"
+        with self.assertRaises(ErroAdaptadorFrete):
+            _adapter(x)
+        # Um atestador assinou outra WABA; não há transferência
+        # automática de direitos entre contas.
+        from scripts.ensaio_fretes_texto_whatsapp import _atestar
+        from datetime import datetime
+        x=deepcopy(p)
+        original={
+            k:v for k,v in x["autorizacao"].items()
+            if k not in {"versao_atestacao","emissor_id","emitido_em",
+                         "valido_ate","assinatura_hmac_sha256"}
+        }
+        original["waba_id"]="waba-outra"
+        x["autorizacao"]=_atestar(
+            original,"DIREITOS",datetime.fromisoformat(x["evento"]["timestamp"])
+        )
+        with self.assertRaisesRegex(ErroAdaptadorFrete,"WABA diferente"):
+            _adapter(x)
+
+    def test_replay_da_mesma_mensagem_no_lote_bloqueia(self):
+        p=gerar_fixture("PJ",0,1)
+        with self.assertRaisesRegex(ErroAdaptadorFrete,"republicação"):
+            executar_lote_whatsapp_rotulado_offline(
+                [p,deepcopy(p)],as_of=ASOF,chave_hmac=PSEUDO_KEY,
+                chaves_atestacao=ATTEST_KEYS,
+                emissores_atestacao=EMISSORES,app_secret=META_SECRET,
+            )
+
     def test_asof_nunca_usa_coleta_posterior(self):
         p=gerar_fixture("PJ",0,1)
         from datetime import datetime,timezone

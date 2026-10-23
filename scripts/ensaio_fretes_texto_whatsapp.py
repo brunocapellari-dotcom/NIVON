@@ -118,6 +118,7 @@ def gerar_fixture(regime: str, dia_idx: int, ponto: int) -> dict:
     }
     auth = {
         "tenant_id":"tenant-sintetico","provider":"fixture",
+        "waba_id":"waba-fixture",
         "status":"APROVADA",
         "operacoes_permitidas":["LEITURA","ARMAZENAMENTO","ANALISE"],
         "fonte_id":"WA_TESTES_SEM_DIREITOS_REAIS",
