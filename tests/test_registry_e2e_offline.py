@@ -6,6 +6,8 @@ Nenhuma rotina aciona WhatsApp ou serviços externos.
 import hashlib
 import json
 import sqlite3
+import subprocess
+import sys
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -169,6 +171,42 @@ class TestRegistryE2EOffline(unittest.TestCase):
         d = diagnosticar_outbox(self.f.con)
         self.assertIn("EMISSOR_AUSENTE_OU_REVOGADO",
                       d["edicoes"][0]["bloqueios"])
+
+    def test_cli_operacional_end_to_end_apos_provisionar(self):
+        self._preparar()
+        for cmd, esperado in (
+            ("nivon_outbox_diagnostico.py", "DIAGNOSTICO_OFFLINE"),
+            ("nivon_registry_admin.py", "DIAGNOSTICO_OFFLINE"),
+        ):
+            args = [sys.executable, "scripts/" + cmd, "--banco", str(self.f.path)]
+            args.extend(["--somente-resumo"] if cmd.startswith("nivon_outbox")
+                        else ["--acao", "resumo"])
+            result = subprocess.run(args, text=True, capture_output=True,
+                                    timeout=10, check=False)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(result.stdout)["estado"], esperado)
+            self.assertNotIn("5566999999999", result.stdout)
+            self.assertNotIn("chave_independente_de_teste", result.stdout)
+
+    def test_cli_admin_simulacao_nao_altera_root_ou_revogacao(self):
+        self._preparar()
+        evento = {
+            "operacao": "REVOGAR",
+            "emissor_id": self.f.comprovantes[0]["emissor_id"],
+            "evidencia_id": "REVOGACAO_MODO_SIMULACAO_2026",
+        }
+        comando = {"manifesto": evento,
+                   "assinatura": assinatura_administrativa(evento)}
+        path = self.f.path.parent / "comando.json"
+        path.write_text(json.dumps(comando), encoding="utf-8")
+        r = subprocess.run(
+            [sys.executable, "scripts/nivon_registry_admin.py",
+             "--acao", "revogar", "--banco", str(self.f.path),
+             "--arquivo", str(path)],
+            text=True, capture_output=True, timeout=10)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(json.loads(r.stdout)["estado"], "SIMULACAO_SEM_MUTACAO")
+        self.assertEqual(resumo_registry(self.f.con)["ativos"], 5)
 
     def test_diagnostico_readonly_sqlite_persistido(self):
         self._preparar()
