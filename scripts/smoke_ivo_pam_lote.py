@@ -164,6 +164,7 @@ def main():
                 ] + [{"municipio_ibge": "5107925", "ano": 2024,
                       "variavel": "214", "categoria_c81": "2713"}],
                 corte=datetime(2026, 10, 21, 17, tzinfo=timezone.utc),
+                raiz=cofre_operacional,
                 idade_maxima_dias=7,
             )
             assert continuidade["alertas"] == 1
