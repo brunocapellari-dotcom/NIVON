@@ -155,13 +155,57 @@ def executar(path:Path,*,client=None,approve:bool=False)->dict:
         # Uma falha parcial de load tambem pode ter criado o objeto temporario.
         cli.delete_table(staging,not_found_ok=True)
 
+def cursor_incremental(*,client=None,overlap:int=5000)->int:
+    """Retorna ID anterior com sobreposicao para reprocessar inserts e correcoes.
+
+    A leitura BigQuery so ocorre apos gate explicito e WIF/ADC; nunca usada
+    no modo de planejamento ou na falta de projeto/tabela validados.
+    """
+    if os.getenv("NIVON_GCP_WRITE_APPROVED")!="true" or os.getenv("NIVON_GCP_COST_REVIEWED")!="true":
+        raise PermissionError("BIGQUERY_CHECKPOINT_NOT_APPROVED")
+    if type(overlap) is not int or not 100<=overlap<=50_000:
+        raise CargaBloqueada("CHECKPOINT_OVERLAP_INVALID")
+    try:
+        from google.cloud import bigquery
+    except ImportError:
+        raise CargaBloqueada("BIGQUERY_SDK_NOT_INSTALLED") from None
+    cli=client or bigquery.Client(project=PROJECT)
+    target=f"{PROJECT}.{DATASET}.{TABLE}"
+    cli.get_dataset(f"{PROJECT}.{DATASET}")
+    table=cli.get_table(target)
+    if (table.time_partitioning is None or
+        table.time_partitioning.field!="reference_date" or
+        not table.require_partition_filter):
+        raise CargaBloqueada("BIGQUERY_CHECKPOINT_TABLE_INVALID")
+    sql=f"""SELECT MAX(source_neon_row_id) AS high_water
+      FROM `{target}` WHERE reference_date
+      BETWEEN DATE '1900-01-01' AND CURRENT_DATE()"""
+    cfg=bigquery.QueryJobConfig(maximum_bytes_billed=MAX_BILLED_BYTES)
+    rows=list(cli.query(sql,job_config=cfg).result(timeout=120))
+    if len(rows)!=1:
+        raise CargaBloqueada("CHECKPOINT_RESULT_INVALID")
+    v=rows[0]["high_water"]
+    if v is None:return 0
+    if type(v) is not int or v<0 or v>2**53-1:
+        raise CargaBloqueada("CHECKPOINT_ID_INVALID")
+    return max(0,v-overlap)
+
+
 def main(argv=None)->int:
     import argparse
     parser=argparse.ArgumentParser(description="Planejamento seguro PTAX BigQuery")
-    parser.add_argument("--arquivo",required=True,type=Path)
+    parser.add_argument("--arquivo",type=Path)
     parser.add_argument("--executar",action="store_true")
+    parser.add_argument("--cursor",action="store_true",help="Imprime somente o ID de reinicio com sobreposicao; requer WIF")
     a=parser.parse_args(argv)
     try:
+        if a.cursor:
+            if a.executar or a.arquivo is not None:
+                raise CargaBloqueada("CHECKPOINT_ARGUMENT_CONFLICT")
+            print(cursor_incremental())
+            return 0
+        if not a.arquivo:
+            raise CargaBloqueada("FILE_REQUIRED")
         r=executar(a.arquivo,approve=True) if a.executar else planejar(a.arquivo)
         print(json.dumps(r,ensure_ascii=False,sort_keys=True))
         return 0
