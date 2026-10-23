@@ -39,6 +39,7 @@ jobs:
           python -m nivon.rotas_coleta --prioridade P0
           python -m nivon.cobertura
           python -m nivon.registro_motores
+          python -m nivon.agro_prontidao_fontes
           python -m nivon.auditoria_prontidao --resumo
           python -m nivon.orquestrador_fontes --prioridade P0 --resumo
           python -m nivon.auditoria_coletores --resumo
