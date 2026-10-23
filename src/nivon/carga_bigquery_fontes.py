@@ -6,6 +6,7 @@ Sem provisionar projeto/dataset, sem ações em cron; valida custo e schema.
 from __future__ import annotations
 import json
 import re
+from datetime import date, datetime
 from pathlib import Path
 from hashlib import sha256
 from uuid import uuid4
@@ -52,6 +53,17 @@ def planejar_carga(*,arquivo,project_id,dataset_id,max_bytes_billed=10_000_000):
             seen.add(key)
             if obj["natureza"] not in ("OBSERVADO","INFORMADO","ESTIMADO","PROJETADO","INFERIDO"):
                 raise ErroCargaBigQuery("natureza invalida")
+            try:
+                date.fromisoformat(obj["referencia"])
+                dt = datetime.fromisoformat(obj["coletado_em"].replace("Z","+00:00"))
+                if dt.utcoffset() is None:
+                    raise ValueError("coleta sem timezone")
+                if obj["publicacao"] is not None:
+                    pub = datetime.fromisoformat(obj["publicacao"].replace("Z","+00:00"))
+                    if pub.utcoffset() is None:
+                        raise ValueError("publicacao sem timezone")
+            except (ValueError, TypeError, AttributeError, KeyError) as exc:
+                raise ErroCargaBigQuery("datas de referencia/publicacao/coleta invalidas") from exc
     return {"tabela":f"{project_id}.{dataset_id}.nivon_observacoes",
          "projeto":project_id,"dataset":dataset_id,"linhas":n,
          "arquivo":str(path),"sha256":sha256(path.read_bytes()).hexdigest(),
@@ -73,7 +85,12 @@ def executar_carga(*,arquivo,project_id,dataset_id,executar=False,
     target=p["tabela"]
     # Validar tabela e dataset existentes. Sem provisionar nuvem automaticamente.
     cli.get_dataset(f"{project_id}.{dataset_id}")
-    cli.get_table(target)
+    tabela = cli.get_table(target)
+    schema = {f.name: f.field_type.upper() for f in tabela.schema}
+    canonicos = {"data_referencia":"DATE","data_coleta":"TIMESTAMP",
+                 "data_publicacao":"TIMESTAMP"}
+    if not all(schema.get(k)==tipo for k,tipo in canonicos.items()):
+        raise ErroCargaBigQuery("tabela BigQuery sem campos temporais canonicos")
     staging=f"{project_id}.{dataset_id}._nivon_stage_{uuid4().hex[:24]}"
     campos=[("dataset_id","STRING"),("identidade","STRING"),("fingerprint","STRING"),
             ("referencia","STRING"),("competencia","STRING"),("publicacao","STRING"),
@@ -87,12 +104,17 @@ def executar_carga(*,arquivo,project_id,dataset_id,executar=False,
     try:
         with open(arquivo,"rb") as fp:
             cli.load_table_from_file(fp,staging,job_config=job_config).result(timeout=150)
-        coluna=", ".join(COLS)
-        # Deduplicar na staging por chave já validada antes de enviar.
+        inseridos = COLS + ("data_referencia","data_publicacao","data_coleta")
+        colunas = ", ".join(inseridos)
+        valores = (["S."+k for k in COLS] + [
+            "CAST(S.referencia AS DATE)",
+            "CAST(S.publicacao AS TIMESTAMP)",
+            "CAST(S.coletado_em AS TIMESTAMP)",
+        ])
         on=" AND ".join(f"T.{k}=S.{k}" for k in ("dataset_id","identidade","fingerprint"))
         sql=(f"MERGE `{target}` T USING `{staging}` S ON {on} "
-             f"WHEN NOT MATCHED THEN INSERT ({coluna}) VALUES ("+
-             ", ".join("S."+k for k in COLS)+")")
+             f"WHEN NOT MATCHED THEN INSERT ({colunas}) VALUES ("+
+             ", ".join(valores)+")")
         cfg=bigquery.QueryJobConfig(maximum_bytes_billed=p["max_bytes_billed"])
         done=cli.query(sql,job_config=cfg).result(timeout=150)
         p.update({"executado":True,"projeto":project_id,"linhas_enviadas":p["linhas"],
