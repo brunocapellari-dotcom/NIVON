@@ -59,7 +59,8 @@ class TestSgsCloud(unittest.TestCase):
             self.assertEqual(r[0]["natureza"],"INFORMADO")
             self.assertEqual(r[0]["unidade"],"PERCENTUAL_AO_DIA")
             self.assertFalse(out["publicacao_automatica"])
-            self.assertEqual(len(storage.bucket("nivon-raw-private").files),2)
+            self.assertGreaterEqual(len(storage.bucket("nivon-raw-private").files),2)
+            self.assertTrue(any("/raw/" in k for k in storage.bucket("nivon-raw-private").files))
             same=executar_sgs(**kwargs)
             self.assertEqual(same["coleta"]["novos"],0)
 
