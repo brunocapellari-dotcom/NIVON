@@ -68,6 +68,12 @@ usa o artifact **real** de 24 capturas do
 [run 39946796466](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39946796466)
 e executa uma aceitação com o código atual, **sem coletar de novo**.
 
+A aceitação foi realizada na abertura do workflow dentro do PR e
+posteriormente alterada para **`workflow_dispatch` somente**: os mesmos
+24 registros não serão restaurados outra vez a cada alteração textual
+na branch. O fluxo pode ser executado novamente sob demanda enquanto
+o artifact original ainda estiver disponível.
+
 **Execução aprovada:**
 [GitHub Actions 40001515540](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/40001515540).
 Restaurou o ZIP com manifesto e verificou:
