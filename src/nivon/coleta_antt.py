@@ -10,6 +10,8 @@ import json
 import os
 import re
 import tempfile
+import time
+from urllib.error import HTTPError
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -39,6 +41,12 @@ def _http(url: str, *, transporte=None, limite=16_000_000, timeout=25) -> bytes:
             raw = resp.read(limite + 1)
     except ErroTransporte:
         raise
+    except HTTPError as exc:
+        if exc.code in (401, 403):
+            raise ErroTransporte("ANTT_ACESSO_BLOQUEADO") from None
+        if exc.code in (429, 500, 502, 503, 504):
+            raise ErroTransporte("ANTT_FALHA_TRANSITORIA") from None
+        raise ErroTransporte("ANTT_ERRO_HTTP") from None
     except Exception:
         raise ErroTransporte("acesso real ANTT nao validado") from None
     if not 1 <= len(raw) <= limite:
@@ -84,10 +92,26 @@ def _ler_catalogo(raw: bytes) -> dict[int, dict]:
     return dict(sorted(anos.items()))
 
 
-def catalogo_antt(*, habilitar_rede=False, transporte=None) -> dict[int, dict]:
+def catalogo_antt(*, habilitar_rede=False, transporte=None, max_tentativas=3,
+                 dormir=None) -> dict[int, dict]:
+    """Retry limitado apenas para falhas transitorias do catalogo CKAN.
+
+    Erros de acesso, schema e recursos nao sao contornados nem repetidos.
+    """
     if not habilitar_rede:
         raise PermissionError("consulta CKAN exige opt-in")
-    return _ler_catalogo(_http(CATALOGO, transporte=transporte, limite=3_000_000))
+    if type(max_tentativas) is not int or not 1 <= max_tentativas <= 3:
+        raise ErroTransporte("limite de tentativas invalido")
+    pausar = dormir or time.sleep
+    recuperaveis = {"catalogo CKAN invalido", "ANTT_FALHA_TRANSITORIA"}
+    for tentativa in range(max_tentativas):
+        try:
+            return _ler_catalogo(_http(CATALOGO, transporte=transporte, limite=3_000_000))
+        except ErroTransporte as exc:
+            if str(exc) not in recuperaveis or tentativa == max_tentativas - 1:
+                raise
+            pausar(2 ** tentativa)
+    raise AssertionError("catalogo sem resultado")
 
 
 def _atomic(path: Path, data: bytes) -> None:
