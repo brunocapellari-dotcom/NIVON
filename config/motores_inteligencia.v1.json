@@ -31,7 +31,10 @@
         "nivon.inspecao_xls_conab_agricola:inspecionar_xls_conab_capturado",
         "nivon.conab_levantamentos_candidatos:auditar_candidatos_levantamentos_conab",
         "nivon.conab_anexo_xlsx_levantamento:conferir_anexo_xlsx_levantamento",
-        "nivon.conab_ooxml_metadados:inspecionar_abas_ooxml_conab"
+        "nivon.conab_ooxml_metadados:inspecionar_abas_ooxml_conab",
+        "nivon.conab_celulas_xlsx:ler_amostra_celulas_conab",
+        "nivon.conab_lote_offline:executar_lote_conab",
+        "nivon.conab_staging_sqlite:gravar_dossie_conab"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -82,7 +85,10 @@
         "nivon.inspecao_xls_conab_agricola:inspecionar_xls_conab_capturado",
         "nivon.conab_levantamentos_candidatos:auditar_candidatos_levantamentos_conab",
         "nivon.conab_anexo_xlsx_levantamento:conferir_anexo_xlsx_levantamento",
-        "nivon.conab_ooxml_metadados:inspecionar_abas_ooxml_conab"
+        "nivon.conab_ooxml_metadados:inspecionar_abas_ooxml_conab",
+        "nivon.conab_celulas_xlsx:ler_amostra_celulas_conab",
+        "nivon.conab_lote_offline:executar_lote_conab",
+        "nivon.conab_staging_sqlite:gravar_dossie_conab"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
