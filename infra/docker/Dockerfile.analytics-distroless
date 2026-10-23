@@ -17,8 +17,10 @@ RUN set -eu; \
       *) echo "unsupported architecture" >&2; exit 1 ;; \
     esac; \
     mkdir -p "/runtime-libs/usr/lib/$triplet"; \
-    test -r "/usr/lib/$triplet/libsqlite3.so.0"; \
-    cp -L "/usr/lib/$triplet/libsqlite3.so.0" "/runtime-libs/usr/lib/$triplet/libsqlite3.so.0"
+    for soname in libsqlite3.so.0 libbz2.so.1.0 liblzma.so.5 libffi.so.8; do \
+      test -r "/usr/lib/$triplet/$soname"; \
+      cp -L "/usr/lib/$triplet/$soname" "/runtime-libs/usr/lib/$triplet/$soname"; \
+    done
 FROM ${DISTROLESS_BASE} AS analytics-distroless-candidate
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
