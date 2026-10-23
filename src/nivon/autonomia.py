@@ -18,6 +18,7 @@ import threading
 import time
 
 from nivon.cooperacao import change, claim, connect, default_db, report
+from nivon.planejador import get_issues, refresh as refresh_plan
 from nivon.token_guard import summarize
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -51,6 +52,7 @@ def prompt(task):
         "NIVON: você é implementador, trabalhando em PARALELO com outro agente. "
         "Tarefa: " + task["title"] + ". ID: " + task["id"] + ".\n"
         "Arquivos permitidos: " + ", ".join(scope) + ".\n"
+        "Critério de aceite: " + str(task.get("acceptance") or "Testes de regressão offline e sem efeitos externos")[:700] + ".\n"
         "Leia AGENTS.md e apenas os arquivos necessários. "
         "Faça alterações pequenas e úteis e inclua testes sintéticos. "
         "Não altere nada fora do escopo; não instale dependências; "
@@ -160,6 +162,13 @@ def do_task(agent, task, *, timeout_minutes=15):
             tested = command(check, worktree, timeout=180, env=env)
             if tested.returncode:
                 return "blocked", f"{branch}; testes falharam: {summarize(tested.stdout + tested.stderr, 1500)}"
+        # Ruff é opcional, nunca instalado automaticamente: execução determinística local.
+        py_changed = [name for name in modified if name.endswith(".py")]
+        if py_changed and shutil.which("ruff"):
+            linted = command(["ruff", "check", "--output-format", "concise", "--", *py_changed],
+                             worktree, timeout=90, env=env)
+            if linted.returncode:
+                return "blocked", f"{branch}; Ruff: {summarize(linted.stdout + linted.stderr, 1500)}"
         scope = json.loads(task["scope"])
         staged = command(["git", "add", "--", *scope], worktree)
         if staged.returncode:
@@ -177,6 +186,15 @@ def run(*, max_tasks=8, minutes=120, per_task=15):
     preflight()
     (HOME / "STOP").unlink(missing_ok=True)
     dbpath = default_db()
+    # Ler GitHub no host (não dentro dos agentes); falhas de rede não bloqueiam tarefas locais.
+    github_issues = []
+    if os.environ.get("NIVON_GITHUB_READONLY", "1") == "1":
+        try:
+            github_issues, _ = get_issues()
+        except (OSError, subprocess.SubprocessError):
+            pass
+    with connect(dbpath) as db:
+        refresh_plan(db, root=ROOT, issues=github_issues)
     deadline = time.monotonic() + minutes * 60
     guard = threading.Lock()
     count = {"value": 0}
@@ -206,6 +224,10 @@ def run(*, max_tasks=8, minutes=120, per_task=15):
                 else:
                     change(db, task["id"], agent, outcome, note[:2500],
                            tokens_in=usage_in, tokens_out=usage_out)
+                # Replanejar a partir das dependências que acabaram de ser entregues.
+                # Não invoca outro LLM e não reativa tarefas bloqueadas.
+                if outcome == "done":
+                    refresh_plan(db, root=ROOT, issues=github_issues)
             with guard:
                 events.append({"task": task["id"], "agent": agent, "status": outcome,
                                "tokens_input": usage_in, "tokens_output": usage_out,
