@@ -51,6 +51,19 @@ jobs:
             --banco "$WORK_DIR/coleta.sqlite" \
             --raiz "$WORK_DIR/raw" \
             --executar --direitos-armazenamento
+      - name: Exportar historico REAL de quarentena e verificar preflight BigQuery SEM CLOUD
+        env:
+          PYTHONPATH: src
+          WORK_DIR: ${{ runner.temp }}/nivon-conab-one-off
+        run: |
+          python -m nivon.agro_bigquery_stage \
+            --banco "$WORK_DIR/coleta.sqlite" \
+            --saida "$WORK_DIR/conab_stage.jsonl"
+          python -m nivon.agro_bigquery_loader \
+            --arquivo "$WORK_DIR/conab_stage.jsonl" \
+            --projeto nivon-preview-local \
+            --dataset stage_preflight
+          python -m nivon.agro_prontidao_fontes --banco "$WORK_DIR/coleta.sqlite"
       - name: Nao salvar arquivos nem publicar dados
         if: always()
         env:
