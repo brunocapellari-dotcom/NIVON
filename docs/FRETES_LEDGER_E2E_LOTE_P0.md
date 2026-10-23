@@ -70,3 +70,19 @@ Não demonstram existência de histórico real, direitos de uso, credibilidade d
 5. Só após homologação, planejar banco escalável/exportação ao Google Cloud, deployment e integração de indicadores ao IVO/briefing, sempre com autorização para custos e direitos.
 
 **Nunca habilitar flags operacionais por resultado de CI sintético.**
+
+
+## Etapa adicional — store permanente das próprias ofertas
+
+Além do ledger de previsões, existe `fretes_ofertas_store.py`: tabela SQLite local `nivon_frete_ofertas_v1` com registros `OfertaFrete` individuais, identidades econômicas, horas de publicação/coleta e metadados **declarados** sobre `raw_sha256`, `direitos_sha256`, `resolucao_sha256`, pseudônimo de tenant e provedor. A importação ocorre em lotes de até 500 registros, com SQL transacional e cadeia SHA-256 separada do ledger de forecasts. Não produz média municipal nem reúne transportadoras/preços distintos. Reposts devem ser deduplicados no adaptador/camada comercial anterior; `registro_id` repetido é recusado.
+
+**Handoff do WhatsApp AI:** somente `OfertaFrete` que já passou por `adaptar_evento_whatsapp` e atestações independentes pode ser enviada ao store no runtime efetivo; os hashes de evidência fornecidos **não comprovam por si só** RAW, licença, resolução ou consentimento. A operação está desligada e nenhum evento externo foi capturado nesta implementação.
+
+O comando `scripts/auditar_fretes_ledger_local.py` agora suporta duas origens **mutuamente exclusivas** para suas observações:
+
+- **Arquivo JSONL**: campo `arquivo_ofertas` no JSON, no exemplo acima.
+- **SQLite de ofertas**: substituir `arquivo_ofertas` pelos dois campos `arquivo_ofertas_sqlite` e `cabeca_ofertas_sha256`. O arquivo pode ser o mesmo SQLite local usado para previsões; ambas as cadeias são conferidas separadamente. Nesse modo o script não exige JSONL exportado e não faz escrita.
+
+O comando em ambos os casos produz JSON restrito, com identidade da origem (`JSONL_EXPORTADO` ou `SQLITE_STORE`), estado da cabeça de ofertas, cobertura histórica e avaliação de forecasts. O banco SQLite de origem também é aberto em **read-only**; não há acesso por rede nem atualização automática. Testes E2E verificam o store e executam o CLI contra as duas fontes, em arquivos temporários.
+
+**Persistência operacional no Google Cloud ainda NÃO configurada:** este store é exclusivamente local, sem migração ou conexão com banco remoto.
