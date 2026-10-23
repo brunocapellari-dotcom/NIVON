@@ -119,6 +119,26 @@ class TestPipelineOffline(unittest.TestCase):
                 chave_captura=KEY, emissor_esperado="INGESTAO_OFFLINE",
             )
 
+    def test_raw_extra_sem_registro_rejeita_lote_completo(self):
+        rows = anunciados()
+        raws, recibos = assinar(rows)
+        raws["INJETADO"] = b"bytes inesperados"
+        with self.assertRaisesRegex(ErroRegistroFrete, "cobertura RAW"):
+            executar_lote_fretes_quant(
+                rows, as_of=ASOF, raws=raws, recibos=recibos,
+                chave_captura=KEY, emissor_esperado="INGESTAO_OFFLINE",
+            )
+
+    def test_recibo_extra_sem_registro_rejeita_lote_completo(self):
+        rows = anunciados()
+        raws, recibos = assinar(rows)
+        recibos["INJETADO"] = dict(recibos[rows[0].registro_id])
+        with self.assertRaisesRegex(ErroRegistroFrete, "cobertura RAW"):
+            executar_lote_fretes_quant(
+                rows, as_of=ASOF, raws=raws, recibos=recibos,
+                chave_captura=KEY, emissor_esperado="INGESTAO_OFFLINE",
+            )
+
     def test_lote_sem_asof_ou_chave_invalido(self):
         rows = anunciados()
         with self.assertRaises(ErroRegistroFrete):
