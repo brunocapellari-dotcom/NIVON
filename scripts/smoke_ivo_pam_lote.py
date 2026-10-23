@@ -18,6 +18,7 @@ from nivon.ivo_pam_cli_local import executar_importacao_local_pam
 from nivon.ivo_pam_operacao import abrir_operacao_pam, processar_captura_pam
 from nivon.ivo_pam_ponte_operacional import revisar_capturas_pam
 from nivon.ivo_pam_backup import criar_backup_pam, restaurar_backup_pam
+from nivon.ivo_pam_continuidade import planejar_continuidade_pam
 from nivon.sidra_pam import planejar_pam_1612
 
 
@@ -133,6 +134,45 @@ def main():
             assert not operacional["ledger_canonico_modificado"]
             assert all(not row["liberado_para_promocao"]
                        for row in operacional["itens"])
+            # Segunda captura da mesma celula, com valor diferente:
+            # a revisao e observada AGORA, nao retrodatada a 2021.
+            p = pedidos[0]
+            url = planejar_pam_1612(
+                municipio_ibge=p.municipio_ibge, ano=p.ano,
+                codigo_produto_c81=p.categoria_c81,
+                codigo_variavel=p.variavel,
+            )["url"]
+            changed = json.loads(responses[url][0].decode("utf-8"))
+            changed[1]["V"] = "987"
+            processar_captura_pam(
+                db=db, raiz=cofre_operacional,
+                plano=planejar_pam_1612(
+                    municipio_ibge=p.municipio_ibge, ano=p.ano,
+                    codigo_produto_c81=p.categoria_c81,
+                    codigo_variavel=p.variavel,
+                ),
+                payload=json.dumps(changed, ensure_ascii=False).encode("utf-8"),
+                coletado_em=datetime(2026, 10, 21, 16, tzinfo=timezone.utc),
+                origem="TRANSPORTE_TESTE",
+            )
+            continuidade = planejar_continuidade_pam(
+                db=db,
+                tarefas=[
+                    {"municipio_ibge": x.municipio_ibge, "ano": x.ano,
+                     "variavel": x.variavel, "categoria_c81": x.categoria_c81}
+                    for x in pedidos
+                ] + [{"municipio_ibge": "5107925", "ano": 2024,
+                      "variavel": "214", "categoria_c81": "2713"}],
+                corte=datetime(2026, 10, 21, 17, tzinfo=timezone.utc),
+                idade_maxima_dias=7,
+            )
+            assert continuidade["alertas"] == 1
+            assert continuidade["pendentes"] == 1
+            assert continuidade["selecionados"] == 3
+            assert not continuidade["autoriza_coleta"]
+            assert not continuidade["autoriza_publicacao"]
+            operacional = revisar_capturas_pam(db=db, raiz=cofre_operacional)
+            assert operacional["capturas_consideradas"] == len(pedidos) + 1
         finally:
             db.close()
         # Validar recuperacao de desastre em armazenamento local NOVO.
@@ -145,8 +185,8 @@ def main():
         restaurado = restaurar_backup_pam(
             arquivo_zip=arquivo_backup, destino=arquivo_restaurado,
         )
-        assert backup["capturas"] == len(pedidos)
-        assert restaurado["capturas"] == len(pedidos)
+        assert backup["capturas"] == len(pedidos) + 1
+        assert restaurado["capturas"] == len(pedidos) + 1
         assert restaurado["integridade_local_aprovada"]
         assert not restaurado["registro_canonico_modificado"]
         assert (arquivo_restaurado / "operacional.sqlite").is_file()
@@ -165,6 +205,8 @@ def main():
             "backup_restaurado_e_verificado": restaurado["integridade_local_aprovada"],
             "backup_objetos_e_recibos": backup["objetos_e_recibos"],
             "revisoes_pendentes": len(operacional["itens"]),
+            "revisoes_incrementais_detectadas": continuidade["alertas"],
+            "proximas_coletas_identificadas": continuidade["pendentes"],
             "relatorios_locais": len(list(saida.glob("*.json"))),
             "coleta_real": False,
             "homologado": False,
