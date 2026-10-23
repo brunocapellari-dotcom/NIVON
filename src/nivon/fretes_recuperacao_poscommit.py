@@ -140,7 +140,8 @@ def recuperar_recibo_poscommit_frete(
     tardia = emissao.astimezone(MT).date() != momento.astimezone(MT).date()
     # Após a virada do dia, NUNCA emitir recibo com hora da emissão.
     # Um recibo NOVO comprova somente a presença do ledger no momento
-    # da recuperação, e não a existência original daquela previsão.    ofertas = _ofertas_rota(
+    # da recuperação, e não a existência original daquela previsão.
+    ofertas = _ofertas_rota(
         origem["ofertas"], fonte_id=fonte_id, condicoes=condicoes
     )
     disponiveis = [
