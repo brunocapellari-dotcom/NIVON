@@ -98,7 +98,12 @@ def gravar_lote(*, banco, diretorio_bruto, dataset_id, origem, raw, tipo,
     limite_dataset = 120_000_000 if dataset_id == "CONAB_ARMAZENS_CAPACIDADE" else _MAX_BYTES
     if not isinstance(raw, bytes) or not 1 <= len(raw) <= limite_dataset:
         raise ErroIngestao("raw vazio ou limite excedido")
-    if not isinstance(origem, str) or not origem.startswith("https://") or any(x in origem for x in ("@", "#")):
+    from urllib.parse import urlsplit
+    if not isinstance(origem, str) or len(origem) > 1800:
+        raise ErroIngestao("origem insegura")
+    uri=urlsplit(origem)
+    if (uri.scheme!="https" or not uri.hostname or uri.username or uri.password
+            or uri.fragment or uri.port not in (None,443)):
         raise ErroIngestao("origem insegura")
     if estado not in ("RAW_RECEIVED", "NORMALIZED", "QUARANTINED"):
         raise ErroIngestao("estado invalido")

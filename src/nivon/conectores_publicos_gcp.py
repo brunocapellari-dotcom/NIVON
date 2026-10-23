@@ -129,3 +129,59 @@ def coletar(*, fonte: str, plano: dict, banco: str | Path, raw_dir: str | Path,
         "snapshot_id": info["snapshot_id"], "sha256": info["sha256"],
         "data_coleta": data_coleta, "persistencia_gcp": False,
     }
+
+
+def coletar_selic_diaria(*, banco: str | Path, raw_dir: str | Path,
+                        executar: bool = False,
+                        autorizacoes: frozenset[str] = frozenset(),
+                        abridor=None, instante: datetime | None = None) -> dict:
+    """SGS/BCB 11: conecta fonte publica oficial ao MESMO ledger NIVON.
+
+    Taxa diaria observada no SGS nao deve ser reclassificada como meta Selic
+    anual. Sem publicacao oficial timestamp nao presumir data de publicacao.
+    """
+    from .bcb_sgs_selic import URL_PONTUAL, normalizar_selic_diaria
+    if executar is not True or not OPERACOES <= set(autorizacoes):
+        raise PermissionError("SGS requer COLETA e ARMAZENAMENTO")
+    fonte=FonteWeb(
+        fonte_id="BCB_SGS_TAXA_SELIC_DIARIA", url=URL_PONTUAL,
+        dominio_autorizado="api.bcb.gov.br", formato="JSON",
+        status_direitos="APROVADA",operacoes_permitidas=frozenset({"COLETA"}),
+        limite_bytes=250_000)
+    adquirido=adquirir_fonte(fonte,abridor=abridor,instante=instante)
+    normalizado=normalizar_selic_diaria(adquirido["conteudo"],
+                                        coletado_em=adquirido["capturado_em"])
+    rows=[]
+    for item in normalizado["observacoes"]:
+        referencia=item["data_referencia"]
+        rows.append({
+            "identidade":f"BCB_SGS_11|{referencia}",
+            "referencia":referencia,
+            "competencia":item["competencia"],
+            "publicacao":None,
+            "natureza":"INFORMADO",
+            "unidade":"PERCENTUAL_AO_DIA",
+            "valor":item["valor_pct_ao_dia"],
+            "campos":{"fonte":"BCB","serie":11,
+                      "data_referencia":referencia,
+                      "valor_pct_ao_dia":item["valor_pct_ao_dia"],
+                      "referencia_oficial_de_publicacao":False,
+                      "nao_equivale_a_selic_meta_anual":True,
+                      "promovido_a_indicador":False}
+        })
+    if not rows:
+        raise ErroConectorNuvem("BCB sem observacoes, nao gravar zeros artificiais")
+    info=gravar_lote(
+        banco=banco,diretorio_bruto=raw_dir,
+        dataset_id="BCB_SGS_TAXA_SELIC_DIARIA",
+        origem=URL_PONTUAL,raw=adquirido["conteudo"],
+        tipo="application/json",coletado_em=adquirido["capturado_em"],
+        registros=rows,estado="NORMALIZED")
+    return {"status":"COLETA_LOCAL_VERSIONADA",
+            "dataset":"BCB_SGS_TAXA_SELIC_DIARIA",
+            "registros":len(rows),"novos":info["novas_observacoes"],
+            "snapshot_id":info["snapshot_id"],
+            "sha256":info["sha256"],
+            "data_coleta":adquirido["capturado_em"],
+            "persistencia_gcp":False,
+            "publicacao_automatica":False}
