@@ -118,6 +118,10 @@ def _conferir_objeto(bucket_obj, name, sha, tamanho):
 
 def _upload_imutavel(bucket_obj, *, arquivo, nome, sha, mime):
     arquivo = Path(arquivo)
+    # Revalidar os bytes no momento de envio, não apenas no planejamento.
+    # Impede race entre o cálculo do manifesto e a gravação no GCS.
+    if arquivo.is_symlink() or not arquivo.is_file() or _sha(arquivo) != sha:
+        raise ErroLoteCloud("arquivo de stage/manifesto alterado antes do upload")
     antigo = bucket_obj.get_blob(nome)
     if antigo is not None:
         _conferir_objeto(bucket_obj, nome, sha, arquivo.stat().st_size)
