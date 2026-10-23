@@ -25,6 +25,7 @@ from .anp_lpc_coletor_real import coletar_lpc, ErroColetaANP
 from .anp_lpc_staging_real import (iniciar_staging, tendencia_diesel_preliminar,
     painel_qualidade_lpc, auditar_arquivos_origem_lpc)
 from .anp_lpc_gcs import exportar_lpc_staging_gcs
+from .anp_lpc_ciclo_gcs import executar_ciclo_lpc_gcs
 
 
 def _db_seguro(path: Path) -> sqlite3.Connection:
@@ -68,8 +69,8 @@ def _local_files(
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Lote ANP/LPC isolado, não comercial")
-    parser.add_argument("--modo", choices=["rede", "arquivos", "consulta", "status", "integridade", "gcs"], required=True)
-    parser.add_argument("--db", type=Path, required=True)
+    parser.add_argument("--modo", choices=["rede", "arquivos", "consulta", "status", "integridade", "gcs", "ciclo-gcs"], required=True)
+    parser.add_argument("--db", type=Path)
     parser.add_argument("--raw-dir", type=Path)
     parser.add_argument("--ano", type=int, default=datetime.now(timezone.utc).year)
     parser.add_argument("--ultimas", type=int, default=3)
@@ -84,6 +85,15 @@ def main(argv=None) -> int:
     parser.add_argument("--prefixo", default="nivon/anp/lpc/v1")
     args = parser.parse_args(argv)
     try:
+        if args.modo != "ciclo-gcs" and args.db is None:
+            raise ErroColetaANP("modo selecionado exige --db")
+        if args.modo == "ciclo-gcs" and (
+            not args.bucket or args.db is not None or args.raw_dir is not None
+            or args.indice is not None or args.pasta_arquivos is not None
+        ):
+            raise ErroColetaANP(
+                "ciclo-gcs exige --bucket e usa estado temporário/recuperado"
+            )
         if args.modo == "rede" and (
             args.raw_dir is None or args.indice is not None
             or args.pasta_arquivos is not None
@@ -105,6 +115,23 @@ def main(argv=None) -> int:
             args.raw_dir.is_symlink() or not args.raw_dir.is_dir()
         ):
             raise ErroColetaANP("pasta RAW deve existir e não pode ser simbólica")
+        if args.modo == "ciclo-gcs":
+            try:
+                from google.cloud import storage
+            except ImportError as exc:
+                raise ErroColetaANP(
+                    "biblioteca opcional google-cloud-storage necessária"
+                ) from exc
+            client = storage.Client()
+            bucket = client.bucket(args.bucket)
+            bucket.reload()
+            data = executar_ciclo_lpc_gcs(
+                bucket=bucket, ano=args.ano, limite_semanas=args.ultimas,
+                prefixo=args.prefixo, semana_desde=args.desde,
+                semana_ate=args.ate,
+            )
+            print(json.dumps(data, ensure_ascii=False, sort_keys=True, indent=2))
+            return 0 if data["status"] == "CICLO_GCS_COMPLETO" else 2
         with closing(_db_seguro(args.db)) as db:
             iniciar_staging(db)
             if args.modo == "status":
