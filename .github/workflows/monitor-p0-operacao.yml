@@ -1,40 +1,65 @@
-name: NIVON P0 - Saude das fontes
+name: NIVON P0 - Saude real das fontes
 on:
   push:
+    branches: [main]
     paths:
       - '.github/workflows/monitor-p0-operacao.yml'
+      - 'src/nivon/monitor_p0_workflows.py'
+      - 'tests/test_monitor_p0_workflows.py'
+  pull_request:
+    paths:
+      - '.github/workflows/monitor-p0-operacao.yml'
+      - 'src/nivon/monitor_p0_workflows.py'
+      - 'tests/test_monitor_p0_workflows.py'
   workflow_dispatch:
   schedule:
-    # Dias úteis 12:15 UTC / 08:15 em Mato Grosso.
     - cron: '15 12 * * 1-5'
+
 permissions:
   actions: read
   contents: read
+
 concurrency:
   group: nivon-p0-health
   cancel-in-progress: false
+
 jobs:
+  validar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Testar estados de origem sem rede
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -p 'test_monitor_p0_workflows.py' -v
+
   monitorar:
+    needs: validar
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 7
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          ref: 12c47099651ccb2cb9479c87f13019535877045a
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.11'
-      - name: Testes determinísticos do monitor
-        run: python -m unittest discover -s tests -p 'test_monitor_p0_workflows.py' -v
-      - name: Consultar execuções oficiais do próprio GitHub
+      - name: Consultar GitHub Actions e sinalizar falhas P0 reais
         env:
+          PYTHONPATH: src
           GITHUB_TOKEN: ${{ github.token }}
         run: python -m nivon.monitor_p0_workflows
-      - uses: actions/upload-artifact@v4
-        if: always()
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: ${{ always() }}
         with:
-          name: nivon-status-fontes-p0
+          name: nivon-status-fontes-p0-${{ github.run_id }}
           path: status_p0.json
           if-no-files-found: ignore
           retention-days: 14
