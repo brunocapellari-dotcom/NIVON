@@ -41,16 +41,19 @@ def _hash_file(file: Path) -> str:
     return h.hexdigest()
 
 
-def _pack(banco: Path, raw_dir: Path) -> list[dict]:
+def _pack(banco: Path, raw_dir: Path, fonte_dataset: str | None = None) -> list[dict]:
     if banco.is_symlink() or not banco.is_file() or raw_dir.is_symlink() or not raw_dir.is_dir():
         raise ErroGoogleCloud("SQLite ou diretorio RAW ausente/symlink")
+    if fonte_dataset is not None and (not isinstance(fonte_dataset, str) or not _ID.fullmatch(fonte_dataset)):
+        raise ErroGoogleCloud("fonte_dataset invalido")
     db = sqlite3.connect(str(banco))
     db.row_factory = sqlite3.Row
     try:
         rows = db.execute(
             """SELECT dataset_id,sha256,snapshot_id,estado,arquivo,
                       tamanho,content_type,coletado_em,url_publica
-                 FROM snapshots ORDER BY dataset_id,sha256"""
+                 FROM snapshots WHERE (? IS NULL OR dataset_id=?)
+                 ORDER BY dataset_id,sha256""", (fonte_dataset, fonte_dataset)
         ).fetchall()
     finally:
         db.close()
@@ -95,21 +98,23 @@ def _pack(banco: Path, raw_dir: Path) -> list[dict]:
 
 
 def planejar_envio(*, base: str | Path, bucket: str, project_id: str,
-                   dataset_id: str, bigquery: bool = True) -> dict:
+                   dataset_id: str, bigquery: bool = True,
+                   fonte_dataset: str | None = None) -> dict:
     """Preflight offline; will not touch storage, HTTP or BigQuery."""
     if not isinstance(bucket,str) or not _BUCKET.fullmatch(bucket):
         raise ErroGoogleCloud("bucket GCS invalido")
     pasta=Path(base)
-    items=_pack(pasta/"fontes_reais.sqlite",pasta/"raw")
+    items=_pack(pasta/"fontes_reais.sqlite",pasta/"raw",fonte_dataset)
     estados=sorted(set(item["estado"] for item in items))
     if bigquery and estados!=["NORMALIZED"]:
         raise ErroGoogleCloud("BigQuery bloqueado: lote contem RAW ou QUARENTENA")
     from .carga_bigquery_fontes import PROJECT, DATASET
     if not PROJECT.fullmatch(project_id) or not DATASET.fullmatch(dataset_id):
         raise ErroGoogleCloud("project_id/dataset BigQuery invalidos")
-    path = pasta/"staging_fontes_reais.jsonl"
+    path = pasta/("staging_fontes_reais" + ("_" + fonte_dataset if fonte_dataset else "") + ".jsonl")
     if bigquery:
-        exportar_jsonl(banco=pasta/"fontes_reais.sqlite",destino=path)
+        exportar_jsonl(banco=pasta/"fontes_reais.sqlite",destino=path,
+                       dataset_id=fonte_dataset)
         bq=planejar_carga(arquivo=path,project_id=project_id,dataset_id=dataset_id)
         # Exported JSONL must have observations for all valid source snapshots.
         if bq["linhas"]<1:
@@ -118,7 +123,8 @@ def planejar_envio(*, base: str | Path, bucket: str, project_id: str,
         bq=None
     return {
         "estado":"PREFLIGHT_OK","bucket":bucket,"project_id":project_id,
-        "dataset_id":dataset_id,"raw":items, "origem_sqlite":str(pasta/"fontes_reais.sqlite"),
+        "dataset_id":dataset_id,"fonte_dataset":fonte_dataset,
+        "raw":items, "origem_sqlite":str(pasta/"fontes_reais.sqlite"),
         "bigquery":bq,"bigquery_solicitado":bigquery,
         "gcs_executado":False,"bq_executado":False,
     }
@@ -149,10 +155,12 @@ def executar_envio(*, base: str | Path, bucket: str, project_id: str,
                    dataset_id: str, bigquery: bool = True,
                    executar: bool = False, autorizacoes: frozenset[str] = frozenset(),
                    evidencia: str | None = None,
-                   storage_client=None, bq_loader=None) -> dict:
+                   storage_client=None, bq_loader=None,
+                   fonte_dataset: str | None = None) -> dict:
     """GCS first, then BigQuery. Inject fake storage/client in E2E tests."""
     plano=planejar_envio(base=base,bucket=bucket,project_id=project_id,
-                         dataset_id=dataset_id,bigquery=bigquery)
+                         dataset_id=dataset_id,bigquery=bigquery,
+                         fonte_dataset=fonte_dataset)
     if executar is not True or not _OPS.issubset(autorizacoes):
         raise PermissionError("GCP exige executar e direitos COLETA/ARMAZENAMENTO/PROCESSAMENTO")
     if not isinstance(evidencia,str) or len(evidencia.strip())<10:
@@ -178,9 +186,19 @@ def executar_envio(*, base: str | Path, bucket: str, project_id: str,
     # Proveniencia persiste no GCS mesmo quando o SQLite local e efemero.
     # O manifesto e content-addressed, reproduzivel e armazenado no bucket privado.
     manifest_items=[{k:v for k,v in item.items() if k!="arquivo"} for item in plano["raw"]]
+    documento={"schema_version":"1.1.0","fontes":manifest_items}
+    if bigquery:
+        arquivo_stage=Path(plano["bigquery"]["arquivo"])
+        sha_stage=_hash_file(arquivo_stage)
+        documento["carga_bigquery"]={
+            "staging_objeto":f"nivon/staging/{sha_stage}.jsonl",
+            "sha256":sha_stage,
+            "project_id":project_id,"dataset_id":dataset_id,
+            "linhas":plano["bigquery"]["linhas"],
+        }
     manifest_bytes=(json.dumps(
-        {"schema_version":"1.0.0","fontes":manifest_items},
-        ensure_ascii=False,sort_keys=True,separators=(",",":"))+"\n").encode("utf-8")
+        documento,ensure_ascii=False,sort_keys=True,
+        separators=(",",":"))+"\n").encode("utf-8")
     manifest_sha=hashlib.sha256(manifest_bytes).hexdigest()
     manifest_name=f"nivon/manifests/{manifest_sha}.json"
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -192,9 +210,9 @@ def executar_envio(*, base: str | Path, bucket: str, project_id: str,
     stage=None
     envio_bq=None
     if bigquery:
-        arquivo=Path(plano["bigquery"]["arquivo"])
-        stage_sha=_hash_file(arquivo)
-        stage_name=f"nivon/staging/{stage_sha}.jsonl"
+        arquivo=arquivo_stage
+        stage_sha=sha_stage
+        stage_name=documento["carga_bigquery"]["staging_objeto"]
         stage=_enviar_unico(
             remote,arquivo=arquivo,objeto=stage_name,
             sha=stage_sha,content_type="application/x-ndjson")
@@ -216,6 +234,108 @@ def executar_envio(*, base: str | Path, bucket: str, project_id: str,
         "direitos_evidencia_informada":True,
         "nao_equivale_a_publicacao_de_dados":True,
     }
+
+
+
+def reprocessar_bigquery_do_manifesto(*, bucket: str, manifesto_sha256: str,
+                                      project_id: str, dataset_id: str,
+                                      executar: bool = False,
+                                      autorizacoes: frozenset[str] = frozenset(),
+                                      evidencia: str | None = None,
+                                      storage_client=None, bq_loader=None) -> dict:
+    """Recupera stage GCS após falha no MERGE, mesmo sem SQLite/runner original.
+
+    Somente manifesto content-addressed desta ponte e destino original exato.
+    Não reexecuta HTTP, não provisiona GCP e jamais promove quarentena.
+    """
+    from .carga_bigquery_fontes import PROJECT, DATASET, MAX_BYTES, planejar_carga
+
+    if (not isinstance(bucket, str) or not _BUCKET.fullmatch(bucket)
+            or not isinstance(manifesto_sha256, str)
+            or not _SHA.fullmatch(manifesto_sha256)
+            or not isinstance(project_id, str) or not PROJECT.fullmatch(project_id)
+            or not isinstance(dataset_id, str) or not DATASET.fullmatch(dataset_id)):
+        raise ErroGoogleCloud("identificadores de recuperação inválidos")
+    if executar is not True or not _OPS.issubset(autorizacoes):
+        raise PermissionError("recuperacao Google Cloud não autorizada")
+    if not isinstance(evidencia, str) or len(evidencia.strip()) < 10:
+        raise PermissionError("evidencia de direitos ausente")
+    if storage_client is None:
+        try:
+            from google.cloud import storage
+        except ImportError as exc:
+            raise RuntimeError("instalar extra gcp") from exc
+        storage_client=storage.Client(project=project_id)
+    remote=storage_client.bucket(bucket)
+    if not remote.exists():
+        raise ErroGoogleCloud("bucket inexistente ou inacessível")
+
+    def baixar_verificado(nome: str, sha: str, destino: Path, limite: int) -> None:
+        blob=remote.blob(nome)
+        if not blob.exists():
+            raise ErroGoogleCloud("objeto de replay ausente")
+        blob.reload()
+        n=int(blob.size or 0)
+        if (not blob.metadata or blob.metadata.get("sha256")!=sha
+                or not 0 < n <= limite):
+            raise ErroGoogleCloud("metadados de replay divergentes")
+        blob.download_to_filename(str(destino))
+        if destino.stat().st_size!=n or _hash_file(destino)!=sha:
+            raise ErroGoogleCloud("hash de replay diferente do manifesto")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        raiz=Path(tmp)
+        nome_manifesto=f"nivon/manifests/{manifesto_sha256}.json"
+        arquivo_manifesto=raiz/"manifesto.json"
+        baixar_verificado(nome_manifesto,manifesto_sha256,arquivo_manifesto,1_000_000)
+        try:
+            documento=json.loads(arquivo_manifesto.read_text(encoding="utf-8"))
+        except (UnicodeError,ValueError) as exc:
+            raise ErroGoogleCloud("manifesto inválido") from exc
+        if (not isinstance(documento,dict) or documento.get("schema_version")!="1.1.0"
+                or not isinstance(documento.get("fontes"),list)
+                or not documento["fontes"]):
+            raise ErroGoogleCloud("manifesto sem fontes válidas")
+        carga=documento.get("carga_bigquery")
+        if not isinstance(carga,dict):
+            raise ErroGoogleCloud("manifesto sem carga normalizada; quarentena bloqueada")
+        sha=carga.get("sha256")
+        if (not isinstance(sha,str) or not _SHA.fullmatch(sha)
+                or carga.get("staging_objeto")!=f"nivon/staging/{sha}.jsonl"
+                or carga.get("project_id")!=project_id
+                or carga.get("dataset_id")!=dataset_id
+                or type(carga.get("linhas")) is not int
+                or not 1 <= carga["linhas"] <= 75000):
+            raise ErroGoogleCloud("destino ou identidade de stage divergente")
+        identidades=set()
+        for item in documento["fontes"]:
+            if (not isinstance(item,dict) or item.get("estado")!="NORMALIZED"
+                    or not isinstance(item.get("dataset_id"),str)
+                    or not _ID.fullmatch(item["dataset_id"])
+                    or not isinstance(item.get("snapshot_id"),str)
+                    or not _SHA.fullmatch(item["snapshot_id"])):
+                raise ErroGoogleCloud("RAW não normalizado no manifesto de replay")
+            identidades.add((item["dataset_id"],item["snapshot_id"]))
+        stage=raiz/"recuperacao.jsonl"
+        baixar_verificado(carga["staging_objeto"],sha,stage,MAX_BYTES)
+        plano=planejar_carga(arquivo=stage,project_id=project_id,dataset_id=dataset_id)
+        if plano["sha256"]!=sha or plano["linhas"]!=carga["linhas"]:
+            raise ErroGoogleCloud("stage divergente do recibo de recuperação")
+        with stage.open(encoding="utf-8") as fp:
+            for linha in fp:
+                obs=json.loads(linha)
+                if (obs["dataset_id"],obs["snapshot_id"]) not in identidades:
+                    raise ErroGoogleCloud("stage contém snapshot fora do manifesto")
+        if bq_loader is None:
+            from .carga_bigquery_fontes import executar_carga
+            bq_loader=executar_carga
+        resultado=bq_loader(arquivo=str(stage),project_id=project_id,
+                            dataset_id=dataset_id,executar=True)
+        if not isinstance(resultado,dict) or resultado.get("executado") is not True:
+            raise ErroGoogleCloud("reprocessamento BigQuery não confirmado")
+        return {"estado":"BIGQUERY_RECUPERADO","manifesto_sha256":manifesto_sha256,
+                "linhas":plano["linhas"],"bucket":bucket,
+                "bq_executado":True,"publicacao_automatica":False}
 
 
 def main(argv=None):
