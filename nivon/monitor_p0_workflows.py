@@ -76,7 +76,8 @@ def assess(source, runs, *, now=None):
         # Até duas janelas seguidas podem ficar pendentes após a ativação.
         # Depois de 2 horários vencidos sem qualquer disparo schedule,
         # a ausência do cron é falha operacional, mesmo que push tenha passado.
-        misses = expected_slots(latest_any_time,now-timedelta(minutes=90),source)
+        cutoff=now-timedelta(minutes=90)
+        misses=expected_slots(latest_any_time,cutoff,source) if latest_any_time<=cutoff else []
         status = "SCHEDULE_MISSING" if len(misses)>=2 else "SCHEDULE_NOT_OBSERVED"
     elif slots and recent_scheduled:
         # Verifica slots recentes, não aceita um único cron antigo como saúde eterna.
