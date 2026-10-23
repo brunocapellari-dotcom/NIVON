@@ -29,7 +29,7 @@ ALLOW_HOSTS = frozenset({
     "apis.datos.gob.ar", "grainscanada.gc.ca", "www.grainscanada.gc.ca",
     "dadosabertos.ccee.org.br", "pda-download.ccee.org.br", "api.bcra.gob.ar",
     "granosar.lfcaucino.workers.dev",
-    "servicodados.ibge.gov.br", "api.worldbank.org",
+    "servicodados.ibge.gov.br", "apisidra.ibge.gov.br", "api.worldbank.org",
 })
 MAX_TRANSFER = 18_000_000
 SERIES_LIMIT = 500
