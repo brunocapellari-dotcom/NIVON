@@ -16,6 +16,15 @@ class TestLedger(unittest.TestCase):
         self.db.close()
         self.temp.cleanup()
 
+    def test_task_acceptance_and_source_are_preserved(self):
+        seed(self.db, [{"id": "evidence", "title": "Implementar correção",
+                        "scope": ["src/nivon/first.py"],
+                        "acceptance": "Teste integrado offline",
+                        "source": "roadmap"}])
+        task = claim(self.db, "claude")
+        self.assertEqual(task["acceptance"], "Teste integrado offline")
+        self.assertEqual(task["source"], "roadmap")
+
     def test_parallel_distinct_tasks_and_idempotent_seed(self):
         jobs = [
             {"id": "one", "title": "INMET", "scope": ["src/nivon/inmet_historico.py"],
