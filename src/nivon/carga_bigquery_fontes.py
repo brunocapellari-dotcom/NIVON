@@ -90,7 +90,7 @@ def executar_carga(*,arquivo,project_id,dataset_id,executar=False,
         coluna=", ".join(COLS)
         # Deduplicar na staging por chave já validada antes de enviar.
         on=" AND ".join(f"T.{k}=S.{k}" for k in ("dataset_id","identidade","fingerprint"))
-        sql=(f"MERGE \`{target}\` T USING \`{staging}\` S ON {on} "
+        sql=(f"MERGE `{target}` T USING `{staging}` S ON {on} "
              f"WHEN NOT MATCHED THEN INSERT ({coluna}) VALUES ("+
              ", ".join("S."+k for k in COLS)+")")
         cfg=bigquery.QueryJobConfig(maximum_bytes_billed=p["max_bytes_billed"])
