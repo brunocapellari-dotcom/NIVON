@@ -1084,9 +1084,9 @@
       "locator": {
         "kind": "OFFICIAL_INDEX",
         "url": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/progresso-de-safra",
-        "source_proof": "https://github.com/bruno-portfolio/agrobr/blob/main/docs/api/conab_progresso.md"
+        "source_proof": "https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39954034040"
       },
-      "implementation_scope": "conab_sync_metadados.py + conab_fila_publicacoes.py + captura_xlsx_conab.py + conab_ingestao_xlsx.py; sem captura homologada",
+      "implementation_scope": "conab_incremental.py + conab_execucao_edicao.py + conab_quarentena_real.py + conab_replay_xlsx.py: backfill 2 semanas reais, SQLite efemero, 116 observacoes, coleta e cloud desativados",
       "authentication": "VERIFY_PER_SOURCE",
       "last_verified_data": null,
       "runtime_enabled": false,
@@ -1103,8 +1103,8 @@
       ],
       "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
       "data_contract": "OBSERVACAO_CANONICA_V1",
-      "source_note": "Média de estados CONAB não equivale índice Brasil; preserva vintages.",
-      "preliminary_evidence": "OPEN_SOURCE_ADAPTER_REVIEWED_NOT_LIVE_HOMOLOGATED"
+      "source_note": "2 semanas CONAB outubro/2026 testadas com planilhas XLSX oficiais, 116 observacoes no mesmo SQLite em CI, sem cloud. MEDIA_ESTADOS nao equivale Brasil. Exige armazenamento duravel, direitos de publicacao, agendamento e reconciliacao.",
+      "preliminary_evidence": "REAL_TWO_OFFICIAL_XLSX_VALIDATED_EPHEMERAL_58_EACH_IDEMPOTENT_RERUN"
     },
     {
       "dataset_id": "CPTEC_MERGE",
