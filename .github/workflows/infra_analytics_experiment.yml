@@ -231,8 +231,8 @@ jobs:
               except Exception as exc:
                   soname=re.findall(r"[A-Za-z0-9_.+-]+[.]so(?:[.][0-9]+)*",str(exc))
                   module=getattr(exc,"name",None)
-          safe_module=module if isinstance(module,str) and re.fullmatch(r"[A-Za-z0-9_.]{1,100}",module) else "undetermined"
-          print("NIVON_DISTROLESS_IMPORT_BLOCKED",name,type(exc).__name__,soname[-1] if soname else safe_module)
+                  safe_module=module if isinstance(module,str) and re.fullmatch(r"[A-Za-z0-9_.]{1,100}",module) else "undetermined"
+                  print("NIVON_DISTROLESS_IMPORT_BLOCKED",name,type(exc).__name__,soname[-1] if soname else safe_module)
                   sys.exit(4)
           print("NIVON_DISTROLESS_IMPORTS_OK")
           '
