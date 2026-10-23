@@ -6430,6 +6430,1406 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
       "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "BR_CEAGESP_COTACOES_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://ceagesp.gov.br/cotacoes",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "BR_CEASA_PR_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.ceasa.pr.gov.br/Pagina/Cotacao-Diaria-de-Precos",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "BR_CEASA_GO_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://dadosabertos.go.gov.br/dataset/cotacao-ceasa",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "BR_CEASA_RS_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://ceasa.rs.gov.br/cotacoes-de-precos",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "BR_PRF_ACIDENTES_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.gov.br/prf/pt-br/acesso-a-informacao/dados-abertos/dados-abertos-da-prf",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "BR_PRF_INFRACOES_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.gov.br/prf/pt-br/acesso-a-informacao/dados-abertos/dados-abertos-da-prf",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "BR_SGB_RIMAS_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.sgb.gov.br/rede-integrada-de-monitoramento-das-aguas-subterraneas-rimas",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "BR_SGB_SACE_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.sgb.gov.br/sace/",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "BR_EMBRAPA_SATVEG_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.agroapi.cnptia.embrapa.br/store/apis/info?name=SATVeg&provider=agroapi&tag=Modis&version=v2",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "BR_IBGE_PIMPF_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.ibge.gov.br/estatisticas/economicas/industria/9294-pesquisa-industrial-mensal-producao-fisica-brasil.html",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "BR_IBGE_PIA_PROD_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.ibge.gov.br/estatisticas/economicas/industria/9044-pesquisa-industrial-anual.html",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "BR_IBGE_CENSO_AGRO_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.ibge.gov.br/estatisticas/economicas/agricultura-e-pecuaria/21814-2017-censo-agropecuario.html",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "BR_SNIF_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://snif.florestal.gov.br/pt-br",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "BR_IBAMA_EMBARGOS_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.gov.br/pt-br/servicos/consultar-autuacoes-ambientais-e-embargos",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "BR_DNIT_PNCT_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://servicos.dnit.gov.br/dadospnct",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "BR_CNT_RODOVIAS_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://data.cnt.org.br/transporte/painel-da-pesquisa-cnt-de-rodovias/",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "BR_ANTF_FERROVIAS_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.antf.org.br/dados/",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "BR_CEASAMINAS_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.ceasaminas.com.br/informacoesmercadogeral.asp",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "BR_IBGE_PNAD_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.ibge.gov.br/estatisticas/sociais/trabalho/9173-pnad-continua.html",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "BR_INPE_BDC_STAC_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://data.inpe.br/bdc/stac/v1/",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "ARG_SERIES_CAMBIO_DIARIO",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://apis.datos.gob.ar/series/api/",
+        "source_proof": null
+      },
+      "implementation_scope": "CODE_PRESENT; explicit CLI; sem agendamento",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "ARG_BCSF_SEA_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.bcsf.com.ar/ces/base_datos_sea.php",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "ARG_PUERTO_QUEQUEN_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://puertoquequen.com/estadisticas-anuales/",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "ARG_PUERTO_BAHIABLANCA_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://puertobahiablanca.com/estadisticas.html",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "ARG_ROSARIO_COMEX_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://datos.rosario.gob.ar/economia/comercio-exterior",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "ARG_CNRT_FERROVIAS_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.argentina.gob.ar/transporte/cnrt/estadisticas-ferroviarias",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "ARG_BCP_BAHIABLANCA_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.bcp.org.ar/informes.asp",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "ARG_CAMARA_ROSARIO_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://cac.bcr.com.ar/es/precios-de-pizarra",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "ARG_A3_MERCADOS_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://a3mercados.com.ar/",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "ARG_BUENOS_AIRES_EST_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://catalogo.datos.gba.gob.ar/es_AR/dataset/estimaciones-agro",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "CAN_GRAINS_CROP_YEAR_WEEKLY",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.canada.ca/en/grain-commission/services/statistics/grain-statistics-weekly.html",
+        "source_proof": null
+      },
+      "implementation_scope": "CODE_PRESENT; explicit CLI; sem agendamento",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "CAN_AGRI_OUTLOOK_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://agriculture.canada.ca/en/sector/crops/reports-statistics/canada-outlook-principal-field-crops-2026-09-25",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "CAN_STAT_API_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.statcan.gc.ca/en/developers/wds",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "CAN_DROUGHT_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://agriculture.canada.ca/en/agriculture-and-environment/drought-watch-and-agroclimate/canadian-drought-monitor",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "CAN_CROP_METRICS_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://agriculture.canada.ca/en/agricultural-production/weather/canadian-crop-metrics",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "AUS_ABARES_CROP_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.agriculture.gov.au/abares/research-topics/agricultural-outlook/australian-crop-report",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "AUS_ABS_API_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.abs.gov.au/statistics/application-programming-interfaces-apis/data-api-user-guide",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "AUS_BOM_CLIMATE_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.bom.gov.au/climate/data/",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "AUS_ABARES_DATA_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.agriculture.gov.au/abares/data",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "USA_USDA_GRAIN_INSPECTIONS_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://fgisonline.ams.usda.gov/ExportGrainReport/default.aspx",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "USA_BTS_FAF_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://faf.ornl.gov/",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "USA_DROUGHT_MONITOR_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.droughtmonitor.unl.edu/DmData/DataDownload.aspx",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "USA_NOAA_NWM_ARCHIVE_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://registry.opendata.aws/nwm-archive/",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "COP_AGERA5_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://cds.climate.copernicus.eu/datasets/sis-agrometeorological-indicators?tab=overview",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "FAO_AQUASTAT_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.fao.org/land-water/resources/tools/databases/aquastat/en",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "FAO_HIH_GEO_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.fao.org/hih-geospatial-platform/en/",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "MYS_MPOB_PALM_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://bepi.mpob.gov.my/",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "ZAF_SAGIS_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.sagis.org.za/sagis-weekly-data/",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "IND_ENAM_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.enam.gov.in/web/dashboard/agmarknet",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
+    },
+    {
+      "dataset_id": "JODI_OIL_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.jodidata.org/oil/database/overview.aspx",
+        "source_proof": null
+      },
+      "implementation_scope": "DISCOVERY_ONLY - falta endpoint, parser e sample",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "MISSING_REAL_SAMPLE_OR_RIGHTS",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Dados de provedor podem estar defasados ou sofrer revisoes; observar compet/refs; sem inferir series validadas.",
+      "preliminary_evidence": "DISCOVERY_WEB_OFFICIAL"
     }
   ]
 }
