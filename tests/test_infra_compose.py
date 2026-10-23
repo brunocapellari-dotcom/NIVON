@@ -40,13 +40,20 @@ class AuditContainerTests(unittest.TestCase):
         try:
             version = subprocess.run([binary, "compose", "version"], capture_output=True,
                                      text=True, timeout=12, check=False)
-        except OSError as exc:
-            self.skipTest("docker indisponível: " + str(exc))
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            # A sondagem opcional não pode derrubar a suíte de código quando
+            # o Docker do runner está travado; registrar SKIPPED, nunca PASS.
+            self.skipTest("docker compose não responsivo/indisponível: " + str(exc))
         if version.returncode:
             self.skipTest("docker compose plugin não disponível")
-        parsed = subprocess.run([binary, "compose", "-f", str(ROOT / "infra/compose.yaml"),
-                                 "--profile", "audit", "config", "--quiet"],
-                                capture_output=True, text=True, timeout=20, check=False)
+        try:
+            parsed = subprocess.run(
+                [binary, "compose", "-f", str(ROOT / "infra/compose.yaml"),
+                 "--profile", "audit", "config", "--quiet"],
+                capture_output=True, text=True, timeout=20, check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            self.skipTest("diagnóstico Compose indisponível: " + str(exc))
         self.assertEqual(parsed.returncode, 0, parsed.stderr)
 
 
