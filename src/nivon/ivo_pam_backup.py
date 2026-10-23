@@ -6,6 +6,7 @@ Integridade SHA nao equivale a origem oficial/assinatura independente.
 """
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import os
@@ -254,3 +255,38 @@ def restaurar_backup_pam(
         "publicacao_autorizada": False,
         "treinamento_autorizado": False,
     }
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Backup ou restauro local PAM/IVO; nao publica nem envia dados"
+    )
+    sub = parser.add_subparsers(dest="acao", required=True)
+    criar = sub.add_parser("criar", help="snapshot verificavel do staging")
+    criar.add_argument("--db", required=True, type=Path)
+    criar.add_argument("--cofre", required=True, type=Path)
+    criar.add_argument("--arquivo", required=True, type=Path)
+    restaurar = sub.add_parser("restaurar", help="restauro para diretorio NOVO")
+    restaurar.add_argument("--arquivo", required=True, type=Path)
+    restaurar.add_argument("--destino", required=True, type=Path)
+    args = parser.parse_args(argv)
+    try:
+        if args.acao == "criar":
+            result = criar_backup_pam(
+                banco=args.db, cofre=args.cofre, arquivo_zip=args.arquivo)
+        else:
+            result = restaurar_backup_pam(
+                arquivo_zip=args.arquivo, destino=args.destino)
+    except (ValueError, OSError, sqlite3.Error) as exc:
+        # Nunca revelar caminho externo, corpo de arquivo ou segredo.
+        print(json.dumps({
+            "estado": "ERRO_BACKUP_OU_RESTAURO",
+            "classe": type(exc).__name__,
+            "promocoes": 0,
+        }, sort_keys=True))
+        return 2
+    print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
