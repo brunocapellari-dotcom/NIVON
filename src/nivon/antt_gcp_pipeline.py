@@ -18,6 +18,7 @@ from .transporte_multimodal import ErroTransporte
 
 def executar_pipeline(*, pasta: str | Path, anos: list[int], projeto: str,
                      dataset: str, bucket: str, habilitar_live=False,
+                     permitir_criar_tabela=False,
                      coletor=coletar, arquivador=arquivar_gcs,
                      publicador=gravar_bigquery) -> dict:
     """Em dry-run nao faz rede nem escrita; em live valida fonte e arquiva antes da carga."""
@@ -36,7 +37,8 @@ def executar_pipeline(*, pasta: str | Path, anos: list[int], projeto: str,
     objetos = arquivador(pasta, sorted(anos), bucket, habilitar_escrita=True)
     if len(objetos) != len(anos) or any(r["estado"] not in ("ARQUIVADO", "JA_ARQUIVADO") for r in objetos):
         raise ErroTransporte("arquivamento bruto incompleto; banco nao sera alterado")
-    cargas = publicador(pasta, sorted(anos), destino, habilitar_escrita=True)
+    cargas = publicador(pasta, sorted(anos), destino, habilitar_escrita=True,
+                       permitir_criar_tabela=permitir_criar_tabela)
     if len(cargas) != len(anos) or any(
             r["estado"] not in ("CARREGADO_PENDENTE_CONCILIACAO", "SEM_MUDANCA") for r in cargas):
         raise ErroTransporte("carga analitica incompleta")
@@ -53,6 +55,7 @@ def main() -> int:
     ap.add_argument("--inicio", type=int, required=True)
     ap.add_argument("--fim", type=int, required=True)
     ap.add_argument("--live", action="store_true")
+    ap.add_argument("--permitir-criar-tabela", action="store_true")
     a = ap.parse_args()
     if a.inicio > a.fim or a.fim-a.inicio > 25:
         ap.error("intervalo de anos invalido")
@@ -60,7 +63,8 @@ def main() -> int:
         result = executar_pipeline(
             pasta=a.staging, anos=list(range(a.inicio, a.fim+1)),
             projeto=a.projeto, dataset=a.dataset, bucket=a.bucket,
-            habilitar_live=a.live)
+            habilitar_live=a.live,
+            permitir_criar_tabela=a.permitir_criar_tabela)
     except (ErroTransporte, OSError) as exc:
         print(json.dumps({"estado": "FALHA_FECHADA", "erro": str(exc)}, ensure_ascii=False))
         return 2
