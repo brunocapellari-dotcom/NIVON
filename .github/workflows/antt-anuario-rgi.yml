@@ -4,15 +4,15 @@ on:
     branches:
       - feat/antt-anuario-rgi-20261023
     paths:
-      - src/nivon/antt_anuario_rgi.py
+      - 'src/nivon/antt_anuario*.py'
       - scripts/ingest_antt_anuario_rgi.py
-      - tests/test_antt_anuario_rgi.py
+      - 'tests/test_antt_anuario*.py'
       - .github/workflows/antt-anuario-rgi.yml
   pull_request:
     paths:
-      - src/nivon/antt_anuario_rgi.py
+      - 'src/nivon/antt_anuario*.py'
       - scripts/ingest_antt_anuario_rgi.py
-      - tests/test_antt_anuario_rgi.py
+      - 'tests/test_antt_anuario*.py'
       - .github/workflows/antt-anuario-rgi.yml
   workflow_dispatch:
   schedule:
@@ -33,7 +33,7 @@ jobs:
       - name: Testes sem rede
         env:
           PYTHONPATH: 'src:.'
-        run: python -m unittest discover -s tests -p 'test_antt_anuario_rgi.py' -v
+        run: python -m unittest discover -s tests -p 'test_antt_anuario*.py' -v
   extrair-oficial:
     needs: testar
     runs-on: ubuntu-latest
