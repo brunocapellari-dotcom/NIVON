@@ -7,6 +7,8 @@ on:
       - 'src/nivon/lote_cloud_recuperavel.py'
       - 'scripts/lote_cloud_recuperavel.py'
       - 'tests/test_lote_cloud_recuperavel.py'
+      - 'tests/test_backfill_cloud_stage.py'
+      - '.github/workflows/recuperar-lote-gcp.yml'
       - 'src/nivon/verificacao_cloud_fontes.py'
       - '.github/workflows/coleta-recorrente-fontes.yml'
       - 'src/nivon/carga_bigquery_fontes.py'
@@ -52,6 +54,7 @@ jobs:
             test_arquivo_raw_gcs.py \
             test_lote_cloud_recuperavel.py \
             test_backfill_fontes_reais.py \
+            test_backfill_cloud_stage.py \
             test_bigquery_merge_simulado.py \
             test_carga_bigquery_fontes.py \
             test_coletor_bcra_v4.py \
