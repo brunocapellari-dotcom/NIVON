@@ -19,7 +19,8 @@ from scripts.backfill_fontes_reais import backfill, planejar_historico
 
 
 def executar_historico(*, fonte, inicio, fim, projeto, dataset, bucket,
-                       executar=False, max_anos=5):
+                       executar=False, max_anos=5,
+                       arquivar_recuperacao=False):
     plano=planejar_historico(fonte=fonte,inicio=inicio,fim=fim,max_anos=max_anos)
     if executar is not True:
         return {"fonte":fonte,"anos":plano,"modo":"SIMULACAO_SEM_REDE"}
@@ -50,15 +51,17 @@ def executar_historico(*, fonte, inicio, fim, projeto, dataset, bucket,
                 continue
             # Arquivo completo do lote no GCS ANTES do BigQuery. Se o MERGE
             # falhar, replay pelo manifesto funciona sem rerodar HTTP/backfill.
-            recibo=arquivar_stage(
-                banco=root/"historico.sqlite",arquivo_jsonl=saida["arquivo"],
-                bucket=bucket,projeto=projeto,dataset=dataset,executar=True)
+            recibo=None
+            if arquivar_recuperacao:
+                recibo=arquivar_stage(
+                    banco=root/"historico.sqlite",arquivo_jsonl=saida["arquivo"],
+                    bucket=bucket,projeto=projeto,dataset=dataset,executar=True)
             carga=executar_carga(arquivo=saida["arquivo"],project_id=projeto,
                        dataset_id=dataset,executar=True)
             carregados.append({"ano":ano,"estado":"CARREGADO",
                          "observacoes":saida["observacoes"],
                          "linhas_enviadas":carga["linhas_enviadas"],
-                         "manifesto_sha256":recibo["manifesto_sha256"]})
+                         "manifesto_sha256":recibo["manifesto_sha256"] if recibo else None})
         return {"fonte":fonte,"estado":"PARCIAL" if result["falhas"] else "CONCLUIDO",
           "anos":result["lotes"],"arquivamento":arquivo,
           "cargas_bigquery":carregados,"falhas":result["falhas"],
@@ -74,10 +77,12 @@ def main(argv=None):
     p.add_argument("--dataset",required=True)
     p.add_argument("--bucket",required=True)
     p.add_argument("--executar",action="store_true")
+    p.add_argument("--arquivar-recuperacao",action="store_true")
     args=p.parse_args(argv)
     ret=executar_historico(fonte=args.fonte,inicio=args.inicio,fim=args.fim,
       projeto=args.projeto,dataset=args.dataset,bucket=args.bucket,
-      executar=args.executar)
+      executar=args.executar,
+      arquivar_recuperacao=args.arquivar_recuperacao)
     print(json.dumps(ret,ensure_ascii=False,indent=2))
     return 2 if ret.get("falhas") else 0
 
