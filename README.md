@@ -35,3 +35,5 @@ A PR de cooperação fornece o comando Claude Code \`/nivon-autonomo\` e o scrip
 Ambos operam com **tarefas delimitadas**, worktrees separadas, testes offline, limites de duração e commits **somente locais**. Não fazem deploy, push ou merge automático. A operação real requer um host com as duas CLIs autenticadas; não está ativada pelo simples merge dos arquivos.
 
 Instruções: [docs/AUTONOMIA_CONTINUA_NIVON.md](docs/AUTONOMIA_CONTINUA_NIVON.md).
+
+Diagnóstico sem usar tokens: `bash scripts/nivon-autonomo.sh doctor`. Planejamento sem modificar fila: `bash scripts/nivon-autonomo.sh plan`. Testes gerados exigem contêiner Docker local sem rede; não há execução do host autorizada por esta PR.
