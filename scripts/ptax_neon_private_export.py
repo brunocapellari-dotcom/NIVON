@@ -187,8 +187,12 @@ def main(argv=None)->int:
     try:
         token=token_from_actions()
         result=export(args.endpoint,args.source_jsonl,args.target_jsonl,after=args.after_id,token=token)
-    except (PrivateExportError,InvalidQuote,ValueError,OSError,UnicodeError):
-        print("PTAX_PRIVATE_EXPORT_FAILED: conferir OIDC, origem, pagina ou contrato; zero carga na nuvem",file=sys.stderr)
+    except PrivateExportError as exc:
+        # Apenas codigos internos constantes: nunca incluir token, URL ou preco.
+        print("PTAX_PRIVATE_EXPORT_FAILED:"+str(exc)+":NO_CLOUD_WRITE",file=sys.stderr)
+        return 3
+    except (InvalidQuote,ValueError,OSError,UnicodeError) as exc:
+        print("PTAX_PRIVATE_EXPORT_FAILED:"+type(exc).__name__+":NO_CLOUD_WRITE",file=sys.stderr)
         return 3
     print(json.dumps(result,ensure_ascii=False,sort_keys=True))
     return 0
