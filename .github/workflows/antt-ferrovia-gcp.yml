@@ -12,7 +12,7 @@ on:
     # Terças e sextas, 12 UTC (08h Mato Grosso): verifica ano atual e anterior.
     - cron: '0 12 * * 2,5'
   push:
-    branches: [feature/transporte-antt-antaq-20261022]
+    branches: [main, fix/antt-gcp-unificar-config-20261023]
     paths:
       - '.github/workflows/antt-ferrovia-gcp.yml'
 
@@ -30,16 +30,18 @@ jobs:
     steps:
       - name: Informar estado sem expor parametros
         env:
-          P: ${{ vars.NIVON_GCP_PROJECT_ID }}
+          P: ${{ vars.NIVON_BQ_PROJECT }}
           D: ${{ vars.NIVON_BQ_DATASET }}
           B: ${{ vars.NIVON_GCS_BUCKET }}
-          W: ${{ vars.NIVON_GCP_WIF_PROVIDER }}
+          W: ${{ vars.NIVON_GCP_PROVIDER }}
           S: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          A: ${{ vars.NIVON_ZERO_COST_BQ_APPROVED }}
+          R: ${{ vars.NIVON_RAW_ARCHIVE_APPROVED }}
         run: |
-          if [ -n "$P" ] && [ -n "$D" ] && [ -n "$B" ] && [ -n "$W" ] && [ -n "$S" ]; then
-            echo 'GCP_VARIAVEIS_CONFIGURADAS_NAO_EQUIVALE_AUTENTICACAO'
+          if [ -n "$P" ] && [ -n "$D" ] && [ -n "$B" ] && [ -n "$W" ] && [ -n "$S" ] && [ "$A" = "true" ] && [ "$R" = "true" ]; then
+            echo 'GCP_VARIAVEIS_E_APROVACOES_PRESENTES_NAO_EQUIVALE_AUTENTICACAO'
           else
-            echo 'GCP_PENDENTE_CONFIGURACAO; nenhuma autenticacao ou escrita'
+            echo 'GCP_PENDENTE_CONFIGURACAO_OU_APROVACAO; nenhuma autenticacao ou escrita'
           fi
   coletar-e-persistir:
     needs: preflight
@@ -49,8 +51,10 @@ jobs:
       vars.NIVON_GCP_PROJECT_ID != '' &&
       vars.NIVON_BQ_DATASET != '' &&
       vars.NIVON_GCS_BUCKET != '' &&
-      vars.NIVON_GCP_WIF_PROVIDER != '' &&
-      vars.NIVON_GCP_SERVICE_ACCOUNT != ''
+      vars.NIVON_GCP_PROVIDER != '' &&
+      vars.NIVON_GCP_SERVICE_ACCOUNT != '' &&
+      vars.NIVON_ZERO_COST_BQ_APPROVED == 'true' &&
+      vars.NIVON_RAW_ARCHIVE_APPROVED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -66,7 +70,7 @@ jobs:
       - name: Autenticacao temporaria GCP sem chave de servico
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
         with:
-          workload_identity_provider: ${{ vars.NIVON_GCP_WIF_PROVIDER }}
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
           service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
           project_id: ${{ vars.NIVON_GCP_PROJECT_ID }}
           create_credentials_file: true
@@ -79,6 +83,7 @@ jobs:
           NIVON_PROJETO: ${{ vars.NIVON_GCP_PROJECT_ID }}
           NIVON_DATASET: ${{ vars.NIVON_BQ_DATASET }}
           NIVON_BUCKET: ${{ vars.NIVON_GCS_BUCKET }}
+          NIVON_BOOTSTRAP_TABLE_APPROVED: ${{ vars.NIVON_BQ_BOOTSTRAP_TABLE_APPROVED }}
         run: |
           python - <<'PY'
           import os,subprocess
@@ -90,5 +95,7 @@ jobs:
                '--dataset',os.environ['NIVON_DATASET'],
                '--bucket',os.environ['NIVON_BUCKET'],
                '--inicio',str(ano-1),'--fim',str(ano),'--live']
+          if os.environ.get('NIVON_BOOTSTRAP_TABLE_APPROVED') == 'true':
+              cmd.append('--permitir-criar-tabela')
           subprocess.run(cmd,check=True)
           PY
