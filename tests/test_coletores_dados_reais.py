@@ -8,7 +8,7 @@ from pathlib import Path
 
 from nivon.coletores_dados_reais import (
     _safra_canada, _parse_ckan, _recurso_ccee, plano_series_argentina,
-    parse_series_argentina, executar_coleta, ErroColetor, CANADA_CSV, CCEE_PACKAGE)
+    parse_series_argentina, executar_coleta, normalizar_csv_canada, ErroColetor, CANADA_CSV, CCEE_PACKAGE)
 from nivon.ingestao_fontes_reais import gravar_lote, exportar_jsonl, ErroIngestao
 
 T=datetime(2026,10,22,12,0,tzinfo=timezone.utc)
@@ -101,6 +101,20 @@ class DataRealTest(unittest.TestCase):
         self.assertEqual(out["estado"],"RAW_RECEIVED")
         self.assertEqual(out["notas"]["cabecalho"],["week","crop","tonnes"])
         self.assertEqual(out["novas_observacoes"],0)
+
+    def test_canada_converter_ktonnes_com_schema_real(self):
+        colunas=["Crop Year","Grain Week","Week Ending Date","worksheet",
+                 "metric","period","grain","grade","Region","Ktonnes"]
+        row=["2026-2027","10","2026-10-11","Export","Shipments","Weekly",
+             "Soybeans","All","West","1.25"]
+        raw=(",".join(colunas)+"\n"+",".join(row)+"\n").encode()
+        obs,meta=normalizar_csv_canada(raw)
+        self.assertEqual(meta["status_parser"],"MAPPED")
+        self.assertEqual(len(obs),1)
+        self.assertEqual(obs[0]["referencia"],"2026-10-11")
+        self.assertEqual(obs[0]["valor"],"1250.00")
+        self.assertEqual(obs[0]["unidade"],"t")
+        self.assertEqual(obs[0]["natureza"],"INFORMADO")
 
     def test_ccee_recurso_estritamente_da_fonte(self):
         recurso="123e4567-e89b-12d3-a456-426614174000"
