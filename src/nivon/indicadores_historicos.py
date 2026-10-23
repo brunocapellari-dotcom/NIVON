@@ -152,6 +152,8 @@ def compor_pacote_historico(*, db_conab: sqlite3.Connection | None,
                            db_portos: sqlite3.Connection | None,
                            db_mercados: sqlite3.Connection | None = None,
                            incluir_ptax_usd: bool = False,
+                           modo_ptax: str = "LEGADO",
+                           db_ptax_raw: sqlite3.Connection | None = None,
                            db_diesel: sqlite3.Connection | None = None,
                            diesel_localidades: list[dict] | None = None,
                            cotacoes_licenciadas: list[dict] | None = None,
@@ -164,6 +166,8 @@ def compor_pacote_historico(*, db_conab: sqlite3.Connection | None,
                            portos: list[str] | None = None) -> dict:
     """Passa indicadores já validados ao briefing, sem tentar adquirir dados."""
     _instante(gerado_em)
+    if modo_ptax not in {"LEGADO", "AUDITAR_RAW"}:
+        raise ErroPonte("modo PTAX não reconhecido")
     resultados=[]
     if noticias is None: noticias=[]
     if indicadores_externos is None: indicadores_externos=[]
@@ -188,15 +192,47 @@ def compor_pacote_historico(*, db_conab: sqlite3.Connection | None,
         if r["status"]=="INDICADOR_VERIFICADO_TEMPO":
             indicadores.append(r["indicador"])
     if incluir_ptax_usd:
-        if db_mercados is None:
-            r={"status":"SEM_HISTORICO","motivo":"banco PTAX não configurado"}
+        if modo_ptax == "AUDITAR_RAW":
+            # Via paralela somente de diagnóstico. Mesmo com paridade, a
+            # data de publicação BCB e autorização editorial independente
+            # permanecem não comprovadas, portanto NÃO insere indicador.
+            if db_mercados is None or db_ptax_raw is None:
+                r={"status":"SEM_HISTORICO","motivo":"faltam banco legado ou RAW",
+                   "publicavel":False}
+            else:
+                from .auditoria_migracao_ptax import auditar_migracao_ptax
+                from .ptax_cobertura_mercados import diagnosticar_cobertura_ptax
+                try:
+                    paridade=auditar_migracao_ptax(
+                        db_mercados,db_ptax_raw,gerado_em=gerado_em,
+                        fontes=fontes,moeda="USD")
+                    cobertura=diagnosticar_cobertura_ptax(
+                        db_ptax_raw,corte=gerado_em,moeda="USD")
+                    r={
+                        "status":"AUDITORIA_PTAX_RAW_SEM_LIBERACAO_EDITORIAL",
+                        "paridade":paridade,
+                        "cobertura":cobertura,
+                        "motivo":"captura nao comprova horario de publicacao",
+                        "publicavel":False,
+                        "apto_backtest_por_publicacao":False,
+                    }
+                except (ValueError,sqlite3.Error):
+                    r={
+                        "status":"PTAX_BLOQUEADA_INTEGRIDADE",
+                        "motivo":"erro na validacao de RAW ou legado",
+                        "publicavel":False,
+                    }
+            resultados.append({"origem":"BCB_PTAX",**r})
         else:
-            from .indicador_ptax import indicador_ptax_sqlite
-            r=indicador_ptax_sqlite(db_mercados,gerado_em=gerado_em,
-                                   fontes=fontes,moeda="USD")
-        resultados.append({"origem":"BCB_PTAX",**r})
-        if r["status"]=="INDICADOR_VERIFICADO_TEMPO":
-            indicadores.append(r["indicador"])
+            if db_mercados is None:
+                r={"status":"SEM_HISTORICO","motivo":"banco PTAX não configurado"}
+            else:
+                from .indicador_ptax import indicador_ptax_sqlite
+                r=indicador_ptax_sqlite(db_mercados,gerado_em=gerado_em,
+                                       fontes=fontes,moeda="USD")
+            resultados.append({"origem":"BCB_PTAX",**r})
+            if r["status"]=="INDICADOR_VERIFICADO_TEMPO":
+                indicadores.append(r["indicador"])
     for local in diesel_localidades or []:
         if db_diesel is None:
             r={"status":"SEM_HISTORICO","motivo":"banco municipal diesel não configurado"}

@@ -30,6 +30,10 @@ jobs:
         env:
           PYTHONPATH: src
         run: python -m unittest discover -s tests -v
+      - name: Execucao ponta a ponta PTAX (13 etapas, somente sintéticas)
+        env:
+          PYTHONPATH: src
+        run: python scripts/ensaio_ptax_integrado.py
       - name: Conferir catálogo mestre e cobertura de indicadores
         env:
           PYTHONPATH: src

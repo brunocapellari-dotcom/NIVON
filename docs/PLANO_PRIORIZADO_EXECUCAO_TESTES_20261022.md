@@ -1,0 +1,224 @@
+# NIVON — Plano integrado de execução e testes
+
+**Data:** 22/10/2026 — **escopo:** NIVON (câmbio, mercados e interfaces)
+**Execução canônica deste ciclo:** PR #21, base PR #12, demais frentes pelo PR #13.
+
+## Princípios operacionais
+
+1. Avançar **pacotes completos** (coleta/transformação/ledger/consulta/auditoria)
+   por ciclo, nunca criar um comando unitário só para completar uma linha.
+2. Usar a CI para rodar **testes completos + ensaio ponta a ponta em cada PR**.
+   Retestar seletivamente apenas o que falhou durante correções; CI final
+   continua abrangente.
+3. Executar tarefas reversíveis previamente autorizadas sem pedir permissão
+   intermediária, sem merge/deploy/agendamentos comerciais ou custos.
+4. Dado observado nunca vira estimativa sem rótulo; fixture não vira REAL.
+   Direitos de coleta, armazenamento, derivação e redistribuição separados.
+5. Não reutilizar dados estáticos como atualizados nem converter timestamp
+   de coleta em horário comprovado de publicação; impedir look-ahead.
+6. Não clonar infraestrutura de coletores, snapshots ou bancos entre frentes:
+   manter registro canônico e integrar por contratos.
+
+## Prioridade de implementação
+
+| Ordem | Pacote | Status verificável | Gate de conclusão |
+|---|---|---|---|
+| P0-1 | PTAX: legado + RAW Decimal + coexistência de schemas | **Código e CI aprovados**, sem dado live | E2E e conflitos tratados |
+| P0-2 | PTAX: backup, restauração e auditoria de integridade | **Código, testes e recuperação sintética aprovados** | Backup replay contra inventário/SHA |
+| P0-3 | PTAX: migração reversa RAW→legado em cópia | **Código e testes aprovados**, só cópia | Bloqueio a precisão não representável |
+| P0-4 | PTAX: orquestração de lote atômico e ensaio E2E na CI | **Código e CI aprovados** | Rollback completo em falha intermediária |
+| P0-5 | CEPEA, IMEA, CONAB: fontes primárias e atualização incremental | **Outra frente, não homologado aqui** | Autorização, coletor, alterações detectadas, banco e auditoria |
+| P0-6 | Fontes argentinas de produção/comercialização | **Outra frente, não homologado aqui** | Origem oficial, cobertura, calendário e revisão |
+| P0-7 | PTAX: consulta **real** OData autorizada e direitos ODbL | **Bloqueado pelo catálogo/licença/validação externa** | Payload real + direitos + evidência independente |
+| P1-1 | CBOT/ICE e preços físicos com identidade econômica/vintages | Contrato QA em PR #21, licenças e histórico live pendentes | Direitos e séries reais suficientes |
+| P1-2 | Fretes divulgados, custos diesel, pressão logística | Frentes próprias; não executar com dados sintéticos como real | Ligação por ponto/rota/transportadora |
+| P1-3 | Tendências ALTA/BAIXA/ESTABILIDADE para frete, CBOT e preços físicos | Motor em PR #12; validação com dados reais pendente | Walk-forward, cobertura, calibração e benchmark |
+| P1-4 | IVO: explicações auditáveis e briefing via WhatsApp | Integração proibida até gates de direitos/atualidade | Fonte, confiança, referências e licença verificadas |
+| P2-1 | Google Cloud: retenção, IAM, observabilidade, custos | Infraestrutura separada; custo/implantação não autorizados neste ciclo | Aprovação e ensaio de restauração |
+| P2-2 | Automação de coleta + alertas de desatualização/quebra schema | Preparar em branch, **não ativar sozinho** | Governança da fonte e custo aprovados |
+| P2-3 | Homologação integrada e deploy | Não iniciado | Testes E2E reais, segurança e aprovação humana |
+
+## Ordem dos testes — um pacote, uma CI abrangente
+
+| Ordem | Grupo | Evidência requerida |
+|---|---|---|
+| T0 | E2E completo de dados | Captura→RAW→normalização→ledger→as-of→indicador |
+| T1 | Continuidade/DR | Backup→corrupção→restauração→SHA→consulta |
+| T2 | Migração bidirecional | Mesmo SHA sem overwrite; RAW-first só em cópia |
+| T3 | Adversarial e segurança | WAF/HTML, sem redirect, mídia, duplicações, derechos, tempo |
+| T4 | Testes temporais | Revisões, backfill, janelas/cortes, fechamento explícito |
+| T5 | Regressão geral | Unittest do repositório, compileall, registro motores |
+| T6 | Carga/desempenho | Volumetria/limites documentados; ainda não benchmark live |
+| T7 | Aceitação com dados reais | Comparação com fontes oficiais e armazenamento aprovado |
+| T8 | Operação/cloud/editorial | Execução monitorada, IAM, custos e direitos de publicação |
+
+## Execução desta rodada
+
+- `src/nivon/continuidade_ptax.py`: inventário de snapshots RAW e
+  legados, conferência SHA, vínculos, documentação original quando presente,
+  `quick_check`, `foreign_key_check`, pacote SQLite serializado com
+  SHA-256, restauração com inventário comparado.
+- `src/nivon/ptax_migracao_reversa.py`: constrói **apenas na cópia**
+  observações legadas a partir do RAW, sem reclassificar schema ou licenças,
+  recusando perdas de casas decimais e discrepâncias em float.
+- `src/nivon/orquestracao_ptax_lote.py`: processa 1–20 planos canônicos
+  como uma única transação (rollback total, inclusive DDL, em falha).
+  A rede segue desligada sem `permitir_rede=True` e direitos.
+- `scripts/ensaio_ptax_integrado.py`: **um comando** com 10 etapas
+  integradas, acoplado a `.github/workflows/testes.yml`,
+  executado em cada PR. Não acessa rede nem grava dados de mercado no
+  repositório/Google Cloud.
+- Testes: `tests/test_continuidade_ptax.py`,
+  `tests/test_ptax_migracao_reversa.py`,
+  `tests/test_orquestracao_ptax_lote.py`.
+- Evidência da CI integrada:
+  https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39890476740
+  — success, 1.477 testes executados, 5 skipped, 0 falhas,
+  ensaio E2E `ENSAIO_PTAX_E2E_APROVADO_APENAS_SINTETICO`.
+- Controles de não-publicação continuam obrigatórios
+  (`publicavel=false`, `apto_backtest_por_publicacao=false`).
+
+## Dependências legítimas a comunicar ao proprietário
+
+Somente solicitar intervenção para acesso/licença não resolvível
+autonomamente, conta externa ou chave necessária, custos/deploy não
+autorizados, alteração crítica de política editorial ou homologação
+de dado real. De resto, escolher e executar a próxima etapa na
+mesma sessão e atualizar este plano no próprio GitHub.
+
+**Nota:** testes de licença/dados reais e tarefas de outras frentes
+não podem ser considerados aprovados por um teste sintético bem-sucedido.
+Backup em memória **não é** retenção em nuvem, cópia WORM ou recuperação
+de infraestrutura externa; executar esses testes somente no ambiente
+autorizado após aprovação de acesso/custo.
+
+
+## Pacote executado — 23/10/2026: cobertura PTAX e diagnóstico no briefing
+
+### P0 concluídos em código + CI
+
+- `ptax_cobertura_mercados.py`: percorre todas as capturas RAW
+  pertinentes ao corte as-of e classifica cobertura por boletins
+  **explicitamente Fechamento**; bloqueia valores conflitantes por
+  data, detecta boletins sem tipo e preserva identidades RAW,
+  referências e primeiras coletas. Sem calendário oficial, as
+  sessões faltantes são **desconhecidas**, não feriados inferidos.
+  Sem prova de hora de publicação: **não alimentar modelos
+  preditivos/backtest**.
+- `indicadores_historicos.py`: o compositor ganhou
+  `modo_ptax="AUDITAR_RAW"` e `db_ptax_raw`. Neste modo,
+  chama comparação de paridade legado/Decimal e diagnóstico
+  de cobertura; devolve `resultados` **sem inserir PTAX em
+  `pacote.indicadores`**, mesmo quando a classe local do
+  snapshot está marcada REAL_AUTORIZADO. O modo padrão
+  `LEGADO` foi mantido integralmente compatível para não
+  alterar briefing já existente.
+- `scripts/ensaio_ptax_integrado.py` e
+  `.github/workflows/testes.yml`: ensaio E2E agora contém
+  **13 etapas**, inclusive cobertura, compositor em paralelo e
+  bloqueio do briefing sem homologação. Não acessa internet.
+- `tests/test_ptax_ponte_editorial.py`: testes de as-of,
+  vintage conflitante, preço sem fechamento explícito,
+  exclusão sintética, direitos, paridade e roteamento editorial.
+  Fixtures que declaram REAL_AUTORIZADO existem **somente em
+  memória**, sem vínculo com dados do Banco Central.
+- CI verificável [#39946287391](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39946287391):
+  1.487 testes, 5 skipped, zero falhas; os 13 passos E2E foram
+  executados, todos `publicavel=false`.
+
+### Restrições externas P0 remanescentes
+
+A documentação oficial em
+https://dadosabertos.bcb.gov.br/dataset/dolar-americano-usd-todos-os-boletins-diarios
+declara licença **ODbL** e origem Sistema PTAX, com atualizações diárias
+(e mais de um boletim diário em certas séries). A licença aberta não
+dispensa atribuição e avaliação das condições para base derivada;
+o **catálogo interno do NIVON** ainda exige ativação específica.
+A captura HTTPS real **não foi executada neste PR**; o acesso de
+pesquisa pública não retornou um corpo OData conferível. Logo,
+não foi homologado desempenho operacional, catálogo interno,
+horário de publicação de vintage, calendário nem divulgação WhatsApp.
+
+**Próximo pacote preferencial:** integração de fonte real autorizada
+(BCB PTAX e CEPEA/IMEA/CONAB nas frentes competentes), alinhamento
+de schema/versionamento com banco operacional, verificação de
+calendário e de data de disponibilidade; depois análise de preços
+físicos/CBOT/frete com direitos separados. Somente após isso,
+habilitar motores preditivos e camada editorial, com aprovação.
+
+
+## Pacote integrado — 23/10/2026: porta de entrada real em quarentena + Google Cloud
+
+**Status:** implementação e ensaio técnico concluídos; fontes/cloud externas
+não executadas nem homologadas. Entrega sem publicação e sem custos.
+
+- `ptax_quarentena_coleta.py`: importação de bytes JSON
+  OData com manifesto de captura independente da via operacional,
+  SHA-256, timestamps com fuso, URL canônica, HTTP/MIME e
+  verificação rigorosa; aceita `value:[]` como ausência de resposta
+  cotada, não zero ou feriado inferido. SQLite append-only lógico,
+  eventos idempotentes, armazenamento content-addressed.
+- `ptax_google_cloud.py`: prepara objetos content-addressed de RAW e
+  manifesto para Google Cloud Storage; adaptador SDK opcional com
+  `if_generation_match=0`, valida caminho, bucket, SHA e manifest.
+  Upload requer `permitir_upload=True` e referências de
+  direitos e orçamento. Nenhum upload real em CI.
+- `scripts/importar_ptax_quarentena.py`: CLI unitária para arquivos
+  externos recebidos; `scripts/importar_lote_ptax_quarentena.py`:
+  CLI de até 50 pares de arquivos, validados todos antes de iniciar
+  uma transação SQLite; erro cancela todo lote.
+- `tests/test_ptax_quarentena_cloud.py` e
+  `tests/test_importar_lote_ptax_quarentena.py`: segurança,
+  entradas inválidas, lote idempotente, symlinks, JSON HTML/WAF,
+  valor ausente, corrupção, rollback, cliente GCS simulado.
+- `scripts/ensaio_ptax_integrado.py` e workflow da CI agora
+  exercitam **17 passos E2E**; continuam 100% sintéticos.
+- `docs/PTAX_QUARENTENA_GOOGLE_CLOUD_20261023.md`: contrato,
+  importação em lote, manifest, plano de cloud, IAM, custos e ODbL.
+
+**Evidência:** [CI #39984545928](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39984545928):
+`success`, **1.508 testes executados, 5 skipped, 0 falhas**, ensaio
+E2E `ENSAIO_PTAX_E2E_APROVADO_APENAS_SINTETICO`, 17 fases aprovadas.
+
+**Bloqueios P0 reais:** a consulta pública confirmou endpoint
+/documentação/licença ODbL do BCB, mas acesso HTTP externo por esta
+sessão não conseguiu obter um corpo JSON real. O Source Registry
+NIVON tem BCB_PTAX desabilitado; inserir arquivo em quarentena
+não promove o dado ao ledger operacional. Bucket GCS, credencial
+e orçamento/objeto real não foram verificados nesta rodada.
+É indevido registrar status `REAL_SNAPSHOT_TESTED`, `REAL_AUTORIZADO`
+ou publicação. Próximo pacote é realizar prova de captura HTTPS
+real e ingestão em ambiente com rede, guardar cabeçalhos e hashes,
+confrontar boletins originais, e homologar destino cloud antes de
+ativar escrita. Prioridades CEPEA/IMEA/CONAB e Argentina continuam
+em suas frentes sem substituir os processos próprios.
+
+
+## Pacote 23/10/2026 — coletor executável + reconciliação Google Cloud
+
+- Código: `src/nivon/coletor_ptax_quarentena.py` (captura HTTPS
+  oficial opt-in, com direitos e catálogo central, até oito janelas,
+  transação única de quarentena após validação integral);
+  `scripts/coletar_ptax_quarentena.py` (CLI com direitos, período
+  e arquivo de catálogo).
+- Cloud: `src/nivon/ptax_reconciliacao_gcs.py` (leitura e comparação
+  de bytes/hash), `src/nivon/ptax_sincronizacao_gcs.py` (retomada
+  idempotente de upload parcial, sem sobrescrita) e
+  `scripts/sincronizar_ptax_gcs.py` (dry-run por padrão, autorização
+  e custo obrigatórios para upload).
+- Testes integrados em
+  `tests/test_coleta_ptax_quarentena_integracao.py`: duas janelas
+  (uma sem cotação), HTTP inválido/rollback, source registry negado,
+  transporte real substituído por patch **apenas no teste**,
+  CLI sem permissão, recuperação por GCS simulado e dados divergentes.
+  O ensaio `scripts/ensaio_ptax_integrado.py` inclui agora o
+  coletor, a quarantena e a reconciliação GCS end-to-end
+  **sem rede**, sempre `publicavel=false`.
+
+**Próximo gate P0 material:** executar o coletor em máquina com
+conectividade `olinda.bcb.gov.br`, revalidar o contrato para
+USD/EUR, guardar um RAW real e headers com relógio auditável,
+confirmar e registrar direitos de ingestão, e somente depois
+conferir o bucket GCS já aprovado. O catálogo continua
+`enabled=false`, `collection_authorized=false`; não alegar
+acesso live, implantação cloud ou datas de publicação BCB.
