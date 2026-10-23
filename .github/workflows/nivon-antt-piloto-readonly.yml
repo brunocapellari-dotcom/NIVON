@@ -75,7 +75,7 @@ jobs:
       - name: Obter somente arquivo oficial ANTT de 2026
         run: |
           python -m nivon.coleta_antt --inicio 2026 --fim 2026 \
-            --destino "$RUNNER_TEMP/antt-stage" --live
+            --destino "$RUNNER_TEMP/antt-stage" --live --usar-url-verificada-contingencia
       - name: Preparar primeiro lote e inspecionar metadados sem gravar
         run: |
           python -m nivon.antt_gcp_preparar_piloto \
