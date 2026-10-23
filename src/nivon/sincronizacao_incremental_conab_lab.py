@@ -8,6 +8,7 @@ Revisão de competência e mudança de SHA de edição conhecida falham fechadas
 from __future__ import annotations
 
 import argparse
+from contextlib import closing
 import hashlib
 import json
 import os
@@ -52,6 +53,13 @@ def _db_file(path: str | Path):
 
 def abrir_db_lab(path: str | Path):
     p=_db_file(path)
+    if not p.exists():
+        try:
+            fd=os.open(p,os.O_WRONLY|os.O_CREAT|os.O_EXCL|getattr(os,"O_NOFOLLOW",0),0o600)
+        except FileExistsError:
+            _db_file(p)
+        else:
+            os.close(fd)
     db=sqlite3.connect(str(p),timeout=10)
     try:
         db.execute("PRAGMA foreign_keys=ON")
@@ -200,7 +208,7 @@ def sincronizar_incremental_lab(catalogo: dict, db_path: str | Path, pasta_backu
         raise ErroIncrementalConab("escolher exatamente uma entrada: pasta local ou GitHub")
     validated=validar_catalogo_vintages(catalogo)
     backupdir=_dir_private(pasta_backup)
-    with abrir_db_lab(db_path) as db:
+    with closing(abrir_db_lab(db_path)) as db:
         plan=planejar_delta(db,validated)
         if plan["conflitos"]:
             raise ErroIncrementalConab("conflito de edição/revisão/política parser: "+
