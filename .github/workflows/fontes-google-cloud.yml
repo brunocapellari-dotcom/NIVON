@@ -1,0 +1,97 @@
+name: NIVON - Fontes para Google Cloud (GCS + BigQuery)
+on:
+  schedule:
+    - cron: '35 13 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      fonte:
+        type: choice
+        description: Fonte com adaptador HTTP/normalizacao (IMEA requer URL oficial configurada)
+        required: true
+        default: BCB_PTAX
+        options:
+          - BCB_PTAX
+          - IBGE_PAM
+          - IMEA_WORKBOOK
+      municipio_ibge:
+        type: string
+        required: false
+        description: Codigo municipal para PAM
+      ano:
+        type: string
+        required: false
+        description: Ano civil IBGE PAM
+      codigo_produto:
+        type: string
+        required: false
+        description: Classificacao c81 da PAM
+      codigo_variavel:
+        type: string
+        required: false
+        description: Variavel oficial da PAM
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: nivon-gcp-ingestao-principal
+  cancel-in-progress: false
+
+jobs:
+  origem-ate-bigquery:
+    # Sem aprovação dos custos e da operação, não acessar a rede nem a nuvem.
+    if: ${{ vars.NIVON_GCP_OPERACIONAL_APROVADO == 'true' && vars.NIVON_GCP_DIREITOS_DADOS == 'true' && vars.NIVON_ZERO_COST_BQ_APPROVED == 'true' && vars.NIVON_GCP_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && vars.NIVON_BQ_PROJECT != '' && vars.NIVON_BQ_DATASET != '' && vars.NIVON_GCS_BUCKET != '' && vars.NIVON_GCP_RIGHTS_EVIDENCE != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      NIVON_GCP_OPERACIONAL_APROVADO: ${{ vars.NIVON_GCP_OPERACIONAL_APROVADO }}
+      NIVON_GCP_DIREITOS_DADOS: ${{ vars.NIVON_GCP_DIREITOS_DADOS }}
+      NIVON_ZERO_COST_BQ_APPROVED: ${{ vars.NIVON_ZERO_COST_BQ_APPROVED }}
+      NIVON_GCP_RIGHTS_EVIDENCE: ${{ vars.NIVON_GCP_RIGHTS_EVIDENCE }}
+      NIVON_BQ_PROJECT: ${{ vars.NIVON_BQ_PROJECT }}
+      NIVON_BQ_DATASET: ${{ vars.NIVON_BQ_DATASET }}
+      NIVON_GCS_BUCKET: ${{ vars.NIVON_GCS_BUCKET }}
+      NIVON_IMEA_XLSX_URL: ${{ vars.NIVON_IMEA_XLSX_URL }}
+      NIVON_FONTE_SELECIONADA: ${{ inputs.fonte || 'BCB_PTAX' }}
+      NIVON_IBGE_MUNICIPIO: ${{ inputs.municipio_ibge }}
+      NIVON_IBGE_ANO: ${{ inputs.ano }}
+      NIVON_IBGE_PRODUTO: ${{ inputs.codigo_produto }}
+      NIVON_IBGE_VARIAVEL: ${{ inputs.codigo_variavel }}
+    steps:
+      - name: Checkout somente da main
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Configurar Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Instalar conector e SDKs Cloud
+        run: python -m pip install -e '.[gcp]'
+      - name: OIDC Google Cloud sem chave JSON
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+          export_environment_variables: true
+      - name: Coletar fonte, persistir GCS e carregar BQ idempotente
+        run: |
+          set -eu
+          if [ "$NIVON_FONTE_SELECIONADA" = "IBGE_PAM" ]; then
+            if [ -z "$NIVON_IBGE_ANO" ]; then
+              echo 'Ano IBGE PAM e obrigatorio para coleta manual' >&2
+              exit 2
+            fi
+            python scripts/coletar_google_cloud.py --fonte IBGE_PAM --executar \
+              --municipio-ibge "$NIVON_IBGE_MUNICIPIO" \
+              --ano "$NIVON_IBGE_ANO" \
+              --codigo-produto "$NIVON_IBGE_PRODUTO" \
+              --codigo-variavel "$NIVON_IBGE_VARIAVEL"
+          elif [ "$NIVON_FONTE_SELECIONADA" = "IMEA_WORKBOOK" ]; then
+            test -n "$NIVON_IMEA_XLSX_URL" || (echo 'URL oficial XLSX IMEA ausente' >&2; exit 2)
+            python scripts/coletar_google_cloud.py --fonte IMEA_WORKBOOK --executar
+          else
+            python scripts/coletar_google_cloud.py --fonte BCB_PTAX --executar
+          fi
