@@ -322,6 +322,13 @@ class TestColetaANPLPCE2E(unittest.TestCase):
             ])
         self.assertEqual(rc,0)
         self.assertEqual(json.loads(output.getvalue())["direcao_observada"],"ALTA")
+        output=io.StringIO()
+        with redirect_stdout(output):
+            rc=main(["--modo","status","--db",str(arquivo_sqlite),
+                     "--as-of","2026-11-01T00:00:00+00:00"])
+        self.assertEqual(rc,0)
+        self.assertEqual(json.loads(output.getvalue())["semanas_unicas"],3)
+        self.assertEqual(json.loads(output.getvalue())["edicoes_sem_raw_arquivado"],0)
 
 
 if __name__ == "__main__":
