@@ -1,13 +1,13 @@
 name: Inspecao pontual PAM/IBGE NIVON
 
-# O agendamento em producao depende de PR aprovado e armazenamento duravel.
-# PR so executa coleta real ao MODIFICAR este workflow; demais commits rodam
-# testes offline, sem repetir consultas ao SIDRA.
+# Agendamento so executa quando este workflow estiver no branch padrao,
+# apos integracao aprovada. Enquanto o PR e draft, nao roda por cada push.
+# GitHub Actions artifacts expiram em 30 dias: falhar, nunca reiniciar
+# um historico antigo se a cadeia de backup recente desaparecer.
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/ivo-pam-piloto.yml'
   workflow_dispatch:
+  schedule:
+    - cron: '17 11 * * 1-5'
 
 permissions:
   contents: read
