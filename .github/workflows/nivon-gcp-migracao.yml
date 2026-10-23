@@ -30,6 +30,11 @@ jobs:
           python-version: '3.11'
       - name: Testar normalizacao e permissao sem acesso externo
         run: python -m unittest discover -s tests -p 'test_nivon_gcp_migracao.py' -v
+      - name: Validar script de provisionamento sem executar na nuvem
+        run: |
+          bash -n scripts/bootstrap_nivon_gcp.sh
+          test -f database/bigquery/nivon_neon_legado_schema.sql
+          test -f database/bigquery/nivon_ptax_schema.sql
       - name: Autenticacao federada com Google Cloud (somente se habilitada)
         if: ${{ env.NIVON_GCP_ENABLED == 'true' }}
         uses: google-github-actions/auth@v2
