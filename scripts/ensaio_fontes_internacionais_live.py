@@ -53,6 +53,16 @@ def main():
             except Exception as exc:
                 resultado.append({"fonte":"ARG_GRANOS_AR/"+endpoint,"http":"FALHOU",
                    "tipo_erro":type(exc).__name__,"mensagem":str(exc)[:150]})
+        try:
+            out=executar_coleta(fonte="BR_CCEE_PLD",executar=True,
+               recurso_id="3f279d6b-1069-42f7-9b0a-217b084729c4",
+               banco=base/"smoke.sqlite",raw_dir=base/"raw")
+            resultado.append({"fonte":"BR_CCEE_PLD_CSV_2026","http":"SUCESSO",
+                 "estado":out.get("estado"),"observacoes":out.get("novas_observacoes"),
+                 "bytes_raw":out.get("arquivo_raw") is not None})
+        except Exception as exc:
+            resultado.append({"fonte":"BR_CCEE_PLD_CSV_2026","http":"FALHOU",
+                 "tipo_erro":type(exc).__name__,"mensagem":str(exc)[:150]})
     print(json.dumps({"ensaios":resultado,"homologacao":"NAO","dados_fora_do_banco":True},
           ensure_ascii=False,indent=2))
     return 0 if all(x["http"]=="SUCESSO" for x in resultado) else 2
