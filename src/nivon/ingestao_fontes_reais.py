@@ -82,6 +82,15 @@ def _abrir(banco):
     );
     CREATE INDEX IF NOT EXISTS idx_observacoes_asof
       ON observacoes(dataset_id,referencia,coletado_em);
+    CREATE TABLE IF NOT EXISTS capturas_fonte (
+      dataset_id TEXT NOT NULL,
+      snapshot_id TEXT NOT NULL REFERENCES snapshots(snapshot_id),
+      coletado_em TEXT NOT NULL,
+      origem_url TEXT NOT NULL,
+      PRIMARY KEY (dataset_id,snapshot_id,coletado_em)
+    );
+    CREATE INDEX IF NOT EXISTS idx_capturas_fonte_tempo
+      ON capturas_fonte(dataset_id,coletado_em DESC);
     """)
     return con
 
@@ -134,6 +143,11 @@ def gravar_lote(*, banco, diretorio_bruto, dataset_id, origem, raw, tipo,
             (snapshot_id,dataset_id,url_publica,sha256,coletado_em,content_type,tamanho,arquivo,estado)
             VALUES(?,?,?,?,?,?,?,?,?)""",
             (snapshot,dataset_id,origem,sha,coletado_em,tipo,len(raw),str(target),estado))
+        # Um SHA igual não implica que a consulta NÃO ocorreu de novo:
+        # capturas repetidas guardam timestamp sem duplicar snapshot nem valor.
+        captura_nova=db.execute("""INSERT OR IGNORE INTO capturas_fonte
+            (dataset_id,snapshot_id,coletado_em,origem_url)
+            VALUES (?,?,?,?)""",(dataset_id,snapshot,coletado_em,origem)).rowcount
         for row in registros:
             if not isinstance(row, dict) or not all(x in row for x in ("identidade","referencia","natureza","campos")):
                 raise ErroIngestao("registro sem campos obrigatorios")
@@ -157,7 +171,9 @@ def gravar_lote(*, banco, diretorio_bruto, dataset_id, origem, raw, tipo,
             inseridos+=cur.rowcount
     return {"dataset_id": dataset_id,"snapshot_id":snapshot,"sha256":sha,
             "novas_observacoes":inseridos, "total_observacoes_no_lote":len(registros),
-            "estado":estado,"coletado_em":coletado_em,"arquivo_raw":str(target)}
+            "estado":estado,"coletado_em":coletado_em,"arquivo_raw":str(target),
+            "captura_nova":bool(captura_nova),
+            "snapshot_ja_existente":not bool(captura_nova) or inseridos==0}
 
 
 def exportar_jsonl(*, banco, destino, dataset_id=None, competencia=None,
