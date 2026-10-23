@@ -113,9 +113,10 @@ class TestLoteCloudE2E(unittest.TestCase):
             banco=self.db, arquivo_jsonl=self.stage, **DESTINO)
         self.assertEqual(plano["plano"]["linhas"],1)
         self.assertEqual(len(plano["plano"]["snapshots"]),1)
-        with self.assertRaises(PermissionError):
-            arquivar_stage(banco=self.db, arquivo_jsonl=self.stage,
-                           executar=False, **DESTINO)
+        planejamento=arquivar_stage(banco=self.db,arquivo_jsonl=self.stage,
+                                    executar=False,**DESTINO)
+        self.assertFalse(planejamento["executado"])
+        self.assertFalse(self.client.storage.objects)
 
     def test_replay_e2e_sem_sqlite_e_sem_http(self):
         enviado = self._stage_salvo()
