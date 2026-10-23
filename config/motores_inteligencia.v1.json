@@ -398,7 +398,9 @@
         "nivon.historico_vintages:normalizar_edicao",
         "nivon.pipeline_medicoes_horarias:consultar_medicoes_asof",
         "nivon.pipeline_medicoes_horarias:auditar_acervo_medicoes",
-        "nivon.pipeline_medicoes_horarias:relatorio_revisoes_medicoes"
+        "nivon.pipeline_medicoes_horarias:relatorio_revisoes_medicoes",
+        "nivon.fontes_hidro_entrada:preparar_inmet_zip_local",
+        "nivon.fontes_hidro_entrada:preparar_ana_consulta_adotada"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -635,7 +637,8 @@
         "nivon.pipeline_medicoes_cli:executar_manifesto_medicoes",
         "nivon.pipeline_medicoes_cli:exportar_backup_medicoes",
         "nivon.pipeline_medicoes_cli:validar_backup_medicoes",
-        "nivon.pipeline_medicoes_horarias:relatorio_revisoes_medicoes"
+        "nivon.pipeline_medicoes_horarias:relatorio_revisoes_medicoes",
+        "nivon.fontes_hidro_entrada:preparar_inmet_zip_local"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -681,7 +684,8 @@
         "nivon.verificacao_vazao_asof:avaliar_hidrograma_asof",
         "nivon.pipeline_medicoes_horarias:importar_ciclo_medicoes",
         "nivon.pipeline_medicoes_horarias:consultar_medicoes_asof",
-        "nivon.pipeline_medicoes_horarias:relatorio_revisoes_medicoes"
+        "nivon.pipeline_medicoes_horarias:relatorio_revisoes_medicoes",
+        "nivon.fontes_hidro_entrada:preparar_ana_consulta_adotada"
       ],
       "data_dependencies": [
         "ANA_HIDRO",
