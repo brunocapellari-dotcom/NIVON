@@ -8,7 +8,7 @@ from pathlib import Path
 
 from nivon.coletores_dados_reais import (
     _safra_canada, _parse_ckan, _recurso_ccee, plano_series_argentina,
-    parse_series_argentina, executar_coleta, normalizar_csv_canada, ErroColetor, CANADA_CSV, CCEE_PACKAGE)
+    parse_series_argentina, executar_coleta, normalizar_csv_canada, normalizar_ccee_pld, ErroColetor, CANADA_CSV, CCEE_PACKAGE)
 from nivon.ingestao_fontes_reais import gravar_lote, exportar_jsonl, ErroIngestao
 
 T=datetime(2026,10,22,12,0,tzinfo=timezone.utc)
@@ -116,6 +116,20 @@ class DataRealTest(unittest.TestCase):
         self.assertEqual(obs[0]["unidade"],"t")
         self.assertEqual(obs[0]["natureza"],"INFORMADO")
 
+    def test_ccee_parser_preco_hora_e_falhas(self):
+        raw=("MES_REFERENCIA;SUBMERCADO;PERIODO_COMERCIALIZACAO;DIA;HORA;PLD_HORA\\n"
+             "202610;NORDESTE;529;23;0;57.31\\n").encode()
+        o=normalizar_ccee_pld(raw)
+        self.assertEqual(len(o),1)
+        self.assertEqual(o[0]["referencia"],"2026-10-23")
+        self.assertEqual(o[0]["unidade"],"R$/MWh")
+        self.assertEqual(o[0]["valor"],"57.31")
+        for mau in (raw.replace(b"529",b"530"),
+                    raw.replace(b"57.31",b"-10"),
+                    raw.replace(b"NORDESTE",b"INVALID!")):
+            with self.subTest(mau=mau),self.assertRaises(ErroColetor):
+                normalizar_ccee_pld(mau)
+
     def test_ccee_recurso_estritamente_da_fonte(self):
         recurso="123e4567-e89b-12d3-a456-426614174000"
         uri="https://dadosabertos.ccee.org.br/dataset/data/resource/"+recurso+".csv"
@@ -123,11 +137,12 @@ class DataRealTest(unittest.TestCase):
             "resources":[{"id":recurso,"format":"CSV","url":uri,"name":"PLD 2026"}]}}
         self.assertEqual(_recurso_ccee(_parse_ckan(json.dumps(meta).encode())[1],recurso),uri)
         fake=Fake({CCEE_PACKAGE:Resp(CCEE_PACKAGE,json.dumps(meta).encode(),"application/json"),
-                   uri:Resp(uri,DUMMY_CSV,"text/csv")})
+                   uri:Resp(uri,b"MES_REFERENCIA;SUBMERCADO;PERIODO_COMERCIALIZACAO;DIA;HORA;PLD_HORA\\n202610;NORDESTE;529;23;0;57.31\\n","text/csv")})
         out=executar_coleta(fonte="BR_CCEE_PLD",banco=self.db,
                     raw_dir=self.raw,executar=True,recurso_id=recurso,
                     cliente=fake,instante=T)
-        self.assertEqual(out["estado"],"RAW_RECEIVED")
+        self.assertEqual(out["estado"],"NORMALIZED")
+        self.assertEqual(out["novas_observacoes"],1)
         self.assertEqual(len(fake.seen),2)
         self.assertEqual(out["notas"]["licenca"],"cc-by")
         meta["result"]["resources"][0]["url"]="http://127.0.0.1/private.csv"
