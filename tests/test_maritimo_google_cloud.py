@@ -146,5 +146,47 @@ class TestCloud(unittest.TestCase):
             executar_job(env={"GOOGLE_CLOUD_PROJECT":"nivon-exemplo-123"},
                         storage_client=FakeStorage(),bigquery_client=FakeBigQueryClient())
 
+    def test_replay_gcs_faz_bigquery_idempotente_sem_consultar_fonte(self):
+        from nivon.maritimo_replay_gcp import reprocessar_manifesto
+        storage=FakeStorage()
+        first=FakeBigQueryClient()
+        original=executar_job(env={
+            "NIVON_MARITIMO_COLETA_HABILITADA":"true",
+            "GOOGLE_CLOUD_PROJECT":"nivon-exemplo-123",
+            "NIVON_MARITIMO_BUCKET":"bucket-nivon-123",
+            "NIVON_PORTWATCH_COLETA_HABILITADA":"true",
+        },storage_client=storage,bigquery_client=first,
+           bigquery_module=FakeBigQueryModule,
+           fornecedor_html=lambda _:HTML,fornecer_portwatch=PORTWATCH)
+        resumed=FakeBigQueryClient()
+        retry=reprocessar_manifesto(bucket="bucket-nivon-123",
+          uri=original["manifesto"],projeto="nivon-exemplo-123",
+          storage_client=storage,bigquery_client=resumed,
+          bigquery_module=FakeBigQueryModule)
+        self.assertEqual(retry["fontes_reprocessadas"],4)
+        self.assertEqual(retry["linhas_portwatch"],1)
+        self.assertEqual(len(resumed.sql),4)
+        self.assertTrue(all("MERGE" in sql for sql in resumed.sql))
+        self.assertFalse(next(row for target,rows,_ in resumed.loads
+                             for row in rows if row.get("fonte")=="santarem_cdp"
+                             and "publicavel" in row)["publicavel"])
+
+    def test_snapshot_com_hash_adulterado_e_rejeitado(self):
+        from nivon.maritimo_replay_gcp import reprocessar_manifesto
+        storage=FakeStorage()
+        result=executar_job(env={
+            "NIVON_MARITIMO_COLETA_HABILITADA":"true",
+            "GOOGLE_CLOUD_PROJECT":"nivon-exemplo-123",
+            "NIVON_MARITIMO_BUCKET":"bucket-nivon-123",
+        },storage_client=storage,bigquery_client=FakeBigQueryClient(),
+           bigquery_module=FakeBigQueryModule,fornecedor_html=lambda _:HTML)
+        bucket=storage.bucket("bucket-nivon-123")
+        name=next(k for k in bucket.blobs if "/imbituba/" in k)
+        bucket.blobs[name].content=b"invalid"
+        with self.assertRaises(ValueError):
+            reprocessar_manifesto(bucket="bucket-nivon-123",uri=result["manifesto"],
+                projeto="nivon-exemplo-123",storage_client=storage,
+                bigquery_client=FakeBigQueryClient(),bigquery_module=FakeBigQueryModule)
+
 if __name__=="__main__":
     unittest.main()
