@@ -49,7 +49,8 @@ def _url_fonte(value):
     if (p.scheme != "https" or p.hostname not in
             ("www.gov.br", "www.conab.gov.br", "conab.gov.br") or
             p.username or p.password or p.port not in (None,443) or
-            not p.path.startswith(("/conab/", "/pt-br/", "/"))):
+            (p.hostname == "www.gov.br" and
+             not p.path.startswith("/conab/"))):
         raise ErroAgroBRSafras("URL de origem não corresponde à CONAB")
     return value
 
@@ -115,7 +116,7 @@ def _proveniencia(meta, target_safra, target_levantamento):
         raise ErroAgroBRSafras("MetaInfo.source_details obrigatório")
     publication=details.get("publicacao")
     if not isinstance(publication,dict) or publication.get("origem") == "serie_historica":
-        raise ErroAgroBRSafras("metadado não identifica boletim de levantamento")
+        raise ErroAgroBRSafras("MetaInfo não identifica boletim de levantamento")
     numero=publication.get("levantamento")
     safra=publication.get("safra")
     if (type(numero) is not int or numero!=target_levantamento or
@@ -150,11 +151,16 @@ def normalizar_safras_agrobr(
     for row in rows:
         p=row["produto"]
         u=row["uf"]
+        lev_linha=row["levantamento"]
+        try:
+            lev_num=int(lev_linha)
+            corresponde=(str(lev_linha)==str(lev_num) and
+                         not isinstance(lev_linha,bool) and lev_num==levantamento)
+        except (ValueError,TypeError):
+            corresponde=False
         if (p!=produto or row["safra"]!=safra or
                 not isinstance(u,str) or u not in _UFS or
-                (uf is not None and u!=uf) or
-                type(row["levantamento"]) is not int or
-                row["levantamento"]!=levantamento):
+                (uf is not None and u!=uf) or not corresponde):
             raise ErroAgroBRSafras("linha não pertence a produto/UF/edição explícitos")
         if u in seen:
             raise ErroAgroBRSafras("UF duplicada na edição")
@@ -272,7 +278,9 @@ def _guardar_staging_sqlite(path: str, document: dict) -> dict:
             document.get("disponibilidade_asof_comprovada") is not False):
         raise ErroAgroBRSafras("lote tenta promover dados sem vintage")
     file=Path(path)
-    if file.is_symlink() or not file.parent.is_dir() or file.stat().st_size>50_000_000 if file.exists() else file.is_symlink() or not file.parent.is_dir():
+    if (file.is_symlink() or not file.parent.is_dir() or
+            (file.exists() and
+             (not file.is_file() or file.stat().st_size>50_000_000))):
         raise ErroAgroBRSafras("SQLite inválido")
     rows=[]
     for d in document["culturas"]:
