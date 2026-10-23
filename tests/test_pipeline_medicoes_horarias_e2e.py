@@ -14,6 +14,7 @@ import unittest
 from nivon.pipeline_medicoes_horarias import (
     ErroPipelineAmbiental, preparar_arquivo_medicoes, abrir_banco_medicoes,
     importar_ciclo_medicoes, consultar_medicoes_asof, auditar_acervo_medicoes,
+    relatorio_revisoes_medicoes,
 )
 from nivon.pipeline_medicoes_cli import (
     executar_manifesto_medicoes, exportar_backup_medicoes, validar_backup_medicoes,
@@ -196,6 +197,55 @@ class TestPipelineINMETANAE2E(unittest.TestCase):
         raw_one.write_bytes(b"FALSO")
         with self.assertRaises(ErroPipelineAmbiental):
             validar_backup_medicoes(caminho=bkp)
+
+    def test_relatorio_distingue_revisao_de_tendencia_de_chuva(self):
+        first=build_inmet()
+        revised=build_inmet(
+            raw=inmet_fixture().replace(b"1,5",b"2,5",1),visto=T2)
+        importar_ciclo_medicoes(
+            self.db,raw_dir=self.raw,edicoes=[first,revised])
+        before=relatorio_revisoes_medicoes(
+            self.db,raw_dir=self.raw,dataset_id="INMET_ESTACOES",
+            estacao_id="A904",corte_em=CUT1)
+        after=relatorio_revisoes_medicoes(
+            self.db,raw_dir=self.raw,dataset_id="INMET_ESTACOES",
+            estacao_id="A904",corte_em=CUT2)
+        self.assertIsNone(before["snapshot_anterior_sha256"])
+        self.assertEqual(before["medidas_revisadas"],0)
+        self.assertEqual(after["medidas_revisadas"],1)
+        self.assertEqual(after["medidas_novas"],0)
+        self.assertEqual(after["medidas_ausentes_na_nova_edicao"],0)
+        self.assertEqual(after["revisoes_amostradas"][0]["anterior"],1.5)
+        self.assertEqual(after["revisoes_amostradas"][0]["atual"],2.5)
+        self.assertFalse(after["tendencia_clima_ou_vazao_inferida"])
+        self.assertFalse(after["homologado"])
+
+    def test_relatorio_ana_preserva_qc_e_detecta_mudanca_status(self):
+        original=build_ana(raw=ana_pack([ana_amostra(estado="1")]))
+        revised=build_ana(raw=ana_pack([ana_amostra(estado="0")]),visto=T2)
+        importar_ciclo_medicoes(self.db,raw_dir=self.raw,edicoes=[original,revised])
+        report=relatorio_revisoes_medicoes(
+            self.db,raw_dir=self.raw,dataset_id="ANA_HIDRO",
+            estacao_id="15400000",corte_em=CUT2)
+        self.assertEqual(report["mudancas_qc_declarado"],1)
+        self.assertEqual(report["medidas_revisadas"],1)
+        self.assertFalse(report["evidencia_regime_temporal_validada"])
+        self.assertFalse(report["reconstrucao_publicacao_historica"])
+        self.assertFalse(report["homologado"])
+
+    def test_relatorio_cli_usa_corte_sem_criar_alegacao_de_homologacao(self):
+        importar_ciclo_medicoes(self.db,raw_dir=self.raw,
+                                edicoes=[build_inmet()])
+        cmd=[sys.executable,"-m","nivon.pipeline_medicoes_cli","relatorio",
+             "--banco",str(self.dbpath),"--raw-dir",str(self.raw),
+             "--dataset-id","INMET_ESTACOES","--estacao-id","A904",
+             "--corte-em",CUT1]
+        result=subprocess.run(cmd,capture_output=True,text=True,timeout=20)
+        self.assertEqual(result.returncode,0,result.stderr+result.stdout)
+        out=json.loads(result.stdout)
+        self.assertEqual(out["total_medidas_atuais"],48)
+        self.assertFalse(out["tendencia_clima_ou_vazao_inferida"])
+        self.assertFalse(out["homologado"])
 
     def test_cli_processa_tudo_num_unico_lote_e_gera_backup(self):
         inputs=self.folder/"entrada"
