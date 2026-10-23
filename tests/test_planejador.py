@@ -116,6 +116,18 @@ class TestPlanejador(unittest.TestCase):
             self.assertEqual(planejador.main(["preview", "--no-coverage"]), 0)
         self.assertEqual(report(self.db)["counts"]["pending"], 0)
 
+    def test_ruff_diagnostics_create_reproducible_tasks(self):
+        report_json = json.dumps([{"filename": str(self.root / "src/nivon/first.py"),
+                                   "code": "F821", "location": {"row": 2}}])
+        from subprocess import CompletedProcess
+        with patch.object(planejador.shutil, "which", return_value="/usr/bin/ruff"), \
+             patch.object(planejador.subprocess, "run",
+                          return_value=CompletedProcess([], 1, report_json, "")):
+            tasks = planejador.ruff_candidates(self.root)
+        self.assertEqual(len(tasks), 1)
+        self.assertIn("F821", tasks[0]["acceptance"])
+        self.assertEqual(tasks[0]["scope"], ["src/nivon/first.py"])
+
     def test_issue_read_only_and_quota(self):
         with patch.object(planejador.shutil, "which", return_value=None):
             records, warning = planejador.get_issues()
