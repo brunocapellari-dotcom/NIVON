@@ -3,7 +3,7 @@ import json,os,stat,tempfile,unittest
 from pathlib import Path
 from unittest.mock import patch
 from scripts.ptax_neon_to_bigquery_jsonl import normalize
-from scripts.ptax_bigquery_incremental import planejar,executar,CargaBloqueada
+from scripts.ptax_bigquery_incremental import planejar,executar,cursor_incremental,CargaBloqueada
 
 def row(idx:int, curr="USD"):
     return normalize({"id":idx,"currency":curr,"reference_date":"2026-10-22",
@@ -56,6 +56,14 @@ class PTAXBigQueryGate(unittest.TestCase):
                     executar(p,approve=True)
                 with self.assertRaises(PermissionError):
                     executar(p,approve=False)
+    def test_cursor_nao_consulta_cloud_sem_aprovacao(self):
+        with patch.dict(os.environ,{"NIVON_GCP_WRITE_APPROVED":"false","NIVON_GCP_COST_REVIEWED":"false"}):
+            with self.assertRaises(PermissionError):
+                cursor_incremental(overlap=5000)
+    def test_cursor_validacao_limite(self):
+        with patch.dict(os.environ,{"NIVON_GCP_WRITE_APPROVED":"true","NIVON_GCP_COST_REVIEWED":"true"}):
+            with self.assertRaises(CargaBloqueada):
+                cursor_incremental(overlap=-1)
     def test_sem_referencia_publicacao_nao_inferir(self):
         with tempfile.TemporaryDirectory() as d:
             p=Path(d)/"p.jsonl";write(p,[row(1)])
