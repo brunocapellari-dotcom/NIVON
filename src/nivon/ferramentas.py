@@ -63,7 +63,13 @@ def doctor():
     if found["docker"] and image_ok:
         result = call(["docker", "image", "inspect", image])
         local_image = bool(result and result.returncode == 0)
+    # O runner usa sinais POSIX para confirmar encerramento de subprocessos.
+    # No Windows nativo, taskkill /T /F não fornece confirmação suficiente;
+    # usar Linux/WSL2 até existir isolamento validado por Job Objects.
+    host_supported = os.name == "posix"
     return {
+        "supported_host": host_supported,
+        "host_process_family": os.name,
         "required": {k: found[k] for k in REQUIRED},
         "optional": {k: found[k] for k in OPTIONAL},
         "supported_flags": flags,
@@ -71,7 +77,7 @@ def doctor():
         "docker_image_local": local_image,
         "docker_image_allowed": image_ok,
         "ready_for_pilot": (
-            all(found[x] for x in REQUIRED) and image_ok and local_image
+            host_supported and all(found[x] for x in REQUIRED) and image_ok and local_image
             and all(all(v.values()) for v in flags.values())
             and all(value == "subscription" for value in authentication.values())
         ),
