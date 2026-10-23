@@ -43,6 +43,7 @@ class TestHidroviaProduto(unittest.TestCase):
             unico = soma_carga_unica_2025(h,c)
             self.assertEqual(unico["total_ton"], 140.0)
             self.assertEqual(unico["cargas_unicas"],2)
+            self.assertEqual(unico["cobertura_de_classificacao_hidrovia_pct"],100.0)
             pq.write_table(pa.table({
                 "IDCarga": [101.0, 101.0, 102.0, 103.0],
                 "Hidrovia": ["Hidrovia do Madeira","Hidrovia do Tapajós",
