@@ -5,7 +5,10 @@ from copy import deepcopy
 from hashlib import sha256
 import json
 from pathlib import Path
+import os
 import sqlite3
+import subprocess
+import sys
 import tempfile
 from unittest import TestCase
 
@@ -107,6 +110,40 @@ class TestStagingSQLiteConab(TestCase):
             self.assertEqual(record[0],"OFFLINE_SEM_VINTAGE")
             self.assertEqual(json.loads(record[1])["abas_amostradas"],2)
             self.assertFalse(json.loads(record[1])["habilita_treino"])
+
+    def test_cli_end_to_end_sqlite_e_json_em_um_comando(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            raw=root/"raw"
+            raw.mkdir()
+            manifest=root/"manifest.json"
+            output=root/"dossie.json"
+            dbfile=root/"staging.sqlite"
+            manifest.write_text(json.dumps({
+                "schema_version":"1.0","jobs":[_job(raw)]
+            }),encoding="utf-8")
+            project=Path(__file__).resolve().parents[1]
+            env=os.environ.copy()
+            env["PYTHONPATH"]=str(project/"src") + os.pathsep + env.get("PYTHONPATH","")
+            command=[
+                sys.executable,"-m","nivon.conab_lote_offline",
+                "--manifest",str(manifest),"--base-dir",str(raw),
+                "--out",str(output),"--sqlite",str(dbfile),
+            ]
+            proc=subprocess.run(command,cwd=project,env=env,
+                                text=True,capture_output=True,timeout=30)
+            self.assertEqual(proc.returncode,0,proc.stderr)
+            d=json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(d["persistencia_staging"]["inseridos"],1)
+            self.assertFalse(d["persistencia_staging"]["habilita_publicacao"])
+            with sqlite3.connect(str(dbfile)) as db:
+                rows=db.execute(
+                    """SELECT arquivo_sha256,classe_status
+                       FROM nivon_conab_staging_documentos"""
+                ).fetchall()
+            self.assertEqual(len(rows),1)
+            self.assertEqual(rows[0][0],d["resultados"][0]["vinculo"]["arquivo_raw_sha256"])
+            self.assertEqual(rows[0][1],"OFFLINE_SEM_VINTAGE")
 
     def test_conflito_de_layout_rejeita_ao_inves_de_sobrescrever(self):
         with tempfile.TemporaryDirectory() as tmp:
