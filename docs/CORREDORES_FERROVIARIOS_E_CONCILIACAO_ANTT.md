@@ -44,3 +44,22 @@ As seguintes validações serão necessárias antes de qualificar as comparaçõ
 5. Para rodovia, homologar produto/NCM, granularidade de origem/destino e série MDF-e completa; abrir #142.
 
 Fonte: https://www.gov.br/antt/pt-br/assuntos/ferrovias/dados-de-producao-do-transporte-de-carga-origem-destino
+
+
+## Evidência live 23/10/2026 — ranking de estações MT
+
+Execução sem credenciais com origem de dados ANTT/SIADE confirmada:
+https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39952301139
+
+| Estação origem | Ago/2025 TU | Ago/2026 TU | Variação interanual |
+|---|---:|---:|---:|
+| Rondonópolis | 2.159.788 | 2.223.328 | +2,94% |
+| Itiquira | 73.940 | 50.584 | −31,59% |
+| Alto Araguaia | 120.759 | 112.414 | −6,91% |
+
+- Arquivo 2025 SHA-256 \`265a40f1759fcb6af5a83d28b687d3621d8cf50054ae777f80e7cb0d9e863114\`.
+- Arquivo 2026 SHA-256 \`d5063b8f5af64e358bb02fe9189079839b09e765e288e7ce49fdaf30e196f1f8\` (até 2026-08 no arquivo verificado).
+- O município de Dom Aquino não apresentou **correspondência exata de estação na fonte SIADE deste recorte**; jamais publicar volume zero, pois a ferrovia estadual pode ter cobertura distinta.
+- A fonte usa \`Grãos - Milho\` para milho. Crosswalk atualizado com esta denominação literal, sem alteração retroativa de campos canônicos.
+- As medições são **TONELADAS ÚTEIS FERROVIÁRIAS**, não volume rodoviário, movimentação portuária ou carga fisicamente única de toda a cadeia.
+- Revisões futuras do CSV exigem reprocessamento por hash e podem alterar os valores divulgados acima.
