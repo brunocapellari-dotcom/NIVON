@@ -282,3 +282,56 @@ antes do LIMIT, série divergente e proteção contra injeção.
 - Não está comprovada persistência contínua GCS/BigQuery para AIS/fretes,
   nem execução autenticada dessa leitura em projeto real.
 - Prévia de fila 6/24/48h ainda não foi calibrada em dados reais por porto.
+
+
+## Lote 4 — integração da ferrovia efetivamente carregada no Google Cloud
+
+O GitHub documentou carga *real* ANTT/SIADE 2026 para o projeto
+`nivon-data`, dataset `nivon_raw`, região `southamerica-east1`,
+com conferência da carga pela workflow
+`39983416188` e criação/consulta da view mensal em `39984168784`.
+É a primeira fonte logística com leitura cloud e volumes verificados;
+a mesma evidência **não** comprova AIS, fretes WhatsApp ou backfill dos anos antigos.
+
+### Código
+
+- Novo `nivon.ferrovia_painel_bq` consulta
+  `vw_nivon_corredores_ferrovia_mensal` por competência, UF de origem,
+  referência mensal e `as_of`. Query parametrizada, no máximo
+  **50 MB faturáveis** e **1000 registros**; excedentes bloqueados,
+  sem aceitar totais parciais como totais reais.
+- Preserva `arquivos_sha256`, mercadoria literal da ANTT, classe de
+  fonte primária, `linhas_fonte`, estação e polo por correspondência
+  nominal exata. Valida explicitamente `transbordo_confirmado=false`.
+- A resposta `polos_ferroviarios` integra-se à função existente
+  `quadro_intermodal`, sempre lado a lado com MDF-e, sem somar
+  toneladas entre modais ou inferir terminal físico.
+- `ponte_painel_fontes.analisar_fontes` aceita
+  `ferrovia_bigquery` sem concorrência com
+  `ferrovia_staging` ou `ferrovia`. Em modo comum, devolve
+  `PLANO_SEM_REDE`; com `--executar-bigquery`, usa ADC/WIF.
+- **Cuidado com PIT:** a view ferroviária representa a versão **atual**
+  selecionada pelo upstream. Filtrar `data_coleta <= as_of` não
+  reconstrói necessariamente as versões que estavam disponíveis em
+  um as-of histórico. Por isso `historico_pit_reconstruido=false`
+  permanece explícito; não treinar walk-forward com essa view como
+  se fosse histórico de vintages.
+
+### Fluxo comprovável após integração na main
+
+A workflow nova `nivon-painel-ferrovia-leitura-gcp.yml` roda
+todos os testes da interface somente offline nos PRs. Em `push`
+na main, autenticará via WIF GitHub OIDC com as **variáveis
+preexistentes**, realizará **uma única** consulta BigQuery à
+competência 2026-08 por meio da CLI do painel e salvará um JSON
+de evidência com retenção de 30 dias. Nenhuma tabela, bucket,
+credencial ou nova view é criada nesse job. No uso manual, só
+consulta se `workflow_dispatch.executar=true`.
+
+A suíte de testes inclui consulta com schema da view, integridade
+dos hashes de arquivo, agrupamento TU exato por polo/mercadoria,
+limite de leitura, bloqueio de fontes divergentes, retorno vazio
+sem zero presumido, impossibilidade de somar MDF-e e ferrovia e
+CLI completa. Os testes usam dados sintéticos; a prova de nuvem
+dessa *nova* interface só deverá ser considerada concluída depois
+de haver sucesso no job OIDC/BigQuery com artefato real.
