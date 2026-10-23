@@ -267,6 +267,16 @@ def montar_painel(pacote: dict, *, as_of: str) -> dict:
     if len({p.get("porto_id") for p in portos if isinstance(p, dict)}) != len(portos):
         raise ErroMotor("porto duplicado no pacote")
     from .maritimo_painel_avancado import avaliar_porto_avancado
+    from .dinamica_mercados_pit import avaliar_dinamica_historica
+
+    def avaliar_serie(s):
+        base = tendencia_precos(s.get("observacoes", []), classe=s["classe"],
+                               serie_id=s["serie_id"], as_of=as_of)
+        # Dinamica com identidade econômica e banda explicita do dado
+        # original. Nunca substituir estatistica descritiva por probabilidade.
+        return {**base, "dinamica_historica": avaliar_dinamica_historica(
+            s.get("observacoes", []), classe=s["classe"],
+            serie_id=s["serie_id"], as_of=as_of)}
 
     def avaliar_porto(p):
         base = pressao_portuaria(p, as_of=as_of)
@@ -277,11 +287,7 @@ def montar_painel(pacote: dict, *, as_of: str) -> dict:
         "as_of": momento.isoformat(),
         "logistica": resumo_logistico(pacote.get("corredores")),
         "maritimo": [avaliar_porto(p) for p in portos],
-        "quantitativo": [
-            tendencia_precos(s.get("observacoes", []), classe=s["classe"],
-                            serie_id=s["serie_id"], as_of=as_of)
-            for s in series
-        ],
+        "quantitativo": [avaliar_serie(s) for s in series],
         "restricoes": [
             "Nenhum numero representa frete negociado, transbordo confirmado ou embarque realizado.",
             "Nenhum indice shadow autoriza publicacao operacional ou previsao calibrada.",
