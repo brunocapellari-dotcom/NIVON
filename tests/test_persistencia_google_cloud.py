@@ -90,7 +90,7 @@ class TestPersistenciaGoogleCloud(unittest.TestCase):
             events=[]
             def bq_loader(**kwargs):
                 # A GCS receipt must already exist before BQ starts.
-                self.assertEqual(len(storage.obj.files),2)
+                self.assertEqual(len(storage.obj.files),3)
                 self.assertTrue(all(b.uploads==1 for b in storage.obj.files.values()))
                 self.assertTrue(kwargs["executar"])
                 events.append("BQ")
@@ -106,6 +106,7 @@ class TestPersistenciaGoogleCloud(unittest.TestCase):
             self.assertEqual(events,["BQ"])
             self.assertTrue(any(v.startswith("nivon/raw/BCB_PTAX/") for v in storage.obj.files))
             self.assertTrue(any(v.startswith("nivon/staging/") for v in storage.obj.files))
+            self.assertTrue(any(v.startswith("nivon/manifests/") for v in storage.obj.files))
             self.assertEqual(run["raw_enviados"][0]["snapshot_id"],snapshot["snapshot_id"])
             again=executar_envio(**self.kwargs(d),**self.direitos(),
                                  storage_client=storage,bq_loader=bq_loader)
