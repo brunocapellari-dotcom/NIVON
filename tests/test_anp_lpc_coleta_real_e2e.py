@@ -20,6 +20,8 @@ from nivon.anp_lpc_staging_real import (
     iniciar_staging, tendencia_diesel_preliminar, painel_qualidade_lpc,
 )
 from nivon.cli_coletar_anp_lpc import main
+from nivon.anp_diesel_pressao_preview import impacto_diesel_anp_preliminar
+from decimal import Decimal
 from test_anp_lpc_integracao import fixture, Workbook
 
 
@@ -112,6 +114,45 @@ class TestColetaANPLPCE2E(unittest.TestCase):
         self.assertEqual(self.db.execute(
             "SELECT COUNT(*) FROM sqlite_master WHERE name='anp_semanal_edicoes'"
         ).fetchone()[0],0)
+
+    def test_cenario_de_custo_liga_diesel_sem_confundir_com_frete(self):
+        self.run_lote()
+        resposta=impacto_diesel_anp_preliminar(
+            self.db, municipio="SINOP",produto="DIESEL S10",
+            as_of="2026-11-01T00:00:00+00:00",
+            distancia_operacional_km=Decimal("700"),
+            consumo_estimado_l_km=Decimal("0.4"),
+            carga_por_viagem_t=Decimal("30"),
+            distancia_validada=True,premissas_documentadas=True,
+        )
+        self.assertEqual(resposta["status"],"CENARIO_HIPOTETICO_PRELIMINAR")
+        self.assertEqual(resposta["variacao_custo_combustivel_brl_t"],"1.40")
+        self.assertEqual(resposta["repasse_ao_frete"],"INDETERMINADO")
+        self.assertFalse(resposta["frete_negociado"])
+        self.assertFalse(resposta["frete_anunciado"])
+        self.assertFalse(resposta["publicavel"])
+        self.assertFalse(resposta["dados_homologados"])
+        self.assertEqual(resposta["semana_atual"],"2026-10-17")
+        self.assertEqual(len(resposta["sha256_atual"]),64)
+
+    def test_cenario_de_custo_sem_series_suficientes_bloqueia(self):
+        entrada=fixture(start=date(2026,10,11))
+        _,files=lote(semanas=(date(2026,10,11),),precos=("6,02",))
+        html=("<html><body><p>Índice ANP fictício para cenário insuficiente</p>"
+              '<a href="'+entrada["arquivo_url"]+'">planilha</a></body></html>').encode()
+        coletar_lpc(self.db,indice_bytes=html,arquivos_locais=files,
+                   ano=2026,esperar_segundos=0)
+        resposta=impacto_diesel_anp_preliminar(
+            self.db,municipio="SINOP",produto="DIESEL S10",
+            as_of="2026-11-01T00:00:00+00:00",
+            distancia_operacional_km=Decimal("700"),
+            consumo_estimado_l_km=Decimal("0.4"),
+            carga_por_viagem_t=Decimal("30"),
+            distancia_validada=True,premissas_documentadas=True,
+        )
+        self.assertEqual(resposta["status"],"INSUFICIENTE_PARA_CENARIO_DE_CUSTO")
+        self.assertEqual(resposta["repasse_ao_frete"],"INDETERMINADO")
+        self.assertNotIn("variacao_custo_combustivel_brl_t",resposta)
 
     def test_qualidade_revela_cobertura_semana_sem_raw_e_revisao(self):
         result=coletar_lpc(
