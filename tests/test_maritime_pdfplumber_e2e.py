@@ -37,6 +37,7 @@ from nivon.maritime.pdf_programme_ledger import (
     PdfProgrammeLedger, edition_from_pdf_bridge,
 )
 from nivon.maritime.pdf_programme_revisions import compare_pdf_programme_asof
+from nivon.maritime.isolated_pdf_extract import extract_pdf_tables_isolated
 
 try:
     import pdfplumber
@@ -538,6 +539,51 @@ class PdfPlumberE2ETests(unittest.TestCase):
                                        "2026-10-20T18:00:00Z"])
             self.assertEqual(code, 2)
             self.assertIn("rights attestation", error.getvalue())
+
+    def test_isolated_subprocess_extracts_valid_pdf_tables_with_sha_handshake(self):
+        payload = paranagua_pdf(duv="", clock="09:00")
+        tables = extract_pdf_tables_isolated(payload)
+        self.assertEqual(len(tables), 1)
+        self.assertEqual(tables[0].rows[1][1], "N. Prog")
+        self.assertEqual(tables[0].rows[2][1], "PRG-5")
+
+    def test_cli_uses_isolated_worker_not_pdfplumber_in_parent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = local_manifest(tmp, [
+                ("PARANAGUA", paranagua_pdf(duv=""), STAMP,
+                 "2026-10-20T11:00:00Z")
+            ])
+            output = io.StringIO()
+            # A parent-side pdfplumber call would now fail this test.
+            with patch("nivon.portos_automaticos.extract_pdf_tables",
+                       side_effect=AssertionError("parent must not call pdfplumber")):
+                with patch("nivon.maritime.official_lineup_bridge.extract_pdf_tables",
+                           side_effect=AssertionError("parent must not call pdfplumber")):
+                    with redirect_stdout(output):
+                        code = batch_cli.main([
+                            str(manifest), "--as-of", "2026-10-20T18:00:00Z"
+                        ])
+            self.assertEqual(code, 0)
+            data = json.loads(output.getvalue())
+            self.assertEqual(data["documents"][0]["pdf_extraction_mode"],
+                             "ISOLATED_TABLES_PREVALIDATED")
+
+    def test_invalid_pdf_payload_blocked_by_worker_without_db_creation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = local_manifest(tmp, [
+                ("ITAQUI", b"%PDF-1.4\\nCORRUPTED PAGE", STAMP,
+                 "2026-10-20T11:00:00Z")
+            ])
+            db = Path(tmp) / "must_not_exist.sqlite"
+            error = io.StringIO()
+            with redirect_stderr(error):
+                code = batch_cli.main([
+                    str(manifest), "--as-of", "2026-10-20T18:00:00Z",
+                    "--commit", "--ack-rights", "--db", str(db)
+                ])
+            self.assertEqual(code, 2)
+            self.assertFalse(db.exists())
+            self.assertIn("isolated PDF extraction failed", error.getvalue())
 
     def test_itaqui_physical_status_never_promoted_to_schedule(self):
         payload = itaqui_pdf(status="ATRACADO")
