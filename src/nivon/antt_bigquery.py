@@ -117,7 +117,8 @@ def montar_lote(pasta: str | Path, ano: int) -> tuple[list[dict], dict]:
 
 
 def gravar_bigquery(pasta: str | Path, anos: list[int], destino: DestinoBQ, *,
-                    habilitar_escrita=False, cliente=None, sdk=None) -> list[dict]:
+                    habilitar_escrita=False, permitir_criar_tabela=False,
+                    cliente=None, sdk=None) -> list[dict]:
     if not anos or len(set(anos)) != len(anos) or any(type(a) is not int for a in anos):
         raise ErroTransporte("anos invalidos")
     lotes = [montar_lote(pasta, ano) for ano in sorted(anos)]
@@ -140,6 +141,8 @@ def gravar_bigquery(pasta: str | Path, anos: list[int], destino: DestinoBQ, *,
     try:
         t = cliente.get_table(ref)
     except not_found:
+        if not permitir_criar_tabela:
+            raise ErroTransporte("tabela ANTT ausente; bootstrap explicito necessario")
         t = sdk.Table(ref, schema=[sdk.SchemaField(k, typ) for k, typ in _FIELDS.items()])
         t.time_partitioning = sdk.TimePartitioning(type_=sdk.TimePartitioningType.MONTH,
                                                    field="data_referencia")
@@ -194,7 +197,8 @@ def main() -> int:
     a = parser.parse_args()
     try:
         resumo = gravar_bigquery(a.staging, a.anos, DestinoBQ(a.projeto, a.dataset),
-                                habilitar_escrita=a.live)
+                                habilitar_escrita=a.live,
+                                permitir_criar_tabela=a.permitir_criar_tabela)
     except (ErroTransporte, OSError) as exc:
         print(json.dumps({"estado": "BLOQUEADO", "motivo": str(exc)}, ensure_ascii=False))
         return 2

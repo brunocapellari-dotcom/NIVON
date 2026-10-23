@@ -28,6 +28,7 @@ class TestPipeline(unittest.TestCase):
             return [{"ano": 2026, "estado": "JA_ARQUIVADO"}]
         def bq(*args, **kwargs):
             ordem.append("bigquery")
+            self.assertFalse(kwargs["permitir_criar_tabela"])
             return [{"ano": 2026, "estado": "SEM_MUDANCA"}]
         r = executar_pipeline(pasta="/tmp/gerenciado", anos=[2026],
                              projeto="nivon-dados-123", dataset="transporte",
@@ -35,6 +36,22 @@ class TestPipeline(unittest.TestCase):
                              coletor=coleta, arquivador=gcs, publicador=bq)
         self.assertEqual(ordem, ["coleta", "gcs", "bigquery"])
         self.assertEqual(r["estado"], "GCP_CARREGADO_NAO_HOMOLOGADO")
+
+    def test_bootstrap_so_transmitido_quando_autorizado(self):
+        seen=[]
+        def coleta(**kwargs):
+            return [{"estado":"STAGING_NAO_HOMOLOGADO"}]
+        def gcs(*args, **kwargs):
+            return [{"estado":"ARQUIVADO"}]
+        def bq(*args, **kwargs):
+            seen.append(kwargs.get("permitir_criar_tabela"))
+            return [{"estado":"SEM_MUDANCA"}]
+        executar_pipeline(pasta="/tmp/lab", anos=[2026],
+                        projeto="nivon-dados-123",dataset="transporte",
+                        bucket="bucket-nivon",habilitar_live=True,
+                        permitir_criar_tabela=True,
+                        coletor=coleta,arquivador=gcs,publicador=bq)
+        self.assertEqual(seen,[True])
 
     def test_bloqueio_gcs_impede_escrita_no_banco(self):
         ordem = []
