@@ -8,6 +8,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime
+from zoneinfo import ZoneInfo
 from decimal import Decimal
 from typing import Iterable
 
@@ -56,12 +57,15 @@ class OfertaFrete:
     data_publicacao: datetime
     data_coleta: datetime
     fonte_id: str
+    provedor_id: str = ""  # Escopo original atestado; vazio somente em legados sem provedor
 
     def __post_init__(self) -> None:
         for campo in ("publicacao_id", "registro_id", "oferta_id",
                       "pickup_entity_id", "transportadora_id",
                       "descarga_entity_id", "produto", "equipamento", "fonte_id"):
             _identidade(getattr(self, campo), campo)
+        if self.provedor_id:
+            _identidade(self.provedor_id, "provedor_id")
         _ibge(self.municipio_ibge)
         _ibge(self.destino_ibge)
         if self.regime not in {"PF", "PJ", "NAO_INFORMADO"}:
@@ -83,7 +87,7 @@ class OfertaFrete:
             raise ErroRegistroFrete("publicação/coleta exigem timezone")
         if self.data_publicacao > self.data_coleta:
             raise ErroRegistroFrete("publicação não pode ser posterior à coleta")
-        if self.data_referencia > self.data_publicacao.date():
+        if self.data_referencia > self.data_publicacao.astimezone(ZoneInfo("America/Cuiaba")).date():
             raise ErroRegistroFrete("referência futura à publicação")
 
     def identidade_economica(self) -> tuple:
@@ -93,7 +97,7 @@ class OfertaFrete:
                 self.equipamento, self.regime)
 
     def assinatura_republicacao(self) -> tuple:
-        return (self.oferta_id, self.data_referencia,
+        return (self.fonte_id, self.provedor_id, self.oferta_id, self.data_referencia,
                 self.identidade_economica(), self.frete_base_brl_t,
                 self.pedagio_brl_t, self.frete_cheio_brl_t)
 
@@ -115,7 +119,7 @@ def consolidar_ofertas(ofertas: Iterable[OfertaFrete]) -> dict:
         if not isinstance(item, OfertaFrete):
             raise ErroRegistroFrete("registro fora do contrato OfertaFrete")
         assinatura = item.assinatura_republicacao()
-        id_key = (item.oferta_id, item.data_referencia)
+        id_key = (item.fonte_id, item.provedor_id, item.oferta_id, item.data_referencia)
         identidade = item.identidade_economica()
         if id_key in ids_oferta and ids_oferta[id_key] != identidade:
             raise ErroRegistroFrete("oferta_id reutilizada para identidades incompatíveis")
@@ -124,7 +128,15 @@ def consolidar_ofertas(ofertas: Iterable[OfertaFrete]) -> dict:
             raise ErroRegistroFrete("registro_id contém eventos comerciais conflitantes")
         registro_ids[item.registro_id] = assinatura
         referencias[assinatura].add(item.publicacao_id)
-        if assinatura not in distinct:
+        # Escolher representante de forma determinística independentemente
+        # da ordem dos eventos. A primeira publicação verificável prevalece.
+        if (assinatura not in distinct or
+                (item.data_publicacao, item.data_coleta, item.publicacao_id,
+                 item.registro_id) <
+                (distinct[assinatura].data_publicacao,
+                 distinct[assinatura].data_coleta,
+                 distinct[assinatura].publicacao_id,
+                 distinct[assinatura].registro_id)):
             distinct[assinatura] = item
 
     estabelecimentos: dict[str, set[str]] = defaultdict(set)
@@ -155,6 +167,7 @@ def consolidar_ofertas(ofertas: Iterable[OfertaFrete]) -> dict:
             "data_publicacao": x.data_publicacao.isoformat(),
             "data_coleta": x.data_coleta.isoformat(),
             "fonte_id": x.fonte_id,
+            "provedor_id": x.provedor_id or None,
             "publicacoes_origem": sorted(referencias[assinatura]),
             "natureza": "FRETE_ANUNCIADO_NAO_CONTRATADO",
         })
