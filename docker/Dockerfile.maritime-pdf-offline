@@ -1,0 +1,18 @@
+# Build manually only after source review. No collector or deployment side effects.
+# The base tag must be pinned to an approved digest before production.
+FROM python:3.11-slim-bookworm
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/opt/nivon/src
+
+WORKDIR /opt/nivon
+RUN python -m pip install --no-cache-dir --disable-pip-version-check \
+    pdfplumber==0.11.9
+COPY src/ ./src/
+COPY scripts/maritime_pdf_batch.py ./scripts/maritime_pdf_batch.py
+
+# Never use root to process an untrusted document; runtime wrapper maps
+# to the local operator's UID/GID for output ownership.
+USER 65532:65532
+ENTRYPOINT ["python", "scripts/maritime_pdf_batch.py"]
