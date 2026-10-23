@@ -28,6 +28,7 @@ def consolidar_staging(diretorio: str | Path, anos: list[int]) -> dict:
     milho_anuais = defaultdict(lambda: Decimal(0))
     farelo_anuais = defaultdict(lambda: Decimal(0))
     n = 0
+    anomalias = 0
     detalhes = {}
     for ano in anos:
         if type(ano) is not int:
@@ -49,6 +50,7 @@ def consolidar_staging(diretorio: str | Path, anos: list[int]) -> dict:
                 tku = Decimal(x["tku_raw"])
                 if not tu.is_finite() or not tku.is_finite() or tu < 0 or tku < 0:
                     raise ErroTransporte("TU/TKU invalidos")
+                anomalias += int(bool(x.get("anomalia_tu_tku", False)))
                 total["tu"] += tu
                 total["tku_raw"] += tku
                 meses[x["competencia"]] += tu
@@ -77,7 +79,7 @@ def consolidar_staging(diretorio: str | Path, anos: list[int]) -> dict:
     return {"fonte": "ANTT_SIADE_ORIGEM_DESTINO", "estado": "RESUMO_STAGING_NAO_HOMOLOGADO",
             "unidades": {"toneladas_uteis": "TU", "tku_raw": "TKU"},
             "observacao": "TU por fluxo ferroviario; nao equivale a carga unica sem transbordo",
-            "registros": n, "toneladas_uteis": str(total["tu"]),
+            "registros": n, "anomalias_tu_tku": anomalias, "toneladas_uteis": str(total["tu"]),
             "tku_raw": str(total["tku_raw"]),
             "por_mes": {k: str(v) for k, v in sorted(meses.items())},
             "por_ano": {str(k): {"tu": str(anuais[k]),
