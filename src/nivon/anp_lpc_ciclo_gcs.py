@@ -57,7 +57,20 @@ def _inventario(bucket, prefixo: str):
             if len(snapshots)>_MAX_SNAPSHOTS:
                 raise ErroGCSANP("limite de snapshots excedido, revisão necessária")
         else:
+            # Upload pode ter sido interrompido antes do primeiro
+            # snapshot. Somente estruturas reconhecidas são aceitas;
+            # objetos órfãos jamais constituem conhecimento canônico.
+            relativo=name.removeprefix(f"{prefixo}/")
+            estrutura=(
+                r"(?:indices/[0-9a-f]{64}\.html|"
+                r"planilhas/[0-9a-f]{64}\.xlsx|"
+                r"edicoes/[0-9a-f]{64}/[0-9a-f]{64}\.json)"
+            )
+            if not re.fullmatch(estrutura,relativo):
+                raise ErroGCSANP("objeto remoto inesperado no namespace ANP")
             outros+=1
+            if outros>20_000:
+                raise ErroGCSANP("limite de objetos alcançado, revisão necessária")
     return snapshots, outros
 
 
@@ -94,12 +107,16 @@ def restaurar_ultimo_staging_gcs(
         raise ErroGCSANP("restauração exige DB ausente e diretório RAW vazio")
     snapshots, outros = _inventario(bucket,prefixo)
     if not snapshots:
-        if outros:
-            raise ErroGCSANP("bucket contém dados órfãos sem snapshot confirmado")
+        # Retomada segura após upload parcial inicial: não confiar em
+        # arquivos órfãos para popular o SQLite. Apenas a coleta validada
+        # nesta execução pode gerar o PRIMEIRO commit durável.
         with closing(sqlite3.connect(db_path)) as db:
             iniciar_staging(db)
         return {
-            "status":"STAGING_NOVO_SEM_SNAPSHOT", "edicoes_restauradas":0,
+            "status":("STAGING_NOVO_COM_UPLOAD_ANTERIOR_INCOMPLETO"
+                      if outros else "STAGING_NOVO_SEM_SNAPSHOT"),
+            "objetos_anteriores_sem_snapshot":outros,
+            "edicoes_restauradas":0,
             "snapshots_disponiveis":0, "publicavel":False,
         }
     # O tempo é fornecido pelo armazenamento (não pelo XLSX ou coletor).
