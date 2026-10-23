@@ -1,0 +1,49 @@
+name: NIVON PAM - inspeção GCS manual e somente leitura
+
+# Prepara homologacao externa; nao publica backups e nao faz coleta SIDRA.
+# Nenhum agendamento, push, PR ou deploy pode disparar este workflow.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  estado-gcs:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      vars.NIVON_PAM_GCS_HOMOLOGADO == 'true' &&
+      vars.NIVON_PAM_GCS_CUSTO_APROVADO == 'true' &&
+      vars.NIVON_PAM_GCS_BUCKET != '' &&
+      vars.NIVON_GCP_WIF_PROVIDER != '' &&
+      vars.NIVON_GCP_SERVICE_ACCOUNT != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout sem persistir credenciais
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Obter identidade WIF somente quando homologado
+        id: auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          token_format: access_token
+          access_token_lifetime: 900s
+      - name: Consultar SOMENTE ponteiro de backup existente
+        env:
+          PYTHONPATH: src
+          NIVON_GCS_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+          BUCKET: ${{ vars.NIVON_PAM_GCS_BUCKET }}
+        run: |
+          set -euo pipefail
+          python -m nivon.ivo_pam_storage_gcs estado --bucket "$BUCKET"
