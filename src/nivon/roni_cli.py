@@ -4,6 +4,9 @@ Uso:
  python -m nivon.roni_cli validar --manifesto lotes.json
  python -m nivon.roni_cli executar --manifesto lotes.json --banco roni.sqlite \
      --raw-dir arquivo_raw --confirmar-gravacao-local
+ Opcional pontual HTTPS (somente após direitos por operação verificados):
+ python -m nivon.roni_cli capturar --banco roni.sqlite --raw-dir arquivo_raw \
+     --confirmar-gravacao-local --autorizar-http --direitos-fonte REF_LICENCA
 
 Não lê rede, não agenda tarefas, não publica resultados.
 """
@@ -118,17 +121,39 @@ def executar_manifesto_roni(
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description="NIVON RONI: pipeline offline")
-    ap.add_argument("modo", choices=["validar", "executar"])
-    ap.add_argument("--manifesto", required=True)
+    ap.add_argument("modo", choices=["validar", "executar", "capturar"])
+    ap.add_argument("--manifesto")
     ap.add_argument("--banco")
     ap.add_argument("--raw-dir")
     ap.add_argument("--confirmar-gravacao-local", action="store_true")
+    ap.add_argument("--autorizar-http", action="store_true")
+    ap.add_argument("--direitos-fonte")
+    ap.add_argument("--confirmar-revisao", action="store_true")
     a = ap.parse_args(argv)
     try:
-        result = executar_manifesto_roni(
-            manifesto=a.manifesto, modo=a.modo, banco=a.banco,
-            raw_dir=a.raw_dir,
-            confirmar_gravacao_local=a.confirmar_gravacao_local)
+        if a.modo == "capturar":
+            if not a.confirmar_gravacao_local or not a.banco or not a.raw_dir:
+                raise PermissionError("captura requer persistência local explicitamente autorizada")
+            from .roni_captura_manual import capturar_roni_manual
+            if a.autorizar_http is not True:
+                raise PermissionError("HTTP da NOAA desabilitado até opt-in")
+            db = abrir_arquivo_roni(a.banco)
+            try:
+                result = capturar_roni_manual(
+                    db, raw_dir=a.raw_dir, autorizar_http=a.autorizar_http,
+                    autorizacoes=frozenset({"COLETA", "ARMAZENAMENTO"})
+                        if a.direitos_fonte else frozenset(),
+                    evidencia_direitos=a.direitos_fonte,
+                    confirmar_revisao=a.confirmar_revisao)
+            finally:
+                db.close()
+        else:
+            if not a.manifesto:
+                raise ErroRONI("manifesto exigido no modo offline")
+            result = executar_manifesto_roni(
+                manifesto=a.manifesto, modo=a.modo, banco=a.banco,
+                raw_dir=a.raw_dir,
+                confirmar_gravacao_local=a.confirmar_gravacao_local)
     except (ErroRONI, PermissionError, OSError, ValueError) as exc:
         print(json.dumps({"estado": "BLOQUEADO",
                           "tipo": type(exc).__name__, "motivo": str(exc)},
