@@ -150,7 +150,7 @@ def preparar_arquivo_medicoes(*, formato, raw, estacao_id, coletado_em,
         if ano is not None:
             raise ErroPipelineAmbiental("ANA não possui ano de CSV")
         pacote = normalizar_adotada(
-            raw, estacao=estacao_id, zona_estacao=zona,
+            payload=raw, estacao=estacao_id, zona_estacao=zona,
             coletado_em=coletado_em, origem_sha256=digest)
         dataset = "ANA_HIDRO"
         registros = [
