@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from nivon.coleta_antt import CATALOGO, _ler_catalogo, catalogo_antt, coletar
+from nivon.resumo_antt import consolidar_staging
 from nivon.transporte_multimodal import ErroTransporte
 
 PREFIX = "https://dados.antt.gov.br/dataset/438a5184-09db-49a3-88c8-0bad418b4409/resource/"
@@ -104,6 +105,17 @@ class TestColetor(unittest.TestCase):
             man = json.loads(Path(pasta, "manifesto-antt.json").read_text())
             self.assertEqual(man["anos"]["2026"]["revision_id"], "r2")
             self.assertEqual(len(man["anos"]["2026"]["sha256"]), 64)
+
+    def test_consolidacao_preserva_tu_tku_e_mes(self):
+        with tempfile.TemporaryDirectory() as pasta:
+            coletar(destino=pasta, anos=[2026], habilitar_rede=True,
+                   transporte=Transporte(), agora=datetime(2026, 10, 22, tzinfo=timezone.utc))
+            r = consolidar_staging(pasta, [2026])
+            self.assertEqual(r["toneladas_uteis"], "123.0")
+            self.assertEqual(r["tku_raw"], "9999.0")
+            self.assertEqual(r["por_mes"]["2026-02"], "123.0")
+            self.assertEqual(r["por_uf_origem"]["MT"], "123.0")
+            self.assertEqual(r["registros"], 1)
 
     def test_nao_marca_arquivo_corrompido_como_recebido(self):
         class Corrompido(Transporte):
