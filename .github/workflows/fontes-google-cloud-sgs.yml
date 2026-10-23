@@ -35,4 +35,11 @@ jobs:
           workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
           service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
           create_credentials_file: true
+      - name: Validar GCS privado e schema BigQuery antes de coletar
+        run: |
+          python -m nivon.preflight_google_cloud \
+            --projeto "$NIVON_BQ_PROJECT" \
+            --dataset "$NIVON_BQ_DATASET" \
+            --bucket "$NIVON_GCS_BUCKET" \
+            --executar
       - run: python scripts/coletar_sgs_google_cloud.py --executar
