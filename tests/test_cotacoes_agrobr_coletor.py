@@ -109,6 +109,19 @@ class TestColetorAgrobr(TestCase):
                 armazenar_quarentena(db,fonte='IMEA',produto='soja',
                     registros=[{'valor':123}],metadata=meta,coletado_em=HORA)
 
+    def test_nan_e_nat_imea_nao_viram_zero_ou_data_atual(self):
+        with sqlite3.connect(':memory:') as db:
+            meta=SimpleNamespace(source_url='https://api1.imea.com.br/api/v2/mobile/cadeias/4/cotacoes',selected_source='imea')
+            linha={**IMEA[0],'valor':float('nan'),'data_publicacao':None}
+            r=armazenar_quarentena(db,fonte='IMEA',produto='soja',
+                   registros=[linha],metadata=meta,coletado_em=HORA)
+            self.assertEqual(r['linhas'],1)
+            item=db.execute('SELECT valor,competencia,data_publicacao_local,alerta FROM cotacao_linhas').fetchone()
+            self.assertIsNone(item[0])
+            self.assertIsNone(item[1])
+            self.assertIsNone(item[2])
+            self.assertIn('VALOR_NAO_PUBLICADO',item[3])
+
     def test_dedupe_exato_e_preserva_preco_alterado(self):
         with sqlite3.connect(':memory:') as db:
             meta=SimpleNamespace(source_url='https://api1.imea.com.br/api/v2/mobile/cadeias/4/cotacoes',selected_source='imea')
