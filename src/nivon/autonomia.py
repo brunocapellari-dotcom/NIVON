@@ -24,6 +24,7 @@ from nivon.contexto_codigo import capsule
 from nivon.token_guard import summarize
 from nivon.metricas import parse_file
 from nivon.ferramentas import doctor as check_tools, APPROVED_IMAGES
+from nivon.preparacao_host import smoke as sandbox_smoke
 from nivon.processos import executar_cli
 from nivon.janela_noturna import may_begin, status as night_status
 
@@ -61,6 +62,14 @@ def preflight():
     available = command(["docker", "image", "inspect", image], timeout=10)
     if available.returncode:
         raise RuntimeError("Imagem Docker local não encontrada; instalação/pull automático bloqueado")
+    # Pré-condição integral: sintaxe e testes offline dentro da mesma imagem
+    # que será usada pela produção noturna, sem chamar os provedores.
+    verified = sandbox_smoke(root=ROOT, image=image, allow_skips=False)
+    if not verified.get("ready"):
+        raise RuntimeError(
+            "Docker não homologado para suíte completa: " +
+            str(verified.get("reason") or "erro nos testes") +
+            "; execute bash scripts/nivon-autonomo.sh preflight")
     HOME.mkdir(exist_ok=True)
     (HOME / "worktrees").mkdir(exist_ok=True)
     (HOME / "logs").mkdir(exist_ok=True)
