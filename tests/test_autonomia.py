@@ -252,6 +252,25 @@ class TestAutonomia(unittest.TestCase):
             self.assertIn("encerramento", note)
             self.assertTrue((location / "STOP").exists())
 
+    def test_preflight_blocks_uncertified_container_before_model_calls(self):
+        fake = subprocess.CompletedProcess([], 0, "", "")
+        fake_status = {
+            "ready_for_pilot": True,
+            "authentication": {"claude": "subscription", "codex": "subscription"},
+        }
+        with patch.object(autonomia.shutil, "which", return_value="/usr/bin/tool"), \
+             patch.object(autonomia, "check_tools", return_value=fake_status), \
+             patch.object(autonomia, "command", return_value=fake), \
+             patch.object(autonomia, "sandbox_smoke",
+                          return_value={"ready": False, "reason": "optional_tests_skipped"}) as sandbox, \
+             patch.object(autonomia, "HOME", Path("/tmp/nivon-missing-unique-test")):
+            with self.assertRaisesRegex(RuntimeError, "Docker não homologado"):
+                autonomia.preflight()
+            sandbox.assert_called_once()
+        self.assertEqual(autonomia.cli("claude", {
+            "title": "Teste", "id": "example", "scope": '["src/example.py"]'
+        })[0], "claude")
+
     def test_run_limits_and_no_llm_on_preflight(self):
         with patch.object(autonomia, "preflight", side_effect=RuntimeError("sem CLI")):
             self.assertEqual(autonomia.main(["run", "--max-tasks", "1"]), 2)
