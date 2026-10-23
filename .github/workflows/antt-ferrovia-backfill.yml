@@ -4,6 +4,9 @@ on:
     branches: [feature/transporte-antt-antaq-20261022]
     paths:
       - '.github/workflows/antt-ferrovia-backfill.yml'
+      - 'src/nivon/transporte_multimodal.py'
+      - 'src/nivon/coleta_antt.py'
+      - 'src/nivon/resumo_antt.py'
   workflow_dispatch:
 permissions:
   contents: read
