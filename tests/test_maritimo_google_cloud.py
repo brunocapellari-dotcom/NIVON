@@ -169,6 +169,20 @@ class TestCloud(unittest.TestCase):
                bigquery_module=FakeBigQueryModule,fornecedor_html=lambda _:HTML)
         self.assertEqual(storage.buckets,{})
 
+    def test_reutiliza_contrato_cloud_de_fontes_nivon(self):
+        storage=FakeStorage()
+        client=FakeBigQueryClient()
+        report=executar_job(env={
+            "NIVON_MARITIMO_COLETA_HABILITADA":"true",
+            "NIVON_BQ_PROJECT":"nivon-data",
+            "NIVON_BQ_DATASET":"nivon_raw",
+            "NIVON_GCS_BUCKET":"nivon-data-raw-2026",
+        },storage_client=storage,bigquery_client=client,
+           bigquery_module=FakeBigQueryModule,fornecedor_html=lambda _:HTML)
+        self.assertTrue(report["persistencia"]["gravado"])
+        self.assertEqual(report["persistencia"]["destino"],"nivon-data.nivon_raw")
+        self.assertTrue(storage.bucket("nivon-data-raw-2026").blobs)
+
     def test_cloud_run_desabilitado_sem_qualquer_escrita(self):
         with self.assertRaises(PermissionError):
             executar_job(env={"GOOGLE_CLOUD_PROJECT":"nivon-exemplo-123"},

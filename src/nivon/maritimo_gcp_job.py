@@ -24,9 +24,12 @@ def executar_job(*, env=None, storage_client=None, bigquery_client=None,
     variables=os.environ if env is None else env
     if variables.get("NIVON_MARITIMO_COLETA_HABILITADA")!="true":
         raise PermissionError("job nao habilitado; nenhuma coleta iniciada")
-    projeto=variables.get("GOOGLE_CLOUD_PROJECT")
-    dataset=variables.get("NIVON_MARITIMO_DATASET","nivon_maritimo")
-    bucket=variables.get("NIVON_MARITIMO_BUCKET")
+    # Reutilizar contrato de configuracao do NIVON para Google Cloud
+    # compartilhado com os outros coletores (PR de Fontes GCP).
+    projeto=variables.get("GOOGLE_CLOUD_PROJECT") or variables.get("NIVON_BQ_PROJECT")
+    dataset=(variables.get("NIVON_MARITIMO_DATASET") or
+             variables.get("NIVON_BQ_DATASET") or "nivon_raw")
+    bucket=variables.get("NIVON_MARITIMO_BUCKET") or variables.get("NIVON_GCS_BUCKET")
     # Validar o projeto ANTES de arquivar qualquer evidencia no GCS:
     # nunca executar coleta no projeto incorreto ou indeterminado.
     from nivon.maritimo_bigquery import validar_destino

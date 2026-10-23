@@ -71,6 +71,43 @@ jobs:
             exit 1
           fi
           echo "Job permaneceu desabilitado como esperado"
+  inventario-gcp-autenticado:
+    # Somente leitura e apenas na main protegida, acionamento manual;
+    # nunca concede acesso GCP a codigo de pull requests.
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && vars.NIVON_GCP_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' }}
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Identidade federada do projeto NIVON, sem arquivo de chave
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+      - name: Instalar gcloud/bq para diagnostico read-only
+        uses: google-github-actions/setup-gcloud@v2
+      - name: Inspecionar recursos previamente identificados
+        env:
+          NIVON_BQ_PROJECT: ${{ vars.NIVON_BQ_PROJECT }}
+          NIVON_BQ_DATASET: ${{ vars.NIVON_BQ_DATASET }}
+          NIVON_GCS_BUCKET: ${{ vars.NIVON_GCS_BUCKET }}
+        run: |
+          set -euo pipefail
+          PROJECT="${NIVON_BQ_PROJECT:-nivon-data}"
+          DATASET="${NIVON_BQ_DATASET:-nivon_raw}"
+          BUCKET="${NIVON_GCS_BUCKET:-nivon-data-raw-2026}"
+          python infra/google_cloud/preflight_maritimo.py \
+            --projeto "$PROJECT" --regiao southamerica-east1 \
+            --dataset "$DATASET" --bucket "$BUCKET"
   smoke-publico-imbituba:
     # Diagnostico HTTP read-only em PR; nunca grava dados reais ou usa secrets.
     if: github.event_name == 'pull_request'
