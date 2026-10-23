@@ -14,9 +14,10 @@ from zoneinfo import ZoneInfo
 
 from nivon.conectores_publicos_gcp import coletar, preparar_consulta
 from nivon.coletor_imea_origem import coletar_imea
+from nivon.coletor_conab_sicarm_gcp import coletar_conab_armazens
 from nivon.persistencia_google_cloud import planejar_envio, executar_envio
 
-ALLOWED = frozenset({"BCB_PTAX", "IBGE_PAM", "IMEA_WORKBOOK"})
+ALLOWED = frozenset({"BCB_PTAX", "IBGE_PAM", "IMEA_WORKBOOK", "CONAB_ARMAZENS"})
 SOURCE_OPS = frozenset({"COLETA","ARMAZENAMENTO","PROCESSAMENTO"})
 
 
@@ -40,11 +41,16 @@ def executar_lote(*, fonte: str, base: str | Path,
     if aprovacao is not True or len(evidencia.strip())<10:
         raise PermissionError("operacao Google Cloud/direitos ainda nao aprovados")
     base=Path(base)
-    if fonte=="IMEA_WORKBOOK":
+    if fonte=="CONAB_ARMAZENS":
+        coleta=coletar_conab_armazens(
+            base=base,autorizacoes=SOURCE_OPS|frozenset({"USO_INTERNO"}),
+            evidencia=evidencia,executar=True,abridor=abridor,instante=instante)
+        cloud_bigquery=False
+    elif fonte=="IMEA_WORKBOOK":
         if not origem_imea:
             raise ValueError("IMEA sem URL oficial publicada e validada")
         coleta=coletar_imea(
-            url=origem_imea,base=base,autorizacoes=SOURCE_OPS,
+            url=origem_imea,base=base,autorizacoes=SOURCE_OPS|frozenset({"USO_INTERNO"}),
             evidencia=evidencia,executar=True,abridor=abridor,instante=instante)
         cloud_bigquery=False
     else:
@@ -73,7 +79,7 @@ def executar_lote(*, fonte: str, base: str | Path,
         "fonte":fonte,"coleta":coleta,"gcp":cloud,
         "cloud_executado":cloud["gcs_executado"],
         "bigquery_executado":cloud["bq_executado"],
-        "status":"GCS_QUARENTENA" if fonte=="IMEA_WORKBOOK" else "GCS_BIGQUERY",
+        "status":"GCS_QUARENTENA" if fonte in {"IMEA_WORKBOOK","CONAB_ARMAZENS"} else "GCS_BIGQUERY",
     }
 
 
