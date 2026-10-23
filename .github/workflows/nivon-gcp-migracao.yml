@@ -1,0 +1,62 @@
+name: NIVON - migracao historica Neon para BigQuery
+on:
+  push:
+    paths:
+      - '.github/workflows/nivon-gcp-migracao.yml'
+      - 'scripts/nivon_gcp_migracao.py'
+      - 'tests/test_nivon_gcp_migracao.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: nivon-migracao-legado-gcp
+  cancel-in-progress: false
+jobs:
+  migrar-ou-validar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    env:
+      NIVON_NEON_LEGACY_ENDPOINT: https://br-twilight-cell-b77ukd6x-nivonlegacy.compute.c-13.us-east-1.aws.neon.tech
+      NIVON_GCP_WRITE_APPROVED: ${{ vars.NIVON_GCP_WRITE_APPROVED }}
+      NIVON_GCP_COST_REVIEWED: ${{ vars.NIVON_GCP_COST_REVIEWED }}
+      NIVON_GCP_ENABLED: ${{ vars.NIVON_GCP_WRITE_APPROVED == 'true' && vars.NIVON_GCP_COST_REVIEWED == 'true' && vars.NIVON_GCP_WIF_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && 'true' || 'false' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Testar normalizacao e permissao sem acesso externo
+        run: python -m unittest discover -s tests -p 'test_nivon_gcp_migracao.py' -v
+      - name: Autenticacao federada com Google Cloud (somente se habilitada)
+        if: ${{ env.NIVON_GCP_ENABLED == 'true' }}
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+      - name: Instalar BigQuery client somente em migracao autorizada
+        if: ${{ env.NIVON_GCP_ENABLED == 'true' }}
+        run: python -m pip install --disable-pip-version-check google-cloud-bigquery==3.38.0
+      - name: Extrair fontes privadas e verificar integridade; sem artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p "$RUNNER_TEMP/nivon-gcp-private"
+          trap 'rm -rf "$RUNNER_TEMP/nivon-gcp-private"' EXIT
+          for source in imea cepea conab_safras conab_balancos conab_series; do
+            file="$RUNNER_TEMP/nivon-gcp-private/$source.jsonl"
+            python -m scripts.nivon_gcp_migracao --dataset "$source" \
+              --endpoint "$NIVON_NEON_LEGACY_ENDPOINT" --arquivo "$file"
+            if [ -f "$file" ]; then
+              python -m scripts.nivon_gcp_migracao --validar --arquivo "$file"
+              if [ "$NIVON_GCP_ENABLED" = "true" ]; then
+                python -m scripts.nivon_gcp_migracao --carregar --arquivo "$file"
+              else
+                echo 'BIGQUERY_BLOQUEADO_SEM_CREDENCIAIS_E_FATURAMENTO_APROVADOS=true'
+              fi
+            fi
+          done
+          echo 'NIVON_LEGACY_EXPORT_FINISHED; private files removed on exit'
