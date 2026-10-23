@@ -87,56 +87,13 @@ def carregar_bigquery(*,arquivo:str|Path,projeto:str,dataset:str,
     if (custos_autorizados is not True or armazenamento_autorizado is not True
             or licencas_conferidas is not True):
         raise PermissionError('BIGQUERY exige custo, armazenamento e licencas aprovados')
-    if cliente is None or tipos_bq is None:
-        try:
-            from google.cloud import bigquery
-        except ImportError as exc:
-            raise RuntimeError('instale o extra google-cloud-bigquery no executor autorizado') from exc
-        cliente=cliente if cliente is not None else bigquery.Client(project=projeto)
-        tipos_bq=tipos_bq if tipos_bq is not None else bigquery
-    if tipo_nao_encontrado is None:
-        try:
-            from google.api_core.exceptions import NotFound as tipo_nao_encontrado
-        except ImportError as exc:
-            raise RuntimeError('google-api-core nao instalado no executor') from exc
-    # Checar tabela e campos: jamais criar dataset silenciosamente.
-    destino=cliente.get_table(tabela)
-    campos={x.name:x.field_type.upper() for x in destino.schema}
-    if campos != _TIPOS:
-        raise ErroUploadAgro('tabela BigQuery difere do contrato 002')
-    localizacao=getattr(destino,'location',None)
-    if not localizacao:
-        raise ErroUploadAgro('tabela sem localização confirmada')
-    job_id='nivon_agro_'+sha256((tabela+':'+info['sha256_jsonl']).encode()).hexdigest()[:40]
-    config=tipos_bq.LoadJobConfig(
-        source_format=tipos_bq.SourceFormat.NEWLINE_DELIMITED_JSON,
-        write_disposition=tipos_bq.WriteDisposition.WRITE_APPEND,
-        autodetect=False
-    )
-    # Pegar o job de ID anterior PRIMEIRO e nunca reenviar em caso de falha
-    # desconhecida. Reparo exige auditoria e decisão operacional separada.
-    try:
-        anterior=cliente.get_job(job_id,location=localizacao)
-    except tipo_nao_encontrado:
-        anterior=None
-    if anterior is not None:
-        anterior.result(timeout=180)
-        if getattr(anterior,'destination',None) is not None:
-            if str(anterior.destination)!=tabela:
-                raise ErroUploadAgro('job-id reutilizado com destino divergente')
-        return {**info,'tabela':tabela,'job_id':job_id,
-                'status':'JOB_EXISTENTE_CONCLUIDO_RECONCILIAR_LINHAS',
-                'job_executado':False}
-    with Path(arquivo).open('rb') as file:
-        job=cliente.load_table_from_file(file,destination=tabela,
-             job_config=config,job_id=job_id,location=localizacao)
-    job.result(timeout=180)
-    erro=getattr(job,'error_result',None)
-    if erro:
-        raise ErroUploadAgro('job falhou; consultar logs privados do BigQuery')
-    return {**info,'tabela':tabela,'job_id':job_id,
-            'status':'JOB_COMPLETO_NA_TABELA_STAGE_NAO_PUBLICAVEL',
-            'job_executado':True,'dados_publicados':False}
+    # Toda carga em producao passa por MERGE insert-only para evitar
+    # duplicidade entre lotes sobrepostos e historico completo.
+    from .agro_bigquery_merge import mesclar_bigquery
+    return mesclar_bigquery(
+        info=info,arquivo=arquivo,projeto=projeto,dataset=dataset,
+        cliente=cliente,tipos_bq=tipos_bq,
+        tipo_nao_encontrado=tipo_nao_encontrado)
 
 
 def main():
