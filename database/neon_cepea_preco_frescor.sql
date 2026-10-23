@@ -29,7 +29,8 @@ CREATE OR REPLACE VIEW public.nivon_p0_frescor AS
        ELSE s.last_reference_on END AS latest_reference,
   s.last_checked_at,s.last_success_at,
   (SELECT count(*) FROM public.nivon_p0_drive_inventory d WHERE d.source=s.source) AS drive_archive_files,
-  CASE WHEN s.auth_state='PENDING_WRITTEN_PERMISSION' OR s.ingest_state='BLOCKED_BY_RIGHTS' THEN 'BLOCKED_RIGHTS'
+  CASE WHEN s.source='IMEA' AND s.ingest_state='ACTIVE' AND EXISTS(SELECT 1 FROM public.nivon_imea_prices_staging) THEN 'STAGING_PUBLICATION_ONLY'
+       WHEN s.auth_state='PENDING_WRITTEN_PERMISSION' OR s.ingest_state='BLOCKED_BY_RIGHTS' THEN 'BLOCKED_RIGHTS'
        WHEN s.source='CEPEA' AND (SELECT max(reference_date) FROM public.nivon_cepea_prices) IS NULL THEN 'NO_LIVE_DATA'
        WHEN s.source='CONAB' AND (SELECT max(published_on) FROM public.nivon_conab_safras) IS NULL THEN 'NO_LIVE_DATA'
        WHEN (SELECT status FROM public.nivon_p0_source_checks c WHERE c.source=s.source ORDER BY c.id DESC LIMIT 1)='ERROR' THEN 'COLLECTOR_ERROR'
