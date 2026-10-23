@@ -10,3 +10,5 @@ Leia \`README.md\` e \`.ai/skills/nivon-cooperative-dev.md\` antes de editar.
 - Proibidos: receituário agronômico, bypass de autenticação, compras, APIs pagas, deploy, cron ou gravação externa não autorizados.
 - Proceda sem permissões intermediárias para mudanças locais reversíveis dentro do escopo. Pare por credenciais, custos, alterações destrutivas ou risco material.
 - Não efetue merge automático na main; registre bloqueios com precisão. Não tente contornar cotas dos provedores.
+
+- A fila autônoma é criada por `nivon.planejador`: critérios de aceite, dependências, riscos e escopos validados. Nunca inventar tarefa fora desse contrato.
