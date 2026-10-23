@@ -1,0 +1,67 @@
+name: NIVON - Snapshots ferroviarios ANTT 90 dias
+on:
+  push:
+    branches: [feature/transporte-antt-antaq-20261022]
+    paths:
+      - '.github/workflows/antt-ferrovia-snapshot.yml'
+  schedule:
+    - cron: '15 12 * * 3'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-ferrovia-snapshots
+  cancel-in-progress: false
+
+jobs:
+  arquivar_temporariamente:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Coletar versoes do ano corrente e anterior com prova de SHA
+        env:
+          PYTHONPATH: src
+        run: |
+          python - <<'PY'
+          import os, subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
+          y=datetime.now(timezone.utc).year
+          dest=Path(os.environ["RUNNER_TEMP"])/"antt-ferrovia"
+          subprocess.run(["python","-m","nivon.coleta_antt",
+              "--inicio",str(y-1),"--fim",str(y),
+              "--destino",str(dest),"--live"],check=True)
+          subprocess.run(["python","-m","nivon.resumo_antt",
+              "--destino",str(dest),"--anos",str(y-1),str(y)],check=True)
+          PY
+      - name: Documentar origem e restricoes no artefato
+        if: success()
+        run: |
+          cat > "${RUNNER_TEMP}/antt-ferrovia/LEIA-ME.txt" <<'EOF'
+          Fonte primaria: ANTT / SIADE / Producao Origem-Destino ferroviario.
+          Catalogo: https://dados.antt.gov.br/dataset/438a5184-09db-49a3-88c8-0bad418b4409
+          Licenca do catalogo: Creative Commons Atribuicao (CC BY).
+          Artefato: armazenamento temporario por 90 dias, nao banco NIVON.
+          Registro e unidade: volumes declarados de TU e TKU por fluxo, nao volume unico.
+          Status: STAGING_NAO_HOMOLOGADO; conciliar revisoes do ano e do calculo de totais.
+          Preservar SHA256/manifesto e creditos ao reutilizar.
+          EOF
+      - name: Guardar CSV originais e manifestos como prova temporaria
+        if: success()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nivon-antt-ferrovia-raw-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/antt-ferrovia/*.csv
+            ${{ runner.temp }}/antt-ferrovia/manifesto-antt.json
+            ${{ runner.temp }}/antt-ferrovia/LEIA-ME.txt
+          if-no-files-found: error
+          retention-days: 90
