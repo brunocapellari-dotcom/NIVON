@@ -109,7 +109,7 @@ def parse_series_argentina(raw, *, serie=CAMBIO_AR):
     return ret
 
 def _safra_canada(safra):
-    if not isinstance(safra,str) or not re.fullmatch(r"20\\d{2}-\\d{2}",safra):
+    if not isinstance(safra,str) or not re.fullmatch(r"20\d{2}-\d{2}",safra):
         raise ErroColetor("safra canada invalida")
     a,b=safra.split("-")
     if int(b)!=(int(a)+1)%100 or not 2000<=int(a)<=date.today().year:
