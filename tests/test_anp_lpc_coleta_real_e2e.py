@@ -18,6 +18,7 @@ from nivon.anp_lpc_coletor_real import (
 )
 from nivon.anp_lpc_staging_real import (
     iniciar_staging, tendencia_diesel_preliminar, painel_qualidade_lpc,
+    auditar_arquivos_origem_lpc,
 )
 from nivon.cli_coletar_anp_lpc import main
 from nivon.anp_diesel_pressao_preview import impacto_diesel_anp_preliminar
@@ -400,11 +401,20 @@ class TestColetaANPLPCE2E(unittest.TestCase):
         self.run_lote()
         file=next((self.root/"planilhas").glob("*.xlsx"))
         original=file.read_bytes()
-        file.write_bytes(b"PK__ADULTERADO")
+        file.write_bytes(original[:-1]+bytes([original[-1]^1]))
         result=self.run_lote()
         self.assertEqual(result["status"],"LOTE_PARCIAL")
         self.assertTrue(result["erros"])
         self.assertNotEqual(file.read_bytes(),original)
+        auditoria=auditar_arquivos_origem_lpc(
+            self.db,raiz_raw=str(self.root),
+            as_of="2026-11-01T00:00:00+00:00",
+        )
+        self.assertEqual(auditoria["status"],"RAW_NAO_CONFIAVEL")
+        self.assertGreater(auditoria["quantidade_falhas"],0)
+        self.assertTrue(any(x["falha"]=="HASH_DIVERGENTE"
+                            for x in auditoria["falhas"]))
+        self.assertFalse(auditoria["precos_expostos"])
 
     def test_cli_local_roda_integralmente_e_consulta_preview(self):
         pasta=self.root/"entradas"
@@ -438,6 +448,17 @@ class TestColetaANPLPCE2E(unittest.TestCase):
         self.assertEqual(rc,0)
         self.assertEqual(json.loads(output.getvalue())["semanas_unicas"],3)
         self.assertEqual(json.loads(output.getvalue())["edicoes_sem_raw_arquivado"],0)
+        output=io.StringIO()
+        with redirect_stdout(output):
+            rc=main(["--modo","integridade","--db",str(arquivo_sqlite),
+                     "--raw-dir",str(self.root),
+                     "--as-of","2026-11-01T00:00:00+00:00"])
+        self.assertEqual(rc,0)
+        integridade=json.loads(output.getvalue())
+        self.assertEqual(integridade["status"],"RAW_VERIFICADO_LOCALMENTE")
+        self.assertEqual(integridade["edicoes_consultadas"],3)
+        self.assertEqual(integridade["quantidade_falhas"],0)
+        self.assertFalse(integridade["autenticidade_externa_comprovada"])
 
 
 if __name__ == "__main__":
