@@ -141,6 +141,13 @@ jobs:
           PYTHONPATH: .:src:tests
         run: |
           python tests/maritime_container_smoke.py verify "${MARITIME_E2E_ROOT}/outputs"
+      - name: Publicar apenas relatorios sinteticos auditados, por tres dias
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nivon-maritime-offline-container-synthetic-evidence
+          path: ${{ runner.temp }}/nivon_pdf_smoke/outputs/audit_*.json
+          retention-days: 3
+          if-no-files-found: error
 
   conferir-schema-mapa:
     # Diagnóstico de fonte real somente manual. Não repetir downloads em todo PR.
