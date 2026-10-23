@@ -34,6 +34,10 @@ jobs:
         env:
           PYTHONPATH: src
         run: python scripts/ensaio_ptax_integrado.py
+      - name: Execucao ponta a ponta Fretes R01 + Quant (10 etapas sintéticas)
+        env:
+          PYTHONPATH: src
+        run: python scripts/ensaio_fretes_integrado.py
       - name: Conferir catálogo mestre e cobertura de indicadores
         env:
           PYTHONPATH: src
