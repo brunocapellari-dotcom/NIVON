@@ -20,6 +20,27 @@ class _NoRedirect(HTTPRedirectHandler):
         return None
 
 
+def exigir_direitos_catalogo_roni():
+    """Bloqueia rede real enquanto catálogo canônico está em CANDIDATE/OFF.
+
+    A evidência textual passada ao CLI jamais substitui aprovação explícita
+    e sincronizada no catálogo e no validador de fontes.
+    """
+    from .catalogo_fontes import carregar_catalogo
+    catalog = carregar_catalogo()
+    datasets = [x for x in catalog["datasets"] if x["id"] == "NOAA_ENSO_RONI"]
+    if len(datasets) != 1:
+        raise PermissionError("NOAA RONI precisa de cadastro canônico único")
+    item = datasets[0]
+    if (item["stage"] != "REAL_SNAPSHOT_TESTED"
+            or item["enabled"] is not True
+            or item["collection_authorized"] is not True):
+        raise PermissionError(
+            "NOAA RONI: catálogo CANDIDATE/OFF não autoriza HTTP real; "
+            "declaração de licença não pode substituir a homologação")
+    return True
+
+
 def capturar_roni_manual(
     db, *, raw_dir, autorizar_http=False,
     autorizacoes=frozenset(), evidencia_direitos=None,
@@ -38,6 +59,10 @@ def capturar_roni_manual(
         raise PermissionError("declaração de direitos da fonte não fornecida")
     if type(confirmar_revisao) is not bool or type(timeout) is not int or not 1 <= timeout <= 25:
         raise ErroRONI("parâmetros da captura NOAA incompatíveis")
+    # Testes injetam transporte falso; CLI/produção nunca injeta transporte.
+    # Qualquer requisição real exige gates do catálogo (que hoje está OFF).
+    if transporte is None:
+        exigir_direitos_catalogo_roni()
     # Não buscar de novo por padrão se já houver qualquer captura desse arquivo.
     existing = panorama_local_roni(
         db, raw_dir=raw_dir, classe="EXTERNO_NAO_HOMOLOGADO")
