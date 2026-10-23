@@ -81,7 +81,7 @@ jobs:
               f"FROM `{tabela}` "
               "WHERE data_referencia BETWEEN DATE '2025-01-01' AND DATE '2025-12-31' "
               "GROUP BY polo_id,mercadoria_antt,produto_normalizado "
-              "ORDER BY tu DESC LIMIT 50")
+              "ORDER BY SUM(toneladas_uteis) DESC LIMIT 50")
           produtos=[{"polo_id":r.polo_id,"mercadoria_antt":r.mercadoria_antt,
                      "produto_normalizado":r.produto_normalizado,
                      "toneladas_uteis":str(r.tu)} for r in executar(sql_produtos)]
@@ -91,7 +91,7 @@ jobs:
               f"FROM `{tabela}` "
               "WHERE data_referencia BETWEEN DATE '2025-01-01' AND DATE '2025-12-31' "
               "GROUP BY polo_id,estacao_destino,uf_destino "
-              "ORDER BY tu DESC LIMIT 50")
+              "ORDER BY SUM(toneladas_uteis) DESC LIMIT 50")
           destinos=[{"polo_id":r.polo_id,"estacao_destino":r.estacao_destino,
                     "uf_destino":r.uf_destino,
                     "toneladas_uteis":str(r.tu)} for r in executar(sql_destinos)]
