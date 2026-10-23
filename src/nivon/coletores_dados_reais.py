@@ -27,7 +27,7 @@ CCEE_PACKAGE = "https://dadosabertos.ccee.org.br/api/3/action/package_show?id=pl
 CAMBIO_AR = "168.1_T_CAMBIOR_D_0_0_26"
 ALLOW_HOSTS = frozenset({
     "apis.datos.gob.ar", "grainscanada.gc.ca", "www.grainscanada.gc.ca",
-    "dadosabertos.ccee.org.br", "api.bcra.gob.ar",
+    "dadosabertos.ccee.org.br", "pda-download.ccee.org.br", "api.bcra.gob.ar",
     "granosar.lfcaucino.workers.dev",
 })
 MAX_TRANSFER = 18_000_000
@@ -225,9 +225,16 @@ def _recurso_ccee(resources, resource_id):
     if not isinstance(url,str):
         raise ErroColetor("URL nao encontrada")
     p=urlsplit(url)
-    if (p.scheme!="https" or p.hostname!="dadosabertos.ccee.org.br" or
+    dominio_arquivo = (
+        p.hostname == "dadosabertos.ccee.org.br" and p.path.lower().endswith(".csv")
+    )
+    dominio_cdn = (
+        p.hostname == "pda-download.ccee.org.br" and
+        re.fullmatch(r"/[A-Za-z0-9_-]{20,80}/content", p.path) is not None
+    )
+    if (p.scheme!="https" or p.port not in (None,443) or
         p.username or p.password or p.query or p.fragment or
-        not p.path.lower().endswith(".csv")):
+        not (dominio_arquivo or dominio_cdn)):
         raise ErroColetor("recurso fora da origem autorizada")
     return url
 
