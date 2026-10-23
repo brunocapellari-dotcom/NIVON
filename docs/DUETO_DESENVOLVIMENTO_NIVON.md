@@ -17,19 +17,20 @@ No NIVON, Claude Code e Codex continuam como **implementadores de igual autorida
 - tarefas recentes sem incluir notas, logs ou conteúdo de prompts;
 - janela noturna America/Cuiaba com início permitido ou não.
 
-O painel HTML **não tem servidor, rede, JavaScript, fontes externas nem comandos de geração de código**. Escapa títulos que vierem de issues e mantém o HTML em \`.nivon-local/painel-dueto.html\`, modo 0600. O resultado não deve ser enviado a terceiros sem revisão de informações de projeto. Arquivos de logs continuam no host. O painel é **uma fotografia quando solicitado**, não uma transmissão contínua.
+O painel HTML **não tem servidor, rede, JavaScript, fontes externas nem comandos de geração de código**. Escapa títulos que vierem de issues e mantém o HTML em \`.nivon-local/painel-dueto.html\`, modo 0600. O resultado não deve ser enviado a terceiros sem revisão de informações de projeto. Arquivos de logs continuam no host. O comando `painel` gera **uma fotografia quando solicitado**. O comando opcional `painel-live` atualiza o mesmo HTML local periodicamente, durante até duas horas; não é streaming de rede, nem inicia modelos.
 
 ### Comandos do dia, sem tokens de modelos
 
 \`\`\`bash
 bash scripts/nivon-autonomo.sh dueto  # JSON de status
 bash scripts/nivon-autonomo.sh painel  # escreve caminho do HTML local
+bash scripts/nivon-autonomo.sh painel-live  # atualiza HTML local a cada 15s (máx. 120min)
 bash scripts/nivon-autonomo.sh metrics
 bash scripts/nivon-autonomo.sh efficiency
 bash scripts/nivon-autonomo.sh plan
 \`\`\`
 
-Depois de gerar o painel, abra o arquivo HTML impresso pelo comando no navegador local. Execute novamente para atualizar a fotografia; não existe watcher nem servidor nesta implementação.
+Depois de gerar o painel, abra o arquivo HTML impresso pelo comando no navegador local. Execute novamente `painel` para atualizar a fotografia. A opção `painel-live` faz atualizações locais por período limitado (sem servidor) e o navegador pode recarregar a página a cada 15 segundos; encerre com Ctrl+C quando desejar.
 
 ### Execução à noite
 
