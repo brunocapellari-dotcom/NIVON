@@ -17,6 +17,7 @@ from nivon.ivo_pam_gate_promocao import preparar_fila_revisao_pam
 from nivon.ivo_pam_cli_local import executar_importacao_local_pam
 from nivon.ivo_pam_operacao import abrir_operacao_pam, processar_captura_pam
 from nivon.ivo_pam_ponte_operacional import revisar_capturas_pam
+from nivon.ivo_pam_backup import criar_backup_pam, restaurar_backup_pam
 from nivon.sidra_pam import planejar_pam_1612
 
 
@@ -134,6 +135,21 @@ def main():
                        for row in operacional["itens"])
         finally:
             db.close()
+        # Validar recuperacao de desastre em armazenamento local NOVO.
+        arquivo_backup = Path(root) / "backup_operacional.zip"
+        arquivo_restaurado = Path(root) / "backup_restaurado"
+        backup = criar_backup_pam(
+            banco=Path(root) / "operacao_pam.sqlite",
+            cofre=cofre_operacional, arquivo_zip=arquivo_backup,
+        )
+        restaurado = restaurar_backup_pam(
+            arquivo_zip=arquivo_backup, destino=arquivo_restaurado,
+        )
+        assert backup["capturas"] == len(pedidos)
+        assert restaurado["capturas"] == len(pedidos)
+        assert restaurado["integridade_local_aprovada"]
+        assert not restaurado["registro_canonico_modificado"]
+        assert (arquivo_restaurado / "operacional.sqlite").is_file()
         print(json.dumps({
             "demo": "PAM_OFFLINE_SEM_REDE",
             "status": "E2E_SUCESSO_REVISAO_PENDENTE",
@@ -146,6 +162,8 @@ def main():
             "promocoes": primeira["promocoes_realizadas"],
             "importacao_local_auditada": importacao1["auditados"],
             "sqlite_operacional_auditado": operacional["capturas_consideradas"],
+            "backup_restaurado_e_verificado": restaurado["integridade_local_aprovada"],
+            "backup_objetos_e_recibos": backup["objetos_e_recibos"],
             "revisoes_pendentes": len(operacional["itens"]),
             "relatorios_locais": len(list(saida.glob("*.json"))),
             "coleta_real": False,
