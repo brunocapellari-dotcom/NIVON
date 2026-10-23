@@ -62,7 +62,7 @@ def preparar_inmet_zip_local(
     result["container_origem"]={
         "tipo":"ZIP_INMET_ANUAL","parent_sha256":zip_sha,
         "membro":membro_csv,"membro_sha256":result["sha256"],
-        "pai_raw_arquivado_no_acervo":True,
+        "arquivar_zip_pai_obrigatorio":True,
         "arquivo_zip_local":str(original.resolve()),
         "integridade_zip_externa_revalidada":True,
     }
