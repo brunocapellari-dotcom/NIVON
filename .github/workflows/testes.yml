@@ -38,6 +38,10 @@ jobs:
         env:
           PYTHONPATH: src
         run: python scripts/ensaio_fretes_integrado.py
+      - name: Conferir campos econômicos contra RAW JSON estruturado original (sintético)
+        env:
+          PYTHONPATH: src
+        run: python scripts/ensaio_fretes_semantica_raw.py
       - name: Conferir catálogo mestre e cobertura de indicadores
         env:
           PYTHONPATH: src
