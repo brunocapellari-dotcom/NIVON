@@ -9,12 +9,14 @@ from typing import Any
 
 from .consulta_analitica_bq import consultar, planejar_consulta
 from .inteligencia_corredores import consultar_corredores
+from .conciliacao_corredores_ferrovia import analisar_staging, quadro_intermodal
 from .painel_operacional import ErroMotor, montar_painel
 
 
 def analisar_fontes(
     config: dict, *, as_of: str, executar_bigquery: bool = False,
     cliente_bigquery=None, leitor_bq=consultar, leitor_corredores=consultar_corredores,
+    leitor_ferrovia=analisar_staging, conciliador_intermodal=quadro_intermodal,
 ) -> dict:
     """Produz uma resposta independente por fonte, sem silenciar truncamentos."""
     if not isinstance(config, dict):
@@ -41,6 +43,32 @@ def analisar_fontes(
             corredor_cfg["banco"], recorte=corredor_cfg["recorte"],
             competencia=corredor_cfg["competencia"], limite=1000,
         )
+    # SIADE e MDF-e sao reportados lado a lado. Nenhuma soma entre modais,
+    # estimativa de transbordo ou volume unico e calculada aqui.
+    staging = config.get("ferrovia_staging")
+    ferrovia = config.get("ferrovia")
+    if staging is not None and ferrovia is not None:
+        raise ErroMotor("escolha ferrovia ou ferrovia_staging")
+    if staging is not None:
+        if not isinstance(staging, dict) or not isinstance(staging.get("pasta"), str):
+            raise ErroMotor("staging ferroviario invalido")
+        ano = staging.get("ano")
+        competencia = staging.get("competencia")
+        uf = staging.get("uf_origem", "MT")
+        if type(ano) is not int or not isinstance(competencia, str) or not isinstance(uf, str):
+            raise ErroMotor("ano, competencia e UF ferroviarios invalidos")
+        ferrovia = leitor_ferrovia(
+            staging["pasta"], ano=ano, competencia=competencia,
+            uf_origem=uf, limite=1000,
+        )
+    if ferrovia is not None and not isinstance(ferrovia, dict):
+        raise ErroMotor("saida ferroviaria invalida")
+    intermodal = None
+    if ferrovia is not None:
+        intermodal = (conciliador_intermodal(ferrovia, corredores) if corredores is not None
+                      else {"estado": "DADOS_INSUFICIENTES",
+                            "motivos": ["rodovia_ou_recorte_ausente"],
+                            "dados": [], "sem_dados_nao_equivale_a_zero": True})
     series = list(manual_series)
     fontes = []
     chaves = {(s.get("classe"), s.get("serie_id")) for s in series if isinstance(s, dict)}
@@ -99,6 +127,8 @@ def analisar_fontes(
     painel = montar_painel({
         "corredores": corredores, "portos": config.get("portos", []), "series": series,
     }, as_of=as_of)
+    painel["ferrovia"] = ferrovia
+    painel["conciliacao_intermodal"] = intermodal
     painel["fontes_bigquery"] = fontes
     painel["executou_bigquery"] = executar_bigquery is True and bool(config_queries)
     return painel
