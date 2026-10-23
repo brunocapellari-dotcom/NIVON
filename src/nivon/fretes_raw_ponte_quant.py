@@ -14,6 +14,7 @@ from typing import Mapping, Sequence
 
 from .fretes_atestacoes import serializacao_canonica
 from .integracao_frete_quant import preparar_serie_frete_anunciado
+from .fretes_raw_semantica import CONTRATO, conferir_semantica_json_estruturado
 from .quant_core import ErroQuantitativo, _instante
 
 DOMINIO = b"NIVON_RAW_FRETE_V1\x00"
@@ -88,6 +89,7 @@ def preparar_fretes_quant_com_raw(
     recibos: Mapping[str, Mapping], chave_captura: bytes,
     emissor_esperado: str, chave_economica: Mapping, fonte_id: str,
     tipo_valor: str, as_of: str,
+    verificacao_semantica: str | None = None,
 ) -> dict:
     """Requer TODAS as edições RAW com recibos verificados pelo chamador.
 
@@ -96,6 +98,8 @@ def preparar_fretes_quant_com_raw(
     declarados por este emissor. A prova independente do provedor, licença,
     recibo externo durável e direito de publicar seguem pendentes.
     """
+    if verificacao_semantica not in (None, CONTRATO):
+        raise ErroQuantitativo("modo semântico RAW não suportado/sem parser homologado")
     if (not isinstance(chave_captura, bytes) or len(chave_captura) < 32
             or not isinstance(emissor_esperado, str)
             or not emissor_esperado or len(emissor_esperado) > 180):
@@ -116,6 +120,19 @@ def preparar_fretes_quant_com_raw(
                 corte=corte)
         for row in registros
     ]
+    checagens_semanticas = []
+    if verificacao_semantica == CONTRATO:
+        # Somente JSON originalmente estruturado; hash/HMAC já validado.
+        # Não transformar transcrição/OCR em RAW para contornar o gate.
+        checagens_semanticas = [
+            conferir_semantica_json_estruturado(raws[row["registro_id"]], row)
+            for row in validados
+        ]
+        if any(
+            c["raw_sha256"] != row["edicao_sha256"]
+            for c, row in zip(checagens_semanticas, validados)
+        ):
+            raise ErroQuantitativo("RAW semântico não corresponde ao SHA atestado")
     serie = preparar_serie_frete_anunciado(
         validados, chave=chave_economica, fonte_id=fonte_id,
         tipo_valor=tipo_valor, as_of=as_of,
@@ -128,6 +145,13 @@ def preparar_fretes_quant_com_raw(
         "recibos_raw_conferidos": len(validados),
         "raw_digest_sha256": sorted(x["edicao_sha256"] for x in validados),
         "integridade_hmac_coletor_verificada": True,
+        "verificacao_semantica_executada": verificacao_semantica,
+        "campos_estruturados_comparados": len(checagens_semanticas),
+        "correspondencia_semantica_estruturada_verificada": (
+            verificacao_semantica == CONTRATO
+            and len(checagens_semanticas) == len(validados)
+        ),
+        "semantica_mensagem_whatsapp_livre_comprovada": False,
         "autenticidade_origem_independente_comprovada": False,
         "armazenamento_worm_comprovado": False,
         "direitos_redistribuicao_comprovados": False,

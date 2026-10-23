@@ -24,6 +24,7 @@ def executar_lote_fretes_quant(
     chave_captura: bytes | None = None,
     emissor_esperado: str | None = None,
     janela_r01: int = 6, minimo_pares_r01: int = 2,
+    verificacao_semantica: str | None = None,
 ) -> dict:
     """Roda o fluxo completo offline, mantendo gates separados por domínio.
 
@@ -42,6 +43,10 @@ def executar_lote_fretes_quant(
     if type(minimo_pares_r01) is not int or not 2 <= minimo_pares_r01 <= 100:
         raise ErroRegistroFrete("minimo_pares_r01 inválido")
     proved = raws is not None or recibos is not None
+    if verificacao_semantica is not None and not proved:
+        raise ErroRegistroFrete(
+            "semântica de RAW estruturado exige bytes e recibos capturados"
+        )
     if proved and (not isinstance(raws, Mapping) or not isinstance(recibos, Mapping)
                    or not chave_captura or not emissor_esperado):
         raise ErroRegistroFrete("modo RAW exige recibos, bytes e emissor/chave confiáveis")
@@ -99,6 +104,7 @@ def executar_lote_fretes_quant(
                 emissor_esperado=emissor_esperado,
                 chave_economica=chave, fonte_id=next(iter(fontes)),
                 tipo_valor=tipo, as_of=corte,
+                verificacao_semantica=verificacao_semantica,
             )
         else:
             r = preparar_serie_frete_anunciado(
@@ -139,6 +145,12 @@ def executar_lote_fretes_quant(
         "series_quantitativas": series,
         "tendencias_pareadas": tendencia,
         "raw_assinado_verificado_no_lote": bool(proved),
+        "verificacao_semantica_executada": verificacao_semantica,
+        "registros_semantica_estruturada_conferidos": sum(
+            x["resultado"].get("campos_estruturados_comparados", 0)
+            for x in series
+        ),
+        "semantica_whatsapp_livre_comprovada": False,
         "licencas_e_origem_externa_homologadas": False,
         "publicavel": False,
         "uso_preditivo_real_autorizado": False,
