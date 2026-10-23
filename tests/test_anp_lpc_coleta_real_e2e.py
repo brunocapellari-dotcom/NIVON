@@ -187,6 +187,46 @@ class TestColetaANPLPCE2E(unittest.TestCase):
                          ["2026-10-10"])
         self.assertEqual(qa["semanas_com_revisoes"],["2026-10-17"])
 
+    def test_nome_recente_oficial_com_underscore_e_hifen_e_coletado(self):
+        original = next(
+            u for u in self.planilhas
+            if "2026-10-11_2026-10-17" in u
+        )
+        novo_url = original.replace(
+            "2026-10-11_2026-10-17",
+            "2026_10_11-2026_10_17",
+        )
+        self.html = self.html.replace(original.encode(), novo_url.encode())
+        self.planilhas[novo_url] = self.planilhas.pop(original)
+        resultado = self.run_lote()
+        self.assertEqual(resultado["status"], "LOTE_COMPLETO")
+        self.assertEqual(resultado["edicoes_integradas"], 3)
+        self.assertEqual(resultado["edicoes"][0]["semana_fim"], "2026-10-17")
+        self.assertTrue(self.db.execute(
+            "SELECT EXISTS(SELECT 1 FROM anp_lpc_staging_edicoes WHERE url=?)",
+            (novo_url,),
+        ).fetchone()[0])
+
+    def test_url_direta_apenas_resumo_anp_sem_redirect(self):
+        from nivon.anp_lpc_coletor_real import _permitir_url
+        from nivon.anp_indice_lpc import URL_INDICE
+        url = (
+            "https://www.gov.br/anp/pt-br/assuntos/"
+            "precos-e-defesa-da-concorrencia/precos/arquivos-lpc/2026/"
+            "resumo_semanal_lpc_2026_10_11-2026_10_17.xlsx"
+        )
+        _permitir_url(url, tipo="XLSX")
+        for ruim in (
+            url+"/@@download/file",
+            url.replace("resumo_semanal", "revendas"),
+            url.replace("/precos/arquivos-lpc/", "/outra/arquivos-lpc/"),
+            url+"?download=1",
+            "https://evil.example"+url.split("www.gov.br")[1],
+        ):
+            with self.subTest(url=ruim), self.assertRaises(ErroColetaANP):
+                _permitir_url(ruim, tipo="XLSX")
+        _permitir_url(URL_INDICE, tipo="HTML")
+
     def test_recoleta_preserva_edicoes_e_cria_capturas(self):
         self.run_lote()
         resultado=self.run_lote()
@@ -253,9 +293,9 @@ class TestColetaANPLPCE2E(unittest.TestCase):
         from nivon.anp_indice_lpc import URL_INDICE
         res={URL_INDICE:Resposta(URL_INDICE,self.html,"text/html; charset=utf-8")}
         for url,body in self.planilhas.items():
-            dl=url+"/@@download/file"
-            res[dl]=Resposta(
-                dl,body,
+            # A URL do índice aponta diretamente aos bytes do XLSX.
+            res[url]=Resposta(
+                url,body,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
         mock=AberturaFake(res)
