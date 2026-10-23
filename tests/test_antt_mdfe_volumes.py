@@ -18,7 +18,7 @@ class TestANTTVolumes(unittest.TestCase):
         self.assertEqual(x[0]["ncm"], "1201")
 
     def test_rejeitar_invalidos(self):
-        for dado in (csv_dados("-1"), csv_dados("abc"),
+        for dado in (csv_dados("-1"), csv_dados("abc"), csv_dados("1.234"),
                      csv_dados("40", "TOTAL"), csv_dados("40", "X")):
             with self.subTest(dado=dado):
                 with self.assertRaises(DadosANTTInvalidos):
