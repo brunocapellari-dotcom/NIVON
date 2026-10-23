@@ -11,7 +11,9 @@ import json
 from datetime import datetime,timezone
 from pathlib import Path
 
-from .ivo_pam_operacao import abrir_operacao_pam, consultar_pam_operacional
+from .ivo_pam_operacao import consultar_pam_operacional
+from .ivo_pam_leitura import abrir_pam_somente_leitura
+from contextlib import closing
 from .ivo_pam_semantica import conferir_semantica_pam_1612
 
 
@@ -92,13 +94,11 @@ def main(argv=None):
     parser.add_argument("--corte",help="ISO 8601 com fuso")
     a=parser.parse_args(argv)
     try:
-        db=abrir_operacao_pam(a.db)
-        try:
+        with closing(abrir_pam_somente_leitura(a.db)) as db:
             corte=datetime.fromisoformat(a.corte.replace("Z","+00:00")) if a.corte else None
             r=painel_pam_ivo(db,municipio_ibge=a.municipio,
                 produto=a.produto,variavel=a.variavel,
                 ano_inicio=a.inicio,ano_fim=a.fim,corte_coleta=corte)
-        finally: db.close()
         print(json.dumps(r,ensure_ascii=False,indent=2))
         return 0
     except (ValueError,OSError) as exc:
