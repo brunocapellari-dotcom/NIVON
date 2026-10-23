@@ -112,7 +112,7 @@ class BigQueryMERGETest(unittest.TestCase):
                 "unidade":"R$/MWh","valor":"60",
                 "campos":{"submercado":"NORDESTE"},"snapshot_id":"b"*64,
                 "natureza":"INFORMADO"}
-            p.write_text(json.dumps(row)+"\\n",encoding="utf-8")
+            p.write_text(json.dumps(row)+"\n",encoding="utf-8")
             for estimate in (10_000_001,None):
                 with self.subTest(estimate=estimate):
                     client=FakeClient(bytes_processados=estimate)
