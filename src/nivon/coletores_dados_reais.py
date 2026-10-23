@@ -27,6 +27,7 @@ CAMBIO_AR = "168.1_T_CAMBIOR_D_0_0_26"
 ALLOW_HOSTS = frozenset({
     "apis.datos.gob.ar", "grainscanada.gc.ca", "www.grainscanada.gc.ca",
     "dadosabertos.ccee.org.br", "api.bcra.gob.ar",
+    "granosar.lfcaucino.workers.dev",
 })
 MAX_TRANSFER = 18_000_000
 SERIES_LIMIT = 500
