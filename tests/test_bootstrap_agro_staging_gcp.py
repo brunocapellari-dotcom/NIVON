@@ -19,6 +19,7 @@ class Table:
         self.time_partitioning=None
         self.clustering_fields=[]
         self.description=""
+        self.require_partition_filter=False
 
 
 class Client:
@@ -92,6 +93,7 @@ class TestBootstrapAgro(unittest.TestCase):
         self.assertFalse(idem["criou_tabela"])
         self.assertEqual(cli.created,1)
         self.assertEqual(cli.table.time_partitioning.field,"data_coleta")
+        self.assertTrue(cli.table.require_partition_filter)
         self.assertEqual(cli.table.clustering_fields,
                          ["dataset_id","identidade","snapshot_id"])
         schema={x.name:x.field_type for x in cli.table.schema}
