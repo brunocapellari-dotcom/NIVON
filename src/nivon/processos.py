@@ -105,7 +105,10 @@ def executar_cli(argv, *, cwd, logfile, env, timeout_seconds):
             raise
         try:
             exit_code = process.wait(timeout=timeout_seconds)
-            return Resultado(exit_code=exit_code, timed_out=False, cleanup_confirmed=True)
+            # Um comando pode terminar normalmente e deixar subprocessos vivos.
+            # Também encerra/removê-los após saída 0 para evitar work noturno órfão.
+            confirmed = _terminate_tree(process)
+            return Resultado(exit_code=exit_code, timed_out=False, cleanup_confirmed=confirmed)
         except subprocess.TimeoutExpired:
             confirmed = _terminate_tree(process)
             return Resultado(exit_code=process.poll(), timed_out=True,
