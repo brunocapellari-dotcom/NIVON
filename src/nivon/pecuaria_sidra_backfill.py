@@ -94,11 +94,17 @@ def consultar_backfill_quarentena(*, banco, especie, periodos, corte_asof):
         raise DadoInvalido("especie desconhecida")
     corte=_instante(corte_asof,"corte_asof")
     tab=TABELAS_SIDRA[especie]
+    marcas=",".join("?" for _ in periodos)
     consulta = """SELECT id, periodo, territorio, primeira_coleta_em
         FROM valores_pecuaria_quarentena WHERE especie=? AND tabela_sidra=?
-        ORDER BY id ASC LIMIT 500"""
+        AND periodo IN (""" + marcas + """)
+        ORDER BY id DESC LIMIT 501"""
     with closing(_conectar(banco,criar=False)) as cx:
-        rows = cx.execute(consulta,(especie,tab)).fetchall()
+        rows = cx.execute(consulta,(especie,tab,*periodos)).fetchall()
+    # Sem truncamento silencioso de revisoes historicas; exige paginacao
+    # explicita quando o volume crescer, mantendo o status nao homologado.
+    if len(rows) > 500:
+        raise DadoInvalido("consulta excede 500 capturas; paginacao exigida")
     escolhidas={}
     for ident,periodo,geo,coleta in rows:
         if periodo not in periodos or geo not in ("BR","UFS"):
