@@ -13,6 +13,13 @@ from typing import Any, Iterable
 from urllib.parse import urljoin, urlparse
 
 
+# Conservative bounds for *textual/table* PDFs. These do not constitute
+# malicious-PDF sandboxing; production untrusted PDFs require process isolation.
+MAX_PDF_PAGES = 60
+MAX_PDF_TABLES = 300
+MAX_PDF_ROWS = 12_000
+MAX_PDF_CELLS = 240_000
+
 PDF_ALLOWED_HOSTS = frozenset({
     "www.portosdoparana.pr.gov.br",
     "portosdoparana.pr.gov.br",
@@ -143,11 +150,20 @@ def extract_pdf_tables(payload: bytes) -> list[PdfTable]:
         raise RuntimeError("pdfplumber não instalado; requirements-collector incompleto") from exc
 
     tables: list[PdfTable] = []
+    row_count = 0
+    cell_count = 0
     with pdfplumber.open(io.BytesIO(payload)) as pdf:
+        if len(pdf.pages) > MAX_PDF_PAGES:
+            raise ValueError("PDF exceeds maximum supported page count")
         for page_number, page in enumerate(pdf.pages, start=1):
             for table in page.extract_tables() or []:
                 rows = tuple(tuple(_cell(cell) for cell in row) for row in table if row)
                 if rows:
+                    row_count += len(rows)
+                    cell_count += sum(len(row) for row in rows)
+                    if (len(tables) >= MAX_PDF_TABLES or row_count > MAX_PDF_ROWS
+                            or cell_count > MAX_PDF_CELLS):
+                        raise ValueError("PDF extraction exceeds table/row/cell limits")
                     tables.append(PdfTable(page_number=page_number, rows=rows))
     if not tables:
         raise ValueError("PDF oficial sem tabelas extraíveis")
