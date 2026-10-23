@@ -1,0 +1,9 @@
+# Candidato analítico Distroless — benchmark sem produção
+
+Caminho de P0 da infraestrutura: reduzir os **44 HIGH** presentes na imagem analítica experimental Debian Trixie sem desligar o Trivy. O projeto [GoogleContainerTools/distroless](https://github.com/GoogleContainerTools/distroless) mantém `gcr.io/distroless/cc-debian13:nonroot` para amd64 e arm64.
+
+A abordagem mantém **exatamente** o Python 3.11 e as 59 wheels/hashes travadas por arquitetura, reaproveitando a imagem experimental Debian previamente construída (não redownloada). O Dockerfile multistage copia `/usr/local`, `/opt/nivon/deps` e `/app` da imagem já construída para runtime distroless, sem executável `sh`, `apt` ou `pip` via ENTRYPOINT. Se houver dependências de bibliotecas nativas não incluídas na base distroless, o teste falhará. Não copiar indiscriminadamente `/usr/lib`/bibliotecas vulneráveis apenas para ficar verde.
+
+O CI pega a tag pública para pesquisa, **resolve e verifica o digest do índice remoto antes do build**, usa esse digest como `--build-arg DISTROLESS_BASE`, valida arquitetura e tenta o mesmo teste analítico `StatsForecast.Naive` offline. Fase posterior compara scans Trivy e inventário CycloneDX com `agrobr,pandas,statsforecast`. O digest resolvido deve ser versionado em gate próprio antes de possível adoção; somente testar tag sem fixá-la não configura referência imutável para produção.
+
+**Gates:** não autorizar imagem sem prova de ABI/execução, scanner da imagem final em AMD64/ARM64, lock das dependências, licenças/fontes, rede zero, UID não privilegiado, integridade, recuperação, revisão externa, cloud IAM/quotas e autorização humana. Mesmo 0 HIGH/CRITICAL na candidata não significa ausência de risco. A imagem Debian original e workflow de supply-chain canônico permanecem bloqueados, sem `ignore-unfixed` ou waiver.
