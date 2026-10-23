@@ -7,7 +7,8 @@ on:
   pull_request:
     paths:
       - '.github/workflows/infra_supplychain.yml'
-      - 'infra/docker/Dockerfile.worker'
+      - 'infra/docker/**'
+      - 'infra/inventory.v1.json'
       - '.dockerignore'
       - 'src/**'
       - 'config/**'
