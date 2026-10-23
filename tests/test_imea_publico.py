@@ -28,6 +28,32 @@ class TestIMEA(unittest.TestCase):
                     quote(data_publicacao=None),quote(localidade="")):
             with self.subTest(row=row),self.assertRaises(ValueError):
                 normalize(row)
+    def test_same_id_different_chains_no_collision(self):
+        soja=normalize(quote(cadeia="soja"))
+        milho=normalize(quote(cadeia="milho"))
+        self.assertNotEqual(soja["source_key"],milho["source_key"])
+
+    def test_freight_and_price_have_distinct_identity(self):
+        preco=normalize(quote(indicador="Preço soja disponível"))
+        frete=normalize(quote(indicador="Preço Frete rodoviário",unidade="R$/t"))
+        self.assertEqual(preco["indicator_kind"],"PRECO")
+        self.assertEqual(frete["indicator_kind"],"FRETE")
+        self.assertNotEqual(preco["source_key"],frete["source_key"])
+
+    def test_reject_future_invalid_crop_and_wrong_freight_unit(self):
+        from datetime import datetime
+        for invalid in (quote(data_publicacao=datetime(2099,1,1)),
+                        quote(safra="qualquer"),
+                        quote(indicador="Frete rodoviário",unidade="R$/sc")):
+            with self.subTest(invalid=invalid),self.assertRaises(ValueError):
+                normalize(invalid)
+
+    def test_different_publication_creates_distinct_identity(self):
+        a=normalize(quote())
+        b=normalize(quote(data_publicacao=datetime(2026,10,22,18,0)))
+        self.assertNotEqual(a["source_key"],b["source_key"])
+        self.assertEqual(a["version_hash"],b["version_hash"])
+
     def test_freight_stays_distinct(self):
         a=normalize(quote(indicador="Preço disponível do Frete de Grãos",
                           unidade="R$/t",valor=240))
