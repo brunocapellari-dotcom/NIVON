@@ -1,0 +1,87 @@
+name: NIVON - Google Cloud coleta integrada v1
+
+on:
+  schedule:
+    - cron: '30 14 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      fonte:
+        description: 'Fonte especifica ou AUTO (BCB diario; CONAB semanal)'
+        type: choice
+        required: true
+        default: AUTO
+        options:
+          - AUTO
+          - BCB_SGS_TAXA_SELIC_DIARIA
+          - BCB_PTAX
+          - CONAB_ARMAZENS_CAPACIDADE
+          - IMEA_WORKBOOK_LEGADO_STAGING
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: nivon-gcp-ingest-lote1
+  cancel-in-progress: false
+
+jobs:
+  executar:
+    # Nunca autenticar nuvem nem coletar em PRs ou branches de desenvolvimento.
+    if: ${{ github.ref == 'refs/heads/main' && vars.NIVON_GCP_COLLECT_ENABLED == 'true' && vars.NIVON_ZERO_COST_BQ_APPROVED == 'true' && vars.NIVON_GCP_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && vars.NIVON_BQ_PROJECT != '' && vars.NIVON_BQ_DATASET != '' && vars.NIVON_GCS_BUCKET != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NIVON_GCP_COLLECT_ENABLED: ${{ vars.NIVON_GCP_COLLECT_ENABLED }}
+      NIVON_ZERO_COST_BQ_APPROVED: ${{ vars.NIVON_ZERO_COST_BQ_APPROVED }}
+      NIVON_BQ_PROJECT: ${{ vars.NIVON_BQ_PROJECT }}
+      NIVON_BQ_DATASET: ${{ vars.NIVON_BQ_DATASET }}
+      NIVON_GCS_BUCKET: ${{ vars.NIVON_GCS_BUCKET }}
+      NIVON_FONTE_BCB_SGS_TAXA_SELIC_DIARIA_ATIVA: ${{ vars.NIVON_FONTE_BCB_SGS_TAXA_SELIC_DIARIA_ATIVA }}
+      NIVON_FONTE_BCB_PTAX_ATIVA: ${{ vars.NIVON_FONTE_BCB_PTAX_ATIVA }}
+      NIVON_FONTE_CONAB_ARMAZENS_CAPACIDADE_ATIVA: ${{ vars.NIVON_FONTE_CONAB_ARMAZENS_CAPACIDADE_ATIVA }}
+      NIVON_FONTE_IMEA_WORKBOOK_LEGADO_STAGING_ATIVA: ${{ vars.NIVON_FONTE_IMEA_WORKBOOK_LEGADO_STAGING_ATIVA }}
+      NIVON_IMEA_DIREITOS_CONFIRMADOS: ${{ vars.NIVON_IMEA_DIREITOS_CONFIRMADOS }}
+      NIVON_IMEA_EVIDENCIA_DIREITOS: ${{ secrets.NIVON_IMEA_EVIDENCIA_DIREITOS }}
+      NIVON_IMEA_DRIVE_FILE_ID: ${{ vars.NIVON_IMEA_DRIVE_FILE_ID }}
+    steps:
+      - name: Checkout sem credenciais persistentes
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Autenticar Google Cloud sem chave JSON
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+      - name: Dependencias restritas da nuvem
+        run: python -m pip install -e '.[gcp,drive]'
+      - name: Coletar fontes habilitadas, uma por vez
+        shell: bash
+        env:
+          FONTE_INPUT: ${{ inputs.fonte || 'AUTO' }}
+        run: |
+          set -euo pipefail
+          if [ "$FONTE_INPUT" != "AUTO" ]; then
+            python -m nivon.conectores_google_cloud --fonte "$FONTE_INPUT" --executar
+            exit 0
+          fi
+          rc=0
+          if [ "$NIVON_FONTE_BCB_SGS_TAXA_SELIC_DIARIA_ATIVA" = "true" ]; then
+            python -m nivon.conectores_google_cloud --fonte BCB_SGS_TAXA_SELIC_DIARIA --executar || rc=1
+          fi
+          if [ "$NIVON_FONTE_BCB_PTAX_ATIVA" = "true" ]; then
+            python -m nivon.conectores_google_cloud --fonte BCB_PTAX --executar || rc=1
+          fi
+          # Arquivo CONAB costuma ser grande: apenas segunda-feira na rotina.
+          if [ "$(date -u +%u)" = "1" ] && [ "$NIVON_FONTE_CONAB_ARMAZENS_CAPACIDADE_ATIVA" = "true" ]; then
+            python -m nivon.conectores_google_cloud --fonte CONAB_ARMAZENS_CAPACIDADE --executar || rc=1
+          fi
+          # IMEA e privado e nao eh incluido no agendamento sem atualizacao
+          # garantida na fonte. Execucao manual por ID de workbook autorizado.
+          exit "$rc"
