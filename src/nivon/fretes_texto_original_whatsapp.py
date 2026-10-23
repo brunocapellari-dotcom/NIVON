@@ -305,3 +305,87 @@ def executar_lote_whatsapp_rotulado_offline(
         "prova_externa_da_origem_homologada": False,
         "uso_preditivo_real_autorizado": False, "publicavel": False,
     }
+
+
+def triar_lote_whatsapp_em_quarentena_offline(
+    amostras: Sequence[Mapping], *, as_of: datetime,
+    chave_hmac: bytes, chaves_atestacao: Mapping,
+    emissores_atestacao: Mapping, app_secret: str,
+) -> dict:
+    """Separa anúncios originais verificáveis dos que exigem revisão.
+
+    Não armazena os bytes; quarentena é APENAS estado de saída em
+    memória. Não retorna texto, telefone ou aliases originais.
+    Não dá permissão de coleta/produção. Um lote parcialmente válido
+    só gera painéis descritivos dos registros efetivamente aceitos.
+    Para bloqueio atômico total, usar executar_lote_whatsapp_rotulado_offline.
+    """
+    if not isinstance(amostras, (tuple, list)) or not 1 <= len(amostras) <= 1000:
+        raise ErroAdaptadorFrete("lote de quarentena inválido")
+    if not isinstance(as_of, datetime) or as_of.tzinfo is None or as_of.utcoffset() is None:
+        raise ErroAdaptadorFrete("as_of de quarentena exige timezone")
+    aceitas = []
+    rejeitadas = []
+    ids, raws = set(), set()
+    for item in amostras:
+        raw = item.get("raw_webhook") if isinstance(item, Mapping) else None
+        fingerprint = (sha256(raw).hexdigest() if isinstance(raw, bytes)
+                       else None)
+        try:
+            if not isinstance(item, Mapping):
+                raise ErroAdaptadorFrete("pacote ausente")
+            ev = item.get("evento")
+            prov = ev.get("provenance") if isinstance(ev, Mapping) else None
+            source = prov.get("source_event_id") if isinstance(prov, Mapping) else None
+            if not isinstance(source, str) or not _ID_WHATSAPP.fullmatch(source):
+                raise ErroAdaptadorFrete("source_event_id ausente")
+            if source in ids or fingerprint in raws:
+                raise ErroAdaptadorFrete("repetição de mensagem original")
+            validado = adaptar_divulgacao_whatsapp_original(
+                raw_webhook=raw, signature=item["signature"],
+                app_secret=app_secret, evento=item["evento"],
+                resolucao=item["resolucao"], autorizacao=item["autorizacao"],
+                data_coleta=item["data_coleta"], chave_hmac=chave_hmac,
+                chaves_atestacao=chaves_atestacao,
+                emissores_atestacao=emissores_atestacao,
+            )
+            if validado["oferta"].data_coleta > as_of:
+                raise ErroAdaptadorFrete("coleta indisponível no corte")
+        except (ErroAdaptadorFrete, PermissionError, KeyError, TypeError, ValueError):
+            # Sem mensagens/PII ou exceções contendo texto da fonte no
+            # relatório. O digest é só identidade da evidência observada.
+            rejeitadas.append({
+                "raw_sha256":fingerprint,
+                "status":"QUARENTENA_SEM_PROMOCAO",
+                "revisao_semantica_ou_origem_necessaria":True,
+            })
+            continue
+        aceitas.append(validado["oferta"])
+        ids.add(source)
+        raws.add(fingerprint)
+    if aceitas:
+        resumo = executar_lote_fretes_quant(aceitas, as_of=as_of)
+    else:
+        resumo = {
+            "status":"LOTE_SEM_ANUNCIOS_ADMITIDOS",
+            "n_series_individuais":0,"n_paineis_comerciais":0,
+            "series_quantitativas":[],"tendencias_pareadas":[],
+            "total_publicacoes_recebidas":0,
+            "total_registros_divulgados":0,
+            "total_registros_individuais_deduplicados":0,
+            "pontos_unicos_por_municipio":[],
+            "publicavel":False,"uso_preditivo_real_autorizado":False,
+        }
+    return {
+        **resumo,
+        "status":"TRIAGEM_WHATSAPP_OFFLINE_SEM_PERSISTENCIA",
+        "mensagens_recebidas_no_lote":len(amostras),
+        "anuncios_rotulados_admitidos":len(aceitas),
+        "mensagens_em_quarentena":len(rejeitadas),
+        "quarentena":rejeitadas,
+        "raw_quarentena_persistido":False,
+        "dados_pessoais_expostos_no_relatorio":False,
+        "rejeitados_incluidos_nas_tendencias":False,
+        "uso_preditivo_real_autorizado":False,
+        "publicavel":False,
+    }
