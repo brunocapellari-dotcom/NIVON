@@ -38,6 +38,8 @@ jobs:
           PYTHONPATH: src
         run: |
           python -m unittest discover -s tests -p 'test_antt_gcp_backfill_historico.py' -v
+          python -m unittest discover -s tests -p 'test_antt_historico_verificado.py' -v
+          python -m unittest discover -s tests -p 'test_coleta_antt.py' -v
           python -m unittest discover -s tests -p 'test_antt_bigquery.py' -v
           python -m unittest discover -s tests -p 'test_antt_gcs.py' -v
 
@@ -100,10 +102,10 @@ jobs:
             stage="$RUNNER_TEMP/antt-stage-${ini}-${fim}"
             salvo="$RUNNER_TEMP/antt-historico-evidencias/antt-${ini}-${fim}.json"
             # Retry SOMENTE se o coletor validado rejeitar CKAN/CSV; nao
-            # libera fallback para URLs anuais sem validacao pelo catalogo.
+            # fallback opt-in exige SHA anteriormente comprovado, e nunca ignora 403.
             for tentativa in 1 2; do
               if python -m nivon.coleta_antt \
-                  --inicio "$ini" --fim "$fim" --destino "$stage" --live; then
+                  --inicio "$ini" --fim "$fim" --destino "$stage" --live --usar-url-verificada-contingencia; then
                 break
               fi
               if [ "$tentativa" = "2" ]; then
