@@ -47,6 +47,36 @@ jobs:
         env:
           PYTHONPATH: src
         run: python -m unittest discover -s tests -v
+  smoke-publico-imbituba:
+    # Diagnostico HTTP read-only em PR; nunca grava dados reais ou usa secrets.
+    if: github.event_name == 'pull_request'
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Verificar parser da programacao oficial sem persistencia
+        env:
+          PYTHONPATH: src
+        run: |
+          python - <<'PY'
+          from nivon.maritimo_pipeline import baixar_html
+          from nivon.lineup_portos import extrair_lineup_html
+          from datetime import datetime,timezone
+          import json
+          html = baixar_html('imbituba', habilitar_rede=True,timeout=15)
+          rows = extrair_lineup_html(html,'imbituba',
+                    coletado_em=datetime.now(timezone.utc).isoformat())
+          if not rows:
+              raise SystemExit('IMBITUBA_PARSER_NAO_PRODUZIU_LINHAS')
+          print(json.dumps({'fonte':'imbituba','registros_detectados':len(rows),
+              'sem_exibicao_de_navios_ou_dados_de_terceiros':True}))
+          PY
   coleta:
     needs: qa
     if: ${{ github.event_name != 'pull_request' && vars.NIVON_MARITIMO_COLETA_HABILITADA == 'true' }}
