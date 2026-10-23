@@ -34,7 +34,8 @@
         "nivon.conab_ooxml_metadados:inspecionar_abas_ooxml_conab",
         "nivon.conab_celulas_xlsx:ler_amostra_celulas_conab",
         "nivon.conab_lote_offline:executar_lote_conab",
-        "nivon.conab_staging_sqlite:gravar_dossie_conab"
+        "nivon.conab_staging_sqlite:gravar_dossie_conab",
+        "nivon.conab_progresso_csv_drive:normalizar_csv_progresso_conab"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -88,7 +89,8 @@
         "nivon.conab_ooxml_metadados:inspecionar_abas_ooxml_conab",
         "nivon.conab_celulas_xlsx:ler_amostra_celulas_conab",
         "nivon.conab_lote_offline:executar_lote_conab",
-        "nivon.conab_staging_sqlite:gravar_dossie_conab"
+        "nivon.conab_staging_sqlite:gravar_dossie_conab",
+        "nivon.conab_progresso_csv_drive:normalizar_csv_progresso_conab"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
