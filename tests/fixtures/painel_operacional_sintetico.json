@@ -86,7 +86,10 @@
             "regime": "PJ",
             "terminal": "TERMINAL_X",
             "contrato": null,
-            "modal": "RODOVIARIO"
+            "modal": "RODOVIARIO",
+            "ponto_embarque": "SILO_UNICO",
+            "pedagio": "ADICIONAL",
+            "tipo_preco": "BASE"
           }
         },
         {
@@ -108,7 +111,10 @@
             "regime": "PJ",
             "terminal": "TERMINAL_X",
             "contrato": null,
-            "modal": "RODOVIARIO"
+            "modal": "RODOVIARIO",
+            "ponto_embarque": "SILO_UNICO",
+            "pedagio": "ADICIONAL",
+            "tipo_preco": "BASE"
           }
         },
         {
@@ -130,7 +136,10 @@
             "regime": "PJ",
             "terminal": "TERMINAL_X",
             "contrato": null,
-            "modal": "RODOVIARIO"
+            "modal": "RODOVIARIO",
+            "ponto_embarque": "SILO_UNICO",
+            "pedagio": "ADICIONAL",
+            "tipo_preco": "BASE"
           }
         },
         {
@@ -152,7 +161,10 @@
             "regime": "PJ",
             "terminal": "TERMINAL_X",
             "contrato": null,
-            "modal": "RODOVIARIO"
+            "modal": "RODOVIARIO",
+            "ponto_embarque": "SILO_UNICO",
+            "pedagio": "ADICIONAL",
+            "tipo_preco": "BASE"
           }
         },
         {
@@ -174,7 +186,10 @@
             "regime": "PJ",
             "terminal": "TERMINAL_X",
             "contrato": null,
-            "modal": "RODOVIARIO"
+            "modal": "RODOVIARIO",
+            "ponto_embarque": "SILO_UNICO",
+            "pedagio": "ADICIONAL",
+            "tipo_preco": "BASE"
           }
         },
         {
@@ -196,7 +211,10 @@
             "regime": "PJ",
             "terminal": "TERMINAL_X",
             "contrato": null,
-            "modal": "RODOVIARIO"
+            "modal": "RODOVIARIO",
+            "ponto_embarque": "SILO_UNICO",
+            "pedagio": "ADICIONAL",
+            "tipo_preco": "BASE"
           }
         }
       ]
