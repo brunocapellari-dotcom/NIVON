@@ -22,7 +22,7 @@ from urllib.parse import urlsplit
 
 PORTAL='https://www.siogranos.com.ar/Consulta_publica/operaciones_informadas_exportar.aspx'
 CAMPOS_REQUERIDOS=frozenset({'id_operacao','data_concertacao','produto','toneladas'})
-CAMPOS_OPCIONAIS=frozenset({'provincia_origem','moeda','preco_por_tonelada'})
+CAMPOS_OPCIONAIS=frozenset({'provincia_origem','moeda','preco_por_tonelada','data_declaracao'})
 REGISTRO='OPERACAO_DECLARADA_SIO_NAO_COMPROVA_ENTREGA'
 MAX_BYTES=35_000_000
 MAX_ROWS=180_000
@@ -51,7 +51,8 @@ def planejar_periodos(inicio:str,fim:str,*,dias_por_janela:int=90)->list[dict]:
         ponta=min(cursor+timedelta(days=dias_por_janela-1),fim_)
         janelas.append({
             'inicio':cursor.isoformat(),'fim':ponta.isoformat(),
-            'consulta_url':PORTAL,'metodo':'EXPORTACAO_PUBLICA_SUPERVISIONADA',
+            'consulta_url':PORTAL,'campo_janela':'data_declaracao',
+            'metodo':'EXPORTACAO_PUBLICA_SUPERVISIONADA',
             'status':'AGUARDA_EXPORTACAO_AUTORIZADA',
         })
         cursor=ponta+timedelta(days=1)
@@ -130,6 +131,7 @@ def _normalizar_csv(arquivo:bytes, *, colunas:dict, chave_hmac:bytes) -> list[di
         saida.append({
             'id_hmac':uid,
             'data_concertacao':_data(item[colunas['data_concertacao']]),
+            'data_declaracao':_data(item[colunas['data_declaracao']]) if 'data_declaracao' in colunas else None,
             'produto':produto,
             'toneladas':_decimal(item[colunas['toneladas']]),
             'provincia_origem':provincia or None,
@@ -151,7 +153,7 @@ CREATE TABLE IF NOT EXISTS sio_edicoes (
 CREATE TABLE IF NOT EXISTS sio_operacoes (
  sha256_raw TEXT NOT NULL REFERENCES sio_edicoes(sha256_raw),
  id_hmac TEXT NOT NULL, data_concertacao TEXT NOT NULL,
- produto TEXT NOT NULL, toneladas TEXT NOT NULL,
+ data_declaracao TEXT, produto TEXT NOT NULL, toneladas TEXT NOT NULL,
  provincia_origem TEXT, moeda TEXT, preco_por_tonelada TEXT,
  natureza TEXT NOT NULL, PRIMARY KEY(sha256_raw,id_hmac)
 );
@@ -173,8 +175,11 @@ def importar_exportacao_sio(*,db:sqlite3.Connection,arquivo:bytes,janela:dict,
     if len(j)!=1:
         raise ErroSIO('janela ultrapassa 180 dias')
     rows=_normalizar_csv(arquivo,colunas=colunas,chave_hmac=chave_hmac)
-    if any(not janela['inicio']<=r['data_concertacao']<=janela['fim'] for r in rows):
-        raise ErroSIO('data de concertacao fora da janela declarada')
+    if 'data_declaracao' in colunas:
+        if any(not janela['inicio']<=r['data_declaracao']<=janela['fim'] for r in rows):
+            raise ErroSIO('declaracao fora da janela de consulta')
+    # Data de concertacao e independente da data de declaracao. Quando
+    # esta nao estiver presente no CSV, a cobertura temporal nao e provada.
     raw_hash=sha256(arquivo).hexdigest()
     ts=coletado_em.astimezone(timezone.utc).isoformat(timespec='seconds')
     db.execute('PRAGMA foreign_keys=ON')
@@ -188,9 +193,10 @@ def importar_exportacao_sio(*,db:sqlite3.Connection,arquivo:bytes,janela:dict,
             db.execute('INSERT INTO sio_edicoes VALUES (?,?,?,?,?,?,?,?)',
                        (raw_hash,PORTAL,janela['inicio'],janela['fim'],ts,estado[2],len(rows),
                         'QUARENTENA_OPERACOES_NAO_ENTREGA'))
-            db.executemany('INSERT INTO sio_operacoes VALUES (?,?,?,?,?,?,?,?,?)',
-                           [(raw_hash,r['id_hmac'],r['data_concertacao'],r['produto'],r['toneladas'],
+            db.executemany('INSERT INTO sio_operacoes VALUES (?,?,?,?,?,?,?,?,?,?)',
+                           [(raw_hash,r['id_hmac'],r['data_concertacao'],r['data_declaracao'],r['produto'],r['toneladas'],
                              r['provincia_origem'],r['moeda'],r['preco_por_tonelada'],REGISTRO) for r in rows])
     return {'source_id':'ARG_SIO_GRANOS','linhas':len(rows),'sha256_raw':raw_hash,
             'nova_edicao':old is None,'estado':'QUARENTENA_OPERACOES_NAO_ENTREGA',
-            'publicacao_automatica':False,'cloud_write':False}
+            'publicacao_automatica':False,'cloud_write':False,
+            'janela_declaracao_verificada_no_csv':'data_declaracao' in colunas}
