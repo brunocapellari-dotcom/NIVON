@@ -19,6 +19,8 @@ from .pecuaria_sidra_sondagem import _requisicao_https
 from .pecuaria_sidra_mapa_observado import contrato_sidra_observado
 from .pecuaria_sidra_abate import normalizar_snapshot_sidra_abate
 from .pecuaria_sidra_reconciliacao import diagnosticar_cobertura_abate
+from .pecuaria_sidra_vintages import historico_sidra_asof
+from .pecuaria_sidra_quarentena import _checar_semantica_extrato
 from contextlib import closing
 
 
@@ -83,69 +85,104 @@ def executar_backfill_quarentena(*, periodos, rede=False,
 
 
 def consultar_backfill_quarentena(*, banco, especie, periodos, corte_asof):
-    """As-of SÓ por momento da primeira coleta efetivamente arquivada.
+    """Reconstroi estado e TODAS as revisoes arquivadas ate a data de corte.
 
-    Nunca inventa snapshots anteriores à primeira coleta. Para um mesmo
-    trimestre/territorio escolhe-se a última versão conhecida no corte,
-    preservando os dois totais (BR vs UFs) de forma independente.
+    A primeira coleta identifica quando o NIVON soube de uma edicao, NAO
+    a data de publicacao historica pelo IBGE. Um backfill posterior nunca
+    pode aparecer em cortes anteriores à coleta. Preserva proveniencia.
     """
-    periodos=_validar_periodos(periodos)
+    periodos = _validar_periodos(periodos)
     if especie not in TABELAS_SIDRA:
         raise DadoInvalido("especie desconhecida")
-    corte=_instante(corte_asof,"corte_asof")
-    tab=TABELAS_SIDRA[especie]
-    marcas=",".join("?" for _ in periodos)
-    consulta = """SELECT id, periodo, territorio, primeira_coleta_em
-        FROM valores_pecuaria_quarentena WHERE especie=? AND tabela_sidra=?
-        AND periodo IN (""" + marcas + """)
-        ORDER BY id DESC LIMIT 501"""
-    with closing(_conectar(banco,criar=False)) as cx:
-        rows = cx.execute(consulta,(especie,tab,*periodos)).fetchall()
-    # Sem truncamento silencioso de revisoes historicas; exige paginacao
-    # explicita quando o volume crescer, mantendo o status nao homologado.
-    if len(rows) > 500:
+    corte = _instante(corte_asof, "corte_asof")
+    tabela = TABELAS_SIDRA[especie]
+    placeholders = ",".join("?" for _ in periodos)
+    sql = """SELECT id, periodo, territorio, primeira_coleta_em
+        FROM valores_pecuaria_quarentena
+        WHERE especie=? AND tabela_sidra=? AND periodo IN (""" + placeholders + """)
+        ORDER BY id ASC LIMIT 501"""
+    with closing(_conectar(banco, criar=False)) as cx:
+        linhas = cx.execute(sql, (especie, tabela, *periodos)).fetchall()
+    # Falha fechada se a base demandar paginacao para impedir omissao
+    # silenciosa de revisoes antigas ou novas.
+    if len(linhas) > 500:
         raise DadoInvalido("consulta excede 500 capturas; paginacao exigida")
-    escolhidas={}
-    for ident,periodo,geo,coleta in rows:
-        if periodo not in periodos or geo not in ("BR","UFS"):
-            continue
-        instante=_instante(coleta,"primeira_coleta_em")
-        if instante > corte:
-            continue
-        chave=(periodo,geo)
-        vigente=escolhidas.get(chave)
-        if vigente is None or (instante,ident) > (vigente[0],vigente[1]):
-            escolhidas[chave]=(instante,ident)
-    mapa=contrato_sidra_observado(especie=especie,tabela_sidra=tab)
-    snapshots=[]
-    origem=[]
-    for (periodo,geo),(quando,ident) in sorted(escolhidas.items()):
-        cap=recuperar_values_quarentena(banco=banco,id_captura=ident)
-        if cap["especie"] != especie or cap["periodo"] != periodo or cap["territorio"] != geo:
-            raise DadoInvalido("captura recuperada diverge de identidade")
-        # A publicacao real nao foi autenticada. A primeira coleta funciona
-        # apenas como piso conservador de conhecimento para as-of.
-        snap=normalizar_snapshot_sidra_abate(
-            cap["bruto"], especie=especie,tabela_sidra=tab,
-            dimensoes=mapa["dimensoes"],totais=mapa["totais"],
-            variaveis=mapa["variaveis"], publicacao=cap["primeira_coleta_em"],
-            coleta=cap["primeira_coleta_em"],status_fonte="APROVADA",
-            operacoes_autorizadas={"LEITURA","ARMAZENAMENTO"})
-        snapshots.append(snap)
-        origem.append({"id":ident,"periodo":periodo,"territorio":geo,
-                      "primeira_coleta_em":cap["primeira_coleta_em"],
-                      "sha256_bruto":cap["sha256_bruto"]})
-    diag=(diagnosticar_cobertura_abate(
-        snapshots=snapshots, especie=especie, tabela_sidra=tab,
+
+    conhecidos = []
+    for ident, periodo, territorio, primeira_coleta in linhas:
+        if territorio not in ("BR", "UFS"):
+            raise DadoInvalido("territorio invalido no historico SQLite")
+        instante = _instante(primeira_coleta, "primeira_coleta_em")
+        if instante <= corte:
+            conhecidos.append((instante, ident, periodo, territorio))
+    # Garante uma ordem causal reproduzivel na reconstrução.
+    conhecidos.sort(key=lambda r: (r[0], r[1]))
+    if len(conhecidos) > 300:
+        raise DadoInvalido("limite de 300 capturas do motor vintage; paginacao exigida")
+
+    mapa = contrato_sidra_observado(especie=especie, tabela_sidra=tabela)
+    snapshots = []
+    capturas = []
+    vigentes = {}
+    for instante, ident, periodo, territorio in conhecidos:
+        recuperado = recuperar_values_quarentena(banco=banco, id_captura=ident)
+        if (recuperado["especie"] != especie
+            or recuperado["tabela_sidra"] != tabela
+            or recuperado["periodo"] != periodo
+            or recuperado["territorio"] != territorio
+            or _instante(recuperado["primeira_coleta_em"],
+                         "primeira_coleta_em") != instante):
+            raise DadoInvalido("captura historica com identidade divergente")
+        _checar_semantica_extrato(
+            bruto=recuperado["bruto"], especie=especie, periodo=periodo)
+        snapshot = normalizar_snapshot_sidra_abate(
+            recuperado["bruto"], especie=especie, tabela_sidra=tabela,
+            dimensoes=mapa["dimensoes"], totais=mapa["totais"],
+            variaveis=mapa["variaveis"],
+            publicacao=recuperado["primeira_coleta_em"],
+            coleta=recuperado["primeira_coleta_em"],
+            status_fonte="APROVADA",
+            operacoes_autorizadas={"LEITURA", "ARMAZENAMENTO"})
+        snapshots.append(snapshot)
+        provenance = {
+            "id": ident, "periodo": periodo, "territorio": territorio,
+            "primeira_coleta_em": recuperado["primeira_coleta_em"],
+            "sha256_bruto": recuperado["sha256_bruto"],
+        }
+        capturas.append(provenance)
+        # A captura mais nova por coleta e território compõe o estado vigente;
+        # TODAS as capturas são necessárias para contar revisões anteriores.
+        chave = (periodo, territorio)
+        atual = vigentes.get(chave)
+        if atual is None or (instante, ident) > (atual[0], atual[1]):
+            vigentes[chave] = (instante, ident, provenance)
+
+    diagnostico = (diagnosticar_cobertura_abate(
+        snapshots=snapshots, especie=especie, tabela_sidra=tabela,
         corte_asof=corte_asof) if snapshots else None)
-    return {"especie":especie,"tabela_sidra":tab,
-            "periodos_solicitados":periodos, "corte_asof":corte_asof,
-            "capturas_conhecidas_no_corte":origem,
-            "diagnostico":diag,
-            "status":"RECONSTRUCAO_POR_COLETA_NAO_HOMOLOGADA",
-            "publicacao_historica_conhecida":False,
-            "metadados_v3_verificados":False,
-            "publicacao_permitida":False}
+    ultimas = [x[2] for _, x in sorted(vigentes.items())]
+    # Retorno de revisões de valor/status mantém origem SHA, mas sua data
+    # "publicacao_nova" no motor representa PRIMEIRA COLETA neste contexto.
+    revisoes = [] if diagnostico is None else historico_sidra_asof(
+        snapshots=snapshots, especie=especie, tabela_sidra=tabela,
+        corte_asof=corte_asof)["revisoes"]
+    for revisao in revisoes:
+        revisao["data_temporal_representa"] = "PRIMEIRA_COLETA_NIVON"
+        revisao["publicacao_ibge_confirmada"] = False
+    return {
+        "especie": especie, "tabela_sidra": tabela,
+        "periodos_solicitados": periodos, "corte_asof": corte_asof,
+        "capturas_conhecidas_no_corte": ultimas,
+        "capturas_historicas_no_corte": capturas,
+        "capturas_superadas_no_corte": len(capturas) - len(ultimas),
+        "total_revisoes_observadas": len(revisoes),
+        "revisoes_observadas": revisoes,
+        "diagnostico": diagnostico,
+        "status": "RECONSTRUCAO_POR_COLETA_NAO_HOMOLOGADA",
+        "publicacao_historica_conhecida": False,
+        "metadados_v3_verificados": False,
+        "publicacao_permitida": False,
+    }
 
 
 def main(argv=None):
