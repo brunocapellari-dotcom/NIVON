@@ -92,6 +92,11 @@ class TestDossieEditorialOfflineE2E(unittest.TestCase):
             emissores=self.keys)
 
     def linhas(self):
+        existe = self.con.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='nivon_envios'"
+        ).fetchone()
+        if not existe:
+            return 0
         return self.con.execute(
             "SELECT COUNT(*) FROM nivon_envios").fetchone()[0]
 
