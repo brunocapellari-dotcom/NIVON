@@ -41,6 +41,11 @@ CREATE TABLE IF NOT EXISTS conab_observacoes_indice (
  indice_sha256 TEXT NOT NULL, coletado_utc TEXT NOT NULL,
  qtd_semanas INTEGER NOT NULL, PRIMARY KEY(indice_sha256,coletado_utc)
 );
+CREATE TABLE IF NOT EXISTS conab_url_indice_historico (
+ pagina_canonica TEXT NOT NULL, url_observada TEXT NOT NULL,
+ indice_sha256 TEXT NOT NULL, primeira_coleta_utc TEXT NOT NULL,
+ PRIMARY KEY(pagina_canonica,url_observada,indice_sha256)
+);
 CREATE INDEX IF NOT EXISTS idx_conab_doc_fase ON conab_documentos_candidatos(fase);
 """
 
@@ -170,6 +175,11 @@ def atualizar_fila(db:sqlite3.Connection, *, indice:dict,
         db.execute('INSERT OR IGNORE INTO conab_observacoes_indice VALUES (?,?,?)',
                    (hash_indice,coleta,len(lista)))
         for url,item in lista.items():
+            observada=item.get('url_observada_indice',url)
+            if not _url_valida(observada):
+                raise ErroIndiceConab('link originalmente observado fora do indice')
+            db.execute('''INSERT OR IGNORE INTO conab_url_indice_historico
+                          VALUES (?,?,?,?)''',(url,observada,hash_indice,coleta))
             row=db.execute('SELECT titulo,periodo_rotulo FROM conab_semanas_descobertas WHERE pagina_url=?',(url,)).fetchone()
             if row is None:
                 db.execute('INSERT INTO conab_semanas_descobertas VALUES(?,?,?,?,?)',
