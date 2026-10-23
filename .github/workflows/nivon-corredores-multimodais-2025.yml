@@ -1,0 +1,101 @@
+name: NIVON - Comparar Corredores Rodovia Ferrovia 2025
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/nivon-corredores-multimodais-2025.yml'
+      - 'src/nivon/corredores_multimodais_2025.py'
+      - 'tests/test_corredores_multimodais_2025.py'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/nivon-corredores-multimodais-2025.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-corredores-2025-comparacao
+  cancel-in-progress: false
+
+jobs:
+  validar-camada-de-comparacao:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Testar referencias e limites sem GCP
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m unittest discover -s tests -p 'test_corredores_multimodais_2025.py' -v
+
+  consultar-ambas-as-fontes:
+    needs: validar-camada-de-comparacao
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      PYTHONPATH: src
+      NIVON_PROJETO: ${{ vars.NIVON_BQ_PROJECT }}
+      NIVON_DATASET: ${{ vars.NIVON_BQ_DATASET }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Validar projeto canônico
+        run: |
+          test "$NIVON_PROJETO" = 'nivon-data'
+          test "$NIVON_DATASET" = 'nivon_raw'
+      - name: Credencial temporária Google Cloud
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ vars.NIVON_BQ_PROJECT }}
+          create_credentials_file: true
+      - name: Preparar cliente BigQuery
+        run: |
+          python -m pip install --disable-pip-version-check --quiet 'google-cloud-bigquery>=3,<4'
+      - name: Consultar 2025 sem somar universos
+        run: |
+          python -m nivon.corredores_multimodais_2025 \
+            --saida "$RUNNER_TEMP/corredores_multimodais_2025.json"
+      - name: Registrar evidencias por polo
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          doc=json.loads((Path(os.environ["RUNNER_TEMP"])/"corredores_multimodais_2025.json").read_text(encoding='utf8'))
+          assert doc["estado"]=="PAINEL_MULTIMODAL_2025_DADOS_SEPARADOS_COM_PROVENIENCIA"
+          assert not doc["totais_das_modalidades_somaveis"]
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a",encoding="utf8") as f:
+              f.write("### NIVON — corredores 2025, fontes independentes\n\n")
+              f.write("| Polo | Toneladas estação ferroviária origem | Fluxos rodoviários de RGI mesmo nome |\n")
+              f.write("|---|---:|---|\n")
+              for p in doc["polos"]:
+                  entradas=len(p["rodovia_rgi_top16_entradas"])
+                  saidas=len(p["rodovia_rgi_top16_saidas"])
+                  f.write(f"| {p['nome_polo']} | {p['ferrovia_origem_ton_2025'] or 'Não observado'} | entradas {entradas}, saídas {saidas} |\n")
+              f.write("\n**Não somar. RGI ≠ município/terminal. Hidrovia ANTAQ oficial ainda indisponível no BQ.**\n")
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: success()
+        with:
+          name: nivon-comparacao-corredores-2025-${{ github.run_id }}
+          path: ${{ runner.temp }}/corredores_multimodais_2025.json
+          retention-days: 90
+      - name: Limpar relatorio efemero
+        if: always()
+        run: rm -f "$RUNNER_TEMP/corredores_multimodais_2025.json"
