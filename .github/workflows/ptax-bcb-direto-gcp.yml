@@ -53,7 +53,7 @@ jobs:
     env:
       NIVON_GCP_WRITE_APPROVED: ${{ vars.NIVON_GCP_WRITE_APPROVED }}
       NIVON_GCP_COST_REVIEWED: ${{ vars.NIVON_GCP_COST_REVIEWED }}
-      NIVON_GCP_ENABLED: ${{ vars.NIVON_GCP_WRITE_APPROVED == 'true' && vars.NIVON_GCP_COST_REVIEWED == 'true' && vars.NIVON_PTAX_DIRECT_WRITER_APPROVED == 'true' && vars.NIVON_GCP_WIF_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && 'true' || 'false' }}
+      NIVON_GCP_ENABLED: ${{ vars.NIVON_GCP_WRITE_APPROVED == 'true' && vars.NIVON_GCP_COST_REVIEWED == 'true' && vars.NIVON_PTAX_DIRECT_WRITER_APPROVED == 'true' && vars.NIVON_GCP_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && 'true' || 'false' }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -65,7 +65,7 @@ jobs:
         if: ${{ env.NIVON_GCP_ENABLED == 'true' }}
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ vars.NIVON_GCP_WIF_PROVIDER }}
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
           service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
       - name: Instalar BigQuery somente quando habilitado
         if: ${{ env.NIVON_GCP_ENABLED == 'true' }}
