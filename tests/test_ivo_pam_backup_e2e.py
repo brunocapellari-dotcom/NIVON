@@ -1,5 +1,7 @@
 """E2E de backup portavel do SQLite e bytes content-addressed PAM."""
+import contextlib
 import hashlib
+import io
 import json
 import tempfile
 import unittest
@@ -8,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from nivon.ivo_pam_backup import (
-    ErroBackupPAM, criar_backup_pam, restaurar_backup_pam,
+    ErroBackupPAM, criar_backup_pam, restaurar_backup_pam, main,
 )
 from nivon.ivo_pam_operacao import abrir_operacao_pam, processar_captura_pam
 from nivon.ivo_pam_ponte_operacional import revisar_capturas_pam
@@ -154,6 +156,35 @@ class TestBackupPAM(unittest.TestCase):
         with self.assertRaises(ErroBackupPAM):
             self.make_backup()
         self.assertFalse(self.zip.exists())
+
+    def test_cli_backup_e_restauro_sem_escrita_canonica(self):
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            self.assertEqual(main([
+                "criar", "--db", str(self.banco),
+                "--cofre", str(self.cofre), "--arquivo", str(self.zip),
+            ]), 0)
+        self.assertEqual(json.loads(buf.getvalue())["vintages"], 2)
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            self.assertEqual(main([
+                "restaurar", "--arquivo", str(self.zip),
+                "--destino", str(self.restored),
+            ]), 0)
+        result = json.loads(buf.getvalue())
+        self.assertTrue(result["integridade_local_aprovada"])
+        self.assertFalse(result["registro_canonico_modificado"])
+
+    def test_cli_arquivo_ausente_nega_sem_criar_destino(self):
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            self.assertEqual(main([
+                "restaurar",
+                "--arquivo", str(self.root / "missing.zip"),
+                "--destino", str(self.restored),
+            ]), 2)
+        self.assertFalse(self.restored.exists())
+        self.assertEqual(json.loads(output.getvalue())["promocoes"], 0)
 
     def test_limite_de_quota_aplicado_no_backup_e_restauro(self):
         with self.assertRaises(ErroBackupPAM):
