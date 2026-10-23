@@ -34,6 +34,18 @@ class TestGatesPrimeiraCarga(unittest.TestCase):
         self.assertIn("vars.NIVON_CORREDORES_VIEW_APPROVED == 'true'", cond)
         self.assertNotIn("github.event_name == 'push'", cond)
 
+    def test_backfill_historico_exige_confirmacao_manual(self):
+        cond = job_guard("nivon-antt-backfill-2022-2025.yml",
+                         "importar-e-conciliar")
+        self.assertIn("github.ref == 'refs/heads/main'",cond)
+        self.assertIn("github.event_name == 'workflow_dispatch'",cond)
+        self.assertIn("inputs.confirmar_lote_unico == true",cond)
+        self.assertNotIn("github.event_name == 'push'",cond)
+        for v in ("NIVON_ZERO_COST_BQ_APPROVED",
+                  "NIVON_RAW_ARCHIVE_APPROVED",
+                  "NIVON_ANTT_FERROVIA_WRITE_APPROVED"):
+            self.assertIn("vars."+v+" == 'true'",cond)
+
     def test_sem_escrita_para_eventos_de_pr(self):
         for filename, job in (
                 ("nivon-antt-carga-unica-2026.yml", "executar-lote-unico"),
