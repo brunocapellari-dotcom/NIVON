@@ -35,39 +35,52 @@
     {
       "id": "Q-RAW",
       "priority": "P0",
-      "status": "OFFLINE_IMPLEMENTED_NOT_SOURCE_HOMOLOGATED",
+      "status": "HMAC_AND_ORIGINAL_STRUCTURED_JSON_SEMANTIC_PARITY_OFFLINE",
       "code": [
-        "src/nivon/fretes_raw_ponte_quant.py"
+        "src/nivon/fretes_raw_ponte_quant.py",
+        "src/nivon/fretes_raw_semantica.py"
       ],
       "tests": [
-        "tests/test_fretes_raw_ponte_quant.py"
+        "tests/test_fretes_raw_ponte_quant.py",
+        "tests/test_fretes_raw_semantica.py"
       ],
-      "acceptance": "strict full raw bytes digest and signed capture receipts; no production readiness"
+      "acceptance": "strict full raw bytes digest and signed capture receipts; no production readiness",
+      "contract": "NIVON_FRETE_JSON_ESTRUTURADO_V1",
+      "evidence": "https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39984387787",
+      "limits": "Only source-native JSON structured bytes; free text, images, audio, OCR unverified"
     },
     {
       "id": "Q-FREIGHT-PIPELINE",
       "priority": "P0",
-      "status": "OFFLINE_IMPLEMENTED",
+      "status": "OFFLINE_BATCH_WITH_SEMANTIC_MODE_AND_R01",
       "code": [
-        "src/nivon/pipeline_fretes_quant.py"
+        "src/nivon/pipeline_fretes_quant.py",
+        "src/nivon/fretes_raw_semantica.py"
       ],
       "tests": [
         "tests/test_pipeline_fretes_quant.py"
       ],
-      "acceptance": "one batch, strict economic identity and R01 without municipal averaging; fail closed on partial/extra raw"
+      "acceptance": "one batch, strict economic identity and R01 without municipal averaging; fail closed on partial/extra raw",
+      "semantic_mode": "NIVON_FRETE_JSON_ESTRUTURADO_V1"
     },
     {
       "id": "Q-MARKETS",
       "priority": "P0",
-      "status": "INTEGRATED_AT_FROZEN_SHA_AND_TEN_STAGE_PTAX_E2E",
-      "source_ref": "cfbea57b89f6e2eaaa3958ca1f482c3e048daa07",
-      "acceptance": "PTAX continuity, coexistence, RAW SQLite backup/restore and reverse migration test with 10 synthetic stages at each PR push"
+      "status": "FROZEN_INTEGRATED_WITH_OFFLINE_PTAX_GCS_QUARANTINE",
+      "source_ref": "f4d5ffcd890902d170cd854af024b5b0064ed0d9",
+      "acceptance": "PTAX continuity, coexistence, RAW SQLite backup/restore and reverse migration test with 10 synthetic stages at each PR push",
+      "integration_merges": [
+        "3e3e1a87c31ed6ce9ec5e58df360fc323e94175d",
+        "9ef3b8f1bbbab40071f1fad2029e1dafb0ef6398",
+        "cfe6c10c0c509d4cbb36b2467da6c113d6f2aeb5"
+      ],
+      "status_detail": "PTAX RAW quarantined locally and two GCS objects prepared; real uploads/payments not performed"
     },
     {
       "id": "Q-SOURCE-PARSER",
       "priority": "P1",
-      "status": "BLOCKED_EXTERNAL_EVIDENCE",
-      "acceptance": "licensed RAW parser independently reconciles advertised fields with source and immutable external record"
+      "status": "JSON_SOURCE_NATIVE_V1_ONLY_WHATSAPP_FREEFORM_BLOCKED",
+      "acceptance": "Implement auditable source-native parser for authorized original message payloads, including uncertain fields and independent raw evidence; never relabel transcripts as original RAW"
     },
     {
       "id": "Q-CROSS-PR",
@@ -109,11 +122,11 @@
       "status": "SKIPPED_UNTIL_SOURCE_AUTHORIZATION"
     },
     {
-      "id": "PTAX-10-STAGE",
+      "id": "PTAX-17-STAGE",
       "script": "PYTHONPATH=src python scripts/ensaio_ptax_integrado.py",
       "workflow": "validar-nucleo",
-      "status": "SUCCESS_OFFLINE_ONLY",
-      "evidence": "https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39890911522"
+      "status": "SUCCESS_SYNTHETIC_ONLY",
+      "evidence": "https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39984387787"
     },
     {
       "id": "FRETES-E2E-10",
@@ -130,44 +143,75 @@
         "tests/test_tendencias_mercados.py"
       ],
       "status": "SUCCESS_SYNTHETIC_ONLY"
+    },
+    {
+      "id": "FREIGHT-STRUCTURED-RAW-12-STAGE",
+      "script": "PYTHONPATH=src python scripts/ensaio_fretes_semantica_raw.py",
+      "status": "SUCCESS_SYNTHETIC_ONLY",
+      "records": 28
+    },
+    {
+      "id": "PTAX-QUARANTINE-GCS-11-STAGE",
+      "script": "PYTHONPATH=src python scripts/ensaio_quarentena_ptax_gcs.py",
+      "status": "SUCCESS_NO_UPLOAD",
+      "objects_prepared": 2
+    },
+    {
+      "id": "PTAX-QUARANTINE-BATCH",
+      "source_ref": "f4d5ffcd890902d170cd854af024b5b0064ed0d9",
+      "tests": [
+        "tests/test_importar_lote_ptax_quarentena.py",
+        "tests/test_ptax_quarentena_cloud.py",
+        "tests/test_quarentena_ptax_gcs_e2e.py"
+      ],
+      "status": "SUCCESS_OFFLINE_ONLY"
     }
   ],
   "source_of_truth": "docs/NIVON_QUANT_PLANO_LOTES_EXECUCAO_20261022.md",
   "last_verified": {
-    "sha": "7df13980d47b3341637efc4f518ce4c2115981cb",
-    "ci_run": "39946033578",
-    "tests": 1778,
+    "sha": "cbacf1af6a5e009254c210a78623f560210ddfa5",
+    "ci_run": "39984387787",
+    "tests": 1818,
     "failures": 0,
     "skipped": 5,
     "status": "SUCCESS",
-    "ptax_e2e_steps": 10,
+    "ptax_e2e_steps": 17,
     "freight_e2e_steps": 10,
-    "real_source_verification": false
+    "freight_semantic_e2e_steps": 12,
+    "ptax_gcs_quarantine_steps": 11,
+    "source_authenticity_verified": false,
+    "google_cloud_upload_executed": false
   },
   "next_execution_priorities": [
     {
-      "id": "Q-MAIN",
+      "id": "Q-GOVERNANCE",
       "priority": "P0",
-      "status": "AWAIT_INTEGRATOR",
-      "description": "Review and coordinate merge to main. Feature CI does not authorize deploy."
+      "status": "NEEDS_INTEGRATOR_REVIEW",
+      "description": "Review integration in PR20 draft; ensure current main/PR bases and update PR25 issue before merge/deploy"
     },
     {
-      "id": "Q-RAW",
-      "priority": "P1",
-      "status": "BLOCKED_BY_SOURCE_EVIDENCE",
-      "description": "Verify semantic RAW content and rights independently of signed capture metadata."
+      "id": "Q-REAL-RAW",
+      "priority": "P0",
+      "status": "BLOCKED_BY_SOURCE_FORMAT_AND_AUTHORIZATION",
+      "description": "Capture original authorized WhatsApp payloads, verify semantic fields independently and preserve immutable provenance and timestamps"
     },
     {
-      "id": "Q-OOS",
+      "id": "Q-MARKETS-SYNC",
       "priority": "P1",
-      "status": "BLOCKED_BY_AUTHENTIC_HISTORICAL_DATA",
-      "description": "Validate real point-in-time vintages and pre-registered holdout with official calendars."
+      "status": "FROZEN_CUT_REQUIRES_NEW_COMPARE",
+      "description": "Reconcile PTAX/GCS changes subsequent to Market commit f4d5ffcd with diff review and integrated CI; avoid racing branch"
     },
     {
-      "id": "Q-INFRA",
+      "id": "Q-GCS-CLOUD",
       "priority": "P1",
-      "status": "OFFLINE_ONLY",
-      "description": "Validate portability and deterministic restoration without enabling cloud."
+      "status": "CODE_ONLY_NOT_DEPLOYED",
+      "description": "Run Google Cloud Storage upload only with approved bucket, permissions, budget, rights and rollback plan. Current code is upload-disabled."
+    },
+    {
+      "id": "Q-REAL-PREDICTION",
+      "priority": "P1",
+      "status": "BLOCKED_HISTORICAL_EVIDENCE",
+      "description": "Retrieve real point-in-time prices/freight releases with official calendar, blind held-out evidence, drift and calibration"
     }
   ]
 }

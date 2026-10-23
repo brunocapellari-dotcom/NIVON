@@ -109,3 +109,15 @@ zero falhas, cinco skipped**, mais 10 etapas PTAX E2E e 10 Fretes E2E,
 ambos sintéticos. A próxima prioridade não é adicionar testes unitários
 redundantes, mas **proveniência semântica e autorização das fontes**, além
 da revisão de merge em `main` pela coordenação.
+
+## Execução de lote — 23/10/2026, corte de Mercados com GCS
+
+Foram incorporadas as mudanças da PR #21 até `f4d5ffcd`.
+Com integração da quarentena SQLite de PTAX, preparação de objetos GCS
+e conferência determinística de 17 campos de RAW estruturado em Fretes,
+o CI [#39984387787](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39984387787)
+executou **1.818 testes (0 falhas, 5 skipped)** e quatro ensaios de
+ponta a ponta sintéticos. Consultar
+[`docs/FECHAMENTO_QUANT_RAW_PTAX_GCS_20261023.md`](FECHAMENTO_QUANT_RAW_PTAX_GCS_20261023.md)
+para provas, limites e próximos gates. Nenhuma coleta, envio, bucket
+ou autorização de cloud foi ativada.
