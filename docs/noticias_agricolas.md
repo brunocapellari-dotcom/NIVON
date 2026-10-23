@@ -59,3 +59,14 @@ python -m nivon.widgets_exportacao --entrada /diretorio-privado/widgets_neon.jso
 O arquivo de saída é criado como privado (0600) e é removido se qualquer linha falhar no contrato. Há bloqueio de widget desconhecido, mapeamento de origem incorreto, data sem fuso, coleta de widget não autorizada, linha duplicada e publicação posterior à coleta. O relatório informa cobertura, contagem e hash sem imprimir preços.
 
 **Bloqueios restantes:** a PR #84 não homologou credenciais, billing, IAM, dataset ou automação do projeto `nivon-data`; o conector BigQuery não está disponível. Não declarar o BigQuery carregado, nem promover os 39 demais IDs com base no catálogo. IMEA segue com data de referência da cotação não comprovada e staging vazio. A integração operacional só poderá ser declarada após carga autenticada, reconciliação por data/vintage e pelo menos duas execuções incrementais distintas.
+
+## 23/10/2026 — expansão IMEA efetivamente integrada no Neon
+
+- Homologação de origem em `imeastage` Neon: implantação **2 completed** com códigos oficiais IMEA cadeia 1 (algodão) e 2 (bovinocultura), mantendo soja/milho 4/3.
+- Preflight read-only https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39943520307 confirmou 111 candidatos algodão e 684 bovinos, sem data de referência comprovada.
+- E2E de ingestão https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39943738026: **795 inserções**, 217 duplicatas, **0 linhas canônicas**.
+- Reexecução na `main` https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39943963140: **1.012 duplicatas, zero inserções**, provando idempotência no mesmo conjunto; cron dias úteis 14h e 23h UTC, recorrência futura ainda a ser comprovada.
+- `database/neon_widgets_cobertura_42.sql` agora mapeia quatro widgets em estágio de publicação: #199 soja 23; #198 milho 23; #131 pluma algodão 13; #122 boi gordo à vista 150. Outros indicadores do staging ficam preservados mas não equivalem automaticamente a widgets.
+- Query Neon contou **1.012 observações IMEA** no staging (107 soja, 110 milho, 111 algodão, 684 bovinocultura); **todas** sem `data_referencia` confirmada. Status da cobertura: 3 widgets com referência CEPEA/BCB, 4 widgets apenas com publicação IMEA, 35 sem vínculo.
+- `nivon_widgets_saude_v` é derivada da cobertura e não transforma datas publicadas em datas de cotação. Nenhum dado novo foi enviado ao Google Cloud.
+- Proteção de licença: acesso declarado pelo proprietário; não tratar como licença aberta nem redistribuir dados brutos de terceiros. Preserve a separação histórica entre preço de fato observado, publicação informada e preço contratado.
