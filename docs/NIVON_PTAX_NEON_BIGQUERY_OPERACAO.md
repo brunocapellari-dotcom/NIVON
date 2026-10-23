@@ -46,9 +46,19 @@ Banco Central/PTAX --> coletor Neon existente (preservado) --> nivon_ptax_quotes
 1. Verificar por acesso real o projeto `nivon-data`, billing, cota de consumo, IAM e direito de armazenamento. Captura do console não substitui validação.
 2. Configurar `nivon_core.ptax_quotes` de acordo com o SQL versionado: particionamento por `reference_date`, `require_partition_filter=TRUE` e tipos corretos. **Não** criar serviços sem rever custo.
 3. Configurar WIF GitHub → GCP com atributo `repository=brunocapellari-dotcom/NIVON`, ref `main`, workflow exato e service account de mínimo privilégio.
-4. Definir variáveis GitHub `NIVON_GCP_WIF_PROVIDER` e `NIVON_GCP_SERVICE_ACCOUNT`.
+4. Definir variáveis GitHub `NIVON_GCP_PROVIDER` e `NIVON_GCP_SERVICE_ACCOUNT`.
 5. **Somente após revisão expressa de faturamento/custos**, definir `NIVON_GCP_WRITE_APPROVED=true` e `NIVON_GCP_COST_REVIEWED=true`. Sem todas as quatro variáveis, o workflow fica permanentemente em modo de leitura.
 6. Executar o job e conferir carga, `MERGE`, conciliação e uma segunda rodada incremental. Nenhum sucesso da validação local equivale a Google Cloud implantado.
 7. Não executar cutover ou remover Neon sem prova de backup/restore e reconciliação independente.
 
 **Estado final:** `NEON_TO_PRIVATE_JSONL_E2E_OK`; `BIGQUERY_WRITE_NOT_CONFIRMED`; `NEON_KEPT_RUNNING`.
+
+## Atualização operacional em 23/10/2026 (após primeira carga ANTT)
+
+A execução [39983416188](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39983416188) **comprovou escrita no BigQuery e GCS exclusivamente para o lote ferroviário ANTT 2026**. Essa prova não deve ser atribuída à PTAX nem aos dados de CEPEA/IMEA/CONAB.
+
+A identidade já existente e confirmada por OIDC usa a variável GitHub `NIVON_GCP_PROVIDER`, não o nome legado `NIVON_GCP_WIF_PROVIDER`. Os workflows PTAX direto, ponte PTAX Neon e migrador agrícola passaram a reutilizar o provider canônico; continuam com gates independentes de autorização de escrita, revisão de custos e escritor único.
+
+O script `scripts/bootstrap_nivon_gcp.sh` deixa de criar outra service account ou outro provider WIF: verifica o par já existente e recusa `--aplicar` se a condição da identidade não puder ser confirmada como restrita ao repositório e à `main`. Continua obrigatório revisar IAM, custo e o destino `nivon_core.ptax_quotes` (ainda não atestado).
+
+**Dados reais e acesso à origem não são prova de carga PTAX.** Não desligar Neon ou preencher datas não fornecidas.

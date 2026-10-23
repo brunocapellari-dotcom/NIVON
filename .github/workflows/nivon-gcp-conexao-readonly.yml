@@ -5,6 +5,8 @@ on:
     paths:
       - '.github/workflows/nivon-gcp-conexao-readonly.yml'
       - 'scripts/inventario_gcp_readonly.py'
+      - 'scripts/auditar_permissoes_gcp.py'
+      - 'tests/test_auditoria_permissoes_gcp.py'
       - 'tests/test_inventario_gcp_readonly.py'
       - 'scripts/bootstrap_nivon_gcp.sh'
       - 'database/bigquery/nivon_neon_legado_schema.sql'
@@ -12,6 +14,8 @@ on:
     paths:
       - '.github/workflows/nivon-gcp-conexao-readonly.yml'
       - 'scripts/inventario_gcp_readonly.py'
+      - 'scripts/auditar_permissoes_gcp.py'
+      - 'tests/test_auditoria_permissoes_gcp.py'
       - 'tests/test_inventario_gcp_readonly.py'
       - 'scripts/bootstrap_nivon_gcp.sh'
       - 'database/bigquery/nivon_neon_legado_schema.sql'
@@ -38,6 +42,7 @@ jobs:
       - name: Validar inventario e scripts sem cloud
         run: |
           python -m unittest discover -s tests -p 'test_inventario_gcp_readonly.py' -v
+          python -m unittest discover -s tests -p 'test_auditoria_permissoes_gcp.py' -v
           bash -n scripts/bootstrap_nivon_gcp.sh
 
   autenticar-e-verificar-metadados:
@@ -123,12 +128,51 @@ jobs:
               f.write('Autenticação OIDC + leitura de metadados BigQuery e GCS concluídas.\n\n')
               f.write('Nenhum objeto, tabela, dataset ou consulta SQL foi criado.\n')
           PY
+      - name: Conferir tabelas maritimas apenas por metadados
+        env:
+          PYTHONUNBUFFERED: '1'
+        run: |
+          python - <<'PY'
+          import json, os
+          from google.cloud import bigquery
+          from google.api_core.exceptions import NotFound, Forbidden
+          project=os.environ['NIVON_PROJETO']
+          dataset=os.environ['NIVON_DATASET']
+          client=bigquery.Client(project=project,location='southamerica-east1')
+          expected=('maritimo_capturas','maritimo_escalas_revisoes',
+                    'maritimo_fluxos_passagens','maritimo_coleta_execucoes',
+                    'maritimo_estado_fontes_v')
+          state={}
+          for name in expected:
+              try:
+                  meta=client.get_table(f'{project}.{dataset}.{name}',timeout=25)
+                  state[name]='EXISTE' if meta.project==project and meta.dataset_id==dataset else 'DIVERGENTE'
+              except NotFound:
+                  state[name]='AINDA_NAO_CRIADA'
+              except Forbidden:
+                  state[name]='SEM_PERMISSAO_DE_METADADOS'
+          report={'origem':'WIF_READ_ONLY_MAIN','projeto':project,'dataset':dataset,
+                  'tabelas':state,'operacoes_de_escrita':0}
+          print(json.dumps(report,ensure_ascii=False,sort_keys=True))
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as fp:
+              fp.write('### Inventário marítimo NIVON (somente leitura)\n\n')
+              for key,val in state.items():
+                  fp.write(f'- `{key}`: {val}\n')
+              fp.write('\nNenhuma tabela foi criada nem foi realizada coleta marítima.\n')
+          PY
       - name: Conferir tabela e view da ANTT exclusivamente por metadados
         env:
           PYTHONPATH: src
         run: |
           python -m nivon.antt_gcp_preflight \
             --projeto "$NIVON_PROJETO" --dataset "$NIVON_DATASET"
+      - name: Testar permissões IAM de GCS (indicativo, sem escrita)
+        shell: bash
+        run: |
+          python scripts/auditar_permissoes_gcp.py \
+            --projeto "$NIVON_PROJETO" \
+            --dataset "$NIVON_DATASET" \
+            --bucket "$NIVON_BUCKET"
       - name: Inventario read-only de destinos e esquemas sem SQL
         shell: bash
         run: |

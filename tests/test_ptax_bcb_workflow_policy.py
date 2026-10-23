@@ -31,7 +31,7 @@ class PoliticaEscritorUnicoPTAX(unittest.TestCase):
         self.assertNotIn("google-github-actions/auth",offline)
         for regra in ("NIVON_GCP_WRITE_APPROVED == 'true'",
                       "NIVON_GCP_COST_REVIEWED == 'true'",
-                      "NIVON_GCP_WIF_PROVIDER != ''",
+                      "NIVON_GCP_PROVIDER != ''",
                       "NIVON_GCP_SERVICE_ACCOUNT != ''",
                       "      id-token: write"):
             self.assertIn(regra,ingestao)
@@ -40,11 +40,44 @@ class PoliticaEscritorUnicoPTAX(unittest.TestCase):
         self.assertIn("trap 'rm -f",ingestao)
 
     def test_wif_bootstrap_restringe_repo_branch_e_workflow(self):
-        self.assertIn('PTAX_DIRECT_WORKFLOW="${REPO}/.github/workflows/ptax-bcb-direto-gcp.yml@refs/heads/main"',BOOT)
-        self.assertIn("assertion.workflow_ref=='${PTAX_DIRECT_WORKFLOW}'",BOOT)
-        self.assertIn("assertion.repository=='${REPO}'",BOOT)
-        self.assertIn("assertion.ref=='refs/heads/main'",BOOT)
-        self.assertIn("PROVEDOR_PREEXISTENTE_COM_CONDICAO_DIFERENTE",BOOT)
+        self.assertIn('PROVIDER="github-actions"',BOOT)
+        self.assertIn('SA_NAME="nivon-coletor-de-dados"',BOOT)
+        self.assertIn('NIVON_GCP_PROVIDER=$WIF_NAME',BOOT)
+        self.assertIn("assertion.repository",BOOT)
+        self.assertIn("assertion.ref",BOOT)
+        self.assertIn("refs/heads/main",BOOT)
+        self.assertIn("PROVEDOR_EXISTENTE_SEM_ESCOPO_VERIFICAVEL",BOOT)
+        self.assertNotIn("providers create-oidc",BOOT)
+        self.assertNotIn("service-accounts create",BOOT)
+        self.assertNotIn("iam.workloadIdentityUser",BOOT)
+
+    def test_migracoes_reutilizam_provider_que_ja_autenticou_no_cloud(self):
+        workflows = [
+            ".github/workflows/ptax-neon-private-export.yml",
+            ".github/workflows/ptax-bcb-direto-gcp.yml",
+            ".github/workflows/nivon-gcp-migracao.yml",
+            ".github/workflows/nivon-gcp-zarc.yml",
+        ]
+        fonte_validada = (ROOT/".github/workflows/nivon-gcp-conexao-readonly.yml").read_text(encoding="utf-8")
+        self.assertIn("vars.NIVON_GCP_PROVIDER", fonte_validada)
+        for path in workflows:
+            with self.subTest(workflow=path):
+                workflow = (ROOT/path).read_text(encoding="utf-8")
+                self.assertIn("vars.NIVON_GCP_PROVIDER", workflow)
+                self.assertNotIn("NIVON_GCP_WIF_PROVIDER", workflow)
+
+    def test_zarc_sem_escrita_por_push_e_com_escopo_oitc_minimo(self):
+        zarc = (ROOT/".github/workflows/nivon-gcp-zarc.yml").read_text(encoding="utf-8")
+        offline = zarc.split("  testar:",1)[1].split("  migrar:",1)[0]
+        job = zarc.split("  migrar:",1)[1]
+        condition = job.split("    needs:",1)[0]
+        self.assertIn("github.ref == 'refs/heads/main'",condition)
+        self.assertIn("github.event_name == 'workflow_dispatch'",condition)
+        self.assertNotIn("id-token: write",offline)
+        self.assertIn("      id-token: write",job)
+        self.assertIn("NIVON_GCP_PROVIDER",job)
+        self.assertIn("NIVON_GCP_COST_REVIEWED",job)
+        self.assertIn("NIVON_GCP_WRITE_APPROVED",job)
 
 if __name__=="__main__":
     unittest.main()

@@ -36,7 +36,7 @@ class MigracaoWorkflowPolicy(unittest.TestCase):
             "NIVON_GCP_WRITE_APPROVED == 'true'",
             "NIVON_GCP_COST_REVIEWED == 'true'",
             "NIVON_GCP_MIGRATION_APPROVED == 'true'",
-            "NIVON_GCP_WIF_PROVIDER != ''",
+            "NIVON_GCP_PROVIDER != ''",
             "NIVON_GCP_SERVICE_ACCOUNT != ''",
         ):
             with self.subTest(gate=gate):
