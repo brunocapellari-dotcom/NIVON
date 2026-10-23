@@ -97,7 +97,16 @@ def validar_amostra_ptax(raw: bytes, manifesto: Mapping) -> dict:
         if plano["url"] != manifesto["consulta_url"]:
             raise ErroQuarentenaPTAX("URL não canônica para o plano oficial")
         coleta = _momento(manifesto["coletado_em"], "coletado_em")
-        headers = _cabecalhos(manifesto["cabecalhos_http"])
+        entradas = manifesto["cabecalhos_http"]
+        if (not isinstance(entradas, Mapping) or
+                any(not isinstance(k, str) or
+                    (v is not None and not isinstance(v, str))
+                    for k, v in entradas.items())):
+            raise ErroQuarentenaPTAX("headers de captura inválidos")
+        # Um manifesto persistido tem chaves opcionais com null; não
+        # transformar null em um cabeçalho HTTP transmitido pelo provedor.
+        headers = _cabecalhos({k: v for k, v in entradas.items()
+                              if v is not None})
         content_length = headers.get("content-length")
         if content_length is not None and (
             not content_length.isascii() or not content_length.isdecimal()
