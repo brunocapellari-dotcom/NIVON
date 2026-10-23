@@ -1,0 +1,69 @@
+name: NIVON - Migração marítima BigQuery (tabelas vazias)
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/maritimo-gcp-criar-esquema.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: nivon-maritimo-schema-por-projeto
+  cancel-in-progress: false
+
+jobs:
+  criar-esquema:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NIVON_PROJETO: ${{ vars.NIVON_BQ_PROJECT }}
+      NIVON_DATASET: ${{ vars.NIVON_BQ_DATASET }}
+      WIF_PROVIDER: ${{ vars.NIVON_GCP_PROVIDER }}
+      WIF_SERVICE_ACCOUNT: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Verificar alvo estrito antes de executar DDL
+        run: |
+          set -euo pipefail
+          test "$NIVON_PROJETO" = "nivon-data" || { echo "PROJETO_GCP_DIVERGENTE"; exit 3; }
+          test "$NIVON_DATASET" = "nivon_raw" || { echo "DATASET_GCP_DIVERGENTE"; exit 3; }
+          test -n "$WIF_PROVIDER" || { echo "WIF_PROVIDER_AUSENTE"; exit 3; }
+          test -n "$WIF_SERVICE_ACCOUNT" || { echo "WIF_SERVICE_ACCOUNT_AUSENTE"; exit 3; }
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ vars.NIVON_BQ_PROJECT }}
+          create_credentials_file: true
+      - name: Instalar SDK BigQuery por ADC
+        run: python -m pip install --disable-pip-version-check --quiet 'google-cloud-bigquery>=3,<4'
+      - name: Validar dataset existente e regiao sem mutacoes
+        run: |
+          python - <<'PY'
+          import os
+          from google.cloud import bigquery
+          pid=os.environ["NIVON_PROJETO"]
+          ds=os.environ["NIVON_DATASET"]
+          obj=bigquery.Client(project=pid,location="southamerica-east1").get_dataset(f"{pid}.{ds}")
+          if (obj.project,obj.dataset_id,str(obj.location).lower()) != (pid,ds,"southamerica-east1"):
+              raise RuntimeError("DATASET_BIGQUERY_DIVERGENTE")
+          print("DATASET_EXISTENTE_E_REGIAO_VALIDADA")
+          PY
+      - name: Aplicar somente tabelas marítimas com prefixo maritimo_
+        run: |
+          python infra/google_cloud/gerar_migracao_maritima.py \
+            --projeto "$NIVON_PROJETO" --dataset "$NIVON_DATASET" --aplicar
+      - name: Resumir operação sem expor dados
+        run: |
+          echo '### NIVON — Esquema marítimo no BigQuery' >> "$GITHUB_STEP_SUMMARY"
+          echo 'DDL idempotente executado no nivon_raw; quatro tabelas e visão marítima prefixadas.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Nenhuma fonte foi coletada e nenhum agendamento foi criado.' >> "$GITHUB_STEP_SUMMARY"
