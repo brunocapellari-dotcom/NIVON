@@ -117,6 +117,28 @@ class TestSincronizacaoArgentinaIncrementalE2E(unittest.TestCase):
             self.executar([a])
         self.assertFalse(self.db.exists())
 
+    def test_soja_nao_pode_ser_importada_como_milho(self):
+        entrada = self.entrada(arquivo_csv("202"))
+        entrada["recurso"] = "milho"
+        with self.assertRaisesRegex(ErroIncrementalArgentina, "cultivo"):
+            self.executar([entrada])
+        with sqlite3.connect(self.db) as db:
+            self.assertEqual(
+                db.execute("SELECT COUNT(*) FROM ar_ediciones").fetchone()[0], 0
+            )
+
+    def test_milho_maiz_com_acento_preservado_no_recurso_correto(self):
+        dados = arquivo_csv("202").replace(b"Soja", "Maíz".encode("utf-8"))
+        entrada = self.entrada(dados)
+        entrada["recurso"] = "milho"
+        resultado = self.executar([entrada])
+        self.assertEqual(resultado["edicoes_novas"], 1)
+        with sqlite3.connect(self.db) as db:
+            self.assertEqual(
+                db.execute("SELECT cultivo FROM ar_estimaciones").fetchone()[0],
+                "Maíz",
+            )
+
     def test_sem_politica_nao_libera_publicacao_ou_backtest(self):
         a = self.entrada(arquivo_csv())
         resp = self.executar([a])
