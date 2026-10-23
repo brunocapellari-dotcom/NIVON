@@ -61,6 +61,7 @@ jobs:
           name: antt-ferrovia-${{ matrix.inicio }}-${{ matrix.fim }}-${{ github.run_id }}
           path: |
             ${{ runner.temp }}/antt-historico/manifesto-antt.json
+            ${{ runner.temp }}/antt-historico/*.csv
             ${{ runner.temp }}/antt-resumo.json
           if-no-files-found: warn
           retention-days: 90
