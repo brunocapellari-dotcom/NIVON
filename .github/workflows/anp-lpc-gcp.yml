@@ -1,0 +1,149 @@
+name: NIVON - ANP LPC para Google Cloud privado
+
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: 'Diagnostico sem gravacao ou coleta incremental autorizada'
+        type: choice
+        options: [preflight, coletar]
+        default: preflight
+        required: true
+  schedule:
+    # Semanas encerradas no sábado; terça 13 UTC. Gate recorrente fechado
+    # até aprovação explícita de custo, escrita e recorrência.
+    - cron: '0 13 * * 2'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-anp-lpc-gcs-serial
+  cancel-in-progress: false
+
+jobs:
+  verificar-contrato:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Diagnóstico de configuração sem autenticação ou escrita
+        env:
+          P: ${{ vars.NIVON_BQ_PROJECT }}
+          B: ${{ vars.NIVON_GCS_BUCKET }}
+          W: ${{ vars.NIVON_GCP_PROVIDER }}
+          S: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          A: ${{ vars.NIVON_RAW_ARCHIVE_APPROVED }}
+          C: ${{ vars.NIVON_ANP_LPC_COST_LIMIT_APPROVED }}
+          L: ${{ vars.NIVON_ANP_LPC_WRITE_APPROVED }}
+          R: ${{ vars.NIVON_ANP_LPC_RECURRING_APPROVED }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -n "$P" && -n "$B" && -n "$W" && -n "$S" ]] || echo 'GCP_CONFIGURACAO_INCOMPLETA'
+          [[ "$A" = 'true' ]] || echo 'RAW_ARCHIVE_GATE_FECHADO'
+          [[ "$C" = 'true' ]] || echo 'LIMITE_CUSTO_GATE_FECHADO'
+          [[ "$L" = 'true' ]] || echo 'ANP_ESCRITA_GATE_FECHADO'
+          [[ "$R" = 'true' ]] || echo 'ANP_RECORRENCIA_GATE_FECHADO'
+          echo 'SOMENTE_DIAGNOSTICO_SEM_NETWORK_E_SEM_CREDENCIAIS'
+
+  preflight-remoto:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.modo == 'preflight' &&
+      vars.NIVON_BQ_PROJECT != '' &&
+      vars.NIVON_GCS_BUCKET != '' &&
+      vars.NIVON_GCP_PROVIDER != '' &&
+      vars.NIVON_GCP_SERVICE_ACCOUNT != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ vars.NIVON_BQ_PROJECT }}
+          create_credentials_file: true
+      - run: python -m pip install --disable-pip-version-check --no-input 'google-cloud-storage>=3,<4'
+      - name: Checar somente bucket e política de privacidade
+        env:
+          NIVON_PROJECT: ${{ vars.NIVON_BQ_PROJECT }}
+          NIVON_BUCKET: ${{ vars.NIVON_GCS_BUCKET }}
+        run: |
+          python - <<'PY'
+          import os
+          from google.cloud import storage
+          projeto = os.environ['NIVON_PROJECT']
+          bucket = storage.Client(project=projeto).get_bucket(os.environ['NIVON_BUCKET'])
+          if str(bucket.location).lower() != 'southamerica-east1':
+              raise SystemExit('ANP_GCS_REGIAO_INESPERADA')
+          if bucket.iam_configuration.public_access_prevention != 'enforced':
+              raise SystemExit('ANP_GCS_BUCKET_SEM_BLOQUEIO_PUBLICO')
+          print('ANP_GCS_PREFLIGHT_READ_ONLY_OK: zero escritas')
+          PY
+
+  coletar-arquivar:
+    needs: verificar-contrato
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      ( (github.event_name == 'workflow_dispatch' && inputs.modo == 'coletar') ||
+        (github.event_name == 'schedule' &&
+         vars.NIVON_ANP_LPC_RECURRING_APPROVED == 'true') ) &&
+      vars.NIVON_RAW_ARCHIVE_APPROVED == 'true' &&
+      vars.NIVON_ANP_LPC_WRITE_APPROVED == 'true' &&
+      vars.NIVON_ANP_LPC_COST_LIMIT_APPROVED == 'true' &&
+      vars.NIVON_BQ_PROJECT != '' &&
+      vars.NIVON_GCS_BUCKET != '' &&
+      vars.NIVON_GCP_PROVIDER != '' &&
+      vars.NIVON_GCP_SERVICE_ACCOUNT != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: nivon-gcp-producao
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ vars.NIVON_BQ_PROJECT }}
+          create_credentials_file: true
+      - name: Instalar somente clientes ANP e GCS
+        run: python -m pip install --disable-pip-version-check --no-input -e '.[excel,gcs]'
+      - name: Validar destino privado pré-existente
+        env:
+          NIVON_PROJECT: ${{ vars.NIVON_BQ_PROJECT }}
+          NIVON_BUCKET: ${{ vars.NIVON_GCS_BUCKET }}
+        run: |
+          python - <<'PY'
+          import os
+          from google.cloud import storage
+          b=storage.Client(project=os.environ['NIVON_PROJECT']).get_bucket(os.environ['NIVON_BUCKET'])
+          if str(b.location).lower()!='southamerica-east1' or b.iam_configuration.public_access_prevention!='enforced':
+              raise SystemExit('ANP_DESTINO_GCS_INVALIDO')
+          print('ANP_BUCKET_PRIVADO_EXISTENTE_VALIDADO')
+          PY
+      - name: Retomar, coletar e confirmar GCS sem publicar preços
+        env:
+          PYTHONPATH: src
+          NIVON_BUCKET: ${{ vars.NIVON_GCS_BUCKET }}
+        run: |
+          python -m nivon.cli_coletar_anp_lpc --modo ciclo-gcs --ano 2026 \
+            --ultimas 3 --bucket "$NIVON_BUCKET" \
+            --prefixo nivon/anp/lpc/v1
