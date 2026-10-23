@@ -195,6 +195,58 @@ def normalizar_csv_canada(raw):
     return registros,{"status_parser":"MAPPED","linhas_total_csv":lidas,
              "observacoes_alvo":len(registros),"grains":sorted(selecionados)}
 
+def normalizar_ccee_pld(raw):
+    """Preço horário informado CCEE, R$/MWh, com hora local da fonte.
+
+    Cada registro preserva submercado, mês, dia, hora e período
+    de comercialização; evita comparar períodos diferentes como uma observação.
+    """
+    try:
+        doc=raw.decode("utf-8-sig")
+    except (UnicodeError,AttributeError) as exc:
+        raise ErroColetor("CCEE CSV exige UTF-8") from exc
+    reader=csv.DictReader(io.StringIO(doc), delimiter=";")
+    cols={"MES_REFERENCIA","SUBMERCADO","PERIODO_COMERCIALIZACAO",
+          "DIA","HORA","PLD_HORA"}
+    if not reader.fieldnames or set(reader.fieldnames)!=cols:
+        raise ErroColetor("schema CCEE desconhecido")
+    dados=[]
+    for n,r in enumerate(reader):
+        if n>=75000:
+            raise ErroColetor("CCEE CSV excede limite de linhas")
+        try:
+            mes=str(r["MES_REFERENCIA"])
+            if not re.fullmatch(r"[0-9]{6}",mes):
+                raise ValueError("referencia")
+            ano,month=int(mes[:4]),int(mes[4:])
+            if not 2000<=ano<=date.today().year:
+                raise ValueError("ano invalido")
+            day,hour,periodo=[int(str(r[k])) for k in
+                           ("DIA","HORA","PERIODO_COMERCIALIZACAO")]
+            dt=date(ano,month,day)
+            if not 0<=hour<=23 or periodo!=(day-1)*24+hour+1:
+                raise ValueError("hora/periodo incompatível")
+            sub=str(r["SUBMERCADO"]).strip().upper()
+            if not re.fullmatch(r"[A-Z_/ -]{2,40}",sub):
+                raise ValueError("submercado invalido")
+            v=Decimal(str(r["PLD_HORA"]).strip())
+            if not v.is_finite() or not 0<=v<=100000:
+                raise ValueError("PLD fora de faixa")
+        except (ValueError,TypeError,InvalidOperation) as exc:
+            raise ErroColetor("linha CCEE invalida "+str(n+2)) from exc
+        dados.append({
+            "identidade":f"{mes}|{sub}|{day:02d}|{hour:02d}|{periodo}",
+            "referencia":dt.isoformat(),"competencia":mes,"natureza":"INFORMADO",
+            "valor":str(v),"unidade":"R$/MWh",
+            "campos":{"mes_referencia":mes,"submercado":sub,
+                "periodo_comercializacao":periodo,"dia":day,"hora":hour,
+                "pld_hora":str(v),"unidade_original":"R$/MWh",
+                "classificacao":"preco informado CCEE","fuso_utc_nao_inferido":True}
+        })
+    if not dados:
+        raise ErroColetor("CCEE CSV sem observacoes")
+    return dados
+
 def plano_ccee():
     return CCEE_PACKAGE
 
@@ -282,10 +334,11 @@ def executar_coleta(*, fonte, banco, raw_dir, executar=False,
             raise PermissionError("licenca CCEE nao comprovada para download neste coletor")
         url=_recurso_ccee(resources,recurso_id)
         raw,mime=_get(url,cliente=cliente,tipos={"text/csv","text/plain","application/octet-stream","application/csv"})
-        dados=[]
-        dataset="BR_CCEE_PLD_HORARIO_RAW"
-        estado="RAW_RECEIVED"
-        notas={"recurso_id":recurso_id,"hash_catalogo":hashlib.sha256(meta).hexdigest(),"licenca":licenca}
+        dados=normalizar_ccee_pld(raw)
+        dataset="BR_CCEE_PLD_HORARIO_2026"
+        estado="NORMALIZED"
+        notas={"recurso_id":recurso_id,"hash_catalogo":hashlib.sha256(meta).hexdigest(),
+               "licenca":licenca,"observacoes_parseadas":len(dados)}
     else:
         raise ErroColetor("fonte nao possui coleta homologada: "+str(fonte))
     saida=gravar_lote(banco=banco,diretorio_bruto=raw_dir,dataset_id=dataset,
