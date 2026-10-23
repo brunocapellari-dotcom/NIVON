@@ -255,6 +255,7 @@ def main(argv=None):
         p.add_argument("--input-tokens", type=int)
         p.add_argument("--output-tokens", type=int)
     sub.add_parser("report")
+    sub.add_parser("metrics")
     args = parser.parse_args(argv)
     try:
         with connect(args.db or default_db()) as db:
@@ -264,6 +265,11 @@ def main(argv=None):
                 result = {"task": claim(db, args.agent, args.minutes)}
             elif args.command == "report":
                 result = report(db)
+            elif args.command == "metrics":
+                data = report(db)
+                result = {"counts": data["counts"], "agents": data["agents"],
+                          "tokens_reported": data["tokens_reported"],
+                          "semantics": "Tokens medidos de tentativas, sem estimar custo ou economia."}
             else:
                 result = change(db, args.id, args.agent, args.command, args.note,
                                 args.input_tokens, args.output_tokens,
