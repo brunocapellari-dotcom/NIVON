@@ -62,7 +62,8 @@ class TestAutonomia(unittest.TestCase):
             ]
             with connect(dbpath) as db:
                 seed(db, jobs)
-            with patch.object(autonomia, "preflight"), \
+            with patch.object(autonomia, "may_begin", return_value=True), \
+                 patch.object(autonomia, "preflight"), \
                  patch.object(autonomia, "default_db", return_value=dbpath), \
                  patch.object(autonomia, "HOME", Path(tmp)), \
                  patch.object(autonomia, "refresh_plan", return_value={"added": 0}), \
@@ -85,7 +86,8 @@ class TestAutonomia(unittest.TestCase):
                            "preferred_agent": "claude"}])
             def fake(agent, task, **kwargs):
                 return ("quota", "limite da assinatura") if agent == "claude" else ("done", "completado")
-            with patch.object(autonomia, "preflight"), \
+            with patch.object(autonomia, "may_begin", return_value=True), \
+                 patch.object(autonomia, "preflight"), \
                  patch.object(autonomia, "default_db", return_value=dbpath), \
                  patch.object(autonomia, "HOME", Path(tmp)), \
                  patch.object(autonomia, "refresh_plan", return_value={"added": 0}), \
