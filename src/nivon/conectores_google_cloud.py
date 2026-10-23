@@ -202,10 +202,18 @@ def construir_jsonl(lote: dict, *, gcs_uri: str, destino: str | Path) -> dict:
                            "data_referencia":referencia,
                            "competencia":row.get("competencia") or referencia[:7],
                            "aprovado_para_publicacao":False})
-            conteudo=json.dumps(fields,sort_keys=True,ensure_ascii=False,
-                                 separators=(",",":"),allow_nan=False)
-            chave=identidade+"|"+referencia+"|"+conteudo
-            fingerprint=hashlib.sha256(chave.encode("utf-8")).hexdigest()
+            # O hash semantico EXCLUI data_coleta e localizacao GCS: rever
+            # a mesma publicacao amanha nao pode criar uma nova revisao.
+            semantico={
+                "identidade":identidade, "referencia":referencia,
+                "competencia":row.get("competencia") or referencia[:7],
+                "publicacao":row.get("publicacao"),"natureza":natureza,
+                "unidade":row.get("unidade"),"valor":row.get("valor"),
+                "campos":row.get("campos"),
+            }
+            serial=json.dumps(semantico,sort_keys=True,ensure_ascii=False,
+                              separators=(",",":"),allow_nan=False)
+            fingerprint=hashlib.sha256(serial.encode("utf-8")).hexdigest()
             if (identidade,fingerprint) in identidades:
                 raise ErroConectorCloud("chave duplicada no lote")
             identidades.add((identidade,fingerprint))
