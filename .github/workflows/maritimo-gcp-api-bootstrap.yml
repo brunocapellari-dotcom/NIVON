@@ -59,6 +59,6 @@ jobs:
           PY
              exit 4
           fi
-      - name: Preservar estado: nenhum Job ou Scheduler criado
+      - name: 'Preservar estado sem criar Job nem Scheduler'
         run: |
           echo 'NAO_FORAM_CRIADOS_JOBS_CLOUD_RUN_NEM_SCHEDULERS'
