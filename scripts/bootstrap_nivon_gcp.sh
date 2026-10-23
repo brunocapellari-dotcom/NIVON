@@ -14,6 +14,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MAIN_WORKFLOW="${REPO}/.github/workflows/nivon-gcp-migracao.yml@refs/heads/main"
 PTAX_WORKFLOW="${REPO}/.github/workflows/ptax-neon-private-export.yml@refs/heads/main"
 ZARC_WORKFLOW="${REPO}/.github/workflows/nivon-gcp-zarc.yml@refs/heads/main"
+PTAX_DIRECT_WORKFLOW="${REPO}/.github/workflows/ptax-bcb-direto-gcp.yml@refs/heads/main"
 
 command -v gcloud >/dev/null || { echo 'FALTA_GCLOUD'; exit 3; }
 command -v bq >/dev/null || { echo 'FALTA_BQ'; exit 3; }
@@ -52,7 +53,7 @@ if ! gcloud iam workload-identity-pools describe "$POOL" \
       --display-name="NIVON GitHub OIDC"
 fi
 
-CONDITION="assertion.repository=='${REPO}' && assertion.ref=='refs/heads/main' && (assertion.workflow_ref=='${MAIN_WORKFLOW}' || assertion.workflow_ref=='${PTAX_WORKFLOW}' || assertion.workflow_ref=='${ZARC_WORKFLOW}')"
+CONDITION="assertion.repository=='${REPO}' && assertion.ref=='refs/heads/main' && (assertion.workflow_ref=='${MAIN_WORKFLOW}' || assertion.workflow_ref=='${PTAX_WORKFLOW}' || assertion.workflow_ref=='${ZARC_WORKFLOW}' || assertion.workflow_ref=='${PTAX_DIRECT_WORKFLOW}')"
 if ! gcloud iam workload-identity-pools providers describe "$PROVIDER" \
         --workload-identity-pool="$POOL" --project="$PROJECT" \
         --location=global >/dev/null 2>&1; then

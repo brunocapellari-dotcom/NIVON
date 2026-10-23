@@ -99,3 +99,12 @@ jobs:
               cmd.append('--permitir-criar-tabela')
           subprocess.run(cmd,check=True)
           PY
+      - name: Publicar view de corredores somente quando previamente autorizada
+        if: ${{ vars.NIVON_CORREDORES_VIEW_APPROVED == 'true' }}
+        env:
+          PYTHONPATH: src
+          NIVON_PROJETO: ${{ vars.NIVON_BQ_PROJECT }}
+          NIVON_DATASET: ${{ vars.NIVON_BQ_DATASET }}
+        run: |
+          python -m nivon.corredores_bigquery \
+            --projeto "$NIVON_PROJETO" --dataset "$NIVON_DATASET" --live
