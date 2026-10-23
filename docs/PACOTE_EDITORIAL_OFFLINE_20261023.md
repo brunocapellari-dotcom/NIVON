@@ -54,3 +54,14 @@ o gate de reserva terá que impor/confirmar data de corte e expiração
 editorial com base em relógio e calendário confiáveis. Necessário
 também testar envio externo autorizado em ambiente homologado e
 backup/restauração de infraestrutura persistente.
+
+## Leitura explícita de validade editorial
+
+O preparador offline e o comando CLI agora expõem
+vigencia.estado_temporal e vigencia.valido_ate_utc para cada dossiê,
+inclusive no modo --lote. Os estados DENTRO_DO_PRAZO, EDICAO_FUTURA e
+EDICAO_VENCIDA são diagnósticos do relógio atual e do limite derivado
+da notícia mais antiga. Mesmo um status DENTRO_DO_PRAZO **não permite
+envio**: envio_habilitado continua sempre false e faltam homologações.
+O status PREVALIDADO_OFFLINE continua significando apenas que a edição
+passou no preflight histórico, não que possa ser publicada hoje.

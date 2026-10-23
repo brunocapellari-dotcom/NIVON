@@ -206,6 +206,32 @@ class TestDossieEditorialOfflineE2E(unittest.TestCase):
         self.assertEqual(res["resultados"][1]["estado"], "EDICAO_REGISTRADA_OFFLINE_SEM_ENVIO")
         self.assertEqual(self.linhas(), 1)
 
+    def test_status_temporal_independe_de_validacao_historica(self):
+        from unittest.mock import patch
+        with patch("nivon.pacote_editorial_offline._relogio_avaliacao_utc",
+                   return_value=datetime.fromisoformat("2026-10-20T15:01:00-03:00")):
+            ativo = avaliar_pacote_offline(self.pacote)
+        self.assertEqual(ativo["estado"], "PREVALIDADO_OFFLINE")
+        self.assertEqual(ativo["vigencia"]["estado_temporal"], "DENTRO_DO_PRAZO")
+        with patch("nivon.pacote_editorial_offline._relogio_avaliacao_utc",
+                   return_value=datetime.fromisoformat("2026-10-21T12:00:00-03:00")):
+            velho = avaliar_pacote_offline(self.pacote)
+        self.assertEqual(velho["estado"], "PREVALIDADO_OFFLINE")
+        self.assertEqual(velho["vigencia"]["estado_temporal"], "EDICAO_VENCIDA")
+        self.assertFalse(velho["envio_habilitado"])
+
+    def test_cli_lote_mostra_prazo_sem_expor_destinatario(self):
+        entrada=Path(self.temp.name)/"lote_prazos.json"
+        entrada.write_text(json.dumps([self.pacote]), encoding="utf-8")
+        result=subprocess.run(
+            [sys.executable,"scripts/nivon_preparar_pacote.py",str(entrada),"--lote"],
+            capture_output=True,text=True,timeout=12)
+        self.assertEqual(result.returncode,0,result.stderr)
+        d=json.loads(result.stdout)
+        self.assertEqual(d["resultados"][0]["vigencia"]["estado_temporal"],"EDICAO_VENCIDA")
+        self.assertIsNotNone(d["resultados"][0]["vigencia"]["valido_ate_utc"])
+        self.assertNotIn(self.pacote["destinatario"],result.stdout)
+
     def test_lote_preflight_separa_invalidos_sem_banco(self):
         from nivon.pacote_editorial_offline import avaliar_lote_offline
         invalido = copy.deepcopy(self.pacote)

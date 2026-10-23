@@ -30,6 +30,7 @@ def main(argv=None) -> int:
             "estado": resultado["estado"], "bloqueios": pre["bloqueios"][:40],
             "lacunas": pre["lacunas"][:40],
             "quantidades": pre.get("quantidades", {}),
+            "vigencia": resultado["vigencia"],
             "envio_habilitado": False,
             "nota": "Sem verificação de emissores reais ou autorização de envio",
         }, ensure_ascii=False, sort_keys=True))

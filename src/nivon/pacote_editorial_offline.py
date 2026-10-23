@@ -4,7 +4,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 
 from .autorizacao_envio import verificar_autorizacao
 from .editorial_preflight import avaliar_previa_editorial
@@ -15,6 +15,7 @@ from .outbox_whatsapp import (
 )
 from .provas_externas_envio import verificar_pacote_externo
 from .registry_emissores import emissores_confiaveis
+from .vigencia_editorial import calcular_vigencia_editorial
 
 
 CAMPOS = frozenset({
@@ -26,6 +27,10 @@ CAMPOS = frozenset({
 
 class ErroPacoteOffline(ValueError):
     pass
+
+
+def _relogio_avaliacao_utc() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 def avaliar_pacote_offline(pacote: dict) -> dict:
@@ -42,8 +47,19 @@ def avaliar_pacote_offline(pacote: dict) -> dict:
         edicao=edicao, gerado_em=gerado_em, noticias=pacote["noticias"],
         cotacoes=pacote["cotacoes"], fretes=pacote["fretes"],
     )
+    vigencia = {"estado_temporal": "NAO_AVALIADA", "valido_ate_utc": None}
+    if prova["apto_revisao"]:
+        calculada = calcular_vigencia_editorial(
+            gerado_em, pacote["noticias"], prova["sha256_texto"])
+        momento = _relogio_avaliacao_utc().astimezone(timezone.utc)
+        inicio = datetime.fromisoformat(calculada["gerado_em_utc"])
+        fim = datetime.fromisoformat(calculada["valido_ate_utc"])
+        temporal = ("EDICAO_FUTURA" if momento < inicio else
+                    "EDICAO_VENCIDA" if momento >= fim else "DENTRO_DO_PRAZO")
+        vigencia = {"estado_temporal": temporal,
+                    "valido_ate_utc": calculada["valido_ate_utc"]}
     return {"estado": "PREVALIDADO_OFFLINE" if prova["apto_revisao"]
-            else "BLOQUEADO_PREFLIGHT",
+            else "BLOQUEADO_PREFLIGHT", "vigencia": vigencia,
             "preflight": prova, "envio_habilitado": False,
             "nota": "Pré-validação não prova licença nem autoriza disparo"}
 
@@ -126,10 +142,12 @@ def avaliar_lote_offline(pacotes: list[dict]) -> dict:
             resultado = avaliar_pacote_offline(pacote)
             estado = resultado["estado"]
             bloqueios = resultado["preflight"]["bloqueios"][:20]
+            vigencia = resultado["vigencia"]
         except (ValueError, TypeError, KeyError):
             estado, bloqueios = "PACOTE_INVALIDO", ["CONTRATO_INCOMPLETO"]
+            vigencia = {"estado_temporal": "NAO_AVALIADA", "valido_ate_utc": None}
         resultados.append({"indice": indice, "estado": estado,
-                           "bloqueios": bloqueios})
+                           "bloqueios": bloqueios, "vigencia": vigencia})
     return {
         "estado": "LOTE_VALIDADO_OFFLINE",
         "total": len(resultados),
