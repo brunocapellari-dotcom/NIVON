@@ -1,18 +1,26 @@
-"""SONDAGEM TEMPORARIA (remover apos coletar resultado de CI).
-Nenhum payload e escrito, nao publica dado e nao afirma homologacao.
+"""Sondagem temporaria: expor APENAS dimensoes/codigos, nunca valores V.
+Remover apos verificacao da resposta oficial no runner GitHub Actions.
 """
 import json
 import os
 import unittest
-from nivon.pecuaria_sidra_sondagem import sondar_tres_cadeias
+from nivon.pecuaria_sidra_sondagem import _requisicao_https, _URL_VALORES
 
-class TestSondagemPontualSIDRA(unittest.TestCase):
-    def test_acesso_https_do_runner_da_pr22(self):
+class TestSondagemEsquemaSIDRA(unittest.TestCase):
+    def test_cabecalhos_reais_tres_tabelas(self):
         if (os.getenv("GITHUB_HEAD_REF") != "feat/pecuaria-inteligencia-20261020"
             or os.getenv("GITHUB_REPOSITORY") != "brunocapellari-dotcom/NIVON"):
-            self.skipTest("somente uma sondagem da branch pecuaria no CI")
-        diag = sondar_tres_cadeias(periodo="202602", rede=True, timeout=4)
-        print("DIAGNOSTICO_PONTUAL_SIDRA=" + json.dumps(
-            diag, sort_keys=True, ensure_ascii=False), flush=True)
-        self.assertEqual(len(diag["cadeias"]), 3)
-        self.assertTrue(all(not x["homologado"] for x in diag["cadeias"]))
+            self.skipTest("teste pontual da branch pecuaria")
+        for esp, tabela in (("BOVINO","1092"),("SUINO","1093"),("FRANGO","1094")):
+            url = _URL_VALORES.format(tabela,"202602")
+            res = _requisicao_https(url,timeout=7,limite=2_000_000)
+            self.assertEqual(res["status_http"],200)
+            doc=json.loads(res["corpo"].decode("utf-8-sig"))
+            self.assertGreaterEqual(len(doc),2)
+            dados = []
+            for row in doc[1:]:
+                dados.append({k:v for k,v in row.items() if k not in ("V","MN","D1N","D2N")})
+            header={k:v for k,v in doc[0].items() if k not in ("V","MN")}
+            print("ESQUEMA_SIDRA_VERIFICADO="+json.dumps(
+                {"especie":esp,"tabela":tabela,"cabecalho":header,
+                 "amostras_dimensoes_sem_valores":dados},ensure_ascii=False,sort_keys=True),flush=True)
