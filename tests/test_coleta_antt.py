@@ -72,6 +72,48 @@ class TestCatalogo(unittest.TestCase):
                 with self.assertRaises(ErroTransporte):
                     _ler_catalogo(catalogo(url=url))
 
+    def test_ckan_retentativa_transitoria_limitada(self):
+        class Intermitente:
+            def __init__(self):
+                self.chamadas = 0
+            def open(self, req, timeout):
+                self.chamadas += 1
+                if self.chamadas < 3:
+                    return Resposta(b"<html>temporarily unavailable</html>")
+                return Resposta(catalogo())
+        cliente = Intermitente()
+        pausas = []
+        dados = catalogo_antt(habilitar_rede=True, transporte=cliente,
+                              dormir=pausas.append)
+        self.assertEqual(list(dados), [2026])
+        self.assertEqual(pausas, [1, 2])
+        self.assertEqual(cliente.chamadas, 3)
+
+    def test_acesso_bloqueado_nao_faz_retry(self):
+        from urllib.error import HTTPError
+        class Bloqueado:
+            chamadas = 0
+            def open(self, req, timeout):
+                self.chamadas += 1
+                raise HTTPError(req.full_url, 403, "Forbidden", {}, None)
+        cliente = Bloqueado()
+        with self.assertRaisesRegex(ErroTransporte, "ANTT_ACESSO_BLOQUEADO"):
+            catalogo_antt(habilitar_rede=True, transporte=cliente,
+                          dormir=lambda x: self.fail("nao pode repetir 403"))
+        self.assertEqual(cliente.chamadas, 1)
+
+    def test_ckan_persistente_falha_com_teto(self):
+        class Indisponivel:
+            chamadas = 0
+            def open(self, req, timeout):
+                self.chamadas += 1
+                return Resposta(b"<html>indisponivel</html>")
+        cliente = Indisponivel()
+        with self.assertRaisesRegex(ErroTransporte, "catalogo CKAN invalido"):
+            catalogo_antt(habilitar_rede=True, transporte=cliente,
+                          dormir=lambda _: None, max_tentativas=3)
+        self.assertEqual(cliente.chamadas, 3)
+
     def test_rejeita_ano_duplicado(self):
         c = json.loads(catalogo())
         c["result"]["resources"].append(dict(c["result"]["resources"][0]))
