@@ -26,6 +26,12 @@ class TestANTT(unittest.TestCase):
         self.assertFalse(r[0]["unidade_tku_confirmada"])
         self.assertEqual(r[0]["uf_origem"], "MT")
 
+    def test_formatacao_numerica_arquivo_oficial_2026(self):
+        raw = (COLUNAS + AMOSTRA.replace("1.234,50", "33.420").replace("987654,00", "28.774.620")).encode()
+        linhas, _ = interpretar_csv_antt(raw, ano=2026, coleta_utc="2026-10-22T12:00:00Z")
+        self.assertEqual(linhas[0]["toneladas_uteis"], "33420")
+        self.assertEqual(linhas[0]["tku_raw"], "28774620")
+
     def test_formato_invalido_bloqueia(self):
         casos = [
             COLUNAS + AMOSTRA.replace("02/2026", "02/2025"),
