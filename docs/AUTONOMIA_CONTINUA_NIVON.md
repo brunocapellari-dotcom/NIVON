@@ -165,3 +165,36 @@ A CI testa encerramento real de subprocessos locais e simula STOP durante a inic
 ## Painel Dueto local
 
 Os comandos `bash scripts/nivon-autonomo.sh dueto` e `bash scripts/nivon-autonomo.sh painel` consultam o ledger local e apresentam estado Claude/Codex, tarefas, transferências e consumo realmente observado. **Não iniciam modelos.** O HTML é uma fotografia local privada em `.nivon-local/painel-dueto.html` (0600), sem servidor, sem JavaScript nem logs/segredos. Consulte [DUETO_DESENVOLVIMENTO_NIVON.md](DUETO_DESENVOLVIMENTO_NIVON.md). A geração pode ocorrer de dia, mas o trabalho autônomo das CLIs continua restrito ao horário noturno.
+
+
+## Pré-homologação de um comando, sem usar modelos
+
+A integração com `main` está no PR #121. **Este procedimento é para o host local, não evidência de que Claude e Codex já foram autenticados nele.**
+
+O supervisor prefere uma imagem reproduzível que inclui PyArrow, para que testes Parquet não sejam omitidos:
+
+```bash
+# Uma vez, no host, após instalar Docker e revisar a origem da imagem:
+docker build -f infra/docker/Dockerfile.agentes -t nivon-agentes:test-py311 infra/docker
+
+# No clone atualizado da branch da PR:
+bash scripts/nivon-autonomo.sh preflight
+```
+
+O build é **ação explícita do operador**, pode baixar imagem base e wheel públicos e ocupar disco/rede; não é iniciado pelo supervisor nem incluído no comando noturno. O `preflight` verifica instalação, autenticação, flags e executa análise estrutural + suíte Python em Docker sem rede, sem escrita na worktree, sem chamadas a modelos. Falhas, testes omitidos ou falta de login impedem prontidão.
+
+`doctor` aceita flags documentadas do Claude em versões compatíveis mesmo que o `--help` omita opções, conforme ressalva oficial. O Codex é verificado por `codex --help` e `codex exec --help`.
+
+Depois de passar no preflight, à noite (Mato Grosso):
+
+```bash
+bash scripts/nivon-autonomo.sh night-status
+bash scripts/nivon-autonomo.sh plan
+bash scripts/nivon-autonomo.sh
+bash scripts/nivon-autonomo.sh status
+bash scripts/nivon-autonomo.sh painel
+```
+
+O comando autônomo é restrito a 20h–6h em America/Cuiaba, com até 8 tarefas e 120 minutos por ciclo. Ao final, revisar commits em `autonomo/integracao`. O supervisor repete o teste completo do Docker em seu preflight, mesmo quando iniciado diretamente, impedindo execuções com contêiner inadequado.
+
+Ainda não há piloto real com ambas as assinaturas autenticadas. Segredos, arquivos privados e logs da assinatura não devem ser publicados no GitHub.
