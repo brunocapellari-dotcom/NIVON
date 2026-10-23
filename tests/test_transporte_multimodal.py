@@ -32,12 +32,18 @@ class TestANTT(unittest.TestCase):
         self.assertEqual(linhas[0]["toneladas_uteis"], "33420")
         self.assertEqual(linhas[0]["tku_raw"], "28774620")
 
+    def test_divergencia_tu_tku_e_preservada_com_alerta(self):
+        raw = (COLUNAS + AMOSTRA.replace("987654,00", "0")).encode()
+        rows, _ = interpretar_csv_antt(raw, ano=2026,
+            coleta_utc="2026-10-22T12:00:00Z")
+        self.assertTrue(rows[0]["anomalia_tu_tku"])
+        self.assertEqual(rows[0]["tku_raw"], "0")
+
     def test_formato_invalido_bloqueia(self):
         casos = [
             COLUNAS + AMOSTRA.replace("02/2026", "02/2025"),
             COLUNAS + AMOSTRA.replace("1.234,50", "-10"),
             COLUNAS + AMOSTRA.replace("1.234,50", "NaN"),
-            COLUNAS + AMOSTRA.replace("987654,00", "0"),
             COLUNAS.replace("TKU", "TKUX") + AMOSTRA,
             COLUNAS + AMOSTRA.replace(";MT;", ";;"),
         ]
