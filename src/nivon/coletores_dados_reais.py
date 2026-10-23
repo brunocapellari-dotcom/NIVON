@@ -293,6 +293,25 @@ def _recurso_ccee(resources, resource_id):
         raise ErroColetor("recurso fora da origem autorizada")
     return url
 
+def descobrir_recurso_ccee_ano(ano, *,cliente=None):
+    """Devolve somente UUID de CSV anual anunciado pelo CKAN oficial CCEE."""
+    if type(ano) is not int or not 2021<=ano<=date.today().year:
+        raise ErroColetor("ano PLD fora da serie horaria")
+    raw,_mime=_get(CCEE_PACKAGE,cliente=cliente,max_bytes=1_500_000,
+        tipos={"application/json","text/json"})
+    licenca,resources=_parse_ckan(raw)
+    if licenca not in {"cc-by","cc-by-4.0","cc-by-3.0","cc-by-2.0"}:
+        raise PermissionError("licenca CCEE insuficiente")
+    name=f"pld_horario_{ano}"
+    candidatos=[r for r in resources if isinstance(r,dict) and
+        str(r.get("name","")).strip().lower()==name and
+        str(r.get("format","")).strip().upper()=="CSV"]
+    if len(candidatos)!=1:
+        raise ErroColetor("recurso anual CCEE inexistente/duplicado")
+    uid=candidatos[0].get("id")
+    _recurso_ccee(resources,uid)
+    return uid
+
 def executar_coleta(*, fonte, banco, raw_dir, executar=False,
                      inicio=None, fim=None, safra=None, recurso_id=None,
                      cliente=None, instante=None):
