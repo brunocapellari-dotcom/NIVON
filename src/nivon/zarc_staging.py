@@ -172,12 +172,13 @@ def _registro(row,numero,sha,meta):
 def importar_zarc_local(db: Connection,catalogo: dict,arquivo, *,
                         coletado_em: str,origem="SINTETICO",
                         autorizacoes=frozenset(),evidencia_direitos=None,
-                        publicacao=None,max_linhas=MAX_LINHAS):
+                        publicacao=None,max_linhas=MAX_LINHAS,
+                        licenca_manual=None):
     """Ingestão atômica, local, NÃO agendada; reais exigem gates do ledger.
 
-    A função não abre rede e não envia dados para nuvem. Arquivos reais NÃO
-    podem ser gravados enquanto enabled/collection_authorized forem false.
-    Uso com fixtures SINTETICAS para construir/testar armazenamento.
+    A função não abre rede nem envia dados para nuvem. Dados reais exigem
+    autorização do catálogo OU licença manual ZARC CC-BY emitida com prova
+    CKAN e sem habilitar cron/publicação. O registro permanece quarentena.
     """
     if origem not in ("SINTETICO","REAL_AUTORIZADO"):
         raise ErroStagingZarc("ORIGEM_INVALIDA")
@@ -197,7 +198,8 @@ def importar_zarc_local(db: Connection,catalogo: dict,arquivo, *,
             mime="text/csv",schema_versao=SCHEMA,coletado_em=coleta,
             competencia="2026/2027",referencia=None,publicacao=publicacao,
             tipo=origem,autorizacoes=autorizacoes,
-            evidencia_direitos=evidencia_direitos)
+            evidencia_direitos=evidencia_direitos,
+            licenca_manual=licenca_manual)
         for numero,row in _linhas_csv(arquivo,max_linhas=max_linhas):
             contador+=1
             meta=_identificar_mt(row)
