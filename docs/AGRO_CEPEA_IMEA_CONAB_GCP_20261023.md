@@ -116,3 +116,44 @@ Fixtures determinísticas no workflow
 `testes-acessos-isolados.yml`. Tests:
 `test_agro_origem_gcp.py`, `test_cepea_web_primario.py`,
 `test_imea_lotes.py` e pipeline GCS/BigQuery existente.
+
+
+## Atualização: staging BigQuery distinto e incremental
+
+**CONAB e IMEA não ficam restritos ao GCS:** o código também permite gravar
+observações não canônicas em uma tabela própria `agro_publicacoes_staging`
+dentro do dataset privado autorizado, desde que a tabela tenha sido criada e
+que o gate de escrita de staging tenha sido aprovado.
+
+- DDL: `sql/bigquery/003_agro_publicacoes_staging.sql`. Campos
+  `data_referencia DATE NULL`, `data_publicacao DATE`,
+  `publicacao_bruta STRING`, `referencia_tecnica STRING`,
+  `data_coleta TIMESTAMP`; partição por `DATE(data_coleta)`.
+- `agro_staging_bigquery.py`: valida dados do SQLite em `QUARANTINED`,
+  exporta JSONL privado, salva stage por SHA-256 no GCS, verifica tabela
+  existente e usa MERGE idempotente com filtro da partição.
+- Variável extra para habilitar: `NIVON_AGRO_STAGING_BIGQUERY_APPROVED=true`.
+  Essa flag exige que a tabela já exista com schema e IAM corretos e que o
+  responsável tenha revisado custos e condições de uso.
+- Exemplo de execução autorizada:
+  ```bash
+  python scripts/coletar_agro_google_cloud.py --fonte IMEA --executar --gcs --staging-bigquery
+  python scripts/coletar_agro_google_cloud.py --fonte CONAB --executar --gcs --staging-bigquery
+  ```
+- O workflow agendado só acrescenta `--staging-bigquery` se a variável
+  estiver ativa e a tabela for confirmada. A tabela
+  `nivon_observacoes` **não recebe IMEA/CONAB** enquanto faltarem referências
+  de período homologadas.
+
+### Incremental verdadeiro
+Os três conectores retornam os IDs SHA dos snapshots adquiridos na execução;
+o RAW GCS e as exportações BQ usam exatamente esses IDs. Não reenviam a
+base SQLite inteira a cada execução. Esse comportamento é importante quando
+a base acumula mais de 200 snapshots e permite reprocessamento histórico em
+lotes separados. Quando um arquivo novo não contém nenhuma observação inédita
+associada ao snapshot, o sistema arquiva o RAW e registra
+`GCS_RAW_SEM_DELTA_ANALITICO`, sem criar carga BigQuery vazia.
+
+**Ainda pendente de confirmação real:** existência da tabela staging,
+escrita no bucket, execução de MERGE, leitura posterior, limites/alertas
+de cobrança e comparação efetiva com dados Neon em duas datas diferentes.
