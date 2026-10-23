@@ -236,3 +236,72 @@ def recuperar_pacote_sidra_offline(*, banco, id_captura: int):
         "status": estado, "dados_reais_verificados": False,
         "timestamps_autenticados": False,
     }
+
+
+def arquivar_lote_sidra_atomico(*, banco, pacotes, status_fonte, operacoes_autorizadas):
+    """Importa ate 24 capturas na MESMA transacao SQLite.
+
+    Falha em uma captura reverte todas as insercoes do lote. A criacao da
+    estrutura SQLite, se necessaria, pode preceder a transacao de registros.
+    """
+    validar_fonte(status=status_fonte, operacao="LEITURA",
+                  operacoes_autorizadas=operacoes_autorizadas)
+    if "ARMAZENAMENTO" not in operacoes_autorizadas:
+        raise PermissionError("ARMAZENAMENTO de capturas nao autorizado")
+    if not isinstance(pacotes, (list, tuple)) or not 1 <= len(pacotes) <= 24:
+        raise DadoInvalido("lote SIDRA deve ter 1 a 24 capturas")
+    campos = {"especie", "tabela_sidra", "url_valores", "url_metadados",
+              "publicacao_declarada", "coleta_declarada",
+              "bruto_valores", "bruto_metadados"}
+    preparados, chaves = [], {}
+    for pacote in pacotes:
+        if not isinstance(pacote, dict) or set(pacote) != campos:
+            raise DadoInvalido("captura do lote com contrato incompleto")
+        especie, tabela = pacote["especie"], pacote["tabela_sidra"]
+        if TABELAS_SIDRA.get(especie) != tabela:
+            raise DadoInvalido("especie/tabela divergentes no lote")
+        url_v = _validar_url(pacote["url_valores"], tabela=tabela, metadados=False)
+        url_m = _validar_url(pacote["url_metadados"], tabela=tabela, metadados=True)
+        pub = _instante(pacote["publicacao_declarada"], "publicacao")
+        col = _instante(pacote["coleta_declarada"], "coleta")
+        if pub > col:
+            raise DadoInvalido("publicacao posterior a coleta")
+        hv = _conteudo(pacote["bruto_valores"], tipo="valores",
+                       max_bytes=4_000_000, tabela=tabela)
+        hm = _conteudo(pacote["bruto_metadados"], tipo="metadados",
+                       max_bytes=1_000_000, tabela=tabela)
+        chave = (especie, tabela, url_v, url_m, col.isoformat())
+        conteudo = (pub.isoformat(), hv, hm)
+        if chave in chaves and chaves[chave] != conteudo:
+            raise DadoInvalido("lote contem captura conflitante")
+        chaves[chave] = conteudo
+        preparados.append((chave, conteudo, pacote))
+    identificadores = []
+    with closing(_abrir(banco)) as cx:
+        with cx:
+            cx.execute("BEGIN IMMEDIATE")
+            consulta = """SELECT id,publicacao_declarada,sha256_valores,
+                                 sha256_metadados FROM capturas_sidra
+                          WHERE especie=? AND tabela_sidra=? AND url_valores=?
+                            AND url_metadados=? AND coleta_declarada=?"""
+            for chave, conteudo, pacote in preparados:
+                antigo = cx.execute(consulta, chave).fetchone()
+                if antigo and tuple(antigo[1:]) != conteudo:
+                    raise DadoInvalido("conflito com captura preexistente; lote revertido")
+                if not antigo:
+                    cx.execute("""INSERT INTO capturas_sidra (
+                        especie,tabela_sidra,url_valores,url_metadados,
+                        coleta_declarada,publicacao_declarada,
+                        sha256_valores,sha256_metadados,bruto_valores,
+                        bruto_metadados,status)
+                        VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+                        (*chave, *conteudo, pacote["bruto_valores"],
+                         pacote["bruto_metadados"], "ARQUIVADO_NAO_HOMOLOGADO"))
+                registrado = cx.execute(consulta, chave).fetchone()
+                if not registrado or tuple(registrado[1:]) != conteudo:
+                    raise DadoInvalido("conflito concorrente; lote revertido")
+                identificadores.append(registrado[0])
+    return {"ids": identificadores, "n_entradas": len(pacotes),
+            "n_ids_unicos": len(set(identificadores)),
+            "status": "ARQUIVADO_NAO_HOMOLOGADO",
+            "lote_transacional": True, "dados_reais_verificados": False}
