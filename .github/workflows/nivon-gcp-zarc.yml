@@ -8,7 +8,6 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
-  id-token: write
 concurrency:
   group: nivon-gcp-zarc
   cancel-in-progress: false
@@ -25,8 +24,11 @@ jobs:
           python-version: '3.11'
       - run: python -m unittest discover -s tests -p 'test_zarc_neon_bigquery.py' -v
   migrar:
-    if: ${{ github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' }}
     needs: testar
+    permissions:
+      contents: read
+      id-token: write
     runs-on: ubuntu-latest
     timeout-minutes: 24
     env:
