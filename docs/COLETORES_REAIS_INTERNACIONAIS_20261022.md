@@ -1,7 +1,7 @@
 # NIVON — Coletores reais: Argentina, Canada e CCEE (2026-10-22)
 
 ## Entregues
-- 208 fontes e 267 datasets no inventario canônico, rotas versionadas e 10 bibliotecas registradas (sem instalação).
+- 209 fontes e 279 datasets no inventario canônico, rotas versionadas e 10 bibliotecas registradas (sem instalação).
 - Cliente **Argentina Series API** usando identificador oficial documentado `168.1_T_CAMBIOR_D_0_0_26`, data de início/fim estrita, número de observações máximo e parsing de datas/valores. Unidade ainda provisória; observações ficam INTERNAS e NÃO publicáveis até validação da meta da série.
 - Cliente **Canadian Grain Commission** para CSV acumulado da safra `2026-27` e outras safras com padrão `YYYY-YY`, sem presumir coluna e conversão monetária. Armazena RAW, registra cabeçalho amostral. Backfill histórico específico ainda não implementado.
 - Cliente **CCEE** CKAN `pld_horario` consulta pacote, valida licença declarada, identifica recurso UUID CSV e baixa SOMENTE no domínio do provedor, seguindo contrato estrito. Estrutura de PLD não presumida: RAW ainda precisa de parser tipado e unidade por período.
@@ -48,3 +48,27 @@ print(exportar_jsonl(banco="data/nivon/fontes_reais.sqlite", destino="data/nivon
 - API argentina: https://datosgobar.github.io/series-tiempo-ar-api-english/quick_start/
 - Canada CSV: https://grainscanada.gc.ca/en/grain-research/statistics/grain-statistics-weekly/
 - CCEE CKAN: https://dadosabertos.ccee.org.br/dataset/pld_horario
+
+## Evidencia HTTP real em GitHub Actions, 23/10/2026 UTC
+- BCRA v4 /Monetarias/1: 4 observações históricas reais, gravadas em stage SQLite efêmero da CI. Estado: NORMALIZED, unidade aguardando metodologia BCRA.
+- granos.ar /pizarra: 10 observações reais de preços de soja, milho e demais grãos, com moedas ARS/t e USD/t, natureza INFORMADO e fonte SECUNDÁRIA. /status também respondeu.
+- Canadian Grain Commission: arquivo CSV de safra obtido e RAW registrado no SQLite da CI; os campos ainda não têm parser canônico.
+- CCEE PLD: CKAN oficial acessado, licença declarada cc-by-4.0, recursos CSV identificados, sem download de serie/homologação do esquema.
+- Argentina Series API: HTTP 200 mas 0 linhas na janela setembro/2026; corrigido o estado para RAW_RECEIVED, sem fingir atualização de preço.
+
+## CLI de fontes adicionais
+```bash
+python -m nivon.coletor_bcra_v4 --inicio 2026-09-01 --fim 2026-09-05 --executar
+python -m nivon.coletor_granos_ar --endpoint pizarra --executar
+python -m nivon.coletor_granos_ar --endpoint pizarra/historico --dias 30 --executar
+python scripts/operar_fontes_reais.py --canada
+```
+
+## BigQuery e agendamento
+- Contrato DDL: `sql/bigquery/002_observacoes_fontes_reais.sql`.
+- Carga com deduplicação/revisões: `src/nivon/carga_bigquery_fontes.py`, extra opcional `pip install -e '.[gcp]'`.
+- Agenda proposta em `.github/workflows/coleta-recorrente-fontes.yml`; **não executa na main até merge homologado**.
+- Google Cloud projeto NIVON `nivon-data`: identificado, mas dataset BigQuery, tabela, billing e Workload Identity para este repositório não verificados/criados. A conta da AI-Holding NÃO serve para acesso automático ao NIVON.
+- Política R$0: workload de BigQuery só pode autenticar se `NIVON_ZERO_COST_BQ_APPROVED=true` e existir provider OIDC/service account/projeto/dataset. Sem esses gates a ação registra explicitamente histórico efêmero e não publica na nuvem.
+- Nenhuma credencial, série privada, preço proprietário ou dump bruto é publicado no GitHub.
+- Nunca afirmar que o fato de haver workflow agendado em branch torna o serviço ativo.
