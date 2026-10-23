@@ -15,6 +15,10 @@ import re
 from .motores import DadoInvalido, validar_fonte
 
 UNIDADES = {
+    "BOVINO": {
+        "ABATE_CABECAS": "CABECAS", "PESO_CARCACAS_KG": "KG",
+        "REBANHO_BOVINO_CABECAS": "CABECAS",
+    },
     "CANA": {
         "AREA_HA": "HA", "PRODUCAO_CANA_T": "T",
         "PRODUTIVIDADE_KG_HA": "KG_HA", "MOAGEM_CANA_T": "T",
@@ -39,11 +43,11 @@ UNIDADES = {
 FORMATOS = {
     "ANO_CIVIL": r"20\d{2}",
     "SAFRA": r"20\d{2}/20\d{2}",
-    "TRIMESTRE": r"20\d{2}-T[1-4]",
+    "TRIMESTRE": r"(?:19|20)\d{2}-T[1-4]",
     "MES": r"20\d{2}-(?:0[1-9]|1[0-2])",
 }
 CLASSES = frozenset({"OBSERVADO", "INFORMADO", "ESTIMADO", "PROJETADO", "INFERIDO"})
-TABELAS_SIDRA = {"FRANGO": "1094", "SUINO": "1093"}
+TABELAS_SIDRA = {"BOVINO": "1092", "FRANGO": "1094", "SUINO": "1093"}
 UFS = frozenset("AC AL AM AP BA CE DF ES GO MA MG MS MT PA PB PE PI PR RJ RN RO RR RS SC SE SP TO BR".split())
 
 
@@ -157,7 +161,7 @@ def normalizar_abate_sidra_offline(
     de validação em cada extração.
     """
     if TABELAS_SIDRA.get(produto) != tabela_sidra:
-        raise DadoInvalido("SIDRA 1093 para suínos e 1094 para frangos")
+        raise DadoInvalido("SIDRA 1092 bovinos, 1093 suinos, 1094 frangos")
     if contrato.get("fonte_id") != "IBGE" or contrato.get("calendario") != "TRIMESTRE":
         raise DadoInvalido("abate IBGE deve manter competência trimestral")
     return normalizar_linhas_offline(linhas, produto=produto, **contrato)
@@ -195,7 +199,7 @@ def analisar_cadeia(observacoes: Iterable[ObservacaoCadeia]) -> dict:
             raise DadoInvalido("produção zero não permite razão moagem/producao")
         derivados["moagem_producao_indicativa"] = dados["MOAGEM_CANA_T"] / prod
         derivados["ressalva_moagem"] = "VERIFICAR_GEOGRAFIA_E_CALENDARIO_DAS_FONTES"
-    if a.produto in ("FRANGO", "SUINO") and "ABATE_CABECAS" in dados and "PESO_CARCACAS_KG" in dados:
+    if a.produto in ("BOVINO", "FRANGO", "SUINO") and "ABATE_CABECAS" in dados and "PESO_CARCACAS_KG" in dados:
         n = dados["ABATE_CABECAS"]
         if n == 0:
             raise DadoInvalido("abate zero não permite peso médio")
