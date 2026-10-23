@@ -882,7 +882,9 @@
         "nivon.fretes_entrada_jsonl:carregar_ofertas_frete_jsonl",
         "nivon.fretes_ofertas_store:inicializar_store_ofertas_frete",
         "nivon.fretes_ofertas_store:anexar_lote_ofertas_frete",
-        "nivon.fretes_ofertas_store:verificar_store_ofertas_frete"
+        "nivon.fretes_ofertas_store:verificar_store_ofertas_frete",
+        "nivon.fretes_ingestao_atestada:ingerir_lote_whatsapp_atestado",
+        "nivon.fretes_baseline_shadow:preparar_intencoes_baseline_frete"
       ],
       "data_dependencies": [
         "FRETES_WHATSAPP_AUTORIZADO",
