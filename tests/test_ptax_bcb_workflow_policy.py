@@ -61,5 +61,18 @@ class PoliticaEscritorUnicoPTAX(unittest.TestCase):
                 self.assertIn("vars.NIVON_GCP_PROVIDER", workflow)
                 self.assertNotIn("NIVON_GCP_WIF_PROVIDER", workflow)
 
+    def test_zarc_sem_escrita_por_push_e_com_escopo_oitc_minimo(self):
+        zarc = (ROOT/".github/workflows/nivon-gcp-zarc.yml").read_text(encoding="utf-8")
+        offline = zarc.split("  testar:",1)[1].split("  migrar:",1)[0]
+        job = zarc.split("  migrar:",1)[1]
+        condition = job.split("    needs:",1)[0]
+        self.assertIn("github.ref == 'refs/heads/main'",condition)
+        self.assertIn("github.event_name == 'workflow_dispatch'",condition)
+        self.assertNotIn("id-token: write",offline)
+        self.assertIn("      id-token: write",job)
+        self.assertIn("NIVON_GCP_PROVIDER",job)
+        self.assertIn("NIVON_GCP_COST_REVIEWED",job)
+        self.assertIn("NIVON_GCP_WRITE_APPROVED",job)
+
 if __name__=="__main__":
     unittest.main()
