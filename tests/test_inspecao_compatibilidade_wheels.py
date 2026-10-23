@@ -131,6 +131,36 @@ class CompatibilidadeWheelE2ETests(unittest.TestCase):
         self.assertEqual(report["packages"][0]["wheel_metadata_status"],
                          "WHEEL_COMPATIBILITY_UNCERTAIN")
 
+    def test_glibc228_profile_accepts_modern_manylinux_metadata(self):
+        data = fixture()
+        data["packages"][0]["release_files"][0]["filename"] = (
+            "agrobr-1.2.3-cp311-cp311-manylinux_2_28_x86_64.whl")
+        older = analisar(data, glibc_minor=17)
+        newer = analisar(data, glibc_minor=28)
+        self.assertEqual(older["target_glibc_minor"], 17)
+        self.assertEqual(newer["target_glibc_minor"], 28)
+        self.assertEqual(older["packages"][0]["wheel_metadata_status"],
+                         "NO_MATCHING_WHEEL_IN_SUPPORTED_SUBSET")
+        self.assertEqual(newer["packages"][0]["wheel_metadata_status"],
+                         "WHEEL_TAG_AND_PYTHON_RANGE_MATCH_METADATA_ONLY")
+        self.assertFalse(newer["glibc_abi_runtime_verified"])
+        self.assertFalse(newer["approved_for_install"])
+
+    def test_classify_extra_and_environment_declarations_separately(self):
+        report = analisar(fixture())
+        self.assertEqual(report["unresolved_unconditional_names"], ["numpy"])
+        self.assertEqual(report["unresolved_environment_marker_names"],
+                         ["typing-extensions"])
+        self.assertEqual(report["unresolved_extra_referenced_names"], ["pytest"])
+        self.assertTrue(report["dependencies_classified_without_marker_evaluation"])
+        self.assertFalse(report["requires_dist_markers_evaluated"])
+
+    def test_invalid_glibc_baseline_is_rejected(self):
+        for invalid in (16, 41, True, "28"):
+            with self.subTest(invalid=invalid), self.assertRaisesRegex(
+                    BloqueioRadar, "baseline glibc"):
+                analisar(fixture(), glibc_minor=invalid)
+
     def test_wheel_filename_does_not_prove_hash(self):
         report = analisar(fixture())
         self.assertFalse(report["full_packaging_tags_implementation"])
@@ -153,6 +183,8 @@ class CompatibilidadeWheelE2ETests(unittest.TestCase):
         ])
         self.assertEqual(deps["unconditional"], ["numpy"])
         self.assertEqual(deps["conditional_or_extras"], ["colorama", "typer"])
+        self.assertEqual(deps["environment_conditional"], ["colorama"])
+        self.assertEqual(deps["extra_referenced_conditional"], ["typer"])
         self.assertTrue(deps["requires_dist_present"])
         self.assertFalse(deps["unparsed"])
 
