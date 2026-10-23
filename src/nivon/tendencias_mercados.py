@@ -140,12 +140,18 @@ def tendencia_preco_fisico(
 def tendencia_frete_anunciado(
     ofertas: Sequence[Mapping], *, origem_ibge: str, destino_ibge: str,
     produto: str, veiculo: str, pedagio: str, as_of: str,
-    pickup_entity_id: str, transportadora_id: str,
     descarga_entity_id: str, regime: str,
+    pickup_entity_id: str | None = None,
+    transportadora_id: str | None = None,
     janela: int = 6, minimo_lotes_dia: int = 2,
     tolerancia_absoluta: float = 0, tolerancia_relativa: float = 0,
 ) -> dict:
-    """Tendência apenas no MESMO estabelecimento, transportadora e condições.
+    """API R01 unificada com contrato estrito e modo legado isolado.
+
+    Sem pickup/carrier específicos: painel PR #30 por pares invariantes,
+    executado pelo motor canônico `fretes_tendencia_pareada`.
+    Com ambos: modo legado de lotes do MESMO ponto e transportadora,
+    sem agregação municipal ou mistura de descarga/regime.
 
     Nunca agregar/mensurar preços pela média ou mediana municipal. A mediana
     temporal, quando calculável, é restrita a lotes distintos da mesma
@@ -154,6 +160,31 @@ def tendencia_frete_anunciado(
     ou outro coletor autorizado. Mesmo lote e dia com preços divergentes bloqueia
     a análise; reenvios idênticos não pesam duas vezes.
     """
+    # Não permitir que ausência PARCIAL de identidade selecione
+    # silenciosamente outra estatística.
+    if (pickup_entity_id is None) != (transportadora_id is None):
+        raise ErroTendencia(
+            "modo R01 exige pickup_entity_id e transportadora_id ambos "
+            "informados ou ambos ausentes"
+        )
+    if pickup_entity_id is None:
+        # Import tardio evita circularidade: o motor canônico já usa os
+        # validadores de mercado deste arquivo.
+        from .fretes_tendencia_pareada import tendencia_frete_pareado
+        resultado = tendencia_frete_pareado(
+            ofertas, origem_ibge=origem_ibge,
+            destino_ibge=destino_ibge, produto=produto, veiculo=veiculo,
+            pedagio=pedagio, as_of=as_of,
+            descarga_entity_id=descarga_entity_id, regime=regime,
+            janela=janela, minimo_lotes_dia=minimo_lotes_dia,
+            tolerancia_absoluta=tolerancia_absoluta,
+            tolerancia_relativa=tolerancia_relativa,
+        )
+        return {
+            **resultado,
+            "motor_r01_canonico": "PAINEL_PAREADO_ESTABELECIMENTO_TRANSPORTADORA",
+            "publicavel": False,
+        }
     origem_ibge = _ibge(origem_ibge, "origem_ibge")
     destino_ibge = _ibge(destino_ibge, "destino_ibge")
     if origem_ibge == destino_ibge:
@@ -256,6 +287,7 @@ def tendencia_frete_anunciado(
         "transportadora_id": transportadora_id,
         "descarga_entity_id": descarga_entity_id, "regime": regime,
         "escopo_precos": "MESMO_ESTABELECIMENTO_TRANSPORTADORA_DESCARGA_CONDICOES",
+        "motor_r01_canonico": "LEGADO_LOTES_INTRAPAR_ISOLADO",
         "observacoes_brutas": len(ofertas), "reenvios_deduplicados": repetidos,
         "lotes_distintos_total_por_dia": sum(r["lotes_distintos"] for r in coverage),
         "cobertura_amostral": coverage, "direitos_publicacao_verificados": False,
