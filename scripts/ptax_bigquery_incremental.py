@@ -137,11 +137,9 @@ def executar(path:Path,*,client=None,approve:bool=False)->dict:
       GROUP BY quote_id HAVING COUNT(*)>1)"""
     query_config=lambda dry:bigquery.QueryJobConfig(
         query_parameters=params,maximum_bytes_billed=MAX_BILLED_BYTES,dry_run=dry)
-    loaded=False
     try:
         with Path(path).open("rb") as f:
             cli.load_table_from_file(f,staging,job_config=config).result(timeout=180)
-        loaded=True
         for q in (merge,validate,duplicates):
             cli.query(q,job_config=query_config(True))  # conferir custo ANTES de executar DML
         cli.query(merge,job_config=query_config(False)).result(timeout=180)
@@ -154,8 +152,8 @@ def executar(path:Path,*,client=None,approve:bool=False)->dict:
             "cutover_approved":False,"source_snapshot_transactional":False})
         return plan
     finally:
-        if loaded:
-            cli.delete_table(staging,not_found_ok=True)
+        # Uma falha parcial de load tambem pode ter criado o objeto temporario.
+        cli.delete_table(staging,not_found_ok=True)
 
 def main(argv=None)->int:
     import argparse
