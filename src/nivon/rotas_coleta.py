@@ -1,4 +1,4 @@
-"""Plano operacional das rotas de coleta NIVON: 86 datasets, fail-closed.
+"""Plano operacional versionado das rotas de coleta NIVON, fail-closed.
 
 Combina catálogo mestre (um só cadastro de produto, estágio, prioridade, cadência,
 fonte) e rotas técnicas. Nenhum acesso HTTP ou execução de collector aqui.
@@ -38,7 +38,7 @@ class ErroRota(ValueError):
 
 def carregar_rotas(path: str | Path = ROTAS) -> dict:
     p = Path(path)
-    if p.suffix != ".json" or not p.is_file() or p.is_symlink() or p.stat().st_size > 250_000:
+    if p.suffix != ".json" or not p.is_file() or p.is_symlink() or p.stat().st_size > 400_000:
         raise ErroRota("arquivo de rotas ausente, inválido ou grande demais")
     try:
         o = json.loads(p.read_text(encoding="utf-8"))
