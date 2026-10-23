@@ -16,6 +16,11 @@ import json
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
+from types import SimpleNamespace
+from unittest.mock import patch
+from nivon._agrolog_portos_pdf import (
+    extract_pdf_tables, MAX_PDF_PAGES, MAX_PDF_ROWS,
+)
 from datetime import date
 from pathlib import Path
 from scripts import maritime_pdf_batch as batch_cli
@@ -456,6 +461,70 @@ class PdfPlumberE2ETests(unittest.TestCase):
             self.assertEqual(code, 2)
             self.assertIn("SHA-256 differs", error.getvalue())
             self.assertFalse(db.exists())
+
+    def test_real_binary_pdf_page_limit_blocks_before_parser(self):
+        payload = io.BytesIO()
+        pdf = canvas.Canvas(payload, pagesize=(300, 300))
+        for page in range(MAX_PDF_PAGES + 1):
+            pdf.drawString(12, 250, f"SYNTHETIC PAGE {page + 1}")
+            pdf.showPage()
+        pdf.save()
+        with self.assertRaisesRegex(ValueError, "page count"):
+            extract_pdf_tables(payload.getvalue())
+
+    def test_table_row_limit_is_enforced_before_collector(self):
+        class FakeLargePdf:
+            pages = [
+                SimpleNamespace(extract_tables=lambda: [
+                    [("x",) for _ in range(MAX_PDF_ROWS + 1)]
+                ])
+            ]
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_):
+                return False
+        with patch("pdfplumber.open", return_value=FakeLargePdf()):
+            with self.assertRaisesRegex(ValueError, "table/row/cell limits"):
+                extract_pdf_tables(itaqui_pdf())
+
+    def test_cli_denies_storage_rights_before_creating_database(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = local_manifest(tmp, [
+                ("ITAQUI", itaqui_pdf(), STAMP,
+                 "2026-10-20T11:00:00Z")
+            ], rights_override={"store_derived": False})
+            db = Path(tmp) / "no_permission.sqlite"
+            err = io.StringIO()
+            with redirect_stderr(err):
+                code = batch_cli.main([
+                    str(manifest), "--as-of", "2026-10-20T18:00:00Z",
+                    "--commit", "--ack-rights", "--db", str(db)
+                ])
+            self.assertEqual(code, 2)
+            self.assertFalse(db.exists())
+            self.assertIn("storage not attested", err.getvalue())
+
+    def test_cli_refuses_preexisting_report_without_creating_database(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = local_manifest(tmp, [
+                ("ITAQUI", itaqui_pdf(), STAMP,
+                 "2026-10-20T11:00:00Z")
+            ])
+            output = Path(tmp) / "existing_report.json"
+            output.write_text("ORIGINAL", encoding="utf-8")
+            db = Path(tmp) / "never_created.sqlite"
+            err = io.StringIO()
+            with redirect_stderr(err):
+                code = batch_cli.main([
+                    str(manifest), "--as-of", "2026-10-20T18:00:00Z",
+                    "--commit", "--ack-rights", "--db", str(db),
+                    "--report", str(output)
+                ])
+            self.assertEqual(code, 2)
+            self.assertFalse(db.exists())
+            self.assertEqual(output.read_text(), "ORIGINAL")
 
     def test_cli_missing_rights_blocks_without_network(self):
         with tempfile.TemporaryDirectory() as tmp:
