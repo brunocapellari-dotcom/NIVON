@@ -13,7 +13,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .backup_outbox import criar_backup_validado, restaurar_backup_validado
-from .migracao_outbox_legada import planejar_migracao, registrar_quarentena
+from .migracao_outbox_legada import (
+    planejar_migracao, registrar_quarentena, hash_snapshot_legado,
+)
+from .auditoria_outbox_integrada import auditar_integridade_envios
 
 
 def _source(path: str | Path, *, mutate: bool) -> sqlite3.Connection:
@@ -44,7 +47,9 @@ def executar_lote(
     con=_source(banco,mutate=aplicar_quarentena)
     try:
         plano=planejar_migracao(con)
-        result={"auditoria":_counts(plano),"modo":"SOMENTE_LEITURA",
+        result={"auditoria":_counts(plano),
+                "consistencia":auditar_integridade_envios(con),
+                "modo":"SOMENTE_LEITURA",
                 "envio_executado":False,"coleta_executada":False}
         if not aplicar_quarentena:
             return result
@@ -56,6 +61,7 @@ def executar_lote(
         if root.resolve()==Path(banco).resolve():
             raise ValueError("destino e origem são iguais")
         # Se etapa intermediária falhar, backup PRÉ-migração continua disponível.
+        snapshot_esperado=hash_snapshot_legado(con)
         pre=criar_backup_validado(
             con,destino=root/"nivon-antes-migracao.sqlite",
             autorizar_backup=True,
@@ -63,6 +69,7 @@ def executar_lote(
         stage=registrar_quarentena(
             con,autorizar_staging=True,
             registrado_em=agora or datetime.now(timezone.utc).isoformat(),
+            snapshot_legado_esperado=snapshot_esperado,
         )
         post=criar_backup_validado(
             con,destino=root/"nivon-depois-migracao.sqlite",
