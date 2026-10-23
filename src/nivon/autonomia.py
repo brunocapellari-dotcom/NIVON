@@ -303,7 +303,8 @@ def run(*, max_tasks=8, minutes=120, per_task=15):
 
 
 def _run_locked(*, max_tasks=8, minutes=120, per_task=15):
-    (HOME / "STOP").unlink(missing_ok=True)
+    # Nunca apagar STOP no processo filho. Uma ordem de parada emitida após
+    # o start deve permanecer válida mesmo que o supervisor ainda não iniciasse.
     dbpath = default_db()
     # Ler GitHub no host (não dentro dos agentes); falhas de rede não bloqueiam tarefas locais.
     github_issues = []
@@ -423,6 +424,10 @@ def main(argv=None):
         if not may_begin(per_task_minutes=args.per_task):
             raise RuntimeError("Execução autônoma somente no período noturno de Mato Grosso (20:00–06:00), com margem de conclusão")
         preflight()
+        # O próprio comando explícito de início libera uma parada anterior,
+        # antes de criar o supervisor; o filho jamais a remove.
+        HOME.mkdir(exist_ok=True)
+        (HOME / "STOP").unlink(missing_ok=True)
         if args.action == "start":
             HOME.mkdir(exist_ok=True)
             destination = HOME / "supervisor.log"
