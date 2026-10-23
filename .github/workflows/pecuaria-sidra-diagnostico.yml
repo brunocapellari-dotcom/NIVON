@@ -1,0 +1,34 @@
+name: "SIDRA pecuária — diagnóstico pontual de APIs oficiais"
+
+on:
+  push:
+    branches:
+      - feat/pecuaria-inteligencia-20261020
+    paths:
+      - .github/workflows/pecuaria-sidra-diagnostico.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sondagem-unica:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Checkout sem persistir credenciais
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Probe HTTPS IBGE (6 GETs; nenhum bruto persistido)
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m nivon.pecuaria_sidra_sondagem --periodo 202602 --rede
+
+# A execução de push ocorre apenas quando este arquivo mudar.
+# Nao ha schedule, servico cloud, upload de payloads, nem aumento de permissoes.
