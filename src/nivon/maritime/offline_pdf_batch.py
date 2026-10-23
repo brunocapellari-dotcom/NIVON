@@ -12,6 +12,7 @@ from datetime import datetime
 from typing import Any
 
 from nivon.portos_automaticos import ContratoPorto
+from nivon._agrolog_portos_pdf import PdfTable
 from .lineup_history import _aware_utc
 from .maritime_store import MaritimeStore
 from .official_lineup_bridge import bridge_official_pdf_document
@@ -58,6 +59,7 @@ class OfflinePdfEdition:
     publication_evidence_id: str | None = None
     crosswalk_claims: tuple[ProgrammeDuvEvidence, ...] = ()
     independent_crosswalk_reviewed: bool = False
+    pdf_tables: tuple[PdfTable, ...] | None = None
 
 
 def run_offline_pdf_batch(
@@ -94,6 +96,7 @@ def run_offline_pdf_batch(
             raise ValueError("PDF bytes exceed offline batch resource limit")
         bridge = bridge_official_pdf_document(
             contract=entry.contract, document=entry.document,
+            pdf_tables=entry.pdf_tables,
         )
         version = edition_from_pdf_bridge(
             bridge, reference_date=entry.contract.data_referencia.isoformat(),
@@ -123,6 +126,10 @@ def run_offline_pdf_batch(
             ),
             "evidence_class": "PROGRAMME_REFERENCE_NOT_PORT_CALL",
             "publishable": False,
+            "pdf_extraction_mode": (
+                "ISOLATED_TABLES_PREVALIDATED"
+                if entry.pdf_tables is not None else "IN_PROCESS_LIBRARY_CALL"
+            ),
         }
         if entry.crosswalk_claims:
             crosswalk = assess_programme_duv_evidence(
@@ -134,14 +141,9 @@ def run_offline_pdf_batch(
         prepared.append((entry, version, audit))
 
     ledger = PdfProgrammeLedger(store)
-    # All decoding/parsing, SHA, date and rights checks have already succeeded.
-    # The transactional helper performs a second canonical validation and
-    # rolls back earlier insertions on a later SQLite conflict.
-    writes = (
-        ledger.save_batch(tuple(version for _, version, _ in prepared),
-                          storage_authorized=True)
-        if commit else {"inserted": 0, "already_present": 0}
-    )
+    # Build and validate the entire historical report BEFORE modifying SQLite.
+    # An ambiguous pair, excessive history, malformed stored payload or
+    # other report error must not leave a committed but unreported batch.
     scopes = sorted({(v.port_id, v.source_id, v.series or "")
                     for _, v, _ in prepared})
     revision_reports: list[dict[str, Any]] = []
@@ -151,31 +153,30 @@ def run_offline_pdf_batch(
             port_id=port_id, source_id=source_id, series=series,
             as_of=cutoff, read_authorized=True,
         )
-        if commit:
-            known = list(known_existing)
-        else:
-            staged = [
-                version for _, version, _ in prepared
-                if (version.port_id, version.source_id, version.series or "") ==
-                   (port_id, source_id, series_key)
-                and version.published_utc is not None
-                and version.published_utc <= cutoff and version.collected_utc <= cutoff
-            ]
-            # Dry-run may use existing authorized history but MUST NOT mutate
-            # or accept conflicting editions at the same collection instant.
-            index: dict[str, PdfProgrammeEdition] = {
-                existing.collected_utc.isoformat(): existing for existing in known_existing
-            }
-            for version in staged:
-                stamp = version.collected_utc.isoformat()
-                previous = index.get(stamp)
-                if previous is not None and (
-                    PdfProgrammeLedger._canonical(previous)[1:]
-                    != PdfProgrammeLedger._canonical(version)[1:]
-                ):
-                    raise ValueError("dry-run conflicts with previously stored programme edition")
-                index[stamp] = version
-            known = sorted(index.values(), key=lambda item: item.collected_utc)
+        staged = [
+            version for _, version, _ in prepared
+            if (version.port_id, version.source_id, version.series or "") ==
+               (port_id, source_id, series_key)
+            and version.published_utc is not None
+            and version.published_utc <= cutoff and version.collected_utc <= cutoff
+        ]
+        # Both dry-run and commit predict the SAME exact future as-of history.
+        # Conflicting versions in the same batch are rejected before writing.
+        index: dict[str, PdfProgrammeEdition] = {
+            existing.collected_utc.isoformat(): existing for existing in known_existing
+        }
+        for version in staged:
+            stamp = version.collected_utc.isoformat()
+            previous = index.get(stamp)
+            if previous is not None and (
+                PdfProgrammeLedger._canonical(previous)[1:]
+                != PdfProgrammeLedger._canonical(version)[1:]
+            ):
+                raise ValueError("conflicting batch: previously known programme edition")
+            index[stamp] = version
+        known = sorted(index.values(), key=lambda item: item.collected_utc)
+        if len(known) > 200:
+            raise ValueError("preflight history exceeds 200 editions; explicit pagination required")
         for older, newer in zip(known, known[1:]):
             baseline = {
                 "port_id": port_id, "source_id": source_id, "series": series,
@@ -201,6 +202,13 @@ def run_offline_pdf_batch(
                 "changes": [item.summary() for item in changes],
                 "physical_operation_claimed": False,
             })
+    # SQLite transaction is the last stage: no edition is committed unless
+    # report reconstruction and all historical checks have succeeded.
+    writes = (
+        ledger.save_batch(tuple(version for _, version, _ in prepared),
+                          storage_authorized=True)
+        if commit else {"inserted": 0, "already_present": 0}
+    )
     result = {
         "state": "OFFLINE_DERIVED_REPORT_UNRELEASED",
         "execution_mode": "PERSIST_AUTHORIZED_DERIVED_ONLY" if commit else "DRY_RUN_NO_STORAGE",

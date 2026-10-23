@@ -14,7 +14,7 @@ from typing import Any
 from nivon.portos_automaticos import ContratoPorto, processar_documento_porto, ErroPorto
 from nivon._agrolog_portos_html import parse_official_lineup_html
 from nivon._agrolog_portos_pdf import (
-    extract_pdf_tables, parse_itaqui_tables, parse_paranagua_tables,
+    PdfTable, extract_pdf_tables, parse_itaqui_tables, parse_paranagua_tables,
 )
 from nivon.maritime.shipping_reconciliation import LineupCall
 
@@ -170,6 +170,7 @@ def bridge_official_html_document(*, contract: ContratoPorto, document: dict,
 def bridge_official_pdf_document(
     *, contract: ContratoPorto, document: dict,
     captured_before: str | datetime | None = None,
+    pdf_tables: tuple[PdfTable, ...] | None = None,
 ) -> LineupBridgeResult:
     """Parse an already acquired PDF without inventing a DUV or ETA clock.
 
@@ -187,7 +188,9 @@ def bridge_official_pdf_document(
     payload = document.get("conteudo") if isinstance(document, dict) else None
     if not isinstance(payload, bytes) or not (0 < len(payload) <= 20_000_000):
         raise ErroPorto("PDF original missing or over 20MB offline limit")
-    validated = processar_documento_porto(contract, document)
+    validated = processar_documento_porto(
+        contract, document, pdf_tables=pdf_tables,
+    )
     stamp = datetime.fromisoformat(validated["capturado_em"].replace("Z", "+00:00"))
     if stamp.tzinfo is None or stamp.utcoffset() is None:
         raise ErroPorto("PDF collection timestamp missing timezone")
@@ -199,7 +202,7 @@ def bridge_official_pdf_document(
         if cutoff.tzinfo is None or cutoff.utcoffset() is None or stamp > cutoff.astimezone(timezone.utc):
             raise ErroPorto("PDF acquired after as-of cutoff or missing cutoff timezone")
 
-    tables = extract_pdf_tables(payload)
+    tables = pdf_tables if pdf_tables is not None else extract_pdf_tables(payload)
     if contract.modo == "PDF_ITAQUI":
         source_rows = [
             row for row in parse_itaqui_tables(tables, reference_date=contract.data_referencia)

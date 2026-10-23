@@ -17,6 +17,7 @@ from typing import Any
 
 from nivon.coleta_web import FonteWeb
 from nivon.maritime.maritime_store import MaritimeStore
+from nivon.maritime.isolated_pdf_extract import extract_pdf_tables_isolated
 from nivon.maritime.offline_pdf_batch import (
     OfflinePdfEdition, OfflineRightsAttestation, run_offline_pdf_batch,
 )
@@ -102,6 +103,7 @@ def _one(base: Path, item: dict[str, Any]) -> OfflinePdfEdition:
         independent_crosswalk_reviewed=(
             item.get("independent_crosswalk_reviewed", False) is True
         ),
+        pdf_tables=extract_pdf_tables_isolated(payload),
     )
 
 

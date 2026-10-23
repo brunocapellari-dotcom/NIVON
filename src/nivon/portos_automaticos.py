@@ -14,7 +14,7 @@ from .coleta_web import FonteWeb, adquirir_fonte
 from .portos import Programacao, PORTOS_BR, contar_escalas
 from ._agrolog_portos_html import parse_official_lineup_html
 from ._agrolog_portos_pdf import (
-    extract_pdf_tables, parse_itaqui_tables, parse_paranagua_tables,
+    PdfTable, extract_pdf_tables, parse_itaqui_tables, parse_paranagua_tables,
     discover_pdf_link_from_landing,
 )
 
@@ -74,7 +74,10 @@ class ContratoPorto:
         self.fonte.verificar()
 
 
-def processar_documento_porto(contrato: ContratoPorto, documento: dict) -> dict:
+def processar_documento_porto(
+    contrato: ContratoPorto, documento: dict, *,
+    pdf_tables: tuple[PdfTable, ...] | None = None,
+) -> dict:
     """Arquivo real ou fixture já adquirido; não converte programação em realizado."""
     contrato.validar()
     dados = documento.get("conteudo")
@@ -116,7 +119,12 @@ def processar_documento_porto(contrato: ContratoPorto, documento: dict) -> dict:
             raise ErroPorto("HTML não UTF-8; requer adaptação documentada") from exc
         registros = parse_official_lineup_html(texto, contrato.modo)
     else:
-        tabelas = extract_pdf_tables(dados)  # pdfplumber instalado sob demanda
+        if pdf_tables is not None and (
+            not isinstance(pdf_tables, tuple) or not pdf_tables
+            or any(not isinstance(t, PdfTable) for t in pdf_tables)
+        ):
+            raise ErroPorto("isolated PDF table evidence invalid")
+        tabelas = pdf_tables if pdf_tables is not None else extract_pdf_tables(dados)
         if contrato.modo == "PDF_ITAQUI":
             registros = parse_itaqui_tables(tabelas, reference_date=contrato.data_referencia)
             # Itaqui publica ATRACADO/FUNDEADO/ESPERADO; registrar somente
