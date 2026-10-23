@@ -15,8 +15,8 @@ DATASET=re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,255}$")
 SHA=re.compile(r"^[a-f0-9]{64}$")
 COLS=("dataset_id","identidade","fingerprint","referencia","competencia",
       "publicacao","coletado_em","unidade","valor","campos","snapshot_id","natureza")
-MAX_BYTES=12_000_000
-MAX_ROWS=50000
+MAX_BYTES=65_000_000
+MAX_ROWS=75000
 
 class ErroCargaBigQuery(ValueError):
     pass
