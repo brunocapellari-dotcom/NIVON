@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "project": "NIVON",
-  "updated_on": "2026-10-21",
+  "updated_on": "2026-10-22",
   "description": "Rotas de coleta complementares ao catálogo mestre. Fonte/cadência/produto/estágio permanecem somente em fontes_nivon_master.v1.json; endpoints são documentados por dataset, não inferidos pela URL institucional.",
   "source_catalog": "config/fontes_nivon_master.v1.json",
   "policy": "DENY_ALL_UNTIL_PER_OPERATION_RIGHTS_TESTS_AND_PERSISTENCE",
@@ -5310,6 +5310,1126 @@
       "data_contract": "OBSERVACAO_CANONICA_V1",
       "source_note": "BCB SICOR OData v2, ODbL. $top amostra; não total ou tendência sem filtro, schema e contexto. Nenhum consumo automatizado habilitado.",
       "preliminary_evidence": "OFFICIAL_ODATA_DOCUMENTATION_AND_SYNTHETIC_TESTS_ONLY"
+    },
+    {
+      "dataset_id": "ARG_SIO_GRANOS_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.siogranos.com.ar/",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "ARG_BCR_GEA_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.bcr.com.ar/es/mercados/gea",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "ARG_BOLSA_CEREALES_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.bolsadecereales.com/estimaciones-informes",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "ARG_BCCBA_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://bccba.org.ar/informes-cultivos/",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "ARG_SENASA_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.argentina.gob.ar/senasa/transparencia/datosabiertos",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "ARG_INDEC_V1",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://api.indec.gob.ar/",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "FREE_API_KEY_REQUIRED",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "ARG_BCRA_V1",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://api.bcra.gob.ar/",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "ARG_SMN_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://datos.gob.ar/dataset?organization=smn",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "ARG_MERCADO_GANADERO_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.mercadoagroganadero.com.ar/",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "ARG_INTA_GEO_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://geo.inta.gob.ar/",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "BR_DERAL_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.agricultura.pr.gov.br/deral/precos",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "BR_IEA_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://iea.agricultura.sp.gov.br/out/Bancodedados.php",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "BR_EPAGRI_PRECOS_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://cepa.epagri.sc.gov.br/index.php/mercado-agricola/",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "BR_EPAGRI_CUSTOS_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://cepa.epagri.sc.gov.br/index.php/custos-de-producao/",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "BR_CCEE_PLD_V1",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://dadosabertos.ccee.org.br/",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "BR_SIAGAS_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://siagasweb.sgb.gov.br/layout/",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "BR_IRGA_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://irga.rs.gov.br/safra",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "BR_ABRAPA_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://abrapa.com.br/",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "BR_EMBRAPA_MLOG_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.embrapa.br/en/web/territorial/macrologistica/apresentacao",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "BR_CONSECANA_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.consecana.com.br/download.asp",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "WTO_TIMESERIES_V1",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://api.wto.org/",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "FREE_API_KEY_REQUIRED",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "WTO_EPING_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://epingalert.org/",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "OECD_SDMX_V1",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://sdmx.oecd.org/",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "IGC_GOI_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.igc.int/",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "USGS_MINERALS_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.usgs.gov/centers/national-minerals-information-center",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "UNECE_UNLOCODE_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://unece.org/trade/uncefact/unlocode",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "WB_WITS_V1",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://wits.worldbank.org/witsapiintro.aspx",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "UNCTAD_DATA_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://unctadstat.unctad.org/",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "EU_AGRIFOOD_V1",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://agridata.ec.europa.eu/",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "USDA_MMN_V1",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://mymarketnews.ams.usda.gov/mymarketnews-api",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "FREE_API_KEY_REQUIRED",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "FEWSNET_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://fews.net/data",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "TERRACLIMATE_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.climatologylab.org/terraclimate.html",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "NASA_SMAP_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://smap.jpl.nasa.gov/",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "HYDROBASINS_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.hydrosheds.org/products/hydrobasins",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "HYDROATLAS_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.hydrosheds.org/hydroatlas",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "GRDC_RUNOFF_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://www.bafg.de/GRDC/EN/Home/homepage_node.html",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "JRC_ASAP_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://agricultural-production-hotspots.ec.europa.eu/",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "EU_GDO_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://drought.emergency.copernicus.eu/",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "IRI_CLIMATE_V1",
+      "collector_class": "DISCOVERY_REQUIRED",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://iridl.ldeo.columbia.edu/",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "VERIFY_PER_SOURCE",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
+    },
+    {
+      "dataset_id": "EUMETSAT_DATA_V1",
+      "collector_class": "OFFICIAL_API",
+      "locator": {
+        "kind": "PROVIDER_PORTAL",
+        "url": "https://data.eumetsat.int/",
+        "source_proof": null
+      },
+      "implementation_scope": "ADAPTER_DISCOVERY: fontes_expansao_20261022.py; parser real requer schema",
+      "authentication": "FREE_API_KEY_REQUIRED",
+      "last_verified_data": null,
+      "runtime_enabled": false,
+      "scheduled_enabled": false,
+      "primary_blocker": "REAL_SAMPLE_AND_RIGHTS_EVIDENCE",
+      "gates_missing": [
+        "VERIFY_COLLECTION_RIGHTS",
+        "VERIFY_STORAGE_RIGHTS",
+        "REAL_SAMPLE_AND_SCHEMA_VALIDATION",
+        "HISTORICAL_BACKFILL",
+        "SCHEDULE_AND_FRESHNESS",
+        "DURABLE_PERSISTENCE_AND_RESTORE",
+        "LICENSED_PUBLICATION_GATE"
+      ],
+      "history": "BACKFILL_TO_OLDEST_LEGAL_AND_TECHNICALLY_AVAILABLE_THEN_INCREMENTAL",
+      "data_contract": "OBSERVACAO_CANONICA_V1",
+      "source_note": "Conjunto especifico nao homologado; nao confundir metadado com dado observado.",
+      "preliminary_evidence": "PROVIDER_IDENTIFIED"
     }
   ]
 }
