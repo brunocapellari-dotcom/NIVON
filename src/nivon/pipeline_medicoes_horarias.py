@@ -390,23 +390,37 @@ def auditar_acervo_medicoes(db, *, raw_dir):
     if {p.name for p in folder.glob("*.raw")} - seen:
         raise ErroPipelineAmbiental("RAW órfão deve ser reconciliado")
     origens=db.execute(
-        "SELECT sha256,parent_sha256,membro_sha256,membro,tipo,pai_raw_arquivado "
-        "FROM medidas_containers_origem").fetchall()
+        "SELECT p.sha256,p.parent_sha256,p.membro_sha256,p.membro,p.tipo, "
+        "p.pai_raw_arquivado,e.ano "
+        "FROM medidas_containers_origem p "
+        "JOIN medidas_edicoes e ON e.sha256=p.sha256").fetchall()
+    pais=set()
     for origin in origens:
         if (not _HASH.fullmatch(origin["parent_sha256"]) or
             origin["membro_sha256"]!=origin["sha256"] or
             origin["tipo"]!="ZIP_INMET_ANUAL" or
-            origin["pai_raw_arquivado"]!=0 or
+            origin["pai_raw_arquivado"]!=1 or
             not origin["membro"].endswith(".csv")):
             raise ErroPipelineAmbiental("integridade da proveniência de ZIP quebrada")
+        from .arquivo_zip_integral import validar_zip_inmet_guardado
+        validar_zip_inmet_guardado(
+            raw_dir=folder,parent_sha256=origin["parent_sha256"],
+            membro_csv=origin["membro"],
+            membro_sha256=origin["sha256"],ano=origin["ano"])
+        pais.add(origin["parent_sha256"]+".zip")
+    if origens:
+        archivados={p.name for p in (folder/"origens").glob("*.zip")}
+        if archivados!=pais:
+            raise ErroPipelineAmbiental("arquivo ZIP original órfão ou incompleto")
     return {
         "estado":"ACERVO_INMET_ANA_VERIFICADO_TECNICAMENTE",
         "edicoes_auditadas":len(versions),
         "medidas_auditadas":total,
         "capturas_auditadas":db.execute("SELECT COUNT(*) FROM medidas_capturas").fetchone()[0],
         "origens_zip_registradas":len(origens),
-        "zip_pai_preservado_no_acervo":False,
-        "integridade_zip_pai_verificavel_pelo_acervo":False,
+        "arquivos_zip_integrais_conferidos":len(pais),
+        "zip_pai_preservado_no_acervo":bool(origens),
+        "integridade_zip_pai_verificavel_pelo_acervo":bool(origens),
         "integridade_raw":True,"integridade_sqlite":True,
         "publicacao_fonte_autenticada":False,
         "qc_homologado":False,
