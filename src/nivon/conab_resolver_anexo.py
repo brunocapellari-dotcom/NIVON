@@ -183,7 +183,7 @@ def registrar_resolucao(db:sqlite3.Connection,*,resolucao:dict) -> dict:
         raise ErroIndiceConab('hash da pagina invalido')
     db.executescript(_SCHEMA)
     with db:
-        old=db.execute('''SELECT url_anexo,publicacao_data,hash_html_documento
+        old=db.execute('''SELECT url_anexo,pagina_publicada_data,hash_html_documento
                            FROM conab_anexos_resolvidos WHERE pagina_semana=? AND url_documento=?''',
                        (resolucao['pagina_semana'],resolucao['url_documento'])).fetchone()
         if old and tuple(old)!=(resolucao['url_anexo'],resolucao['publicacao_data'],resolucao['hash_html_documento']):
