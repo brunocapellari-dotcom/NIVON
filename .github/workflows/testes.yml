@@ -12,6 +12,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  validar-conab-vintages-reais-de-terceiro:
+    # Aciona somente nesta PR de integração ou manualmente.
+    # Baixa de GitHub público por commit imutável; NUNCA toca portal CONAB
+    # nem persiste XLSX na árvore/repo/artifact ou banco de produção.
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.ref == 'feat/dados-lote-conab-endtoend-20261022'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout sem credenciais persistentes
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Integrar 3 XLSX reais do agrobr em SQLite de laboratório transitório
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m nivon.lote_conab_integracao \
+            --catalogo config/conab_referencias_multivintage_20261021.json \
+            --obter-do-github
+          # A própria rotina faz 2 processamentos e exige a segunda carga idempotente.
+
   validar-nucleo:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -50,33 +77,6 @@ jobs:
         env:
           PYTHONPATH: src
         run: python -m nivon.analise_local --config config/contrato_exemplo_sintetico.json
-
-  validar-conab-vintages-reais-de-terceiro:
-    # Aciona somente nesta PR de integração ou manualmente.
-    # Baixa de GitHub público por commit imutável; NUNCA toca portal CONAB
-    # nem persiste XLSX na árvore/repo/artifact ou banco de produção.
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.ref == 'feat/dados-lote-conab-endtoend-20261022'
-    runs-on: ubuntu-latest
-    timeout-minutes: 8
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout sem credenciais persistentes
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          persist-credentials: false
-      - name: Python 3.11
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
-        with:
-          python-version: '3.11'
-      - name: Integrar 3 XLSX reais do agrobr em SQLite de laboratório transitório
-        env:
-          PYTHONPATH: src
-        run: |
-          python -m nivon.lote_conab_integracao \
-            --catalogo config/conab_referencias_multivintage_20261021.json \
-            --obter-do-github
-          # A própria rotina faz 2 processamentos e exige a segunda carga idempotente.
 
   conferir-schema-mapa:
     # Diagnóstico de fonte real somente manual. Não repetir downloads em todo PR.
