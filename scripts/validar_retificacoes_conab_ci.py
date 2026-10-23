@@ -16,6 +16,7 @@ from pathlib import Path
 
 from nivon.fixture_retificacao_conab import alterar_xlsx_apenas_teste
 from nivon.revisoes_conab_lab import consultar_versao_asof_lab
+from nivon.recuperacao_isolada_conab_lab import recuperar_backup_isolado
 
 ROOT=Path(__file__).resolve().parents[1]
 FIXTURE=ROOT/"tests"/"fixtures"/"conab_progresso_agrobr_20260207.xlsx.b64"
@@ -132,6 +133,48 @@ def main():
             with sqlite3.connect(str(file)) as restored:
                 assert restored.execute("PRAGMA integrity_check").fetchone()[0]=="ok"
                 assert not restored.execute("PRAGMA foreign_key_check").fetchall()
+        snapshots=[
+            (backups/original["backup"]["arquivo_backup"],
+             original["backup"]["sha256_backup"],0),
+            (backups/first["backup"]["arquivo"],
+             first["backup"]["sha256"],1),
+            (backups/second["backup"]["arquivo"],
+             second["backup"]["sha256"],2),
+        ]
+        restore_reports=[]
+        for index,(snapshot,expected_sha,expected_revisions) in enumerate(snapshots):
+            dest=root/f"recuperacao-{index}"
+            dest.mkdir(mode=0o700)
+            recovered=recuperar_backup_isolado(
+                snapshot,expected_sha,catalog,dest,
+                banco_vivo=db,cortes_coleta=[
+                    "2026-10-23T14:59:59Z",
+                    "2026-10-23T15:01:30Z",
+                    "2026-10-23T15:02:30Z",
+                ])
+            assert recovered["restauracao_integridade_fk_semantica_conferida"] is True
+            assert recovered["resumo_restaurado"]["retificacoes"]==expected_revisions
+            assert recovered["resumo_restaurado"]["observacoes_originais"]==11
+            assert recovered["resumo_restaurado"]["observacoes_retificacoes"]==11*expected_revisions
+            assert recovered["comparacao"]["equivalencia_com_banco_vivo"] is (expected_revisions==2)
+            assert recovered["comparacao"]["divergencias"]["retificacoes"]==2-expected_revisions
+            expected_asof=[0]+[min(expected_revisions,1),min(expected_revisions,2)]
+            assert [item.get("revisao",0) for item in recovered["cortes_asof"]]==expected_asof
+            assert (dest/"conab-recuperado-lab.sqlite").is_file()
+            assert (dest/"recuperacao-evidencia-lab.json").is_file()
+            restore_reports.append({
+                "snapshot":snapshot.name,
+                "retificacoes_no_ponto":expected_revisions,
+                "restauracao_valida":True,
+                "igual_ao_vivo":expected_revisions==2,
+            })
+        lost=root/"recuperacao-sem-banco-vivo"
+        lost.mkdir(mode=0o700)
+        last=recuperar_backup_isolado(
+            snapshots[-1][0],snapshots[-1][1],catalog,lost,
+            banco_vivo=None,cortes_coleta=["2026-10-23T15:02:30Z"])
+        assert last["comparacao"]["comparacao_realizada"] is False
+        assert last["resumo_restaurado"]["retificacoes"]==2
         report={
             "estado":"LAB_RETIFICACOES_SINTETICAS_E2E_VERIFICADAS",
             "processos_independentes":5,
@@ -144,6 +187,9 @@ def main():
             "retificacao_idempotente":True,
             "sincronizacao_base_consistente_apos_retificacao":True,
             "consulta_asof_3_cortes_sem_lookahead":True,
+            "snapshots_recuperados_isoladamente":restore_reports,
+            "recuperacao_sem_banco_vivo_verificada":True,
+            "reconciliacao_laboratorio_com_versoes_historicas":True,
             "documentos_conab_oficiais_retificados":0,
             "dados_de_terceiro_com_valores_artificialmente_alterados":True,
             "banco_produtivo_alterado":False,
