@@ -129,13 +129,16 @@ def sql_merge(projeto,dataset,table,staging):
 
 def sincronizar_bigquery(banco, *, portwatch_banco=None, projeto, dataset="nivon_raw",
                         client=None, bigquery_module=None, dry_run=False,
-                        max_bytes_cobraveis=100_000_000):
+                        max_bytes_cobraveis=100_000_000,
+                        localizacao="southamerica-east1"):
     """Carga de staging + MERGE, fail-safe e recuperavel por replay.
 
     O dataset e tabelas devem existir (migracao SQL). Sem provisionamento
     implicito nem tabelas sinteticas no banco de producao.
     """
     base=validar_destino(projeto,dataset)
+    if not isinstance(localizacao,str) or not re.fullmatch(r"[a-z]+(?:-[a-z]+)+[0-9]",localizacao):
+        raise ValueError("localizacao BigQuery invalida")
     if (type(max_bytes_cobraveis) is not int or
         not 10_000_000 <= max_bytes_cobraveis <= 1_000_000_000):
         raise ValueError("teto de bytes faturaveis BigQuery invalido")
@@ -145,7 +148,7 @@ def sincronizar_bigquery(banco, *, portwatch_banco=None, projeto, dataset="nivon
     if bigquery_module is None:
         from google.cloud import bigquery as bigquery_module
     if client is None:
-        client=bigquery_module.Client(project=projeto)
+        client=bigquery_module.Client(project=projeto,location=localizacao)
     done=[]
     for table,payload in rows.items():
         if not payload: continue
@@ -171,11 +174,12 @@ def main(argv=None):
     p.add_argument("--projeto",required=True)
     p.add_argument("--dataset",default="nivon_raw")
     p.add_argument("--max-bytes-cobraveis",type=int,default=100_000_000)
+    p.add_argument("--localizacao",default="southamerica-east1")
     p.add_argument("--dry-run",action="store_true")
     args=p.parse_args(argv)
     out=sincronizar_bigquery(args.banco,portwatch_banco=args.portwatch_banco,
            projeto=args.projeto,dataset=args.dataset,dry_run=args.dry_run,
-           max_bytes_cobraveis=args.max_bytes_cobraveis)
+           max_bytes_cobraveis=args.max_bytes_cobraveis,localizacao=args.localizacao)
     print(json.dumps(out,ensure_ascii=False))
 
 if __name__=="__main__":

@@ -117,6 +117,11 @@ class TestCloud(unittest.TestCase):
             sincronizar_bigquery("/tmp/nao-existe.sqlite",projeto="nivon-data",
                   dataset="nivon_raw",max_bytes_cobraveis=True)
 
+    def test_localizacao_invalida_bloqueada_antes_de_rede(self):
+        with self.assertRaises(ValueError):
+            sincronizar_bigquery("/tmp/arquivo-ausente.sqlite",projeto="nivon-data",
+                dataset="nivon_raw",localizacao="US;drop")
+
     def test_bigquery_injection_rejeitada(self):
         for bad in ["other.project","a;delete","x"]:
             with self.assertRaises(ValueError):

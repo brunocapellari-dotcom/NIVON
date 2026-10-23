@@ -75,7 +75,8 @@ def executar_job(*, env=None, storage_client=None, bigquery_client=None,
         bigquery=sincronizar_bigquery(db_path,
             portwatch_banco=pw_path if pw_path.is_file() else None,
             projeto=projeto,dataset=dataset,
-            client=bigquery_client,bigquery_module=bigquery_module)
+            client=bigquery_client,bigquery_module=bigquery_module,
+            localizacao=variables.get("NIVON_GCP_REGION") or "southamerica-east1")
         # Erros recuperaveis por reprocessamento dos objetos GCS.
         return {"estados":result["estados"],"portwatch":result.get("portwatch_estado"),
                 "persistencia":bigquery,"manifesto":manifesto,"apto_operacao":

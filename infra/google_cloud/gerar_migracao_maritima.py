@@ -41,7 +41,7 @@ def aplicar_sql(sql, *, projeto, dataset, autorizado=False, client=None):
     # Confirmar primeiro que dataset preexistente é consultável.
     if client is None:
         from google.cloud import bigquery
-        client=bigquery.Client(project=projeto)
+        client=bigquery.Client(project=projeto,location="southamerica-east1")
     ref=f"{projeto}.{dataset}"
     client.get_dataset(ref)
     # DDL BigQuery multi-statement. Tabelas são criadas somente no dataset validado.
