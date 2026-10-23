@@ -55,7 +55,7 @@ def preflight():
     # Testes executam código produzido por LLM: exigir Docker local offline.
     if not shutil.which("docker"):
         raise RuntimeError("Docker requerido para testes isolados sem rede")
-    image = os.environ.get("NIVON_PYTHON_IMAGE", "python:3.11-slim")
+    image = os.environ.get("NIVON_PYTHON_IMAGE", "nivon-agentes:test-py311")
     if image not in APPROVED_IMAGES:
         raise RuntimeError("Imagem de teste fora da lista aprovada")
     available = command(["docker", "image", "inspect", image], timeout=10)
@@ -234,7 +234,7 @@ def do_task(agent, task, *, timeout_minutes=15):
         modified = within_scope(worktree, json.loads(task["scope"]))
         if not modified:
             return "blocked", f"{branch}; nenhuma alteração produzida"
-        image = os.environ.get("NIVON_PYTHON_IMAGE", "python:3.11-slim")
+        image = os.environ.get("NIVON_PYTHON_IMAGE", "nivon-agentes:test-py311")
         sandbox = ["docker", "run", "--rm", "--pull", "never", "--network", "none",
                    "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
                    "--pids-limit", "128", "--memory", "512m", "--cpus", "1",
