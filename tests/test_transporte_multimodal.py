@@ -48,7 +48,8 @@ class TestANTT(unittest.TestCase):
         self.assertEqual(meta.referencia_maxima, "2026-02")
         raw_2006 = (COLUNAS + AMOSTRA.replace("02/2026", "02_06")).encode()
         rows, _ = interpretar_csv_antt(
-            raw_2006, ano=2006, coleta_utc="2026-10-22T12:00:00Z")
+            raw_2006, ano=2006, coleta_utc="2026-10-22T12:00:00Z",
+            fonte_url="https://dados.antt.gov.br/dataset/438a5184-09db-49a3-88c8-0bad418b4409/resource/00000000-0000-0000-0000-000000000000/download/producao_origem_destino_2006.csv")
         self.assertEqual(rows[0]["competencia"], "2006-02")
 
     def test_2025_isolado(self):
