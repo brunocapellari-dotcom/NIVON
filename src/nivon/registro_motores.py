@@ -39,6 +39,7 @@ MODULOS=frozenset({
     "mjo_rmm", "contexto_mjo_asof",
     "noaa_roni", "inspecao_roni_offline", "roni_store", "roni_cli",
     "roni_captura_manual", "roni_ciclo",
+    "pipeline_medicoes_horarias", "pipeline_medicoes_cli",
     "qualidade_cientifica", "historico_vintages",
     "confronto_climatico_qc", "confronto_janelas_fisicas",
     "analogos_historicos",
