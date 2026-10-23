@@ -114,6 +114,57 @@ class TestCatalogo(unittest.TestCase):
                           dormir=lambda _: None, max_tentativas=3)
         self.assertEqual(cliente.chamadas, 3)
 
+    def test_fallback_canonico_recentes_sem_catalogo(self):
+        from unittest.mock import patch
+        class ForaDoAr(Transporte):
+            def __init__(self):
+                super().__init__()
+                self.catalogo_chamadas=0
+            def open(self, req, timeout):
+                if req.full_url == CATALOGO:
+                    self.catalogo_chamadas += 1
+                    return Resposta(b"<html>ckan falhou</html>")
+                return super().open(req,timeout)
+        source=ForaDoAr()
+        with tempfile.TemporaryDirectory() as pasta, \
+             patch("nivon.coleta_antt.time.sleep",return_value=None):
+            result=coletar(destino=pasta,anos=[2026],habilitar_rede=True,
+                           transporte=source,agora=datetime(2026,10,23,tzinfo=timezone.utc))
+            self.assertEqual(result[0]["metodo_descoberta"],
+                             "LINK_OFICIAL_FIXO_FALLBACK_CKAN")
+            self.assertEqual(result[0]["registros"],1)
+            self.assertEqual(source.catalogo_chamadas,3)
+            self.assertEqual(source.csv_calls,1)
+            meta=json.loads(Path(pasta,"manifesto-antt.json").read_text())
+            self.assertEqual(meta["anos"]["2026"]["url"],CSV_URL)
+            self.assertEqual(meta["anos"]["2026"]["metodo_descoberta"],
+                             "LINK_OFICIAL_FIXO_FALLBACK_CKAN")
+
+    def test_sem_fallback_para_historico_desconhecido(self):
+        from unittest.mock import patch
+        class Invalido:
+            def open(self,req,timeout):
+                return Resposta(b"<html>nao disponivel</html>")
+        with tempfile.TemporaryDirectory() as pasta, \
+             patch("nivon.coleta_antt.time.sleep",return_value=None):
+            with self.assertRaisesRegex(ErroTransporte,"catalogo CKAN invalido"):
+                coletar(destino=pasta,anos=[2024],habilitar_rede=True,
+                        transporte=Invalido())
+
+    def test_sem_fallback_para_http_403(self):
+        from urllib.error import HTTPError
+        class Negado:
+            def __init__(self):
+                self.contagem=0
+            def open(self,req,timeout):
+                self.contagem+=1
+                raise HTTPError(req.full_url,403,"Forbidden",{},None)
+        fonte=Negado()
+        with tempfile.TemporaryDirectory() as pasta:
+            with self.assertRaisesRegex(ErroTransporte,"ANTT_ACESSO_BLOQUEADO"):
+                coletar(destino=pasta,anos=[2026],habilitar_rede=True,transporte=fonte)
+            self.assertEqual(fonte.contagem,1)
+
     def test_rejeita_ano_duplicado(self):
         c = json.loads(catalogo())
         c["result"]["resources"].append(dict(c["result"]["resources"][0]))
