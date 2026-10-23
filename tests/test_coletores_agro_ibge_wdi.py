@@ -6,7 +6,7 @@ from pathlib import Path
 from datetime import datetime,timezone
 
 from nivon.coletores_agro_ibge_wdi import (
-    ESTADOS,INDICADORES,plano_ibge_pam,parse_ibge_pam,coletar_ibge_pam,
+    ESTADOS,INDICADORES,plano_ibge_pam,parse_ibge_pam,parse_ibge_sidra,coletar_ibge_pam,
     plano_wdi,parse_wdi,coletar_wdi,ErroFonteAgro)
 from nivon.ingestao_fontes_reais import exportar_jsonl
 
@@ -21,6 +21,22 @@ IBGE=[
     "series":[{"localidade":{"id":"51","nome":"Mato Grosso"},
                "serie":{"2024":".." }}]}
   ]}
+]
+SIDRA=[
+ {"NC":"Nível Territorial (Código)","NN":"Nível Territorial","MC":"Unidade de Medida (Código)",
+  "MN":"Unidade de Medida","V":"Valor","D1C":"Unidade da Federação (Código)",
+  "D1N":"Unidade da Federação","D2C":"Ano (Código)","D2N":"Ano",
+  "D3C":"Variável (Código)","D3N":"Variável",
+  "D4C":"Produto das lavouras temporárias (Código)",
+  "D4N":"Produto das lavouras temporárias"},
+ {"NC":"3","NN":"Unidade da Federação","MC":"1017","MN":"Toneladas",
+  "V":"42800000","D1C":"51","D1N":"Mato Grosso",
+  "D2C":"2024","D2N":"2024","D3C":"214","D3N":"Quantidade produzida",
+  "D4C":"2713","D4N":"Soja (em grão)"},
+ {"NC":"3","NN":"Unidade da Federação","MC":"1017","MN":"Toneladas",
+  "V":"..","D1C":"51","D1N":"Mato Grosso",
+  "D2C":"2024","D2N":"2024","D3C":"214","D3N":"Quantidade produzida",
+  "D4C":"2714","D4N":"Milho (em grão)"}
 ]
 WDI=[{"page":1,"pages":1,"per_page":100,"total":2},
       [{"countryiso3code":"BRA","indicator":{"id":"AG.YLD.CREL.KG"},
@@ -60,6 +76,25 @@ class FontesAgroTest(unittest.TestCase):
         with self.assertRaises(ErroFonteAgro):
             parse_ibge_pam(json.dumps(bad).encode(),ano=2024,uf="MT")
 
+    def test_sidra_pam_com_schema_oficial(self):
+        observed=parse_ibge_sidra(json.dumps(SIDRA).encode(),ano=2024,uf="MT")
+        self.assertEqual(len(observed),1)
+        self.assertEqual(observed[0]["campos"]["produto"],"SOJA")
+        self.assertEqual(observed[0]["valor"],"42800000")
+        self.assertEqual(observed[0]["unidade"],"t")
+        bad=json.loads(json.dumps(SIDRA))
+        bad[1]["D1C"]="52"
+        with self.assertRaises(ErroFonteAgro):
+            parse_ibge_sidra(json.dumps(bad).encode(),ano=2024,uf="MT")
+        bad=json.loads(json.dumps(SIDRA))
+        bad[1]["D3N"]="Valor da produção"
+        with self.assertRaises(ErroFonteAgro):
+            parse_ibge_sidra(json.dumps(bad).encode(),ano=2024,uf="MT")
+        bad=json.loads(json.dumps(SIDRA))
+        bad[1]["MN"]="Kg"
+        with self.assertRaises(ErroFonteAgro):
+            parse_ibge_sidra(json.dumps(bad).encode(),ano=2024,uf="MT")
+
     def test_wdi_estatistica_projetada_e_informada(self):
         rows=parse_wdi(json.dumps(WDI).encode(),pais="BRA",
                 indicador="AG.YLD.CREL.KG",inicio=2023,fim=2024)
@@ -81,7 +116,7 @@ class FontesAgroTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             d=Path(td);db=d/"raw.sqlite";out=d/"out.jsonl"
             u=plano_ibge_pam(ano=2024,uf="MT")
-            client=Fake(u,json.dumps(IBGE).encode())
+            client=Fake(u,json.dumps(SIDRA).encode())
             args=dict(ano=2024,uf="MT",banco=db,raw_dir=d/"raw",
                       executar=True,cliente=client,instante=T)
             a=coletar_ibge_pam(**args)
