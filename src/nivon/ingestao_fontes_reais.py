@@ -142,7 +142,7 @@ def gravar_lote(*, banco, diretorio_bruto, dataset_id, origem, raw, tipo,
         snapshot_novo=db.execute("""INSERT OR IGNORE INTO snapshots
             (snapshot_id,dataset_id,url_publica,sha256,coletado_em,content_type,tamanho,arquivo,estado)
             VALUES(?,?,?,?,?,?,?,?,?)""",
-            (snapshot,dataset_id,origem,sha,coletado_em,tipo,len(raw),str(target),estado))
+            (snapshot,dataset_id,origem,sha,coletado_em,tipo,len(raw),str(target),estado)).rowcount
         # Um SHA igual não implica que a consulta NÃO ocorreu de novo:
         # capturas repetidas guardam timestamp sem duplicar snapshot nem valor.
         captura_nova=db.execute("""INSERT OR IGNORE INTO capturas_fonte
