@@ -184,7 +184,9 @@ def executar_coleta(*, fonte, banco, raw_dir, executar=False,
         raw,mime=_get(url,cliente=cliente,tipos={"application/json","text/json"})
         dados=parse_series_argentina(raw)
         dataset="ARG_SERIES_CAMBIO_DIARIO"
-        estado="NORMALIZED"
+        estado="NORMALIZED" if dados else "RAW_RECEIVED"
+        if not dados:
+            notas={"sem_observacoes_na_janela":True,"fonte_desatualizada_ou_sem_dados":True}
     elif fonte=="CAN_GRAINS_WEEKLY":
         url=_safra_canada(safra)
         raw,mime=_get(url,cliente=cliente,max_bytes=MAX_TRANSFER,
