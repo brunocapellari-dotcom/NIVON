@@ -7,7 +7,7 @@
 | Fonte | Leitura e banco | Automação | Estado atual |
 |---|---|---|---|
 | CEPEA | 30 preços de soja, duas séries (Paranaguá, Paraná), com referência em 21/10/2026 | GitHub Actions na main, soja 21h30 UTC e milho 23h30 UTC em dias úteis | **COLLECTOR_ERROR** para soja: última tentativa HTTP 522. Milho ainda sem registros persistidos. |
-| IMEA | **1.112 registros em staging**, soja 107, milho 110, algodão 111, bovinocultura 684. Fonte oficial verificada. | Workflow na main; inicialmente comprovado 10h/19h MT para soja/milho. Verificar inclusão e agenda efetiva das demais cadeias antes de declará-las recorrentes. | **STAGING_PUBLICATION_ONLY**: todas as linhas têm `reference_date=NULL`. Nenhuma deve entrar como cotação diária de fechamento. |
+| IMEA | **1.012 registros em staging**, soja 107, milho 110, algodão 111, bovinocultura 684. Fonte oficial verificada. | Workflow na main; inicialmente comprovado 10h/19h MT para soja/milho. Verificar inclusão e agenda efetiva das demais cadeias antes de declará-las recorrentes. | **STAGING_PUBLICATION_ONLY**: todas as linhas têm `reference_date=NULL`. Nenhuma deve entrar como cotação diária de fechamento. |
 | CONAB | 4 registros de levantamentos MT, 14 de balanços soja/milho, 32 safras históricas 2010/11–2025/26 | Main: dias úteis 17h UTC (13h MT), histórico integral às quartas | **ACTIVE**. Primeiro teste E2E na main aprovado e idempotente; próximas agendas precisam comprovar continuidade. |
 
 ### Evidências reais
