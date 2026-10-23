@@ -159,6 +159,40 @@ def consultar_corredores(banco, *, recorte, competencia, limite=100):
                     g["mdfes_no_recorte"]=None
                 elif g["mdfes_no_recorte"] is not None:
                     g["mdfes_no_recorte"]+=int(mdfes)
+    # Agregação por polo e sentido, antes de aplicar limite ao ranking.
+    # Nunca consolidar DESTINO+ORIGEM como se fossem cargas diferentes.
+    subtotais={}
+    for item in grupos.values():
+        key=(item["polo"]["id"],item["sentido"])
+        if key not in subtotais:
+            subtotais[key] = {
+                "polo":item["polo"],"sentido":item["sentido"],
+                "toneladas_no_recorte":Decimal(0),
+                "produtos_toneladas":defaultdict(lambda:Decimal(0)),
+                "origens_toneladas":defaultdict(lambda:Decimal(0)),
+            }
+        subtotal=subtotais[key]
+        subtotal["toneladas_no_recorte"]+=item["toneladas_no_recorte"]
+        subtotal["produtos_toneladas"][item["produto"]]+=item["toneladas_no_recorte"]
+        if item["sentido"]=="DESTINO":
+            subtotal["origens_toneladas"][item["origem"]]+=item["toneladas_no_recorte"]
+    polos_rank=[]
+    for p in subtotais.values():
+        polos_rank.append({
+            "polo":p["polo"],"sentido":p["sentido"],
+            "toneladas_no_recorte":format(p["toneladas_no_recorte"],"f"),
+            "produtos_toneladas":[
+                {"produto":k,"toneladas_no_recorte":format(v,"f")}
+                for k,v in sorted(p["produtos_toneladas"].items(),key=lambda x:(-x[1],x[0]))
+            ],
+            "principais_origens":[
+                {"origem":k,"toneladas_no_recorte":format(v,"f")}
+                for k,v in sorted(p["origens_toneladas"].items(),key=lambda x:(-x[1],x[0]))[:10]
+            ],
+            "validade":"AGREGADO_SOMENTE_NO_RECORTE_GEOGRAFICO",
+            "transbordo_confirmado":False,
+        })
+    polos_rank.sort(key=lambda x:(-Decimal(x["toneladas_no_recorte"]),x["polo"]["id"],x["sentido"]))
     ranking=sorted(grupos.values(),key=lambda x:(-x["toneladas_no_recorte"],x["polo"]["id"],x["origem"],x["destino"],x["produto"]))
     for g in ranking:
         g["toneladas_no_recorte"]=format(g["toneladas_no_recorte"],"f")
@@ -174,6 +208,7 @@ def consultar_corredores(banco, *, recorte, competencia, limite=100):
                      "regional_ou_municipal":_confianca(nivel),
                      "sem_inferencia_de_transbordo":True,
                      "nao_somar_com_rail_ou_antaq":True},
+        "resumo_polos":polos_rank,
         "corredores":ranking[:limite],
         "truncado":len(ranking)>limite,
     }
