@@ -159,8 +159,8 @@ class TestColetor(unittest.TestCase):
                 return super().open(req, timeout)
         with tempfile.TemporaryDirectory() as pasta:
             with patch("nivon.coleta_antt.time.sleep", return_value=None):
-                with self.assertRaisesRegex(ErroTransporte, "sem URL CSV oficialmente verificada"):
-                    coletar(destino=pasta, anos=[2024], habilitar_rede=True,
+                with self.assertRaisesRegex(ErroTransporte, "sem URL/SHA historico validado"):
+                    coletar(destino=pasta, anos=[2035], habilitar_rede=True,
                            transporte=CatalogoHTML(),
                            permitir_url_verificada_contingencia=True)
             self.assertFalse(Path(pasta, "manifesto-antt.json").exists())
