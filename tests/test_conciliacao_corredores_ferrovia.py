@@ -8,7 +8,7 @@ from pathlib import Path
 from nivon.antt_mdfe_volumes import importar
 from nivon.conciliacao_corredores_ferrovia import (
     CROSSWALK_MERCADORIAS, ErroConciliacao, analisar_estacoes,
-    analisar_staging, quadro_intermodal, quadro_staging,
+    analisar_staging, quadro_intermodal, quadro_staging, comparar_mes_contra_ano_anterior,
 )
 from nivon.inteligencia_corredores import consultar_corredores
 from nivon.transporte_multimodal import link_antt, interpretar_csv_antt
@@ -50,6 +50,11 @@ class TestRankingEstacoes(unittest.TestCase):
         self.assertEqual(r["ranking"][0]["estacao_origem"],"Terminal Itiquira Norte")
         self.assertIsNone(r["ranking"][0]["produto_normalizado"]) if False else None
 
+    def test_nome_oficial_graos_milho_classificado(self):
+        x=analisar_estacoes([linha(1,"Rondonópolis","Grãos - Milho")],
+                          competencia="2026-08")
+        self.assertEqual(x["ranking"][0]["produto_normalizado"],"MILHO_EM_GRAO")
+
     def test_produto_ambiguo_nao_imputado(self):
         rows=[linha(1,"Rondonópolis","GRAOS",tu="55")]
         doc=analisar_estacoes(rows,competencia="2026-08")
@@ -67,6 +72,24 @@ class TestRankingEstacoes(unittest.TestCase):
             with self.subTest(rows=rows):
                 with self.assertRaises(ErroConciliacao):
                     analisar_estacoes(rows,competencia="2026-08",sha256=sha)
+
+    def test_yoy_mes_igual_e_lacunas_sem_zero(self):
+        base=analisar_estacoes([
+            linha(1,"Rondonópolis","Grãos - Milho",comp="2025-08",tu="100"),
+            linha(2,"Itiquira","MILHO",comp="2025-08",tu="20"),
+        ],competencia="2025-08",uf_origem="MT")
+        atual=analisar_estacoes([
+            linha(3,"Rondonópolis","Grãos - Milho",comp="2026-08",tu="150"),
+            linha(4,"Dom Aquino","MILHO",comp="2026-08",tu="30"),
+        ],competencia="2026-08",uf_origem="MT")
+        doc=comparar_mes_contra_ano_anterior(base,atual)
+        r={x["polo_id"]:x for x in doc["polos"]}
+        self.assertEqual(r["MT_RONDONOPOLIS_FERRO"]["variacao_percentual"],"50.00")
+        self.assertEqual(r["MT_ITIQUIRA_FERRO"]["estado"],"LACUNA_FONTE_NAO_ZERO")
+        self.assertIsNone(r["MT_DOM_AQUINO_BR070"]["variacao_percentual"])
+        with self.assertRaises(ErroConciliacao):
+            comparar_mes_contra_ano_anterior(base,
+                {**atual,"competencia":"2026-07"})
 
     def test_filtro_de_mes_e_uf_nao_fabrica_dados(self):
         doc=analisar_estacoes(self.rows,competencia="2026-07",uf_origem="MT")
