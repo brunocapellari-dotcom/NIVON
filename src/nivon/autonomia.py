@@ -19,6 +19,7 @@ import time
 
 from nivon.cooperacao import change, claim, connect, default_db, report
 from nivon.planejador import get_issues, refresh as refresh_plan
+from nivon.contexto_codigo import capsule
 from nivon.token_guard import summarize
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -48,11 +49,14 @@ def preflight():
 
 def prompt(task):
     scope = json.loads(task["scope"])
+    context = capsule(task, root=ROOT, limit=450)
+    hint = ("Mapa de símbolos (somente metadados): " + context + "\n") if context else ""
     return (
         "NIVON: você é implementador, trabalhando em PARALELO com outro agente. "
         "Tarefa: " + task["title"] + ". ID: " + task["id"] + ".\n"
         "Arquivos permitidos: " + ", ".join(scope) + ".\n"
         "Critério de aceite: " + str(task.get("acceptance") or "Testes de regressão offline e sem efeitos externos")[:700] + ".\n"
+        + hint +
         "Leia AGENTS.md e apenas os arquivos necessários. "
         "Faça alterações pequenas e úteis e inclua testes sintéticos. "
         "Não altere nada fora do escopo; não instale dependências; "
