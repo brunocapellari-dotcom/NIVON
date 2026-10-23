@@ -110,13 +110,24 @@ def _filename_tag(filename: str, name: str, version: str,
 
 
 def _dependencies(declared: list[str] | None) -> dict:
-    """Extrai somente nomes declarados. NÃO interpreta markers nem extras."""
+    """Classifica NOMES e marcadores, sem ativar extras nem resolver PEP 508.
+
+    Um marker que menciona extra continua marcado como POSSÍVEL,
+    mesmo se envolver OR/AND: não significa que será instalado.
+    """
+    empty = {
+        "requires_dist_present": False,
+        "unconditional": [],
+        "environment_conditional": [],
+        "extra_referenced_conditional": [],
+        "conditional_or_extras": [],
+        "unparsed": [],
+    }
     if declared is None:
-        return {"requires_dist_present": False, "unconditional": [],
-                "conditional_or_extras": [], "unparsed": []}
+        return empty
     if not isinstance(declared, list) or len(declared) > MAX_DEPENDENCIES:
         raise BloqueioRadar("Requires-Dist excessivo")
-    direct, conditional, unparsed = set(), set(), []
+    direct, env, extra, unparsed = set(), set(), set(), []
     for row in declared:
         if not isinstance(row, str) or len(row) > 512:
             raise BloqueioRadar("Requires-Dist inválido")
@@ -126,14 +137,23 @@ def _dependencies(declared: list[str] | None) -> dict:
             continue
         name = _CANON.sub("-", m.group(1)).lower()
         suffix = m.group(2)
-        if ";" in suffix or "[" in suffix:
-            conditional.add(name)
+        # Os nomes são rótulos de evidência, NÃO arestas resolvidas.
+        if ";" in suffix:
+            marker = suffix.split(";", 1)[1]
+            if re.search(r"\bextra\b", marker):
+                extra.add(name)
+            else:
+                env.add(name)
+        elif "[" in suffix:
+            extra.add(name)
         else:
             direct.add(name)
     return {
         "requires_dist_present": True,
         "unconditional": sorted(direct),
-        "conditional_or_extras": sorted(conditional),
+        "environment_conditional": sorted(env),
+        "extra_referenced_conditional": sorted(extra),
+        "conditional_or_extras": sorted(env | extra),
         "unparsed": unparsed,
     }
 
@@ -223,6 +243,15 @@ def analisar(releases: dict, *, glibc_minor: int = 17) -> dict:
         name for p in result for name in p["dependencies_declared"]["conditional_or_extras"]
     }
     unresolved = sorted((direct_required | conditional_required) - all_names)
+    only_unconditional = sorted(direct_required - all_names)
+    env_marked = sorted({
+        name for p in result
+        for name in p["dependencies_declared"]["environment_conditional"]
+    } - all_names)
+    extra_marked = sorted({
+        name for p in result
+        for name in p["dependencies_declared"]["extra_referenced_conditional"]
+    } - all_names)
     counts = {}
     for r in result:
         counts[r["wheel_metadata_status"]] = counts.get(r["wheel_metadata_status"], 0) + 1
@@ -236,6 +265,10 @@ def analisar(releases: dict, *, glibc_minor: int = 17) -> dict:
         "packages": result,
         "declared_distinct_dependency_names": len(direct_required | conditional_required),
         "declared_unresolved_dependency_names": unresolved,
+        "unresolved_unconditional_names": only_unconditional,
+        "unresolved_environment_marker_names": env_marked,
+        "unresolved_extra_referenced_names": extra_marked,
+        "dependencies_classified_without_marker_evaluation": True,
         "requires_dist_markers_evaluated": False,
         "full_pep508_dependency_resolution": False,
         "full_packaging_tags_implementation": False,
