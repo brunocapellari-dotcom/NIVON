@@ -236,6 +236,8 @@ def main(argv=None):
     parser.add_argument("--corte", required=True)
     parser.add_argument("--idade-dias", type=int, default=7)
     parser.add_argument("--resultado-anterior", type=Path)
+    parser.add_argument("--proximas-tarefas", type=Path,
+                        help="JSON com recortes pendentes para o coletor autorizado")
     args = parser.parse_args(argv)
     try:
         if (args.db.is_symlink() or not args.db.is_file()
@@ -259,12 +261,31 @@ def main(argv=None):
             )
         raw = (json.dumps(result, ensure_ascii=False, sort_keys=True,
                           indent=2) + "\n").encode("utf-8")
-        try:
-            with args.saida.open("xb") as file:
-                file.write(raw)
-        except FileExistsError:
-            if args.saida.is_symlink() or args.saida.read_bytes() != raw:
-                raise ErroContinuidadePAM("relatorio existente divergente")
+        # Recortes exportados sao PLANOS, sem permissoes de acesso nem coleta.
+        # O executor de rede permanece separado e exige autorizacao propria.
+        pendentes_raw = (json.dumps(result["tarefas_pendentes"],
+                                    ensure_ascii=False, sort_keys=True,
+                                    indent=2) + "\n").encode("utf-8")
+        arquivos = [(args.saida, raw)]
+        if args.proximas_tarefas is not None:
+            if (args.proximas_tarefas == args.saida or
+                    args.proximas_tarefas.is_symlink() or
+                    not args.proximas_tarefas.parent.is_dir()):
+                raise ErroContinuidadePAM("destino de tarefas invalido")
+            arquivos.append((args.proximas_tarefas, pendentes_raw))
+        # Preflight dos dois arquivos, para nao criar relatorio aprovado
+        # se ja existe uma lista de tarefas com conteudo diferente.
+        for destino, conteudo in arquivos:
+            if destino.is_symlink() or (destino.exists() and
+                    (not destino.is_file() or destino.read_bytes() != conteudo)):
+                raise ErroContinuidadePAM("saida existente divergente")
+        for destino, conteudo in arquivos:
+            try:
+                with destino.open("xb") as file:
+                    file.write(conteudo)
+            except FileExistsError:
+                if destino.is_symlink() or destino.read_bytes() != conteudo:
+                    raise ErroContinuidadePAM("saida existente divergente")
         print(json.dumps({
             "estado": result["estado"], "pendentes": result["pendentes"],
             "alertas": result["alertas"], "manifesto_sha256": result["manifesto_sha256"],
