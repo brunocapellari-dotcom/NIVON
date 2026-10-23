@@ -38,6 +38,7 @@ jobs:
           PYTHONPATH: src
         run: |
           python -m unittest discover -s tests -p 'test_corredores_bigquery.py' -v
+          python -m unittest discover -s tests -p 'test_antt_single_run_workflow_policy.py' -v
 
   publicar-e-medir:
     needs: validar
