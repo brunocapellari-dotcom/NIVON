@@ -120,6 +120,7 @@ def preparar_lote(payload: bytes, *, origem: str, coletado_em: str,
             "planilha": origem_aba,
             "produto": row["produto"],
             "metrica": row["metric_name"],
+            "valor_canonico": value,  # necessario ao fingerprint de revisao as-of
             "local": row.get("local"),
             "origem_frete": row.get("origem"),
             "destino_frete": row.get("destino"),
