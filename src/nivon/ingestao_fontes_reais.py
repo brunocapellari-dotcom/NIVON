@@ -103,7 +103,7 @@ def gravar_lote(*, banco, diretorio_bruto, dataset_id, origem, raw, tipo,
         raise ErroIngestao("estado invalido")
     if tipo not in ("text/csv", "application/json", "application/octet-stream", "application/vnd.ms-excel"):
         raise ErroIngestao("MIME nao permitido")
-    if not isinstance(registros, (list, tuple)) or len(registros) > 20000:
+    if not isinstance(registros, (list, tuple)) or len(registros) > 75000:
         raise ErroIngestao("quantidade de observacoes invalida")
     sha = hashlib.sha256(raw).hexdigest()
     snapshot = hashlib.sha256((dataset_id + "|" + sha).encode()).hexdigest()
