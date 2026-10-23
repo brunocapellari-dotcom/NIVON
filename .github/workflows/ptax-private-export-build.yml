@@ -1,0 +1,53 @@
+name: NIVON - Build do exportador privado PTAX
+on:
+  push:
+    paths:
+      - 'functions/ptax_private_export/index.mjs'
+      - '.github/workflows/ptax-private-export-build.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Gerar bundle sem credenciais
+        run: |
+          npm install --no-audit --no-fund --no-save pg@8.13.0 jose@6.1.0 esbuild@0.25.0
+          mkdir -p functions/ptax_private_export/dist
+          ./node_modules/.bin/esbuild functions/ptax_private_export/index.mjs \
+            --bundle --platform=node --target=node24 --format=esm \
+            --banner:js="import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);" \
+            --outfile=functions/ptax_private_export/dist/index.mjs
+          node --check functions/ptax_private_export/dist/index.mjs
+      - name: Provar bloqueio de acesso sem autenticacao
+        run: |
+          node --input-type=module - <<'NODE'
+          import fn from './functions/ptax_private_export/dist/index.mjs'
+          for (const path of ['/checkpoint','/export?upto=5']) {
+            const res=await fn.fetch(new Request('https://example.invalid'+path))
+            if(res.status!==401)throw Error('PTAX_EXPORT_MUST_REQUIRE_AUTH')
+          }
+          const wrong=await fn.fetch(new Request('https://example.invalid/nonexistent'))
+          if(wrong.status!==404)throw Error('PTAX_EXPORT_WRONG_ROUTE')
+          const health=await fn.fetch(new Request('https://example.invalid/health'))
+          if(health.status!==200 || JSON.stringify(await health.json()).includes('price'))
+            throw Error('HEALTH_MUST_NOT_EXPOSE_DATA')
+          console.log('PTAX_EXPORT_OIDC_DENY_BY_DEFAULT_OK')
+          NODE
+      - name: Versionar bundle de deploy
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f functions/ptax_private_export/dist/index.mjs
+          if ! git diff --cached --quiet; then
+            git commit -m "build(ptax): empacotar exportador privado [skip ci]"
+            git push origin HEAD:${{ github.ref_name }}
+          fi
