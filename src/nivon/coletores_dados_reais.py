@@ -14,6 +14,7 @@ import io
 import json
 import math
 import re
+from decimal import Decimal, InvalidOperation
 from datetime import date, datetime, timezone
 from urllib.parse import urlencode, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
@@ -131,6 +132,66 @@ def parse_csv_canada(raw):
         raise ErroColetor("colunas canadenses invalidas")
     return {"cabecalho":head[:30],"linhas_sample":sum(1 for _,r in zip(range(20),reader) if r)}
 
+def normalizar_csv_canada(raw):
+    """Extrai cultura/semana/metric de tabela CSV oficial, mantendo revisoes RAW.
+
+    Unidade original 'Ktonnes' e convertida para tonelada somente com colunas
+    explicitamente conferidas. Dados nao sao comparaveis entre metricas.
+    """
+    try:
+        stream=io.StringIO(raw.decode("utf-8-sig"),newline="")
+    except UnicodeError as exc:
+        raise ErroColetor("canada CSV nao UTF-8") from exc
+    table=csv.DictReader(stream)
+    obrigatorio={"Crop Year","Grain Week","Week Ending Date","worksheet",
+                 "metric","period","grain","grade","Region","Ktonnes"}
+    if not table.fieldnames or not obrigatorio<=set(table.fieldnames):
+        return [],{"status_parser":"SCHEMA_NOT_MATCHING","expected":sorted(obrigatorio)}
+    selecionados={"soybeans","corn","wheat","canola"}
+    registros=[]
+    lidas=0
+    for d in table:
+        lidas+=1
+        if lidas>120000:
+            raise ErroColetor("CSV canada excede linhas permitidas")
+        grain=str(d.get("grain") or "").strip()
+        if grain.casefold() not in selecionados:
+            continue
+        v=str(d.get("Ktonnes") or "").strip().replace(",","")
+        if not v or v in {"-","..","N/A"}:
+            continue
+        try:
+            decimal=Decimal(v)
+        except InvalidOperation:
+            raise ErroColetor("Ktonnes canada nao numerico")
+        if not decimal.is_finite():
+            raise ErroColetor("Ktonnes canada invalido")
+        data=str(d.get("Week Ending Date") or "").split(" ")[0]
+        try:
+            data=date.fromisoformat(data).isoformat()
+        except ValueError as exc:
+            raise ErroColetor("data semanal canada invalida") from exc
+        identidade="|".join([str(d.get(k) or "") for k in
+           ("Crop Year","Grain Week","worksheet","metric","period","grain","grade","Region")])
+        if not identidade or len(identidade)>180:
+            raise ErroColetor("identidade canada longa/invalida")
+        tonnes=decimal*1000
+        registros.append({
+            "identidade":identidade,"referencia":data,
+            "competencia":str(d.get("Crop Year")),"natureza":"INFORMADO",
+            "valor":str(tonnes),"unidade":"t",
+            "campos":{"region":d.get("Region"),"grain":grain,
+              "metric":d.get("metric"),"period":d.get("period"),
+              "worksheet":d.get("worksheet"),"grade":d.get("grade"),
+              "crop_year":d.get("Crop Year"),"grain_week":d.get("Grain Week"),
+              "source_ktonnes":str(decimal),"tonnes":str(tonnes),
+              "unidade_original":"Ktonnes"}
+        })
+        if len(registros)>18000:
+            raise ErroColetor("mais de 18000 series canada; particionar antes")
+    return registros,{"status_parser":"MAPPED","linhas_total_csv":lidas,
+             "observacoes_alvo":len(registros),"grains":sorted(selecionados)}
+
 def plano_ccee():
     return CCEE_PACKAGE
 
@@ -193,9 +254,10 @@ def executar_coleta(*, fonte, banco, raw_dir, executar=False,
         raw,mime=_get(url,cliente=cliente,max_bytes=MAX_TRANSFER,
                       tipos={"text/csv","application/octet-stream","text/plain","application/csv"})
         notas=parse_csv_canada(raw)
-        dados=[]
+        dados,parsed=normalizar_csv_canada(raw)
+        notas.update(parsed)
         dataset="CAN_GRAINS_CROP_YEAR_WEEKLY"
-        estado="RAW_RECEIVED"
+        estado="NORMALIZED" if dados else "RAW_RECEIVED"
     elif fonte=="BR_CCEE_PLD":
         url=plano_ccee()
         meta,mime=_get(url,cliente=cliente,max_bytes=1_500_000,
