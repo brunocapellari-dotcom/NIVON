@@ -78,3 +78,23 @@ Foi encontrado no Drive conectado o arquivo **`DIESEL ANP.xlsx`**, criado em 10/
 Arquivo de origem: https://docs.google.com/spreadsheets/d/1cD1QFFgdA3NzaiFkupFRjHjlwxW3ElcJ/edit
 
 **Governança:** é uma **compilação derivada presente no Drive**, não um arquivo LPC semanal RAW validado diretamente contra a ANP. Não atribuir a ela atualidade outubro/2026, não promover a fonte canônica, nem incorporar os dados de 2022–2026 como se fossem registros comprovados pelo novo coletor. A nova coleta real identifica versões oficiais e poderá servir para reconciliação futura dessas amostras históricas. A planilha foi consultada, **não foi copiada integralmente para o repositório ou banco de produção**. A contagem acima é de linhas reconhecidas no conteúdo textual fornecido pelo Drive, não de XLSX bruto verificado por ZIP e openpyxl.
+
+
+## Descoberta oficial revisada em 23/10/2026 — quebra real de nomenclatura
+
+Ao seguir os links efetivamente publicados no índice da ANP, foi identificada uma variação **real** da grafia do nome da planilha da semana 11/10 a 17/10/2026:
+
+| Semana oficial | Nome no link da ANP | Resultado da revisão |
+| --- | --- | --- |
+| 27/09 a 03/10/2026 | `resumo_semanal_lpc_2026-09-27_2026-10-03.xlsx` | Formato ISO antigo |
+| 04/10 a 10/10/2026 | `resumo_semanal_lpc_2026-10-04_2026-10-10.xlsx` | Formato ISO antigo |
+| 11/10 a 17/10/2026 | `resumo_semanal_lpc_2026_10_11-2026_10_17.xlsx` | **Underscores dentro da data e hífen entre datas** |
+
+Página de descoberta oficial:
+https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/levantamento-de-precos-de-combustiveis-ultimas-semanas-pesquisadas
+
+Os links se referem ao mesmo conjunto temático; a mudança de nome **não** implica mudança de layout XLSX. Isso será verificado apenas com os bytes. Em 23/10/2026 a ferramenta de consulta web conseguiu alcançar os links diretos mas não extrair arquivos XLSX devido à restrição do leitor web para `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`. O ambiente de execução de Python não possui resolução de DNS para `www.gov.br`. Portanto, **o layout de uma edição real e a integração real permanecem não homologados**.
+
+**Correção aplicada:** `anp_indice_lpc.py` aceita estritamente as duas grafias realmente observadas, valida exatamente 7 dias por semana e obtém os intervalos do próprio link do índice, não de um calendário inferido. `anp_lpc_coletor_real.py` agora solicita **a URL XLSX direta listada pela ANP**. O código anterior acrescentava `/@@download/file` sem o sufixo ser anunciado, o que podia transformar links oficiais válidos em erros HTTP ou baixar recurso diferente. A restrição de domínio/caminho/arquivo foi mantida e reforçada. Foram adicionados contratos de descoberta e um cenário E2E para a grafia mais recente; testes de regressão HTTP foram ajustados para URLs diretas.
+
+**Próximo gate:** rodar os testes E2E no HEAD novo e baixar as três edições verdadeiras com runtime que possa ler XLSX, sem criar caminhos artificiais ou presumir publicação.
