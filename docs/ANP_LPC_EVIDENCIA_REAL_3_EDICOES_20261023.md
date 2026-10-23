@@ -89,3 +89,26 @@ Backfill por recorte pode usar `--desde AAAA-MM-DD --ate AAAA-MM-DD --ultimas 12
 **Testes E2E sintéticos:** três ciclos consecutivos com bucket simulado: ingestão de três semanas, restauração de 3 edições em novo processo, reprocessamento sem novas edições e revisão posterior de uma planilha resultando em 4 edições; também snapshot adulterado, primeira exportação incompleta e colisão de SHA remoto. Em instância GCS real, listagem, leitura e criação exigem credenciais e custeio prévios; por isso os testes automáticos continuam offline.
 
 **Gates restantes:** provar operação em bucket real com acesso e custo monitorados; implementar exclusão mútua/lease por prefixo e política de retenção/backup independente; confirmar atualidade da fonte em execuções recorrentes; integrar relatórios sob governança de dados e direitos. Não foi feita promoção para `REAL_AUTORIZADO`, merge nem deploy.
+
+
+## Infraestrutura real identificada na branch main (mesmo projeto NIVON)
+
+A investigação sobre `main` confirmou que o projeto **não precisa de um segundo Google Cloud**: os workflows já usam `vars.NIVON_BQ_PROJECT`, `vars.NIVON_GCS_BUCKET`, `vars.NIVON_GCP_PROVIDER` e `vars.NIVON_GCP_SERVICE_ACCOUNT`. A documentação de ANTT de 23/10/2026 registra execução real de GCS e BigQuery [Actions #39983416188](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39983416188), no projeto **`nivon-data`**, região **`southamerica-east1`**, bucket privado **`nivon-data-raw-2026`** e dataset **`nivon_raw`**. Essa prova é da ANTT e **não** comprova autorização de escrita ANP, bucket gratuito, custo zero, retenção ANP ou tabela ANP operacional.
+
+A `main` mantém o núcleo compartilhado `arquivo_raw_gcs.py`, `lote_cloud_recuperavel.py`, `carga_bigquery_fontes.py` e workflows próprios. A camada LPC nesta PR é um **staging específico da fonte**; não deve virar um segundo núcleo central de GCS/BigQuery. Na etapa de reconciliação com `main`, será necessário reutilizar os contratos comuns de RAW/manifests/replay e mapear observações ANP para o modelo canônico do NIVON, preservando bitemporalidade, hashes e as separações diesel B/S10. **Não foi criada tabela ANP ou novo dataset BigQuery nesta rodada.**
+
+### Workflow de operação preparada (não ativada)
+
+`.github/workflows/anp-lpc-gcp.yml` é uma entrada operacional compatível com as variáveis e identidade federada existentes. Possui `workflow_dispatch` para `preflight` somente leitura e `coletar` e **cadência semanal prevista em código**, mas a escrita só pode acontecer após incorporação à **`main`** e todas as variáveis independentes:
+
+- `NIVON_RAW_ARCHIVE_APPROVED=true`: autorização geral de arquivamento privado;
+- `NIVON_ANP_LPC_WRITE_APPROVED=true`: autorização específica de escrita ANP;
+- `NIVON_ANP_LPC_COST_LIMIT_APPROVED=true`: orçamento/cota verificado pela operação;
+- `NIVON_ANP_LPC_RECURRING_APPROVED=true`: necessário **apenas** para a recorrência, não para o despacho manual;
+- `NIVON_GCP_PROVIDER`, `NIVON_GCP_SERVICE_ACCOUNT`, `NIVON_BQ_PROJECT`, `NIVON_GCS_BUCKET` existentes e definidos na infraestrutura.
+
+O job de escrita reutiliza **WIF/OIDC**, `environment: nivon-gcp-producao`, execução serializada, bucket existente com `public_access_prevention=enforced`, região `southamerica-east1`, ano UTC corrente e o `--modo ciclo-gcs`. Não habilita APIs, serviços, faturamento, contas de serviço, chaves permanentes, bucket, tabela ou agendadores externos. O pré-teste local de configuração não autentica e não escreve. O WIF atualmente verificado na `main` **não foi testado nem ampliado para a branch da PR #42**. Por isso o workflow foi adicionado somente ao código e **não foi executado com credenciais reais**.
+
+Como o NIVON usa bucket compartilhado, o prefixo é restrito a `nivon/anp/lpc/v1` para não misturar a série municipal da ANP com ANTT, CEPEA, IMEA e CONAB. Em operação futura, confirmar explicitamente IAM mínimo no prefixo/bucket e revisar a estimativa de custo de armazenamento e leituras antes do primeiro lote. **GitHub Actions e GCS podem gerar custo**; aprovação na variable é um gate necessário, não prova de ausência de cobrança.
+
+**Situação:** coletor ANP 3 edições reais já aprovado no runner efêmero; restauração e retomada testadas com bucket sintético; **primeira escrita ANP no bucket `nivon-data-raw-2026` ainda não executada**. PR aberta em rascunho, sem merge. A reconciliação com o núcleo canônico da `main` deve anteceder qualquer promoção operacional, evitando um pipeline concorrente.
