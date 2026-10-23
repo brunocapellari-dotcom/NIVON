@@ -95,7 +95,8 @@ def gravar_lote(*, banco, diretorio_bruto, dataset_id, origem, raw, tipo,
     """
     dataset_id = _identificador(dataset_id)
     coletado_em = _utc(coletado_em)
-    if not isinstance(raw, bytes) or not 1 <= len(raw) <= _MAX_BYTES:
+    limite_dataset = 120_000_000 if dataset_id == "CONAB_ARMAZENS_CAPACIDADE" else _MAX_BYTES
+    if not isinstance(raw, bytes) or not 1 <= len(raw) <= limite_dataset:
         raise ErroIngestao("raw vazio ou limite excedido")
     if not isinstance(origem, str) or not origem.startswith("https://") or any(x in origem for x in ("@", "#")):
         raise ErroIngestao("origem insegura")
