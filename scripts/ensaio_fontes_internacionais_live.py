@@ -12,6 +12,8 @@ from nivon.coletor_bcra_v4 import coletar_bcra
 from nivon.coletor_granos_ar import coletar_granos_ar
 from nivon.coletores_dados_reais import CCEE_PACKAGE, _get, _parse_ckan
 from urllib.parse import urlsplit
+from nivon.coletores_dados_reais import CANADA_CSV
+import io, csv
 
 def main():
     # Data antiga e delimitada, sem depender de uma cotação no dia corrente.
@@ -36,8 +38,23 @@ def main():
                    "recurso_csv_amostra":dado.get("csv_resources",[])[:15],
                    "notas":dado.get("notas")})
             except Exception as exc:
+                diagnostico={}
+                if fonte == "CAN_GRAINS_WEEKLY":
+                    try:
+                        raw, _mime = _get(CANADA_CSV.format(safra="2026-27"),
+                            tipos={"text/csv","text/plain","application/octet-stream","application/csv"})
+                        leitor=csv.DictReader(io.StringIO(raw.decode("utf-8-sig")))
+                        vistos=[]
+                        for n, item in enumerate(leitor):
+                            valor=str(item.get("Week Ending Date",""))[:40]
+                            if valor not in vistos: vistos.append(valor)
+                            if n >= 50 or len(vistos)>=6: break
+                        diagnostico={"datas_amostra":vistos}
+                    except Exception as sub_exc:
+                        diagnostico={"diagnostico":type(sub_exc).__name__}
                 resultado.append({"fonte":fonte,"http":"FALHOU",
-                  "tipo_erro":type(exc).__name__,"mensagem":str(exc)[:150]})
+                  "tipo_erro":type(exc).__name__,"mensagem":str(exc)[:150],
+                  "diagnostico":diagnostico})
         try:
             resp=coletar_bcra(inicio="2026-09-01",fim="2026-09-05",
                         banco=base/"smoke.sqlite",raw_dir=base/"raw",executar=True)
