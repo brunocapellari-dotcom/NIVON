@@ -11,7 +11,7 @@ import sys
 
 REQUIRED = ("git", "claude", "codex", "docker")
 OPTIONAL = ("gh", "ruff", "ty", "rg", "ast-grep", "sg", "serena", "codebase-memory-mcp", "rtk", "uv", "gitleaks", "semgrep", "osv-scanner", "ollama", "pytest")
-CLAUDE_FLAGS = ("--restricted", "--permission-prompts", "--tools")
+CLAUDE_FLAGS = ("--restricted", "--bare", "--no-session-persistence", "--permission-prompts", "--tools")
 CODEX_FLAGS = ("--sandbox", "--json")
 
 
