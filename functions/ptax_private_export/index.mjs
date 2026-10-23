@@ -77,7 +77,7 @@ export default {
     const upto=strictInt(url.searchParams.get('upto'),'UPTO');
     const limit=strictInt(url.searchParams.get('limit')??'100','LIMIT',{limit:MAX_LIMIT});
     if(after>upto)return json({error:'INVALID_RANGE'},422);
-    const result=await pool.query(FIELDS+' WHERE id>$1 AND id<=$2 ORDER BY id ASC LIMIT $3',
+    const result=await pool.query(FIELDS+' WHERE id>$1 AND id<=$2 ORDER BY public.nivon_ptax_quotes.id ASC LIMIT $3',
      [after,upto,limit]);
     for(const r of result.rows){
       strictInt(r.id,'ROW_ID');
