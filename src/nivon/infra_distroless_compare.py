@@ -69,7 +69,8 @@ def main(argv=None):
         print(json.dumps({"status":"INVALID_DISTROLESS_PROOF","production_authorized":False}))
         return 2
     print(json.dumps(result,sort_keys=True))
-    return 0
+    # Scanner de laboratório é gate de segurança REAL, independente de go-live.
+    return 0 if result["distroless_zero_high_critical"] else 3
 
 
 if __name__=="__main__":

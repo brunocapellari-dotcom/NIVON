@@ -99,15 +99,18 @@ class TestBatchPipeline(unittest.TestCase):
             batch._reconcile(self.root)
 
     def test_existing_ci_reuses_images_and_no_deploy(self):
-        workflow=(Path(__file__).resolve().parents[1] /
-                  ".github/workflows/infra_analytics_experiment.yml").read_text()
-        self.assertIn("nivon-batch:worker", workflow)
-        self.assertIn("nivon-analytics:ci", workflow)
-        self.assertIn("infra_offline_pipeline", workflow)
+        base=Path(__file__).resolve().parents[1]
+        workflow=(base / ".github/workflows/infra_analytics_experiment.yml").read_text()
+        runner=(base / "infra/scripts/offline_batch_ci.sh").read_text()
+        combined=workflow+"\\n"+runner
+        self.assertIn("nivon-batch:worker", combined)
+        self.assertIn("nivon-analytics:ci", combined)
+        self.assertIn("nivon-analytics:distroless", combined)
+        self.assertIn("infra_offline_pipeline", combined)
         for stage in ("prepare", "process", "reconcile", "verify", "backup", "restore"):
-            self.assertIn(" " + stage, workflow)
+            self.assertIn(" " + stage, combined)
         for banned in ("docker push", "docker login", "secrets.", "continue-on-error: true"):
-            self.assertNotIn(banned, workflow)
+            self.assertNotIn(banned, combined)
 
 
 if __name__ == "__main__":
