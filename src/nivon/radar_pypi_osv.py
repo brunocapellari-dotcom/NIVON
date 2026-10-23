@@ -147,9 +147,15 @@ def _release(name: str, response: bytes, *, pinned: str | None = None) -> dict:
                 or filetype not in ("bdist_wheel", "sdist") or
                 type(item.get("yanked")) is not bool):
             raise BloqueioRadar("distribuição PyPI sem hash/nome/tipo válido")
+        file_requires = item.get("requires_python")
+        if file_requires is not None and (
+            not isinstance(file_requires, str) or len(file_requires) > 256
+        ):
+            raise BloqueioRadar("Requires-Python de arquivo inválido")
         files.append({
             "filename": filename, "sha256_official_claim": sha,
             "type": filetype, "yanked": item["yanked"],
+            "requires_python": file_requires,
             "upload_time_iso_8601": item.get("upload_time_iso_8601"),
         })
     expr = info.get("license_expression")
