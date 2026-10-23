@@ -18,15 +18,19 @@
     {
       "id": "Q-R01",
       "priority": "P0",
-      "status": "IMPLEMENTED_IN_PR30_ONLY",
+      "status": "PR30_CONTRACT_RECONCILED_IN_QUANT_BRANCH",
       "branch": "integration/nivon-mercados-reconciliacao-20261020",
       "code": [
         "src/nivon/tendencias_mercados.py"
       ],
       "evidence": [
-        "https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39889891470"
+        "https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39946033578"
       ],
-      "acceptance": "must enforce same pickup/carrier/discharge/regime/product/equipment/toll and no municipal price average"
+      "acceptance": "must enforce same pickup/carrier/discharge/regime/product/equipment/toll and no municipal price average",
+      "source_ref": "8b351202e9ead030dd862dd45e8e6afd86ecc378",
+      "canonical_entrypoint": "nivon.tendencias_mercados:tendencia_frete_anunciado",
+      "statistical_engine": "nivon.fretes_tendencia_pareada:tendencia_frete_pareado",
+      "test": "tests/test_r01_reconciliacao_pr30_quant.py"
     },
     {
       "id": "Q-RAW",
@@ -67,9 +71,16 @@
     },
     {
       "id": "Q-CROSS-PR",
-      "priority": "P1",
-      "status": "PARTIAL_PR30_NOT_MERGED",
-      "acceptance": "reconcile all branch contracts, update issue 25, run all E2E in one checkout"
+      "priority": "P0",
+      "status": "PR30_HISTORY_MERGED_IN_QUANT_NOT_MAIN",
+      "acceptance": "reconcile all branch contracts, update issue 25, run all E2E in one checkout",
+      "merge_sha": "c04ff66f48e03bfbc6890630b51bfc8aab60e84d",
+      "origin_sha": "8b351202e9ead030dd862dd45e8e6afd86ecc378",
+      "already_identical_paths": 87,
+      "safe_blobs_imported": 39,
+      "conflicts_explicitly_resolved": 14,
+      "evidence": "https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39946033578",
+      "next_gate": "COORDINATED_MAIN_MERGE_WITH_HUMAN_REVIEW"
     },
     {
       "id": "Q-REAL-OOS",
@@ -103,16 +114,60 @@
       "workflow": "validar-nucleo",
       "status": "SUCCESS_OFFLINE_ONLY",
       "evidence": "https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39890911522"
+    },
+    {
+      "id": "FRETES-E2E-10",
+      "run": "PYTHONPATH=src python scripts/ensaio_fretes_integrado.py",
+      "workflow": "validar-nucleo",
+      "status": "SUCCESS_SYNTHETIC_ONLY",
+      "evidence": "https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39946033578"
+    },
+    {
+      "id": "R01-COMPAT-PR30",
+      "files": [
+        "tests/test_r01_reconciliacao_pr30_quant.py",
+        "tests/test_fretes_tendencia_pareada.py",
+        "tests/test_tendencias_mercados.py"
+      ],
+      "status": "SUCCESS_SYNTHETIC_ONLY"
     }
   ],
   "source_of_truth": "docs/NIVON_QUANT_PLANO_LOTES_EXECUCAO_20261022.md",
   "last_verified": {
-    "quant_head_before_manifest_sync": "5a840abab6ed78e933df565f6d20bf030931c04a",
-    "ci_run": "39890911522",
-    "tests": 1666,
+    "sha": "7df13980d47b3341637efc4f518ce4c2115981cb",
+    "ci_run": "39946033578",
+    "tests": 1778,
     "failures": 0,
     "skipped": 5,
     "status": "SUCCESS",
-    "limitations": "ONLY_SYNTHETIC_OFFLINE"
-  }
+    "ptax_e2e_steps": 10,
+    "freight_e2e_steps": 10,
+    "real_source_verification": false
+  },
+  "next_execution_priorities": [
+    {
+      "id": "Q-MAIN",
+      "priority": "P0",
+      "status": "AWAIT_INTEGRATOR",
+      "description": "Review and coordinate merge to main. Feature CI does not authorize deploy."
+    },
+    {
+      "id": "Q-RAW",
+      "priority": "P1",
+      "status": "BLOCKED_BY_SOURCE_EVIDENCE",
+      "description": "Verify semantic RAW content and rights independently of signed capture metadata."
+    },
+    {
+      "id": "Q-OOS",
+      "priority": "P1",
+      "status": "BLOCKED_BY_AUTHENTIC_HISTORICAL_DATA",
+      "description": "Validate real point-in-time vintages and pre-registered holdout with official calendars."
+    },
+    {
+      "id": "Q-INFRA",
+      "priority": "P1",
+      "status": "OFFLINE_ONLY",
+      "description": "Validate portability and deterministic restoration without enabling cloud."
+    }
+  ]
 }

@@ -98,3 +98,14 @@ O fato de um HEAD novo surgir não invalida o CI de um corte anterior,
 mas seus commits adicionais não estão auditados por esta suíte.
 Não adicionar automaticamente novos workflows, serviços de rede ou
 mudanças de licenciamento sem inspecionar os deltas.
+
+## Lote executado em 23/10/2026
+
+Merge de PR #30 por ancestral e SHA, com 39 blobs novos e 14 conflitos tratados,
+registrado em `docs/RECONCILIACAO_PR30_QUANT_20261023.md`.
+O contrato R01 foi consolidado na interface do painel multi-pares sem perder
+o uso legado de um só estabelecimento. CI `39946033578`: **1.778 testes,
+zero falhas, cinco skipped**, mais 10 etapas PTAX E2E e 10 Fretes E2E,
+ambos sintéticos. A próxima prioridade não é adicionar testes unitários
+redundantes, mas **proveniência semântica e autorização das fontes**, além
+da revisão de merge em `main` pela coordenação.
