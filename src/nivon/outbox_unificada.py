@@ -96,6 +96,10 @@ def registrar_decisao_consentimento(
     if not hmac.compare_digest(esperado, assinatura):
         raise PermissionError("prova assinada inválida")
     ts = _tempo(em)
+    # Prova autêntica com carimbo de tempo futuro não representa autorização
+    # vigente. Rejeitar na ingestão para não envenenar o ledger canônico.
+    if datetime.fromisoformat(ts) > datetime.now(timezone.utc):
+        raise ErroControleEnvio("decisão de consentimento futura não é vigente")
     _schema(db)
     db.execute("BEGIN IMMEDIATE")
     try:
@@ -138,13 +142,22 @@ def registrar_decisao_consentimento(
             "comprovacao_externa_homologada": False, "envio_autorizado": False}
 
 
-def _consentimento_atual(db: sqlite3.Connection, destinatario_hmac: str) -> None:
+def _consentimento_atual(
+    db: sqlite3.Connection, destinatario_hmac: str, *,
+    corte: str | None = None,
+) -> None:
+    # O estado atual não basta: uma concessão posterior ao corte NÃO autoriza
+    # uma reserva retrospectiva. Esta validação também protege o pre-POST.
     row = db.execute(
-        "SELECT estado FROM nivon_consentimentos WHERE destinatario_hmac=?",
+        "SELECT estado, decisao_utc FROM nivon_consentimentos "
+        "WHERE destinatario_hmac=?",
         (_hash(destinatario_hmac),),
     ).fetchone()
-    if row is None or row[0] != "CONCEDIDO":
-        raise PermissionError("consentimento ausente ou revogado")
+    instante = datetime.now(timezone.utc) if corte is None else datetime.fromisoformat(_tempo(corte))
+    if (row is None or row[0] != "CONCEDIDO"
+            or datetime.fromisoformat(row[1]) > instante
+            or datetime.fromisoformat(row[1]) > datetime.now(timezone.utc)):
+        raise PermissionError("consentimento ausente, revogado ou não vigente no corte")
 
 
 def reservar_na_transacao(
@@ -159,7 +172,7 @@ def reservar_na_transacao(
     if canal not in CANAIS or not isinstance(intencao_id, str) or not 1 <= len(intencao_id) <= 160:
         raise ErroControleEnvio("canal/intenção inválidos")
     ts = _tempo(agora)
-    _consentimento_atual(db, destinatario_hmac)
+    _consentimento_atual(db, destinatario_hmac, corte=ts)
     try:
         db.execute("""INSERT INTO nivon_reservas_canonicas
             (dia_local,destinatario_hmac,canal,intencao_id,reservada_utc,estado)
@@ -177,9 +190,11 @@ def verificar_consentimento_pre_post(
 ) -> None:
     """Checagem antes do POST. NÃO elimina a corrida de revogação no provedor."""
     _schema(db)
-    _consentimento_atual(db, destinatario_hmac)
-    row = db.execute("""SELECT estado FROM nivon_reservas_canonicas
+    row = db.execute("""SELECT estado, reservada_utc FROM nivon_reservas_canonicas
         WHERE dia_local=? AND destinatario_hmac=? AND canal=? AND intencao_id=?""",
         (_dia(dia_local), destinatario_hmac, canal, intencao_id)).fetchone()
     if row is None or row[0] != "RESERVADA":
         raise PermissionError("reserva central ausente, revogada ou divergente")
+    # Nunca revalidar um envio anterior com consentimento concedido depois
+    # da reserva, mesmo que a tabela de decisões seja alterada externamente.
+    _consentimento_atual(db, destinatario_hmac, corte=row[1])
