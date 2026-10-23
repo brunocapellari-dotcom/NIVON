@@ -15,6 +15,7 @@ from math import isfinite
 
 from .historico import Observacao
 from .sidra_pam import normalizar_pam_1612, planejar_pam_1612
+from .ivo_pam_semantica import conferir_semantica_pam_1612, ErroSemanticaPAM
 
 
 class ErroPontePAM(ValueError):
@@ -105,6 +106,16 @@ def preparar_pam_anual_asof(*, payload: bytes, plano: dict,
             or not isinstance(unidade_autorizada, str)
             or not unidade_autorizada.strip() or len(unidade_autorizada) > 100):
         raise ErroPontePAM("produto/variável/unidade sem mapeamento explícito")
+    # O coletor base aceita códigos genéricos; o IVO só pode fazer
+    # inferência quando a grandeza, a unidade e a cultura foram
+    # identificadas SEM heurística ou mistura de hectares/toneladas.
+    try:
+        semantica=conferir_semantica_pam_1612(
+            variavel=variavel_autorizada,
+            categoria_c81=produto_autorizado,
+            unidade=unidade_autorizada)
+    except ErroSemanticaPAM as exc:
+        raise ErroPontePAM("semântica PAM/C81/unidade não verificada") from exc
     # Contrato oficial do planejador SIDRA; não reconstitui endpoint externo.
     expected = planejar_pam_1612(
         municipio_ibge=plano.get("municipio_ibge"),
@@ -138,6 +149,7 @@ def preparar_pam_anual_asof(*, payload: bytes, plano: dict,
         # indisponibilidade em label numérico exato.
         return {
             "estado": "BLOQUEADO_MARCADOR_SIDRA",
+            "semantica_sidra": semantica,
             "motivo": estado,
             "hash_payload": digest, "competencia": str(plano["ano"]),
             "treino_real_autorizado": False, "label_final_certificado": False,
@@ -154,6 +166,7 @@ def preparar_pam_anual_asof(*, payload: bytes, plano: dict,
         valor=float(valor), natureza="INFORMADO", edicao=digest)
     return {
         "estado": "PAM_ANUAL_CANDIDATO_NAO_CERTIFICADO",
+        "semantica_sidra": semantica,
         "observacao": observado,
         "hash_payload": digest, "dataset_id": "IBGE_PAM",
         "tipo_snapshot": snapshot["classe_registro"],
