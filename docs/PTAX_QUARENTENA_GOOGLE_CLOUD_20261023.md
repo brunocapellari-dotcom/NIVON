@@ -162,3 +162,79 @@ incluindo quarentena e bloqueio de envio cloud, com execução em
 
 **Não declarar** que um arquivo armazenado na quarentena é valor
 atual da PTAX ou que foi certificado pelo Banco Central.
+
+
+## 5. Coleta HTTPS diretamente do BCB sob aprovação
+
+Agora existe um coletor operacional, não apenas o importador de
+arquivos externos: `src/nivon/coletor_ptax_quarentena.py`.
+`scripts/coletar_ptax_quarentena.py` fornece a entrada por terminal.
+O comando **não funciona no catálogo atual**, pois `BCB_PTAX`
+ainda está com `enabled=false` e `collection_authorized=false`.
+Não alterar esses campos sem a avaliação de licença, direito de
+armazenamento e operação. O comando abaixo é somente o contrato
+**para quando** a política estiver formalmente aprovada:
+
+```bash
+PYTHONPATH=src python scripts/coletar_ptax_quarentena.py \
+  --catalogo config/fontes_nivon_master.v1.json \
+  --banco /dados/nivon_ptax_quarentena.sqlite \
+  --moeda USD --inicio 2026-10-20 --fim 2026-10-23 \
+  --dias-janela 4 --permitir-rede \
+  --evidencia-direitos REFERENCIA_INTERNA_DIREITOS_APROVADOS
+```
+
+Se o catálogo não autorizar a coleta, não cria o banco nem acessa
+a rede. O coletor recebe até **oito consultas em um lote**, usa
+apenas URLs PTAX validadas pelo planejador, HTTP 200/HTTPS com
+verificação de certificado, aceita respostas vazias OData, verifica
+SHA, horários, identidade monetária, MIME e conteúdo, e só após
+todas as respostas válidas grava o lote em **uma única transação**
+SQLite. Uma falha intermediária cancela todas as alterações. O
+horário gravado é o instante local posterior ao recebimento: não
+comprova o instante em que o BCB publicou a taxa.
+
+O endpoint USD `CotacaoDolarPeriodo` devolve as taxas por período
+e pode não fornecer `tipoBoletim`. Isso não permite atribuir
+`Fechamento` a uma linha pela mera ausência do campo.
+Para uma série só de fechamento, validar separadamente o endpoint
+oficial `CotacaoMoedaPeriodoFechamento` e seus campos antes da
+integração de modelos preditivos.
+
+A amostra permanece `AMOSTRA_EXTERNA_NAO_HOMOLOGADA`, sem status
+`REAL_SNAPSHOT_TESTED` ou promoção automática para `nivon_snapshots`.
+Transporte injetado em testes continua explicitamente `SINTETICO`.
+
+## 6. Arquivamento e recuperação GCS idempotentes
+
+`src/nivon/ptax_reconciliacao_gcs.py` faz readback dos dois
+objetos e reconfere SHA-256 e bytes completos; classifica
+`CONFERIDO`, `AUSENTE` e `DIVERGENTE`.
+`src/nivon/ptax_sincronizacao_gcs.py` verifica o estado remoto
+antes de escrever, envia **somente arquivos ausentes** com
+`if_generation_match=0`, relê e reconfere tudo. Objeto divergente
+é bloqueado, nunca sobrescrito. Um upload interrompido pode ser
+retomado sem criar um novo objeto para o arquivo já existente.
+
+CLI `scripts/sincronizar_ptax_gcs.py`: o comando a seguir
+produz **somente planejamento offline**, sem rede/cloud:
+
+```bash
+PYTHONPATH=src python scripts/sincronizar_ptax_gcs.py \
+  --banco /dados/nivon_ptax_quarentena.sqlite \
+  --bucket BUCKET_PRIVADO_EXISTENTE --max-eventos 5
+```
+
+Para upload real, somente após revisão de IAM, bucket privado,
+armazenamento, licença e custo: acrescentar
+`--confirmar-upload --referencia-direitos CODIGO_APROVADO
+--referencia-custo ORCAMENTO_APROVADO` e disponibilizar
+credenciais ADC de escopo mínimo. A leitura/recuperação também
+pode gerar custos e tem gates separados. Cada comando limita
+a no máximo dez eventos; não ativa cron/agendamentos.
+
+**Evidência técnica:** CI de PR executa o coletor com transporte
+de teste, o fluxo de quarentena, readback/retomada GCS com cliente
+em memória e regras de bloqueio. **Não substitui** teste de IAM
+e operação real no bucket; nenhuma integração com Google Cloud
+foi ativada por este trabalho.
