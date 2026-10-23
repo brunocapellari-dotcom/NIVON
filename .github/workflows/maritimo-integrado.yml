@@ -77,6 +77,42 @@ jobs:
           print(json.dumps({'fonte':'imbituba','registros_detectados':len(rows),
               'sem_exibicao_de_navios_ou_dados_de_terceiros':True}))
           PY
+  smoke-publico-portwatch:
+    # Apenas 1 consulta curta de fonte aberta; nao salva resposta AIS no repo.
+    if: github.event_name == 'pull_request'
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Confirmar consulta da fonte FMI com dados reais
+        env:
+          PYTHONPATH: src
+        run: |
+          python - <<'PY'
+          from datetime import datetime,timezone,timedelta
+          from nivon.portwatch_fluxos import consulta_url, baixar_pagina, normalizar
+          import json
+          today=datetime.now(timezone.utc).date()
+          first=(today-timedelta(days=14)).isoformat()
+          last=(today-timedelta(days=7)).isoformat()
+          selected=['hormuz','bab_el_mandeb','suez','panama']
+          url=consulta_url(passagens=selected,inicio=first,fim=last)
+          payload=baixar_pagina(url,permitir_rede=True)
+          records,more=normalizar(payload,consultadas=selected,
+              coletado_em=datetime.now(timezone.utc).isoformat())
+          if not records or more:
+              raise SystemExit('PORTWATCH_VAZIO_OU_PAGINACAO_INCOMPLETA')
+          print(json.dumps({'fonte':'FMI_PORTWATCH','registros':len(records),
+              'passagens_identificadas':sorted({r['passagem'] for r in records}),
+              'datas':[min(r['data_referencia'] for r in records),max(r['data_referencia'] for r in records)],
+              'sem_persistencia_publica':True}))
+          PY
   coleta:
     needs: qa
     if: ${{ github.event_name != 'pull_request' && vars.NIVON_MARITIMO_COLETA_HABILITADA == 'true' }}
