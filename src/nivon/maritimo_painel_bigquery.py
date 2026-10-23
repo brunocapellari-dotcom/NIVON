@@ -200,8 +200,7 @@ def consultar_maritimo(*, projeto, dataset, inicio, fim, as_of,
             "toneladas_realizadas":None,"navios_em_fila_ais":None,
             "previsao_eta":None,"publicavel":False,
             "nota":"Contagem de IDs de programacao nao equivale a navios/DUV realizados."}
-    passagens=Counter()
-    volumes=Decimal("0")
+    por_dia = {}
     for raw in rows:
         row=dict(raw.items()) if hasattr(raw,"items") else dict(raw)
         if row.get("fonte")!="FMI_PORTWATCH" or row.get("passagem")!=passagem:
@@ -222,17 +221,25 @@ def consultar_maritimo(*, projeto, dataset, inicio, fim, as_of,
         count=row.get("transitos_ais")
         if type(count) is not int or count<0:
             raise ErroPainelMaritimo("transitos PortWatch invalidos")
-        n=row.get("volume_transito_estimado_t")
-        if n is not None:
-            volumes+=_dec_nonnegative(n,"volume estimado PortWatch")
-        passagens[ref.isoformat()]+=1
+        vol=row.get("volume_transito_estimado_t")
+        volume=None if vol is None else _dec_nonnegative(vol,"volume estimado PortWatch")
+        at=_instante(coleta)
+        # Uma data pode conter multiplas revisoes, jamais somar vintages.
+        k=ref.isoformat()
+        anterior=por_dia.get(k)
+        registro={"at":at,"sha":sha,"transitos":count,"volume":volume}
+        if anterior is None or (at,sha)>(anterior["at"],anterior["sha"]):
+            por_dia[k]=registro
+    total_volume=None
+    if por_dia and all(v["volume"] is not None for v in por_dia.values()):
+        total_volume=format(sum((v["volume"] for v in por_dia.values()),Decimal("0")),"f")
+    total_transitos=sum(v["transitos"] for v in por_dia.values()) if por_dia else None
     return {**base,"executado":True,
         "estado":"PORTWATCH_TRANSITOS_ESTIMADOS_SHADOW" if rows else "SEM_DADOS_NAO_EQUIVALE_A_ZERO",
-        "revisoes_visiveis":len(rows),"dias_distintos":len(passagens),
-        "revisoes_por_dia":dict(sorted(passagens.items())),
-        "volume_estimado_modelo_t":format(volumes,"f") if rows and
-            all(dict(r.items() if hasattr(r,"items") else r).get("volume_transito_estimado_t") is not None for r in rows)
-            else None,
+        "revisoes_visiveis":len(rows),"dias_distintos":len(por_dia),
+        "vintages_descartadas_para_soma":len(rows)-len(por_dia),
+        "transitos_ais_reportados":total_transitos,
+        "volume_estimado_modelo_t":total_volume,
         "volume_movimentado_real":None,"transitos_portuarios_confirmados":None,
         "publicavel":False,
         "nota":"PortWatch nao identifica port call, carga realizada nem trading."}
