@@ -91,3 +91,30 @@ jobs:
               'duplicados':result['duplicates'],'referencia':result['latest_reference']},
               ensure_ascii=False))
           PY
+      - name: Registrar falha de coleta no Neon sem alterar preços
+        if: ${{ failure() }}
+        continue-on-error: true
+        env:
+          NIVON_CEPEA_INGEST_URL: https://br-twilight-cell-b77ukd6x-cepeaingest.compute.c-13.us-east-1.aws.neon.tech/ingest
+          NIVON_CEPEA_PRODUTO: ${{ github.event.schedule == '30 23 * * 1-5' && 'MILHO' || 'SOJA' }}
+        run: |
+          python - <<'PY'
+          import json,os
+          from urllib.parse import quote
+          from urllib.request import Request,urlopen
+          audience='urn:nivon:cepea:ingest'
+          oidc_url=os.environ['ACTIONS_ID_TOKEN_REQUEST_URL']+'&audience='+quote(audience,safe='')
+          req=Request(oidc_url,headers={'Authorization':'Bearer '+os.environ['ACTIONS_ID_TOKEN_REQUEST_TOKEN']})
+          with urlopen(req,timeout=20) as response:
+              jwt=json.load(response)['value']
+          url=os.environ['NIVON_CEPEA_INGEST_URL'].removesuffix('/ingest')+'/report-failure'
+          data=json.dumps({'source':'CEPEA','product':os.environ['NIVON_CEPEA_PRODUTO'],
+                           'event':'WORKFLOW_FAILED'}).encode('utf8')
+          req=Request(url,data=data,method='POST',headers={
+              'Authorization':'Bearer '+jwt,'Content-Type':'application/json'})
+          with urlopen(req,timeout=25) as response:
+              result=json.load(response)
+          if result.get('status')!='RECORDED' or result.get('canonical_quotes_inserted')!=0:
+              raise SystemExit('CEPEA_FAILURE_LOG_UNCONFIRMED')
+          print('CEPEA_FAILURE_LOGGED='+result['product'])
+          PY
