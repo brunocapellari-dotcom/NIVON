@@ -335,3 +335,40 @@ sem zero presumido, impossibilidade de somar MDF-e e ferrovia e
 CLI completa. Os testes usam dados sintéticos; a prova de nuvem
 dessa *nova* interface só deverá ser considerada concluída depois
 de haver sucesso no job OIDC/BigQuery com artefato real.
+
+
+## Lote 5 — execução real da leitura marítima no BigQuery (23/10/2026)
+
+**PR #230 mesclado na main**:
+https://github.com/brunocapellari-dotcom/NIVON/pull/230
+
+**Leitura real com OIDC no projeto `nivon-data`, dataset `nivon_raw`**:
+https://github.com/brunocapellari-dotcom/NIVON/actions/runs/40008847040
+
+Resultado auditado na saída `NIVON_MARITIMO_READBACK_REAL`:
+- **Imbituba**, fonte de programação: 5 revisões, 5 IDs de programação
+  distintos. Natureza `PROGRAMACAO_HISTORICA_READONLY_SHADOW`.
+- **PortWatch, passagem Panamá**: 4 revisões.
+  Natureza `PORTWATCH_TRANSITOS_ESTIMADOS_SHADOW`.
+- O job verificou consulta autenticada, compatibilidade de origem,
+  não publicação e ausência de atribuição indevida de carga realizada.
+- Artefato: `nivon-maritimo-readback-40008847040`, retido até
+  22/11/2026. Evidência limitada à janela consultada de outubro/2026.
+
+As consultas passam por `scripts/rodar_painel_operacional.py`,
+`ponte_painel_fontes.py` e `maritimo_painel_bigquery.py`, usando as
+tabelas marítimas **já existentes**, sem criação de tabelas, bucket
+ou recursos de cron. O leitor usa no máximo 35 dias por recorte,
+1.000 registros e 50 MB faturáveis por consulta. A reconciliação
+PortWatch elimina vintages repetidas no mesmo dia antes de agregar
+estimativas. Uma consulta vazia é `SEM_DADOS_NAO_EQUIVALE_A_ZERO`.
+
+**Bloqueio operacional ainda existente:** os 5 IDs não representam
+5 escalas realizadas e não estão validados como DUV. Não existem
+posições AIS por navio suficientemente conciliadas com geocercas e
+eventos portuários nesse contrato de leitura. Por isso a ponte não
+popula `navios_em_fila_ais`, nem tonelagem realizada, VQI ou ETA.
+Para avançar é necessário disponibilizar eventos AIS historizados por
+MMSI/IMO e horários + correspondência independente com eventos oficiais
+(chegada, atracação, desatracação, DUV e porto/terminal).
+Somente depois disso medir erros de previsão de filas e tempo de espera.
