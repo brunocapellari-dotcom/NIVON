@@ -66,7 +66,8 @@ def processar_ciclo_roni(db, *, raw_dir, itens):
         raise
     after = db.execute("SELECT COUNT(*) FROM roni_snapshots").fetchone()[0]
     return {
-        "estado": "CICLO_LOCAL_ATOMICO_NAO_HOMOLOGADO",
+        "estado": "LOTES_PERSISTIDOS_OFFLINE_NAO_HOMOLOGADOS",
+        "lote_atomico": True,
         "lotes_processados": len(results), "snapshots_novos": after-prior,
         "resultados": results, "auditoria": audit,
         "atualizacao_em_lote_confirmada": True,
