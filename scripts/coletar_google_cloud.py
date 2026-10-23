@@ -97,6 +97,14 @@ def main(argv=None):
     approved=(os.getenv("NIVON_GCP_OPERACIONAL_APROVADO")=="true"
               and os.getenv("NIVON_GCP_DIREITOS_DADOS")=="true"
               and os.getenv("NIVON_ZERO_COST_BQ_APPROVED")=="true")
+    # O mesmo preflight usado pelo workflow também vale para execução manual.
+    # Nenhum HTTP externo começa antes da confirmação GCS/BQ por ADC.
+    if execute and approved:
+        from nivon.preflight_google_cloud import verificar_recursos
+        verificar_recursos(
+            projeto=os.getenv("NIVON_BQ_PROJECT",""),
+            dataset=os.getenv("NIVON_BQ_DATASET",""),
+            bucket=os.getenv("NIVON_GCS_BUCKET",""))
     result=executar_lote(
         fonte=args.fonte,base=args.base,
         project_id=os.getenv("NIVON_BQ_PROJECT",""),
