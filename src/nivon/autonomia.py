@@ -310,6 +310,7 @@ def _run_locked(*, max_tasks=8, minutes=120, per_task=15):
     events = []
 
     def worker(agent):
+        idle_without_other = 0
         while (not (HOME / "STOP").exists() and time.monotonic() < deadline
                and may_begin(per_task_minutes=per_task)):
             with guard:
@@ -319,9 +320,27 @@ def _run_locked(*, max_tasks=8, minutes=120, per_task=15):
                     return
                 with connect(dbpath) as db:
                     task = claim(db, agent, minutes=max(per_task + 3, 30))
+                    if task is None:
+                        # Um agente pode alcançar sua cota e transferir uma tarefa
+                        # somente depois de concluir a tentativa atual. Não encerrar
+                        # o colega prematuramente enquanto houver trabalho em curso.
+                        other_running = db.execute(
+                            "SELECT COUNT(*) FROM tasks WHERE status='running' AND owner<>?",
+                            (agent,)).fetchone()[0] > 0
+                    else:
+                        other_running = False
                 if task is None:
-                    return
-                count["value"] += 1
+                    idle_without_other = 0 if other_running else idle_without_other + 1
+                    if idle_without_other >= 3:
+                        return
+                else:
+                    idle_without_other = 0
+                    count["value"] += 1
+            if task is None:
+                # Aguarda sem fazer chamadas a Claude/Codex. Prazo, STOP e
+                # janela noturna são reavaliados no início da próxima passagem.
+                time.sleep(0.25)
+                continue
             try:
                 outcome, note = do_task(agent, task, timeout_minutes=per_task)
             except Exception as exc:
