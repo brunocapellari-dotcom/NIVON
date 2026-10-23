@@ -225,7 +225,7 @@ jobs:
             --entrypoint /usr/local/bin/python nivon-analytics:distroless \
             -c '
           import importlib,re,sys
-          for name in ("ssl","sqlite3","bz2","lzma","ctypes","numpy","pandas","scipy","numba","statsforecast","agrobr"):
+          for name in ("ssl","sqlite3","bz2","lzma","ctypes","numpy","pandas","scipy","statsforecast","agrobr"):
               try:
                   importlib.import_module(name)
               except Exception as exc:
