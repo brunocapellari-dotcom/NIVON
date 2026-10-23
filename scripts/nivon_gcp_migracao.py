@@ -235,7 +235,7 @@ def extrair(dataset:str,endpoint:str,token:str,saida:Path,*,api=_api)->dict:
                 if len(rows)<80:break
         if count==0 and expected!=0:raise MigracaoBloqueada("LEGACY_EMPTY_WHEN_EXPECTED")
         # Inserts entre checkpoint e ultima pagina sao possiveis: contagem e teto registrados.
-        if count>expected:raise MigracaoBloqueada("LEGACY_MORE_THAN_CHECKPOINT")
+        if count!=expected:raise MigracaoBloqueada("LEGACY_SNAPSHOT_COUNT_MISMATCH")
     except BaseException:
         saida.unlink(missing_ok=True)
         raise
