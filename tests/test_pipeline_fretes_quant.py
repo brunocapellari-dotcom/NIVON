@@ -113,7 +113,7 @@ class TestPipelineOffline(unittest.TestCase):
         rows = anunciados()
         raws, recibos = assinar(rows)
         raws.pop(rows[0].registro_id)
-        with self.assertRaises(ErroQuantitativo):
+        with self.assertRaisesRegex(ErroRegistroFrete, "cobertura RAW"):
             executar_lote_fretes_quant(
                 rows, as_of=ASOF, raws=raws, recibos=recibos,
                 chave_captura=KEY, emissor_esperado="INGESTAO_OFFLINE",
