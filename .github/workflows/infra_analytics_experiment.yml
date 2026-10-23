@@ -9,6 +9,9 @@ on:
       - '.dockerignore'
       - 'src/nivon/infra_analytics_probe.py'
       - 'src/nivon/infra_offline_pipeline.py'
+      - 'src/nivon/infra_wheel_lock.py'
+      - 'tests/test_infra_wheel_lock.py'
+      - 'infra/locks/**'
       - 'tests/test_infra_offline_pipeline.py'
       - 'src/nivon/infra_analytics_audit.py'
       - 'tests/test_infra_analytics_experiment.py'
@@ -50,6 +53,7 @@ jobs:
           set -euo pipefail
           PYTHONPATH=src python -m unittest discover -s tests -p test_infra_analytics_experiment.py -v
           PYTHONPATH=src python -m unittest discover -s tests -p test_infra_offline_pipeline.py -v
+          PYTHONPATH=src python -m unittest discover -s tests -p test_infra_wheel_lock.py -v
           docker_arch="$(docker info --format '{{.Architecture}}')"
           case "$docker_arch" in
             x86_64) docker_arch=amd64 ;;
@@ -96,6 +100,19 @@ jobs:
           ( cd "$RUNNER_TEMP/nivon-analytics-wheels" && sha256sum ./*.whl > "$RUNNER_TEMP/nivon-analytics-wheels.sha256" )
           ( cd "$RUNNER_TEMP/nivon-analytics-wheels" && sha256sum -c "$RUNNER_TEMP/nivon-analytics-wheels.sha256" > /dev/null )
           echo "NIVON_WHEELS_SHA256_VERIFIED_PRIVATE"
+          # Captura somente metadados públicos de arquivos PyPI para lock real.
+          PYTHONPATH=src python -m nivon.infra_wheel_lock \
+            --folder "$RUNNER_TEMP/nivon-analytics-wheels" \
+            --arch "${{ matrix.arch }}" --emit
+          # Após versionamento dos dois manifests, cada execução exige hash exato.
+          if test -f "infra/locks/analytics-${{ matrix.arch }}.json"; then
+            PYTHONPATH=src python -m nivon.infra_wheel_lock \
+              --folder "$RUNNER_TEMP/nivon-analytics-wheels" \
+              --arch "${{ matrix.arch }}" \
+              --check "infra/locks/analytics-${{ matrix.arch }}.json"
+          else
+            echo "NIVON_WHEEL_LOCK_CAPTURE_ONLY_NOT_APPROVED"
+          fi
       - name: Build analítico com wheelhouse externo e SEM rede
         shell: bash
         env:
