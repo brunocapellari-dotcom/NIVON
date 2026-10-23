@@ -221,6 +221,11 @@ def do_task(agent, task, *, timeout_minutes=15):
                     encoding="utf-8")
                 return "blocked", f"{branch}; timeout, parada dos descendentes NÃO comprovada"
             return "blocked", f"{branch}; timeout de {timeout_minutes} min; processos encerrados"
+        if not process.cleanup_confirmed:
+            (HOME / "STOP").write_text(
+                "Descendentes da CLI não confirmados após saída; revisão humana\n",
+                encoding="utf-8")
+            return "blocked", f"{branch}; encerramento de descendentes não comprovado"
         if process.exit_code:
             raw = logfile.read_text(encoding="utf-8", errors="replace")
             if QUOTA.search(raw) and task["attempts"] == 1:
