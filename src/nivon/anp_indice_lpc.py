@@ -13,7 +13,15 @@ from urllib.parse import urljoin, urlsplit
 
 URL_INDICE = ("https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/"
               "precos/levantamento-de-precos-de-combustiveis-ultimas-semanas-pesquisadas")
-_PATTERN = re.compile(r"^resumo_semanal_lpc_(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})\.xlsx$",re.I)
+# A ANP usa pelo menos duas grafias em 2026: 04-10 e 11-17 de outubro.
+# Apenas nomes observados no índice. Nunca gerar URLs a partir de calendário.
+_PATTERN = re.compile(
+    r"^resumo_semanal_lpc_(?:"
+    r"(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})"
+    r"|"
+    r"(\d{4}_\d{2}_\d{2})-(\d{4}_\d{2}_\d{2})"
+    r")\.xlsx$", re.I,
+)
 _PREFIX = "/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/arquivos-lpc/"
 
 
@@ -59,7 +67,15 @@ def descobrir_semanas_lpc(html: bytes, *, ano: int, url_indice: str = URL_INDICE
         m=_PATTERN.fullmatch(basename)
         if not m:
             continue
-        inicio,fim=(date.fromisoformat(m.group(i)) for i in (1,2))
+        inicio_raw, fim_raw = (
+            (m.group(1), m.group(2)) if m.group(1) is not None
+            else (m.group(3), m.group(4))
+        )
+        try:
+            inicio = date.fromisoformat(inicio_raw.replace("_", "-"))
+            fim = date.fromisoformat(fim_raw.replace("_", "-"))
+        except ValueError:
+            continue
         if inicio.year!=ano or (fim-inicio).days!=6:
             continue
         # Arquivo pode ser anunciado em dois lugares da página; preservar 1 registro.
