@@ -11,6 +11,7 @@ import tempfile
 from pathlib import Path
 
 from nivon.arquivo_raw_gcs import arquivar_gcs
+from nivon.lote_cloud_recuperavel import arquivar_stage
 from nivon.carga_bigquery_fontes import executar_carga
 from nivon.ingestao_fontes_reais import exportar_jsonl
 from nivon.preflight_gcp_fontes import verificar_nuvem
@@ -47,11 +48,17 @@ def executar_historico(*, fonte, inicio, fim, projeto, dataset, bucket,
             if saida["observacoes"]==0:
                 carregados.append({"ano":ano,"estado":"SEM_DADOS_NORMALIZADOS"})
                 continue
+            # Arquivo completo do lote no GCS ANTES do BigQuery. Se o MERGE
+            # falhar, replay pelo manifesto funciona sem rerodar HTTP/backfill.
+            recibo=arquivar_stage(
+                banco=root/"historico.sqlite",arquivo_jsonl=saida["arquivo"],
+                bucket=bucket,projeto=projeto,dataset=dataset,executar=True)
             carga=executar_carga(arquivo=saida["arquivo"],project_id=projeto,
                        dataset_id=dataset,executar=True)
             carregados.append({"ano":ano,"estado":"CARREGADO",
                          "observacoes":saida["observacoes"],
-                         "linhas_enviadas":carga["linhas_enviadas"]})
+                         "linhas_enviadas":carga["linhas_enviadas"],
+                         "manifesto_sha256":recibo["manifesto_sha256"]})
         return {"fonte":fonte,"estado":"PARCIAL" if result["falhas"] else "CONCLUIDO",
           "anos":result["lotes"],"arquivamento":arquivo,
           "cargas_bigquery":carregados,"falhas":result["falhas"],
