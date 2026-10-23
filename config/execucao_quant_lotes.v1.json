@@ -1,0 +1,102 @@
+{
+  "schema_version": "nivon.quant.execution.v1",
+  "captured_local_date": "2026-10-22",
+  "repository": "brunocapellari-dotcom/NIVON",
+  "branch": "feat/quantitativo-validacao-asof-probabilidades-20261020",
+  "domain": "quant-freights-markets",
+  "mode": "OFFLINE_ONLY",
+  "rollout_allowed": false,
+  "cadence": "ON_AUTHORIZED_DEVELOPMENT_TURN_AND_PUSH_CI",
+  "exit_rules": [
+    "CONFLITO_REAL",
+    "DIREITOS_NAO_VERIFICADOS",
+    "CREDENCIAL_ESSENCIAL",
+    "CUSTO_NAO_AUTORIZADO",
+    "DECISAO_IRREVERSIVEL"
+  ],
+  "execution_batches": [
+    {
+      "id": "Q-R01",
+      "priority": "P0",
+      "status": "IMPLEMENTED_IN_PR30_ONLY",
+      "branch": "integration/nivon-mercados-reconciliacao-20261020",
+      "code": [
+        "src/nivon/tendencias_mercados.py"
+      ],
+      "evidence": [
+        "https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39889891470"
+      ],
+      "acceptance": "must enforce same pickup/carrier/discharge/regime/product/equipment/toll and no municipal price average"
+    },
+    {
+      "id": "Q-RAW",
+      "priority": "P0",
+      "status": "OFFLINE_IMPLEMENTED_NOT_SOURCE_HOMOLOGATED",
+      "code": [
+        "src/nivon/fretes_raw_ponte_quant.py"
+      ],
+      "tests": [
+        "tests/test_fretes_raw_ponte_quant.py"
+      ],
+      "acceptance": "strict full raw bytes digest and signed capture receipts; no production readiness"
+    },
+    {
+      "id": "Q-FREIGHT-PIPELINE",
+      "priority": "P0",
+      "status": "OFFLINE_IMPLEMENTED",
+      "code": [
+        "src/nivon/pipeline_fretes_quant.py"
+      ],
+      "tests": [
+        "tests/test_pipeline_fretes_quant.py"
+      ],
+      "acceptance": "one batch, strict economic identity and R01 without municipal averaging; fail closed on partial/extra raw"
+    },
+    {
+      "id": "Q-MARKETS",
+      "priority": "P0",
+      "status": "INTEGRATED_AT_FROZEN_SHA",
+      "source_ref": "687ce367ca5f88fa07f0e050440812f4c5451d7b",
+      "acceptance": "maintain PTAX migration + continuity, reconcile newer commits only after SHA comparison"
+    },
+    {
+      "id": "Q-SOURCE-PARSER",
+      "priority": "P1",
+      "status": "BLOCKED_EXTERNAL_EVIDENCE",
+      "acceptance": "licensed RAW parser independently reconciles advertised fields with source and immutable external record"
+    },
+    {
+      "id": "Q-CROSS-PR",
+      "priority": "P1",
+      "status": "PARTIAL_PR30_NOT_MERGED",
+      "acceptance": "reconcile all branch contracts, update issue 25, run all E2E in one checkout"
+    },
+    {
+      "id": "Q-REAL-OOS",
+      "priority": "P1",
+      "status": "BLOCKED_REAL_DATA_LICENSE_CALENDAR",
+      "acceptance": "official calendar, raw vintage proof, pre-registered model/holdout, verified OOS skill and calibration"
+    }
+  ],
+  "test_batches": [
+    {
+      "id": "OFFLINE-CORE",
+      "run": "PYTHONPATH=src python -m unittest discover -s tests -v",
+      "workflow": "validar-nucleo"
+    },
+    {
+      "id": "CROSS-MODULE",
+      "files": [
+        "tests/test_pipeline_fretes_quant.py",
+        "tests/test_fretes_raw_ponte_quant.py",
+        "tests/test_mercados_quant_integracao_e2e.py",
+        "tests/test_fretes_quant_integracao_e2e.py"
+      ]
+    },
+    {
+      "id": "REAL-SOURCE-OPTIONAL",
+      "status": "SKIPPED_UNTIL_SOURCE_AUTHORIZATION"
+    }
+  ],
+  "source_of_truth": "docs/NIVON_QUANT_PLANO_LOTES_EXECUCAO_20261022.md"
+}
