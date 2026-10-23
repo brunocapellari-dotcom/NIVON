@@ -16,6 +16,7 @@ import tempfile
 from .pipeline_medicoes_horarias import (
     ErroPipelineAmbiental, TIPOS, MAX_RAW, _pasta, abrir_banco_medicoes,
     preparar_arquivo_medicoes, importar_ciclo_medicoes, auditar_acervo_medicoes,
+    relatorio_revisoes_medicoes,
 )
 
 
@@ -163,11 +164,15 @@ def validar_backup_medicoes(*, caminho):
 
 def main(argv=None):
     cli=argparse.ArgumentParser(description="NIVON INMET/ANA local (sem rede)")
-    cli.add_argument("modo",choices=["validar","executar","auditar","backup","validar-backup"])
+    cli.add_argument("modo",choices=["validar","executar","auditar","backup","validar-backup","relatorio"])
     cli.add_argument("--manifesto")
     cli.add_argument("--banco")
     cli.add_argument("--raw-dir")
     cli.add_argument("--destino-backup")
+    cli.add_argument("--dataset-id")
+    cli.add_argument("--estacao-id")
+    cli.add_argument("--corte-em")
+    cli.add_argument("--classe",default="SINTETICO")
     cli.add_argument("--confirmar-gravacao",action="store_true")
     args=cli.parse_args(argv)
     try:
@@ -188,6 +193,13 @@ def main(argv=None):
             try:
                 if args.modo=="auditar":
                     result=auditar_acervo_medicoes(db,raw_dir=args.raw_dir)
+                elif args.modo=="relatorio":
+                    if not args.dataset_id or not args.estacao_id or not args.corte_em:
+                        raise ErroPipelineAmbiental("relatório exige fonte, estação e corte")
+                    result=relatorio_revisoes_medicoes(
+                        db,raw_dir=args.raw_dir,dataset_id=args.dataset_id,
+                        estacao_id=args.estacao_id,corte_em=args.corte_em,
+                        classe=args.classe)
                 else:
                     if not args.destino_backup:
                         raise ErroPipelineAmbiental("destino de backup obrigatório")
