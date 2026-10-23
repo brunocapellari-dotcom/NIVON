@@ -159,13 +159,15 @@ def registrar_lote_offline(
         if isinstance(chave, str) and chave in vistos:
             resultados.append({"indice": indice, "estado": "REPETIDO_NO_LOTE"})
             continue
-        if isinstance(chave, str):
-            vistos.add(chave)
+        # Só a edição REGISTRADA conta como vista. Caso contrário,
+        # um pacote inválido impediria um válido posterior com o mesmo ID.
         try:
             result = registrar_pacote_offline(
                 con, pacote, chave_destinatario=chave_destinatario,
                 chave_auditoria=chave_auditoria, emissores=emissores)
             estado = result["estado"]
+            if estado == "EDICAO_REGISTRADA_OFFLINE_SEM_ENVIO" and isinstance(chave, str):
+                vistos.add(chave)
         except (PermissionError, ValueError, TypeError, KeyError):
             estado = "REPROVADO_POR_PROVA_OU_CONTRATO"
         resultados.append({"indice": indice, "estado": estado})

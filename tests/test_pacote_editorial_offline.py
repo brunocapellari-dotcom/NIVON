@@ -192,6 +192,20 @@ class TestDossieEditorialOfflineE2E(unittest.TestCase):
         self.assertEqual(consultar_envio(
             self.con, self.pacote["documento"]["idempotency_key"])["tentativas"], 0)
 
+    def test_lote_nao_perde_valido_apos_corrompido_com_mesmo_id(self):
+        from nivon.pacote_editorial_offline import registrar_lote_offline
+        provisionar_teste(self.con, self.keys)
+        primeiro = copy.deepcopy(self.pacote)
+        primeiro["noticias"][0]["direitos_publicacao"] = False
+        res = registrar_lote_offline(
+            self.con, [primeiro, self.pacote],
+            chave_destinatario=SEGREDO, chave_auditoria=CHAVE_AUDITORIA,
+            emissores=self.keys)
+        self.assertEqual(res["registrados"], 1)
+        self.assertEqual(res["bloqueados"], 1)
+        self.assertEqual(res["resultados"][1]["estado"], "EDICAO_REGISTRADA_OFFLINE_SEM_ENVIO")
+        self.assertEqual(self.linhas(), 1)
+
     def test_lote_preflight_separa_invalidos_sem_banco(self):
         from nivon.pacote_editorial_offline import avaliar_lote_offline
         invalido = copy.deepcopy(self.pacote)
