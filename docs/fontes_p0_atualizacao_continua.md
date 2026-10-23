@@ -1,50 +1,41 @@
-# NIVON — fontes P0 com atualização recorrente (22/10/2026)
+# NIVON — operação P0 de CEPEA, IMEA e CONAB
 
-## Princípio vinculante
-**Drive é arquivo histórico, NÃO fonte de preços atuais.** O valor mais recente deve vir da própria CEPEA, IMEA ou CONAB, sob direitos de uso validados. A data de coleta não substitui competência, data de cotação ou publicação. Motores só podem rotular uma série como atual quando houver fonte original, referência recente e pipeline funcional. Revisões do passado são preservadas, não sobrescritas.
+**Estado verificado em 23/10/2026, horário de Mato Grosso.** Os dados do Google Drive não são tratados como atualização oficial. Um arquivo modificado não altera datas de referência ou publicação. Estado descrito conforme PostgreSQL Neon e execuções GitHub Actions.
 
-## Estado comprovado
+## Estado operacional auditado
 
-| Fonte | Direitos | Coleta real | Banco no Neon | Recorrência |
-|---|---|---|---|---|
-| CEPEA | CC BY-NC 4.0 (uso pessoal não comercial e atribuição) | Soja Paranaguá e Paraná pelo site oficial; 30 observações | Sim, `nivon_cepea_prices` | Workflow no **main** `cepea-neon-ingest.yml`: dois cron separados (`30 21 * * 1-5` UTC para soja; `30 23 * * 1-5` UTC para milho) para limitar carga por coleta; primeira execução main soja concluída com 30 duplicatas e zero inserções, provando persistência idempotente. Execuções agendadas futuras ainda não observadas; milho passou em diagnóstico isolado, mas sofreu timeout ao ser coletado junto com a soja e continua aguardando gravação E2E. |
-| CONAB | Dados públicos oficiais com proveniência | Soja/milho MT: dois levantamentos, 2010–2025, balanços | Sim, 4 estimativas + 32 séries históricas + 14 balanços | Workflow OIDC validado por push no **branch feature**; cron apenas efetivo quando fluxo principal estiver homologado. **Não afirmar produção diária em main**. |
-| IMEA | Aguardando confirmação documental para coleta e armazenamento automatizados | Não homologada | Apenas inventário histórico do Drive, sem cotações promovidas | **Bloqueada por direitos.** Preparado pedido de autorização, ainda não enviado. |
+| Fonte | Leitura e banco | Automação | Estado atual |
+|---|---|---|---|
+| CEPEA | 30 preços de soja, duas séries (Paranaguá, Paraná), com referência em 21/10/2026 | GitHub Actions na main, soja 21h30 UTC e milho 23h30 UTC em dias úteis | **COLLECTOR_ERROR** para soja: última tentativa HTTP 522. Milho ainda sem registros persistidos. |
+| IMEA | **1.112 registros em staging**, soja 107, milho 110, algodão 111, bovinocultura 684. Fonte oficial verificada. | Workflow na main; inicialmente comprovado 10h/19h MT para soja/milho. Verificar inclusão e agenda efetiva das demais cadeias antes de declará-las recorrentes. | **STAGING_PUBLICATION_ONLY**: todas as linhas têm `reference_date=NULL`. Nenhuma deve entrar como cotação diária de fechamento. |
+| CONAB | 4 registros de levantamentos MT, 14 de balanços soja/milho, 32 safras históricas 2010/11–2025/26 | Main: dias úteis 17h UTC (13h MT), histórico integral às quartas | **ACTIVE**. Primeiro teste E2E na main aprovado e idempotente; próximas agendas precisam comprovar continuidade. |
 
-## Evidências ao vivo
-- CEPEA coleta direta oficial com parser isolado, sem Notícias Agrícolas: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39855374825
-- CEPEA ingestão OIDC Neon com 30 novas observações: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39856137721
-- CEPEA **primeira execução na main**, 30 duplicatas corretamente evitadas: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39856413420
-- CEPEA milho original validado em diagnóstico, sem persistência: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39857311058
-- CONAB coleta e histórico 2010–2025: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39702302650
-- CONAB segunda execução histórica: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39702649991
+### Evidências reais
+- CEPEA [30 preços no Neon](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39856137721), [erro de origem HTTP 522 e gravação de alerta OIDC](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39943843277). A falha foi inserida em `nivon_p0_source_checks` como `PRIMARY_SOURCE_FAILURE`, sem alterar as cotações.
+- IMEA [primeira ingestão soja/milho](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39894377921), [deduplicação](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39894495044), [sucesso na main](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39894592868). Total com algodão e bovinos conferido diretamente na tabela `nivon_imea_prices_staging`.
+- CONAB [carga e idempotência na main](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39895201422); [histórico](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39702302650).
 
-## Inventário do Google Drive (metadados, sem ingestão dos bytes)
-- `CEPEA`: 1 arquivo ZIP, 175.296.628 bytes, última modificação 07/08/2026.
-- `IMEA`: 4 arquivos, contendo planilha consolidada e ZIPs de soja, milho, algodão, últimas modificações 07–10/08/2026.
-- `CONAB`: 16 arquivos: 15 ZIPs e 1 XLSX, últimas modificações 07–10/08/2026.
-- Total: **21 arquivos registrados** em `nivon_p0_drive_inventory`, com `promoted_to_current=FALSE`. Conteúdo ainda não foi copiado para o banco operacional.
-- Amostra de esquema da planilha consolidada IMEA: `DATA, SEMANA, MÊS, ANO, PRODUTO, INFORMAÇÃO, LOCAL, UNIDADE, FONTE, DADO, INFORMAÇÃO_FONTE`. **Não autorizar a importação só porque a planilha está acessível**. A licença é independente do acesso e datas de referência antigas não constituem atualização.
+### Separação obrigatória de dados e licenças
+- `public.nivon_p0_drive_inventory`: **21 arquivos históricos** do Drive: CEPEA 1, IMEA 4, CONAB 16; `promoted_to_current=FALSE`.
+- `reference_date`, `published_at`, `collected_at`, `crop_year` e `competencia` representam conceitos distintos. Campo ausente não pode ser preenchido artificialmente.
+- O IMEA foi autorizado pelo responsável pelo NIVON na conversa; `provider_document_verified=FALSE` e `auth_state=PENDING_WRITTEN_PERMISSION` permanecem, pois não foi apresentado documento do provedor. Não tornar dados do IMEA públicos nem distribuir base bruta de terceiros por essa declaração.
+- CEPEA: preços de páginas públicas são CC BY-NC 4.0 com atribuição; API contratada oficial possui termos específicos. Ela **não foi habilitada** no NIVON e não se deve pressupor gratuidade ou endpoint sem credenciais.
+- CONAB: publicações oficiais e edições de safra são separadas de séries históricas, com versões e hashes; projeções não são produção realizada.
 
-## Estruturas analíticas e governança
-- `nivon_p0_sources`: direito de uso, estado do conector, cadence, última verificação.
-- `nivon_p0_source_checks`: execuções, novas observações, erros, SOURCE_LAG.
-- `nivon_p0_drive_inventory`: metadados imutáveis do acervo com selo histórico.
-- `nivon_p0_frescor`: fonte, idade da última observação e condição operacional, sem usar modifiedTime do Drive.
-- `nivon_cepea_prices`: preço por série, praça, saca 60kg, referência e revisão.
-- `nivon_cepea_variacao_diaria_v`: mudança porcentual **descritiva** dia a dia, não projeção.
-- `nivon_conab_producao_anual_v`: variação interanual **histórica**, sem confundir com preço físico.
-- Fontes oficiais CEPEA com CC BY-NC: https://cepea.org.br/br/licenca-de-uso-de-dados.aspx
-- Termo oficial do IMEA: https://imea.com.br/imea-site/termo-de-uso.html
-- Safras oficiais CONAB: https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras
+### Banco e motores
+- `nivon_p0_sources`, `nivon_p0_source_checks`: permissões, estado e execução observada.
+- `nivon_p0_frescor`, `nivon_p0_series_status_v`: status por fonte e por série; erros CEPEA isolados por URL soja/milho. `COLLECTOR_ERROR` nunca equivale a preço novo.
+- `nivon_cepea_variacao_diaria_v`: variação descritiva diária apenas com preço CEPEA observado e referência explícita.
+- `nivon_conab_producao_anual_v`: comparação anual das safras históricas da CONAB.
+- `nivon_imea_indicadores_verificados_v`: IMEA com `PUBLICACAO_SEM_REFERENCIA` não é elegível para tendência diária.
+- `nivon_imea_staging_saude_v`: estado do coletor, mesmo em dias sem novas publicações.
+- `nivon_imea_comparativo_publicacoes_v`: compara versões por publicação sem fingir data de cotação; o resultado pode não ter observações anteriores comparáveis por indicador.
 
-## Pendências que não podem ser declaradas prontas
-1. Confirmar segunda data de execução do agendamento CEPEA em main e instrumentar alertas de falhas / atraso.
-2. Habilitar agendamento CONAB em main após reconciliação de workflow, testes de integração e segurança; não usar PR draft como fonte permanente de execução.
-3. IMEA: encaminhar o pedido formal de autorização; após recebimento, homologar atualização automatizada diária/semanal de preços regionais, fretes e comercialização sem violar termos.
-4. CEPEA milho: fonte original e 15 registros validados em diagnóstico; aguardar gravação E2E do cron isolado, sem bypass de timeout. Outras culturas dependem de validações específicas.
-5. Auditar/adaptar histórico do Drive por documento/lote, em quarentena, reconciliando com dados de origem e revisões antes da promoção à base canônica.
-6. Backup externo, alertas de pipeline e controle de quotas gratuitos.
+## Próximas ações por impacto
+1. CEPEA: manter tentativas limitadas e registro automático de incidentes. Diagnosticar HTTP 522 junto ao provedor, ou integrar **API oficial autorizada** caso acesso/termos/credenciais sejam obtidos. Não usar Notícias Agrícolas como se fosse CEPEA.
+2. CEPEA: coletar milho somente após restabelecer acesso e confirmar referência, unidade e praça.
+3. IMEA: confirmar próxima rodada de cron efetivamente disparada, anomalias e revisões; expandir cobertura sem misturar datas de publicação com cotação.
+4. CONAB: acompanhar novos levantamentos e auditar cron em dias diferentes; expandir produtos/UFs após sucesso continuado.
+5. Todas: monitoramento de falhas persistentes, backup e integração controlada aos motores por estado de qualidade.
 
-## Critério mínimo de aceite por fonte
-Cada atualização exige URL de origem, data de referência, data de coleta, praça/UF, unidade, código de série, licença, parser, log de execução, ausência de duplicação, tratamento de erro e teste no banco. A ausência de nova cotação não equivale automaticamente a falha; uma coleta falha jamais pode exibir preço antigo como novo.
+Links: [Termos de API do CEPEA](https://onetoone.cepea.org.br/termocontratacao-regulamentoapi/) · [Termo do IMEA](https://imea.com.br/imea-site/termo-de-uso.html) · [CONAB](https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras).
