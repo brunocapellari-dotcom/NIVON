@@ -4,7 +4,7 @@
 set -euo pipefail
 
 PROJECT="nivon-data"
-REGION="us-central1"
+REGION="southamerica-east1"
 POOL="nivon-github"
 PROVIDER="nivon-workflows"
 SA_NAME="nivon-github-loader"

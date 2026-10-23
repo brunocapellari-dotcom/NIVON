@@ -1,7 +1,12 @@
 name: NIVON — CI transporte ANTT e ANTAQ
 on:
   push:
-    branches: [main, fix/antt-gcp-unificar-config-20261023]
+    branches: [main, fix/antt-bq-readiness-20261023]
+  pull_request:
+    paths:
+      - '.github/workflows/antt-ferrovia-gcp.yml'
+      - '.github/workflows/transporte-antt-ci.yml'
+      - 'tests/test_antt_gcp_workflow_policy.py'
   workflow_dispatch:
 
 permissions:
@@ -32,6 +37,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_antt_gcs.py' -v
           python -m unittest discover -s tests -p 'test_antt_gcp_pipeline.py' -v
           python -m unittest discover -s tests -p 'test_antt_gcp_workflow_policy.py' -v
+          python -m unittest discover -s tests -p 'test_antt_gcp_preflight.py' -v
       - name: Prova LIVE pontual ANTT 2025 e 2026 (nao publica)
         if: github.event_name == 'workflow_dispatch'
         env:
