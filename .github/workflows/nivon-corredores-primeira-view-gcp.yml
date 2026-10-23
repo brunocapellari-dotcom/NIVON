@@ -43,9 +43,9 @@ jobs:
     needs: validar
     if: >-
       github.ref == 'refs/heads/main' &&
-      (github.event_name == 'push' ||
-      (github.event_name == 'workflow_dispatch' &&
-      inputs.confirmar_view == true))
+      github.event_name == 'workflow_dispatch' &&
+      inputs.confirmar_view == true &&
+      vars.NIVON_CORREDORES_VIEW_APPROVED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
