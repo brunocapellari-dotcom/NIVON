@@ -11,6 +11,7 @@ from nivon.argentina_agricultura import importar_csv_autorizado
 from nivon.cotacoes_agrobr_coletor import armazenar_quarentena
 from nivon.agro_consolidar_multibancos import consolidar_sqlites, ErroConsolidacao
 from nivon.agro_bigquery_loader import validar_lote, carregar_bigquery
+from nivon.agro_operacao import operar_agro
 
 AGORA=datetime(2026,10,22,21,tzinfo=timezone.utc)
 CSV=('cultivo,anio,campania,provincia,provincia_id,departamento,departamento_id,superficie_sembrada_ha,superficie_cosechada_ha,produccion_tm,rendimiento_kgxha\n'
@@ -51,6 +52,22 @@ class TestConsolidarAgro(TestCase):
             self.assertEqual(resposta['status'],'PREFLIGHT_LOCAL_SEM_CLOUD')
         self.assertTrue((self.output/'agro-manifesto.json').is_file())
         self.assertFalse(result['cloud_write'])
+
+    def test_operacao_unica_preflight_integrado(self):
+        resposta=operar_agro(bancos=[self.arg,self.imea],
+                    pasta_saida=self.output,projeto='nivon-data',dataset='nivon_stage',
+                    max_linhas_por_lote=2)
+        self.assertEqual(resposta['linhas_distintas'],5)
+        self.assertEqual(len(resposta['lotes']),3)
+        self.assertFalse(resposta['cloud_autorizado'])
+        self.assertFalse(resposta['cloud_concluido'])
+        self.assertEqual(resposta['estado'],'PREFLIGHT_INTEGRADO_APROVADO_SEM_REDE')
+
+    def test_operacao_real_sem_direitos_rejeita_antes_de_preparar_lotes(self):
+        with self.assertRaises(PermissionError):
+            operar_agro(bancos=[self.arg,self.imea],pasta_saida=self.output,
+                     projeto='nivon-data',dataset='nivon_stage',executar_cloud=True)
+        self.assertFalse(list(self.output.iterdir()))
 
     def test_nao_sobrescreve_manifesto_existente(self):
         consolidar_sqlites(bancos=[self.imea,self.arg],pasta_saida=self.output)
