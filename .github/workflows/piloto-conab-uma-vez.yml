@@ -41,6 +41,15 @@ jobs:
             --direitos-consulta \
             --direitos-coleta \
             --direitos-armazenamento
+      - name: Reimportar RAW REAL para histórico SQLite local de quarentena
+        env:
+          PYTHONPATH: src
+          WORK_DIR: ${{ runner.temp }}/nivon-conab-one-off
+        run: |
+          python -m nivon.conab_quarentena_real \
+            --banco "$WORK_DIR/coleta.sqlite" \
+            --raiz "$WORK_DIR/raw" \
+            --executar --direitos-armazenamento
       - name: Nao salvar arquivos nem publicar dados
         if: always()
         env:
