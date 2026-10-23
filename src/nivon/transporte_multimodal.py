@@ -83,6 +83,9 @@ def _numero(valor: str) -> Decimal:
         if not re.fullmatch(r"-?(?:\d+|\d{1,3}(?:\.\d{3})+),\d+", s):
             raise ErroTransporte("TU/TKU decimal brasileiro ambiguo")
         s = s.replace(".", "").replace(",", ".")
+    elif re.fullmatch(r"-?\d{1,3}(?:\.\d{3})+", s):
+        # No SIADE o ponto separa milhares: 33.420 = 33420 t.
+        s = s.replace(".", "")
     elif not re.fullmatch(r"-?\d+(?:\.\d+)?", s):
         raise ErroTransporte("TU/TKU numerico invalido")
     try:
