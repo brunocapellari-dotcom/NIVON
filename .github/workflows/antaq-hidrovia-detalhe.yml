@@ -4,6 +4,8 @@ on:
     branches: [feat/antaq-hidrovia-produtos-20261023]
     paths:
       - '.github/workflows/antaq-hidrovia-detalhe.yml'
+      - 'src/nivon/antaq_replica_detalhe.py'
+      - 'tests/test_antaq_replica_detalhe.py'
   workflow_dispatch:
 
 permissions:
