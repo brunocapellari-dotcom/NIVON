@@ -121,3 +121,23 @@ ponta a ponta sintéticos. Consultar
 [`docs/FECHAMENTO_QUANT_RAW_PTAX_GCS_20261023.md`](FECHAMENTO_QUANT_RAW_PTAX_GCS_20261023.md)
 para provas, limites e próximos gates. Nenhuma coleta, envio, bucket
 ou autorização de cloud foi ativada.
+
+## Desenvolvimento WhatsApp original → R01 — 23/10/2026
+
+Implementado `src/nivon/fretes_texto_original_whatsapp.py`:
+verificação HMAC do webhook original, autorização assinada vinculada
+à WABA, prova de texto rotulado com 11 campos literais e offsets
+hashados sem divulgar o conteúdo pessoal, resolução canônica de
+estabelecimento/transportadora com atestação independente, bloqueio
+de replay e triagem de rejeições em quarentena **não persistente**.
+[CI #40001225772](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/40001225772):
+1.831 testes, zero falhas, 5 skipped. Ensaio com 28 webhooks
+sintéticos admitidos, 4 séries econômicas, 2 painéis R01; no ensaio
+de triagem, mais 2 mensagens rejeitadas sem entrar nas tendências.
+Relatório completo:
+[`docs/WHATSAPP_FRETES_ORIGINAL_AUDITORIA_20261023.md`](WHATSAPP_FRETES_ORIGINAL_AUDITORIA_20261023.md).
+
+**Próxima prioridade é implementação de fonte genuína autorizada e
+mensagens não rotuladas sob evidência verificável**, não adicionar
+testes redundantes. A quarentena ainda não tem armazenamento durável,
+a Meta não foi acessada e a PR continua sem autorização de produção.

@@ -79,8 +79,18 @@
     {
       "id": "Q-SOURCE-PARSER",
       "priority": "P1",
-      "status": "JSON_SOURCE_NATIVE_V1_ONLY_WHATSAPP_FREEFORM_BLOCKED",
-      "acceptance": "Implement auditable source-native parser for authorized original message payloads, including uncertain fields and independent raw evidence; never relabel transcripts as original RAW"
+      "status": "STRUCTURED_JSON_AND_STRICT_LABELED_WHATSAPP_TEXT_ONLY",
+      "acceptance": "Next implement independently testable extraction of unlabelled original WhatsApp text, images/audio from authorized provider, with traceable spans and uncertainty; never infer absent toll, point or regime",
+      "code": [
+        "src/nivon/fretes_raw_semantica.py",
+        "src/nivon/fretes_texto_original_whatsapp.py"
+      ],
+      "not_homologated": [
+        "arbitrary_freeform_whatsapp",
+        "media_ocr_audio",
+        "provider_live_auth",
+        "source_rights"
+      ]
     },
     {
       "id": "Q-CROSS-PR",
@@ -100,6 +110,24 @@
       "priority": "P1",
       "status": "BLOCKED_REAL_DATA_LICENSE_CALENDAR",
       "acceptance": "official calendar, raw vintage proof, pre-registered model/holdout, verified OOS skill and calibration"
+    },
+    {
+      "id": "Q-WHATSAPP-ORIGINAL-ROTULADO",
+      "priority": "P0",
+      "status": "IMPLEMENTED_OFFLINE_NO_PROVIDER_CONNECTION",
+      "source_ref": "3f0f04d0d36a3bb643ec9305544abaa79e3d89eb",
+      "code": [
+        "src/nivon/fretes_texto_original_whatsapp.py",
+        "scripts/ensaio_fretes_texto_whatsapp.py"
+      ],
+      "tests": [
+        "tests/test_fretes_texto_original_whatsapp.py"
+      ],
+      "mode": "WHATSAPP_CLOUD_WEBHOOK_TEXT_WITH_EXPLICIT_LABELS_V1",
+      "acceptance": "Meta signature verified against unchanged webhook raw JSON bytes; WABA scoped to independently signed rights; exactly one message, source_event_id and second-level timestamp matched; 11 literal fields extracted and checked against signed resolution; reject alias ambiguity and replay; no PII emitted; QUARANTINE_ONLY unsupported texts; R01 and Quant descriptive only",
+      "evidence": "https://github.com/brunocapellari-dotcom/NIVON/actions/runs/40001225772",
+      "no_real_connection": true,
+      "no_source_permission_proof": true
     }
   ],
   "test_batches": [
@@ -165,53 +193,71 @@
         "tests/test_quarentena_ptax_gcs_e2e.py"
       ],
       "status": "SUCCESS_OFFLINE_ONLY"
+    },
+    {
+      "id": "WHATSAPP-ORIGINAL-R01-E2E",
+      "run": "PYTHONPATH=src python scripts/ensaio_fretes_texto_whatsapp.py",
+      "status": "SUCCESS_SYNTHETIC_ONLY",
+      "evidence": "https://github.com/brunocapellari-dotcom/NIVON/actions/runs/40001225772",
+      "samples": 28,
+      "fields_per_sample": 11,
+      "series": 4,
+      "r01_panels": 2,
+      "quarantine_sampled": 2,
+      "quarantine_only_in_memory": true
     }
   ],
   "source_of_truth": "docs/NIVON_QUANT_PLANO_LOTES_EXECUCAO_20261022.md",
   "last_verified": {
-    "sha": "cbacf1af6a5e009254c210a78623f560210ddfa5",
-    "ci_run": "39984387787",
-    "tests": 1818,
+    "sha": "aeb38442f3d5e69bf8ac46f6ef22736ca26be8a6",
+    "ci_run": "40001225772",
+    "tests": 1831,
     "failures": 0,
     "skipped": 5,
     "status": "SUCCESS",
-    "ptax_e2e_steps": 17,
-    "freight_e2e_steps": 10,
-    "freight_semantic_e2e_steps": 12,
-    "ptax_gcs_quarantine_steps": 11,
-    "source_authenticity_verified": false,
+    "pipeline_e2e": [
+      "PTAX",
+      "FREIGHT_R01",
+      "STRUCTURED_JSON_SEMANTICS",
+      "PTAX_QUARANTINE_GCS",
+      "WHATSAPP_ORIGINAL_LABELED_TEXT"
+    ],
+    "meta_signature_tested_only_with_fixture": true,
+    "quarantine_persisted": false,
+    "real_messages_captured": false,
+    "source_authenticity_verified_externally": false,
     "google_cloud_upload_executed": false
   },
   "next_execution_priorities": [
     {
-      "id": "Q-GOVERNANCE",
+      "id": "Q-MERCADOS-NOVO-CORTE",
       "priority": "P0",
-      "status": "NEEDS_INTEGRATOR_REVIEW",
-      "description": "Review integration in PR20 draft; ensure current main/PR bases and update PR25 issue before merge/deploy"
+      "status": "UNMERGED_ACTIVE_SOURCE",
+      "description": "Freeze and reconcile PR21 commits after 3f0f04d incl. PTAX collector/quarantine and GCS recovery, inspect any network/cloud operations and rerun E2E; do not race continuously against active PR"
     },
     {
-      "id": "Q-REAL-RAW",
+      "id": "Q-RAW-LIVRE",
       "priority": "P0",
-      "status": "BLOCKED_BY_SOURCE_FORMAT_AND_AUTHORIZATION",
-      "description": "Capture original authorized WhatsApp payloads, verify semantic fields independently and preserve immutable provenance and timestamps"
+      "status": "BLOCKED_ORIGINAL_AUTHORIZED_CORPUS",
+      "description": "Create evidence-driven structured extraction for more real freight message formats; distinguish observed literal from canonical resolution and inferred fields; obtain authorization for real source corpus"
     },
     {
-      "id": "Q-MARKETS-SYNC",
+      "id": "Q-QUARENTENA-PERSISTENTE",
       "priority": "P1",
-      "status": "FROZEN_CUT_REQUIRES_NEW_COMPARE",
-      "description": "Reconcile PTAX/GCS changes subsequent to Market commit f4d5ffcd with diff review and integrated CI; avoid racing branch"
+      "status": "ONLY_IN_MEMORY",
+      "description": "Design portable append-only storage and transaction boundaries for rejected message digests/RAW under approved retention, encryption and rights; no storage of personal data without authorization"
     },
     {
-      "id": "Q-GCS-CLOUD",
+      "id": "Q-DEPLOY-GOV",
       "priority": "P1",
-      "status": "CODE_ONLY_NOT_DEPLOYED",
-      "description": "Run Google Cloud Storage upload only with approved bucket, permissions, budget, rights and rollback plan. Current code is upload-disabled."
+      "status": "PENDING_INTEGRATION_APPROVAL",
+      "description": "Review main branch and multiple PR contracts with integrator, then authorize merge, source collection and any GCS IAM/billing separately"
     },
     {
-      "id": "Q-REAL-PREDICTION",
+      "id": "Q-OOS-HISTORICO",
       "priority": "P1",
-      "status": "BLOCKED_HISTORICAL_EVIDENCE",
-      "description": "Retrieve real point-in-time prices/freight releases with official calendar, blind held-out evidence, drift and calibration"
+      "status": "NOT_REAL_VALIDATED",
+      "description": "Evaluate genuine PTAX and freight vintages with official calendars, embargo, holdout preregistration and report empirical uncertainty"
     }
   ]
 }
