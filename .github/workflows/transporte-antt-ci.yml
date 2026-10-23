@@ -7,6 +7,9 @@ on:
       - '.github/workflows/antt-ferrovia-gcp.yml'
       - '.github/workflows/transporte-antt-ci.yml'
       - 'tests/test_antt_gcp_workflow_policy.py'
+      - 'src/nivon/coleta_antt.py'
+      - 'tests/test_coleta_antt.py'
+      - '.github/workflows/nivon-antt-piloto-readonly.yml'
   workflow_dispatch:
 
 permissions:
