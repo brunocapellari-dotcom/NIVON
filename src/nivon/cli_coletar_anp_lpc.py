@@ -12,6 +12,7 @@ Consulta de tendência preliminar (não publicável):
 from __future__ import annotations
 
 import argparse
+from contextlib import closing
 from datetime import datetime, timezone
 import json
 from pathlib import Path
@@ -21,7 +22,7 @@ from urllib.parse import urlsplit
 
 from .anp_indice_lpc import descobrir_semanas_lpc
 from .anp_lpc_coletor_real import coletar_lpc, ErroColetaANP
-from .anp_lpc_staging_real import iniciar_staging, tendencia_diesel_preliminar
+from .anp_lpc_staging_real import iniciar_staging, tendencia_diesel_preliminar, painel_qualidade_lpc
 
 
 def _db_seguro(path: Path) -> sqlite3.Connection:
@@ -55,7 +56,7 @@ def _local_files(index_html: bytes, pasta: Path, *, ano: int, limite: int):
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Lote ANP/LPC isolado, não comercial")
-    parser.add_argument("--modo", choices=["rede", "arquivos", "consulta"], required=True)
+    parser.add_argument("--modo", choices=["rede", "arquivos", "consulta", "status"], required=True)
     parser.add_argument("--db", type=Path, required=True)
     parser.add_argument("--raw-dir", type=Path)
     parser.add_argument("--ano", type=int, default=datetime.now(timezone.utc).year)
@@ -84,9 +85,13 @@ def main(argv=None) -> int:
             args.raw_dir.is_symlink() or not args.raw_dir.is_dir()
         ):
             raise ErroColetaANP("pasta RAW deve existir e não pode ser simbólica")
-        with _db_seguro(args.db) as db:
+        with closing(_db_seguro(args.db)) as db:
             iniciar_staging(db)
-            if args.modo == "consulta":
+            if args.modo == "status":
+                data = painel_qualidade_lpc(
+                    db, as_of=args.as_of or datetime.now(timezone.utc).isoformat())
+                code = 0
+            elif args.modo == "consulta":
                 data = tendencia_diesel_preliminar(
                     db, municipio=args.municipio.upper().strip(),
                     produto=args.produto,
@@ -111,6 +116,8 @@ def main(argv=None) -> int:
                     db, ano=args.ano, limite_semanas=args.ultimas,
                     raw_dir=args.raw_dir, **options
                 )
+                data["qualidade_staging"] = painel_qualidade_lpc(
+                    db, as_of=datetime.now(timezone.utc).isoformat())
                 code = 0 if data["status"] == "LOTE_COMPLETO" else 2
         print(json.dumps(data, ensure_ascii=False, sort_keys=True, indent=2))
         return code
