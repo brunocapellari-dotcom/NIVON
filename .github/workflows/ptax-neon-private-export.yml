@@ -1,0 +1,57 @@
+name: NIVON - PTAX Neon OIDC export privado E2E
+on:
+  push:
+    paths:
+      - 'scripts/ptax_neon_private_export.py'
+      - 'tests/test_ptax_neon_private_export.py'
+      - '.github/workflows/ptax-neon-private-export.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: nivon-ptax-private-readonly
+  cancel-in-progress: false
+jobs:
+  exportar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Contratos de fonte privada e exportacao em lote
+        run: python -m unittest discover -s tests -p 'test_ptax_neon_private_export.py' -v
+      - name: Exportacao real somente leitura Neon para JSONL temporario
+        env:
+          NIVON_PTAX_PRIVATE_ENDPOINT: https://br-twilight-cell-b77ukd6x-ptaxbridge.compute.c-13.us-east-1.aws.neon.tech
+        run: |
+          set -euo pipefail
+          src="$RUNNER_TEMP/nivon-ptax-source-${{ github.run_id }}.jsonl"
+          dst="$RUNNER_TEMP/nivon-ptax-bq-${{ github.run_id }}.jsonl"
+          trap 'rm -f "$src" "$dst"' EXIT
+          umask 077
+          python -m scripts.ptax_neon_private_export \
+            --endpoint "$NIVON_PTAX_PRIVATE_ENDPOINT" \
+            --source-jsonl "$src" \
+            --target-jsonl "$dst"
+          python - <<'PY'
+          from pathlib import Path
+          import json,os
+          root=Path(os.environ["RUNNER_TEMP"])
+          files=list(root.glob("nivon-ptax-bq-*.jsonl"))
+          if len(files)!=1:raise SystemExit("PTAX_EXPORT_NOT_FOUND")
+          with files[0].open(encoding="utf8") as fd:
+              count=0
+              for line in fd:
+                  row=json.loads(line)
+                  if not (row.get("quote_id") and row.get("quality_status")=="NEON_EXPORT_UNVERIFIED"):
+                      raise SystemExit("INVALID_BIGQUERY_CONTRACT")
+                  count+=1
+          if count<=0:raise SystemExit("PTAX_EMPTY_EXPORT")
+          print("PTAX_PRIVATE_E2E_VALIDATED_ROWS="+str(count))
+          print("GCP_LOAD=false; NO_ARTIFACTS_UPLOADED")
+          PY
