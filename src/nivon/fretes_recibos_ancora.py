@@ -88,6 +88,8 @@ def verificar_recibo_local_frete(
     if (type(recibo["sequencia"]) is not int
             or not 1<=recibo["sequencia"]<=1_000_000):
         raise ErroReciboFrete("sequência de recibo inválida")
+    if recibo["versao"]!=VERSAO or recibo["tipo_ledger"] not in ("OFERTAS","PREVISOES"):
+        raise ErroReciboFrete("tipo ou versão de recibo inválido")
     nonce=recibo["nonce_hex"]
     if (not isinstance(nonce,str) or len(nonce)!=32
             or any(x not in "0123456789abcdef" for x in nonce)):
