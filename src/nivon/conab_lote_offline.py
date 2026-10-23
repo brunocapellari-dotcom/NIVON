@@ -196,9 +196,17 @@ def main(argv=None) -> int:
             if (store.is_symlink() or not store.parent.is_dir()
                     or store.resolve().is_relative_to(Path(args.base_dir).resolve())):
                 raise ErroLoteConab("SQLite staging inseguro ou dentro dos RAWs")
-            with sqlite3.connect(str(store), timeout=5) as db:
-                preparar_staging(db)
-                result["persistencia_staging"] = gravar_dossie_conab(db, result)
+            if result["rejeitados"]:
+                # Dossiê de rejeições permanece legível e nunca é gravado no
+                # armazém de inspeções completas.
+                result["persistencia_staging"] = {
+                    "estado": "NAO_PERSISTIDO_LOTE_COM_REJEICOES",
+                    "inseridos": 0, "habilita_publicacao": False,
+                }
+            else:
+                with sqlite3.connect(str(store), timeout=5) as db:
+                    preparar_staging(db)
+                    result["persistencia_staging"] = gravar_dossie_conab(db, result)
         # O_EXCL evita sobrescrita silenciosa de artefatos anteriores.
         with destination.open("x", encoding="utf-8") as f:
             json.dump(result, f, ensure_ascii=False, indent=2, allow_nan=False)
