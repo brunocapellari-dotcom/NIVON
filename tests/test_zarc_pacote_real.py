@@ -10,6 +10,7 @@ from datetime import datetime,timezone
 from pathlib import Path
 
 from nivon.zarc_pacote_real import criar_pacote
+from nivon.zarc_verificar_pacote import verificar_pacote,ErroVerificacaoPacoteZarc
 from nivon.zarc_stream_mt import COLUNAS,URL
 from nivon.zarc_sinais_ckan import RESOURCE_ID
 
@@ -74,6 +75,13 @@ class TestPacoteReal(unittest.TestCase):
             self.assertEqual(records[0]["campos_csv"]["dec36"],"")
             self.assertFalse(manifest["publicavel"])
             self.assertFalse(manifest["apto_backtest"])
+            proof=verificar_pacote(d)
+            self.assertEqual(proof["mt_linhas"],2)
+            self.assertEqual(proof["bytes_csv_integral"],len(csv_fixture()))
+            with mt.open("ab") as hacked:
+                hacked.write(b"corrompido")
+            with self.assertRaises(ErroVerificacaoPacoteZarc):
+                verificar_pacote(d)
 
     def test_sem_limpeza_de_pasta_nao_vazia(self):
         with tempfile.TemporaryDirectory() as d:
