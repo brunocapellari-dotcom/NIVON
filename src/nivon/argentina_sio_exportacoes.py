@@ -183,6 +183,11 @@ def importar_exportacao_sio(*,db:sqlite3.Connection,arquivo:bytes,janela:dict,
     raw_hash=sha256(arquivo).hexdigest()
     ts=coletado_em.astimezone(timezone.utc).isoformat(timespec='seconds')
     db.execute('PRAGMA foreign_keys=ON')
+    # Uma base antiga da branch piloto pode ter sio_operacoes sem
+    # data_declaracao. Nao gravar indices deslocados nem migrar em silencio.
+    colunas_anteriores={x[1] for x in db.execute("PRAGMA table_info(sio_operacoes)")}
+    if colunas_anteriores and 'data_declaracao' not in colunas_anteriores:
+        raise ErroSIO('schema SIO anterior: migracao auditada obrigatoria')
     db.executescript(_SCHEMA)
     with db:
         old=db.execute('SELECT inicio,fim,colunas_homologadas,quantidade FROM sio_edicoes WHERE sha256_raw=?',(raw_hash,)).fetchone()
