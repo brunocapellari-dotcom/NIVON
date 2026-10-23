@@ -13,11 +13,11 @@ import re
 import subprocess
 import sys
 
-from nivon.ferramentas import doctor
+from nivon.ferramentas import doctor, APPROVED_IMAGES
 from nivon.token_guard import summarize
 
 ROOT = Path(__file__).resolve().parents[2]
-DOCKER_IMAGES = {"python:3.11-slim", "python:3.11", "nivon-agentes:test-py311"}
+DOCKER_IMAGES = APPROVED_IMAGES
 RE_TEST_COUNT = re.compile(r"Ran\s+(\d+)\s+tests?")
 RE_SKIPPED = re.compile(r"skipped=(\d+)")
 
@@ -84,7 +84,8 @@ def smoke(*, root=ROOT, image=None, allow_skips=False):
 
 
 def readiness(*, root=ROOT, image=None, allow_skips=False):
-    host = doctor()
+    target = image or os.environ.get("NIVON_PYTHON_IMAGE", "python:3.11-slim")
+    host = doctor(image=target)
     output = {
         "host": host,
         "docker_smoke": None,
@@ -96,7 +97,6 @@ def readiness(*, root=ROOT, image=None, allow_skips=False):
     if image is not None and image not in DOCKER_IMAGES:
         output["actions"].append("Escolha imagem previamente homologada.")
         return output
-    target = image or os.environ.get("NIVON_PYTHON_IMAGE", "python:3.11-slim")
     if not host["supported_host"]:
         output["actions"].append("Usar Linux ou WSL2; execução Windows nativa bloqueada.")
     if not host["authentication"].get("claude") == "subscription":
