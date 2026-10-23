@@ -144,7 +144,7 @@ def tendencia_frete_anunciado(
     janela: int = 6, minimo_lotes_dia: int = 2,
     tolerancia_absoluta: float = 0, tolerancia_relativa: float = 0,
 ) -> dict:
-    """Motor R01 canônico #30 + controles comerciais #18; variações PAREADAS.
+    """Tendência de variações PAREADAS por ponto de embarque e transportadora.
 
     Não agrega níveis de frete por município/corredor. Compara somente
     identidade econômica presente em TODOS os dias da janela e mesmas
@@ -159,7 +159,7 @@ def tendencia_frete_anunciado(
     veiculo = _identidade(veiculo, "veiculo", tamanho=60)
     descarga_entity_id = _identidade(descarga_entity_id, "descarga_entity_id", tamanho=150)
     if regime not in {"PF", "PJ", "NAO_INFORMADO"}:
-        raise ErroTendencia("regime PF/PJ deve ser explícito")
+        raise ErroTendencia("regime PF/PJ obrigatório")
     if pedagio not in PEDAGIO:
         raise ErroTendencia("condição de pedágio precisa ser informada")
     if tolerancia_relativa != 0:
