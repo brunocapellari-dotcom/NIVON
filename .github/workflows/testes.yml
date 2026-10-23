@@ -26,6 +26,8 @@ jobs:
           python-version: '3.11'
       - name: Compilar sem dependencias
         run: python -m compileall -q src tests
+      - name: Verificar sintaxe do runner maritimo em conteiner
+        run: bash -n scripts/run_maritime_pdf_container.sh
       - name: Testar com fixtures 100 por cento sinteticas
         env:
           PYTHONPATH: src
