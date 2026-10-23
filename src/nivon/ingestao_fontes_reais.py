@@ -11,7 +11,7 @@ import os
 import re
 import sqlite3
 import tempfile
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 from pathlib import Path
 
 _MAX_BYTES = 25_000_000
@@ -160,10 +160,20 @@ def gravar_lote(*, banco, diretorio_bruto, dataset_id, origem, raw, tipo,
             "estado":estado,"coletado_em":coletado_em,"arquivo_raw":str(target)}
 
 
-def exportar_jsonl(*, banco, destino, dataset_id=None):
+def exportar_jsonl(*, banco, destino, dataset_id=None, competencia=None, referencia_inicio=None, referencia_fim=None):
     """Gera arquivo para estágio BigQuery, sem afirmar carga no BigQuery."""
     if dataset_id is not None:
         _identificador(dataset_id)
+    if competencia is not None and (not isinstance(competencia,str) or len(competencia)>20):
+        raise ErroIngestao("competencia fora do contrato")
+    for v in (referencia_inicio,referencia_fim):
+        if v is not None:
+            try:
+                date.fromisoformat(v)
+            except (TypeError,ValueError) as exc:
+                raise ErroIngestao("limite de referencia invalido") from exc
+    if referencia_inicio is not None and referencia_fim is not None and referencia_inicio>referencia_fim:
+        raise ErroIngestao("inicio apos fim")
     path=Path(destino)
     path.parent.mkdir(parents=True,exist_ok=True)
     con=_abrir(banco)
@@ -171,8 +181,13 @@ def exportar_jsonl(*, banco, destino, dataset_id=None):
         rows=con.execute("""SELECT dataset_id,identidade,fingerprint,referencia,
                     competencia,publicacao,coletado_em,unidade,valor,
                     campos_json,snapshot_id,natureza FROM observacoes
-                    WHERE (? IS NULL OR dataset_id=?) ORDER BY dataset_id,referencia,identidade,fingerprint""",
-                    (dataset_id,dataset_id))
+                    WHERE (? IS NULL OR dataset_id=?)
+                      AND (? IS NULL OR competencia=?)
+                      AND (? IS NULL OR referencia>=?)
+                      AND (? IS NULL OR referencia<=?)
+                    ORDER BY dataset_id,referencia,identidade,fingerprint""",
+                    (dataset_id,dataset_id,competencia,competencia,
+                     referencia_inicio,referencia_inicio,referencia_fim,referencia_fim))
         n=0
         with path.open("w",encoding="utf-8") as fp:
             for x in rows:
