@@ -11,6 +11,7 @@ from .consulta_analitica_bq import consultar, planejar_consulta
 from .inteligencia_corredores import consultar_corredores
 from .conciliacao_corredores_ferrovia import analisar_staging, quadro_intermodal
 from .painel_operacional import ErroMotor, montar_painel
+from .adaptadores_operacionais import adaptar_fretes_consolidados, ler_replay_ais_sqlite
 
 
 def analisar_fontes(
@@ -71,7 +72,42 @@ def analisar_fontes(
                             "dados": [], "sem_dados_nao_equivale_a_zero": True})
     series = list(manual_series)
     fontes = []
-    chaves = {(s.get("classe"), s.get("serie_id")) for s in series if isinstance(s, dict)}
+    if not all(isinstance(s, dict) for s in series):
+        raise ErroMotor("serie manual malformada")
+    chaves = {(s.get("classe"), s.get("serie_id")) for s in series}
+    if len(chaves) != len(series):
+        raise ErroMotor("series manuais duplicadas")
+    fretes_meta = None
+    fretes_input = config.get("fretes_consolidados")
+    if fretes_input is not None:
+        fretes_meta = adaptar_fretes_consolidados(fretes_input, as_of=as_of)
+        for s in fretes_meta["series"]:
+            chave = (s["classe"], s["serie_id"])
+            if chave in chaves:
+                raise ErroMotor("identidade de frete duplicada entre fontes")
+            chaves.add(chave)
+            series.append(s)
+        if len(series) + len(config_queries) > 50:
+            raise ErroMotor("excesso de series; particionar as ofertas")
+    ais_config = config.get("replays_ais_sqlite", [])
+    if not isinstance(ais_config, list) or len(ais_config) > 25:
+        raise ErroMotor("maximo 25 replays AIS por lote")
+    replays = []
+    portos_ais = set()
+    for entrada in ais_config:
+        if not isinstance(entrada, dict) or any(
+            not isinstance(entrada.get(k), str) or not entrada[k]
+            for k in ("banco","porto_id","inicio","fim")
+        ):
+            raise ErroMotor("parametros de replay AIS incompletos")
+        if entrada["porto_id"] in portos_ais:
+            raise ErroMotor("porto repetido na lista de replay AIS")
+        portos_ais.add(entrada["porto_id"])
+        replays.append(ler_replay_ais_sqlite(
+            banco=entrada["banco"], porto_id=entrada["porto_id"],
+            inicio=entrada["inicio"], fim=entrada["fim"],
+            as_of=as_of, limite=entrada.get("limite", 2000)
+        ))
     for cfg in config_queries:
         if not isinstance(cfg, dict):
             raise ErroMotor("consulta BigQuery invalida")
@@ -129,6 +165,10 @@ def analisar_fontes(
     }, as_of=as_of)
     painel["ferrovia"] = ferrovia
     painel["conciliacao_intermodal"] = intermodal
+    painel["fretes_consolidados"] = (
+        {k:v for k,v in fretes_meta.items() if k!="series"} if fretes_meta else None
+    )
+    painel["replays_ais"] = replays
     painel["fontes_bigquery"] = fontes
     painel["executou_bigquery"] = executar_bigquery is True and bool(config_queries)
     return painel
