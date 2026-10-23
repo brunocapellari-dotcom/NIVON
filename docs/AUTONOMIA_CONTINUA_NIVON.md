@@ -14,7 +14,7 @@ Ambos chamam o módulo local \`nivon.autonomia\`, que:
 - lê o backlog SQLite já alimentado por \`docs/COOPERACAO_TAREFAS.json\`;
 - inicia supervisor local destacado; até duas tarefas em paralelo, uma por provedor;
 - cria uma worktree/branch local exclusiva por tarefa, sem jamais escrever na \`main\`;
-- impõe até **8 tarefas, 120 minutos totais e 15 minutos por tarefa** por execução;
+- impõe até **8 tarefas, 120 minutos totais e 15 minutos por tarefa** por execução; dependências liberam tarefas adicionais apenas quando seus pré-requisitos ficam `done`;
 - não concede ferramentas Bash ao Claude (modo restricted, ferramentas de arquivo e sem MCP);
 - executa Codex em sandbox workspace-write com política sem perguntas e sem rede por padrão;
 - exige \`compileall\` e unittest offline antes de commit local; arquivos fora do escopo bloqueiam conclusão;
@@ -52,3 +52,24 @@ A parada é cooperativa: permite concluir as tarefas já iniciadas. Logs privado
 5. Não instalar plugins que interceptem autenticação, exponham segredos, alterem termos de uso ou bypass de cota.
 
 As CLIs usam sessões autenticadas no host; apenas o código nesta PR não demonstra acesso funcional. Não se pode inferir ausência absoluta de cobranças por execução a partir do script; o operador deve verificar o método de autenticação e faturamento das duas ferramentas.
+
+
+## Planejador de backlog — uso e limites
+\`\`\`sh
+PYTHONPATH=src python -m nivon.planejador preview --github
+PYTHONPATH=src python -m nivon.planejador refresh --github
+PYTHONPATH=src python -m nivon.contexto_codigo index
+PYTHONPATH=src python -m nivon.contexto_codigo find precipitacao --limit 8
+\`\`\`
+
+O planejador executa sem LLM, cruza \`docs/PLANEJADOR_ROADMAP.json\`, o código efetivamente presente e as issues abertas. Gera candidatos por falta de testes e, se houver \`gh\` autenticado, lê até 60 issues sem realizar mutações. O uso de informações externas é sempre classificado como **não confiável**.
+
+Apenas issues com label \`nivon-auto-ready\` e bloco HTML estrutural são elegíveis:
+\`\`\`text
+<!-- NIVON-AUTO {"title":"Aprimorar normalizador de chuvas","scope":["src/nivon/inmet_historico.py","tests/test_inmet_historico.py"],"priority":30,"acceptance":"Testes offline e preservação de nulos."} -->
+\`\`\`
+Não há execução de comandos extraídos de comentários. Arquivos fora de \`src/\` e \`tests/\`, referências a implantação, licenças e credenciais ou dependências pendentes não entram na fila. Issues complexas não são transformadas automaticamente em código sem escopo revisado. O roteiro versionado é a fonte confiável de objetivos.
+
+O índice AST é incremental por hash, guarda só nomes/linhas de símbolos e fornece cápsula de contexto de até 450 caracteres quando houver correspondência com a tarefa; não lê o código completo no prompt.
+
+Quando o roteiro terminar e não houver novas issues aprovadas ou lacunas seguras, **o supervisor encerra o ciclo**. Não inventa tarefas intermináveis e não efetua merge automático; isso é uma proteção contra loops de custo e alterações descontroladas.
