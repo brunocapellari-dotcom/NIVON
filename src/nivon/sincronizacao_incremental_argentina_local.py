@@ -14,6 +14,7 @@ from pathlib import Path
 import re
 import sqlite3
 import stat
+import unicodedata
 
 from .argentina_agricultura import (
     CAMPOS, ErroArgentina, RECURSOS, _SQL, _url_legal, _utc, ler_linhas_csv,
@@ -82,6 +83,21 @@ def _manifesto(catalogo: dict):
         ids.add(edicao_id)
         parsed.append((edicao_id, recurso, digest, e["origem_url"], corte))
     return sorted(parsed)
+
+
+def _cultivo_do_recurso(recurso: str, cultivo: str):
+    """Não misturar observações de soja, milho e trigo por rótulo do recurso."""
+    if recurso == "todos":
+        return
+    canonico = "".join(
+        char for char in unicodedata.normalize("NFKD", cultivo)
+        if not unicodedata.combining(char)
+    ).strip().upper()
+    esperado = {"soja": "SOJA", "milho": "MAIZ", "trigo": "TRIGO"}[recurso]
+    if canonico != esperado:
+        raise ErroIncrementalArgentina(
+            "cultivo do CSV diverge do recurso oficial selecionado"
+        )
 
 
 def _digest_pares(rows):
@@ -174,6 +190,7 @@ def sincronizar_raw_argentina_local(
             linhas = []
             seen = set()
             for row in ler_linhas_csv(raw):
+                _cultivo_do_recurso(recurso, row["cultivo"])
                 vals = tuple(row[col] for col in _COLUNAS)
                 key = (row["cultivo"], row["campania"],
                        row["provincia_id"], row["departamento_id"])
