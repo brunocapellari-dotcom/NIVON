@@ -223,5 +223,105 @@ class TestBackfillSidra(unittest.TestCase):
         self.assertEqual(rc,2)
         self.assertEqual(json.loads(error.getvalue())["status"],"BLOQUEADO")
 
+
+    def test_revisoes_numericas_tem_proveniencia_e_nao_sao_apagadas(self):
+        class Primeiro(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return cls(2026,10,1,12,0,tzinfo=tz)
+        class Segundo(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return cls(2026,10,23,12,0,tzinfo=tz)
+        with patch("nivon.pecuaria_sidra_quarentena.datetime", Primeiro):
+            self.executar(banco=self.banco,gravar=True,periodos=["202502"])
+        def novo_valor(*,url,timeout,limite):
+            r=fake_transport(url=url,timeout=timeout,limite=limite)
+            rows=json.loads(r["corpo"])
+            for row in rows[1:]:
+                if row["D3C"]=="284":
+                    row["V"]="110"
+            r["corpo"]=json.dumps(rows,ensure_ascii=False).encode()
+            return r
+        with patch("nivon.pecuaria_sidra_quarentena.datetime", Segundo):
+            self.executar(banco=self.banco,gravar=True,periodos=["202502"],
+                          transporte=novo_valor)
+        antes=consultar_backfill_quarentena(
+            banco=self.banco,especie="BOVINO",periodos=["202502"],
+            corte_asof="2026-10-02T00:00:00+00:00")
+        depois=consultar_backfill_quarentena(
+            banco=self.banco,especie="BOVINO",periodos=["202502"],
+            corte_asof="2026-10-24T00:00:00+00:00")
+        self.assertEqual(antes["total_revisoes_observadas"],0)
+        self.assertEqual(depois["total_revisoes_observadas"],2)
+        self.assertEqual(len(depois["capturas_historicas_no_corte"]),4)
+        self.assertEqual(depois["capturas_superadas_no_corte"],2)
+        self.assertEqual(len(depois["capturas_conhecidas_no_corte"]),2)
+        self.assertTrue(all(r["de_status"]=="VALOR" and r["para_status"]=="VALOR"
+                            and r["valor_anterior"]==100
+                            and r["valor_atual"]==110
+                            and not r["data_publicacao_ibge_verificada"]
+                            for r in depois["revisoes_observadas"]))
+        self.assertFalse(depois["publicacao_historica_conhecida"])
+
+    def test_uf_omitida_em_edicao_posterior_nao_reusa_valor_antigo(self):
+        class Primeiro(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return cls(2026,10,1,12,0,tzinfo=tz)
+        class Segundo(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return cls(2026,10,23,12,0,tzinfo=tz)
+        with patch("nivon.pecuaria_sidra_quarentena.datetime", Primeiro):
+            self.executar(banco=self.banco,gravar=True,periodos=["202502"])
+        def novo_territorio(*,url,timeout,limite):
+            r=fake_transport(url=url,timeout=timeout,limite=limite)
+            rows=json.loads(r["corpo"])
+            if "/n3/all/" in url:
+                for row in rows[1:]:
+                    row["D1C"]="35" # SP no lugar de MT, sem criar zero para MT
+            r["corpo"]=json.dumps(rows,ensure_ascii=False).encode()
+            return r
+        with patch("nivon.pecuaria_sidra_quarentena.datetime", Segundo):
+            self.executar(banco=self.banco,gravar=True,periodos=["202502"],
+                          transporte=novo_territorio)
+        res=consultar_backfill_quarentena(
+            banco=self.banco,especie="BOVINO",periodos=["202502"],
+            corte_asof="2026-10-24T00:00:00+00:00")
+        self.assertEqual(res["total_revisoes_observadas"],4)
+        estados={(r["uf"],r["de_status"],r["para_status"])
+                 for r in res["revisoes_observadas"]}
+        self.assertIn(("MT","VALOR","AUSENTE_NO_EXTRATO"),estados)
+        self.assertIn(("SP","AUSENTE_NO_EXTRATO","VALOR"),estados)
+        self.assertEqual({i["quantidade_ufs_numericas"]
+                          for i in res["diagnostico"]["indicadores"]},{1})
+        for indicador in res["diagnostico"]["indicadores"]:
+            self.assertEqual(indicador["ufs_numericas"],["SP"])
+            self.assertIn("MT",indicador["ufs_nao_presentes"])
+            self.assertIsNone(indicador["soma_ufs"])
+        self.assertTrue(res["ausencia_no_extrato_nao_e_zero"])
+
+    def test_duas_edicoes_diferentes_mesma_coleta_falham_antes_de_gravar(self):
+        class MesmoInstante(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return cls(2026,10,23,12,0,tzinfo=tz)
+        with patch("nivon.pecuaria_sidra_quarentena.datetime", MesmoInstante):
+            self.executar(banco=self.banco,gravar=True,periodos=["202502"])
+        def mudado(*,url,timeout,limite):
+            r=fake_transport(url=url,timeout=timeout,limite=limite)
+            rows=json.loads(r["corpo"])
+            rows[1]["V"]="111"
+            r["corpo"]=json.dumps(rows,ensure_ascii=False).encode()
+            return r
+        with patch("nivon.pecuaria_sidra_quarentena.datetime", MesmoInstante):
+            with self.assertRaisesRegex(DadoInvalido,"mesmo instante"):
+                self.executar(banco=self.banco,gravar=True,
+                              periodos=["202502"],transporte=mudado)
+        with sqlite3.connect(self.banco) as cx:
+            self.assertEqual(cx.execute(
+                "SELECT COUNT(*) FROM valores_pecuaria_quarentena").fetchone()[0],6)
+
 if __name__=="__main__":
     unittest.main()
