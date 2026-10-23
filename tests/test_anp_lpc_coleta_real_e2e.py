@@ -9,7 +9,7 @@ import sqlite3
 import tempfile
 import unittest
 from contextlib import redirect_stdout
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from hashlib import sha256
 from pathlib import Path
 
@@ -23,6 +23,9 @@ from nivon.anp_lpc_staging_real import (
 from nivon.cli_coletar_anp_lpc import main
 from nivon.anp_diesel_pressao_preview import impacto_diesel_anp_preliminar
 from nivon.anp_lpc_gcs import exportar_lpc_staging_gcs, ErroGCSANP
+from nivon.anp_lpc_ciclo_gcs import (
+    executar_ciclo_lpc_gcs, restaurar_ultimo_staging_gcs,
+)
 from decimal import Decimal
 from test_anp_lpc_integracao import fixture, Workbook
 
@@ -39,6 +42,17 @@ class FakeGCSBlob:
     def reload(self):
         self.metadata=dict(self.bucket.data[self.key]["metadata"])
 
+    @property
+    def name(self):
+        return self.key
+
+    @property
+    def time_created(self):
+        return self.bucket.data[self.key]["criado_em"]
+
+    def download_as_bytes(self):
+        return self.bucket.data[self.key]["bytes"]
+
     def upload_from_string(self,payload,*,content_type,if_generation_match):
         self._save(payload,content_type,if_generation_match)
 
@@ -52,6 +66,8 @@ class FakeGCSBlob:
         self.bucket.data[self.key] = {
             "bytes":payload,"metadata":dict(self.metadata),
             "tipo":content_type,
+            "criado_em":datetime(2026,10,23,tzinfo=timezone.utc)
+                + timedelta(seconds=len(self.bucket.data)),
         }
 
 
@@ -65,6 +81,12 @@ class FakeGCSBucket:
 
     def blob(self,name):
         return FakeGCSBlob(self,name)
+
+    def list_blobs(self,*,prefix):
+        return [
+            FakeGCSBlob(self,name)
+            for name in sorted(self.data) if name.startswith(prefix)
+        ]
 
 
 class Resposta:
@@ -427,6 +449,85 @@ class TestColetaANPLPCE2E(unittest.TestCase):
                 as_of="2026-11-01T00:00:00+00:00",
             )
         self.assertFalse(bucket.data)
+
+    def test_ciclo_gcs_duravel_restaura_estado_e_aceita_revisao_real(self):
+        bucket=FakeGCSBucket()
+        primeira=executar_ciclo_lpc_gcs(
+            bucket=bucket,ano=2026,limite_semanas=3,
+            indice_bytes=self.html,arquivos_locais=self.planilhas,
+            esperar_segundos=0,
+        )
+        self.assertEqual(primeira["status"],"CICLO_GCS_COMPLETO")
+        self.assertEqual(primeira["restauracao"]["status"],
+                         "STAGING_NOVO_SEM_SNAPSHOT")
+        self.assertEqual(primeira["coleta"]["edicoes_novas"],3)
+        self.assertEqual(primeira["exportacao"]["objetos_novos"],7)
+        self.assertEqual(len(bucket.data),8)  # 3 RAW + 1 índice + 3 JSON + snapshot
+        segunda=executar_ciclo_lpc_gcs(
+            bucket=bucket,ano=2026,limite_semanas=3,
+            indice_bytes=self.html,arquivos_locais=self.planilhas,
+            esperar_segundos=0,
+        )
+        self.assertEqual(segunda["restauracao"]["status"],"STAGING_RESTAURADO_GCS")
+        self.assertEqual(segunda["restauracao"]["edicoes_restauradas"],3)
+        self.assertEqual(segunda["coleta"]["edicoes_novas"],0)
+        self.assertEqual(segunda["coleta"]["edicoes_integradas"],3)
+        novo=fixture(start=date(2026,10,11),preco="6,25")
+        self.planilhas[novo["arquivo_url"]]=novo["xlsx"]
+        terceira=executar_ciclo_lpc_gcs(
+            bucket=bucket,ano=2026,limite_semanas=3,
+            indice_bytes=self.html,arquivos_locais=self.planilhas,
+            esperar_segundos=0,
+        )
+        self.assertEqual(terceira["status"],"CICLO_GCS_COMPLETO")
+        self.assertEqual(terceira["restauracao"]["edicoes_restauradas"],3)
+        self.assertEqual(terceira["coleta"]["edicoes_novas"],1)
+        with tempfile.TemporaryDirectory() as p:
+            root=Path(p)
+            raw=root/"raw"
+            raw.mkdir()
+            info=restaurar_ultimo_staging_gcs(
+                bucket=bucket,db_path=root/"restaurado.sqlite",raw_dir=raw,
+            )
+            self.assertEqual(info["edicoes_restauradas"],4)
+            with sqlite3.connect(root/"restaurado.sqlite") as db:
+                self.assertEqual(db.execute(
+                    "SELECT COUNT(*) FROM anp_lpc_staging_edicoes").fetchone()[0],4)
+                self.assertEqual(db.execute(
+                    "SELECT COUNT(*) FROM anp_lpc_staging_observacoes").fetchone()[0],8)
+                qa=auditar_arquivos_origem_lpc(
+                    db,raiz_raw=str(raw),
+                    as_of="2026-11-01T00:00:00+00:00",
+                )
+                self.assertEqual(qa["status"],"RAW_VERIFICADO_LOCALMENTE")
+
+    def test_ciclo_gcs_bloqueia_snapshot_mais_recente_corrompido(self):
+        bucket=FakeGCSBucket()
+        executar_ciclo_lpc_gcs(
+            bucket=bucket,ano=2026,indice_bytes=self.html,
+            arquivos_locais=self.planilhas,esperar_segundos=0,
+        )
+        snapshot=next(k for k in bucket.data if "/snapshots/" in k)
+        bucket.data[snapshot]["bytes"]=b"sqlite-adulterado"
+        with self.assertRaisesRegex(ErroGCSANP,"hash esperado"):
+            executar_ciclo_lpc_gcs(
+                bucket=bucket,ano=2026,indice_bytes=self.html,
+                arquivos_locais=self.planilhas,esperar_segundos=0,
+            )
+
+    def test_ciclo_gcs_rejeita_dados_orfaos_sem_commit(self):
+        bucket=FakeGCSBucket()
+        bucket.data["nivon/anp/lpc/v1/indices/"+"a"*64+".html"]={
+            "bytes":b"<html>fixture</html>",
+            "metadata":{"sha256":"a"*64},
+            "tipo":"text/html",
+            "criado_em":datetime.now(timezone.utc),
+        }
+        with self.assertRaisesRegex(ErroGCSANP,"órfãos"):
+            executar_ciclo_lpc_gcs(
+                bucket=bucket,ano=2026,indice_bytes=self.html,
+                arquivos_locais=self.planilhas,esperar_segundos=0,
+            )
 
     def test_recoleta_preserva_edicoes_e_cria_capturas(self):
         self.run_lote()
