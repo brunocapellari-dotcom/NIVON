@@ -145,6 +145,34 @@ class TestStagingSQLiteConab(TestCase):
             self.assertEqual(rows[0][0],d["resultados"][0]["vinculo"]["arquivo_raw_sha256"])
             self.assertEqual(rows[0][1],"OFFLINE_SEM_VINTAGE")
 
+    def test_cli_com_raw_invalido_retorna_2_e_preserva_dossie(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            raw=root/"raw"
+            raw.mkdir()
+            manifest=root/"manifest.json"
+            out=root/"rejeicoes.json"
+            store=root/"staging.sqlite"
+            manifest.write_text(json.dumps({
+                "schema_version":"1.0","jobs":[_job(raw,bad_sha=True)]
+            }),encoding="utf-8")
+            project=Path(__file__).resolve().parents[1]
+            env=os.environ.copy()
+            env["PYTHONPATH"]=str(project/"src") + os.pathsep + env.get("PYTHONPATH","")
+            p=subprocess.run([
+                sys.executable,"-m","nivon.conab_lote_offline",
+                "--manifest",str(manifest),"--base-dir",str(raw),
+                "--out",str(out),"--sqlite",str(store)
+            ],cwd=project,env=env,capture_output=True,text=True,timeout=30)
+            self.assertEqual(p.returncode,2,p.stderr)
+            dossier=json.loads(out.read_text(encoding="utf-8"))
+            self.assertEqual(dossier["rejeitados"],1)
+            self.assertEqual(dossier["persistencia_staging"]["inseridos"],0)
+            self.assertEqual(dossier["persistencia_staging"]["estado"],
+                             "NAO_PERSISTIDO_LOTE_COM_REJEICOES")
+            self.assertFalse(store.exists())
+            self.assertFalse(dossier["habilita_publicacao"])
+
     def test_conflito_de_layout_rejeita_ao_inves_de_sobrescrever(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)
