@@ -117,6 +117,10 @@ def executar() -> dict:
             quarentena,raw=RAW,manifesto=manifest,
         )
         assert recibido["status"]=="AMOSTRA_EXTERNA_NAO_HOMOLOGADA"
+        repetido=receber_amostra_ptax(
+            quarentena,raw=RAW,manifesto=manifest,
+        )
+        assert repetido["nova_versao"] is False
         assert len(listar_amostras_ptax(quarentena))==1
         preparo=preparar_objetos_gcs_ptax(
             quarentena,evento_sha256=recibido["evento_sha256"],
