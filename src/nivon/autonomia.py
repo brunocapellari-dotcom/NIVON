@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 import json
 import os
 from pathlib import Path
@@ -203,8 +204,30 @@ def do_task(agent, task, *, timeout_minutes=15):
         return "blocked", f"{branch}; timeout de {timeout_minutes} min; revisar worktree"
 
 
+@contextmanager
+def supervisor_lock():
+    """Evita supervisores simultâneos; lock órfão exige inspeção, não é roubado."""
+    HOME.mkdir(parents=True, exist_ok=True)
+    path = HOME / "supervisor.pid"
+    try:
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    except FileExistsError as exc:
+        raise RuntimeError("Supervisor já ativo ou lock órfão; inspeção local necessária") from exc
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(str(os.getpid()) + "\n")
+        yield
+    finally:
+        path.unlink(missing_ok=True)
+
+
 def run(*, max_tasks=8, minutes=120, per_task=15):
     preflight()
+    with supervisor_lock():
+        return _run_locked(max_tasks=max_tasks, minutes=minutes, per_task=per_task)
+
+
+def _run_locked(*, max_tasks=8, minutes=120, per_task=15):
     (HOME / "STOP").unlink(missing_ok=True)
     dbpath = default_db()
     # Ler GitHub no host (não dentro dos agentes); falhas de rede não bloqueiam tarefas locais.
