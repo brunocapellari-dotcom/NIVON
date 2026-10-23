@@ -68,6 +68,10 @@ def conferir_semantica_json_estruturado(raw: bytes, registro: Mapping) -> dict:
             parse_int=Decimal,
             parse_constant=_sem_constante,
         )
+    except ErroQuantitativo:
+        # Preserve o motivo de duplicidade/número proibido; não converter
+        # uma falha semântica determinística em "JSON genérico inválido".
+        raise
     except (UnicodeError, json.JSONDecodeError, ValueError, TypeError) as exc:
         raise ErroQuantitativo("RAW não é JSON UTF-8 estruturado válido") from exc
     if not isinstance(payload, dict) or set(payload) != CAMPOS:
