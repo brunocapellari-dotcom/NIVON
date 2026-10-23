@@ -20,7 +20,7 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from .ingestao_fontes_reais import gravar_lote
 
-BASE_SERIES = "https://apis.datos.gob.ar/series/api/series"
+BASE_SERIES = "https://apis.datos.gob.ar/series/api/series/"
 CANADA_CSV = "https://grainscanada.gc.ca/en/grain-research/statistics/grain-statistics-weekly/{safra}/gsw-shg-en.csv"
 CCEE_PACKAGE = "https://dadosabertos.ccee.org.br/api/3/action/package_show?id=pld_horario"
 CAMBIO_AR = "168.1_T_CAMBIOR_D_0_0_26"
