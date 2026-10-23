@@ -78,7 +78,7 @@ def preparar_manifesto(*, banco, raw_dir, bucket, limite=MAX_OBJECTS,
             raise ErroArquivoCloud("origem do snapshot invalida")
         if not isinstance(dt,str) or len(dt)>45:
             raise ErroArquivoCloud("timestamp de coleta invalido")
-        if mime not in ("text/csv","application/json","application/octet-stream","application/vnd.ms-excel"):
+        if mime not in ("text/html","text/csv","application/json","application/octet-stream","application/vnd.ms-excel"):
             raise ErroArquivoCloud("MIME de arquivo invalido")
         itens.append({
             "dataset": ds, "snapshot_id": sid, "sha256": sha,
