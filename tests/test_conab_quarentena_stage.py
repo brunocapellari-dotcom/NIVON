@@ -44,6 +44,9 @@ class TestQuarentenaConabParaStage(TestCase):
             rows=[json.loads(x) for x in arquivo.read_text().splitlines()]
             self.assertEqual({x['status'] for x in rows},{'QUARENTENA_NAO_PUBLICAVEL'})
             self.assertEqual({x['data_publicacao_original'] for x in rows},{'2026-10-19'})
+            self.assertEqual({x['data_publicacao'] for x in rows},{'2026-10-19'})
+            self.assertEqual({x['data_referencia'] for x in rows},{'2026-10-16'})
+            self.assertTrue(all(x['data_coleta']==x['coletado_utc'] for x in rows))
             self.assertEqual({x['source_sha256'] for x in rows},{'a'*64})
             self.assertTrue(all(x['classe']=='INFORMADO_QUARENTENA' for x in rows))
             painel=auditar_fontes_agro(bancos=[banco],
