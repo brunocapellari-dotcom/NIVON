@@ -48,6 +48,15 @@ def assert_report(report: dict, *, mode: str, inserted: int, repeated: int) -> N
     assert report["publication_allowed"] is False
     assert report["canonical_duv_links_allowed"] is False
     assert report["source_homologation_status"] == "NOT_HOMOLOGATED"
+    by_port = {row["port_id"]: row for row in report["source_readiness"]}
+    assert set(by_port) == {"PARANAGUA", "ITAQUI"}
+    assert by_port["PARANAGUA"]["documents_known_as_of"] == 2
+    assert by_port["ITAQUI"]["documents_known_as_of"] == 1
+    for readiness in by_port.values():
+        assert readiness["status"] == "NOT_HOMOLOGATED_EXTERNAL_REVIEW_REQUIRED"
+        assert "FEWER_THAN_THREE_DISTINCT_DATED_EDITIONS" in readiness["blockers"]
+        assert "NO_EXPLICIT_DUV_IN_KNOWN_PDF_EDITION" in readiness["blockers"]
+        assert readiness["release_allowed"] is False
     assert all(
         d["pdf_extraction_mode"] == "ISOLATED_TABLES_PREVALIDATED"
         for d in report["documents"]
@@ -71,9 +80,10 @@ def verify(outputs: Path) -> None:
         assert db.execute(
             "SELECT COUNT(*) FROM maritime_pdf_programme_editions"
         ).fetchone()[0] == 3
-        assert db.execute(
-            "SELECT COUNT(*) FROM maritime_lineup_vintages"
-        ).fetchone()[0] == 0 if ("maritime_lineup_vintages",) in tables else True
+        if ("maritime_lineup_vintages",) in tables:
+            assert db.execute(
+                "SELECT COUNT(*) FROM maritime_lineup_vintages"
+            ).fetchone()[0] == 0
     print("CONTAINER_PDF_E2E_PASS: 3 sources editions, 1 declared ETA revision, "
           "dry-run, atomic commit, idempotent replay, zero physical claims")
 
