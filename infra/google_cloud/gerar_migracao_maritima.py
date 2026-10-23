@@ -22,7 +22,7 @@ def gerar_sql(*, projeto, dataset, fonte=PADRAO):
     if not isinstance(dataset,str) or not DATASET.fullmatch(dataset):
         raise ValueError("dataset BigQuery invalido")
     texto=Path(fonte).read_text(encoding="utf-8")
-    if texto.count("NIVON_PROJECT_ID")!=5 or texto.count("NIVON_DATASET_ID")!=5:
+    if texto.count("NIVON_PROJECT_ID")!=6 or texto.count("NIVON_DATASET_ID")!=6:
         raise ValueError("template SQL esperado mudou; revisar migracao")
     conteudo=texto.replace("NIVON_PROJECT_ID",projeto).replace("NIVON_DATASET_ID",dataset)
     expected=[f"{projeto}.{dataset}.{n}" for n in EXPECTED]
