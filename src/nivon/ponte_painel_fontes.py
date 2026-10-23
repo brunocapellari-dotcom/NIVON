@@ -12,12 +12,14 @@ from .inteligencia_corredores import consultar_corredores
 from .conciliacao_corredores_ferrovia import analisar_staging, quadro_intermodal
 from .painel_operacional import ErroMotor, montar_painel
 from .adaptadores_operacionais import adaptar_fretes_consolidados, ler_replay_ais_sqlite
+from .ferrovia_painel_bq import consultar_ferrovia
 
 
 def analisar_fontes(
     config: dict, *, as_of: str, executar_bigquery: bool = False,
     cliente_bigquery=None, leitor_bq=consultar, leitor_corredores=consultar_corredores,
     leitor_ferrovia=analisar_staging, conciliador_intermodal=quadro_intermodal,
+    leitor_ferrovia_bq=consultar_ferrovia, cliente_ferrovia_bq=None, sdk_ferrovia_bq=None,
 ) -> dict:
     """Produz uma resposta independente por fonte, sem silenciar truncamentos."""
     if not isinstance(config, dict):
@@ -48,8 +50,38 @@ def analisar_fontes(
     # estimativa de transbordo ou volume unico e calculada aqui.
     staging = config.get("ferrovia_staging")
     ferrovia = config.get("ferrovia")
-    if staging is not None and ferrovia is not None:
-        raise ErroMotor("escolha ferrovia ou ferrovia_staging")
+    config_bq_ferrovia = config.get("ferrovia_bigquery")
+    if sum(x is not None for x in (staging, ferrovia, config_bq_ferrovia)) > 1:
+        raise ErroMotor("escolha so uma fonte ferroviaria")
+    ferrovia_bq_meta = None
+    if config_bq_ferrovia is not None:
+        if not isinstance(config_bq_ferrovia, dict):
+            raise ErroMotor("configuracao ferroviaria BigQuery invalida")
+        chaves_rail = ("projeto","dataset","competencia")
+        if not all(isinstance(config_bq_ferrovia.get(k),str)
+                   and config_bq_ferrovia[k] for k in chaves_rail):
+            raise ErroMotor("projeto/dataset/competencia ferroviarios obrigatorios")
+        resposta_ferrovia_bq = leitor_ferrovia_bq(
+            projeto=config_bq_ferrovia["projeto"],
+            dataset=config_bq_ferrovia["dataset"],
+            competencia=config_bq_ferrovia["competencia"],
+            uf_origem=config_bq_ferrovia.get("uf_origem","MT"),
+            as_of=as_of,
+            executar=executar_bigquery is True,
+            cliente=cliente_ferrovia_bq, sdk=sdk_ferrovia_bq,
+        )
+        if not isinstance(resposta_ferrovia_bq,dict):
+            raise ErroMotor("resposta ferroviaria BigQuery invalida")
+        if executar_bigquery is True:
+            if (resposta_ferrovia_bq.get("executado") is not True
+                or resposta_ferrovia_bq.get("competencia")!=config_bq_ferrovia["competencia"]
+                or not isinstance(resposta_ferrovia_bq.get("polos_ferroviarios"),list)):
+                raise ErroMotor("consulta SIADE nao comprovada")
+            ferrovia = resposta_ferrovia_bq
+        ferrovia_bq_meta = {
+            k:v for k,v in resposta_ferrovia_bq.items()
+            if k not in ("polos_ferroviarios","mercadorias")
+        }
     if staging is not None:
         if not isinstance(staging, dict) or not isinstance(staging.get("pasta"), str):
             raise ErroMotor("staging ferroviario invalido")
@@ -171,11 +203,14 @@ def analisar_fontes(
         "corredores": corredores, "portos": config.get("portos", []), "series": series,
     }, as_of=as_of)
     painel["ferrovia"] = ferrovia
+    painel["fonte_ferrovia_bigquery"] = ferrovia_bq_meta
     painel["conciliacao_intermodal"] = intermodal
     painel["fretes_consolidados"] = (
         {k:v for k,v in fretes_meta.items() if k!="series"} if fretes_meta else None
     )
     painel["replays_ais"] = replays
     painel["fontes_bigquery"] = fontes
-    painel["executou_bigquery"] = executar_bigquery is True and bool(config_queries)
+    painel["executou_bigquery"] = executar_bigquery is True and bool(
+        config_queries or config_bq_ferrovia is not None
+    )
     return painel
