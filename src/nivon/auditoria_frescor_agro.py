@@ -101,6 +101,13 @@ def auditar_fontes_agro(
                     (dataset,dataset)).fetchone()
                 total_capturas=conn.execute("""SELECT COUNT(*)
                     FROM capturas_fonte WHERE dataset_id=?""",(dataset,)).fetchone()[0]
+                # Bases legadas podem possuir snapshots anteriores à tabela
+                # capturas_fonte. Não apagar sua visibilidade no diagnóstico.
+                if ss is None:
+                    ss=conn.execute("""SELECT snapshot_id,coletado_em,sha256,
+                        tamanho,arquivo,estado FROM snapshots WHERE dataset_id=?
+                        ORDER BY coletado_em DESC,snapshot_id DESC LIMIT 1""",
+                        (dataset,)).fetchone()
             else:
                 ss=conn.execute("""SELECT snapshot_id,coletado_em,sha256,
                     tamanho,arquivo,estado FROM snapshots WHERE dataset_id=?
