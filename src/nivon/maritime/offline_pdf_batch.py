@@ -20,6 +20,7 @@ from .pdf_programme_ledger import (
     PdfProgrammeEdition, PdfProgrammeLedger, edition_from_pdf_bridge,
 )
 from .pdf_programme_revisions import compare_pdf_programme_editions
+from .pdf_source_dossier import source_readiness_dossiers
 from .programme_duv_evidence import (
     ProgrammeDuvEvidence, assess_programme_duv_evidence,
 )
@@ -217,6 +218,9 @@ def run_offline_pdf_batch(
         "document_bytes_processed": total_pdf_bytes,
         "edition_writes": writes,
         "documents": [audit for _, _, audit in prepared],
+        "source_readiness": source_readiness_dossiers(
+            tuple(version for _, version, _ in prepared), as_of=cutoff,
+        ),
         "revisions": revision_reports,
         "port_call_count": None,
         "realized_tonnes": None,
