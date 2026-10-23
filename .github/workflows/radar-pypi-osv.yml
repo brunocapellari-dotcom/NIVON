@@ -7,8 +7,10 @@ on:
     paths:
       - 'src/nivon/radar_pypi_osv.py'
       - 'src/nivon/radar_compatibilidade_pypi.py'
+      - 'src/nivon/inspecao_compatibilidade_wheels.py'
       - 'tests/test_radar_pypi_osv.py'
       - 'tests/test_radar_compatibilidade_pypi.py'
+      - 'tests/test_inspecao_compatibilidade_wheels.py'
       - '.github/workflows/radar-pypi-osv.yml'
       - 'pyproject.toml'
   workflow_dispatch:
@@ -52,6 +54,15 @@ jobs:
           python -m nivon.radar_compatibilidade_pypi \
             --pyproject pyproject.toml \
             --output evidencias-pypi/candidatos_nove_extras.json
+      - name: Inspecionar tags de wheel Python 3.11 Linux e dependencias transitivas declaradas
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m unittest discover -s tests -p 'test_inspecao_compatibilidade_wheels.py' -v
+          python -m nivon.inspecao_compatibilidade_wheels \
+            --input evidencias-pypi/candidatos_nove_extras.json \
+            --output evidencias-pypi/compatibilidade_cp311_linux_x86_64.json
+          python -c 'import json; d=json.load(open("evidencias-pypi/compatibilidade_cp311_linux_x86_64.json")); assert d["packages_examined"]==9 and d["approved_for_install"] is False and d["approved_for_production"] is False and d["full_pep508_dependency_resolution"] is False'
       - name: Validar cobertura total de extras e avisos antes de publicar
         run: |
           python -c 'import json; d=json.load(open("evidencias-pypi/candidatos_nove_extras.json")); assert d["direct_distributions_covered"] == 9 and len(d["optional_extras_covered"]) == 7; assert d["pypi_release_json_requests"] == 9 and d["pypi_index_json_requests"] == 8 and d["osv_batch_queries"] == 9; assert d["source"] == "LIVE_PUBLIC_PYPI_AND_OSV_METADATA" and d["approved_for_install"] is False and d["approved_for_production"] is False and d["full_pep440_pep508_resolved"] is False'
@@ -67,7 +78,7 @@ jobs:
         run: |
           python -c 'import json; p="evidencias-pypi/radar_pypi_osv.json"; d=json.load(open(p)); assert d["queried_package_count"] == 4 and d["approved_for_production"] is False and d["approved_for_install"] is False and d["full_dependency_resolution"] is False; assert len(d["packages"]) == len(d["osv"]) == 4'
           cd evidencias-pypi
-          sha256sum radar_pypi_osv.json candidatos_nove_extras.json > sha256sums.txt
+          sha256sum radar_pypi_osv.json candidatos_nove_extras.json compatibilidade_cp311_linux_x86_64.json > sha256sums.txt
           sha256sum -c sha256sums.txt
       - name: Publicar somente inventario normalizado de APIs publicas
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
