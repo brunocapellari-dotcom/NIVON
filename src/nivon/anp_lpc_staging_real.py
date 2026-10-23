@@ -140,6 +140,75 @@ def integrar_real_preliminar(
 
 
 
+def auditar_arquivos_origem_lpc(
+    db: sqlite3.Connection, *, raiz_raw: str, as_of: str,
+) -> dict:
+    """Confere bytes privados já arquivados versus os hashes persistidos.
+
+    Só metadados de integridade. Não lê XLSX como fonte de preço,
+    não devolve bytes nem nomes de postos e não homologa licenças.
+    """
+    from pathlib import Path
+    raiz = Path(raiz_raw)
+    if not raiz.is_dir() or raiz.is_symlink():
+        raise ErroStagingANP("raiz privada de RAW ausente ou insegura")
+    raiz = raiz.resolve()
+    corte = _tempo(as_of, "as_of")
+    db.row_factory = sqlite3.Row
+    linhas = db.execute("""
+        SELECT sha256, indice_sha256, raw_arquivado
+        FROM anp_lpc_staging_edicoes e
+        WHERE EXISTS (
+            SELECT 1 FROM anp_lpc_staging_capturas c
+            WHERE c.sha256=e.sha256 AND c.capturado_em<=?
+        ) ORDER BY e.sha256""", (corte.isoformat(),)).fetchall()
+    cache = {}
+    falhas = []
+    verificacoes = 0
+
+    def validar(subpasta: str, expected: str, tipo: str) -> None:
+        nonlocal verificacoes
+        chave = (subpasta, expected)
+        if chave in cache:
+            resultado = cache[chave]
+        else:
+            p = raiz / subpasta / (expected + (".html" if subpasta=="indices" else ".xlsx"))
+            if (p.is_symlink() or p.parent.is_symlink()
+                    or not p.resolve().is_relative_to(raiz)):
+                resultado = "CAMINHO_INSEGURO"
+            elif not p.is_file():
+                resultado = "ARQUIVO_AUSENTE"
+            elif (p.stat().st_size < 100 or
+                    p.stat().st_size > (4_000_000 if subpasta=="indices" else 14_000_000)):
+                resultado = "TAMANHO_INVALIDO"
+            else:
+                digest = sha256()
+                with p.open("rb") as fluxo:
+                    for parte in iter(lambda: fluxo.read(1024*1024), b""):
+                        digest.update(parte)
+                resultado = "INTEGRO" if digest.hexdigest() == expected else "HASH_DIVERGENTE"
+            cache[chave] = resultado
+            verificacoes += 1
+        if resultado != "INTEGRO":
+            falhas.append({"tipo":tipo, "sha256_esperado":expected, "falha":resultado})
+
+    for e in linhas:
+        if not e["raw_arquivado"]:
+            falhas.append({"tipo":"EDICAO", "sha256_esperado":e["sha256"],
+                           "falha":"ARQUIVAMENTO_NAO_COMPROVADO"})
+            continue
+        validar("planilhas",e["sha256"],"XLSX")
+        validar("indices",e["indice_sha256"],"INDICE_HTML")
+    return {
+        "status":"RAW_VERIFICADO_LOCALMENTE" if not falhas else "RAW_NAO_CONFIAVEL",
+        "as_of":corte.isoformat(), "edicoes_consultadas":len(linhas),
+        "arquivos_distintos_verificados":verificacoes,
+        "quantidade_falhas":len(falhas), "falhas":falhas,
+        "precos_expostos":False, "publicavel":False,
+        "autenticidade_externa_comprovada":False,
+    }
+
+
 def painel_qualidade_lpc(db: sqlite3.Connection, *, as_of: str) -> dict:
     """Auditoria rápida do histórico preliminar, sem divulgar preços.
 
