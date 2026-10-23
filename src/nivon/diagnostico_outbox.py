@@ -32,7 +32,7 @@ def diagnosticar_outbox(con: sqlite3.Connection, *, agora: datetime | None = Non
     obrigatorias = {
         "nivon_envios", "nivon_autorizacoes", "nivon_provas_externas",
         "nivon_optouts_destinatario", "nivon_registry_root",
-        "nivon_registry_emissores",
+        "nivon_registry_emissores", "nivon_vigencia_editorial",
     }
     presentes = {name for name in obrigatorias if _tabela(con, name)}
     if presentes != obrigatorias:
@@ -58,16 +58,34 @@ def diagnosticar_outbox(con: sqlite3.Connection, *, agora: datetime | None = Non
     }
     rows = con.execute("""SELECT e.idempotency_key,e.edicao,e.estado,e.tentativas,
         e.provider_message_id, a.documento_sha256,a.valido_ate,a.revogado_em,
-        p.comprovantes_sha256, o.destinatario_hmac
+        p.comprovantes_sha256, o.destinatario_hmac,
+        v.gerado_em_utc,v.noticia_mais_antiga_utc,v.valido_ate_utc
         FROM nivon_envios e
         LEFT JOIN nivon_autorizacoes a ON a.idempotency_key=e.idempotency_key
         LEFT JOIN nivon_provas_externas p ON p.idempotency_key=e.idempotency_key
         LEFT JOIN nivon_optouts_destinatario o ON
            o.destinatario_hmac=e.destinatario_hmac
+        LEFT JOIN nivon_vigencia_editorial v ON
+           v.idempotency_key=e.idempotency_key
         ORDER BY e.edicao,e.idempotency_key""").fetchall()
     itens = []
-    for key, edicao, estado, tentativas, provider, documento, validade, revogacao, provas, optout in rows:
+    for (key, edicao, estado, tentativas, provider, documento, validade,
+         revogacao, provas, optout, gerado, mais_antiga, expiracao) in rows:
         motivos = []
+        if not (gerado and mais_antiga and expiracao):
+            motivos.append("VIGENCIA_EDITORIAL_AUSENTE")
+        else:
+            try:
+                fim = datetime.fromisoformat(expiracao.replace("Z","+00:00"))
+                inicio = datetime.fromisoformat(gerado.replace("Z","+00:00"))
+                if fim.tzinfo is None or inicio.tzinfo is None:
+                    motivos.append("VIGENCIA_EDITORIAL_INVALIDA")
+                elif now < inicio.astimezone(timezone.utc):
+                    motivos.append("EDICAO_FUTURA")
+                elif now >= fim.astimezone(timezone.utc):
+                    motivos.append("EDICAO_VENCIDA")
+            except (ValueError, TypeError):
+                motivos.append("VIGENCIA_EDITORIAL_INVALIDA")
         if not registry["apto_registry"]:
             motivos.append("EMISSOR_AUSENTE_OU_REVOGADO")
         if optout is not None:

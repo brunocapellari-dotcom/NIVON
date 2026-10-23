@@ -236,6 +236,65 @@ class TestOutboxWhatsApp(unittest.TestCase):
         self.assertEqual(self.webhook("delivered")["atualizados"],1)
         self.assertEqual(consultar_envio(self.con,self.modelo["idempotency_key"])["estado"],"ENTREGUE")
 
+    def test_edicao_vence_pela_noticia_mais_antiga_sem_callback(self):
+        self.registrar()
+        self.aprovar()
+        chamadas = []
+        with patch("nivon.outbox_whatsapp._agora_reserva_utc",
+                   return_value=datetime.fromisoformat("2026-10-21T06:00:00-03:00")):
+            with self.assertRaisesRegex(PermissionError, "vencida"):
+                self.despachar(lambda *_: chamadas.append(True))
+        self.assertEqual(chamadas, [])
+        self.assertEqual(consultar_envio(
+            self.con, self.modelo["idempotency_key"])["tentativas"], 0)
+
+    def test_edicao_futura_nao_pode_reservar(self):
+        self.registrar()
+        self.aprovar()
+        with patch("nivon.outbox_whatsapp._agora_reserva_utc",
+                   return_value=datetime.fromisoformat("2026-10-20T06:59:59-03:00")):
+            with self.assertRaisesRegex(PermissionError, "futura"):
+                self.despachar(lambda *_: self.fail("não chamar provedor"))
+        self.assertEqual(consultar_envio(
+            self.con, self.modelo["idempotency_key"])["tentativas"], 0)
+
+    def test_alteracao_de_horario_no_preparado_e_reprovada(self):
+        self.registrar()
+        self.aprovar()
+        from copy import deepcopy
+        tamper = deepcopy(self.modelo)
+        tamper["gerado_em"] = "2026-10-20T08:00:00-03:00"
+        with self.assertRaisesRegex(PermissionError, "vigência"):
+            despachar_registrado(
+                self.con, tamper, autorizar_envio=True, custos_aprovados=True,
+                remetente=lambda *_: self.fail("não chamar"),
+                documento=self.documento, assinatura=self.assinatura,
+                chave_auditoria=CHAVE_AUDITORIA,
+                comprovantes=self.comprovantes, emissores=self.emissores)
+        self.assertEqual(consultar_envio(
+            self.con, self.modelo["idempotency_key"])["tentativas"], 0)
+
+    def test_base_legada_sem_validade_editorial_nao_reserva(self):
+        self.registrar()
+        self.aprovar()
+        self.con.execute("DELETE FROM nivon_vigencia_editorial")
+        self.con.commit()
+        with self.assertRaisesRegex(PermissionError, "vigência editorial ausente"):
+            self.despachar(lambda *_: self.fail("bypass de banco legado"))
+        self.assertEqual(consultar_envio(
+            self.con, self.modelo["idempotency_key"])["tentativas"], 0)
+
+    def test_notica_no_limite_vigente_antes_da_expiracao(self):
+        self.registrar()
+        self.aprovar()
+        chamadas = []
+        with patch("nivon.outbox_whatsapp._agora_reserva_utc",
+                   return_value=datetime.fromisoformat("2026-10-21T05:59:59-03:00")):
+            res = self.despachar(lambda *_: chamadas.append(True) or {
+                "provider_message_id": "wamid.RELOGIO_SINTETICO"})
+        self.assertEqual(res["estado"], "ACEITO_PROVEDOR")
+        self.assertEqual(chamadas, [True])
+
     def test_sem_aprovacao_persistida_nao_chama_remetente(self):
         self.registrar()
         chamadas = []

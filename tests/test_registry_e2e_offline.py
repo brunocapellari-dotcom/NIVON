@@ -9,6 +9,7 @@ import sqlite3
 import subprocess
 import sys
 import unittest
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -122,7 +123,8 @@ class TestRegistryE2EOffline(unittest.TestCase):
 
     def test_fluxo_completo_e_diagnostico_nao_reservam(self):
         self._preparar()
-        antes = diagnosticar_outbox(self.f.con)
+        antes = diagnosticar_outbox(self.f.con,
+            agora=datetime.fromisoformat("2026-10-20T07:30:00-03:00"))
         self.assertEqual(antes["total"], 1)
         self.assertTrue(antes["emissores"]["apto_registry"])
         self.assertEqual(
