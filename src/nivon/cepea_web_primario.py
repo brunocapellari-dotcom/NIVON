@@ -7,7 +7,8 @@ from __future__ import annotations
 
 from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
-from urllib.request import Request, urlopen
+from urllib.request import Request
+from html.parser import HTMLParser
 from urllib.parse import urlparse
 import re
 import ssl
@@ -42,9 +43,11 @@ def valor_real(texto):
     return format(n,"f")
 
 
-def consultar_pagina_primaria(url: str, *, open_url=urlopen):
+def consultar_pagina_primaria(url: str, *, open_url=None):
     if url not in (URL_SOJA,URL_MILHO):
         raise CepeaNaoHomologado("Somente URL primária CEPEA homologada")
+    if open_url is None or not callable(open_url):
+        raise PermissionError("EGRESS_CEPEA_NAO_HOMOLOGADO: transporte HTTPS obrigatório")
     req=Request(url,headers={"User-Agent":"NIVON-Research/1.0 (personal noncommercial; one page per test)", "Accept":"text/html"})
     with open_url(req,timeout=18) as r:
         returned=r.geturl()
@@ -58,34 +61,85 @@ def consultar_pagina_primaria(url: str, *, open_url=urlopen):
     return html.decode(charset,errors="replace")
 
 
+class _TabelasCEPEA(HTMLParser):
+    """Parser mínimo sem rede; associa tabela à última seção de título HTML.
+
+    Estrutura desconhecida, títulos ambíguos ou tabelas duplicadas são
+    rejeitados posteriormente, nunca atribuídos por busca textual global.
+    """
+    _TITULOS = frozenset(("h1","h2","h3","h4","h5","h6"))
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.tabelas=[]
+        self._heading=None
+        self._heading_data=[]
+        self._last_heading=""
+        self._table_depth=0
+        self._table_heading=""
+        self._rows=[]
+        self._row=None
+        self._cell=None
+
+    def handle_starttag(self,tag,attrs):
+        if tag in self._TITULOS and self._table_depth==0:
+            self._heading=tag
+            self._heading_data=[]
+        if tag=="table":
+            if self._table_depth==0:
+                self._table_heading=self._last_heading
+                self._rows=[]
+            self._table_depth+=1
+        elif tag=="tr" and self._table_depth==1:
+            self._row=[]
+        elif tag in ("td","th") and self._table_depth==1 and self._row is not None:
+            self._cell=[]
+
+    def handle_data(self,data):
+        if self._heading is not None and self._table_depth==0:
+            self._heading_data.append(data)
+        if self._cell is not None:
+            self._cell.append(data)
+
+    def handle_endtag(self,tag):
+        if tag==self._heading and self._table_depth==0:
+            self._last_heading=" ".join(" ".join(self._heading_data).upper().split())
+            self._heading=None
+            self._heading_data=[]
+        if tag in ("td","th") and self._cell is not None:
+            self._row.append(" ".join(" ".join(self._cell).split()))
+            self._cell=None
+        elif tag=="tr" and self._table_depth==1:
+            if self._row is not None:
+                self._rows.append(self._row)
+            self._row=None
+        elif tag=="table" and self._table_depth:
+            self._table_depth-=1
+            if self._table_depth==0:
+                self.tabelas.append((self._table_heading,self._rows))
+                self._rows=[]
+
 def extrair_precos_html(html: str, identificadores:tuple[str,...], *,
                         hoje:date|None=None, coleta:datetime|None=None):
-    try:
-        from bs4 import BeautifulSoup
-    except ImportError as exc:
-        raise RuntimeError("Instalar beautifulsoup4 para parse HTML validado") from exc
+    if not isinstance(html,str) or len(html)>1_000_000:
+        raise CepeaNaoHomologado("HTML inválido ou fora do limite")
     hoje=hoje or date.today()
     coleta=coleta or datetime.now(timezone.utc)
-    if coleta.tzinfo is None:
+    if coleta.tzinfo is None or coleta.utcoffset() is None:
         raise CepeaNaoHomologado("Coleta sem timezone")
-    soup=BeautifulSoup(html,"html.parser")
+    parser=_TabelasCEPEA()
+    parser.feed(html)
+    parser.close()
     dados=[]
     for serie_id in identificadores:
         if serie_id not in SERIES:
             raise CepeaNaoHomologado("ID de série desconhecido")
         spec=SERIES[serie_id]
         achados=[]
-        for table in soup.find_all("table"):
-            titulo=table.find_previous(string=lambda x: bool(x) and spec["assinatura"] in " ".join(str(x).upper().split()))
-            if titulo is None:
-                continue
-            # Examinar proximidade: não atribuir tabela ao título de outra série.
-            ancoro=table.find_previous(string=lambda x: bool(x) and "INDICADOR" in str(x).upper())
-            if ancoro is None or spec["assinatura"] not in " ".join(str(ancoro).upper().split()):
+        for titulo,linhas_brutas in parser.tabelas:
+            if "INDICADOR" not in titulo or spec["assinatura"] not in titulo:
                 continue
             linhas=[]
-            for tr in table.find_all("tr"):
-                cells=[c.get_text(" ",strip=True) for c in tr.find_all(["td","th"],recursive=False)]
+            for cells in linhas_brutas:
                 if len(cells)<2 or not ROW.fullmatch(cells[0]):
                     continue
                 try:
@@ -98,7 +152,8 @@ def extrair_precos_html(html: str, identificadores:tuple[str,...], *,
             if linhas:
                 achados.append(linhas)
         if len(achados)!=1:
-            raise CepeaNaoHomologado(f"CEPEA série {serie_id}: tabelas detectadas {len(achados)}, esperado 1")
+            raise CepeaNaoHomologado(
+                f"CEPEA série {serie_id}: tabelas detectadas {len(achados)}, esperado 1")
         for ref,valor in achados[0]:
             dados.append({
                 "fonte":"CEPEA","serie_id":serie_id,
