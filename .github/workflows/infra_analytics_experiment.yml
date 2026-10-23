@@ -8,6 +8,8 @@ on:
       - 'infra/docker/Dockerfile.analytics-experiment'
       - 'infra/docker/Dockerfile.analytics-distroless'
       - 'src/nivon/infra_distroless_compare.py'
+      - 'src/nivon/infra_wheel_license_audit.py'
+      - 'tests/test_infra_wheel_license_audit.py'
       - 'tests/test_infra_distroless_compare.py'
       - '.dockerignore'
       - 'src/nivon/infra_analytics_probe.py'
@@ -59,6 +61,7 @@ jobs:
           PYTHONPATH=src python -m unittest discover -s tests -p test_infra_offline_pipeline.py -v
           PYTHONPATH=src python -m unittest discover -s tests -p test_infra_wheel_lock.py -v
           PYTHONPATH=src python -m unittest discover -s tests -p test_infra_distroless_compare.py -v
+          PYTHONPATH=src python -m unittest discover -s tests -p test_infra_wheel_license_audit.py -v
           docker_arch="$(docker info --format '{{.Architecture}}')"
           case "$docker_arch" in
             x86_64) docker_arch=amd64 ;;
@@ -118,6 +121,10 @@ jobs:
           else
             echo "NIVON_WHEEL_LOCK_CAPTURE_ONLY_NOT_APPROVED"
           fi
+          PYTHONPATH=src python -m nivon.infra_wheel_license_audit \
+            --folder "$RUNNER_TEMP/nivon-analytics-wheels" \
+            --arch "${{ matrix.arch }}" \
+            --lock "infra/locks/analytics-${{ matrix.arch }}.json"
       - name: Build analítico com wheelhouse externo e SEM rede
         shell: bash
         env:
