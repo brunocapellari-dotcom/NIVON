@@ -8,7 +8,7 @@ from pathlib import Path
 
 from nivon.coletores_dados_reais import (
     _safra_canada, _parse_ckan, _recurso_ccee, plano_series_argentina,
-    parse_series_argentina, executar_coleta, normalizar_csv_canada, normalizar_ccee_pld, ErroColetor, CANADA_CSV, CCEE_PACKAGE)
+    parse_series_argentina, executar_coleta, descobrir_recurso_ccee_ano, normalizar_csv_canada, normalizar_ccee_pld, ErroColetor, CANADA_CSV, CCEE_PACKAGE)
 from nivon.ingestao_fontes_reais import gravar_lote, exportar_jsonl, ErroIngestao
 
 T=datetime(2026,10,22,12,0,tzinfo=timezone.utc)
@@ -136,8 +136,10 @@ class DataRealTest(unittest.TestCase):
         meta={"success":True,"result":{"name":"pld_horario","license_id":"cc-by",
             "resources":[{"id":recurso,"format":"CSV","url":uri,"name":"PLD 2026"}]}}
         self.assertEqual(_recurso_ccee(_parse_ckan(json.dumps(meta).encode())[1],recurso),uri)
+        meta["result"]["resources"][0]["name"]="pld_horario_2026"
         fake=Fake({CCEE_PACKAGE:Resp(CCEE_PACKAGE,json.dumps(meta).encode(),"application/json"),
                    uri:Resp(uri,b"MES_REFERENCIA;SUBMERCADO;PERIODO_COMERCIALIZACAO;DIA;HORA;PLD_HORA\n202610;NORDESTE;529;23;0;57.31\n","text/csv")})
+        self.assertEqual(descobrir_recurso_ccee_ano(2026,cliente=fake),recurso)
         out=executar_coleta(fonte="BR_CCEE_PLD",banco=self.db,
                     raw_dir=self.raw,executar=True,recurso_id=recurso,
                     cliente=fake,instante=T)
