@@ -116,6 +116,9 @@ class TestColetor(unittest.TestCase):
             self.assertEqual(r["por_mes"]["2026-02"], "123.0")
             self.assertEqual(r["por_uf_origem"]["MT"], "123.0")
             self.assertEqual(r["registros"], 1)
+            self.assertEqual(r["por_ano"]["2026"]["tu"], "123.0")
+            self.assertEqual(r["por_ano"]["2026"]["tu_origem_mt"], "123.0")
+            self.assertEqual(r["por_ano"]["2026"]["tu_soja"], "123.0")
 
     def test_nao_marca_arquivo_corrompido_como_recebido(self):
         class Corrompido(Transporte):
