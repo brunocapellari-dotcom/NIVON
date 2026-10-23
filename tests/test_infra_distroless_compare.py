@@ -54,6 +54,8 @@ class TestDistrolessExperiment(unittest.TestCase):
         self.assertIn("infra_distroless_compare",w)
         self.assertIn("--network=none",w)
         self.assertIn("NIVON_DISTROLESS_EXPERIMENT_ONLY",w)
+        self.assertIn("NIVON_DISTROLESS_IMPORT_BLOCKED",w)
+        self.assertIn("83b9b50586253821cf63ffcec87d3d94265a093ad30da232039af962dd8f4edf",(root/"infra/docker/Dockerfile.analytics-distroless").read_text())
         for bad in ("docker push", "continue-on-error: true","secrets."):
             self.assertNotIn(bad,w)
 

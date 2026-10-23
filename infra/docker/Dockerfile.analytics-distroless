@@ -1,7 +1,7 @@
 # NIVON EXPERIMENTAL: distroless Debian 13 + CPython 3.11 from image already locked.
 # The base is injected as a VERIFIED, immutable multiarchitecture digest by CI.
 # Never release without full CVE/ABI audit. No network, shell or package manager in runtime.
-ARG DISTROLESS_BASE
+ARG DISTROLESS_BASE=gcr.io/distroless/cc-debian13@sha256:83b9b50586253821cf63ffcec87d3d94265a093ad30da232039af962dd8f4edf
 FROM nivon-analytics:ci AS analytics-source
 FROM ${DISTROLESS_BASE} AS analytics-distroless-candidate
 ENV PYTHONDONTWRITEBYTECODE=1 \

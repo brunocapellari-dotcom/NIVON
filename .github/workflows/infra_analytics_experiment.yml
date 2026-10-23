@@ -205,14 +205,10 @@ jobs:
           ARCH: ${{ matrix.arch }}
         run: |
           set -euo pipefail
-          # Esta TAG é usada APENAS para descobrir o digest de laboratório.
-          # Um tag mutável não é usado diretamente no FROM nem como prova de release.
-          docker pull --platform "$PLATFORM" gcr.io/distroless/cc-debian13:nonroot
-          distroless_digest="$(docker image inspect gcr.io/distroless/cc-debian13:nonroot --format '{{index .RepoDigests 0}}')"
-          [[ "$distroless_digest" =~ ^gcr[.]io/distroless/cc-debian13@sha256:[0-9a-f]{64}$ ]] || {
-            echo "::error::Digest distroless inválido"; exit 1;
-          }
-          docker_arch="$(docker image inspect gcr.io/distroless/cc-debian13:nonroot --format '{{.Architecture}}')"
+          # Digest multiarch real resolvido no ensaio anterior, agora congelado.
+          distroless_digest="gcr.io/distroless/cc-debian13@sha256:83b9b50586253821cf63ffcec87d3d94265a093ad30da232039af962dd8f4edf"
+          docker pull --platform "$PLATFORM" "$distroless_digest"
+          docker_arch="$(docker image inspect "$distroless_digest" --format '{{.Architecture}}')"
           test "$docker_arch" = "$ARCH"
           echo "DISTROLESS_DIGEST_REF=$distroless_digest" >> "$GITHUB_ENV"
           docker build --network=none --platform "$PLATFORM" \
@@ -220,6 +216,24 @@ jobs:
             -f infra/docker/Dockerfile.analytics-distroless \
             -t nivon-analytics:distroless . > /dev/null
           test "$(docker image inspect nivon-analytics:distroless --format '{{.Architecture}}')" = "$ARCH"
+          # Diagnóstico sem rede ou segredos: mostra SOMENTE nome do módulo,
+          # classe do erro e SONAME, nunca traceback ou payload de terceiros.
+          docker run --rm --platform "$PLATFORM" --network none --read-only \
+            --cap-drop ALL --security-opt no-new-privileges:true --user 65532:65532 \
+            --pids-limit 96 --memory 1024m --cpus 1.0 \
+            -e OPENBLAS_NUM_THREADS=1 -e OMP_NUM_THREADS=1 \
+            --entrypoint /usr/local/bin/python nivon-analytics:distroless \
+            -c '
+import importlib,re,sys
+for name in ("ssl","sqlite3","bz2","lzma","ctypes","numpy","pandas","scipy","numba","statsforecast","agrobr"):
+    try:
+        importlib.import_module(name)
+    except Exception as exc:
+        soname=re.findall(r"[A-Za-z0-9_.+-]+[.]so(?:[.][0-9]+)*",str(exc))
+        print("NIVON_DISTROLESS_IMPORT_BLOCKED",name,type(exc).__name__,soname[-1] if soname else "undetermined")
+        sys.exit(4)
+print("NIVON_DISTROLESS_IMPORTS_OK")
+'
           docker run --rm --platform "$PLATFORM" --network none --read-only \
             --cap-drop ALL --security-opt no-new-privileges:true --user 65532:65532 \
             --pids-limit 96 --memory 1024m --cpus 1.0 \
