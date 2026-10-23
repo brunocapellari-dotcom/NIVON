@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.request import Request, HTTPRedirectHandler, build_opener
 
-from .conab_armazens import LAYOUT_CONAB_SICARM_HEADER_V1, agregar_capacidade_local
+from .conab_armazens import LAYOUT_CONAB_SICARM_HEADER_V1, agregar_capacidade_local, ErroArmazens
 from .qualidade_conab_armazens import verificar_consistencia_armazens
 from .ingestao_fontes_reais import gravar_lote
 from .persistencia_google_cloud import _enviar_unico, executar_envio
@@ -70,8 +70,11 @@ def preparar_agregado(raw: bytes, *, coletado_em: str) -> dict:
     with tempfile.TemporaryDirectory(prefix="nivon-conab-") as pasta:
         file=Path(pasta)/"sicarm.txt"
         file.write_bytes(raw)
-        a=agregar_capacidade_local(file,LAYOUT_CONAB_SICARM_HEADER_V1,
-                                   coletado_em=utc)
+        try:
+            a=agregar_capacidade_local(file,LAYOUT_CONAB_SICARM_HEADER_V1,
+                                       coletado_em=utc)
+        except ErroArmazens as exc:
+            raise ErroConabCloud("CONAB layout oficial divergente") from exc
     q=verificar_consistencia_armazens(a)
     if q["estado"]!="CONSISTENCIA_INTERNA_OK_SEM_HOMOLOGACAO" or q["liberado_para_publicacao"]:
         raise ErroConabCloud("CONAB sem validação interna conservadora")
