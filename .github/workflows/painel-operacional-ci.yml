@@ -4,9 +4,16 @@ on:
     paths:
       - 'src/nivon/painel_operacional.py'
       - 'src/nivon/ponte_painel_fontes.py'
+      - 'src/nivon/maritimo_painel_avancado.py'
+      - 'src/nivon/maritime/**'
+      - 'src/nivon/conciliacao_corredores_ferrovia.py'
       - 'scripts/rodar_painel_operacional.py'
       - 'tests/test_painel_operacional.py'
       - 'tests/test_ponte_painel_fontes.py'
+      - 'tests/test_integracao_logistica_maritima_avancada.py'
+      - 'tests/test_maritime_agrolog_maritime_queue.py'
+      - 'tests/test_maritime_agrolog_maritime_queue_forecast.py'
+      - 'tests/test_maritime_agrolog_maritime_source_health.py'
       - 'tests/fixtures/painel_operacional_sintetico.json'
       - '.github/workflows/painel-operacional-ci.yml'
   workflow_dispatch:
@@ -27,9 +34,14 @@ jobs:
         run: python -m pip install -e .
       - name: Compilacao e testes do contrato
         run: |
-          python -m compileall -q src/nivon/painel_operacional.py src/nivon/ponte_painel_fontes.py scripts/rodar_painel_operacional.py
+          python -m compileall -q src/nivon/painel_operacional.py src/nivon/ponte_painel_fontes.py src/nivon/maritimo_painel_avancado.py src/nivon/maritime scripts/rodar_painel_operacional.py
           python -m unittest discover -s tests -p 'test_painel_operacional.py' -v
           python -m unittest discover -s tests -p 'test_ponte_painel_fontes.py' -v
+          python -m unittest discover -s tests -p 'test_integracao_logistica_maritima_avancada.py' -v
+          python -m unittest discover -s tests -p 'test_maritime_agrolog_maritime_queue.py' -v
+          python -m unittest discover -s tests -p 'test_maritime_agrolog_maritime_queue_forecast.py' -v
+          python -m unittest discover -s tests -p 'test_maritime_agrolog_maritime_source_health.py' -v
+          python -m unittest discover -s tests -p 'test_conciliacao_corredores_ferrovia.py' -v
       - name: Ensaio integrado em um comando sem nuvem
         shell: bash
         run: |
