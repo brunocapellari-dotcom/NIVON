@@ -74,6 +74,32 @@ jobs:
         run: |
           python -m nivon.coleta_antt --inicio 2025 --fim 2025 \
             --destino "$RUNNER_TEMP/antt-2025" --live --usar-url-verificada-contingencia
+      - name: Diagnosticar somente cabecalho publico quando o parser falhar
+        if: failure()
+        run: |
+          python - <<'PY'
+          import hashlib
+          from nivon.coleta_antt import catalogo_antt, _http
+          from nivon.transporte_multimodal import CAMPOS_ANTT
+          try:
+              url = catalogo_antt(habilitar_rede=True)[2025]["url"]
+              raw = _http(url)
+              header = raw.splitlines()[0][:500]
+              for codec in ("utf-8-sig", "cp1252"):
+                  try:
+                      decoded = header.decode(codec)
+                      break
+                  except UnicodeDecodeError:
+                      continue
+              else:
+                  decoded = "CODIFICACAO_DESCONHECIDA"
+              print("DIAGNOSTICO_FONTE_ANTT_2025_SHA256",hashlib.sha256(raw).hexdigest())
+              print("DIAGNOSTICO_FONTE_ANTT_2025_BYTES",len(raw))
+              print("DIAGNOSTICO_FONTE_ANTT_2025_CABECALHO",repr(decoded))
+              print("ESQUEMA_ESPERADO",repr(CAMPOS_ANTT))
+          except Exception as e:
+              print("DIAGNOSTICO_FALHOU",type(e).__name__,str(e)[:140])
+          PY
       - name: Validar SHA, volume, tabela existente e ausencia de objeto
         run: |
           python -m nivon.antt_gcp_preparar_piloto \
