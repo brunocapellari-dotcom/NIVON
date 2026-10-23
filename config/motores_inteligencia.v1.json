@@ -139,7 +139,9 @@
         "nivon.pecuaria_sidra_vintages:historico_sidra_asof",
         "nivon.pecuaria_sidra_pacote:normalizar_captura_arquivada_sidra",
         "nivon.pecuaria_sidra_lote:executar_lote_sidra_offline",
-        "nivon.pecuaria_sidra_reconciliacao:diagnosticar_cobertura_abate"
+        "nivon.pecuaria_sidra_reconciliacao:diagnosticar_cobertura_abate",
+        "nivon.pecuaria_sidra_revisoes:auditar_edicoes_quarentena",
+        "nivon.pecuaria_sidra_backfill:consultar_backfill_quarentena"
       ],
       "data_dependencies": [
         "IBGE_PPM",
@@ -593,7 +595,9 @@
         "nivon.pecuaria_sidra_vintages:historico_sidra_asof",
         "nivon.pecuaria_sidra_pacote:normalizar_captura_arquivada_sidra",
         "nivon.pecuaria_sidra_lote:executar_lote_sidra_offline",
-        "nivon.pecuaria_sidra_reconciliacao:diagnosticar_cobertura_abate"
+        "nivon.pecuaria_sidra_reconciliacao:diagnosticar_cobertura_abate",
+        "nivon.pecuaria_sidra_revisoes:auditar_edicoes_quarentena",
+        "nivon.pecuaria_sidra_backfill:consultar_backfill_quarentena"
       ],
       "data_dependencies": [
         "IBGE_ABATE_FRANGO_1094",
@@ -631,7 +635,9 @@
         "nivon.pecuaria_sidra_vintages:historico_sidra_asof",
         "nivon.pecuaria_sidra_pacote:normalizar_captura_arquivada_sidra",
         "nivon.pecuaria_sidra_lote:executar_lote_sidra_offline",
-        "nivon.pecuaria_sidra_reconciliacao:diagnosticar_cobertura_abate"
+        "nivon.pecuaria_sidra_reconciliacao:diagnosticar_cobertura_abate",
+        "nivon.pecuaria_sidra_revisoes:auditar_edicoes_quarentena",
+        "nivon.pecuaria_sidra_backfill:consultar_backfill_quarentena"
       ],
       "data_dependencies": [
         "IBGE_ABATE_SUINO_1093",
