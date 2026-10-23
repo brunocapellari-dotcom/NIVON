@@ -22,6 +22,11 @@ def consolidar_staging(diretorio: str | Path, anos: list[int]) -> dict:
     mercadorias = defaultdict(lambda: Decimal(0))
     por_uf_o = defaultdict(lambda: Decimal(0))
     ferrovias = defaultdict(lambda: Decimal(0))
+    anuais = defaultdict(lambda: Decimal(0))
+    mt_anuais = defaultdict(lambda: Decimal(0))
+    soja_anuais = defaultdict(lambda: Decimal(0))
+    milho_anuais = defaultdict(lambda: Decimal(0))
+    farelo_anuais = defaultdict(lambda: Decimal(0))
     n = 0
     detalhes = {}
     for ano in anos:
@@ -50,6 +55,16 @@ def consolidar_staging(diretorio: str | Path, anos: list[int]) -> dict:
                 mercadorias[x["mercadoria"]] += tu
                 por_uf_o[x["uf_origem"]] += tu
                 ferrovias[x["ferrovia"]] += tu
+                anuais[ano] += tu
+                if x["uf_origem"] == "MT":
+                    mt_anuais[ano] += tu
+                merc = x["mercadoria"].casefold()
+                if "farelo" in merc and "soja" in merc:
+                    farelo_anuais[ano] += tu
+                elif "soja" in merc:
+                    soja_anuais[ano] += tu
+                elif "milho" in merc:
+                    milho_anuais[ano] += tu
                 linhas_ano += 1
                 n += 1
             except (ValueError, KeyError, TypeError, InvalidOperation) as exc:
@@ -65,6 +80,12 @@ def consolidar_staging(diretorio: str | Path, anos: list[int]) -> dict:
             "registros": n, "toneladas_uteis": str(total["tu"]),
             "tku_raw": str(total["tku_raw"]),
             "por_mes": {k: str(v) for k, v in sorted(meses.items())},
+            "por_ano": {str(k): {"tu": str(anuais[k]),
+                              "tu_origem_mt": str(mt_anuais[k]),
+                              "tu_soja": str(soja_anuais[k]),
+                              "tu_milho": str(milho_anuais[k]),
+                              "tu_farelo_soja": str(farelo_anuais[k])}
+                        for k in sorted(anuais)},
             "por_mercadoria": {k: str(v) for k, v in sorted(mercadorias.items(), key=lambda kv: -kv[1])},
             "por_ferrovia": {k: str(v) for k, v in sorted(ferrovias.items(), key=lambda kv: -kv[1])},
             "por_uf_origem": {k: str(v) for k, v in sorted(por_uf_o.items(), key=lambda kv: -kv[1])},
