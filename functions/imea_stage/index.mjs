@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 const POOL=new Pool({connectionString:process.env.DATABASE_URL,max:2,connectionTimeoutMillis:10000});
 const KEYS=createRemoteJWKSet(new URL('https://token.actions.githubusercontent.com/.well-known/jwks'));
 const REPO='brunocapellari-dotcom/NIVON';
-const SOURCE_IDS={soja:'4',milho:'3'};
+const SOURCE_IDS={soja:'4',milho:'3',algodao:'1',bovinocultura:'2'};
 const sha=s=>createHash('sha256').update(s).digest('hex');
 function check(r){
  if(!r||r.source!=='IMEA'||!SOURCE_IDS[r.chain]||!['PRECO','FRETE'].includes(r.indicator_kind)||
