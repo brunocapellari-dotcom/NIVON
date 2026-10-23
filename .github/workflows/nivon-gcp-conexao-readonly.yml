@@ -4,6 +4,17 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/nivon-gcp-conexao-readonly.yml'
+      - 'scripts/inventario_gcp_readonly.py'
+      - 'tests/test_inventario_gcp_readonly.py'
+      - 'scripts/bootstrap_nivon_gcp.sh'
+      - 'database/bigquery/nivon_neon_legado_schema.sql'
+  pull_request:
+    paths:
+      - '.github/workflows/nivon-gcp-conexao-readonly.yml'
+      - 'scripts/inventario_gcp_readonly.py'
+      - 'tests/test_inventario_gcp_readonly.py'
+      - 'scripts/bootstrap_nivon_gcp.sh'
+      - 'database/bigquery/nivon_neon_legado_schema.sql'
   workflow_dispatch:
 
 permissions:
@@ -14,7 +25,23 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  validar-inventario-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Validar inventario e scripts sem cloud
+        run: |
+          python -m unittest discover -s tests -p 'test_inventario_gcp_readonly.py' -v
+          bash -n scripts/bootstrap_nivon_gcp.sh
+
   autenticar-e-verificar-metadados:
+    needs: validar-inventario-offline
     if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     timeout-minutes: 8
@@ -102,3 +129,11 @@ jobs:
         run: |
           python -m nivon.antt_gcp_preflight \
             --projeto "$NIVON_PROJETO" --dataset "$NIVON_DATASET"
+      - name: Inventario read-only de destinos e esquemas sem SQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/inventario_gcp_readonly.py \
+            --projeto "$NIVON_PROJETO" \
+            --dataset-raw "$NIVON_DATASET" \
+            --bucket "$NIVON_BUCKET"
