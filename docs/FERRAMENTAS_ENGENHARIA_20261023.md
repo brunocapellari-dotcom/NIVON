@@ -1,12 +1,12 @@
 # NIVON — engenharia contínua, qualidade e autonomia de tokens
 
-Data de avaliação: 23/10/2026. Inventário de oportunidades, não declaração de instalação. O \`doctor\` detecta apenas comandos presentes no host; a CI do GitHub valida o código Python, não comprova ferramentas instaladas no computador.
+Data de avaliação: 23/10/2026. Inventário de oportunidades, não declaração de instalação. O `doctor` detecta apenas comandos presentes no host; a CI do GitHub valida o código Python, não comprova ferramentas instaladas no computador.
 
 ## Operação diurna x noturna
 
-- Dia: pesquisar, programar, testar, executar \`doctor\`, \`plan\`, \`night-status\`, \`python -m nivon.qualidade\`, analisar CI e preparar PRs.
+- Dia: pesquisar, programar, testar, executar `doctor`, `plan`, `night-status`, `python -m nivon.qualidade`, analisar CI e preparar PRs.
 - Noite: execução autônoma **somente de 20:00 até 06:00 no fuso America/Cuiaba**, com margem de 15 minutos para testes e integração, além do timeout da tarefa.
-- O script \`scripts/nivon-autonomo.sh\`, a skill \`/nivon-autonomo\` e o supervisor verificam horário **antes de movimentar fila ou iniciar agentes**. \`status\` e \`stop\` funcionam a qualquer hora.
+- O script `scripts/nivon-autonomo.sh`, a skill `/nivon-autonomo` e o supervisor verificam horário **antes de movimentar fila ou iniciar agentes**. `status` e `stop` funcionam a qualquer hora.
 - O horário noturno **não agenda nada**: PC/servidor precisa estar ligado e o operador precisa iniciar o processo; não usar GitHub Actions como substituto para CLIs autenticadas.
 
 ## Ferramentas para código melhor e menos tokens
@@ -29,23 +29,23 @@ Data de avaliação: 23/10/2026. Inventário de oportunidades, não declaração
 
 ## O que já foi incorporado na branch
 
-1. \`nivon.janela_noturna\`: valida fuso, janela e margem para testes; nega execução diurna.
-2. \`nivon.qualidade\`: análise AST offline de \`src/\` e \`tests/\`, sem executar os arquivos, mais Ruff opcional selecionando regras críticas \`E9,F821,F822,F823\`.
-3. \`nivon.ferramentas doctor\`: informa disponibilidade de ferramentas, sem instalar nem configurar credenciais.
-4. \`nivon.contexto_codigo\`: indexação Python por hash e dicas de símbolos limitadas; não injeta arquivos inteiros no prompt.
-5. \`nivon.planejador\`: tarefas priorizadas com dependências, gates de licença/risco e ítems de qualidade Ruff; não toma texto de issue como instrução livre.
-6. \`nivon.autonomia\`: duas worktrees em paralelo e integração serializada na branch local \`autonomo/integracao\`, com regressão offline em contêiner sem rede.
+1. `nivon.janela_noturna`: valida fuso, janela e margem para testes; nega execução diurna.
+2. `nivon.qualidade`: análise AST offline de `src/` e `tests/`, sem executar os arquivos, mais Ruff opcional selecionando regras críticas `E9,F821,F822,F823`.
+3. `nivon.ferramentas doctor`: informa disponibilidade de ferramentas, sem instalar nem configurar credenciais.
+4. `nivon.contexto_codigo`: indexação Python por hash e dicas de símbolos limitadas; não injeta arquivos inteiros no prompt.
+5. `nivon.planejador`: tarefas priorizadas com dependências, gates de licença/risco e ítems de qualidade Ruff; não toma texto de issue como instrução livre.
+6. `nivon.autonomia`: duas worktrees em paralelo e integração serializada na branch local `autonomo/integracao`, com regressão offline em contêiner sem rede.
 
 ## Como avaliar, sem ativar agentes
 
-\`\`\`bash
+```bash
 bash scripts/nivon-autonomo.sh night-status
 bash scripts/nivon-autonomo.sh doctor
 bash scripts/nivon-autonomo.sh plan
 PYTHONPATH=src python -m nivon.qualidade --json
-\`\`\`
+```
 
-Quando, **à noite** e após validação no host, o operador poderá usar \`bash scripts/nivon-autonomo.sh\` ou \`/nivon-autonomo\`. Não há scheduler ativo e não foram iniciadas CLIs autenticadas nesta etapa.
+Quando, **à noite** e após validação no host, o operador poderá usar `bash scripts/nivon-autonomo.sh` ou `/nivon-autonomo`. Não há scheduler ativo e não foram iniciadas CLIs autenticadas nesta etapa.
 
 ## Aumentar capacidade sem prometer tokens infinitos
 
