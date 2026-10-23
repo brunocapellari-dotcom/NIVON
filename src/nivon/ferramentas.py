@@ -58,7 +58,7 @@ def doctor(image=None):
             elif "api key" in output or "api_key" in output:
                 authentication["codex"] = "external_billing_blocked"
 
-    image = image or os.environ.get("NIVON_PYTHON_IMAGE", "python:3.11-slim")
+    image = image or os.environ.get("NIVON_PYTHON_IMAGE", "nivon-agentes:test-py311")
     image_ok = image in APPROVED_IMAGES
     local_image = False
     if found["docker"] and image_ok:
