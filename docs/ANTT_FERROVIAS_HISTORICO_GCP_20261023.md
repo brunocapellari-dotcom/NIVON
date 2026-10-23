@@ -38,15 +38,21 @@
 Ativar somente com projeto, dataset e bucket existentes e apos verificar permissoes/custos.
 No GitHub, em variaveis de repositorio (nao inserir chaves JSON), configurar:
 
-- `NIVON_GCP_PROJECT_ID`: ID real do projeto.
+- `NIVON_BQ_PROJECT`: ID real do projeto.
 - `NIVON_BQ_DATASET`: dataset existente.
 - `NIVON_GCS_BUCKET`: bucket existente.
-- `NIVON_GCP_WIF_PROVIDER`: provider de Workload Identity Federation existente e restrito ao repositorio **e branch main**.
+- `NIVON_GCP_PROVIDER`: provider de Workload Identity Federation existente e restrito ao repositorio **e branch main**.
 - `NIVON_GCP_SERVICE_ACCOUNT`: service account dedicada, com acesso minimo ao bucket, dataset e criacao de jobs.
+- `NIVON_ZERO_COST_BQ_APPROVED=true`: autorização explícita do núcleo para ativar cargas BQ.
+- `NIVON_RAW_ARCHIVE_APPROVED=true`: autorização explícita para arquivar arquivos brutos GCS.
+- `NIVON_BQ_BOOTSTRAP_TABLE_APPROVED=true`: habilitação separada, somente durante bootstrap, para criar a tabela ANTT caso ausente. Na ausência, a carga falha fechada.
+
 
 A conta deve ter permissoes para criar objetos **sem sobrescrever**, verificar metadados, criar tabela/view no dataset e executar BigQuery jobs. A WIF deve validar `repository` e `ref=refs/heads/main` para evitar OIDC de PRs ou forks. Nunca usar chave JSON de longa duracao como substituto por conveniencia. Ver https://docs.cloud.google.com/iam/docs/workload-identity-federation-with-deployment-pipelines.
 
-**Estado atual:** repositorio verificado e os testes de contrato passaram. Credenciais GCP nao estao acessiveis por esta conversa, nao foram verificadas e nenhuma carga foi confirmada em GCS ou BigQuery. PR continua sem merge. O workflow de GCP executou somente preflight no branch sem IAM.
+**Estado verificado em 23/10/2026:** PR #140 integrada à main, seguida da correção GCP #164 e monitor ANTAQ #167. Testes de regressão em main concluídos com sucesso em https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39951827638 . O preflight de https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39951123248 retornou `GCP_PENDENTE_CONFIGURACAO_OU_APROVACAO`; job de persistência foi pulado. Isso não demonstra ausência de qualquer recurso GCP no projeto do usuário, apenas a falta de configuração/autorização completa no GitHub. Nenhuma escrita ou consulta BigQuery desta integração foi comprovada.
+
+O fluxo GCP usa agora as mesmas variáveis aprovadas do núcleo comum, sem um segundo conjunto de credenciais. O agendamento de terças e sextas só publica na `main` se ambos os gates de autorização forem `true`, e a criação da tabela depende de um terceiro gate temporário. A rotina secundária ANTAQ verifica fontes diariamente, sem gravar seus dados no banco: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39951827877 .
 
 ## ANTAQ — bloqueio externo
 
