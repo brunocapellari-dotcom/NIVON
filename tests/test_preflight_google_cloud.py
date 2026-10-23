@@ -112,6 +112,28 @@ class TestPreflightCloud(unittest.TestCase):
         with self.assertRaises(ErroPreflightCloud):
             self.executar(bigquery=BigQueryFake(table=Table(schema=duplicate)))
 
+    def test_cli_bloqueia_coleta_antes_de_abrir_http(self):
+        from unittest.mock import patch
+        from scripts import coletar_google_cloud, coletar_sgs_google_cloud
+        env={
+            "NIVON_GCP_OPERACIONAL_APROVADO":"true",
+            "NIVON_GCP_DIREITOS_DADOS":"true",
+            "NIVON_ZERO_COST_BQ_APPROVED":"true",
+            "NIVON_FONTE_BCB_SGS_TAXA_SELIC_DIARIA_ATIVA":"true",
+            "NIVON_GCP_RIGHTS_EVIDENCE":"Coleta pública verificada",
+            "NIVON_BQ_PROJECT":"nivon-data",
+            "NIVON_BQ_DATASET":"nivon_stage",
+            "NIVON_GCS_BUCKET":"nivon-raw-privado",
+        }
+        with patch.dict("os.environ",env,clear=True):
+            with patch("nivon.preflight_google_cloud.verificar_recursos",
+                       side_effect=ErroPreflightCloud("IAM bloqueado")) as cloud:
+                with self.assertRaisesRegex(ErroPreflightCloud,"IAM bloqueado"):
+                    coletar_google_cloud.main(["--fonte","BCB_PTAX","--executar"])
+                with self.assertRaisesRegex(ErroPreflightCloud,"IAM bloqueado"):
+                    coletar_sgs_google_cloud.main(["--executar"])
+                self.assertEqual(cloud.call_count,2)
+
     def test_validacao_identificadores_e_clientes(self):
         for cfg in [
             dict(CFG,bucket="../outro"),
