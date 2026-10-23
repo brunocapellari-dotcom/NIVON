@@ -123,7 +123,7 @@ class TestRetificacoesConabLab(unittest.TestCase):
         ref=self.events[0]
         raw=(self.rawdir/self.base["arquivo"]).read_bytes()
         no_change={**ref,"sha256":hashlib.sha256(raw).hexdigest(),"tamanho":len(raw)}
-        (self.rawdir[ref["arquivo"]).write_bytes(raw)
+        (self.rawdir/ref["arquivo"]).write_bytes(raw)
         with self.assertRaises(ErroRetificacaoConab):
             self.apply([no_change])
 
