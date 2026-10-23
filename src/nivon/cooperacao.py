@@ -49,6 +49,11 @@ def connect(path):
         claimed_at TEXT, lease_until TEXT, finished_at TEXT,
         tokens_in INTEGER, tokens_out INTEGER,
         note TEXT NOT NULL DEFAULT '', attempts INTEGER NOT NULL DEFAULT 0)""")
+    # Migração compatível: preserva tarefas e checkpoints de versões anteriores.
+    columns = {x["name"] for x in db.execute("PRAGMA table_info(tasks)")}
+    for name in ("acceptance", "source"):
+        if name not in columns:
+            db.execute(f"ALTER TABLE tasks ADD COLUMN {name} TEXT NOT NULL DEFAULT ''")
     db.commit()
     return db
 
@@ -85,12 +90,19 @@ def seed(db, manifest):
             raise ValueError("Preferência/prioridade inválida")
         if not isinstance(row["title"], str) or not row["title"].strip():
             raise ValueError("Título ausente")
+        acceptance = row.get("acceptance", "")
+        source = row.get("source", "")
+        if not isinstance(acceptance, str) or len(acceptance) > 700:
+            raise ValueError("Critério de aceite inválido")
+        if not isinstance(source, str) or len(source) > 120:
+            raise ValueError("Fonte inválida")
         prepared.append((task_id, row["title"], json.dumps(clean_scope(row["scope"])),
-                         priority, preference))
+                         priority, preference, acceptance, source))
     with db:
         previous = db.total_changes
         db.executemany("""INSERT OR IGNORE INTO tasks
-            (id,title,scope,priority,preferred_agent) VALUES (?,?,?,?,?)""", prepared)
+            (id,title,scope,priority,preferred_agent,acceptance,source)
+            VALUES (?,?,?,?,?,?,?)""", prepared)
         return db.total_changes - previous
 
 
