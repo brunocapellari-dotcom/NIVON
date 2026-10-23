@@ -281,6 +281,60 @@ def carregar_stage(*, arquivo, fonte_dataset, project_id, dataset_id,
             "bytes_estimados":estimativa,"limite_bytes_cobraveis":max_bytes_billed}
 
 
+
+def reprocessar_stage_quarentena(*, sha256, fonte_dataset, bucket,
+                                project_id, dataset_id, executar=False,
+                                storage_client=None, bq_client=None):
+    """Restaura o stage imutável do GCS e refaz MERGE sem HTTP nem SQLite.
+
+    O id SHA do objeto GCS é obrigatório; só se aceita estágio validado
+    anteriormente e QUARANTINED com referência temporal explicitamente nula.
+    A identidade de WIF, as aprovações e a tabela devem existir externamente.
+    """
+    from .arquivo_raw_gcs import _validar_bucket
+    from tempfile import TemporaryDirectory
+    _destino(project_id,dataset_id)
+    _validar_bucket(bucket)
+    if fonte_dataset not in FONTES:
+        raise ErroStagingAgro("fonte não autorizada para replay")
+    if not isinstance(sha256,str) or not SHA.fullmatch(sha256):
+        raise ErroStagingAgro("SHA do stage inválido")
+    name=f"nivon/staging-agro-quarentena/v1/{sha256}.jsonl"
+    if executar is not True:
+        return {"estado":"PLANO_REPLAY_SEM_REDE",
+                "fonte_dataset":fonte_dataset,"sha256":sha256,
+                "gcs_objeto":name,"executado":False}
+    if storage_client is None:
+        from google.cloud import storage
+        storage_client=storage.Client(project=project_id)
+    remoto=storage_client.bucket(bucket)
+    blob=remoto.get_blob(name)
+    if (blob is None or type(blob.size) is not int
+            or not 0 < blob.size <= MAX_BYTES
+            or not isinstance(blob.metadata,dict)
+            or blob.metadata.get("sha256")!=sha256):
+        raise ErroStagingAgro("arquivo staging GCS ausente ou metadados inválidos")
+    with TemporaryDirectory(prefix="nivon-agro-replay-") as tmp:
+        destino=Path(tmp)/"stage.jsonl"
+        blob.download_to_filename(str(destino))
+        if destino.stat().st_size!=blob.size or _sha(destino)!=sha256:
+            raise ErroStagingAgro("stage GCS adulterado; replay recusado")
+        plano=verificar_jsonl(arquivo=destino,fonte_dataset=fonte_dataset,
+                            projeto=project_id,dataset=dataset_id)
+        if plano["sha256"]!=sha256:
+            raise ErroStagingAgro("conteúdo diverge do SHA informado")
+        resultado=carregar_stage(
+            arquivo=destino,fonte_dataset=fonte_dataset,
+            project_id=project_id,dataset_id=dataset_id,
+            executar=True,client=bq_client)
+        if resultado.get("bigquery_executado") is not True:
+            raise ErroStagingAgro("BigQuery não confirmou MERGE")
+        return {"estado":"REPLAY_STAGING_CONCLUIDO",
+                "fonte_dataset":fonte_dataset,"sha256":sha256,
+                "linhas":resultado["linhas"],"executado":True,
+                "bigquery_executado":True,"sqlite_necessario":False,
+                "http_fonte_consultado":False,"promocao_canonica":False}
+
 def verificar_ou_criar_tabela(*, projeto, dataset, verificar=False,
                              aplicar=False, aprovado=False, client=None):
     """Bootstrap restrito a uma tabela no dataset existente, nunca ao projeto."""
