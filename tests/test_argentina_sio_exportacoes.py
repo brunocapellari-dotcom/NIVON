@@ -53,6 +53,28 @@ class TestExportSIO(TestCase):
         self.assertEqual(db.execute('SELECT length(id_hmac) FROM sio_operacoes LIMIT 1').fetchone()[0],64)
         db.close()
 
+    def test_concertacao_antiga_e_declaracao_no_intervalo(self):
+        arquivo=('ID;Concertacion;Declaracion;Producto;Cantidad\n'
+                 'op1;15/01/2025;21/10/2026;Soja;100,00\n').encode()
+        colunas={'id_operacao':'ID','data_concertacao':'Concertacion',
+                 'data_declaracao':'Declaracion','produto':'Producto','toneladas':'Cantidad'}
+        with sqlite3.connect(':memory:') as db:
+            kw=dict(db=db,arquivo=arquivo,janela=WINDOW,colunas=colunas,
+                    chave_hmac=b'K'*32,coletado_em=HORA,
+                    direitos_confirmados=True,layout_validado=True)
+            r=importar_exportacao_sio(**kw)
+            self.assertTrue(r['janela_declaracao_verificada_no_csv'])
+            datas=db.execute('select data_concertacao,data_declaracao from sio_operacoes').fetchone()
+            self.assertEqual(datas,('2025-01-15','2026-10-21'))
+            with self.assertRaises(ErroSIO):
+                importar_exportacao_sio(**{**kw,'arquivo':arquivo.replace(b'21/10/2026',b'01/01/2025')})
+
+    def test_sem_coluna_declaracao_nao_certifica_janela(self):
+        with sqlite3.connect(':memory:') as db:
+            r=importar_exportacao_sio(db=db,arquivo=CSV,janela=WINDOW,colunas=MAPPING,
+               chave_hmac=b'K'*32,coletado_em=HORA,direitos_confirmados=True,layout_validado=True)
+            self.assertFalse(r['janela_declaracao_verificada_no_csv'])
+
     def test_gate_sem_direitos_ou_layout(self):
         db=sqlite3.connect(':memory:')
         kw=dict(db=db,arquivo=CSV,janela=WINDOW,colunas=MAPPING,chave_hmac=b'A'*32,coletado_em=HORA)
@@ -76,8 +98,7 @@ class TestExportSIO(TestCase):
         db=sqlite3.connect(':memory:')
         kw=dict(db=db,arquivo=CSV,janela=WINDOW,colunas=MAPPING,chave_hmac=b'A'*32,
                 coletado_em=HORA,direitos_confirmados=True,layout_validado=True)
-        for payload in [CSV.replace(b'21/10/2026',b'01/01/2025'),
-                        CSV+CSV.split(b'\n')[1]+b'\n',
+        for payload in [CSV+CSV.split(b'\n')[1]+b'\n',
                         b'<html>bad response</html>',
                         CSV.replace(b'1.234,50',b'1234.50')]:
             with self.subTest(payload=payload[:25]):
