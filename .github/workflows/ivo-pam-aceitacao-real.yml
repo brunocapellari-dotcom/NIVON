@@ -1,9 +1,8 @@
 name: Aceitacao real do console IVO PAM sem nova coleta
 
+# Aceitacao ja demonstrada no PR #7 (GitHub Actions 40001515540).
+# Nao repetir download do mesmo artifact a cada commit do PR.
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/ivo-pam-aceitacao-real.yml'
   workflow_dispatch:
 
 permissions:
