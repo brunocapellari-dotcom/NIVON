@@ -47,12 +47,21 @@ def _url(value: str, *, anexo: bool) -> str:
                 or "//" in p.path or ".." in p.path or "%" in p.path):
             raise ErroProvenienciaConab("URL CONAB fora do contrato")
         end = p.path.removeprefix(_PREFIX).strip("/").split("/")
-        if len(end) != 2 or not end[0].startswith("acompanhamento-das-lavouras-"):
-            raise ErroProvenienciaConab("não é uma página de edição semanal da CONAB")
-        if anexo and not end[1].startswith("plantio-e-colheita-"):
-            raise ErroProvenienciaConab("URL de anexo não identifica plantio e colheita")
-        if not anexo and not end[1].startswith("acompanhamento-das-lavouras-"):
-            raise ErroProvenienciaConab("URL de publicação semanal inesperada")
+        if not end[0].startswith("acompanhamento-das-lavouras-"):
+            raise ErroProvenienciaConab("não é uma edição semanal da CONAB")
+        if anexo:
+            # O Plone do gov.br apresenta primeiro um /view (HTML); os
+            # bytes devem vir do endereço explícito @@download/file.
+            if (len(end) not in (2,4) or
+                    not end[1].startswith("plantio-e-colheita-") or
+                    (len(end)==4 and end[2:] != ["@@download","file"])):
+                raise ErroProvenienciaConab("anexo não é recurso XLSX oficial")
+        else:
+            # A edição REAL tem um segmento. Edições antigas podem ter
+            # um espelho com segundo segmento da própria semana.
+            if not (len(end)==1 or
+                    (len(end)==2 and end[1]==end[0])):
+                raise ErroProvenienciaConab("URL de publicação semanal inesperada")
     except ValueError as exc:
         if isinstance(exc, ErroProvenienciaConab):
             raise
@@ -74,7 +83,9 @@ def validar_publicacao_conab(reg: dict) -> dict:
     annex = _url(reg["url_anexo"],anexo=True)
     ap=urlsplit(page).path.strip("/").split("/")
     aa=urlsplit(annex).path.strip("/").split("/")
-    if ap[-2] != aa[-2]:
+    page_prefix=urlsplit(page).path.removeprefix(_PREFIX).strip("/").split("/")[0]
+    annex_prefix=urlsplit(annex).path.removeprefix(_PREFIX).strip("/").split("/")[0]
+    if page_prefix != annex_prefix:
         raise ErroProvenienciaConab("link de anexo aponta para outra edição")
     published = _dia(reg["publicacao_data"])
     page_start,page_end = _dia(reg["pagina_inicio"]),_dia(reg["pagina_fim"])
