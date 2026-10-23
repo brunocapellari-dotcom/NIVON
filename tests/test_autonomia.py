@@ -17,6 +17,7 @@ class TestAutonomia(unittest.TestCase):
         self.assertIn("--restricted", claude)
         self.assertIn("--safe-mode", claude)
         self.assertNotIn("--bare", claude)
+        self.assertIn("--safe-mode", claude)
         self.assertIn("--no-session-persistence", claude)
         self.assertIn("--tools", claude)
         self.assertIn("--permission-prompts", claude)
@@ -144,6 +145,9 @@ class TestAutonomia(unittest.TestCase):
         self.assertIn("after", note)
         self.assertTrue(any("cherry-pick" in cmd for cmd in commands))
         self.assertTrue(any("--network" in cmd and "none" in cmd for cmd in commands))
+        self.assertTrue(any(any("dst=/workspace,readonly" in element for element in cmd)
+                            for cmd in commands))
+        self.assertTrue(any("PYTHONDONTWRITEBYTECODE=1" in cmd for cmd in commands))
         self.assertFalse(any("--force" in cmd or "--push" in cmd for cmd in commands))
 
     def test_conflicting_cherry_pick_preserves_feature_branch(self):
