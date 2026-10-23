@@ -43,3 +43,5 @@ Diagnóstico sem usar tokens: `bash scripts/nivon-autonomo.sh doctor`. Planejame
 A execução autônoma acumula entregas em `autonomo/integracao` **local**, com cherry-pick serializado e nova rodada de testes offline. Não publica nem mescla na `main` automaticamente.
 
 **Compatibilidade Claude OAuth:** o executor usa `--restricted --safe-mode`, não `--bare`, que não recupera a sessão de assinatura. O `doctor` rejeita credenciais de API potencialmente faturadas. Testes no Docker mantêm o checkout montado somente para leitura. Para testes Parquet adicionados na `main`, o ambiente isolado precisa da dependência PyArrow previamente instalada.
+
+**Dueto de desenvolvimento:** `bash scripts/nivon-autonomo.sh dueto` (estado local em JSON) e `bash scripts/nivon-autonomo.sh painel` (HTML privado, sem rede). [Procedimento de operação](docs/DUETO_DESENVOLVIMENTO_NIVON.md).
