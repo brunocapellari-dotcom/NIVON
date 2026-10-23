@@ -66,6 +66,10 @@ def abrir_db_lab(path: str | Path):
         db.execute("PRAGMA journal_mode=DELETE")
         db.execute("PRAGMA synchronous=FULL")
         _stage(db)
+        db.execute("""CREATE TABLE IF NOT EXISTS lab_integridade_observacoes (
+           sha TEXT PRIMARY KEY REFERENCES lab_referencia_conab(sha),
+           sha256_conteudo TEXT NOT NULL
+        )""")
         db.execute("""CREATE TABLE IF NOT EXISTS lab_eventos_incrementais (
            seq INTEGER PRIMARY KEY,
            executado_utc TEXT NOT NULL,
@@ -94,9 +98,32 @@ def _manifest_sha(catalogo: dict):
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
+def _sha_observacoes(pairs):
+    dig=hashlib.sha256()
+    for key,value in sorted(pairs):
+        dig.update(json.dumps([key,value],ensure_ascii=False,
+                   separators=(",",":"),allow_nan=False).encode("utf-8"))
+        dig.update(b"\n")
+    return dig.hexdigest()
+
+
+def _auditar_historico_local(db: sqlite3.Connection):
+    for sha,qtde in db.execute("SELECT sha,qtde FROM lab_referencia_conab"):
+        pairs=list(db.execute("""SELECT chave,observacao_json
+             FROM lab_observacao_conab WHERE sha=? ORDER BY chave""",(sha,)))
+        anchor=db.execute("""SELECT sha256_conteudo FROM lab_integridade_observacoes
+            WHERE sha=?""",(sha,)).fetchone()
+        if not anchor or len(pairs)!=qtde or _sha_observacoes(pairs)!=anchor[0]:
+            raise ErroIncrementalConab(
+                "LAB histórico adulterado/incompleto ou sem digest semântico: "+sha[:12])
+    if db.execute("PRAGMA foreign_key_check").fetchall():
+        raise ErroIncrementalConab("lab histórico falhou integridade referencial")
+
+
 def planejar_delta(db: sqlite3.Connection, catalogo: dict):
     entries=validar_catalogo_vintages(catalogo)["edicoes"]
     _stage(db)
+    _auditar_historico_local(db)
     olds=list(db.execute("""SELECT sha,referencia_id,competencia,origem,
                           parser_sha,qtde FROM lab_referencia_conab"""))
     by_id={r[1]:r for r in olds}
@@ -147,6 +174,7 @@ def _fingerprint(db):
     for q in (
         "SELECT sha,referencia_id,competencia,origem,parser_sha,qtde FROM lab_referencia_conab ORDER BY sha",
         "SELECT sha,chave,observacao_json FROM lab_observacao_conab ORDER BY sha,chave",
+        "SELECT sha,sha256_conteudo FROM lab_integridade_observacoes ORDER BY sha",
         "SELECT seq,executado_utc,manifesto_sha256,referencias_novas,observacoes_novas,observacoes_apos,origem FROM lab_eventos_incrementais ORDER BY seq",
     ):
         for row in db.execute(q):
@@ -195,6 +223,30 @@ def backup_restore_lab(db: sqlite3.Connection, pasta_backup: Path):
     }
 
 
+def verificar_backup_atual_lab(db: sqlite3.Connection, pasta_backup: Path) -> bool:
+    """Em no-op, detecta backup ausente, danificado ou fora de sincronia."""
+    folder=_dir_private(pasta_backup)
+    seq=db.execute("SELECT COALESCE(MAX(seq),0) FROM lab_eventos_incrementais").fetchone()[0]
+    if seq==0:
+        return True
+    file=folder/f"conab-lab-seq-{seq:04d}.sqlite"
+    if not file.is_file() or file.is_symlink():
+        raise ErroIncrementalConab("backup da última execução ausente ou symlink")
+    if os.name=="posix" and stat.S_IMODE(file.stat().st_mode)&0o077:
+        raise ErroIncrementalConab("backup da última execução com acesso público")
+    try:
+        with closing(sqlite3.connect("file:"+str(file)+"?mode=ro",uri=True)) as shadow:
+            if shadow.execute("PRAGMA integrity_check").fetchone()[0]!="ok":
+                raise ErroIncrementalConab("backup atual corrompido")
+            if shadow.execute("PRAGMA foreign_key_check").fetchall():
+                raise ErroIncrementalConab("backup atual viola chaves estrangeiras")
+            if _fingerprint(shadow)!=_fingerprint(db):
+                raise ErroIncrementalConab("backup atual diverge do histórico persistido")
+    except sqlite3.Error as exc:
+        raise ErroIncrementalConab("não foi possível abrir backup atual para conferência") from exc
+    return True
+
+
 def sincronizar_incremental_lab(catalogo: dict, db_path: str | Path, pasta_backup: str | Path,
                                *, arquivos_locais: str | Path | None = None,
                                obter_do_github: bool = False,
@@ -215,8 +267,10 @@ def sincronizar_incremental_lab(catalogo: dict, db_path: str | Path, pasta_backu
                                        json.dumps(plan["conflitos"],ensure_ascii=False))
         before=_read_only_counts(db)
         if not plan["novas"]:
+            verificar_backup_atual_lab(db,backupdir)
             return {
                 "estado":"SEM_DELTA_NENHUM_DOWNLOAD_OU_GRAVACAO",
+                "integridade_historico_e_backup_conferida":True,
                 "edicoes_novas":0,"edicoes_inalteradas":len(plan["inalteradas"]),
                 "edicoes_historicas_preservadas":before[0],
                 "observacoes_no_lab":before[1],
@@ -269,6 +323,9 @@ def sincronizar_incremental_lab(catalogo: dict, db_path: str | Path, pasta_backu
                                     entry["origem_repositorio"],parsed["parser_codigo_sha256"],len(pairs)))
                         db.executemany("INSERT INTO lab_observacao_conab VALUES (?,?,?)",
                             [(entry["sha256"],k,v) for k,v in pairs])
+                        db.execute("INSERT INTO lab_integridade_observacoes VALUES (?,?)",
+                                   (entry["sha256"],_sha_observacoes(pairs)))
+                    _auditar_historico_local(db)
                     after=_read_only_counts(db)
                     if after!=(before[0]+len(batch),before[1]+sum(len(x[2]) for x in batch)):
                         raise ErroIncrementalConab("contagens da transação não conferem")
