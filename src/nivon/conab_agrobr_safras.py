@@ -31,6 +31,7 @@ _COLS = frozenset(("fonte", "produto", "safra", "uf",
 _METRICS = (("area_plantada", "mil_ha"), ("produtividade", "kg_ha"),
             ("producao", "mil_t"))
 _STATUS = "AGROBR_CONAB_NORMALIZADO_SEM_RAW_OU_VINTAGE"
+_PRODUTOS = frozenset(("soja","milho","milho_1","milho_2","milho_3"))
 
 
 def _safra(valor):
@@ -135,7 +136,7 @@ def normalizar_safras_agrobr(
 ) -> dict:
     """Rejeita fallback, edições implícitas, nulidades mal convertidas e mix de UFs."""
     _safra(safra)
-    if produto not in ("soja","milho"):
+    if produto not in _PRODUTOS:
         raise ErroAgroBRSafras("somente soja e milho nesta integração")
     if type(levantamento) is not int or not 1<=levantamento<=12:
         raise ErroAgroBRSafras("levantamento explícito 1..12")
@@ -219,7 +220,7 @@ async def consultar_safras_agrobr(
 ) -> dict:
     """Conector fonte direta, SEM fallback para LSPA ou série histórica."""
     _safra(safra)
-    if produto not in ("soja","milho") or type(levantamento) is not int or not 1<=levantamento<=12:
+    if produto not in _PRODUTOS or type(levantamento) is not int or not 1<=levantamento<=12:
         raise ErroAgroBRSafras("cultura/levantamento inválidos")
     if uf is not None and uf not in _UFS:
         raise ErroAgroBRSafras("UF inválida")
@@ -248,11 +249,16 @@ async def consultar_safras_agrobr(
 
 
 def consultar_lote_agrobr(*, safra: str, levantamento: int, uf: str = "MT",
+                         produtos: tuple[str,...] = ("soja","milho"),
                          direitos_confirmados: bool = False, apis=None) -> dict:
-    """SOJA e MILHO serialmente, sem fallback cruzado ou gravação automática."""
+    """SOJA e MILHO, com sub-safras opcionais, sem fallback ou soma indevida."""
+    if (not isinstance(produtos,tuple) or not 1<=len(produtos)<=5 or
+            len(produtos)!=len(set(produtos)) or
+            any(p not in _PRODUTOS for p in produtos)):
+        raise ErroAgroBRSafras("lista de culturas inválida")
     async def go():
         items=[]
-        for p in ("soja","milho"):
+        for p in produtos:
             items.append(await consultar_safras_agrobr(
                 produto=p,safra=safra,levantamento=levantamento,uf=uf,
                 direitos_confirmados=direitos_confirmados,api=apis,
@@ -322,6 +328,7 @@ def main(argv=None) -> int:
     p.add_argument("--safra",required=True)
     p.add_argument("--levantamento",type=int,required=True)
     p.add_argument("--uf",default="MT")
+    p.add_argument("--produtos",default="soja,milho",help="lista explícita, ex.: soja,milho,milho_1,milho_2,milho_3")
     p.add_argument("--permitir-consulta",action="store_true")
     p.add_argument("--out",required=True)
     p.add_argument("--sqlite")
@@ -334,6 +341,7 @@ def main(argv=None) -> int:
             raise ErroAgroBRSafras("saída já existe ou é insegura")
         result=consultar_lote_agrobr(
             safra=a.safra,levantamento=a.levantamento,uf=a.uf,
+            produtos=tuple(a.produtos.split(",")),
             direitos_confirmados=a.permitir_consulta,
         )
         if a.sqlite:
