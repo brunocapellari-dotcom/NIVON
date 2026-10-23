@@ -57,7 +57,10 @@ def main(argv: list[str] | None = None) -> int:
                     variavel=args.variavel,ano_inicio=args.inicio,
                     ano_fim=args.fim,corte_coleta=corte)
                 radar=(alertas_revisoes_pam(
-                    db,desde_exclusivo=inicio_alertas,ate_inclusivo=corte)
+                    db,desde_exclusivo=inicio_alertas,ate_inclusivo=corte,
+                    municipio_ibge=args.municipio,categoria_c81=args.produto,
+                    variavel=args.variavel,ano_inicio=args.inicio,
+                    ano_fim=args.fim)
                     if inicio_alertas is not None else None)
             resultado={
                 **resultado,
