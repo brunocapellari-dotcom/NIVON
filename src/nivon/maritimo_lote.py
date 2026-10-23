@@ -85,7 +85,12 @@ def executar_lote(fontes, db: HistoricoMaritimo, *, coletado_em=None,
             if not isinstance(html, str) or len(html.encode("utf-8")) > 2_000_000:
                 raise ValueError("html invalido ou acima do limite")
             if on_snapshot is not None:
-                on_snapshot(fonte,html,at)
+                try:
+                    on_snapshot(fonte,html,at)
+                except Exception:
+                    # Nao persistir registro derivado se a evidencia nao
+                    # foi arquivada no GCS. Nao divulgar excecao externa.
+                    raise OSError("falha de arquivamento da evidencia") from None
             result = processar_html(fonte, html, db, coletado_em=at)
             flags = result["qualidade"].get("flags", ())
             record.update({
