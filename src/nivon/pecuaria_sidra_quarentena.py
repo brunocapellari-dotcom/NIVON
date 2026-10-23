@@ -211,6 +211,34 @@ def _preparar(*, periodo, transporte, timeout):
     return capturas
 
 
+def _salvar_capturas_atomicas(*, banco, capturas):
+    """Uma transacao ACID para N capturas pre-validadas."""
+    ids = []
+    with closing(_conectar(banco,criar=True)) as cx:
+        with cx:
+            cx.execute("BEGIN IMMEDIATE")
+            for c in capturas:
+                key = (c["especie"],c["tabela_sidra"],c["periodo"],
+                       c["territorio"],c["sha256_bruto"])
+                anterior = cx.execute(
+                    """SELECT id,bruto FROM valores_pecuaria_quarentena
+                       WHERE especie=? AND tabela_sidra=? AND periodo=?
+                       AND territorio=? AND sha256_bruto=?""",key).fetchone()
+                if anterior:
+                    if anterior[1] != c["bruto"]:
+                        raise DadoInvalido("conflito com mesmo hash de captura")
+                    ids.append(anterior[0])
+                    continue
+                cx.execute("""INSERT INTO valores_pecuaria_quarentena(
+                    especie,tabela_sidra,periodo,territorio,url_declarada,
+                    primeira_coleta_em,sha256_bruto,bruto,estado)
+                    VALUES (?,?,?,?,?,?,?,?,?)""",
+                    (*key[:4],c["url_declarada"],c["primeira_coleta_em"],
+                     key[4],c["bruto"],"QUARENTENA_VALUES_SEM_METADATA_V3"))
+                ids.append(cx.execute("SELECT last_insert_rowid()").fetchone()[0])
+    return ids
+
+
 def executar_captura_values_quarentena(
     *, periodo="202602", rede=False, direitos_confirmados=False,
     banco=None, gravar=False, timeout=8, transporte=None,
@@ -242,30 +270,7 @@ def executar_captura_values_quarentena(
             snapshots=snaps,especie=especie,tabela_sidra=TABELAS_SIDRA[especie],
             corte_asof=datetime.now(timezone.utc).isoformat())
         diagnosticos.append(rel)
-    ids = []
-    if gravar:
-        with closing(_conectar(banco,criar=True)) as cx:
-            with cx:
-                cx.execute("BEGIN IMMEDIATE")
-                for c in capturas:
-                    key = (c["especie"],c["tabela_sidra"],c["periodo"],
-                           c["territorio"],c["sha256_bruto"])
-                    anterior = cx.execute(
-                        """SELECT id,bruto FROM valores_pecuaria_quarentena
-                           WHERE especie=? AND tabela_sidra=? AND periodo=?
-                           AND territorio=? AND sha256_bruto=?""",key).fetchone()
-                    if anterior:
-                        if anterior[1] != c["bruto"]:
-                            raise DadoInvalido("conflito com mesmo hash de captura")
-                        ids.append(anterior[0])
-                        continue
-                    cx.execute("""INSERT INTO valores_pecuaria_quarentena(
-                        especie,tabela_sidra,periodo,territorio,url_declarada,
-                        primeira_coleta_em,sha256_bruto,bruto,estado)
-                        VALUES (?,?,?,?,?,?,?,?,?)""",
-                        (*key[:4],c["url_declarada"],c["primeira_coleta_em"],
-                         key[4],c["bruto"],"QUARENTENA_VALUES_SEM_METADATA_V3"))
-                    ids.append(cx.execute("SELECT last_insert_rowid()").fetchone()[0])
+    ids = _salvar_capturas_atomicas(banco=banco,capturas=capturas) if gravar else []
     return {"status":"QUARENTENA_VALUES_SEM_METADATA_V3",
             "periodo":periodo,"gravado":gravar,"ids":ids,
             "consulta_externa_executada":bool(rede and transporte is None),
