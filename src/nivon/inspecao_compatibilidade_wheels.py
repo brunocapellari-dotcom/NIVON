@@ -50,14 +50,14 @@ def _python_range(spec: str | None) -> str:
     return "MATCHES"
 
 
-def _platform(token: str) -> str:
+def _platform(token: str, glibc_minor: int = 17) -> str:
     if token == "any":
         return "MATCHES"
     if token in {"manylinux1_x86_64", "manylinux2010_x86_64",
                  "manylinux2014_x86_64"}:
         return "MATCHES"
     m = _MANYLINUX.fullmatch(token)
-    if m and int(m.group(1)) <= 17:
+    if m and int(m.group(1)) <= glibc_minor:
         return "MATCHES"
     if token == "linux_x86_64":
         # Não há garantia de glibc/ABI para a distro-alvo.
@@ -65,7 +65,8 @@ def _platform(token: str) -> str:
     return "EXCLUDES"
 
 
-def _filename_tag(filename: str, name: str, version: str) -> str:
+def _filename_tag(filename: str, name: str, version: str,
+                  glibc_minor: int = 17) -> str:
     """Avalia o subconjunto de tags pip/PEP 425 sem assumir tags desconhecidas.
 
     Compactação por '.' é testada em produto cartesiano com limites estritos.
@@ -99,7 +100,7 @@ def _filename_tag(filename: str, name: str, version: str) -> str:
             if not py_match:
                 continue
             for plat in plats:
-                result = _platform(plat)
+                result = _platform(plat, glibc_minor)
                 if result == "MATCHES":
                     return "MATCHES_SUPPORTED_TAG_SUBSET"
                 if result == "INDETERMINATE":
@@ -137,8 +138,11 @@ def _dependencies(declared: list[str] | None) -> dict:
     }
 
 
-def analisar(releases: dict) -> dict:
+def analisar(releases: dict, *, glibc_minor: int = 17) -> dict:
     """Consome somente JSON do radar de nove candidatos e não contata a rede."""
+    if type(glibc_minor) is not int or not 17 <= glibc_minor <= 40:
+        raise BloqueioRadar("baseline glibc Linux fora da política")
+    target = f"CPython 3.11 / Linux x86_64 / glibc >=2.{glibc_minor}"
     if (not isinstance(releases, dict) or
             releases.get("schema") != "NIVON_ALL_EXTRAS_PYPI_OSV_CANDIDATES_V1"
             or releases.get("direct_distributions_covered") != 9):
@@ -178,7 +182,7 @@ def analisar(releases: dict) -> dict:
                 continue
             if item.get("type") != "bdist_wheel":
                 continue
-            tag = _filename_tag(item["filename"], name, version)
+            tag = _filename_tag(item["filename"], name, version, glibc_minor)
             file_py = _python_range(item.get("requires_python") or release.get("requires_python"))
             row = {"filename": item["filename"], "wheel_tag_status": tag,
                    "requires_python_status": file_py}
@@ -198,7 +202,7 @@ def analisar(releases: dict) -> dict:
             status = "NO_MATCHING_WHEEL_IN_SUPPORTED_SUBSET"
         result.append({
             "name": name, "candidate_version": version,
-            "target": TARGET,
+            "target": target,
             "requires_python_declared": release.get("requires_python"),
             "release_requires_python_status": requires,
             "wheel_metadata_status": status,
@@ -225,7 +229,8 @@ def analisar(releases: dict) -> dict:
     return {
         "schema": "NIVON_PYPI_TARGET_WHEEL_TAGS_AUDIT_V1",
         "source_observation_utc": releases.get("generated_utc"),
-        "target": TARGET,
+        "target": target,
+        "target_glibc_minor": glibc_minor,
         "packages_examined": len(result),
         "package_status_counts": counts,
         "packages": result,
@@ -247,12 +252,14 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Auditar tags de wheel e Requires-Python declarados sem download")
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--glibc-minor", type=int, choices=range(17, 41), default=17,
+                        help="Baseline manylinux glibc 2.X (17..40), nao e prova do runner real")
     args = parser.parse_args()
     try:
         if args.input.is_symlink() or not args.input.is_file() or args.input.stat().st_size > 10_000_000:
             raise BloqueioRadar("arquivo de metadados ausente ou inseguro")
         data = json.loads(args.input.read_text(encoding="utf-8"))
-        report = analisar(data)
+        report = analisar(data, glibc_minor=args.glibc_minor)
         if args.output.exists() or args.output.is_symlink() or not args.output.parent.is_dir():
             raise BloqueioRadar("destino existente ou inseguro")
         args.output.write_text(json.dumps(report, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
@@ -261,6 +268,7 @@ def main() -> int:
         parser.exit(2, f"COMPATIBILIDADE_BLOQUEADA: {exc}\n")
     print(json.dumps({
         "packages_examined": report["packages_examined"],
+        "target": report["target"],
         "status_counts": report["package_status_counts"],
         "declared_unresolved_dependency_names": report["declared_unresolved_dependency_names"][:35],
         "approved_for_install": False,
