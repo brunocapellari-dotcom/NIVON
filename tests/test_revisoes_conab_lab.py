@@ -14,7 +14,7 @@ from nivon.fixture_retificacao_conab import alterar_xlsx_apenas_teste
 from nivon.sincronizacao_incremental_conab_lab import (
     sincronizar_incremental_lab, abrir_db_lab, ErroIncrementalConab,
 )
-from nivon.revisoes_conab_lab import aplicar_retificacoes_lab, ErroRetificacaoConab
+from nivon.revisoes_conab_lab import aplicar_retificacoes_lab, ErroRetificacaoConab, consultar_versao_asof_lab
 
 BASE=Path(__file__).parent/"fixtures"/"conab_progresso_agrobr_20260207.xlsx.b64"
 
@@ -155,6 +155,40 @@ class TestRetificacoesConabLab(unittest.TestCase):
             self.apply(self.events)
         with sqlite3.connect(str(self.dbfile)) as db:
             self.assertEqual(db.execute("SELECT COUNT(*) FROM lab_retificacoes_conab").fetchone()[0],0)
+
+    def test_consulta_asof_impede_revisao_futura(self):
+        self.apply(self.events)
+        with sqlite3.connect(str(self.dbfile)) as db:
+            before=consultar_versao_asof_lab(db,self.cat,id_base=self.base["id"],
+                corte_coleta="2026-02-01T00:00:00Z")
+            base=consultar_versao_asof_lab(db,self.cat,id_base=self.base["id"],
+                corte_coleta="2026-10-23T14:59:59Z")
+            r1=consultar_versao_asof_lab(db,self.cat,id_base=self.base["id"],
+                corte_coleta="2026-10-23T15:01:30Z")
+            r2=consultar_versao_asof_lab(db,self.cat,id_base=self.base["id"],
+                corte_coleta="2026-10-23T15:02:30Z")
+        self.assertIsNone(before["sha_versao"])
+        self.assertEqual(base["sha_versao"],self.base["sha256"])
+        self.assertEqual(r1["sha_versao"],self.events[0]["sha256"])
+        self.assertEqual(r2["sha_versao"],self.events[1]["sha256"])
+        self.assertEqual([base["revisao"],r1["revisao"],r2["revisao"]],[0,1,2])
+        self.assertEqual([base["observacoes"],r1["observacoes"],r2["observacoes"]],[11,11,11])
+        self.assertFalse(r2["publicacao_permitida"])
+        self.assertNotEqual(base["sha_semantico"],r1["sha_semantico"])
+
+    def test_revisao_nao_pode_antecipar_a_anterior(self):
+        self.apply(self.events[:1])
+        invalid={**self.events[1],"coletado_em":"2026-10-23T15:00:30Z"}
+        with self.assertRaisesRegex(ErroRetificacaoConab,"antes ou junto"):
+            self.apply([invalid])
+        with sqlite3.connect(str(self.dbfile)) as db:
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM lab_retificacoes_conab").fetchone()[0],1)
+
+    def test_revisao_duplicada_na_mesma_data_bloqueia(self):
+        self.apply(self.events[:1])
+        invalid={**self.events[1],"coletado_em":self.events[0]["coletado_em"]}
+        with self.assertRaisesRegex(ErroRetificacaoConab,"antes ou junto"):
+            self.apply([invalid])
 
     def test_revisao_nunca_publicada(self):
         out=self.apply(self.events)
