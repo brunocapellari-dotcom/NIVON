@@ -29,7 +29,9 @@ def main():
                 resultado.append({"fonte":fonte,"http":"SUCESSO",
                    "estado":dado.get("estado"),
                    "observacoes":dado.get("novas_observacoes"),
-                   "licenca":dado.get("licenca")})
+                   "licenca":dado.get("licenca"),
+                   "recurso_csv_amostra":dado.get("csv_resources",[])[:4],
+                   "notas":dado.get("notas")})
             except Exception as exc:
                 resultado.append({"fonte":fonte,"http":"FALHOU",
                   "tipo_erro":type(exc).__name__,"mensagem":str(exc)[:150]})
