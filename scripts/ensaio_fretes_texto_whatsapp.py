@@ -15,6 +15,7 @@ from nivon.fretes_atestacoes import hash_evento, serializacao_canonica
 from nivon.fretes_texto_original_whatsapp import (
     adaptar_divulgacao_whatsapp_original,
     executar_lote_whatsapp_rotulado_offline,
+    triar_lote_whatsapp_em_quarentena_offline,
 )
 
 META_SECRET = "meta-fixture-secret-do-not-use-outside-tests-0123456789"
@@ -208,12 +209,28 @@ def executar() -> dict:
         assinatura_bloqueada=True
     else:
         raise AssertionError("assinatura Meta adulterada foi aceita")
+    # Fluxo não-atômico de quarentena offline: mantém evidências válidas
+    # em série individual e segrega mensagem livre/republicação original.
+    triagem=triar_lote_whatsapp_em_quarentena_offline(
+        pacotes+[invalidos[-1],deepcopy(pacotes[0])],
+        as_of=ASOF,chave_hmac=PSEUDO_KEY,
+        chaves_atestacao=ATTEST_KEYS,
+        emissores_atestacao=EMISSORES,app_secret=META_SECRET,
+    )
+    assert triagem["anuncios_rotulados_admitidos"]==28
+    assert triagem["mensagens_em_quarentena"]==2
+    assert triagem["n_series_individuais"]==4
+    assert triagem["n_paineis_comerciais"]==2
+    assert not triagem["publicavel"]
+    assert "FAZENDA TESTE" not in str(triagem["quarentena"])
     return {
         "status":"WHATSAPP_ORIGINAL_ROTULADO_E2E_OFFLINE",
         "webhooks_sinteticos_assinados":28,
         "campos_literais_por_mensagem":11,
         "series_economicas":4, "paineis_r01":2,
         "amostras_adversariais_rejeitadas":len(resultados)+int(assinatura_bloqueada),
+        "triagem_quarentena_admitidas":triagem["anuncios_rotulados_admitidos"],
+        "triagem_quarentena_rejeitadas":triagem["mensagens_em_quarentena"],
         "texto_livre_sem_rotulos_homologado":False,
         "webhook_real_recebido":False,"publicavel":False,
         "cloud_upload_realizado":False,

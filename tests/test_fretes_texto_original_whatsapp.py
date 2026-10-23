@@ -7,7 +7,10 @@ from scripts.ensaio_fretes_texto_whatsapp import (
     ATTEST_KEYS, EMISSORES, ASOF, _adapter
 )
 from nivon.fretes_adapter_whatsapp import ErroAdaptadorFrete
-from nivon.fretes_texto_original_whatsapp import executar_lote_whatsapp_rotulado_offline
+from nivon.fretes_texto_original_whatsapp import (
+    executar_lote_whatsapp_rotulado_offline,
+    triar_lote_whatsapp_em_quarentena_offline,
+)
 
 
 class TestTextoWhatsAppOriginal(unittest.TestCase):
@@ -154,6 +157,45 @@ class TestTextoWhatsAppOriginal(unittest.TestCase):
                 chaves_atestacao=ATTEST_KEYS,
                 emissores_atestacao=EMISSORES,app_secret=META_SECRET,
             )
+
+    def test_quarentena_preserva_somente_validos_sem_pii(self):
+        batch=[gerar_fixture(regime,d,p)
+               for regime in ("PJ","PF") for d in range(7) for p in (1,2)]
+        suspeito=reemitir_pacote(
+            batch[0],alterar_texto=lambda _: "Frete milho Sorriso 155. Negociar."
+        )
+        result=triar_lote_whatsapp_em_quarentena_offline(
+            batch+[suspeito,deepcopy(batch[1])],
+            as_of=ASOF,chave_hmac=PSEUDO_KEY,
+            chaves_atestacao=ATTEST_KEYS,
+            emissores_atestacao=EMISSORES,app_secret=META_SECRET,
+        )
+        self.assertEqual(result["mensagens_recebidas_no_lote"],30)
+        self.assertEqual(result["anuncios_rotulados_admitidos"],28)
+        self.assertEqual(result["mensagens_em_quarentena"],2)
+        self.assertEqual(result["n_series_individuais"],4)
+        self.assertEqual(result["n_paineis_comerciais"],2)
+        self.assertFalse(result["publicavel"])
+        self.assertFalse(result["raw_quarentena_persistido"])
+        self.assertFalse(result["rejeitados_incluidos_nas_tendencias"])
+        self.assertNotIn("FAZENDA TESTE",str(result["quarentena"]))
+        self.assertNotIn("Sorriso-MT",str(result["quarentena"]))
+
+    def test_quarentena_total_nao_cria_paineis_ou_frete_sintetico(self):
+        pacote=gerar_fixture("PJ",0,1)
+        pacote=reemitir_pacote(
+            pacote,alterar_texto=lambda t:"Mensagem livre sem preço verificável."
+        )
+        out=triar_lote_whatsapp_em_quarentena_offline(
+            [pacote],as_of=ASOF,chave_hmac=PSEUDO_KEY,
+            chaves_atestacao=ATTEST_KEYS,
+            emissores_atestacao=EMISSORES,app_secret=META_SECRET,
+        )
+        self.assertEqual(out["anuncios_rotulados_admitidos"],0)
+        self.assertEqual(out["mensagens_em_quarentena"],1)
+        self.assertEqual(out["n_series_individuais"],0)
+        self.assertEqual(out["n_paineis_comerciais"],0)
+        self.assertFalse(out["publicavel"])
 
     def test_asof_nunca_usa_coleta_posterior(self):
         p=gerar_fixture("PJ",0,1)
