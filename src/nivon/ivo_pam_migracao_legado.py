@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import sqlite3
 import stat
@@ -99,21 +100,27 @@ def converter_zip_piloto_pam(*, arquivo_legado: str | Path,
                 state = auditar_operacao_pam(db=db, raiz=root)
             if state.get("integridade_local_aprovada") is not True:
                 raise ErroMigracaoPAM("dados legados nao passam auditoria completa")
-            backup = criar_backup_pam(
-                banco=root / "operacional.sqlite", cofre=root,
-                arquivo_zip=dest,
-            )
-            # Restauro independente, antes de considerar conversao
-            # bem-sucedida e disponibilizar novo archive.
-            checked = restaurar_backup_pam(
-                arquivo_zip=dest, destino=root / "restaurado",
-            )
-            if (checked["capturas"] != state["capturas_registradas"] or
-                    checked["vintages"] != state["vintages_verificadas"]):
-                raise ErroMigracaoPAM("arquivo convertido difere da origem")
+            # Construir e reauditar o arquivo em staging isolado.
+            # SOMENTE após o restauro integral criar o destino pelo link
+            # atômico sem sobrescrita (previne corrida com outro processo).
+            with tempfile.TemporaryDirectory(
+                prefix=".nivon_pam_convertido_", dir=dest.parent
+            ) as local:
+                candidate = Path(local) / "canonico.zip"
+                criar_backup_pam(
+                    banco=root / "operacional.sqlite", cofre=root,
+                    arquivo_zip=candidate,
+                )
+                checked = restaurar_backup_pam(
+                    arquivo_zip=candidate, destino=root / "restaurado",
+                )
+                if (checked["capturas"] != state["capturas_registradas"] or
+                        checked["vintages"] != state["vintages_verificadas"]):
+                    raise ErroMigracaoPAM("arquivo convertido difere da origem")
+                os.link(candidate, dest)
         except (sqlite3.Error, OSError, ErroBackupPAM, ValueError) as exc:
-            if dest.exists():
-                dest.unlink()
+            # Nunca apagar um destino possivelmente criado por terceiro.
+            # Uma falha deixa apenas artefatos efêmeros fora do destino.
             raise ErroMigracaoPAM("falha de auditoria/migracao") from exc
     return {
         "estado": "PAM_LEGADO_CONVERTIDO_CANONICO_NAO_HOMOLOGADO",
