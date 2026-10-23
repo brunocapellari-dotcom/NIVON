@@ -266,3 +266,57 @@ def carregar_stage(*, arquivo, fonte_dataset, project_id, dataset_id,
     return {**plano, "executado":True,"linhas_enviadas":plano["linhas"],
             "estado":"BIGQUERY_STAGING_NAO_CANONICO",
             "bigquery_executado":True,"promocao_canonica":False}
+
+
+def verificar_ou_criar_tabela(*, projeto, dataset, verificar=False,
+                             aplicar=False, aprovado=False, client=None):
+    """Bootstrap restrito a uma tabela no dataset existente, nunca ao projeto."""
+    destino = _destino(projeto, dataset)
+    if aplicar and (verificar is not True or aprovado is not True):
+        raise PermissionError("criação de tabela staging sem aprovação")
+    if verificar is not True:
+        return {"destino":destino,"estado":"PLANO_SEM_REDE",
+                "executado":False,"criou_tabela":False}
+    try:
+        from google.cloud import bigquery
+        from google.api_core.exceptions import NotFound
+    except ImportError as exc:
+        raise RuntimeError("instalar extra nivon[gcp]") from exc
+    cli=client if client is not None else bigquery.Client(project=projeto)
+    ds=cli.get_dataset(f"{projeto}.{dataset}")
+    if str(ds.location or "").lower() != "southamerica-east1":
+        raise ErroStagingAgro("dataset fora da região NIVON")
+    criou=False
+    try:
+        tabela=cli.get_table(destino)
+    except NotFound:
+        if aplicar is not True:
+            return {"destino":destino,"estado":"TABELA_AUSENTE",
+                    "executado":True,"criou_tabela":False}
+        campos=[bigquery.SchemaField(
+            nome,tipo,mode="REQUIRED" if nome in {
+                "dataset_id","snapshot_id","identidade","fingerprint",
+                "origem_url","referencia_tecnica","data_coleta",
+                "natureza","campos","estado"} else "NULLABLE")
+            for nome,tipo in TIPOS.items()]
+        tabela=bigquery.Table(destino,schema=campos)
+        tabela.time_partitioning=bigquery.TimePartitioning(
+            type_=bigquery.TimePartitioningType.DAY,field="data_coleta")
+        tabela.clustering_fields=["dataset_id","identidade","snapshot_id"]
+        tabela.description=(
+            "NIVON staging privado: publicacoes IMEA/CONAB sem data-referencia; "
+            "somente QUARANTINED, sem publicacao analitica canonica")
+        cli.create_table(tabela,exists_ok=False)
+        tabela=cli.get_table(destino)
+        criou=True
+    schema={c.name:c.field_type.upper() for c in tabela.schema}
+    if (any(schema.get(k)!=t for k,t in TIPOS.items())
+            or not getattr(tabela,"time_partitioning",None)
+            or tabela.time_partitioning.field!="data_coleta"
+            or list(getattr(tabela,"clustering_fields",None) or [])
+            != ["dataset_id","identidade","snapshot_id"]):
+        raise ErroStagingAgro("tabela existente nao atende contrato staging")
+    return {"destino":destino,"estado":"SCHEMA_VALIDADO",
+            "executado":True,"criou_tabela":criou,
+            "referencia_temporal_opcional":True,
+            "promocao_canonica":False}
