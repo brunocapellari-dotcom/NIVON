@@ -11,7 +11,7 @@ import re
 import sqlite3
 from html.parser import HTMLParser
 from .editorial_evidencias_pipeline import conciliar_complementos
-from .editorial_preflight import _instante, _url_chave
+from .editorial_preflight import _instante, _url_chave, avaliar_previa_editorial
 from .registry_emissores import emissores_confiaveis
 from .rss_radar import ler_feed_xml
 
@@ -143,7 +143,7 @@ def conciliar_rss_com_pagina_e_atestados(
     con: sqlite3.Connection, *, candidatos: dict, feeds: list[dict],
     snapshots_xml: dict[str, bytes], paginas: dict[str, dict],
     atestados: dict[str, dict], eventos: dict[str, dict],
-    chaves_emissores: dict,
+    chaves_emissores: dict, registrar_hashes: bool = False,
 ) -> dict:
     """Reconciliador fail-closed e sem persistência, para notícias selecionadas.
 
@@ -175,6 +175,7 @@ def conciliar_rss_com_pagina_e_atestados(
     try:
         trusted = emissores_confiaveis(con,chaves_emissores)
         complementos = []
+        rastreios = []
         vistos = set()
         for noticia in candidatos["noticias"]:
             if not isinstance(noticia,dict) or noticia.get("fonte_id") not in fids:
@@ -233,6 +234,17 @@ def conciliar_rss_com_pagina_e_atestados(
                 "evidencia_evento_id":evento["evidencia_evento_id"],
                 "evidencia_publicacao_original_id":provados["PUBLICACAO_ORIGINAL"],
             })
+            # Somente hashes e IDs; RAW HTML/RSS ficam sob custódia do coletor.
+            assinatura_hash = hashlib.sha256(json.dumps([
+                docs[tipo]["assinatura"] for tipo in sorted(PAPEIS)
+            ],separators=(",",":")).encode("utf-8")).hexdigest()
+            rastreios.append((
+                candidatos["sha256_edicao"],
+                hashlib.sha256(_url_chave(url).encode("utf-8")).hexdigest(),
+                noticia["fonte_id"],hash_rss,page["sha256"],data,
+                provados["PUBLICACAO_ORIGINAL"],provados["DIREITOS_PUBLICACAO"],
+                assinatura_hash
+            ))
         conciliado = conciliar_complementos(candidatos,{
             "sha256_edicao":candidatos["sha256_edicao"],
             "noticias":complementos,
@@ -241,9 +253,65 @@ def conciliar_rss_com_pagina_e_atestados(
         })
         for registro in conciliado["noticias"]:
             registro["publicacao_original_verificada"] = True
+        if registrar_hashes is True:
+            con.execute("""CREATE TABLE IF NOT EXISTS nivon_proveniencia_editorial (
+                sha256_edicao TEXT NOT NULL, url_sha256 TEXT NOT NULL,
+                fonte_id TEXT NOT NULL, sha256_feed TEXT NOT NULL,
+                sha256_pagina TEXT NOT NULL, publicado_em TEXT NOT NULL,
+                evidencia_publicacao_id TEXT NOT NULL,
+                evidencia_direitos_id TEXT NOT NULL,
+                atestados_sha256 TEXT NOT NULL,
+                PRIMARY KEY(sha256_edicao,url_sha256))""")
+            for linha in rastreios:
+                existe = con.execute("""SELECT fonte_id,sha256_feed,sha256_pagina,
+                    publicado_em,evidencia_publicacao_id,evidencia_direitos_id,
+                    atestados_sha256 FROM nivon_proveniencia_editorial
+                    WHERE sha256_edicao=? AND url_sha256=?""",linha[:2]).fetchone()
+                if existe and tuple(existe) != tuple(linha[2:]):
+                    raise PermissionError("proveniência persistida não pode ser substituída")
+                if not existe:
+                    con.execute("""INSERT INTO nivon_proveniencia_editorial
+                        (sha256_edicao,url_sha256,fonte_id,sha256_feed,sha256_pagina,
+                         publicado_em,evidencia_publicacao_id,evidencia_direitos_id,
+                         atestados_sha256) VALUES (?,?,?,?,?,?,?,?,?)""",linha)
+            con.commit()
+        else:
+            con.rollback()
         return {"estado":"ORIGEM_VERIFICADA_OFFLINE_SEM_PUBLICACAO",
                 "sha256_edicao":candidatos["sha256_edicao"],
                 "noticias":conciliado["noticias"],"cotacoes":conciliado["cotacoes"],
-                "fretes":conciliado["fretes"],"envio_habilitado":False}
-    finally:
+                "fretes":conciliado["fretes"],"rastreios_gravados":len(rastreios) if registrar_hashes else 0,
+                "envio_habilitado":False}
+    except Exception:
         con.rollback()
+        raise
+
+
+def revisar_edicao_com_custodia_offline(
+    con: sqlite3.Connection, *, edicao: dict, feeds: list[dict],
+    snapshots_xml: dict[str,bytes], paginas: dict[str,dict],
+    atestados: dict[str,dict], eventos: dict[str,dict],
+    chaves_emissores: dict, registrar_hashes: bool = False,
+) -> dict:
+    """Conecta o resultado real do pipeline de coleta ao preflight editorial.
+
+    Sem cotacoes/fretes auditados, o preflight permanece bloqueado mesmo
+    quando a publicação original e os direitos do RSS foram verificados.
+    """
+    if (not isinstance(edicao,dict) or not isinstance(edicao.get("evidencias_editoriais"),dict)
+            or edicao["evidencias_editoriais"].get("sha256_edicao") != edicao.get("sha256")):
+        raise ErroProveniencia("edição não vinculada ao SHA das evidências")
+    provas = conciliar_rss_com_pagina_e_atestados(
+        con,candidatos=edicao["evidencias_editoriais"],feeds=feeds,
+        snapshots_xml=snapshots_xml,paginas=paginas,atestados=atestados,
+        eventos=eventos,chaves_emissores=chaves_emissores,
+        registrar_hashes=registrar_hashes)
+    preflight = avaliar_previa_editorial(
+        edicao={"estado":edicao["estado"],"gerado_em":edicao["gerado_em"],
+                "texto":edicao["texto"],"sha256":edicao["sha256"],"enviado":False},
+        gerado_em=edicao["gerado_em"],noticias=provas["noticias"],
+        cotacoes=provas["cotacoes"],fretes=provas["fretes"])
+    return {"estado":("REVISADO_OFFLINE_SEM_ENVIO" if preflight["apto_revisao"]
+                     else "BLOQUEADO_POR_OUTRAS_EVIDENCIAS"),
+            "sha256_edicao":edicao["sha256"],"evidencias":provas,
+            "preflight":preflight,"envio_habilitado":False}
