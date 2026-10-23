@@ -64,6 +64,8 @@ class TestStageAgro(TestCase):
         self.assertNotIn('id_operacao',path.read_text())
         self.assertNotIn('id_hmac',path.read_text())
         self.assertEqual(sio['classe'],'DECLARADO_NAO_ENTREGUE')
+        self.assertIsNone(sio['data_declaracao'])
+        self.assertIn('SEM_DATA_DECLARACAO',sio['qualidade'])
         self.assertFalse(r['google_cloud_gravado'])
 
     def test_stage_idempotente_mesma_origem(self):
