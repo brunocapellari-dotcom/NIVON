@@ -47,6 +47,20 @@ class TestPainelDueto(unittest.TestCase):
         self.assertEqual(payload["agents"]["claude"]["completed"], 1)
         self.assertIsNone(payload["agents"]["codex"]["tasks_per_100k_tokens"])
 
+    def test_recent_activity_uses_timestamps_not_task_priority(self):
+        payload = {
+            "counts": {"pending": 1, "running": 0, "done": 2, "blocked": 0},
+            "tasks": [
+                {"id": "old", "title": "Older", "status": "done",
+                 "attempts": 1, "finished_at": "2026-10-22T22:00:00Z"},
+                {"id": "new", "title": "Newer", "status": "done",
+                 "attempts": 1, "finished_at": "2026-10-23T03:00:00Z"},
+            ],
+            "attempts": [],
+        }
+        shown = summary(payload, self.night)["last_tasks"]
+        self.assertEqual([r["id"] for r in shown], ["new", "old"])
+
     def test_html_escapes_untrusted_issue_titles_and_has_no_javascript(self):
         seed(self.db, [{
             "id": "untrusted", "title": '<script>alert("hacked")</script> task',
