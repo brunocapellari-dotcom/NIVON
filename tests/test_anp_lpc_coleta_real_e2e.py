@@ -315,6 +315,33 @@ class TestColetaANPLPCE2E(unittest.TestCase):
                 "SELECT semana_fim FROM anp_lpc_staging_edicoes")}
         self.assertEqual(semanas,{"2026-10-03","2026-10-10"})
 
+    def test_indice_novo_mesmas_tres_planilhas_preserva_evidencias_sem_duplicar(self):
+        primeiro=self.run_lote()
+        self.assertEqual(primeiro["edicoes_novas"],3)
+        self.assertEqual(primeiro["indices_associados"],3)
+        self.assertEqual(self.db.execute(
+            "SELECT COUNT(*) FROM anp_lpc_staging_indices").fetchone()[0],3)
+        self.html += b"\n<!-- Atualizacao de links sem trocar XLSX -->"
+        segundo=self.run_lote()
+        self.assertEqual(segundo["status"],"LOTE_COMPLETO")
+        self.assertEqual(segundo["edicoes_novas"],0)
+        self.assertEqual(segundo["indices_associados"],3)
+        self.assertEqual(self.db.execute(
+            "SELECT COUNT(*) FROM anp_lpc_staging_edicoes").fetchone()[0],3)
+        self.assertEqual(self.db.execute(
+            "SELECT COUNT(*) FROM anp_lpc_staging_observacoes").fetchone()[0],6)
+        self.assertEqual(self.db.execute(
+            "SELECT COUNT(*) FROM anp_lpc_staging_indices").fetchone()[0],6)
+        self.assertEqual(len(list((self.root/"indices").glob("*.html"))),2)
+        auditoria=auditar_arquivos_origem_lpc(
+            self.db, raiz_raw=str(self.root),
+            as_of="2026-11-01T00:00:00+00:00",
+        )
+        self.assertEqual(auditoria["status"],"RAW_VERIFICADO_LOCALMENTE")
+        self.assertEqual(auditoria["quantidade_falhas"],0)
+        self.assertEqual(auditoria["arquivos_distintos_verificados"],5)
+        self.assertEqual(auditoria["snapshots_de_indice_registrados"],2)
+
     def test_recoleta_preserva_edicoes_e_cria_capturas(self):
         self.run_lote()
         resultado=self.run_lote()
