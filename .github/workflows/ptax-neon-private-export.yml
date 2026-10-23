@@ -1,6 +1,6 @@
 # NIVON: copy PTAX Neon -> BigQuery. Sem variaveis de aprovacao, SOMENTE leitura privada.
 # Nenhuma credencial, cotacao ou artifact enviado ao repositório publico.
-# O codigo vem de commit imutavel na PR #84 (plataforma Google Cloud).
+# O codigo vem de commit imutavel na main; GCP permanece desabilitado por padrao.
 name: NIVON PTAX - ponte privada para Google Cloud
 on:
   push:
@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 00046f98806eb5e6961b1cf160dc74579b78021d
+          ref: 31ce2bd7b83f1356efa15159a55e564125eb7b95
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
