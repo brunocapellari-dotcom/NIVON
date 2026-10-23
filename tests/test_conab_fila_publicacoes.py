@@ -9,10 +9,10 @@ from nivon.conab_fila_publicacoes import (
     examinar_pagina_semana, atualizar_fila, proximos_arquivos,
 )
 
-SEMANA=(INDICE+'/acompanhamento-das-lavouras-12-10-a-18-10-26/'
-        'acompanhamento-das-lavouras-05-10-a-11-10-26')
+SEMANA=INDICE+'/acompanhamento-das-lavouras-12-10-a-18-10-26'
+SEMANA_LINK=SEMANA+'/acompanhamento-das-lavouras-05-10-a-11-10-26'
 INDICE_HTML=f'''<html><title>Conab</title>
-<a href="{SEMANA}">Acompanhamento das Lavouras - 12/10 a 18/10/26</a>
+<a href="{SEMANA_LINK}">Acompanhamento das Lavouras - 12/10 a 18/10/26</a>
 </html>'''.encode()
 PAGINA_HTML=f'''<html><title>Conab</title>
 <a href="plantio-e-colheita-10-10-a-16-10">Plantio e Colheita 10-10 a 16-10</a>
@@ -40,6 +40,8 @@ class TestFILAConab(TestCase):
 
     def test_fila_idempotente_e_ligada_ao_indice_existente(self):
         db=sqlite3.connect(':memory:')
+        self.assertEqual(self._indice()['edicoes_candidatas'][0]['pagina_oficial'],SEMANA)
+        self.assertEqual(self._indice()['edicoes_candidatas'][0]['url_observada_indice'],SEMANA_LINK)
         primeira=atualizar_fila(db,indice=self._indice(),paginas={SEMANA:PAGINA_HTML})
         self.assertEqual(primeira['novas_semanas'],1)
         self.assertEqual(primeira['novos_recursos_candidatos'],3)
