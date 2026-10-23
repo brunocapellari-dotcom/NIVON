@@ -90,7 +90,7 @@ def main(argv=None):
     if args.relatorio:
         path=Path(args.relatorio)
         path.parent.mkdir(parents=True,exist_ok=True)
-        path.write_text(output+"\\n",encoding="utf-8")
+        path.write_text(output+"\n",encoding="utf-8")
     print(output)
     # Persistir RAW/analitico antes de avaliar falhas parciais.
     return 0 if result["sucesso"]>0 else 2
