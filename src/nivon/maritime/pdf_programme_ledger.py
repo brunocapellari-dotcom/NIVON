@@ -429,3 +429,39 @@ class PdfProgrammeLedger:
         if len(rows) > max_editions:
             raise ValueError("historical window exceeds max_editions: explicit pagination required")
         return tuple(self._decode(row) for row in rows)
+
+    def audit_history_asof(
+        self, *, port_id: str, source_id: str, series: str | None,
+        as_of: str | datetime, read_authorized: bool = False,
+        max_editions: int = 200,
+    ) -> tuple[PdfProgrammeEdition, ...]:
+        """Bounded *audit-only* history including unknown publication.
+
+        Rows with unknown publication dates may be described as MISSING
+        PUBLICATION in a readiness report, but MUST NEVER become available
+        as known historical market information or a programme revision.
+        The cutoff still prevents observing future collections/publications.
+        """
+        if not read_authorized:
+            raise PermissionError("PDF programme audit history reading not authorized")
+        if type(max_editions) is not int or not 1 <= max_editions <= 200:
+            raise ValueError("invalid audit history limit")
+        if port_id not in PDF_PORTS or not source_id or not source_id.strip():
+            raise ValueError("invalid port or source")
+        if port_id == "PARANAGUA" and series not in PARANAGUA_SERIES:
+            raise ValueError("Paranagua programme series required")
+        if port_id == "ITAQUI" and series is not None:
+            raise ValueError("Itaqui has no programme series")
+        cutoff = _aware_utc(as_of, "as_of").isoformat()
+        rows = self.db.execute("""
+            SELECT edition_id,port_id,source_id,series_key,collected_at,published_at,
+                   source_sha256,payload_sha256,payload_json
+            FROM maritime_pdf_programme_editions
+            WHERE port_id=? AND source_id=? AND series_key=? AND collected_at<=?
+              AND (published_at IS NULL OR published_at<=?)
+            ORDER BY collected_at ASC LIMIT ?
+        """, (port_id, source_id, series or "", cutoff, cutoff,
+              max_editions + 1)).fetchall()
+        if len(rows) > max_editions:
+            raise ValueError("audit history exceeds max_editions: explicit pagination required")
+        return tuple(self._decode(row) for row in rows)
