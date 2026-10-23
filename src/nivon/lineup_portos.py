@@ -184,9 +184,7 @@ def extrair_lineup_html(html: str, fonte: str, *, coletado_em: str) -> list[dict
             navio = _campo(row, "NAVIO", "NOME DA EMBARCAÇÃO")
             if not navio or _norm(navio) in {"navio", "vessel", "a definir", "a confirmar", "teste"}:
                 continue
-            raw_status = _campo(row, "STATUS") or heading
-            if _status(raw_status) == "STATUS_NAO_DETERMINADO":
-                raw_status = _campo(row, "SITUAÇÃO") or raw_status
+            raw_status = _campo(row, "STATUS") or _campo(row, "SITUAÇÃO") or heading
             status = _status(raw_status)
             flags = []
             if status == "STATUS_NAO_DETERMINADO":
