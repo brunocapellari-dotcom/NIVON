@@ -126,7 +126,6 @@ def hash_snapshot_legado(db: sqlite3.Connection) -> str:
 
 
 def _preparar_quarentena(db: sqlite3.Connection) -> None:
-    preparar_recibos(db)
     db.execute("""CREATE TABLE IF NOT EXISTS nivon_quarentena_legado (
         registro_sha256 TEXT PRIMARY KEY,
         dia_local TEXT NOT NULL,
@@ -159,7 +158,6 @@ def registrar_quarentena(
         raise PermissionError("quarentena exige autorização explícita do chamador")
     from .outbox_unificada import _tempo
     ts=_tempo(registrado_em)
-    _preparar_quarentena(db)
     db.execute("BEGIN IMMEDIATE")
     novos=0
     try:
@@ -171,6 +169,7 @@ def registrar_quarentena(
                     "fontes legadas alteradas desde o backup pré-migração"
                 )
         plano=_montar_plano(db)
+        _preparar_quarentena(db)  # DDL SQLite também reverte se falhar a migração.
         for row in plano["registros"]:
             fp=_fingerprint(row)
             existente=db.execute("""SELECT fingerprint_sha256
