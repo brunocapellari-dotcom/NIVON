@@ -82,6 +82,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_anp_semanal_store.py' -v
           python -m unittest discover -s tests -p 'test_anp_revogacoes.py' -v
           python -m unittest discover -s tests -p 'test_anp_revogacoes_frescor.py' -v
+          python -m unittest discover -s tests -p 'test_anp_lpc_coleta_real_e2e.py' -v
 
   conferir-schema-mapa:
     # Diagnóstico de fonte real somente manual. Não repetir downloads em todo PR.
