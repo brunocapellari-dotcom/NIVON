@@ -98,3 +98,31 @@ Os links se referem ao mesmo conjunto temático; a mudança de nome **não** imp
 **Correção aplicada:** `anp_indice_lpc.py` aceita estritamente as duas grafias realmente observadas, valida exatamente 7 dias por semana e obtém os intervalos do próprio link do índice, não de um calendário inferido. `anp_lpc_coletor_real.py` agora solicita **a URL XLSX direta listada pela ANP**. O código anterior acrescentava `/@@download/file` sem o sufixo ser anunciado, o que podia transformar links oficiais válidos em erros HTTP ou baixar recurso diferente. A restrição de domínio/caminho/arquivo foi mantida e reforçada. Foram adicionados contratos de descoberta e um cenário E2E para a grafia mais recente; testes de regressão HTTP foram ajustados para URLs diretas.
 
 **Próximo gate:** rodar os testes E2E no HEAD novo e baixar as três edições verdadeiras com runtime que possa ler XLSX, sem criar caminhos artificiais ou presumir publicação.
+
+
+## Continuidade de 23/10/2026 — backfill e verificação de integridade
+
+**Backfill paginado por recorte oficial.** `coletar_lpc` e a CLI aceitam agora `--desde YYYY-MM-DD`, `--ate YYYY-MM-DD` e `--ultimas N` com limite de **1 a 12 edições por execução**. O filtro usa sempre datas de início/fim da semana identificadas no HTML da ANP. `semanas_catalogadas` é a quantidade de edições reconhecidas no índice; `semanas_elegiveis_periodo` é o subconjunto do intervalo; `ainda_pendentes_recorte` informa o restante não visitado pelo teto do lote — **não significa ausência na ANP nem erro de cobertura**. O intervalo abrange apenas um `--ano` por execução; para recuperar vários anos, executar lotes anuais distintos. Evitar repetição excessiva de solicitações, obedecer termos e não presumir semanas faltantes.
+
+Exemplo de uma operação histórica interna, após confirmar acesso à rede:
+
+```bash
+PYTHONPATH=src python -m nivon.cli_coletar_anp_lpc \
+  --modo rede --ano 2026 --desde 2026-07-01 --ate 2026-10-17 \
+  --ultimas 12 --db data/anp_lpc/staging.sqlite \
+  --raw-dir data/anp_lpc/raw
+```
+
+Uma segunda execução com `--ate` anterior ao último início capturado recupera a próxima janela do mesmo histórico. Arquivos de mesmo SHA não são duplicados; revisões do conteúdo para a mesma semana permanecem como edições distintas.
+
+**Auditoria RAW pós-ingestão.** `anp_lpc_staging_real.auditar_arquivos_origem_lpc` compara `SHA-256` de cada XLSX e snapshot HTML originais mantidos em `data/anp_lpc/raw` contra os hashes do SQLite. Retorna apenas contagens, hashes esperados e estados `INTEGRO`, `ARQUIVO_AUSENTE`, `HASH_DIVERGENTE`, `TAMANHO_INVALIDO`, `CAMINHO_INSEGURO` ou `ARQUIVAMENTO_NAO_COMPROVADO`; não imprime dados de preço ou identificadores de posto.
+
+```bash
+PYTHONPATH=src python -m nivon.cli_coletar_anp_lpc \
+  --modo integridade --db data/anp_lpc/staging.sqlite \
+  --raw-dir data/anp_lpc/raw
+```
+
+Retorna código de saída 0 só para `RAW_VERIFICADO_LOCALMENTE`; falha com código 2 para `RAW_NAO_CONFIAVEL`. A prova atesta apenas integridade do arquivo em disco perante o hash armazenado, **não** que o conteúdo tenha sido fornecido ou homologado pela ANP, que os termos de uso foram confirmados independentemente ou que o arquivo tenha sido obtido em data passada. Cenários E2E de recorte, retomada, corrupção local e comando de auditoria foram acrescentados.
+
+**Testes:** as alterações estão no GitHub e o workflow ANP existente foi ampliado, mas é necessário observar uma execução de CI vinculada ao **HEAD desta rodada** antes de relatar número de testes aprovados. A inexistência de run de CI não equivale a sucesso nem a falha. No ambiente do assistente somente uma checagem local da expressão de nome de arquivo foi executada; a montagem integral com `openpyxl` ainda exige runner.
