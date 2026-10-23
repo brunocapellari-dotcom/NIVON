@@ -40,6 +40,17 @@ class TestANTT(unittest.TestCase):
                 with self.assertRaises(ErroTransporte):
                     interpretar_csv_antt(caso.encode(), ano=2026, coleta_utc="2026-10-22T12:00:00Z")
 
+    def test_mes_ano_dicionario_oficial_mm_aa(self):
+        raw = (COLUNAS + AMOSTRA.replace("02/2026", "02_26")).encode()
+        rows, meta = interpretar_csv_antt(
+            raw, ano=2026, coleta_utc="2026-10-22T12:00:00Z")
+        self.assertEqual(rows[0]["competencia"], "2026-02")
+        self.assertEqual(meta.referencia_maxima, "2026-02")
+        raw_2006 = (COLUNAS + AMOSTRA.replace("02/2026", "02_06")).encode()
+        rows, _ = interpretar_csv_antt(
+            raw_2006, ano=2006, coleta_utc="2026-10-22T12:00:00Z")
+        self.assertEqual(rows[0]["competencia"], "2006-02")
+
     def test_2025_isolado(self):
         raw = (COLUNAS + AMOSTRA.replace("02/2026", "2025-02")).encode()
         r, _ = interpretar_csv_antt(raw, ano=2025, coleta_utc="2026-10-22T12:00:00Z")
