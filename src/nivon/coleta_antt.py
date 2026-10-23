@@ -18,7 +18,7 @@ from urllib.parse import urlsplit
 from urllib.request import Request, build_opener
 
 from .transporte_multimodal import (
-    _SemRedirecionamento, ErroTransporte, interpretar_csv_antt
+    _SemRedirecionamento, ErroTransporte, interpretar_csv_antt, link_antt
 )
 
 CATALOGO = "https://dados.antt.gov.br/api/3/action/package_show?id=438a5184-09db-49a3-88c8-0bad418b4409"
@@ -155,7 +155,25 @@ def coletar(*, destino: str | Path, anos: list[int], habilitar_rede=False,
     if agora.tzinfo is None:
         raise ErroTransporte("agora precisa de fuso")
     stamp = agora.astimezone(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-    recursos = catalogo_antt(habilitar_rede=True, transporte=transporte)
+    # Se o catalogo CKAN falhar transitoriamente, consultar SOMENTE CSV
+    # oficiais 2025/2026 previamente verificados. Nunca contornar 401/403.
+    try:
+        recursos = catalogo_antt(habilitar_rede=True, transporte=transporte)
+        metodo_descoberta = "CKAN_VALIDADO"
+    except ErroTransporte as exc:
+        falhas_transitorias = {"catalogo CKAN invalido", "ANTT_FALHA_TRANSITORIA"}
+        if str(exc) not in falhas_transitorias or not set(anos).issubset({2025, 2026}):
+            raise
+        metodo_descoberta = "LINK_OFICIAL_FIXO_FALLBACK_CKAN"
+        recursos = {
+            a: {
+                "url": link_antt(a),
+                "id": urlsplit(link_antt(a)).path.split("/")[4],
+                "last_modified": None,
+                "revision_id": None,
+            }
+            for a in anos
+        }
     if any(a not in recursos for a in anos):
         raise ErroTransporte("ano nao publicado no CKAN")
     destino = Path(destino)
@@ -183,12 +201,14 @@ def coletar(*, destino: str | Path, anos: list[int], habilitar_rede=False,
         _atomic(destino / f"antt-od-{ano}.csv", bruto)
         _atomic(destino / f"antt-od-{ano}.jsonl", jsonl)
         manifesto["anos"][str(ano)] = {
-            **recurso, "sha256": hashlib.sha256(bruto).hexdigest(),
+            **recurso, "metodo_descoberta": metodo_descoberta,
+            "sha256": hashlib.sha256(bruto).hexdigest(),
             "verificado_utc": stamp, "competencia_maxima": meta.referencia_maxima,
             "registros": meta.registros, "status": "STAGING_NAO_HOMOLOGADO"
         }
         _atomic(path, json.dumps(manifesto, ensure_ascii=False, sort_keys=True, indent=2).encode())
         saida.append({"ano": ano, "estado": "STAGING_NAO_HOMOLOGADO",
+                      "metodo_descoberta": metodo_descoberta,
                       "competencia_maxima": meta.referencia_maxima,
                       "registros": meta.registros, "sha256": meta.arquivo_sha256})
     return saida
