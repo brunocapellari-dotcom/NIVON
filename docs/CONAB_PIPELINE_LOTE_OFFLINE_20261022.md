@@ -40,3 +40,52 @@ As suítes test_conab_lote_e2e e test_conab_staging_sqlite geram arquivos ZIP OO
 O pipeline sempre retorna habilita_backtest=false, habilita_treino=false e habilita_publicacao=false. A inspeção de um XLSX capturado agora não autentica os dados efetivamente disponíveis no passado. Datas de captura e de publicação não são intercambiáveis. O parsing de conteúdo externo deve ocorrer em worker isolado com limites de memória/tempo, pois os validadores não criam sandbox.
 
 Próxima etapa material: Engenharia de Dados fornecer RAW oficial autorizado com URLs, bytes, SHA e metadados HTTP; executar o lote, aprovar mapeamento real de cultura, produto, unidade e UF e obter evidência independente de cada edição antes de alimentar historico_vintages. Não executar automaticamente merge, deploy, cron, serviços pagos ou WhatsApp.
+
+
+## Segunda trilha entregue: histórico de progresso presente no Drive
+
+Pesquisa real no Google Drive conectado identificou o arquivo
+[CONAB_Plantio_Colheita_Historico.xlsx](https://docs.google.com/spreadsheets/d/1CsSAwovXncudDw1S0XDh8z9wNin04Qt4/edit)
+com MIME XLSX e tamanho informado pelo Drive de 794.067 bytes, criado em 10/08/2026.
+A leitura conectada de texto retornou **17.982 registros**, em **10 colunas**, cobrindo
+**08/11/2019 a 31/07/2026**. O perfil do texto confirmou:
+- Operações: Semeadura e Colheita.
+- Produtos: Soja, Milho 1ª, Milho 2ª e Algodão.
+- 12 estados: BA, GO, MA, MT, MS, MG, PR, PI, RS, SC, SP e TO.
+- Campo Dado em fração 0..1; campo INFO apenas Brasil ou MT (rótulos da origem, nunca média municipal/nacional).
+- Nas 17.982 linhas lidas, não houve divergências encontradas de índice sequencial, semana ISO, ano, relação INFO/MT ou fração fora de 0..1.
+
+**Atenção:** a inspeção ocorreu via conversão textual do conector Drive;
+não foi materializado o XLSX binário original nem recalculado seu SHA-256.
+As datas Data são referências das observações, não provas de publicação original.
+A última referência é julho de 2026; o documento NÃO substitui a coleta atualizada
+da CONAB nem permite backtest point-in-time de séries futuras.
+
+Implementado o adaptador independente
+src/nivon/conab_progresso_csv_drive.py, que aceita **CSV exportado do XLSX**
+com hash de aquisição obrigatório, valida todas as linhas, datas, operações,
+estados, produtos e frações, e produz uma série normalizada com
+publicado_em=null, disponivel_em=null e todos os gates OFF.
+O importador não reutiliza o parser de boletins mensais: progresso de
+semeadura/colheita (fração) é dado distinto de produção, produtividade,
+área e oferta/demanda, evitando mistura de unidades.
+
+Comando quando o RAW CSV estiver exportado localmente:
+
+    PYTHONPATH=src python -m nivon.conab_progresso_csv_drive --input progresso_conab.csv --sha256 SHA256_DO_CSV_REAL --adquirido-em 2026-10-22T09:00:00-04:00 --out progresso_staging.json
+
+Os horários e hash do comando são placeholders exemplificativos.
+tests/test_conab_progresso_csv_drive.py valida três linhas de schema
+derivadas da leitura conectada do arquivo do usuário e faz smoke test do CLI;
+não utiliza a totalidade de linhas em CI e não declara autenticação do XLSX original.
+
+### Bloqueios remanescentes
+
+1. Para produção histórica mensal: adquirir HTML+XLSX da edição original
+   diretamente de fonte autorizada e conferir bytes, hash e layout real.
+2. Para progresso semanal: montar coletor oficial CONAB com carimbo de
+   publicação e versão por levantamento, sem usar o Drive de agosto como
+   substituto de novas publicações.
+3. Para operacionalização: integrar staging ao banco de dados autorizado
+   com custeio e acesso verificados; não promover automaticamente a
+   tabelas de séries canônicas, modelos ou dashboards.
