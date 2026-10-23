@@ -15,6 +15,7 @@ import tempfile
 from pathlib import Path
 
 from nivon.fixture_retificacao_conab import alterar_xlsx_apenas_teste
+from nivon.revisoes_conab_lab import consultar_versao_asof_lab
 
 ROOT=Path(__file__).resolve().parents[1]
 FIXTURE=ROOT/"tests"/"fixtures"/"conab_progresso_agrobr_20260207.xlsx.b64"
@@ -113,6 +114,18 @@ def main():
             assert edges==[(base["sha256"],),(versions[0]["sha256"],)]
             assert conn.execute("PRAGMA integrity_check").fetchone()[0]=="ok"
             assert not conn.execute("PRAGMA foreign_key_check").fetchall()
+        with sqlite3.connect(str(db)) as query_db:
+            check0=consultar_versao_asof_lab(query_db,catalog,id_base=base["id"],
+                corte_coleta="2026-10-23T14:59:59Z")
+            check1=consultar_versao_asof_lab(query_db,catalog,id_base=base["id"],
+                corte_coleta="2026-10-23T15:01:30Z")
+            check2=consultar_versao_asof_lab(query_db,catalog,id_base=base["id"],
+                corte_coleta="2026-10-23T15:02:30Z")
+            assert [check0["revisao"],check1["revisao"],check2["revisao"]]==[0,1,2]
+            assert [check0["sha_versao"],check1["sha_versao"],check2["sha_versao"]]==[
+                base["sha256"],versions[0]["sha256"],versions[1]["sha256"]]
+            assert len({check0["sha_semantico"],check1["sha_semantico"],
+                        check2["sha_semantico"]})==3
         b=sorted(backups.glob("*.sqlite"))
         assert len(b)==3, [x.name for x in b]
         for file in b:
@@ -130,6 +143,7 @@ def main():
             "backup_sqlite_lab_conferidos":len(b),
             "retificacao_idempotente":True,
             "sincronizacao_base_consistente_apos_retificacao":True,
+            "consulta_asof_3_cortes_sem_lookahead":True,
             "documentos_conab_oficiais_retificados":0,
             "dados_de_terceiro_com_valores_artificialmente_alterados":True,
             "banco_produtivo_alterado":False,
