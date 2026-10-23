@@ -1,0 +1,49 @@
+name: NIVON CONAB - piloto oficial pontual
+
+# Experimento de UMA execução em branch de desenvolvimento.
+# Sem cron, segredo, custo GCP, artefatos persistidos nem publicação.
+# Novos commits não disparam novamente esta coleta (filtro paths).
+on:
+  push:
+    branches:
+      - feat/argentina-sagyp-fontes-prioritarias-20261022
+    paths:
+      - .github/workflows/piloto-conab-uma-vez.yml
+
+permissions:
+  contents: read
+
+jobs:
+  captura-pontual-conab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Obter codigo da branch isolada
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Coletar UMA edicao oficial e inspecionar RAW sem upload
+        env:
+          PYTHONPATH: src
+          WORK_DIR: ${{ runner.temp }}/nivon-conab-one-off
+        run: |
+          set -eu
+          mkdir -m 700 "$WORK_DIR"
+          mkdir -m 700 "$WORK_DIR/raw"
+          python -m nivon.conab_execucao_edicao \
+            --banco "$WORK_DIR/coleta.sqlite" \
+            --pasta-raw "$WORK_DIR/raw" \
+            --executar \
+            --direitos-consulta \
+            --direitos-coleta \
+            --direitos-armazenamento
+      - name: Nao salvar arquivos nem publicar dados
+        if: always()
+        env:
+          WORK_DIR: ${{ runner.temp }}/nivon-conab-one-off
+        run: |
+          rm -rf -- "$WORK_DIR"
