@@ -18,6 +18,7 @@ from .pipeline_medicoes_horarias import (
     preparar_arquivo_medicoes, importar_ciclo_medicoes, auditar_acervo_medicoes,
     relatorio_revisoes_medicoes,
 )
+from .fontes_hidro_entrada import preparar_inmet_zip_local
 
 
 def _lotes(path):
@@ -37,9 +38,11 @@ def _lotes(path):
     editions=[]
     seen=set()
     for entry in obj["lotes"]:
-        if not isinstance(entry, dict) or set(entry) != {
+        default_keys={
             "arquivo","formato","estacao_id","ano","zona","coletado_em","classe"
-        }:
+        }
+        if (not isinstance(entry,dict) or
+            set(entry) not in (default_keys,default_keys|{"membro_csv"})):
             raise ErroPipelineAmbiental("entrada de manifesto incompleta")
         filename=entry["arquivo"]
         if (not isinstance(filename,str) or len(filename)>160 or
@@ -51,13 +54,22 @@ def _lotes(path):
         if file.is_symlink() or not file.is_file() or file.resolve().parent != base:
             raise ErroPipelineAmbiental("arquivo fora do diretório do manifesto")
         fmt=entry["formato"]
-        if fmt not in TIPOS or not 12<=file.stat().st_size<=MAX_RAW[fmt]:
-            raise ErroPipelineAmbiental("arquivo maior do que o limite por formato")
-        raw=file.read_bytes()
-        edition=preparar_arquivo_medicoes(
-            formato=fmt,raw=raw,estacao_id=entry["estacao_id"],
-            ano=entry["ano"],zona=entry["zona"],
-            coletado_em=entry["coletado_em"],classe=entry["classe"])
+        if fmt=="INMET_ANUAL_ZIP":
+            if set(entry)!=default_keys|{"membro_csv"} or entry["zona"] is not None:
+                raise ErroPipelineAmbiental("ZIP INMET requer membro CSV e fuso da origem")
+            edition=preparar_inmet_zip_local(
+                caminho_zip=file,ano=entry["ano"],
+                membro_csv=entry["membro_csv"],
+                estacao_id=entry["estacao_id"],
+                coletado_em=entry["coletado_em"],classe=entry["classe"])
+        else:
+            if set(entry)!=default_keys or fmt not in TIPOS or not 12<=file.stat().st_size<=MAX_RAW[fmt]:
+                raise ErroPipelineAmbiental("arquivo maior do que o limite por formato")
+            raw=file.read_bytes()
+            edition=preparar_arquivo_medicoes(
+                formato=fmt,raw=raw,estacao_id=entry["estacao_id"],
+                ano=entry["ano"],zona=entry["zona"],
+                coletado_em=entry["coletado_em"],classe=entry["classe"])
         editions.append(edition)
     return editions
 
