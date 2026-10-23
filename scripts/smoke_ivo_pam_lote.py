@@ -15,6 +15,8 @@ from pathlib import Path
 from nivon.ivo_pam_operacao_lote import PedidoPAM, executar_lote_pam_offline
 from nivon.ivo_pam_gate_promocao import preparar_fila_revisao_pam
 from nivon.ivo_pam_cli_local import executar_importacao_local_pam
+from nivon.ivo_pam_operacao import abrir_operacao_pam, processar_captura_pam
+from nivon.ivo_pam_ponte_operacional import revisar_capturas_pam
 from nivon.sidra_pam import planejar_pam_1612
 
 
@@ -105,6 +107,33 @@ def main():
         assert not importacao1["rede_executada"]
         assert len(list(saida.glob("manifesto_*.json"))) == 1
         assert len(list(saida.glob("fila_*.json"))) == 1
+        # Unir tambem a base operacional SQLite do piloto IVO,
+        # sem usar rede nem declarar os valores sinteticos como oficiais.
+        db = abrir_operacao_pam(Path(root) / "operacao_pam.sqlite")
+        try:
+            cofre_operacional = Path(root) / "cofre_operacional"
+            for p in pedidos:
+                plan = planejar_pam_1612(
+                    municipio_ibge=p.municipio_ibge, ano=p.ano,
+                    codigo_produto_c81=p.categoria_c81,
+                    codigo_variavel=p.variavel,
+                )
+                processar_captura_pam(
+                    db=db, raiz=cofre_operacional, plano=plan,
+                    payload=responses[plan["url"]][0],
+                    coletado_em=datetime(2026, 10, 21, 15,
+                                        tzinfo=timezone.utc),
+                    origem="TRANSPORTE_TESTE",
+                )
+            operacional = revisar_capturas_pam(
+                db=db, raiz=cofre_operacional)
+            assert operacional["capturas_consideradas"] == len(pedidos)
+            assert not operacional["dados_reais_homologados"]
+            assert not operacional["ledger_canonico_modificado"]
+            assert all(not row["liberado_para_promocao"]
+                       for row in operacional["itens"])
+        finally:
+            db.close()
         print(json.dumps({
             "demo": "PAM_OFFLINE_SEM_REDE",
             "status": "E2E_SUCESSO_REVISAO_PENDENTE",
@@ -116,6 +145,8 @@ def main():
             "fila_sha256": fila["fila_sha256"],
             "promocoes": primeira["promocoes_realizadas"],
             "importacao_local_auditada": importacao1["auditados"],
+            "sqlite_operacional_auditado": operacional["capturas_consideradas"],
+            "revisoes_pendentes": len(operacional["itens"]),
             "relatorios_locais": len(list(saida.glob("*.json"))),
             "coleta_real": False,
             "homologado": False,
