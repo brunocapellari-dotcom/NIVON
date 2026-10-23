@@ -100,7 +100,9 @@ class TestDNSControladoR06(unittest.TestCase):
                 "socket não pode ser criado para IP privado"
             )),
         ):
-            with self.assertRaises(ErroAquisicao):
+            with self.assertRaisesRegex(
+                PermissionError, "EGRESS_NAO_HOMOLOGADO"
+            ):
                 adquirir_fonte(FONTE)
 
     def test_dns_vazio_recusado(self):
