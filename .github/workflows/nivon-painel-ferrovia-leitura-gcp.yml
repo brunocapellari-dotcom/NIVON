@@ -1,0 +1,140 @@
+name: NIVON - Leitura ferroviaria BigQuery para o Painel
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/nivon-painel-ferrovia-leitura-gcp.yml'
+      - 'src/nivon/ferrovia_painel_bq.py'
+      - 'src/nivon/ponte_painel_fontes.py'
+      - 'tests/test_ferrovia_painel_bq.py'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/nivon-painel-ferrovia-leitura-gcp.yml'
+      - 'src/nivon/ferrovia_painel_bq.py'
+      - 'src/nivon/ponte_painel_fontes.py'
+      - 'tests/test_ferrovia_painel_bq.py'
+  workflow_dispatch:
+    inputs:
+      executar:
+        description: 'Autorizo uma consulta read-only de ate 50 MB na view ANTT'
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-painel-ferrovia-leitura
+  cancel-in-progress: false
+
+jobs:
+  validar-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Instalar NIVON e testar consumidor BigQuery
+        run: |
+          python -m pip install --disable-pip-version-check -e .
+          python -m unittest discover -s tests -p 'test_ferrovia_painel_bq.py' -v
+
+  consultar-view-real:
+    needs: validar-offline
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && inputs.executar == true))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      NIVON_PROJETO: ${{ vars.NIVON_BQ_PROJECT }}
+      NIVON_DATASET: ${{ vars.NIVON_BQ_DATASET }}
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Conferir projeto, dataset e origem sem criar recursos
+        run: |
+          set -euo pipefail
+          test "$NIVON_PROJETO" = 'nivon-data'
+          test "$NIVON_DATASET" = 'nivon_raw'
+      - name: OIDC com identidade temporaria
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ vars.NIVON_BQ_PROJECT }}
+          create_credentials_file: true
+      - name: Instalar SDK de leitura BigQuery
+        run: python -m pip install --disable-pip-version-check --quiet 'google-cloud-bigquery>=3,<4'
+      - name: Ler o recorte ANTT SIADE de agosto 2026 uma unica vez
+        shell: bash
+        run: |
+          set -euo pipefail
+          NOW="$(python -c 'from datetime import datetime,timezone;print(datetime.now(timezone.utc).isoformat())')"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          Path(os.environ["RUNNER_TEMP"],"ferrovia-config.json").write_text(json.dumps({
+              "ferrovia_bigquery":{
+                  "projeto":os.environ["NIVON_PROJETO"],
+                  "dataset":os.environ["NIVON_DATASET"],
+                  "competencia":"2026-08","uf_origem":"MT"
+              }
+          }),encoding="utf-8")
+          PY
+          python scripts/rodar_painel_operacional.py \
+            --entrada "$RUNNER_TEMP/ferrovia-config.json" \
+            --as-of "$NOW" --executar-bigquery > "$RUNNER_TEMP/ferrovia-view.json"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          painel=json.loads((Path(os.environ["RUNNER_TEMP"])/"ferrovia-view.json").read_text())
+          if painel["status"]!="ANALISE_SHADOW_NAO_HOMOLOGADA":
+              raise RuntimeError("PAINEL_NAO_SHADOW")
+          if painel["executou_bigquery"] is not True or painel["conciliacao_intermodal"] is None:
+              raise RuntimeError("SIADE_BQ_NAO_LIDO_PELO_PAINEL")
+          doc=painel["ferrovia"]
+          if doc["estado"]!="REVISAO_ATUAL_CONSULTADA_NAO_HOMOLOGADA":
+              raise RuntimeError("SIADE_SEM_LINHAS_NAO_CONFIRMAR_ZERO")
+          if (not doc["executado"] or doc["historico_pit_reconstruido"]
+              or doc["transbordo_confirmado"] or not doc["arquivos_sha256"]):
+              raise RuntimeError("SIADE_PROVENIENCIA_INCONSISTENTE")
+          print("FERROVIA_VIEW_READBACK_REAL",json.dumps({
+              "competencia":doc["competencia"],
+              "polos":[{"polo_id":p["polo"]["id"],
+                "toneladas_ferroviarias":p["toneladas_ferroviarias"]}
+                for p in doc["polos_ferroviarios"]],
+              "linhas_view":doc["linhas_view"],
+              "linhas_fonte":doc["linhas_fonte"],
+              "arquivos_sha256":doc["arquivos_sha256"],
+              "publicavel":False
+          },ensure_ascii=False))
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a",encoding="utf-8") as f:
+              f.write("### NIVON — leitura real da view ANTT/SIADE (modo SHADOW)\n\n")
+              for p in doc["polos_ferroviarios"]:
+                  f.write(f"- {p['polo']['id']}: {p['toneladas_ferroviarias']} TU\n")
+              f.write("\nSem transbordo comprovado; sem vintage histórico reconstruído.\n")
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: success()
+        with:
+          name: nivon-painel-ferrovia-readonly-${{ github.run_id }}
+          path: ${{ runner.temp }}/ferrovia-view.json
+          retention-days: 30
+      - name: Limpar extrato temporario
+        if: always()
+        run: rm -f "$RUNNER_TEMP/ferrovia-view.json" "$RUNNER_TEMP/ferrovia-config.json"
