@@ -121,3 +121,45 @@ PYTHONPATH=src python -m nivon.cotacoes_agrobr_coletor \
 
 ### Homologação restante
 Testes unitários/offline devem passar em PR. Ainda faltam execução HTTP real autorizada, bytes fonte verificados, aquisição incremental monitorada, API e licença SIO/DJVE, fila operando como scheduler, persistência em armazenamento cloud e integração ao banco/briefing NIVON. Não executar jobs de produção nem gerar custos enquanto essas dependências permanecerem.
+
+
+## Atualização 22/10 — comercialização SIO e integração BigQuery
+
+### Exportação SIO Granos (manual/autorizada, até 180 dias por consulta)
+
+Fonte oficial: https://www.siogranos.com.ar/Consulta_publica/operaciones_informadas_exportar.aspx .
+A página informa teto de 180 dias para a janela de declaração. Documentação de API pública: https://www.siogranos.com.ar/docs/DOC%20-%20API%20SIOGRANOS%20-%20Consulta%20Publica%20de%20Operaciones.rar .
+
+- `src/nivon/argentina_sio_exportacoes.py` planeja janelas sem lacunas/sobreposição, importa exportações CSV após **verificação real do layout**, valida quantidade e moeda no locale argentino, aplica HMAC com chave privada ao ID de operação e versiona as edições em SQLite. Sem captura automática ASP.NET, scraping autenticado ou reutilização de credenciais.
+- As colunas reais exportadas e a licença de armazenamento ainda **não foram homologadas**. A interface de mapeamento é explícita e fail-closed; nunca presumir que a tabela visual do site equivale ao CSV exportado.
+- A agregação para outros motores é feita por edição/produto/província/data, mantendo `DECLARADO_NAO_ENTREGUE`. Exportações repetidas com operações sobrepostas não são somadas; vintages preservadas.
+
+### Stage unificado e carga GCP
+
+- `src/nivon/agro_bigquery_stage.py`: exportador OFFLINE em JSONL de tabelas SQLite locais de SAGyP, CEPEA, IMEA, CONAB e SIO. A camada SIO exporta SOMENTE agregados, nunca IDs/HMAC individuais.
+- `sql/bigquery/002_agro_fontes_staging.sql`: DDL de landing em quarentena, separado das tabelas editoriais canônicas. Substituir variáveis de projeto/dataset depois de verificar GCP.
+- `src/nivon/agro_bigquery_loader.py`: uploader BigQuery que, por padrão, apenas valida JSONL privado 0600/0700. Com execução real explicitamente autorizada, confirma tabela preexistente, esquema, localização, custo/armazenamento/licenças, usa job-id derivado de SHA e nunca cria recursos automaticamente. Não foi testado com credenciais reais.
+- Dependência opcional em `pyproject.toml`: `pip install -e '.[gcp]'`. Em produção, ADC por workload identity/IAM de menor privilégio; nunca tokens em arquivo ou GitHub.
+
+### Exemplos offline e preflight (não realizam cobrança)
+
+```bash
+# Stage de um SQLite local que contenha as tabelas previamente importadas
+PYTHONPATH=src python -m nivon.agro_bigquery_stage \
+  --banco /dados/privados/nivon_ingestao.sqlite \
+  --saida /dados/privados/agro_stage.jsonl
+
+# Inspecao de schema/valores LOCAL, sem conexao GCP
+PYTHONPATH=src python -m nivon.agro_bigquery_loader \
+  --arquivo /dados/privados/agro_stage.jsonl \
+  --projeto PROJECT_ID_VALIDADO --dataset DATASET_ID_VALIDADO
+```
+
+O comando real de carga acrescentaria `--executar --custos-autorizados --armazenamento-autorizado --licencas-conferidas`, após configurações/IAM/licenças comprovados. **Não executar** enquanto essas verificações estiverem pendentes. A saída de staging e o SQLite devem ficar em volume privado e persistente, não no repositório.
+
+Limitações que continuam abertas:
+1. A rota exata de CSV SAGyP obtida do CKAN ainda não passou por download verificado no ambiente conectado.
+2. A exportação SIO exige homologação por arquivo real + prova de condições de uso; sua documentação RAR não pôde ser inspecionada pelo leitor HTML.
+3. A página de compras/DJVE do MAGyP tem dados públicos, mas layout para parser canônico ainda não validado: https://www.magyp.gob.ar/sitio/areas/ss_mercados_agropecuarios/areas/granos/_archivos/000058_Estad%C3%ADsticas/000020_Compras%20y%20DJVE%20de%20Granos.php .
+4. O staging não substitui RAW imutável em GCS; não há GCS, Cloud Scheduler, Cloud Run, BigQuery real ou monitor de freshness ativados.
+5. São necessárias validação da origem/datas e separação entre estimativas, registros de comércio, DJVE e embarques concluídos.
