@@ -5,7 +5,8 @@ import argparse
 import json
 from pathlib import Path
 
-from nivon.painel_operacional import ErroMotor, montar_painel
+from nivon.painel_operacional import ErroMotor
+from nivon.ponte_painel_fontes import analisar_fontes
 
 
 def _sem_chaves_duplicadas(pares):
@@ -17,7 +18,7 @@ def _sem_chaves_duplicadas(pares):
     return resultado
 
 
-def executar(arquivo: str, *, as_of: str) -> dict:
+def executar(arquivo: str, *, as_of: str, executar_bigquery: bool = False) -> dict:
     origem = Path(arquivo)
     if not origem.is_file() or origem.is_symlink():
         raise ErroMotor("arquivo de entrada precisa ser arquivo local regular")
@@ -28,16 +29,17 @@ def executar(arquivo: str, *, as_of: str) -> dict:
         object_pairs_hook=_sem_chaves_duplicadas,
         parse_constant=lambda _: (_ for _ in ()).throw(ErroMotor("NaN/Infinity nao permitido")),
     )
-    return montar_painel(pacote, as_of=as_of)
+    return analisar_fontes(pacote, as_of=as_of, executar_bigquery=executar_bigquery)
 
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Painel NIVON logistica + AIS + tendencias (shadow)")
     parser.add_argument("--entrada", required=True, help="pacote JSON local")
     parser.add_argument("--as-of", required=True, help="timestamp ISO UTC ou com offset")
+    parser.add_argument("--executar-bigquery", action="store_true",\n                        help="autoriza leitura BigQuery via ADC/WIF; pode gerar custo")
     a = parser.parse_args(argv)
     try:
-        saida = executar(a.entrada, as_of=a.as_of)
+        saida = executar(a.entrada, as_of=a.as_of, executar_bigquery=a.executar_bigquery)
     except (ErroMotor, OSError, ValueError) as exc:
         print(json.dumps({"status": "FALHA_FECHADA", "erro": str(exc)}, ensure_ascii=False))
         return 2
