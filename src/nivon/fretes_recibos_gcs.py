@@ -57,11 +57,14 @@ def gravar_recibo_gcs_condicional(
             "tentativa_de_escrita":False,
             "publicavel":False,
         }
-    ver=verificar_recibo_local_frete(
-        recibo,chave_recibo=chave_recibo,as_of=as_of,
-        tipo_esperado=recibo.get("tipo_ledger") if isinstance(recibo,Mapping) else "",
-        emissor_esperado=emissor_esperado,
-    )
+    try:
+        ver=verificar_recibo_local_frete(
+            recibo,chave_recibo=chave_recibo,as_of=as_of,
+            tipo_esperado=recibo.get("tipo_ledger") if isinstance(recibo,Mapping) else "",
+            emissor_esperado=emissor_esperado,
+        )
+    except ErroReciboFrete as exc:
+        raise ErroReciboGCS("recibo não verificado; upload bloqueado") from exc
     nome=_destino(recibo)
     dados=serializacao_canonica(dict(recibo))
     if len(dados)>8192:
