@@ -43,3 +43,9 @@ O recorte é a identidade estável do conjunto de filtros. Uma nova exportação
 5. Integrar banco canônico do NIVON e camadas de análise de tendências/fretes, mantendo etiqueta `AMOSTRAL_NCM` quando aplicável.
 
 **Nenhum cron, deploy, acesso a base privada ou tonelagem real foi ativado por este PR.**
+
+## Monitor de catálogo após integração no main
+
+O workflow `.github/workflows/antt-mdfe-catalogo.yml` inspeciona diariamente a API oficial de metadados CKAN ANTT e produz relatório JSON auditável em artefato do GitHub Actions com retenção de até 90 dias. Este agendamento é apenas para descoberta de fontes, **não baixa nem armazena tonelagem de MDF-e**. Na falta de um CSV oficial verificável, o painel continua sendo fonte consultável manualmente e os volumes permanecem não coletados.
+
+A extração operacional em arquivo, persistência em Google Cloud e habilitação de indicadores ficam condicionadas à publicação/fornecimento de dados estruturados, homologação do universo de transporte e configuração segura de credenciais. Não inserir segredos ou arquivos particulares no repositório público.
