@@ -221,6 +221,16 @@ def _salvar_capturas_atomicas(*, banco, capturas):
             for c in capturas:
                 key = (c["especie"],c["tabela_sidra"],c["periodo"],
                        c["territorio"],c["sha256_bruto"])
+                # A mesma primeira coleta nao pode identificar dois
+                # conteúdos diferentes do MESMO escopo; rejeitar colisao
+                # antes de inserir e reverter o lote inteiro em erro.
+                colisao = cx.execute(
+                    """SELECT sha256_bruto FROM valores_pecuaria_quarentena
+                       WHERE especie=? AND tabela_sidra=? AND periodo=?
+                       AND territorio=? AND primeira_coleta_em=?
+                       LIMIT 1""", (*key[:4], c["primeira_coleta_em"])).fetchone()
+                if colisao and colisao[0] != key[4]:
+                    raise DadoInvalido("capturas conflitantes no mesmo instante de coleta")
                 anterior = cx.execute(
                     """SELECT id,bruto FROM valores_pecuaria_quarentena
                        WHERE especie=? AND tabela_sidra=? AND periodo=?
