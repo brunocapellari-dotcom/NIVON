@@ -190,8 +190,20 @@ def executar_lote_laboratorio(catalogo: dict, pasta: str | Path,
     counts=dict(db.execute("SELECT sha,COUNT(*) FROM lab_observacao_conab GROUP BY sha"))
     if any(counts.get(ref["sha256"])!=len(pairs) for ref,_,pairs in batch):
         raise ErroLoteConab("contagem armazenada difere do parsing")
+    operation_stats=[]
+    for ref,_,pairs in batch:
+        rows=[json.loads(v) for _,v in pairs]
+        operation_stats.append({
+            "competencia":ref["competencia"],
+            "total_observacoes":len(rows),
+            "culturas":sorted({r["cultura"] for r in rows}),
+            "ufs":sorted({r["uf"] for r in rows if r["uf"]!="MEDIA_ESTADOS"}),
+            "linhas_media_estados":sum(r["uf"]=="MEDIA_ESTADOS" for r in rows),
+            "linhas_marcadas_revisadas":sum(r["revisado"] is True for r in rows),
+        })
     return {
         "estado":"STAGING_TRANSACIONAL_APENAS_LAB_REFERENCIA_TERCEIRO",
+        "diagnostico_por_edicao":operation_stats,
         "edicoes_auditadas":len(batch),
         "edicoes_novas":depois-antes,
         "edicoes_ja_existentes":len(batch)-(depois-antes),
@@ -204,6 +216,40 @@ def executar_lote_laboratorio(catalogo: dict, pasta: str | Path,
         "fonte_conab_direta":False,"direitos_homologados":False,
         "integracao_banco_produtivo":False,
         "migracao_permitida":False,"publicacao_permitida":False,
+    }
+
+
+
+def verificar_backup_restore_laboratorio(db: sqlite3.Connection) -> dict:
+    """SQLite online backup in-memory -> restore shadow -> equality and integrity.
+
+    Somente TESTE de recuperação lógica em memória. NÃO produz backup
+    operacional persistente e NÃO autoriza recuperação/migração em produção.
+    """
+    db.commit()
+    queries=(
+        "SELECT sha,referencia_id,competencia,origem,parser_sha,qtde FROM lab_referencia_conab ORDER BY sha",
+        "SELECT sha,chave,observacao_json FROM lab_observacao_conab ORDER BY sha,chave",
+    )
+    before=[list(db.execute(q)) for q in queries]
+    if not before[0] or not before[1]:
+        raise ErroLoteConab("backup LAB exige edições e observações reais de referência")
+    with sqlite3.connect(":memory:") as shadow:
+        db.backup(shadow,pages=64,sleep=0.01)
+        after=[list(shadow.execute(q)) for q in queries]
+        if after!=before:
+            raise ErroLoteConab("restauração LAB não reproduziu os dados byte a byte em SQLite")
+        for source in (db,shadow):
+            if source.execute("PRAGMA integrity_check").fetchone()[0]!="ok":
+                raise ErroLoteConab("integridade SQLite LAB não passou")
+            if source.execute("PRAGMA foreign_key_check").fetchall():
+                raise ErroLoteConab("integridade referencial do backup LAB falhou")
+    return {
+        "tipo":"BACKUP_RESTORE_SQLITE_MEMORIA_LAB",
+        "backup_restauracao_verificada":True,
+        "edicoes":len(before[0]),"observacoes":len(before[1]),
+        "backup_duravel_em_storage":False,
+        "backup_operacional_de_producao":False,
     }
 
 
@@ -235,6 +281,7 @@ def main(argv=None) -> int:
                 if second["edicoes_novas"]!=0 or first["observacoes_stage_total"]!=second["observacoes_stage_total"]:
                     raise ErroLoteConab("rodada repetida não foi idempotente")
                 first["idempotencia_verificada_na_mesma_transacao"]=True
+                first["recuperacao_lab"]=verificar_backup_restore_laboratorio(db)
             if fetched is not None:
                 first["download_terceiro"]=fetched
         if args.resumo:
