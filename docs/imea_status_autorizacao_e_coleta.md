@@ -23,6 +23,13 @@ Execução https://github.com/brunocapellari-dotcom/NIVON/actions/runs/398912366
 - `nivon_imea_access_attestations`: registro da declaração do responsável; `provider_document_verified=FALSE`.
 - Meta de fonte no PostgreSQL permanece bloqueada para automação de persistência enquanto a autorização documental e o serviço de gravação não estiverem homologados.
 
+## Monitoramento recorrente e contratos de integração
+- `nivon/imea_lotes.py`: processamento incremental de até 80 observações por lote, deduplicação exata e relatório de rejeições sem divulgar valores no GitHub.
+- `tests/test_imea_lotes.py`: seis testes de lotes, origem oficial, troca de cadeia, ausência de data de referência, limites de tamanho e duplicatas. `tests/test_imea_publico.py` ampliado para oito testes. Total **14/14 aprovados**: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39892153962.
+- `main/.github/workflows/imea-publicacoes-monitor.yml`: verificação **diária em dias úteis** (14:00 UTC / 10:00 America/Cuiaba), via checkout em SHA testado, saída apenas com contagens e última data de publicação. Primeira execução **aprovada**: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39892381956. Recorrência do cron ainda não comprovada.
+- `database/neon_imea_eligibilidade_motor.sql`: visão `nivon_imea_indicadores_verificados_v` criada no Neon. Quando há apenas `published_at` e `reference_date` é NULL, `analysis_eligibility=PUBLICACAO_SEM_REFERENCIA`, bloqueando promoção para tendência diária.
+- O monitor de publicação **não** envia valores para o Neon. Staging `nivon_imea_prices_staging` continua com **0 linhas**, e nenhum indicador IMEA pode ser apresentado como cotação atual com base apenas nessa execução.
+
 ## Próximas ações
 1. Precisar/registrar condições da autorização: conjunto de indicadores, armazenamento privado, atualização automática, limite de chamadas, possibilidade de reuso analítico.
 2. Habilitar transmissão autenticada OIDC de batches validados para `nivon_imea_prices_staging` (a tentativa de publicação do endpoint de gravação foi bloqueada pelas configurações de segurança da ferramenta).
