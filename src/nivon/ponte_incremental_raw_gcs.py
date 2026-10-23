@@ -210,7 +210,16 @@ def estagiar_raw_incremental(
         os.close(fd)
     # O estágio pode sobreviver a falhas/restarts: inspecionar TODA a base
     # antes de incluir novos objetos e novamente após cada rodada.
-    _arquivo_privado(target)
+    # Arquivo SQLite recém-criado pode ter zero bytes ANTES do primeiro
+    # acesso sqlite3. Aplicar permissão/regularidade, sem regra de tamanho RAW.
+    if target.is_symlink() or not target.is_file():
+        raise ErroPonteRaw("banco de estágio inválido ou symlink")
+    stats = target.stat()
+    if os.name == "posix" and (
+        stat.S_IMODE(stats.st_mode) & 0o077 or
+        (hasattr(os, "getuid") and stats.st_uid != os.getuid())
+    ):
+        raise ErroPonteRaw("banco de estágio exige arquivo privado 0600")
     _conferir_stage_existente(target)
     resultados = []
     for e in planos:
