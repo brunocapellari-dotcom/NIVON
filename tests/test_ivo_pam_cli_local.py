@@ -153,6 +153,19 @@ class TestImportacaoLocalPAM(unittest.TestCase):
         with self.assertRaises(ErroImportacaoLocalPAM):
             self.stage()
 
+    def test_arquivo_sintaticamente_invalido_nao_vira_auditado(self):
+        invalido = b"{}"
+        (self.origin / "pam_soja.json").write_bytes(invalido)
+        self.cfg["itens"][0]["arquivo_sha256"] = hashlib.sha256(invalido).hexdigest()
+        res = self.stage()
+        self.assertEqual(res["estado"], "QUARENTENA_LOCAL_COM_FALHAS")
+        self.assertEqual(res["falhas"], 1)
+        self.assertEqual(res["auditados"], 0)
+        self.assertEqual(res["promocoes"], 0)
+        fila = json.loads(next(self.output.glob("fila_*.json")).read_text())
+        self.assertEqual(fila["quantidade_pendente"], 0)
+        self.assertFalse(fila["registro_canonico_autorizado"])
+
     def test_cli_main_realiza_fluxo_local_sem_rede(self):
         manifest = self.origin / "manifesto.json"
         manifest.write_text(json.dumps(self.cfg, ensure_ascii=False))
