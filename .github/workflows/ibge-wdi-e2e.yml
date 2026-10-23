@@ -6,6 +6,7 @@ on:
       - 'src/nivon/coletores_dados_reais.py'
       - 'tests/test_coletores_agro_ibge_wdi.py'
       - 'scripts/ensaio_ibge_wdi_live.py'
+      - 'scripts/diagnosticar_ibge_endpoints.py'
       - '.github/workflows/ibge-wdi-e2e.yml'
   workflow_dispatch:
 permissions:
@@ -23,5 +24,7 @@ jobs:
           python-version: '3.11'
       - run: python -m pip install -e .
       - run: python -m unittest discover -s tests -p 'test_coletores_agro_ibge_wdi.py' -v
+      - name: Diagnosticar rotas IBGE com timeout curto
+        run: python scripts/diagnosticar_ibge_endpoints.py
       - name: Smoke oficial HTTPS sem dados privados
         run: python scripts/ensaio_ibge_wdi_live.py
