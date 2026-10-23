@@ -7,10 +7,12 @@ from __future__ import annotations
 
 import hashlib
 import ipaddress
+import socket
+from http.client import HTTPSConnection
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from urllib.parse import urlsplit
-from urllib.request import Request, build_opener, HTTPRedirectHandler
+from urllib.request import Request, build_opener, HTTPRedirectHandler, HTTPSHandler, ProxyHandler
 
 
 class ErroAquisicao(ValueError):
@@ -20,6 +22,62 @@ class ErroAquisicao(ValueError):
 class _SemRedirecionar(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         return None
+
+
+
+def _ip_publico_resolvido(dominio: str, *, resolver=None) -> str:
+    """Recusa qualquer A/AAAA não global. Falha fechada em DNS inválido."""
+    consulta = resolver if resolver is not None else socket.getaddrinfo
+    try:
+        respostas = consulta(dominio, 443, type=socket.SOCK_STREAM)
+        ips = [registro[4][0] for registro in respostas]
+        if not ips:
+            raise ErroAquisicao("domínio sem endereços DNS verificáveis")
+        for txt in ips:
+            if not ipaddress.ip_address(txt).is_global:
+                raise ErroAquisicao("DNS aponta rede não pública; coleta negada")
+        return ips[0]
+    except ErroAquisicao:
+        raise
+    except (OSError, ValueError, IndexError, TypeError, KeyError) as exc:
+        raise ErroAquisicao("resolução DNS indisponível ou inválida") from exc
+
+
+class _ConexaoHTTPSFixada(HTTPSConnection):
+    """Usa IP aprovado no socket; hostname original para SNI/TLS."""
+    def __init__(self, host, *, ip_fixo, **kwargs):
+        self._ip_fixo = ip_fixo
+        super().__init__(host, **kwargs)
+
+    def connect(self):
+        if self._tunnel_host:
+            raise ErroAquisicao("túneis e proxies proibidos neste coletor")
+        sock = socket.create_connection(
+            (self._ip_fixo, self.port), self.timeout, self.source_address,
+        )
+        try:
+            self.sock = self._context.wrap_socket(sock, server_hostname=self.host)
+        except BaseException:
+            sock.close()
+            raise
+
+
+class _HTTPSHandlerFixado(HTTPSHandler):
+    """Não permite segunda resolução de DNS após o controle do IP."""
+    def __init__(self, dominio: str, ip_fixo: str):
+        super().__init__()
+        self._dominio = dominio
+        self._ip_fixo = ip_fixo
+
+    def https_open(self, req):
+        if urlsplit(req.full_url).hostname != self._dominio:
+            raise ErroAquisicao("hostname divergente no transporte HTTPS")
+        return self.do_open(
+            lambda host, **kw: _ConexaoHTTPSFixada(
+                host, ip_fixo=self._ip_fixo, **kw
+            ),
+            req, context=self._context, check_hostname=self._check_hostname,
+        )
 
 
 @dataclass(frozen=True)
@@ -71,22 +129,35 @@ class FonteWeb:
             raise ErroAquisicao("limite máximo inválido")
 
 
-def adquirir_fonte(fonte: FonteWeb, *, abridor=None, instante: datetime | None = None) -> dict:
+def adquirir_fonte(
+    fonte: FonteWeb, *, abridor=None, instante: datetime | None = None,
+    resolver=None,
+) -> dict:
     """Obtém bytes com verificação e hash; SOMENTE quando autorizada.
 
-    `abridor` é obrigatório inclusive após concessão de direitos. Sem
-    transporte homologado de DNS/TLS/egress, a coleta real é bloqueada.
+    `abridor` é somente um adaptador de teste; não garante a rota/IP real.
+    O acesso HTTP real continua desligado sem abridor injetado. A política
+    de egress deve ser homologada fora deste módulo antes da conexão;
+    `_ip_publico_resolvido`, `_HTTPSHandlerFixado` e
+    `_ConexaoHTTPSFixada` são blocos técnicos para orquestração confiável,
+    nunca autorização operacional independente. `resolver` é fixture DNS.
     """
     fonte.verificar()
     instante = instante or datetime.now(timezone.utc)
     if instante.tzinfo is None:
         raise ErroAquisicao("instante sem timezone")
-    # Egress real NÃO pode recair em urllib padrão: DNS rebinding resolveria
-    # o host autorizado para IP privado sem uma camada de conexão protegida.
-    # Exigir transporte injetado; o chamador deve homologar egress, TLS/SNI,
-    # resolução/pinning de IP e bloqueio de redirects antes de habilitar rede.
+    # Princípio de segurança R08: nem direitos de coleta aprovados, nem
+    # DNS público bastam para homologar a política de egress da infraestrutura.
+    # O transporte HTTP precisa ser INJETADO por um orquestrador confiável
+    # com firewall/controle de destino auditados; urllib padrão fica OFF.
     if abridor is None:
-        raise PermissionError("EGRESS_NAO_HOMOLOGADO: transporte HTTPS seguro obrigatório")
+        raise PermissionError(
+            "EGRESS_NAO_HOMOLOGADO: transporte HTTPS auditado obrigatório"
+        )
+    # Com resolução injetada, falhar fechado antes do primeiro HTTP.
+    # O transporte real deve impor pinning e TLS SNI no socket efetivo.
+    if resolver is not None:
+        _ip_publico_resolvido(fonte.dominio_autorizado, resolver=resolver)
     cliente = abridor
     req = Request(fonte.url, headers={
         "Accept": "text/html,application/pdf,text/csv,application/json,application/rss+xml,application/atom+xml,application/xml",
