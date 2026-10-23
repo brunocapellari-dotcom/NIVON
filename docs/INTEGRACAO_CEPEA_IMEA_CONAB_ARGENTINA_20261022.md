@@ -208,3 +208,21 @@ O uso de `MERGE` é indicado pela documentação oficial do BigQuery como forma 
 - Dados de SAGyP no portal de dados abertos indicam CC BY 4.0; ainda falta validar bytes download/CKAN e data efetiva de disponibilidade, pois o portal retornou 403 ao navegador de pesquisa.
 - DJVE e monitor comercial precisam do esquema de fonte validado. SIO operação declarada não equivale a frete, entrega ou exportação realizada.
 - O workflow `.github/workflows/acessos-privados.yml` apresenta falhas em push sem jobs executados; seu diagnóstico permanece separado do job `Testes locais NIVON`. Não concluir integração a partir do resultado do segundo.
+
+
+## Encerramento da rodada 23/10 — contratos finais de staging e idempotência BigQuery
+
+- Fonte Argentina SIO: `sio_operacoes.data_declaracao` é distinta de `sio_operacoes.data_concertacao`. A primeira verifica a janela de consulta de 180 dias, enquanto a segunda é usada para a referência econômica do contrato; ausência de `data_declaracao` não prova cobertura da janela.
+- Stage: `agro_bigquery_stage._FIELDS` e `sql/bigquery/002_agro_fontes_staging.sql` incluem `data_declaracao` opcional, distinta de `data_publicacao_original`. Para SIO com `data_declaracao` não fornecida, marcar `SEM_DATA_DECLARACAO` na qualidade.
+- `agro_consolidar_multibancos.py`: consolidação offline de múltiplos SQLite, deduplicação de linhas exatas, lotes limitados a 25 mil registros por padrão, com manifesto e SHA para reconciliação.
+- `agro_operacao.py`: comando único `SQLite(s) -> JSONL(s) -> preflight -> MERGE opcional`. Sem flags de autorização, não acessa rede/cloud; com autorização expressa, deve encontrar tabela BigQuery preexistente.
+- `agro_bigquery_loader.py` **não usa mais WRITE_APPEND direto**: agora delega ao `agro_bigquery_merge.py`, que realiza LOAD em tabela intermediária restrita a cada lote, seguida de `MERGE INSERT-only` com igualdade NULL-safe. Não apaga vintages nem reenvia lote cujo MERGE tenha sido concluído; falha e preserva evidência quando job parcial não pôde ser conciliado.
+- A documentação do GoogleSQL confirma `MERGE`, `IS NOT DISTINCT FROM` e `INSERT` para esse contrato. Esse desenho ainda precisa de homologação com execução real e métricas de cobrança.
+- Todas essas alterações estão em PR draft sem merge em main nem deploy. A fonte SIO e as condições de uso permanecem sem homologação técnica de CSV/API (arquivo RAR oficial publicado, mas não legível pelo ambiente). Sem backfill automático ativo.
+
+Proximas etapas (em blocos executáveis, não testes isolados):
+1. Confirmar bytes originais SAGyP e uma planilha CONAB real licitamente capturada, com hashes e datas de acesso/edição.
+2. Abrir e inspecionar legalmente o arquivo da especificação da API SIO e reconciliar colunas/método de exportação real.
+3. Conciliar os importadores CEPEA/IMEA com os direitos/cadências e o histórico do Drive como backfill, não como verdade de atualização.
+4. Em GCP real, validar IAM, criar a tabela stage de contrato 002 apenas se autorizada, executar carga pequena com limite de custo, verificar query MERGE e contar duplicatas/frescura; só depois automatizar cloud jobs.
+5. Diagnosticar falha pré-job da workflow GitHub `acessos-privados.yml`, que é independente da validação do núcleo.
