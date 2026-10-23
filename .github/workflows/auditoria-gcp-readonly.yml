@@ -1,0 +1,54 @@
+name: NIVON - Auditoria GCP somente leitura
+on:
+  pull_request:
+    paths:
+      - 'src/nivon/auditoria_gcp_readonly.py'
+      - 'tests/test_auditoria_gcp_readonly.py'
+      - '.github/workflows/auditoria-gcp-readonly.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/nivon/auditoria_gcp_readonly.py'
+      - '.github/workflows/auditoria-gcp-readonly.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  contrato:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - run: python -m unittest discover -s tests -p 'test_auditoria_gcp_readonly.py' -v
+  metadados-reais:
+    if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && vars.NIVON_GCP_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && vars.NIVON_BQ_PROJECT != '' && vars.NIVON_BQ_DATASET != '' && vars.NIVON_GCS_BUCKET != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ vars.NIVON_BQ_PROJECT }}
+          create_credentials_file: true
+      - run: python -m pip install -e '.[gcp]'
+      - name: Conferir recursos Google Cloud sem gravar dados
+        env:
+          NIVON_BQ_PROJECT: ${{ vars.NIVON_BQ_PROJECT }}
+          NIVON_BQ_DATASET: ${{ vars.NIVON_BQ_DATASET }}
+          NIVON_GCS_BUCKET: ${{ vars.NIVON_GCS_BUCKET }}
+        run: |
+          python -m nivon.auditoria_gcp_readonly --projeto "$NIVON_BQ_PROJECT" --dataset "$NIVON_BQ_DATASET" --bucket "$NIVON_GCS_BUCKET" --executar
