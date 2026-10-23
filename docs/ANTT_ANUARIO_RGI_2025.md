@@ -27,3 +27,9 @@ O workflow `antt-anuario-rgi.yml` faz testes sintéticos e, em evento permitido 
 4. Armazenar snapshots imutáveis, separar dados observados, inferidos e estimados. Não inferir frete contratado, viagem física nem produto de tabela geral.
 
 Issue de fonte aberta: https://github.com/brunocapellari-dotcom/NIVON/issues/142
+
+## Preparação de saída para BigQuery
+
+O módulo `nivon.antt_anuario_bigquery_export.exportar(banco, saida)` produz JSON Lines a partir do snapshot anual mais recente armazenado em SQLite, com esquema de origem, destino, toneladas e versões de procedência. A saída inclui obrigatoriamente `data_referencia`, `competencia`, `data_publicacao` (nulo enquanto a data exata não for homologada) e `data_coleta`. A tabela proposta fica em `sql/antt_anuario_rgi_bigquery.sql`, particionada por data de referência e clusterizada por UF e RGI.
+
+**A exportação é offline, não envia nada ao BigQuery, não cria serviços, não usa credenciais e não implica go-live.** Não salvar JSONL com toneladas reais em GitHub público. Uma futura etapa autorizada deverá usar carga transacional/idempotente e armazenar histórico privado no projeto Cloud validado.
