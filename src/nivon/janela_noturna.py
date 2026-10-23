@@ -62,3 +62,23 @@ def status(at=None, *, per_task_minutes=15):
         "next_open": state["opens"].isoformat(timespec="seconds"),
         "current_or_next_close": state["closes"].isoformat(timespec="seconds"),
     }
+
+
+def main(argv=None):
+    import argparse
+    import json
+
+    parser = argparse.ArgumentParser(description="Janela do desenvolvimento autônomo NIVON")
+    parser.add_argument("command", choices=("status", "check"))
+    parser.add_argument("--per-task", type=int, default=15)
+    args = parser.parse_args(argv)
+    try:
+        details = status(per_task_minutes=args.per_task)
+    except ValueError as exc:
+        parser.error(str(exc))
+    print(json.dumps(details, ensure_ascii=False))
+    return 0 if args.command == "status" or details["may_begin_task"] else 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
