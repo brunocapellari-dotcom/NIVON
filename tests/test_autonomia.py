@@ -122,6 +122,40 @@ class TestAutonomia(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, "inválida"):
                     autonomia.prepare_integration()
 
+    def test_local_integration_cherry_pick_and_offline_gate(self):
+        commands = []
+        rev_count = 0
+        def fake(args, cwd=autonomia.ROOT, **kwargs):
+            nonlocal rev_count
+            commands.append(args)
+            if args[:3] == ["git", "rev-parse", "HEAD"]:
+                rev_count += 1
+                return subprocess.CompletedProcess(args, 0, "before\n" if rev_count == 1 else "after\n", "")
+            return subprocess.CompletedProcess(args, 0, "", "")
+        with patch.object(autonomia, "prepare_integration", return_value=Path("/tmp/nivon-integration")), \
+             patch.object(autonomia, "command", side_effect=fake):
+            approved, note = autonomia.integrate_local("deadbeef", "python:3.11-slim")
+        self.assertTrue(approved)
+        self.assertIn("after", note)
+        self.assertTrue(any("cherry-pick" in cmd for cmd in commands))
+        self.assertTrue(any("--network" in cmd and "none" in cmd for cmd in commands))
+        self.assertFalse(any("--force" in cmd or "--push" in cmd for cmd in commands))
+
+    def test_conflicting_cherry_pick_preserves_feature_branch(self):
+        commands = []
+        def fake(args, cwd=autonomia.ROOT, **kwargs):
+            commands.append(args)
+            if "cherry-pick" in args and "--abort" not in args:
+                return subprocess.CompletedProcess(args, 1, "", "conflict")
+            return subprocess.CompletedProcess(args, 0, "before\n" if "rev-parse" in args else "", "")
+        with patch.object(autonomia, "prepare_integration", return_value=Path("/tmp/nivon-integration")), \
+             patch.object(autonomia, "command", side_effect=fake):
+            approved, reason = autonomia.integrate_local("deadbeef", "python:3.11-slim")
+        self.assertFalse(approved)
+        self.assertIn("Conflito", reason)
+        self.assertTrue(any("--abort" in cmd for cmd in commands))
+        self.assertFalse(any("reset" in cmd for cmd in commands))
+
     def test_supervisor_lock_blocks_parallel_processes(self):
         with tempfile.TemporaryDirectory() as tmp:
             with patch.object(autonomia, "HOME", Path(tmp)):
