@@ -67,9 +67,12 @@ def revisar_capturas_pam(
             type(max_capturas) is not int or not 1 <= max_capturas <= 3000):
         raise ErroPonteOperacionalPAM("parametros de revisao invalidos")
     corte = _instante(corte_coleta) if corte_coleta is not None else None
+    # A auditoria operacional usa db.Row por nome de coluna; configurar
+    # antes de auditar, inclusive para conexoes em modo somente leitura.
+    db.row_factory = sqlite3.Row
     try:
         check = auditar_operacao_pam(db=db, raiz=raiz, max_vintages=max_capturas)
-    except (sqlite3.Error, ValueError, OSError) as exc:
+    except (sqlite3.Error, ValueError, OSError, TypeError) as exc:
         raise ErroPonteOperacionalPAM("auditoria SQLite/quarentena indisponivel") from exc
     if (check["estado"] != "INTEGRIDADE_LOCAL_VERIFICADA"
             or check["integridade_local_aprovada"] is not True):
