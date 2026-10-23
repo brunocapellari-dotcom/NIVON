@@ -81,11 +81,18 @@ def main(argv=None):
     p.add_argument("--bigquery",action="store_true")
     p.add_argument("--projeto")
     p.add_argument("--dataset")
+    p.add_argument("--relatorio")
     args=p.parse_args(argv)
     result=operar(base=args.base,coletar_canada=args.canada,
           coletar_ccee=args.ccee,
           publicar_bigquery=args.bigquery,projeto=args.projeto,dataset=args.dataset)
-    print(json.dumps(result,ensure_ascii=False,indent=2))
+    output=json.dumps(result,ensure_ascii=False,indent=2)
+    if args.relatorio:
+        path=Path(args.relatorio)
+        path.parent.mkdir(parents=True,exist_ok=True)
+        path.write_text(output+"\\n",encoding="utf-8")
+    print(output)
+    # Persistir RAW/analitico antes de avaliar falhas parciais.
     return 0 if result["sucesso"]>0 else 2
 
 if __name__=="__main__":
