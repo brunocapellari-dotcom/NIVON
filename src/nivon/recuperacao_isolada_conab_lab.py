@@ -145,7 +145,10 @@ def recuperar_backup_isolado(
     path=_validate_path(Path(backup_path))
     if not FILE_RE.fullmatch(path.name):
         raise ErroRecuperacaoConab("backup não pertence ao contrato de nomes LAB")
-    folder=_dir_private(destino)
+    try:
+        folder=_dir_private(destino)
+    except ValueError as exc:
+        raise ErroRecuperacaoConab("destino precisa ser diretório privado 0700 sem symlink") from exc
     if any(folder.iterdir()):
         raise ErroRecuperacaoConab("destino de recuperação deve estar vazio; não sobrescrever")
     if banco_vivo is not None:
