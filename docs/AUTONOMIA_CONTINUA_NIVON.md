@@ -18,10 +18,10 @@ Ambos chamam o módulo local \`nivon.autonomia\`, que:
 - não concede ferramentas Bash ao Claude (modo restricted, ferramentas de arquivo e sem MCP);
 - executa Codex em sandbox workspace-write com política sem perguntas e sem rede por padrão;
 - exige \`compileall\` e unittest offline antes de commit local; arquivos fora do escopo bloqueiam conclusão;
-- conserva logs no host e faz checkpoint no banco; quando identifica limite de cota, oferece a tarefa ao outro agente se ainda não houve segunda tentativa;
-- **não** faz push, merge, instalação, deploy, agendamento, integração de dados, chamadas a bancos ou compras.
+- após testes, faz cherry-pick serializado do commit em `autonomo/integracao`, roda regressões novamente em Docker offline e só então marca a tarefa como `done`; preserva a branch de tarefa se houver falha; conserva logs e checkpoints; quando identifica cota, transfere a tarefa explicitamente ao outro agente;
+- **não** faz push, merge na `main`, instalação, deploy, agendamento, integração de dados, chamadas a bancos ou compras. A única integração automática é a branch **local** `autonomo/integracao`.
 
-O supervisor **não espera infinitamente por renovação de cotas**. Uma tarefa marcada como quota pode receber handoff, mas worktree do agente original permanece para inspeção. Seu WIP **não** é migrado automaticamente: a segunda tentativa recomeça a partir da base Git. O programa não recupera leases vencidos porque um processo ainda pode estar ativo.
+O supervisor usa lock local `.nivon-local/supervisor.pid` para impedir duas instâncias e **não espera infinitamente por renovação de cotas**. Uma tarefa marcada como quota pode receber handoff, mas worktree do agente original permanece para inspeção. Seu WIP **não** é migrado automaticamente: a segunda tentativa recomeça a partir da base Git. O programa não recupera leases vencidos porque um processo ainda pode estar ativo.
 
 ## Operação e parada
 
@@ -97,3 +97,14 @@ bash scripts/nivon-autonomo.sh
 2. Medir tokens e qualidade no fluxo sem MCP; instalar *um único* indexador para comparação, sem duplicar o índice.
 3. Expandir a geração de backlog a issues com label \`nivon-auto-ready\` e especificação JSON delimitada; não autorizar texto livre de issues como instruções.
 4. Após CI, revisar integração de worktrees. Merge na \`main\`, coleta live, cron/cloud e gastos não são decisões da IA.
+
+
+## Quando o código fica pronto
+Cada tarefa concluída deixa seu commit na branch \`autonomo/<tarefa>-<agente>-<tentativa>\`. Após passar nos testes, o executor faz cherry-pick da alteração em \`autonomo/integracao\`, que nunca é \`main\`. A conclusão no backlog somente é registrada depois que a branch integrada passa também nos testes dentro do Docker offline. Tarefas dependentes passam a se basear nessa branch atualizada.
+
+A integração local não implica uma PR publicada no GitHub. O resultado pode ser inspecionado pelo operador com:
+\`\`\`sh
+git log --oneline autonomo/integracao -15
+git diff main..autonomo/integracao --stat
+\`\`\`
+O push e a PR ampla de integração são decisões separadas; o processo não muda repositórios remotos automaticamente. Isso evita conflitos com as dezenas de PRs existentes do NIVON ainda não reconciliadas com \`main\`.
