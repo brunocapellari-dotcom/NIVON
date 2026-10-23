@@ -1,4 +1,4 @@
-name: NIVON - Coleta recorrente de fontes publicas
+name: NIVON - Coleta recorrente com persistencia GCP
 on:
   schedule:
     - cron: '20 11 * * 1-5'
@@ -11,37 +11,49 @@ concurrency:
   cancel-in-progress: false
 jobs:
   coletar:
-    if: ${{ github.event_name == 'workflow_dispatch' || (vars.NIVON_ZERO_COST_BQ_APPROVED == 'true' && vars.NIVON_GCP_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && vars.NIVON_BQ_PROJECT != '' && vars.NIVON_BQ_DATASET != '') }}
+    if: ${{ vars.NIVON_ZERO_COST_BQ_APPROVED == 'true' && vars.NIVON_RAW_ARCHIVE_APPROVED == 'true' && vars.NIVON_GCP_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && vars.NIVON_BQ_PROJECT != '' && vars.NIVON_BQ_DATASET != '' && vars.NIVON_GCS_BUCKET != '' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 35
+    env:
+      NIVON_BQ_PROJECT: ${{ vars.NIVON_BQ_PROJECT }}
+      NIVON_BQ_DATASET: ${{ vars.NIVON_BQ_DATASET }}
+      NIVON_GCS_BUCKET: ${{ vars.NIVON_GCS_BUCKET }}
+      NIVON_BOOTSTRAP_TABLE_APPROVED: ${{ vars.NIVON_BQ_BOOTSTRAP_TABLE_APPROVED }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.11'
-      - name: Instalar coletor
-        run: python -m pip install -e .
-      - name: Coletar BCRA/granos diariamente e Canada/CCEE semanalmente
-        run: |
-          if [ "$(date -u +%u)" = '1' ]; then
-            python scripts/operar_fontes_reais.py --canada --ccee
-          else
-            python scripts/operar_fontes_reais.py
-          fi
-      - name: Registrar modo sem nuvem
-        if: ${{ vars.NIVON_ZERO_COST_BQ_APPROVED != 'true' || vars.NIVON_GCP_PROVIDER == '' || vars.NIVON_GCP_SERVICE_ACCOUNT == '' || vars.NIVON_BQ_PROJECT == '' || vars.NIVON_BQ_DATASET == '' }}
-        run: echo 'COLETA TEMPORARIA. BIGQUERY NAO CONFIGURADO; HISTORICO NAO PERSISTENTE.'
-      - name: Credenciais efemeras GCP via OIDC
-        if: ${{ vars.NIVON_ZERO_COST_BQ_APPROVED == 'true' && vars.NIVON_GCP_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && vars.NIVON_BQ_PROJECT != '' && vars.NIVON_BQ_DATASET != '' }}
+      - name: Autenticar GCP antes da coleta
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
           service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
-      - name: Instalar extra BigQuery
-        if: ${{ vars.NIVON_ZERO_COST_BQ_APPROVED == 'true' && vars.NIVON_GCP_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && vars.NIVON_BQ_PROJECT != '' && vars.NIVON_BQ_DATASET != '' }}
+      - name: Instalar coletores e clientes GCP
         run: python -m pip install -e '.[gcp]'
-      - name: Carregar JSONL no BigQuery com MERGE idempotente
-        if: ${{ vars.NIVON_ZERO_COST_BQ_APPROVED == 'true' && vars.NIVON_GCP_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && vars.NIVON_BQ_PROJECT != '' && vars.NIVON_BQ_DATASET != '' }}
-        run: python -m nivon.carga_bigquery_fontes --arquivo data/nivon/staging_fontes_reais.jsonl --projeto "${{ vars.NIVON_BQ_PROJECT }}" --dataset "${{ vars.NIVON_BQ_DATASET }}" --executar
+      - name: Validar bucket, dataset e esquema antes de coletar
+        shell: bash
+        run: |
+          if [[ "$NIVON_BOOTSTRAP_TABLE_APPROVED" == "true" ]]; then
+            python -m nivon.preflight_gcp_fontes --projeto "$NIVON_BQ_PROJECT" --dataset "$NIVON_BQ_DATASET" --bucket "$NIVON_GCS_BUCKET" --criar-tabela
+          else
+            python -m nivon.preflight_gcp_fontes --projeto "$NIVON_BQ_PROJECT" --dataset "$NIVON_BQ_DATASET" --bucket "$NIVON_GCS_BUCKET"
+          fi
+      - name: Coletar e preparar lote auditavel
+        shell: bash
+        run: |
+          if [[ "$(date -u +%u)" == "1" ]]; then
+            python scripts/operar_fontes_reais.py --canada --ccee --relatorio data/nivon/status_fontes.json
+          else
+            python scripts/operar_fontes_reais.py --relatorio data/nivon/status_fontes.json
+          fi
+      - name: Arquivar todos os RAWs no GCS antes do BigQuery
+        run: |
+          python -m nivon.arquivo_raw_gcs --banco data/nivon/fontes_reais.sqlite --raw-dir data/nivon/raw --bucket "$NIVON_GCS_BUCKET" --executar
+      - name: Carregar observacoes com MERGE historico no BigQuery
+        run: |
+          python -m nivon.carga_bigquery_fontes --arquivo data/nivon/staging_fontes_reais.jsonl --projeto "$NIVON_BQ_PROJECT" --dataset "$NIVON_BQ_DATASET" --executar
+      - name: Reprovar coleta parcial apos arquivamento e carga
+        run: python scripts/verificar_status_fontes.py data/nivon/status_fontes.json
