@@ -23,7 +23,7 @@ from nivon.planejador import get_issues, refresh as refresh_plan
 from nivon.contexto_codigo import capsule
 from nivon.token_guard import summarize
 from nivon.metricas import parse_file
-from nivon.ferramentas import doctor as check_tools
+from nivon.ferramentas import doctor as check_tools, APPROVED_IMAGES
 from nivon.processos import executar_cli
 from nivon.janela_noturna import may_begin, status as night_status
 
@@ -56,8 +56,8 @@ def preflight():
     if not shutil.which("docker"):
         raise RuntimeError("Docker requerido para testes isolados sem rede")
     image = os.environ.get("NIVON_PYTHON_IMAGE", "python:3.11-slim")
-    if not re.fullmatch(r"python:3\.11(?:-slim)?", image):
-        raise RuntimeError("Imagem Python fora da lista aprovada")
+    if image not in APPROVED_IMAGES:
+        raise RuntimeError("Imagem de teste fora da lista aprovada")
     available = command(["docker", "image", "inspect", image], timeout=10)
     if available.returncode:
         raise RuntimeError("Imagem Docker local não encontrada; instalação/pull automático bloqueado")
