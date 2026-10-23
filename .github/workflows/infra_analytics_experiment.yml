@@ -233,7 +233,7 @@ jobs:
                   print("NIVON_DISTROLESS_IMPORT_BLOCKED",name,type(exc).__name__,soname[-1] if soname else "undetermined")
                   sys.exit(4)
           print("NIVON_DISTROLESS_IMPORTS_OK")
-'
+          '
           docker run --rm --platform "$PLATFORM" --network none --read-only \
             --cap-drop ALL --security-opt no-new-privileges:true --user 65532:65532 \
             --pids-limit 96 --memory 1024m --cpus 1.0 \
