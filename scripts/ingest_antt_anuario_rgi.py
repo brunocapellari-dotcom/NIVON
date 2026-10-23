@@ -3,7 +3,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from nivon.antt_anuario_rgi import executar
+from nivon.antt_anuario_rgi import executar, ErroAnuarioANTT
 
 def main(argv=None):
     ap=argparse.ArgumentParser(description="Extrair top-16 fluxos RGI anuais ANTT")
@@ -15,6 +15,9 @@ def main(argv=None):
         status=executar(args.db,pdf=bruto)
         print(json.dumps({k:status[k] for k in ("estado","sha256","linhas","ano","escopo")},ensure_ascii=False))
         return 0
+    except ErroAnuarioANTT as exc:
+        print(json.dumps({"estado":"FALHA_VALIDACAO_FONTE","motivo":str(exc)[:150]}),file=sys.stderr)
+        return 1
     except Exception as exc:
         print(json.dumps({"estado":"FALHA_EXTRAIR_E_PERSISTIR","classe_erro":type(exc).__name__}),file=sys.stderr)
         return 1
