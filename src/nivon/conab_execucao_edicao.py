@@ -114,10 +114,16 @@ def executar_edicao_conab(*,banco:str|Path,raw_dir:str|Path,
         raise
     if capturado.get('publicacao_permitida') is not False:
         raise ErroExecucaoConab('capturador retornou publicação indevida')
+    # A operação só conta como captura após conferir RAW + manifesto na pasta.
+    # Retorno otimista de transporte/mocks jamais basta para declarar sucesso.
+    validacao=verificar(registro,pasta)
+    if (validacao.get('publicacao_permitida') is not False or
+            capturado.get('raw_sha256')!=validacao.get('sha256')):
+        raise ErroExecucaoConab('manifesto RAW nao confirmou o SHA do capturador')
     return {'status':'CAPTURA_PONTUAL_CONAB_NAO_PUBLICAVEL',
             'edicao_id':registro['id_edicao'],'arquivo_dir':str(pasta),
             'sha256_raw':capturado.get('raw_sha256'),
-            'quantidade_observacoes':capturado.get('quantidade_observacoes'),
+            'quantidade_observacoes':validacao.get('observacoes'),
             'novas_semanas':novos['novas_semanas'],
             'documento_novo':persistido['novo'],
             'publicado_no_nivon':False,'google_cloud_gravado':False}
