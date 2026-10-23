@@ -45,7 +45,28 @@ def texto_pdf(pdf, *, comando=None):
         raise ErroAnuarioANTT("PDF inválido")
     programa = comando or shutil.which("pdftotext")
     if not programa:
-        raise ErroAnuarioANTT("pdftotext indisponível")
+        # Runner Ubuntu mínimo pode não incluir Poppler. Alternativa auditável
+        # pure Python, pypdf==5.9.0 (licença BSD-3-Clause).
+        import io
+        try:
+            from pypdf import PdfReader
+        except ImportError as exc:
+            raise ErroAnuarioANTT("pypdf ausente; instalar dependência fixada") from exc
+        try:
+            reader=PdfReader(io.BytesIO(pdf), strict=True)
+            if len(reader.pages)<64:
+                raise ErroAnuarioANTT("PDF com páginas insuficientes")
+            page=reader.pages[63]
+            if not page.get_contents() or len(page.get_contents().get_data())>10_000_000:
+                raise ErroAnuarioANTT("Stream de página excessivo")
+            txt=page.extract_text(extraction_mode="layout")
+        except ErroAnuarioANTT:
+            raise
+        except Exception as exc:
+            raise ErroAnuarioANTT("PDF não pôde ser lido com pypdf") from exc
+        if not txt or len(txt)>1_000_000:
+            raise ErroAnuarioANTT("Extração de texto pypdf inválida")
+        return txt
     p = subprocess.run([programa,"-layout","-f","64","-l","64","-","-"],
                        input=pdf,capture_output=True,check=False,timeout=20)
     if p.returncode or not p.stdout or len(p.stdout)>1_000_000:
