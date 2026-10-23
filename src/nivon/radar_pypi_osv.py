@@ -163,6 +163,18 @@ def _release(name: str, response: bytes, *, pinned: str | None = None) -> dict:
         raise BloqueioRadar("Requires-Dist do PyPI inválido/excessivo")
     if declared_license is not None and len(declared_license) > 512:
         raise BloqueioRadar("License-Expression extensa")
+    pypi_advisories = obj.get("vulnerabilities")
+    pypi_ids = None
+    if pypi_advisories is not None:
+        if not isinstance(pypi_advisories, list) or len(pypi_advisories) > 2000:
+            raise BloqueioRadar("lista de vulnerabilidades PyPI inválida")
+        pypi_ids = []
+        for advisory in pypi_advisories:
+            if (not isinstance(advisory, dict) or
+                    not isinstance(advisory.get("id"), str) or
+                    not advisory["id"] or len(advisory["id"]) > 128):
+                raise BloqueioRadar("aviso PyPI sem ID válido")
+            pypi_ids.append(advisory["id"])
     return {
         "name": name, "version": version,
         "pypi_raw_response_sha256": hashlib.sha256(response).hexdigest(),
@@ -173,6 +185,10 @@ def _release(name: str, response: bytes, *, pinned: str | None = None) -> dict:
         "legacy_license_present": isinstance(legacy_license, str) and bool(legacy_license.strip()),
         "requires_python": info.get("requires_python"),
         "requires_dist_declared": declared,
+        "pypi_reported_vulnerability_ids": (
+            sorted(set(pypi_ids)) if pypi_ids is not None else None
+        ),
+        "pypi_vulnerability_list_in_response": pypi_ids is not None,
         "release_wheel_bytes_downloaded": False,
         "release_hashes_verified_against_downloads": False,
     }
@@ -250,10 +266,14 @@ def executar(project_text: str, *, pypi_fetch=_request, osv_fetch=_request,
             "https://docs.pypi.org/api/json/",
             "https://google.github.io/osv.dev/post-v1-querybatch/",
         ],
-        "source": "OFFICIAL_PUBLIC_METADATA_APIS",
+        "source": (
+            "OFFICIAL_PUBLIC_METADATA_APIS"
+            if pypi_fetch is _request and osv_fetch is _request
+            else "MOCKED_OR_INJECTED_API_RESPONSE"
+        ),
         "scope": "FOUR_SELECTED_DIRECT_DEPENDENCIES_ONLY",
-        "pypi_responses_verified_https": True,
-        "osv_response_verified_https": True,
+        "pypi_responses_verified_https": pypi_fetch is _request,
+        "osv_response_verified_https": osv_fetch is _request,
         "osv_raw_response_sha256": hashlib.sha256(osv_raw).hexdigest(),
         "packages": packages,
         "osv": vulnerabilities,
@@ -267,6 +287,12 @@ def executar(project_text: str, *, pypi_fetch=_request, osv_fetch=_request,
             if p["latest_satisfies_supported_numeric_requirement"] is None
         ],
         "osv_total_ids_reported": sum(x["osv_count_reported"] for x in vulnerabilities),
+        "pypi_total_ids_reported": sum(
+            len(p["pypi_reported_vulnerability_ids"] or []) for p in packages
+        ),
+        "pypi_packages_with_vulnerability_field": sum(
+            p["pypi_vulnerability_list_in_response"] for p in packages
+        ),
         "full_dependency_resolution": False,
         "all_optional_extras_covered": False,
         "wheel_bytes_downloaded": False,
