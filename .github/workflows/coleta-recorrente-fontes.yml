@@ -15,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
+      NIVON_ZERO_COST_BQ_APPROVED: ${{ vars.NIVON_ZERO_COST_BQ_APPROVED }}
+      NIVON_RAW_ARCHIVE_APPROVED: ${{ vars.NIVON_RAW_ARCHIVE_APPROVED }}
       NIVON_BQ_PROJECT: ${{ vars.NIVON_BQ_PROJECT }}
       NIVON_BQ_DATASET: ${{ vars.NIVON_BQ_DATASET }}
       NIVON_GCS_BUCKET: ${{ vars.NIVON_GCS_BUCKET }}
