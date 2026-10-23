@@ -65,7 +65,7 @@ class HistoricoBQ(unittest.TestCase):
         r=consultar(destino=self.d,cliente=client,sdk=SDK)
         self.assertEqual(r["bytes_processados_job"],12345)
         self.assertEqual(client.conf.maximum_bytes_billed,250_000_000)
-        self.assertIn("FROM \`nivon-data.nivon_raw.vw_antt_ferrovia_od_atual\`",client.sql)
+        self.assertIn("FROM `nivon-data.nivon_raw.vw_antt_ferrovia_od_atual`",client.sql)
         self.assertTrue(client.sql.startswith("SELECT ano"))
         self.assertIn("COUNT(DISTINCT arquivo_sha256)",client.sql)
 
