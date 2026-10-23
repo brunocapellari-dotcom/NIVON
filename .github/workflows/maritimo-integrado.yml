@@ -4,11 +4,13 @@ on:
     paths:
       - 'src/nivon/lineup_portos.py'
       - 'src/nivon/maritimo_pipeline.py'
+      - 'src/nivon/maritimo_lote.py'
       - 'src/nivon/portwatch_fluxos.py'
       - 'src/nivon/maritimo_neon.py'
       - 'migrations/001_maritimo_neon.sql'
       - 'tests/test_lineup_portos.py'
       - 'tests/test_maritimo_integrado.py'
+      - 'tests/test_maritimo_lote.py'
       - 'tests/test_portwatch_fluxos.py'
       - 'tests/test_maritimo_neon.py'
       - '.github/workflows/maritimo-integrado.yml'
