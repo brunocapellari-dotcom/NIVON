@@ -31,6 +31,11 @@ class TestMonitorP0(unittest.TestCase):
         x=[run(1,NOW-timedelta(minutes=15),"success"),
            run(2,datetime(2026,10,22,14,0,tzinfo=UTC),"success","schedule")]
         self.assertEqual(assess("IMEA",x,now=NOW)["status"],"SCHEDULE_LAG")
+    def test_two_missed_future_crons_raise_failure(self):
+        last=run(1,datetime(2026,10,23,15,0,tzinfo=UTC),"success","push")
+        later=datetime(2026,10,27,20,0,tzinfo=UTC)
+        self.assertEqual(assess("IMEA",[last],now=later)["status"],"SCHEDULE_MISSING")
+
     def test_weekend_slots_skipped(self):
         start=datetime(2026,10,24,0,0,tzinfo=UTC)
         end=datetime(2026,10,26,13,0,tzinfo=UTC)
