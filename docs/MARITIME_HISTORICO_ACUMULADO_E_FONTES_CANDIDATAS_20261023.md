@@ -7,7 +7,7 @@
 1. O relatório de prontidão não reinicia a contagem a cada execução: junta registros SQLite anteriores e PDFs do lote atual, sem duplicar replay do mesmo instante.
 2. O método `history_asof` só permite revisões sobre documentos publicados e coletados antes do corte. `audit_history_asof` inclui arquivos armazenados com publicação **desconhecida** apenas para auditoria de lacunas, sem vazamento para modelos ou indicadores históricos.
 3. São exibidos `population_basis=PERSISTED_AUDIT_HISTORY_PLUS_CURRENT_BATCH`, `documents_in_current_batch`, `persisted_audit_editions_prior_to_batch`, hashes/horários distintos e todos os bloqueios editoriais.
-4. Validação completa é anterior ao commit transacional. O limite de 200 edições auditadas por fonte ainda exige futura paginação explícita.
+4. Validação completa é anterior ao commit transacional. A nova leitura paginada por chave temporal suporta até 2.000 edições por fonte/série, com páginas de 100 por padrão, quota de 48 MB de payload JSON e erro explícito ao ultrapassar cotas. As APIs antigas de leitura limitada seguem disponíveis para compatibilidade.
 5. O teste real de contêiner em CI agora percorre cinco execuções sem rede: primeiro lote de 3 PDFs sintéticos (2 Paranaguá, 1 Itaqui), dry-run, commit e replay; segundo lote separado com 3ª edição Paranaguá, commit e replay. Resultado: 4 edições SQLite, 2 revisões documentais de ETA, 3 edições distintas Paranaguá. Nenhuma atracação/carga realizada inferida, release sempre bloqueado.
 
 ## Fontes oficiais identificadas em pesquisa pública — SOMENTE CANDIDATAS
@@ -24,7 +24,7 @@
 
 - Confirmar direitos por operação com a autoridade e obter por meios autorizados ao menos três PDFs originais independentes por fonte/série, com URL exata, hash dos bytes, página, publicação efetiva, data de referência, coleta e competência.
 - Revisar visualmente a extração, incluindo fuso, status do navio, múltiplas linhas de produto e revisão de layout. Se faltarem DUVs, preservar a camada de programação sem transformar Nº Prog em visita comprovada.
-- Paginar histórico operacional para mais de 200 edições por fonte, mantendo leitura temporal e limites de memória.
+- A paginação do histórico foi implementada e exercitada com 205 edições anteriores mais 1 nova; para operação superior a 2.000 edições por fonte/série, planejar armazenamento analítico com paginação de relatórios e redução incremental de memória, sem ignorar arquivos em silêncio.
 - Após direitos e amostras reais verificados, conduzir aceite shadow e aprovação humana antes de qualquer implantação, cron, serviço pago ou publicação.
 
 **Nunca inferir** volume embarcado, partida ou atracação com base somente no line-up. Mesmo com três documentos sintéticos distintos, release_allowed continua false.
