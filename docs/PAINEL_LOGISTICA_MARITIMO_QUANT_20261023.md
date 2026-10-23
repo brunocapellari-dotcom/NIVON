@@ -24,6 +24,28 @@ python scripts/rodar_painel_operacional.py \
   --as-of 2026-10-23T12:00:00Z
 ```
 
+Agora tambem ha uma **ponte executavel** sem pipeline paralelo:
+- `corredores_sqlite: {banco, recorte, competencia}` chama diretamente o
+  consultor MDF-e existente (alternativo a `corredores`);
+- `consultas_bigquery: [{project_id, dataset_id, fonte, inicio, fim, classe,
+  serie_id, limite}]` chama o leitor bitemporal NIVON existente.
+  Sem a flag abaixo, somente planeja/valida e devolve
+  `PLANO_SEM_REDE`. Respostas que atingem o limite de linhas sao
+  recusadas para a tendencia; resultados sem serie/classe declaradas
+  nunca sao automaticamente recategorizados.
+
+```bash
+# Mesmo comando; consultas reais somente com opt-in e IAM ADC/WIF.
+python scripts/rodar_painel_operacional.py \\
+  --entrada /diretorio/privado/pacote_com_consultas_bigquery.json \\
+  --as-of 2026-10-23T12:00:00Z --executar-bigquery
+```
+
+A flag faz consultas **somente leitura**, porem pode consumir bytes
+faturaveis no BigQuery. Usar exclusivamente destino privado ja
+configurado, limite no leitor existente e orcamento GCP aprovado.
+Ela nao cria dataset, tabela ou permissao.
+
 A estrutura de entrada é um JSON com três chaves opcionais:
 - `corredores`: saída íntegra de `consultar_corredores` (MDF-e; mesmo recorte);
 - `portos`: snapshots AIS por porto com MMSI deduplicado, validação de
