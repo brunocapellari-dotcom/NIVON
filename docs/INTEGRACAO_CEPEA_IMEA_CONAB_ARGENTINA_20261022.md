@@ -226,3 +226,34 @@ Proximas etapas (em blocos executáveis, não testes isolados):
 3. Conciliar os importadores CEPEA/IMEA com os direitos/cadências e o histórico do Drive como backfill, não como verdade de atualização.
 4. Em GCP real, validar IAM, criar a tabela stage de contrato 002 apenas se autorizada, executar carga pequena com limite de custo, verificar query MERGE e contar duplicatas/frescura; só depois automatizar cloud jobs.
 5. Diagnosticar falha pré-job da workflow GitHub `acessos-privados.yml`, que é independente da validação do núcleo.
+
+
+## Rodada de integracao — 23/10/2026: Catalogo, rotas e sanidade de CI
+
+**Lacuna real corrigida**: as primeiras versoes dos adaptadores argentinos nao tinham registros no catalogo mestre e no plano de rotas. O modulo de auditoria de prontidao e os proximos orquestradores usam o catalogo unico `config/fontes_nivon_master.v1.json`; sem essas entradas, SAGyP/SIO/DJVE seriam invisiveis na governanca.
+
+Quatro datasets argentinos agora constam de **ambos** os arquivos centrais:
+- `ARG_SAGYP_ESTIMACIONES_AGRICOLAS` → `SAGYP_AR`, P0, SAFRA, SEASONAL, `CODE_PRESENT`; portal de dados abertos sob CC BY 4.0 (verificar permissoes especificas), CKAN/CSV real nao confirmado.
+- `ARG_SIO_OPERACOES_DECLARADAS` → `SIO_GRANOS_AR`, P0, PRECOS, DAILY, `CODE_PRESENT`; janela de declaracao ate 180 dias, nunca tratar como entrega/embarque; contrato CSV/API ainda nao homologado.
+- `ARG_DJVE_DECLARACOES_EXPORTACAO` → `MAGYP_COMERCIAL_AR`, P0, COMEX, WEEKLY, `DISCOVERY_ONLY`; DJVE nao comprova volume embarcado. Comparar com aduana e conhecimento de embarque se disponiveis.
+- `ARG_MAGYP_COMPRAS_GRANOS` → `MAGYP_COMERCIAL_AR`, P1, BALANCO, WEEKLY, `DISCOVERY_ONLY`; compras declaradas nao comprovam entrega.
+
+As rotas `CEPEA_FISICO`, `IMEA_FISICO` e `CONAB_PROGRESSO_SEMANAL` passaram a apontar para os conectores implementados nas revisoes atuais. As fontes continuam desabilitadas no catalogo: `enabled=false`, `collection_authorized=false`, `commercial_redistribution_authorized=false`. Uma referencia a endpoint oficial NAO equivale a dados de produção.
+
+**Novo comando de operacao (local e sem rede):**
+```bash
+PYTHONPATH=src python -m nivon.agro_prontidao_fontes \
+  --banco /dados/privados/argentina.sqlite \
+  --banco /dados/privados/mercado.sqlite
+```
+O modulo `agro_prontidao_fontes.py` le o catalogo e os SQLite em modo `ro`, reporta quantidade de edicoes, ultimo timestamp de coleta LOCAL, possivel defasagem versus cadencia, estado da rota e proxima acao. Mantem `go_live_confirmado=false` mesmo quando o banco contem registros. O relatorio de saude tambem roda no workflow `Testes locais NIVON` sem rede (com lista vazia de bancos, portanto sem dados operacionais).
+
+**Falha previa do workflow privado investigada e corrigida**: `.github/workflows/acessos-privados.yml` referenciava `${{ runner.temp }}` em `jobs.validar-inmet.env`. O contexto `runner` nao esta disponivel nessa secao e leva a falha de validacao do YAML sem qualquer job iniciar. Foi movido para `steps.env`, que suporta esse contexto. A execucao em `push` deixa de gerar novo run com `conclusion=failure` apos a mudanca (workflow continua intencionalmente apenas manual no branch principal). **Nao representa comprovacao de acesso ANA, USDA ou INMET nem teste manual do workflow**.
+
+Fontes oficiais:
+- Dataset SAGyP: https://datos.magyp.gob.ar/dataset/estimaciones-agricolas (licenca CC BY 4.0 na descricao geral)
+- SIO: https://www.siogranos.com.ar/ (documentacao API publica em RAR)
+- DJVE: https://www.argentina.gob.ar/normativa/nacional/resoluci%C3%B3n-128-2019-331783/texto (registro declaratorio distinto de embarque)
+- Contextos GitHub Actions: https://docs.github.com/en/actions/reference/workflows-and-actions/contexts
+
+Nao houve execucao real de GET CKAN/CSV, import de XLSX oficial, BigQuery/GCS, schedulers ou alteracao de permissoes comerciais. Proximos passos: validar bytes reais autorizados, registrar primeiro snapshot com provenance, testar carga Cloud apenas apos IAM/custos/licencas homologados e habilitar incremento por fonte.
