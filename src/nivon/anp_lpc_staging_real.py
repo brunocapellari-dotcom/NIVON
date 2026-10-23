@@ -6,7 +6,7 @@ operador, preserva revisões e captura, sem postos individuais ou publicação.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from hashlib import sha256
 import json
@@ -136,6 +136,52 @@ def integrar_real_preliminar(
         "captura_nova": nova, "edicao_nova": existing is None,
         "raw_arquivado": raw_arquivado, "publicavel": False,
         "homologado": False, "fonte": "ANP_LEVANTAMENTO_PRECOS_COMBUSTIVEIS",
+    }
+
+
+
+def painel_qualidade_lpc(db: sqlite3.Connection, *, as_of: str) -> dict:
+    """Auditoria rápida do histórico preliminar, sem divulgar preços.
+
+    Toda revisão é preservada, e cobertura municipal varia entre semanas.
+    """
+    corte = _tempo(as_of, "as_of")
+    db.row_factory = sqlite3.Row
+    edicoes = db.execute("""
+        SELECT e.sha256,e.semana_inicio,e.semana_fim,e.qtd_observacoes,
+          e.raw_arquivado
+        FROM anp_lpc_staging_edicoes e
+        WHERE EXISTS (SELECT 1 FROM anp_lpc_staging_capturas c
+                      WHERE c.sha256=e.sha256 AND c.capturado_em<=?)
+        ORDER BY e.semana_fim DESC, e.sha256""", (corte.isoformat(),)).fetchall()
+    por_semana = {}
+    for ed in edicoes:
+        por_semana.setdefault(ed["semana_fim"], []).append(ed)
+    from datetime import date
+    dias = sorted(por_semana)
+    faltantes = []
+    for anterior, proxima in zip(dias, dias[1:]):
+        diff = (date.fromisoformat(proxima) -
+                date.fromisoformat(anterior)).days
+        if diff > 7 and diff % 7 == 0:
+            faltantes.extend(
+                (date.fromisoformat(anterior) +
+                 timedelta(days=k)).isoformat()
+                for k in range(7, diff, 7)
+            )
+    return {
+        "status": "STAGING_REAL_PRELIMINAR_SEM_HOMOLOGACAO",
+        "corte_as_of": corte.isoformat(),
+        "semanas_unicas": len(dias), "edicoes_distintas": len(edicoes),
+        "observacoes_por_edicao_somadas": sum(x["qtd_observacoes"] for x in edicoes),
+        "semanas_com_revisoes": sorted(
+            [week for week,values in por_semana.items() if len(values)>1]
+        ),
+        "semanas_faltantes_entre_extremos": faltantes,
+        "semana_mais_recente": dias[-1] if dias else None,
+        "edicoes_sem_raw_arquivado": sum(not x["raw_arquivado"] for x in edicoes),
+        "edicoes_homologadas": 0,
+        "publicavel": False, "preco_atual_homologado": False,
     }
 
 
