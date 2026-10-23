@@ -23,7 +23,7 @@ from .auditoria_extras import analisar_requisito, ErroDependencias
 REPO = "brunocapellari-dotcom/NIVON"
 PACKAGES = {"agrobr": "agro", "duckdb": "ivo-query",
             "river": "ivo-online", "mlforecast": "ivo-ml"}
-MAX_BYTES = 8 * 1024 * 1024
+MAX_BYTES = 24 * 1024 * 1024
 MAX_RESPONSE = 64 * 1024
 _SHA = re.compile(r"[a-f0-9]{64}\Z")
 _VERSION = re.compile(r"[A-Za-z0-9][A-Za-z0-9._+!-]{0,127}\Z")
