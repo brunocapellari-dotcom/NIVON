@@ -45,3 +45,5 @@ A execução autônoma acumula entregas em `autonomo/integracao` **local**, com 
 **Compatibilidade Claude OAuth:** o executor usa `--restricted --safe-mode`, não `--bare`, que não recupera a sessão de assinatura. O `doctor` rejeita credenciais de API potencialmente faturadas. Testes no Docker mantêm o checkout montado somente para leitura. Para testes Parquet adicionados na `main`, o ambiente isolado precisa da dependência PyArrow previamente instalada.
 
 **Dueto de desenvolvimento:** `bash scripts/nivon-autonomo.sh dueto` (estado local em JSON) e `bash scripts/nivon-autonomo.sh painel` (HTML privado, sem rede). [Procedimento de operação](docs/DUETO_DESENVOLVIMENTO_NIVON.md).
+
+Painel local opcional com atualização a cada 15 segundos e duração de até 120 minutos: `bash scripts/nivon-autonomo.sh painel-live`. Ele consulta só o SQLite, sem chamadas aos agentes e sem servidor.
