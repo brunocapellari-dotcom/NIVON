@@ -32,7 +32,8 @@ MODULOS=frozenset({
     "grade_meteorologica_store","chirps_v3_conservacao",
     "meteorologia_probabilistica","hidrograma_bacia","calibracao_cn_bacias",
     "modelos_fisicos","verificacao_probabilistica","analogos_historicos","unidades_mercado","inmet_horario_qc","confronto_climatico_qc","noaa_roni","auditoria_safra_preditiva","agregacao_pam_ibge","composicao_pam_sidra","ensemble_hidrologico_bacia",
-    "motor_tendencias","tendencias_mercados", "dinamica_tendencias", "qualidade_mercados"
+    "motor_tendencias","tendencias_mercados", "dinamica_tendencias", "qualidade_mercados",
+    "chuva_areal_ensemble"
 })
 
 

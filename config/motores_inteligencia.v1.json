@@ -482,7 +482,8 @@
         "nivon.hidrograma_bacia:hidrograma_evento_cn",
         "nivon.ensemble_hidrologico_bacia:cenario_ensemble_bacia",
         "nivon.motor_tendencias:tendencia_observada",
-        "nivon.motor_tendencias:tendencia_projetada"
+        "nivon.motor_tendencias:tendencia_projetada",
+        "nivon.chuva_areal_ensemble:agregar_ensemble_chuva_areal"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -724,7 +725,8 @@
         "nivon.meteorologia_probabilistica:crps_ensemble",
         "nivon.meteorologia_probabilistica:avaliar_ensemble",
         "nivon.motor_tendencias:tendencia_observada",
-        "nivon.motor_tendencias:tendencia_projetada"
+        "nivon.motor_tendencias:tendencia_projetada",
+        "nivon.chuva_areal_ensemble:agregar_ensemble_chuva_areal"
       ],
       "data_dependencies": [
         "INMET_ESTACOES",
@@ -739,7 +741,7 @@
         "NASA_GPM_IMERG",
         "NOAA_ENSO_RONI"
       ],
-      "indicators_planned": 19,
+      "indicators_planned": 21,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
       "inputs_reais_homologados": false,
       "previsao_homologada": false,
@@ -770,7 +772,8 @@
         "nivon.calibracao_cn_bacias:calibrar_cn_historico",
         "nivon.ensemble_hidrologico_bacia:cenario_ensemble_bacia",
         "nivon.motor_tendencias:tendencia_observada",
-        "nivon.motor_tendencias:tendencia_projetada"
+        "nivon.motor_tendencias:tendencia_projetada",
+        "nivon.chuva_areal_ensemble:agregar_ensemble_chuva_areal"
       ],
       "data_dependencies": [
         "ANA_HIDRO",
@@ -783,7 +786,7 @@
         "ERA5_LAND_CDS",
         "NASA_GPM_IMERG"
       ],
-      "indicators_planned": 25,
+      "indicators_planned": 27,
       "status": "CODE_TESTED_SYNTHETIC_ONLY",
       "inputs_reais_homologados": false,
       "previsao_homologada": false,
