@@ -18,6 +18,9 @@ from .pecuaria_sidra_arquivo import (
     recuperar_pacote_sidra_offline,
 )
 from .pecuaria_sidra_vintages import historico_sidra_asof
+from .pecuaria_sidra_metadados import (
+    analisar_contrato_metadados_sidra, confrontar_mapa_variaveis,
+)
 
 
 def executar_lote_sidra_offline(*, capturas, corte_asof, status_fonte,
@@ -59,6 +62,12 @@ def executar_lote_sidra_offline(*, capturas, corte_asof, status_fonte,
                               max_bytes=1_000_000, tabela=tabela)
         _conteudo(cap["bruto_valores"], tipo="valores",
                   max_bytes=4_000_000, tabela=tabela)
+        diagnostico = analisar_contrato_metadados_sidra(
+            bruto_metadados=cap["bruto_metadados"],
+            bruto_valores=cap["bruto_valores"],
+            especie=especie, tabela_sidra=tabela)
+        contrato_variaveis = confrontar_mapa_variaveis(
+            diagnostico=diagnostico, mapa=cap["variaveis"])
         snap = normalizar_snapshot_sidra_abate(
             cap["bruto_valores"], especie=especie, tabela_sidra=tabela,
             dimensoes=cap["dimensoes"], totais=cap["totais"],
@@ -75,7 +84,12 @@ def executar_lote_sidra_offline(*, capturas, corte_asof, status_fonte,
                           "ausentes_ou_inibidos": len(snap["linhas_indisponiveis"]),
                           "pares_incompletos": len(snap["pares_incompletos"]),
                           "sha256_valores": snap["origem_sha256"],
-                          "sha256_metadados": hash_meta}
+                          "sha256_metadados": hash_meta,
+                          "contrato_variaveis": contrato_variaveis,
+                          "variaveis_completas_nos_metadados":
+                              diagnostico["variaveis_completas"],
+                          "classificacoes_listadas":
+                              len(diagnostico["classificacoes_candidatas"])}
         capturas_validadas.append(cap)
         pacotes_persistencia.append({k: cap[k] for k in obrigatorios -
             {"dimensoes", "totais", "variaveis"}})
@@ -100,6 +114,11 @@ def executar_lote_sidra_offline(*, capturas, corte_asof, status_fonte,
                 raise DadoInvalido("divergencia na verificacao pos-gravacao")
     qualidade = {
         "n_capturas": len(capturas_validadas),
+        "n_contratos_variaveis_coerentes": sum(
+            d["contrato_variaveis"] == "CONSISTENTE_COM_METADADOS_NAO_HOMOLOGADOS"
+            for d in contagens.values()),
+        "n_contratos_variaveis_nao_verificaveis": sum(
+            not d["variaveis_completas_nos_metadados"] for d in contagens.values()),
         "n_especies": len(historicos),
         "registros_normalizados": sum(x["registros"] for x in contagens.values()),
         "linhas_inibidas_ou_indisponiveis": sum(
