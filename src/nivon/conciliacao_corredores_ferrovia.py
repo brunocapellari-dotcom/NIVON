@@ -211,3 +211,53 @@ def quadro_staging(pasta_ferro, banco_rodo, *, ano, competencia, recorte, limite
     f=analisar_staging(pasta_ferro,ano=ano,competencia=competencia,limite=limite)
     r=consultar_corredores(banco_rodo,recorte=recorte,competencia=competencia,limite=limite)
     return quadro_intermodal(f,r)
+
+
+def comparar_mes_contra_ano_anterior(anterior, atual):
+    """Mudança de TU embarcada por nome exato de polo, mesmo mês em anos adjacentes.
+
+    Sem volumes de rodovia e sem extrapolar se um polo não aparece na fonte.
+    """
+    a=anterior.get("competencia")
+    b=atual.get("competencia")
+    if (not isinstance(a,str) or not isinstance(b,str) or
+        not re.fullmatch(r"20\d\d-(0[1-9]|1[0-2])",a) or
+        not re.fullmatch(r"20\d\d-(0[1-9]|1[0-2])",b) or
+        a[5:]!=b[5:] or int(b[:4])-int(a[:4])!=1):
+        raise ErroConciliacao("comparação exige mesmo mês em anos consecutivos")
+    if anterior.get("uf_origem")!=atual.get("uf_origem"):
+        raise ErroConciliacao("UF de origem distinta")
+    def indexar(d):
+        x={}
+        for p in d.get("polos_ferroviarios",[]):
+            polo=p["polo"]["id"]
+            if polo in x:
+                raise ErroConciliacao("polo ferroviário repetido")
+            x[polo]=p
+        return x
+    x=indexar(anterior)
+    y=indexar(atual)
+    saida=[]
+    for id in sorted(set(x)|set(y)):
+        velho=x.get(id)
+        novo=y.get(id)
+        valor_a=_decimal(velho["toneladas_ferroviarias"]) if velho else None
+        valor_b=_decimal(novo["toneladas_ferroviarias"]) if novo else None
+        delta=valor_b-valor_a if valor_a is not None and valor_b is not None else None
+        pct=delta/valor_a*100 if valor_a is not None and valor_a>0 and valor_b is not None else None
+        saida.append({
+            "polo_id":id,
+            "tu_mes_anterior_ano":str(valor_a) if valor_a is not None else None,
+            "tu_mes_atual":str(valor_b) if valor_b is not None else None,
+            "variacao_absoluta_tu":str(delta) if delta is not None else None,
+            "variacao_percentual":format(pct.quantize(Decimal("0.01")),"f") if pct is not None else None,
+            "comparavel":delta is not None,
+            "estado":"COMPARAVEL_MESMO_MES_ESTACAO_NOME_EXATO" if delta is not None else "LACUNA_FONTE_NAO_ZERO",
+        })
+    return {
+        "estado":"COMPARACAO_ANUAL_FERROVIARIA_NAO_E_TRANSBORDO",
+        "anterior_competencia":a,"atual_competencia":b,
+        "uf_origem":atual["uf_origem"],
+        "polos":saida,
+        "nota":"Mesmo mês de anos consecutivos; diferenças podem incluir mudanças de estação/cadastro/revisão.",
+    }
