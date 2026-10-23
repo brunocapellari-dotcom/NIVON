@@ -5,6 +5,9 @@ Nenhum HTTP, GCP, custo ou autorização real. Referência CONAB é terceiro agr
 from __future__ import annotations
 
 import base64
+from contextlib import redirect_stdout
+from io import StringIO
+import json
 import hashlib
 import sqlite3
 import tempfile
@@ -17,7 +20,7 @@ from nivon.sincronizacao_incremental_argentina_local import (
 )
 from nivon.sincronizacao_incremental_conab_lab import sincronizar_incremental_lab
 from nivon.ponte_incremental_raw_gcs import (
-    ErroPonteRaw, estagiar_raw_incremental,
+    ErroPonteRaw, estagiar_raw_incremental, main,
 )
 from nivon.arquivo_raw_gcs import preparar_manifesto, arquivar_gcs
 from nivon.ingestao_fontes_reais import exportar_jsonl
@@ -236,6 +239,35 @@ class TestPonteR11GcsE2E(unittest.TestCase):
             db.execute("UPDATE snapshots SET dataset_id='FONTE_DESCONHECIDA'")
         with self.assertRaisesRegex(ErroPonteRaw, "não autorizado"):
             self.bridge(argentina=self.conf_ar(ar))
+
+    def test_cli_dryrun_e_estagio_no_mesmo_flx_sem_google(self):
+        self.add_arg("200")
+        ar,_=self.sync_arg()
+        manifesto=self.base/"argentina-manifesto.json"
+        manifesto.write_text(json.dumps(ar),encoding="utf-8")
+        args=[
+            "--stage-dir",str(self.base/"stage"),
+            "--stage-banco",str(self.stage),
+            "--argentina-manifesto",str(manifesto),
+            "--argentina-banco",str(self.argdb),
+            "--argentina-raw-dir",str(self.base/"ar_raw"),
+            "--bucket","nivon-raw-archive",
+        ]
+        out=StringIO()
+        with redirect_stdout(out):
+            self.assertEqual(main(args),0)
+        self.assertEqual(json.loads(out.getvalue())["estado"],
+                         "PONTE_RAW_DESABILITADA")
+        self.assertFalse(self.stage.exists())
+        out=StringIO()
+        with redirect_stdout(out):
+            self.assertEqual(main(args+[
+                "--executar","--direitos-arquivamento-verificados"
+            ]),0)
+        result=json.loads(out.getvalue())
+        self.assertEqual(result["quantidade"],1)
+        self.assertFalse(result["upload_gcs"])
+        self.assertEqual(result["manifesto_gcs"]["objetos"],1)
 
     def test_privacidade_da_pasta_stage(self):
         self.add_arg("200")
