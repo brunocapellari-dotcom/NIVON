@@ -26,6 +26,29 @@ jobs:
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.11'
+      - name: Diagnosticar links publicos da ultima edicao CONAB (somente metadados)
+        env:
+          PYTHONPATH: src
+        run: |
+          python - <<'PY'
+          from urllib.parse import urljoin,urlsplit
+          from nivon.conab_indice_progresso import consultar_indice
+          from nivon.conab_sync_metadados import consultar_pagina_semana
+          from nivon.conab_fila_publicacoes import _Links,examinar_pagina_semana,_recurso_oficial
+          idx=consultar_indice(executar=True)
+          print('Indice_edicoes',len(idx['edicoes_candidatas']))
+          first=idx['edicoes_candidatas'][0]
+          print('Edicao_URL',first['pagina_oficial'])
+          raw=consultar_pagina_semana(first['pagina_oficial'],executar=True,direitos_consulta=True)
+          parser=_Links();parser.feed(raw.decode('utf-8-sig'))
+          print('Edicao_links',len(parser.links))
+          matches=[(h,t) for h,t in parser.links if 'plantio' in t.casefold() or 'colheita' in t.casefold()]
+          print('Links_plantio',len(matches))
+          for h,t in matches[:8]:
+              u=urljoin(first['pagina_oficial'].rstrip('/')+'/',h or '')
+              print('Rotulo',repr(t[:100]),'href_path',repr(urlsplit(u).path),'aceito',_recurso_oficial(u,first['pagina_oficial']))
+          print('Candidatos_extraidos',len(examinar_pagina_semana(raw,pagina_url=first['pagina_oficial'])['recursos']))
+          PY
       - name: Coletar UMA edicao oficial e inspecionar RAW sem upload
         env:
           PYTHONPATH: src
