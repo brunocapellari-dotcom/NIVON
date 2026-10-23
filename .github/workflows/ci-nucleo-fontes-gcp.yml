@@ -8,6 +8,8 @@ on:
       - 'src/nivon/agro_staging_bigquery.py'
       - 'sql/bigquery/003_agro_publicacoes_staging.sql'
       - 'tests/test_agro_staging_bigquery.py'
+      - 'tests/test_agro_stage_replay_gcs.py'
+      - 'scripts/replay_agro_staging_gcp.py'
       - 'tests/test_bootstrap_agro_staging_gcp.py'
       - 'scripts/bootstrap_agro_staging_gcp.py'
       - '.github/workflows/bootstrap-agro-staging-gcp.yml'
@@ -76,6 +78,7 @@ jobs:
             test_lote_cloud_recuperavel.py \
             test_agro_origem_gcp.py \
             test_agro_staging_bigquery.py \
+            test_agro_stage_replay_gcs.py \
             test_bootstrap_agro_staging_gcp.py \
             test_agro_incremental_pipeline.py \
             test_cepea_web_primario.py \
