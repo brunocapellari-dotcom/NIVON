@@ -56,6 +56,14 @@ def _gravar_objeto(bucket, *, chave: str, sha: str, tipo: str,
         metadata=blob.metadata or {}
         if metadata.get("sha256") != sha:
             raise ErroGCSANP(f"colisão de objeto ou conteúdo sem hash de proveniência: {chave}")
+        # Verifica o CONTEÚDO remoto, não apenas metadata editável.
+        # Limita a leitura: um objeto inesperadamente grande falha fechado.
+        if getattr(blob, "size", 0) is not None and getattr(blob, "size", 0)>64_000_000:
+            raise ErroGCSANP("objeto remoto excede limite operacional")
+        remote=blob.download_as_bytes(start=0,end=64_000_000)
+        if (not isinstance(remote, bytes) or len(remote)>64_000_000
+                or sha256(remote).hexdigest()!=sha):
+            raise ErroGCSANP("objeto remoto existente não passa na verificação de SHA")
         return False
     blob.metadata={
         "sha256":sha,
