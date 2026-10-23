@@ -112,7 +112,7 @@ class RGI2025GCP(unittest.TestCase):
         self.assertEqual(a["estado"],"ANTT_RGI_TOP16_2025_CONCILIADO")
         self.assertEqual(b["bq_estado"],"SEM_MUDANCA")
         self.assertEqual(len(storage),2)
-        self.assertTrue(all(x["maximum_bytes_billed"]<=60_000_000 for _,x in bq.queries))
+        self.assertTrue(all(x.maximum_bytes_billed<=60_000_000 for _,x in bq.queries))
         self.assertFalse(a["somar_com_ferrovia_ou_hidrovia"])
 
     def test_preexistente_parcial_bloqueia(self):
