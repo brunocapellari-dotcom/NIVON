@@ -6,7 +6,12 @@ from __future__ import annotations
 import json
 import time
 
-from nivon.coletores_dados_reais import _get
+from nivon.coletores_dados_reais import _get, _SemRedirect
+from urllib.request import build_opener
+
+class ClienteCurto:
+    def open(self,req,timeout=None):
+        return build_opener(_SemRedirect()).open(req,timeout=10)
 from nivon.coletores_agro_ibge_wdi import plano_ibge_pam
 
 
@@ -19,7 +24,7 @@ def main():
     for label,url in urls:
         start=time.monotonic()
         try:
-            b,_=_get(url,max_bytes=900000,tipos={"application/json","text/json"})
+            b,_=_get(url,cliente=ClienteCurto(),max_bytes=900000,tipos={"application/json","text/json"})
             doc=json.loads(b)
             first=doc[0] if isinstance(doc,list) and doc else {}
             out.append({"endpoint":label,"http":"SUCESSO","bytes":len(b),
