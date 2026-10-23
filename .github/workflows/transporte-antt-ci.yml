@@ -1,7 +1,7 @@
 name: NIVON — CI transporte ANTT e ANTAQ
 on:
   push:
-    branches: [feature/transporte-antt-antaq-20261022]
+    branches: [feature/transporte-antt-antaq-20261022, fix/antt-ckan-retry-20261023]
   workflow_dispatch:
 
 permissions:
