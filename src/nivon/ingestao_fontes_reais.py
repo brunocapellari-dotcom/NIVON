@@ -97,7 +97,14 @@ def gravar_lote(*, banco, diretorio_bruto, dataset_id, origem, raw, tipo,
     coletado_em = _utc(coletado_em)
     if not isinstance(raw, bytes) or not 1 <= len(raw) <= _MAX_BYTES:
         raise ErroIngestao("raw vazio ou limite excedido")
-    if not isinstance(origem, str) or not origem.startswith("https://") or any(x in origem for x in ("@", "#")):
+    # OData oficial do BCB usa @parametro no QUERY; negar @ na URL inteira
+    # rejeitava PTAX. Credenciais embutidas no authority continuam proibidas.
+    from urllib.parse import urlsplit
+    if not isinstance(origem, str) or len(origem) > 1800:
+        raise ErroIngestao("origem insegura")
+    uri=urlsplit(origem)
+    if (uri.scheme!="https" or not uri.hostname or uri.username or uri.password
+            or uri.fragment or uri.port not in (None,443)):
         raise ErroIngestao("origem insegura")
     if estado not in ("RAW_RECEIVED", "NORMALIZED", "QUARANTINED"):
         raise ErroIngestao("estado invalido")
