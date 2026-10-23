@@ -224,15 +224,15 @@ jobs:
             -e OPENBLAS_NUM_THREADS=1 -e OMP_NUM_THREADS=1 \
             --entrypoint /usr/local/bin/python nivon-analytics:distroless \
             -c '
-import importlib,re,sys
-for name in ("ssl","sqlite3","bz2","lzma","ctypes","numpy","pandas","scipy","numba","statsforecast","agrobr"):
-    try:
-        importlib.import_module(name)
-    except Exception as exc:
-        soname=re.findall(r"[A-Za-z0-9_.+-]+[.]so(?:[.][0-9]+)*",str(exc))
-        print("NIVON_DISTROLESS_IMPORT_BLOCKED",name,type(exc).__name__,soname[-1] if soname else "undetermined")
-        sys.exit(4)
-print("NIVON_DISTROLESS_IMPORTS_OK")
+          import importlib,re,sys
+          for name in ("ssl","sqlite3","bz2","lzma","ctypes","numpy","pandas","scipy","numba","statsforecast","agrobr"):
+              try:
+                  importlib.import_module(name)
+              except Exception as exc:
+                  soname=re.findall(r"[A-Za-z0-9_.+-]+[.]so(?:[.][0-9]+)*",str(exc))
+                  print("NIVON_DISTROLESS_IMPORT_BLOCKED",name,type(exc).__name__,soname[-1] if soname else "undetermined")
+                  sys.exit(4)
+          print("NIVON_DISTROLESS_IMPORTS_OK")
 '
           docker run --rm --platform "$PLATFORM" --network none --read-only \
             --cap-drop ALL --security-opt no-new-privileges:true --user 65532:65532 \
