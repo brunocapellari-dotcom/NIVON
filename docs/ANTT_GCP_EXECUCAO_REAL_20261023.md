@@ -41,8 +41,8 @@
 
 **É comprovado:** acesso GitHub OIDC, GCS, tabela BigQuery, persistência e conciliação de 2026 e primeira view analítica.
 
-**Não está comprovado nesta etapa:** histórico 2006–2025 gravado em BigQuery, atualização recorrente em produção, volumes rodoviários MDF-e completos, conciliação com ANTAQ, transbordos físicos, fretes pagos ou comércio individual.
+**Atualização verificada em 23/10/2026:** o histórico ferroviário 2006–2025 foi efetivamente gravado no BigQuery e GCS, com 21 anos auditados até agosto de 2026. Ver docs/ANTT_21_ANOS_GCP_CORREDORES_20261023.md e https://github.com/brunocapellari-dotcom/NIVON/actions/runs/40001461762. **Ainda não comprovado:** atualização recorrente em produção, MDF-e rodoviário completo, ANTAQ integrada, transbordos físicos, fretes negociados ou comércio individual.
 
 O workflow recorrente da ANTT para Google Cloud permanece **bloqueado pelas variáveis independentes de aprovação**, para não iniciar gastos automáticos não delimitados. A operação do piloto não alterou esses gates. Custos reais devem ser acompanhados pelo faturamento GCP; resultados não significam custo zero.
 
-Próxima prioridade: aprovar limites de custo da operação recorrente e realizar backfill histórico particionado; depois cruzar ferroviário com rodoviário, ANTAQ e cadastros de terminais, sem dupla contagem.
+Próxima prioridade: auditar orçamento/faturamento, configurar a rotina incremental com limites aprovados e cruzar ferroviário com rodoviário, ANTAQ e cadastros de terminais, sem dupla contagem.
