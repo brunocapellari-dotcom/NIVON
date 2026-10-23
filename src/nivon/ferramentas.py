@@ -26,14 +26,31 @@ def call(args):
 def doctor(image=None):
     found = {tool: bool(shutil.which(tool)) for tool in REQUIRED + OPTIONAL}
     flags = {}
+    claude_version = None
+    flag_validation = {"claude": "missing", "codex": "missing"}
     if found["claude"]:
+        version = call(["claude", "--version"])
+        raw = (version.stdout or "") if version and version.returncode == 0 else ""
+        version_match = re.search(r"\\b(\\d+)\\.(\\d+)\\.(\\d+)\\b", raw)
+        if version_match:
+            claude_version = tuple(map(int, version_match.groups()))
         run = call(["claude", "--help"])
         desc = ((run.stdout or "") + "\n" + (run.stderr or "")) if run else ""
-        flags["claude"] = {flag: flag in desc for flag in CLAUDE_FLAGS}
+        # O manual oficial informa que --help não lista todas as flags.
+        # Claude >=2.1.259 contém as flags versionadas mais recentes aqui usadas
+        # (--permission-prompts e --restricted); smoke real ainda é obrigatório.
+        version_supported = claude_version is not None and claude_version >= (2, 1, 259)
+        flags["claude"] = {flag: (flag in desc or version_supported)
+                           for flag in CLAUDE_FLAGS}
+        flag_validation["claude"] = ("version_and_documentation" if version_supported
+                                      else "help_only")
     if found["codex"]:
-        run = call(["codex", "exec", "--help"])
-        desc = ((run.stdout or "") + "\n" + (run.stderr or "")) if run else ""
+        exec_help = call(["codex", "exec", "--help"])
+        global_help = call(["codex", "--help"])
+        desc = "".join((("\n" + p.stdout + p.stderr) if p else "")
+                       for p in (exec_help, global_help))
         flags["codex"] = {flag: flag in desc for flag in CODEX_FLAGS}
+        flag_validation["codex"] = "global_and_exec_help"
     # Login de assinatura: sem ligar contas/API com cobrança automática.
     # O doctor nunca publica tokens ou a resposta completa de auth.
     authentication = {"claude": "unknown", "codex": "unknown"}
@@ -74,6 +91,8 @@ def doctor(image=None):
         "required": {k: found[k] for k in REQUIRED},
         "optional": {k: found[k] for k in OPTIONAL},
         "supported_flags": flags,
+        "flag_validation": flag_validation,
+        "claude_version": ".".join(map(str, claude_version)) if claude_version else None,
         "authentication": authentication,
         "docker_image_local": local_image,
         "docker_image_name": image,
