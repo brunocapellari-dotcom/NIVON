@@ -31,6 +31,7 @@ from test_fretes_previsoes_arquivadas import (
     BASE, KEY, SOURCE, PARAMS, CUTOFF, historico,
 )
 from test_fretes_ofertas_store import evidencias
+from test_fretes_recibos_gcs_contrato import BucketFalso
 
 RECIBO_KEY=b"only-fixture-independent-receipt-key-20261023"
 RECIBO_EMISSOR="fixture-anchor-signer"
@@ -209,6 +210,43 @@ class TestCicloShadowComRecibo(unittest.TestCase):
         )
         with self.assertRaisesRegex(ErroCicloShadowFrete,"posteriores"):
             self.ciclo(cabeca_ofertas_esperada=nova["cabeca_sha256"])
+
+    def test_gcs_desligado_nao_chama_bucket(self):
+        bucket=BucketFalso()
+        r=self.ciclo(bucket_recibo_gcs=bucket)
+        self.assertFalse(r["gcs_upload_executado"])
+        self.assertFalse(bucket.uploads)
+        self.assertTrue(r["recibo_local_emitido"])
+
+    def test_ciclo_com_gcs_optin_chave_e_readback_exatos(self):
+        bucket=BucketFalso()
+        r=self.ciclo(
+            bucket_recibo_gcs=bucket,autorizar_escrita_gcs=True,
+        )
+        self.assertEqual(r["status"],"SHADOW_LEDGER_GCS_READBACK_CONFERIDO")
+        self.assertEqual(r["previsoes_gravadas"],3)
+        self.assertEqual(r["gcs_generation"],1)
+        self.assertTrue(r["gcs_upload_executado"])
+        self.assertEqual(bucket.uploads[0]["if_generation_match"],0)
+        self.assertFalse(r["retencao_worm_comprovada"])
+        self.assertFalse(r["timestamp_independente_comprovado"])
+        self.assertFalse(r["publicavel"])
+
+    def test_gcs_readback_falhou_ledger_local_continua_integro(self):
+        bucket=BucketFalso()
+        bucket.forcar_divergencia=True
+        r=self.ciclo(
+            bucket_recibo_gcs=bucket,autorizar_escrita_gcs=True,
+        )
+        self.assertEqual(r["status"],"SHADOW_LEDGER_GRAVADO_GCS_NAO_CONFIRMADO")
+        self.assertTrue(r["recuperacao_gcs_necessaria"])
+        self.assertTrue(r["recibo_local_emitido"])
+        self.assertFalse(r["gcs_upload_executado"])
+        ledger=verificar_ledger_frete(
+            self.db,cabeca_esperada_sha256=r["previsoes_cabeca_sha256"],
+            chave_verificacao=KEY,emissor_esperado="fixture-archive",
+        )
+        self.assertEqual(ledger["quantidade"],3)
 
     def test_recibo_local_nao_e_preditivo_ou_worm(self):
         r=self.ciclo()
