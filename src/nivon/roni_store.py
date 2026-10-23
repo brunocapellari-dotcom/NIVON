@@ -300,3 +300,64 @@ def panorama_local_roni(db, *, raw_dir, classe="SINTETICO"):
         "historico_retrospectivo_nao_point_in_time": True,
         "homologado": False, "pode_ativar_coleta": False,
     }
+
+
+def auditar_acervo_roni(db, *, raw_dir):
+    """Reabre todos os RAWs e verifica SHA, parser, DB e integridade relacional.
+
+    Resultado de integridade técnica, NÃO homologação de licença/vintage.
+    Usável após backup/restore da pasta RAW + banco SQLite. Zero HTTP.
+    """
+    if db.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
+        raise ErroRONI("SQLite falhou na verificação de integridade")
+    if db.execute("PRAGMA foreign_key_check").fetchall():
+        raise ErroRONI("SQLite contém vínculos quebrados")
+    rows = db.execute(
+        "SELECT * FROM roni_snapshots ORDER BY visto_nivon_em_utc,sha256"
+    ).fetchall()
+    if not rows:
+        return {"estado": "ACERVO_VAZIO", "snapshots_auditados": 0,
+                "homologado": False}
+    root = _safe_dir(raw_dir, criar=False)
+    refs = set()
+    total = 0
+    for row in rows:
+        path = _guard_raw(root, row["sha256"])
+        refs.add(path.name)
+        raw = path.read_bytes()
+        parsed = importar_roni_ascii(
+            raw=raw, coletado_em=row["capturado_em_utc"])
+        if (parsed["sha256"] != row["sha256"] or
+            parsed["quantidade"] != row["quantidade"] or
+            parsed["centro_primeiro"] != row["primeiro_mes"] or
+            parsed["centro_ultimo"] != row["ultimo_mes"]):
+            raise ErroRONI("índice SQLite não coincide com arquivo RONI bruto")
+        entries = db.execute(
+            "SELECT competencia,temporada,anomalia FROM roni_valores "
+            "WHERE sha256=? ORDER BY competencia", (row["sha256"],)
+        ).fetchall()
+        if len(entries) != parsed["quantidade"]:
+            raise ErroRONI("número de observações diverge do snapshot")
+        for stored, original in zip(entries, parsed["registros"]):
+            if (stored["competencia"] != original["competencia_centro"] or
+                stored["temporada"] != original["temporada"] or
+                stored["anomalia"] != original["anomalia_roni_c"]):
+                raise ErroRONI("valor RONI normalizado diverge dos bytes RAW")
+        total += len(entries)
+    extra = {x.name for x in root.glob("*.ascii")} - refs
+    if extra:
+        raise ErroRONI("arquivos RAW não indexados precisam de reconciliação")
+    captures = db.execute("SELECT COUNT(*) FROM roni_capturas").fetchone()[0]
+    return {
+        "estado": "ACERVO_LOCAL_INTEGRO_NAO_HOMOLOGADO",
+        "snapshots_auditados": len(rows),
+        "registros_validados": total,
+        "capturas_auditadas": captures,
+        "arquivos_raw_conferidos": len(refs),
+        "integridade_sqlite": True,
+        "integridade_sha256": True,
+        "consistencia_indices": True,
+        "direitos_auditados": False,
+        "vintage_historico_externo_auditado": False,
+        "homologado": False,
+    }
