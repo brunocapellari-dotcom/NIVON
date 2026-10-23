@@ -117,8 +117,8 @@ class DataRealTest(unittest.TestCase):
         self.assertEqual(obs[0]["natureza"],"INFORMADO")
 
     def test_ccee_parser_preco_hora_e_falhas(self):
-        raw=("MES_REFERENCIA;SUBMERCADO;PERIODO_COMERCIALIZACAO;DIA;HORA;PLD_HORA\\n"
-             "202610;NORDESTE;529;23;0;57.31\\n").encode()
+        raw=("MES_REFERENCIA;SUBMERCADO;PERIODO_COMERCIALIZACAO;DIA;HORA;PLD_HORA\n"
+             "202610;NORDESTE;529;23;0;57.31\n").encode()
         o=normalizar_ccee_pld(raw)
         self.assertEqual(len(o),1)
         self.assertEqual(o[0]["referencia"],"2026-10-23")
@@ -137,7 +137,7 @@ class DataRealTest(unittest.TestCase):
             "resources":[{"id":recurso,"format":"CSV","url":uri,"name":"PLD 2026"}]}}
         self.assertEqual(_recurso_ccee(_parse_ckan(json.dumps(meta).encode())[1],recurso),uri)
         fake=Fake({CCEE_PACKAGE:Resp(CCEE_PACKAGE,json.dumps(meta).encode(),"application/json"),
-                   uri:Resp(uri,b"MES_REFERENCIA;SUBMERCADO;PERIODO_COMERCIALIZACAO;DIA;HORA;PLD_HORA\\n202610;NORDESTE;529;23;0;57.31\\n","text/csv")})
+                   uri:Resp(uri,b"MES_REFERENCIA;SUBMERCADO;PERIODO_COMERCIALIZACAO;DIA;HORA;PLD_HORA\n202610;NORDESTE;529;23;0;57.31\n","text/csv")})
         out=executar_coleta(fonte="BR_CCEE_PLD",banco=self.db,
                     raw_dir=self.raw,executar=True,recurso_id=recurso,
                     cliente=fake,instante=T)
