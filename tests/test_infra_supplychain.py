@@ -23,6 +23,7 @@ def fixtures():
     }
     bom = {
         "bomFormat": "CycloneDX", "specVersion": "1.6",
+        "metadata": {"component": {"type": "container", "name": IMAGE}},
         "components": [{"name": "python"}, {"name": "debian"}],
     }
     return scan, bom
@@ -64,6 +65,17 @@ class TestSupplyChain(unittest.TestCase):
                 avaliar_relatorios(z, b, imagem=IMAGE)
         with self.assertRaises(ErroSupplyChain):
             avaliar_relatorios(s, b, imagem="other:ci")
+
+    def test_sbom_outro_artefato_nao_homologa_imagem(self):
+        scan, bom = fixtures()
+        bom["metadata"]["component"]["name"] = "outro-worker:ci"
+        with self.assertRaisesRegex(ErroSupplyChain, "mesma imagem"):
+            avaliar_relatorios(scan, bom, imagem=IMAGE)
+
+    def test_arquivo_de_inventario_dispara_pipeline(self):
+        raw = WF.read_text(encoding="utf-8")
+        self.assertIn("'infra/inventory.v1.json'", raw)
+        self.assertIn("'infra/docker/**'", raw)
 
     def test_sbom_ausente_falha(self):
         s, b = fixtures()
