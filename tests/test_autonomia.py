@@ -66,6 +66,7 @@ class TestAutonomia(unittest.TestCase):
                  patch.object(autonomia, "default_db", return_value=dbpath), \
                  patch.object(autonomia, "HOME", Path(tmp)), \
                  patch.object(autonomia, "refresh_plan", return_value={"added": 0}), \
+                 patch.object(autonomia, "prepare_integration", return_value=Path(tmp)/"integration"), \
                  patch.object(autonomia, "get_issues", return_value=([], None)), \
                  patch.object(autonomia, "do_task", side_effect=lambda agent,task,**kwargs:
                               ("done", f"{agent}: local fake")):
@@ -88,6 +89,7 @@ class TestAutonomia(unittest.TestCase):
                  patch.object(autonomia, "default_db", return_value=dbpath), \
                  patch.object(autonomia, "HOME", Path(tmp)), \
                  patch.object(autonomia, "refresh_plan", return_value={"added": 0}), \
+                 patch.object(autonomia, "prepare_integration", return_value=Path(tmp)/"integration"), \
                  patch.object(autonomia, "get_issues", return_value=([], None)), \
                  patch.object(autonomia, "do_task", side_effect=fake):
                 result = autonomia.run(max_tasks=2, minutes=2, per_task=2)
@@ -109,6 +111,16 @@ class TestAutonomia(unittest.TestCase):
             self.assertEqual(autonomia.usage_from_log(logfile), (330, 44))
             logfile.write_text("texto sem métricas", encoding="utf-8")
             self.assertEqual(autonomia.usage_from_log(logfile), (None, None))
+
+    def test_prepare_integration_fail_closed_on_unexpected_branch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            location = Path(tmp) / "integration"
+            location.mkdir()
+            with patch.object(autonomia, "HOME", Path(tmp)), \
+                 patch.object(autonomia, "command",
+                              return_value=subprocess.CompletedProcess([], 0, "main\n", "")):
+                with self.assertRaisesRegex(RuntimeError, "inválida"):
+                    autonomia.prepare_integration()
 
     def test_supervisor_lock_blocks_parallel_processes(self):
         with tempfile.TemporaryDirectory() as tmp:
