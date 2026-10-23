@@ -95,20 +95,25 @@ def _numero(valor: str) -> Decimal:
 
 
 def _competencia(valor: str, ano: int) -> str:
+    """SIADE documenta MM_AA; aceitar tambem variacoes ISO se houver."""
     v = valor.strip()
-    m = (re.fullmatch(r"(20\d\d)[-/](0?[1-9]|1[0-2])", v)
-         or re.fullmatch(r"(20\d\d)(0[1-9]|1[0-2])", v))
+    m = re.fullmatch(r"(20\\d{2})[-/](0?[1-9]|1[0-2])", v)
     if m:
         y, mes = int(m[1]), int(m[2])
     else:
-        m = re.fullmatch(r"(0?[1-9]|1[0-2])[-/](20\d\d)", v)
-        if not m:
-            raise ErroTransporte("Mes_Ano nao reconhecido; validar o arquivo real")
-        mes, y = int(m[1]), int(m[2])
+        m = re.fullmatch(r"(20\\d{2})(0[1-9]|1[0-2])", v)
+        if m:
+            y, mes = int(m[1]), int(m[2])
+        else:
+            m = re.fullmatch(r"(0?[1-9]|1[0-2])[-/_](20\\d{2}|\\d{2})", v)
+            if not m:
+                raise ErroTransporte("Mes_Ano nao reconhecido; validar arquivo real")
+            mes, y = int(m[1]), int(m[2])
+            if y < 100:
+                y += 2000
     if y != ano:
         raise ErroTransporte("competencia fora do ano declarado")
     return f"{y:04d}-{mes:02d}"
-
 
 def interpretar_csv_antt(raw: bytes, *, ano: int, coleta_utc: str) -> tuple[list[dict], MetadadosFonte]:
     """Importa CSV anual OD; teste LIVE + conciliacao antes de publicar."""
