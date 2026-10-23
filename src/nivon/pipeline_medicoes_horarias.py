@@ -230,7 +230,7 @@ def importar_ciclo_medicoes(db, *, raw_dir, edicoes):
                     raise ErroPipelineAmbiental("capturas conflitantes de estação no mesmo instante")
                 archive = _raw(folder,sha,data=item["raw"])
                 if existing is None:
-                    db.execute("INSERT INTO medidas_edicoes VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                    db.execute("INSERT INTO medidas_edicoes VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                         (sha,dataset,item["formato"],station,item["ano"],item["zona"],
                          item["classe"],item["fonte_coletado_utc"],when,
                          None,archive.name,len(item["registros"]),"NAO_HOMOLOGADO"))
