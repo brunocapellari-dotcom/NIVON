@@ -42,6 +42,10 @@ jobs:
         env:
           PYTHONPATH: src
         run: python scripts/ensaio_fretes_semantica_raw.py
+      - name: Validar quarentena PTAX e preparar objetos GCS sem rede
+        env:
+          PYTHONPATH: src
+        run: python scripts/ensaio_quarentena_ptax_gcs.py
       - name: Conferir catálogo mestre e cobertura de indicadores
         env:
           PYTHONPATH: src
