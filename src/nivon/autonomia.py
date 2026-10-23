@@ -100,7 +100,8 @@ def prompt(task):
 def cli(agent, task):
     instruction = prompt(task)
     if agent == "claude":
-        return ["claude", "-p", "--restricted", "--permission-mode", "acceptEdits",
+        return ["claude", "-p", "--restricted", "--bare", "--no-session-persistence",
+                "--permission-mode", "acceptEdits",
                 "--permission-prompts", "none", "--tools", "Read,Edit,Write,Grep,Glob",
                 "--disallowedTools", "mcp__*", "--max-turns", "8",
                 "--output-format", "json", instruction]
