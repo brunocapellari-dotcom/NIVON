@@ -22,8 +22,9 @@ class ErroStageAgro(ValueError):
 
 
 _FIELDS=('source_id','dataset_id','indicador_id','pais','produto','safra',
-         'regiao','competencia','unidade','valor','data_publicacao_original',
-         'data_declaracao','coletado_utc','source_sha256','hash_natureza','classe',
+         'regiao','competencia','data_referencia','unidade','valor',
+         'data_publicacao_original','data_publicacao','data_declaracao',
+         'coletado_utc','data_coleta','source_sha256','hash_natureza','classe',
          'qualidade','nivel_agregacao','status')
 
 
@@ -51,6 +52,12 @@ def _utc(v):
 
 def _r(**kw):
     kw={'status':'QUARENTENA_NAO_PUBLICAVEL','data_declaracao':None,**kw}
+    # Quatro dimensoes temporais canonicas obrigatorias do NIVON:
+    # data_referencia, data_publicacao, data_coleta e competencia.
+    # Nunca inventar data de publicacao ausente; conservar o campo RAW.
+    kw.setdefault('data_referencia',kw.get('competencia'))
+    kw.setdefault('data_publicacao',kw.get('data_publicacao_original'))
+    kw.setdefault('data_coleta',kw.get('coletado_utc'))
     if set(kw)!=set(_FIELDS):
         raise ErroStageAgro('schema stage divergente')
     if kw['status']!='QUARENTENA_NAO_PUBLICAVEL':
@@ -58,6 +65,9 @@ def _r(**kw):
     if not isinstance(kw['source_sha256'],str) or len(kw['source_sha256'])!=64:
         raise ErroStageAgro('hash da fonte ausente')
     kw['coletado_utc']=_utc(kw['coletado_utc'])
+    kw['data_coleta']=_utc(kw['data_coleta'])
+    if kw['data_coleta']!=kw['coletado_utc']:
+        raise ErroStageAgro('datas de coleta divergentes no contrato')
     kw['valor']=_n(kw['valor'])
     return kw
 
