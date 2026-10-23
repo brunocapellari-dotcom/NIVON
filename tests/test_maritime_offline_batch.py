@@ -138,6 +138,44 @@ class OfflineMaritimeBatchTests(unittest.TestCase):
                 port_id="PARANAGUA", source_id="OFFICIAL_PARANAGUA_TEST",
                 series="EXPORT_OESTE", read_authorized=True), 1)
 
+    def test_historical_read_failure_before_commit_leaves_ledger_empty(self):
+        item = input_doc()
+        with MaritimeStore() as store:
+            with patch("nivon.maritime.offline_pdf_batch.PdfProgrammeLedger.history_asof",
+                       side_effect=ValueError("historical scan unavailable")):
+                with self.assertRaisesRegex(ValueError, "historical scan unavailable"):
+                    run(store, [item], [programmed()], commit=True)
+            self.assertEqual(PdfProgrammeLedger(store).count_editions(
+                port_id="PARANAGUA", source_id="OFFICIAL_PARANAGUA_TEST",
+                series="EXPORT_OESTE", read_authorized=True), 0)
+
+    def test_revision_report_error_before_commit_leaves_ledger_empty(self):
+        first = input_doc()
+        second = input_doc(collected="2026-10-20T16:00:00Z",
+                           published="2026-10-20T15:00:00Z", seed=b"B")
+        with MaritimeStore() as store:
+            with patch("nivon.maritime.offline_pdf_batch.compare_pdf_programme_editions",
+                       side_effect=ValueError("synthetic revision failure")):
+                with self.assertRaisesRegex(ValueError, "synthetic revision failure"):
+                    run(store, [first, second], [programmed(), programmed()], commit=True)
+            self.assertEqual(PdfProgrammeLedger(store).count_editions(
+                port_id="PARANAGUA", source_id="OFFICIAL_PARANAGUA_TEST",
+                series="EXPORT_OESTE", read_authorized=True), 0)
+
+    def test_dryrun_revision_report_matches_committed_revision_report(self):
+        first = input_doc()
+        second = input_doc(collected="2026-10-20T16:00:00Z",
+                           published="2026-10-20T15:00:00Z", seed=b"B")
+        with MaritimeStore() as store:
+            proposed = run(store, [first, second], [
+                programmed(), programmed(eta="21/10/2026 13:00")
+            ], commit=False)
+            actual = run(store, [first, second], [
+                programmed(), programmed(eta="21/10/2026 13:00")
+            ], commit=True)
+            self.assertEqual(proposed["revisions"], actual["revisions"])
+            self.assertEqual(actual["edition_writes"]["inserted"], 2)
+
     def test_mixed_ports_do_not_cross_reconcile(self):
         west = input_doc()
         itaqui_doc = input_doc(port="ITAQUI", seed=b"I")
