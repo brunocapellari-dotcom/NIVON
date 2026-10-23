@@ -10,7 +10,7 @@ import subprocess
 import sys
 
 REQUIRED = ("git", "claude", "codex", "docker")
-OPTIONAL = ("gh", "ruff", "rg", "ast-grep", "serena", "codebase-memory-mcp", "rtk", "uv")
+OPTIONAL = ("gh", "ruff", "ty", "rg", "ast-grep", "sg", "serena", "codebase-memory-mcp", "rtk", "uv", "gitleaks", "semgrep", "osv-scanner", "ollama", "pytest")
 CLAUDE_FLAGS = ("--restricted", "--permission-prompts", "--tools")
 CODEX_FLAGS = ("--sandbox", "--json")
 
@@ -49,7 +49,9 @@ def doctor():
             all(found[x] for x in REQUIRED) and image_ok and local_image
             and all(all(v.values()) for v in flags.values())
         ),
-        "limits": "Não verifica login, franquia da assinatura, isolamento real do host ou cobrança.",
+        "local_model_option": ("ollama_available_manual_configuration"
+                                if found.get("ollama") else "ollama_not_installed"),
+        "limits": "Não verifica login, franquia da assinatura, VRAM/RAM, licenças de modelos, isolamento real do host ou cobrança.",
     }
 
 
