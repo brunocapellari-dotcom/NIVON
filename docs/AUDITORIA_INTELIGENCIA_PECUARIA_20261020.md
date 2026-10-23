@@ -222,3 +222,19 @@ Reproduzir testes sinteticos: PYTHONPATH=src python -m unittest tests.test_pecua
 - Consultas diretas nesta rodada a https://servicodados.ibge.gov.br/api/v3/agregados/1092/metadados, /1093/metadados, /1094/metadados e ao serviço https://apisidra.ibge.gov.br/values/t/1092/n1/1/p/202602/v/allxp/h/y não retornaram JSON utilizável no navegador. Não provar indisponibilidade da API na origem.
 - Os serviços metadados, períodos, localidades e variáveis são contratos distintos da API Agregados v3, segundo estudo técnico: https://www.scielo.br/j/eb/a/yzWLzKTbKMkxgsZ9vYypPCv/?lang=pt. A primeira validação com payload oficial continua P0.
 - Próximo passo técnico: captura limitada e autorizada de dados reais fora do runner restrito, com verificação da resposta HTTPS, identificadores, categorias, unidades, períodos, localidades e direito de armazenamento; só depois processar arquivo e produzir série real. Nenhuma coleta automática, registro operacional ou promoção de maturidade foi ativada.
+
+## Lote consolidado 22/10/2026 — implementação multi-etapas sem microcomandos
+
+**Prioridade definida:** P0.1 sondagem HTTPS; P0.2 fluxo de normalização de arquivos locais; P0.3 lote das três cadeias; P1.4 transações e vintages; P1.5 auditoria de qualidade; P1.6 interface de execução, documentação e CI. O runbook completo é `docs/RUNBOOK_SIDRA_PECUARIA_LOTES_20261022.md`.
+
+- `pecuaria_sidra_sondagem.py`: sondagem opt-in apenas dos hosts oficiais IBGE, sem redirects/proxy, timeouts e limites de bytes; modo sem rede gera plano; HTTP real segue PENDENTE.
+- `pecuaria_sidra_lote.py`: pré-valida 1-24 capturas, IDs de tabela, formatos, datas e variáveis explicitamente mapeadas, gera observações por espécie e vintage temporal, audita qualidade e emite resumo JSON; todas as evidências permanecem NÃO HOMOLOGADAS.
+- `pecuaria_sidra_arquivo.py`: `arquivar_lote_sidra_atomico` faz INSERT transacional no SQLite local, recusa divergências no mesmo instante de coleta e reverte todas as inserções do lote no erro; replay idêntico é idempotente. Direitos seguem declarativos e devem ser homologados fora do software.
+- `pecuaria_sidra_operacao.py`: CLI com manifesto 1.0 e referências a JSON locais, base-dir e corte timestamp, `--confirmar-direitos` obrigatório; dry-run padrão; `--gravar --banco` explícitos. Proibição de path traversal/symlink e contrato malformado.
+- Testes novos `test_pecuaria_sidra_lote_integrado.py` e `test_pecuaria_sidra_operacao_cli.py`: E2E 3 espécies, 2 vintages, priorização da data real de coleta, dry-run, commit e rollback SQLite, reprocessamento, schema e direitos, sondagem simulada, JSON/HTTP inválidos e execução da CLI em processo separado.
+- Módulos de processamento offline incluídos no registro de BOI/FRANGO/SUINO; `scheduled_enabled=false`, `operational_enabled=false`, `inputs_reais_homologados=false` e `previsao_homologada=false`.
+- CI final https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39891228332 : 1.285 testes, zero falhas, cinco ignorados; validação de registro, compilação e conjunto integrado passaram.
+
+**Não realizado/bloqueado:** a API oficial de metadados e valores de 1092/1093/1094 não pôde ser acessada neste ambiente. Não existem amostras autênticas, licença validada, coleta automática, histórico real, previsão calibrada nem publicação. Não classificar simulações de transporte/arquivamento como ingestão real. Necessária uma execução HTTPS em ambiente autorizado e checagem de contrato oficial por tabela e trimestre.
+
+**Próxima rodada:** substituir o material sintético de teste por três capturas oficiais verificadas (somente com permissão), homologar IDs/unidades/classificações e aferir revisão/presença de UFs; executar o mesmo pipeline e validar o histórico. Não repetir implementação offline que já passou no CI. Nenhum merge/deploy/cron ou gasto foi ativado.
