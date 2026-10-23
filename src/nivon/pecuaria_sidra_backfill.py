@@ -19,7 +19,7 @@ from .pecuaria_sidra_sondagem import _requisicao_https
 from .pecuaria_sidra_mapa_observado import contrato_sidra_observado
 from .pecuaria_sidra_abate import normalizar_snapshot_sidra_abate
 from .pecuaria_sidra_reconciliacao import diagnosticar_cobertura_abate
-from .pecuaria_sidra_vintages import historico_sidra_asof
+from .pecuaria_sidra_revisoes import auditar_edicoes_quarentena
 from .pecuaria_sidra_quarentena import _checar_semantica_extrato
 from contextlib import closing
 
@@ -123,7 +123,7 @@ def consultar_backfill_quarentena(*, banco, especie, periodos, corte_asof):
     mapa = contrato_sidra_observado(especie=especie, tabela_sidra=tabela)
     snapshots = []
     capturas = []
-    vigentes = {}
+    edicoes = []
     for instante, ident, periodo, territorio in conhecidos:
         recuperado = recuperar_values_quarentena(banco=banco, id_captura=ident)
         if (recuperado["especie"] != especie
@@ -150,25 +150,22 @@ def consultar_backfill_quarentena(*, banco, especie, periodos, corte_asof):
             "sha256_bruto": recuperado["sha256_bruto"],
         }
         capturas.append(provenance)
-        # A captura mais nova por coleta e território compõe o estado vigente;
-        # TODAS as capturas são necessárias para contar revisões anteriores.
-        chave = (periodo, territorio)
-        atual = vigentes.get(chave)
-        if atual is None or (instante, ident) > (atual[0], atual[1]):
-            vigentes[chave] = (instante, ident, provenance)
+        edicoes.append({**provenance, "snapshot": snapshot})
 
+    # Snapshot posterior substitui integralmente seu proprio recorte BR ou
+    # UFs. Ausencias nao herdam valor da versao anterior como se fosse atual.
+    auditoria = auditar_edicoes_quarentena(
+        capturas=edicoes, especie=especie, tabela_sidra=tabela)
+    ultimas_edicoes = auditoria["edicoes_vigentes"]
+    ultimas = [
+        {k: v for k, v in e.items() if k != "snapshot"}
+        for e in ultimas_edicoes
+    ]
     diagnostico = (diagnosticar_cobertura_abate(
-        snapshots=snapshots, especie=especie, tabela_sidra=tabela,
-        corte_asof=corte_asof) if snapshots else None)
-    ultimas = [x[2] for _, x in sorted(vigentes.items())]
-    # Retorno de revisões de valor/status mantém origem SHA, mas sua data
-    # "publicacao_nova" no motor representa PRIMEIRA COLETA neste contexto.
-    revisoes = [] if diagnostico is None else historico_sidra_asof(
-        snapshots=snapshots, especie=especie, tabela_sidra=tabela,
-        corte_asof=corte_asof)["revisoes"]
-    for revisao in revisoes:
-        revisao["data_temporal_representa"] = "PRIMEIRA_COLETA_NIVON"
-        revisao["publicacao_ibge_confirmada"] = False
+        snapshots=[e["snapshot"] for e in ultimas_edicoes],
+        especie=especie, tabela_sidra=tabela,
+        corte_asof=corte_asof) if ultimas_edicoes else None)
+    revisoes = auditoria["alteracoes_observadas"]
     return {
         "especie": especie, "tabela_sidra": tabela,
         "periodos_solicitados": periodos, "corte_asof": corte_asof,
@@ -177,6 +174,8 @@ def consultar_backfill_quarentena(*, banco, especie, periodos, corte_asof):
         "capturas_superadas_no_corte": len(capturas) - len(ultimas),
         "total_revisoes_observadas": len(revisoes),
         "revisoes_observadas": revisoes,
+        "substituicao_integral_por_escopo": True,
+        "ausencia_no_extrato_nao_e_zero": True,
         "diagnostico": diagnostico,
         "status": "RECONSTRUCAO_POR_COLETA_NAO_HOMOLOGADA",
         "publicacao_historica_conhecida": False,
