@@ -7,18 +7,23 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from nivon.pacote_editorial_offline import avaliar_pacote_offline
+from nivon.pacote_editorial_offline import avaliar_pacote_offline, avaliar_lote_offline
 
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Avaliar pacote sem enviar")
     parser.add_argument("pacote")
+    parser.add_argument("--lote", action="store_true", help="Entrada é lista de pacotes")
     args = parser.parse_args(argv)
     try:
         arquivo = Path(args.pacote)
         if not arquivo.is_file() or arquivo.stat().st_size > 2_000_000:
             raise ValueError("pacote inexistente ou excessivo")
         pacote = json.loads(arquivo.read_text(encoding="utf-8"))
+        if args.lote:
+            resultado = avaliar_lote_offline(pacote)
+            print(json.dumps(resultado, ensure_ascii=False, sort_keys=True))
+            return 0 if resultado["bloqueados"] == 0 else 1
         resultado = avaliar_pacote_offline(pacote)
         pre = resultado["preflight"]
         print(json.dumps({

@@ -176,6 +176,55 @@ class TestDossieEditorialOfflineE2E(unittest.TestCase):
         self.assertNotIn(self.pacote["destinatario"],result.stdout)
         self.assertFalse(self.path.exists() and self.path.stat().st_size)
 
+    def test_lote_registra_sucessos_e_bloqueios_sem_envio(self):
+        from nivon.pacote_editorial_offline import registrar_lote_offline
+        provisionar_teste(self.con, self.keys)
+        invalido = copy.deepcopy(self.pacote)
+        invalido["noticias"][0]["direitos_publicacao"] = False
+        lote = [self.pacote, invalido, copy.deepcopy(self.pacote)]
+        resultado = registrar_lote_offline(
+            self.con, lote, chave_destinatario=SEGREDO,
+            chave_auditoria=CHAVE_AUDITORIA, emissores=self.keys)
+        self.assertEqual(resultado["registrados"], 1)
+        self.assertEqual(resultado["bloqueados"], 2)
+        self.assertEqual(resultado["resultados"][2]["estado"], "REPETIDO_NO_LOTE")
+        self.assertEqual(self.linhas(), 1)
+        self.assertEqual(consultar_envio(
+            self.con, self.pacote["documento"]["idempotency_key"])["tentativas"], 0)
+
+    def test_lote_preflight_separa_invalidos_sem_banco(self):
+        from nivon.pacote_editorial_offline import avaliar_lote_offline
+        invalido = copy.deepcopy(self.pacote)
+        invalido["noticias"][0]["publicado_em"] = "2026-10-01T08:00:00-03:00"
+        out = avaliar_lote_offline([self.pacote, invalido, {"contrato": "errado"}])
+        self.assertEqual(out["prevalidados"], 1)
+        self.assertEqual(out["bloqueados"], 2)
+        self.assertFalse(out["envio_habilitado"])
+        self.assertEqual(self.linhas(), 0)
+
+    def test_cli_em_lote_retorna_estado_sanitizado(self):
+        entrada=Path(self.temp.name)/"lote.json"
+        invalido=copy.deepcopy(self.pacote)
+        invalido["fretes"][0]["direitos_publicacao"]=False
+        entrada.write_text(json.dumps([self.pacote,invalido]),encoding="utf-8")
+        r=subprocess.run(
+            [sys.executable,"scripts/nivon_preparar_pacote.py",str(entrada),"--lote"],
+            capture_output=True,text=True,timeout=12)
+        self.assertEqual(r.returncode,1,r.stderr)
+        d=json.loads(r.stdout)
+        self.assertEqual(d["prevalidados"],1)
+        self.assertEqual(d["bloqueados"],1)
+        self.assertNotIn(self.pacote["destinatario"],r.stdout)
+        self.assertNotIn("Plantio de soja avança",r.stdout)
+
+    def test_lote_rejeita_quantidade_excessiva_antes_de_escrever(self):
+        from nivon.pacote_editorial_offline import registrar_lote_offline
+        with self.assertRaises(ValueError):
+            registrar_lote_offline(
+                self.con,[{}]*201,chave_destinatario=SEGREDO,
+                chave_auditoria=CHAVE_AUDITORIA,emissores=self.keys)
+        self.assertEqual(self.linhas(),0)
+
     def test_cli_reporta_bloqueio_sem_imprimir_dados(self):
         p=copy.deepcopy(self.pacote)
         p["noticias"][0]["publicado_em"]="2026-10-01T00:00:00-03:00"

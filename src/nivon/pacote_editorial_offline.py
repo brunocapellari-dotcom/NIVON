@@ -113,3 +113,66 @@ def registrar_pacote_offline(
         "pendencias_editoriais": revisao["preflight"]["lacunas"],
         "envio_habilitado": False, "mutacao": True,
     }
+
+
+def avaliar_lote_offline(pacotes: list[dict]) -> dict:
+    """Valida vários pacotes sem abrir banco, usar chaves ou enviar."""
+    if not isinstance(pacotes, list) or not 1 <= len(pacotes) <= 200:
+        raise ErroPacoteOffline("lote deve conter de 1 a 200 pacotes")
+    resultados = []
+    for indice, pacote in enumerate(pacotes):
+        try:
+            resultado = avaliar_pacote_offline(pacote)
+            estado = resultado["estado"]
+            bloqueios = resultado["preflight"]["bloqueios"][:20]
+        except (ValueError, TypeError, KeyError):
+            estado, bloqueios = "PACOTE_INVALIDO", ["CONTRATO_INCOMPLETO"]
+        resultados.append({"indice": indice, "estado": estado,
+                           "bloqueios": bloqueios})
+    return {
+        "estado": "LOTE_VALIDADO_OFFLINE",
+        "total": len(resultados),
+        "prevalidados": sum(x["estado"] == "PREVALIDADO_OFFLINE" for x in resultados),
+        "bloqueados": sum(x["estado"] != "PREVALIDADO_OFFLINE" for x in resultados),
+        "resultados": resultados, "envio_habilitado": False,
+    }
+
+
+def registrar_lote_offline(
+    con: sqlite3.Connection, pacotes: list[dict], *,
+    chave_destinatario: bytes, chave_auditoria: bytes, emissores: dict
+) -> dict:
+    """Registra um lote de edições válidas, isolando bloqueios por pacote.
+
+    Cada edição faz sua própria verificação e transações SQLite. Uma falha
+    de dados ou assinatura reprova só aquele pacote; falha do banco sobe
+    para o operador (nunca fingir sucesso). Não há callback ou POST.
+    """
+    if not isinstance(pacotes, list) or not 1 <= len(pacotes) <= 200:
+        raise ErroPacoteOffline("lote deve conter de 1 a 200 pacotes")
+    vistos = set()
+    resultados = []
+    for indice, pacote in enumerate(pacotes):
+        chave = None
+        if isinstance(pacote, dict) and isinstance(pacote.get("documento"), dict):
+            chave = pacote["documento"].get("idempotency_key")
+        if isinstance(chave, str) and chave in vistos:
+            resultados.append({"indice": indice, "estado": "REPETIDO_NO_LOTE"})
+            continue
+        if isinstance(chave, str):
+            vistos.add(chave)
+        try:
+            result = registrar_pacote_offline(
+                con, pacote, chave_destinatario=chave_destinatario,
+                chave_auditoria=chave_auditoria, emissores=emissores)
+            estado = result["estado"]
+        except (PermissionError, ValueError, TypeError, KeyError):
+            estado = "REPROVADO_POR_PROVA_OU_CONTRATO"
+        resultados.append({"indice": indice, "estado": estado})
+    aprovados = sum(x["estado"] == "EDICAO_REGISTRADA_OFFLINE_SEM_ENVIO"
+                    for x in resultados)
+    return {
+        "estado": "LOTE_REGISTRADO_OFFLINE_SEM_ENVIO", "total": len(resultados),
+        "registrados": aprovados, "bloqueados": len(resultados) - aprovados,
+        "resultados": resultados, "envio_habilitado": False,
+    }
