@@ -28,3 +28,9 @@ def test_ais_sem_inventar_carga():
     assert rows[0]["natureza"]=="INFERIDO_AIS"
     assert rows[0]["produto_informado"] is None
     assert rows[0]["realizado_confirmado"] is False
+
+
+def test_imbituba_atracado_nao_vira_esperado():
+    html = "<h3>Programacao de Navios</h3><table><tr><th>Navio</th><th>Situacao</th><th>Berco</th></tr><tr><td>TEST SHIP</td><td>Atracado</td><td>2</td></tr></table>"
+    rows=extrair_lineup_html(html,"imbituba",coletado_em="2026-10-22T22:00:00Z")
+    assert rows[0]["status"]=="ATRACADO_INFORMADO"
