@@ -47,13 +47,13 @@ class BigQueryContratoTest(unittest.TestCase):
                     "unidade":"kg/ha","valor":"5000",
                     "campos":{"fonte":"World Bank"},
                     "snapshot_id":"a"*64,"natureza":"INFORMADO"})
-            arquivo.write_text("\\n".join(json.dumps(x) for x in linhas)+"\\n",encoding="utf-8")
+            arquivo.write_text("\n".join(json.dumps(x) for x in linhas)+"\n",encoding="utf-8")
             plano=planejar_carga(arquivo=arquivo,project_id="nivon-data",dataset_id="agro")
             self.assertEqual(plano["linhas"],3)
             self.assertEqual(plano["referencia_inicio"],"2022-01-01")
             self.assertEqual(plano["referencia_fim"],"2025-06-15")
             linhas[1]["referencia"]="2026-W43-5"
-            arquivo.write_text("\\n".join(json.dumps(x) for x in linhas)+"\\n",encoding="utf-8")
+            arquivo.write_text("\n".join(json.dumps(x) for x in linhas)+"\n",encoding="utf-8")
             with self.assertRaises(ErroCargaBigQuery):
                 planejar_carga(arquivo=arquivo,project_id="nivon-data",dataset_id="agro")
 
