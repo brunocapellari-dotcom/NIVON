@@ -97,7 +97,13 @@ class RadarIntegradoTests(unittest.TestCase):
             if name == "duckdb":
                 return project(name, "2.0.0")
             return self.fetch_pypi(url)
-        data = self.executar_radar(fetch_pypi=version2)
+        def osv_with_changed_version(url, raw):
+            queries = json.loads(raw)["queries"]
+            selected = next(q for q in queries if q["package"]["name"] == "duckdb")
+            self.assertEqual(selected["version"], "2.0.0")
+            return json.dumps({"results": [{"vulns": []} for _ in queries]}).encode()
+        data = self.executar_radar(fetch_pypi=version2,
+                                  fetch_osv=osv_with_changed_version)
         self.assertEqual(data["latest_outside_declared_range"], ["duckdb"])
         self.assertEqual(data["latest_range_not_evaluable"], [])
         item = next(p for p in data["packages"] if p["name"] == "duckdb")
