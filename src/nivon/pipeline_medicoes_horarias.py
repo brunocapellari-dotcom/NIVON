@@ -340,3 +340,81 @@ def auditar_acervo_medicoes(db, *, raw_dir):
         "qc_homologado":False,
         "modelo_preditivo_homologado":False,"homologado":False,
     }
+
+
+def relatorio_revisoes_medicoes(
+    db, *, raw_dir, dataset_id, estacao_id, corte_em,
+    classe="SINTETICO",
+):
+    """Compara as duas edições distintas mais recentes da mesma estação.
+
+    Compara *alterações do arquivo na fonte*, não tendências hidrometeorológicas.
+    Chuva horária sem convenção e ANA instantânea continuam sem agregação.
+    """
+    if dataset_id not in ("INMET_ESTACOES","ANA_HIDRO") or classe not in CLASSES:
+        raise ErroPipelineAmbiental("fonte ou classe desconhecida")
+    if not isinstance(estacao_id,str) or not re.fullmatch(r"[A-Z0-9_-]{3,32}",estacao_id):
+        raise ErroPipelineAmbiental("identidade de estação inválida")
+    corte=_tempo(corte_em,"data de corte NIVON")
+    captures=db.execute(
+        "SELECT c.sha256,c.visto_nivon_utc "
+        "FROM medidas_capturas c JOIN medidas_edicoes e ON c.sha256=e.sha256 "
+        "WHERE e.dataset_id=? AND e.estacao_id=? AND e.classe=? "
+        "AND c.visto_nivon_utc<=? "
+        "ORDER BY c.visto_nivon_utc DESC,c.sha256 DESC LIMIT 1000",
+        (dataset_id,estacao_id,classe,corte.isoformat())
+    ).fetchall()
+    editions=[]
+    for row in captures:
+        if not editions or editions[-1]["sha256"]!=row["sha256"]:
+            editions.append(dict(row))
+        if len(editions)==2:
+            break
+    if not editions:
+        return {"estado":"SEM_EDICAO_ATE_CORTE","dataset_id":dataset_id,
+                "estacao_id":estacao_id,"homologado":False}
+    root=_pasta(raw_dir,criar=False)
+    for ed in editions:
+        _raw(root,ed["sha256"])
+    def readings(digest):
+        return {
+            (r["medido_utc"],r["metrica"]):
+            (float(r["valor"]),r["unidade"],r["qualidade_origem"],r["suporte_temporal"])
+            for r in db.execute(
+                "SELECT medido_utc,metrica,valor,unidade,qualidade_origem,suporte_temporal "
+                "FROM medidas_registros WHERE sha256=?",(digest,))
+        }
+    newest=readings(editions[0]["sha256"])
+    previous=readings(editions[1]["sha256"]) if len(editions)>1 else {}
+    common=set(newest)&set(previous)
+    revised=[
+        {"instante_utc":t,"metrica":metric,
+         "anterior":previous[(t,metric)][0],"atual":newest[(t,metric)][0],
+         "qc_anterior":previous[(t,metric)][2],
+         "qc_atual":newest[(t,metric)][2]}
+        for t,metric in sorted(common)
+        if newest[(t,metric)]!=previous[(t,metric)]
+    ]
+    new=set(newest)-set(previous)
+    removed=set(previous)-set(newest)
+    qc_changed=sum(
+        newest[k][2]!=previous[k][2] for k in common)
+    return {
+        "estado":"DIAGNOSTICO_REVISOES_SEM_INFERENCIA_CLIMATICA",
+        "dataset_id":dataset_id,"estacao_id":estacao_id,
+        "corte_nivon_utc":corte.isoformat(),
+        "snapshot_atual_sha256":editions[0]["sha256"],
+        "snapshot_anterior_sha256":editions[1]["sha256"] if len(editions)>1 else None,
+        "ativo_desde_nivon":editions[0]["visto_nivon_utc"],
+        "total_medidas_atuais":len(newest),
+        "medidas_novas":len(new) if len(editions)>1 else len(newest),
+        "medidas_revisadas":len(revised),
+        "medidas_ausentes_na_nova_edicao":len(removed),
+        "mudancas_qc_declarado":qc_changed,
+        "revisoes_amostradas":revised[:20],
+        "revisoes_adicionais":max(0,len(revised)-20),
+        "reconstrucao_publicacao_historica":False,
+        "evidencia_regime_temporal_validada":False,
+        "homologado":False,
+        "tendencia_clima_ou_vazao_inferida":False,
+    }
