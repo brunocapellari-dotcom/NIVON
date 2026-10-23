@@ -10,8 +10,9 @@ argument-hint: "[minutos] [numero-de-tarefas]"
 Quando invocada pelo usuário com \`/nivon-autonomo\`, esta skill deve executar **uma única vez** a sequência abaixo, sem construir ciclos próprios em mensagens da IA.
 
 1. Ler \`AGENTS.md\` e \`docs/COOPERACAO_CLAUDE_CODE_CODEX.md\`. Informar caso o checkout esteja sujo, CLIs não estejam instaladas ou autenticadas.
-2. Adicionar tarefas do manifesto ao ledger somente se ainda não existirem:
-   \`PYTHONPATH=src python -m nivon.cooperacao seed docs/COOPERACAO_TAREFAS.json\`
+2. Executar planejamento determinístico (código, dependências e GitHub somente leitura):
+   `PYTHONPATH=src python -m nivon.planejador refresh --github`
+   As issues só entram na fila com label `nivon-auto-ready` e bloco estruturado `NIVON-AUTO`. Na ausência do gh CLI, usar roteiro local.
 3. Chamar \`PYTHONPATH=src python -m nivon.autonomia start --minutes 120 --max-tasks 8 --per-task 15\` para iniciar o supervisor **local**.
 4. Responder com instruções curtas:
    \`PYTHONPATH=src python -m nivon.autonomia status\` e
