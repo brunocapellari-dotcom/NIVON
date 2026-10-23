@@ -6,15 +6,19 @@ CREATE TABLE IF NOT EXISTS `${PROJECT_ID}.${DATASET_ID}.nivon_observacoes` (
   identidade STRING NOT NULL,
   fingerprint STRING NOT NULL,
   referencia STRING NOT NULL,
+  data_referencia DATE NOT NULL,
   competencia STRING,
   publicacao STRING,
+  data_publicacao TIMESTAMP,
   coletado_em STRING NOT NULL,
+  data_coleta TIMESTAMP NOT NULL,
   unidade STRING,
   valor STRING,
   campos JSON NOT NULL,
   snapshot_id STRING NOT NULL,
   natureza STRING NOT NULL
 )
+PARTITION BY data_referencia
 CLUSTER BY dataset_id, identidade, fingerprint
 OPTIONS (
   description='NIVON: observacoes informadas/observadas versionadas por fingerprint e SHA RAW; sem promocao editorial automatica'
