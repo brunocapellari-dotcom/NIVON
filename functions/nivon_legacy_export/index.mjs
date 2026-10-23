@@ -71,10 +71,10 @@ export default {async fetch(req){
   if(after>upto)return reply({error:'BAD_RANGE'},422);
   // The table name is a server-side constant, never a client-provided SQL identifier.
   const records=await pool.query(
-    'SELECT t.id::text AS id,to_jsonb(t) AS payload FROM '+table+' t WHERE t.id>$1 AND t.id<=$2 ORDER BY t.id ASC LIMIT $3',
+    'SELECT t.id::text AS id,to_jsonb(t)::text AS payload_json FROM '+table+' t WHERE t.id>$1 AND t.id<=$2 ORDER BY t.id ASC LIMIT $3',
     [after,upto,limit]
   );
-  const rows=records.rows.map(x=>({id:x.id,payload:x.payload}));
+  const rows=records.rows.map(x=>({id:x.id,payload_json:x.payload_json}));
   return reply({status:'OK',dataset:requested,upper_id:String(upto),
       after_id:String(after),rows,received:rows.length,
       next_after_id:rows.length?rows[rows.length-1].id:String(after)});
