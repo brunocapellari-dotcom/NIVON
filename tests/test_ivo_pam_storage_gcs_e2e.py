@@ -148,8 +148,11 @@ class TestIVOSyncGCS(unittest.TestCase):
         self.mock.mudar_no_cas=True
         with self.assertRaises(ErroGCSState):
             publicar_backup_gcs(cliente=self.cloud,arquivo=novo)
-        self.assertNotEqual(self.cloud.ponteiro()[0]["sha256"],
-                            __import__("hashlib").sha256(novo.read_bytes()).hexdigest())
+        # A simulação faz outro processo alterar a geração e deixar
+        # ponteiro inválido; o cliente deve rejeitá-lo em vez de fingir
+        # que o próprio upload foi publicado.
+        with self.assertRaises(ErroGCSState):
+            self.cloud.ponteiro()
 
     def test_readback_corrompido_nao_avanca_latest(self):
         b=self.estado("100",1)
