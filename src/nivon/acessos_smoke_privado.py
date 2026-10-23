@@ -118,7 +118,7 @@ def _ana(*, transport=None) -> dict:
 
 def _inmet(*, transport=None) -> dict:
     from pathlib import Path
-    from .inmet_bdmep import ErroBDMEP, link_privado_do_ambiente, receber_bdmep
+    from .inmet_bdmep import ErroBDMEP, ErroBDMEPDiagnostico, link_privado_do_ambiente, receber_bdmep
     try:
         link_privado_do_ambiente()
     except ErroBDMEP:
@@ -134,8 +134,11 @@ def _inmet(*, transport=None) -> dict:
                        evidencias={"csv_no_zip": inv["csv"],
                                    "arquivos_no_zip": inv["membros"],
                                    "bytes_transferidos": result["bytes"]})
+    except ErroBDMEPDiagnostico as exc:
+        # Um código estático identifica a classe de falha, nunca o URL privado.
+        return _status("inmet", exc.codigo)
     except (ErroBDMEP, OSError, ValueError):
-        # Um link vencido não deve ser classificado sem verificar a resposta.
+        # Não inferir expiração sem resposta HTTP específica.
         return _status("inmet", "LINK_OU_DOWNLOAD_NAO_VALIDADO")
 
 
