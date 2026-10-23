@@ -6,6 +6,7 @@ Os testes exercitam persistência, integridade e queries PIT; não homologam ENS
 import hashlib
 import json
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import sys
@@ -15,7 +16,7 @@ import unittest
 from nivon.noaa_roni import SEASONS, ErroRONI
 from nivon.roni_store import (
     abrir_arquivo_roni, executar_lote_roni, consultar_arquivo_roni,
-    panorama_local_roni,
+    panorama_local_roni, auditar_acervo_roni,
 )
 from nivon.roni_cli import executar_manifesto_roni
 
@@ -236,6 +237,60 @@ class TestPipelineRONIPersistente(unittest.TestCase):
         man = manifest(self.p, [("link.ascii", T1, "SINTETICO")])
         with self.assertRaisesRegex(ErroRONI, "symlink"):
             executar_manifesto_roni(manifesto=man)
+
+    def test_auditoria_completa_funciona_apos_restauracao_da_base_e_raw(self):
+        db = abrir_arquivo_roni(self.dbpath)
+        executar_lote_roni(
+            db, raw_dir=self.raw_dir, raw=fake_source(),
+            coletado_em=T1, instante_registro=T1)
+        executar_lote_roni(
+            db, raw_dir=self.raw_dir, raw=fake_source(1953, revised=True),
+            coletado_em=T2, instante_registro=T2)
+        report = auditar_acervo_roni(db, raw_dir=self.raw_dir)
+        self.assertEqual(report["snapshots_auditados"], 2)
+        self.assertEqual(report["registros_validados"], 84)
+        self.assertEqual(report["capturas_auditadas"], 2)
+        self.assertFalse(report["homologado"])
+        copy_path = self.p / "restore.sqlite"
+        target = abrir_arquivo_roni(copy_path)
+        db.backup(target)
+        target.close()
+        db.close()
+        restored_raw = self.p / "restored"
+        shutil.copytree(self.raw_dir, restored_raw)
+        reopened = abrir_arquivo_roni(copy_path)
+        self.addCleanup(reopened.close)
+        after = auditar_acervo_roni(reopened, raw_dir=restored_raw)
+        self.assertEqual(after["registros_validados"], 84)
+        self.assertEqual(after["estado"], "ACERVO_LOCAL_INTEGRO_NAO_HOMOLOGADO")
+        self.assertFalse(after["vintage_historico_externo_auditado"])
+
+    def test_auditoria_rejeita_valor_sqlite_adulterado(self):
+        db = abrir_arquivo_roni(self.dbpath)
+        self.addCleanup(db.close)
+        executar_lote_roni(
+            db, raw_dir=self.raw_dir, raw=fake_source(),
+            coletado_em=T1, instante_registro=T1)
+        with db:
+            db.execute("UPDATE roni_valores SET anomalia=15 WHERE competencia='1951-03'")
+        with self.assertRaisesRegex(ErroRONI, "diverge"):
+            auditar_acervo_roni(db, raw_dir=self.raw_dir)
+
+    def test_auditoria_cli_recupera_acervo_sem_qualquer_http(self):
+        db = abrir_arquivo_roni(self.dbpath)
+        executar_lote_roni(
+            db, raw_dir=self.raw_dir, raw=fake_source(),
+            coletado_em=T1, instante_registro=T1)
+        db.close()
+        result = subprocess.run(
+            [sys.executable, "-m", "nivon.roni_cli", "auditar",
+             "--banco", str(self.dbpath), "--raw-dir", str(self.raw_dir)],
+            capture_output=True, text=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        report = json.loads(result.stdout)
+        self.assertTrue(report["integridade_sha256"])
+        self.assertEqual(report["snapshots_auditados"], 1)
+        self.assertFalse(report["homologado"])
 
     def test_cli_processa_lote_com_uma_unica_invocacao(self):
         (self.p / "jan.ascii").write_bytes(fake_source())
