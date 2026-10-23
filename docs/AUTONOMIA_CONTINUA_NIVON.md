@@ -73,3 +73,27 @@ Não há execução de comandos extraídos de comentários. Arquivos fora de \`s
 O índice AST é incremental por hash, guarda só nomes/linhas de símbolos e fornece cápsula de contexto de até 450 caracteres quando houver correspondência com a tarefa; não lê o código completo no prompt.
 
 Quando o roteiro terminar e não houver novas issues aprovadas ou lacunas seguras, **o supervisor encerra o ciclo**. Não inventa tarefas intermináveis e não efetua merge automático; isso é uma proteção contra loops de custo e alterações descontroladas.
+
+
+## Isolamento obrigatório dos testes e diagnóstico
+**Atenção:** testes são execução de código escrito por agentes, portanto o supervisor exige Docker disponível e imagem \`python:3.11-slim\` **já instalada localmente**. Não baixa imagens nem instala ferramentas sozinho. A compilação e os testes rodam com \`docker run --pull never --network none\`, sem capabilities, privilégios extras nem credenciais de nuvem injetadas; limites de CPU, RAM e processos. Imagens/volumes não são publicados. Em host que não aceite esse isolamento, **a produção autônoma é bloqueada**.
+
+\`\`\`sh
+bash scripts/nivon-autonomo.sh doctor
+bash scripts/nivon-autonomo.sh plan
+bash scripts/nivon-autonomo.sh
+\`\`\`
+
+\`doctor\` só verifica binários, flags de CLI e imagem Docker local. **Não confirma autenticação ou franquias**. Para baixar manualmente uma imagem de teste, após revisar origem e custos do ambiente, usar o procedimento documentado pelo Docker; o supervisor não fará esse download.
+
+## Ferramentas de terceiros e estado real
+- **Funcionalmente incorporados sem dependências:** busca estrutural AST incremental, contexto mínimo, separação em tarefas estilo Ralph, checkpoints, GitHub read-only e critérios de aceite estilo CCPM; Ruff usado opcionalmente para reparar erros.
+- **Opcionais detectadas pelo doctor:** \`ruff\`, \`rg\`, \`ast-grep\`, \`serena\`, \`codebase-memory-mcp\`, \`rtk\`, \`uv\`.
+- **Não instaladas nem ativadas automaticamente:** Serena / Codebase Memory MCP, Context Mode, RTK, Claude-Mem, Superpowers e qualquer proxy de autenticação. Devem ser avaliadas separadamente em um piloto, porque instalação global de hooks/MCP pode interferir nas duas CLIs. Os agentes autônomos atualmente usam busca interna restrita; o índice Python é injetado como dica estrutural, não como ferramenta MCP com acesso ampliado.
+- **Não há promessa de tokens infinitos.** Métricas de consumo vindas das CLIs podem ser \`null\`. O sucesso deve ser medido por tarefa concluída e integrada, não apenas pela contagem de commits em worktrees.
+
+## Plano de execução em ondas
+1. Rodar \`doctor\`, instalar manualmente só as dependências ausentes sob controle do host e fazer piloto curto de duas tarefas.
+2. Medir tokens e qualidade no fluxo sem MCP; instalar *um único* indexador para comparação, sem duplicar o índice.
+3. Expandir a geração de backlog a issues com label \`nivon-auto-ready\` e especificação JSON delimitada; não autorizar texto livre de issues como instruções.
+4. Após CI, revisar integração de worktrees. Merge na \`main\`, coleta live, cron/cloud e gastos não são decisões da IA.
