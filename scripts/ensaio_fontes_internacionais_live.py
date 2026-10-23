@@ -9,6 +9,7 @@ from datetime import date, timedelta
 from pathlib import Path
 from nivon.coletores_dados_reais import executar_coleta
 from nivon.coletor_bcra_v4 import coletar_bcra
+from nivon.coletor_granos_ar import coletar_granos_ar
 
 def main():
     # Data antiga e delimitada, sem depender de uma cotação no dia corrente.
@@ -43,6 +44,15 @@ def main():
         except Exception as exc:
             resultado.append({"fonte":"ARG_BCRA","http":"FALHOU",
                 "tipo_erro":type(exc).__name__,"mensagem":str(exc)[:150]})
+        for endpoint in ("status","pizarra"):
+            try:
+                out=coletar_granos_ar(endpoint=endpoint,
+                    banco=base/"smoke.sqlite",raw_dir=base/"raw",executar=True)
+                resultado.append({"fonte":"ARG_GRANOS_AR/"+endpoint,"http":"SUCESSO",
+                   "estado":out.get("estado"),"observacoes":out.get("novas_observacoes")})
+            except Exception as exc:
+                resultado.append({"fonte":"ARG_GRANOS_AR/"+endpoint,"http":"FALHOU",
+                   "tipo_erro":type(exc).__name__,"mensagem":str(exc)[:150]})
     print(json.dumps({"ensaios":resultado,"homologacao":"NAO","dados_fora_do_banco":True},
           ensure_ascii=False,indent=2))
     return 0 if all(x["http"]=="SUCESSO" for x in resultado) else 2
