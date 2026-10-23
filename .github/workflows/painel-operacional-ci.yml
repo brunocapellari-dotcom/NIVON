@@ -5,6 +5,7 @@ on:
       - 'src/nivon/painel_operacional.py'
       - 'src/nivon/ponte_painel_fontes.py'
       - 'src/nivon/maritimo_painel_avancado.py'
+      - 'src/nivon/adaptadores_operacionais.py'
       - 'src/nivon/motor_tendencias.py'
       - 'src/nivon/dinamica_tendencias.py'
       - 'src/nivon/dinamica_mercados_pit.py'
@@ -12,6 +13,7 @@ on:
       - 'src/nivon/conciliacao_corredores_ferrovia.py'
       - 'scripts/rodar_painel_operacional.py'
       - 'tests/test_painel_operacional.py'
+      - 'tests/test_adaptadores_operacionais.py'
       - 'tests/test_ponte_painel_fontes.py'
       - 'tests/test_integracao_logistica_maritima_avancada.py'
       - 'tests/test_motor_tendencias.py'
@@ -40,9 +42,10 @@ jobs:
         run: python -m pip install -e .
       - name: Compilacao e testes do contrato
         run: |
-          python -m compileall -q src/nivon/painel_operacional.py src/nivon/ponte_painel_fontes.py src/nivon/maritimo_painel_avancado.py src/nivon/dinamica_mercados_pit.py src/nivon/motor_tendencias.py src/nivon/dinamica_tendencias.py src/nivon/maritime scripts/rodar_painel_operacional.py
+          python -m compileall -q src/nivon/painel_operacional.py src/nivon/ponte_painel_fontes.py src/nivon/maritimo_painel_avancado.py src/nivon/adaptadores_operacionais.py src/nivon/dinamica_mercados_pit.py src/nivon/motor_tendencias.py src/nivon/dinamica_tendencias.py src/nivon/maritime scripts/rodar_painel_operacional.py
           python -m unittest discover -s tests -p 'test_painel_operacional.py' -v
           python -m unittest discover -s tests -p 'test_ponte_painel_fontes.py' -v
+          python -m unittest discover -s tests -p 'test_adaptadores_operacionais.py' -v
           python -m unittest discover -s tests -p 'test_integracao_logistica_maritima_avancada.py' -v
           python -m unittest discover -s tests -p 'test_motor_tendencias.py' -v
           python -m unittest discover -s tests -p 'test_dinamica_tendencias.py' -v
