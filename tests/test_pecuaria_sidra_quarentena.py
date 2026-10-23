@@ -18,7 +18,11 @@ def transporte_sintetico(*,url,timeout,limite):
     especie = {"1092":"BOVINO","1093":"SUINO","1094":"FRANGO"}[tabela]
     mapa = contrato_sidra_observado(especie=especie,tabela_sidra=tabela)
     uf = "/n3/all/" in url
-    header = {col: nome + " (Código)"
+    nomes = {"territorio": "Brasil", "periodo": "Trimestre",
+             "variavel": "Variável", "inspecao": "Tipo de inspeção",
+             "rebanho": "Tipo de rebanho bovino",
+             "referencia_temporal": "Referência temporal"}
+    header = {col: nomes[nome] + " (Código)"
               for nome,col in mapa["dimensoes"].items()}
     header.update({"NC":"Nível Territorial (Código)","MN":"Unidade",
                    "V":"Valor"})
@@ -27,6 +31,7 @@ def transporte_sintetico(*,url,timeout,limite):
         ("284","Cabeças","100"),
         ("285","Quilogramas","23000")):
         row={"NC":"3" if uf else "1","MN":unid,"V":val,
+             "D3N": "Animais abatidos" if variable=="284" else "Peso total das carcaças",
              mapa["dimensoes"]["territorio"]:"51" if uf else "1",
              mapa["dimensoes"]["periodo"]:"202602",
              mapa["dimensoes"]["variavel"]:variable}
@@ -101,10 +106,23 @@ class TestColetorValuesQuarentena(unittest.TestCase):
                 self.executar_simulado(direitos_confirmados=False,gravar=gr,banco=self.banco)
             self.assertFalse(self.banco.exists())
 
-    def test_periodo_nao_homologado_falha_fechado(self):
-        for periodo in ("199701","202603","202601","202602/redirect"):
+    def test_periodo_futuro_invalido_falha_fechado(self):
+        for periodo in ("199601","202704","202613","202602/redirect"):
             with self.assertRaises(DadoInvalido):
                 self.executar_simulado(periodo=periodo)
+
+    def test_periodos_historicos_exigem_esquema_real_sem_publicacao_retroativa(self):
+        for periodo in ("202502", "202601", "202602"):
+            def stub(*,url,timeout,limite):
+                r=transporte_sintetico(url=url,timeout=timeout,limite=limite)
+                rows=json.loads(r["corpo"])
+                for row in rows[1:]:
+                    row["D2C"]=periodo
+                r["corpo"]=json.dumps(rows,ensure_ascii=False).encode()
+                return r
+            out=self.executar_simulado(periodo=periodo,transporte=stub)
+            self.assertEqual(out["periodo"],periodo)
+            self.assertFalse(out["publicacao_historica_confirmada"])
 
     def test_bytes_adulterados_nao_recuperados(self):
         r=self.executar_simulado(banco=self.banco,gravar=True)
