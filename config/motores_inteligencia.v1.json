@@ -36,7 +36,9 @@
         "nivon.conab_lote_offline:executar_lote_conab",
         "nivon.conab_staging_sqlite:gravar_dossie_conab",
         "nivon.conab_progresso_csv_drive:normalizar_csv_progresso_conab",
-        "nivon.conab_comparar_capturas:comparar_capturas_sqlite"
+        "nivon.conab_comparar_capturas:comparar_capturas_sqlite",
+        "nivon.conab_coleta_pontual:coletar_uma_edicao",
+        "nivon.conab_progresso_auditoria:auditar_progresso_conab_drive"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -92,7 +94,9 @@
         "nivon.conab_lote_offline:executar_lote_conab",
         "nivon.conab_staging_sqlite:gravar_dossie_conab",
         "nivon.conab_progresso_csv_drive:normalizar_csv_progresso_conab",
-        "nivon.conab_comparar_capturas:comparar_capturas_sqlite"
+        "nivon.conab_comparar_capturas:comparar_capturas_sqlite",
+        "nivon.conab_coleta_pontual:coletar_uma_edicao",
+        "nivon.conab_progresso_auditoria:auditar_progresso_conab_drive"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
