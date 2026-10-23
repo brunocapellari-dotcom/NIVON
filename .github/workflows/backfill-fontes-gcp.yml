@@ -29,6 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 50
     env:
+      NIVON_RECOVERABLE_STAGE_APPROVED: ${{ vars.NIVON_RECOVERABLE_STAGE_APPROVED }}
       NIVON_BQ_PROJECT: ${{ vars.NIVON_BQ_PROJECT }}
       NIVON_BQ_DATASET: ${{ vars.NIVON_BQ_DATASET }}
       NIVON_GCS_BUCKET: ${{ vars.NIVON_GCS_BUCKET }}
@@ -49,4 +50,6 @@ jobs:
       - run: python -m pip install -e '.[gcp]'
       - name: Recuperar historico, preservar RAW GCS, inserir BigQuery
         run: |
-          python -m scripts.backfill_fontes_cloud --fonte "$NIVON_BACKFILL_FONTE" --inicio "$NIVON_BACKFILL_INICIO" --fim "$NIVON_BACKFILL_FIM" --projeto "$NIVON_BQ_PROJECT" --dataset "$NIVON_BQ_DATASET" --bucket "$NIVON_GCS_BUCKET" --executar
+          args=()
+          if [[ "$NIVON_RECOVERABLE_STAGE_APPROVED" == "true" ]]; then args+=(--arquivar-recuperacao); fi
+          python -m scripts.backfill_fontes_cloud --fonte "$NIVON_BACKFILL_FONTE" --inicio "$NIVON_BACKFILL_INICIO" --fim "$NIVON_BACKFILL_FIM" --projeto "$NIVON_BQ_PROJECT" --dataset "$NIVON_BQ_DATASET" --bucket "$NIVON_GCS_BUCKET" --executar "${args[@]}"
