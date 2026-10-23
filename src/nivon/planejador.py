@@ -149,6 +149,8 @@ def tasks_from_issues(issues, root=HERE):
             spec["id"] = f"issue-{number}"
             spec["source"] = f"github-issue-{number}"
             item = normalized(spec, root)
+            if RISK.search(item["title"]) or RISK.search(item["acceptance"]):
+                raise ValueError("Texto exige revisão humana")
             # Não transformar conteúdo de uma issue em prompt irrestrito.
             # Aceite deve ser preenchido no manifesto canônico, não na issue.
             if item["risk"] != "low":
@@ -265,13 +267,20 @@ def main(argv=None):
         issues, warning = get_issues() if args.github else ([], None)
         with connect(args.db or default_db()) as db:
             if args.cmd == "preview":
-                db.execute("SAVEPOINT preview")
-            data = refresh(db, issues=issues, include_coverage=not args.no_coverage)
-            if args.cmd == "preview":
-                db.execute("ROLLBACK TO SAVEPOINT preview")
-                db.execute("RELEASE SAVEPOINT preview")
+                # seed commits its transaction: preview must use a disposable DB.
+                memory = sqlite3.connect(":memory:")
+                memory.row_factory = sqlite3.Row
+                db.backup(memory)
+                try:
+                    data = refresh(memory, issues=issues,
+                                   include_coverage=not args.no_coverage)
+                    data["states"] = report(memory)["counts"]
+                finally:
+                    memory.close()
+            else:
+                data = refresh(db, issues=issues, include_coverage=not args.no_coverage)
+                data["states"] = report(db)["counts"]
             data["github_warning"] = warning
-            data["states"] = report(db)["counts"]
         print(json.dumps(data, indent=2, ensure_ascii=False))
         return 0
     except (ValueError, OSError, sqlite3.Error, json.JSONDecodeError,
