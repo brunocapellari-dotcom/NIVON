@@ -6,7 +6,9 @@ on:
   pull_request:
     paths:
       - 'src/nivon/radar_pypi_osv.py'
+      - 'src/nivon/radar_compatibilidade_pypi.py'
       - 'tests/test_radar_pypi_osv.py'
+      - 'tests/test_radar_compatibilidade_pypi.py'
       - '.github/workflows/radar-pypi-osv.yml'
       - 'pyproject.toml'
   workflow_dispatch:
@@ -22,7 +24,7 @@ jobs:
   radar-metadata-real:
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == 'brunocapellari-dotcom/NIVON' && github.event.pull_request.head.ref == 'research/github-tooling-gates-20261020'
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 8
     permissions:
       contents: read
     steps:
@@ -38,6 +40,21 @@ jobs:
         env:
           PYTHONPATH: src
         run: python -m unittest discover -s tests -p 'test_radar_pypi_osv.py' -v
+      - name: Executar testes integrados de nove dependencias opcionais
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -p 'test_radar_compatibilidade_pypi.py' -v
+      - name: Consultar PyPI e OSV para candidatos compativeis dos nove pacotes diretos
+        env:
+          PYTHONPATH: src
+        run: |
+          mkdir -p evidencias-pypi
+          python -m nivon.radar_compatibilidade_pypi \
+            --pyproject pyproject.toml \
+            --output evidencias-pypi/candidatos_nove_extras.json
+      - name: Validar cobertura total de extras e avisos antes de publicar
+        run: |
+          python -c 'import json; d=json.load(open("evidencias-pypi/candidatos_nove_extras.json")); assert d["direct_distributions_covered"] == 9 and len(d["optional_extras_covered"]) == 7; assert d["pypi_release_json_requests"] == 9 and d["pypi_index_json_requests"] == 8 and d["osv_batch_queries"] == 9; assert d["source"] == "LIVE_PUBLIC_PYPI_AND_OSV_METADATA" and d["approved_for_install"] is False and d["approved_for_production"] is False and d["full_pep440_pep508_resolved"] is False'
       - name: Consultar quatro releases PyPI e avisos OSV sem baixar wheels
         env:
           PYTHONPATH: src
@@ -50,7 +67,7 @@ jobs:
         run: |
           python -c 'import json; p="evidencias-pypi/radar_pypi_osv.json"; d=json.load(open(p)); assert d["queried_package_count"] == 4 and d["approved_for_production"] is False and d["approved_for_install"] is False and d["full_dependency_resolution"] is False; assert len(d["packages"]) == len(d["osv"]) == 4'
           cd evidencias-pypi
-          sha256sum radar_pypi_osv.json > sha256sums.txt
+          sha256sum radar_pypi_osv.json candidatos_nove_extras.json > sha256sums.txt
           sha256sum -c sha256sums.txt
       - name: Publicar somente inventario normalizado de APIs publicas
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
