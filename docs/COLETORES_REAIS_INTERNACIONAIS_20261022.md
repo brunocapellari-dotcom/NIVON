@@ -88,3 +88,20 @@ python scripts/operar_fontes_reais.py --canada
 - `src/nivon/carga_bigquery_fontes.py`: JSONL -> BigQuery por carga temporária seguida de MERGE, exigindo tabela existente, ADC e limites de bytes; **não executado contra Cloud real**.
 - Snapshot RAW precisa de persistência durável adicional na infraestrutura NIVON; quando executado em GitHub Actions, o arquivo local é efêmero. **A operação contínua não está implantada.**
 - Demais fontes (mais de 90 fontes adicionais sem coleta homologada) continuam requerendo implementação individual de endpoint, esquema e direitos.
+
+## Persistência permanente GCS + BigQuery — implementação de 23/10/2026
+
+**Arquitetura do código (PR #137):** autenticação Google OIDC/ADC -> pré-voo de acesso, bucket e tabela -> BCRA/granos.ar diários + CCEE/Canadá semanais -> SQLite/RAW local -> validação SHA-256 -> upload imutável de RAW para Cloud Storage -> carga JSONL no BigQuery via staging e MERGE -> verificação de falhas parciais. Uma falha no armazenamento RAW bloqueia a carga no BigQuery.
+
+**Módulos criados:**
+- `src/nivon/arquivo_raw_gcs.py`: lista a tabela `snapshots` do SQLite e valida arquivo, tamanho, SHA-256, origem e identidade antes de arquivar em `gs://BUCKET/nivon/raw/v1/DATASET/SHA256.raw`. Não sobrescreve objetos e valida o objeto já existente.
+- `src/nivon/preflight_gcp_fontes.py`: verifica projeto, dataset, bucket, schema e particionamento. A opção `--criar-tabela` cria somente a tabela em dataset existente, se autorizada.
+- `src/nivon/carga_bigquery_fontes.py`: valida datas ISO e identidade por versão e converte referência, publicação e coleta em DATE/TIMESTAMP, mantendo as datas originais auditáveis.
+- `scripts/verificar_status_fontes.py`: reprova resultado parcial após tentar arquivamento e persistência.
+- `.github/workflows/coleta-recorrente-fontes.yml`: cron segunda a sexta e execução manual; exige acesso cloud validado **antes** de qualquer coleta.
+
+**Configuração única que falta para operação real na main:** no repositório GitHub, cadastrar variables `NIVON_GCP_PROVIDER`, `NIVON_GCP_SERVICE_ACCOUNT`, `NIVON_BQ_PROJECT`, `NIVON_BQ_DATASET`, `NIVON_GCS_BUCKET`, `NIVON_ZERO_COST_BQ_APPROVED=true` e `NIVON_RAW_ARCHIVE_APPROVED=true`. Se for permitir a criação da tabela dentro do dataset existente, acrescentar `NIVON_BQ_BOOTSTRAP_TABLE_APPROVED=true`; depois poderá ser desabilitada. Exigem-se IAM mínimo de escrita/leitura dos objetos do bucket (para integridade e idempotência), acesso ao dataset e execução de jobs BigQuery, e permissão de criação de tabela apenas durante o bootstrap. O GitHub Actions usa Workload Identity OIDC, **não** chaves JSON em repositório. Bucket e dataset **não** são criados automaticamente. Verificar termos e direitos de arquivamento de cada fonte.
+
+**Custos:** o nome da variable `NIVON_ZERO_COST_BQ_APPROVED` representa uma autorização de controle operacional, **não** uma garantia de faturamento zero. BigQuery e Cloud Storage podem gerar custos de armazenamento, leitura e operações; configurar orçamento, limites e alertas antes da ativação.
+
+**Situação real:** o código de arquivamento, preflight e carga está registrado e testado com clientes simulados; nenhuma leitura/escrita real no Google Cloud foi confirmada nesta frente. As coletas reais de CCEE/Canadá/BCRA/granos.ar foram testadas no GitHub Actions, porém em ambiente temporário. O workflow só passa a ser executado pelo agendamento após integração na branch principal e preenchimento dos requisitos.
