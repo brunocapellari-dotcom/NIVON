@@ -30,7 +30,7 @@ def main():
                    "estado":dado.get("estado"),
                    "observacoes":dado.get("novas_observacoes"),
                    "licenca":dado.get("licenca"),
-                   "recurso_csv_amostra":dado.get("csv_resources",[])[:4],
+                   "recurso_csv_amostra":dado.get("csv_resources",[])[:15],
                    "notas":dado.get("notas")})
             except Exception as exc:
                 resultado.append({"fonte":fonte,"http":"FALHOU",
