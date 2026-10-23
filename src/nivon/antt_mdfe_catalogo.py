@@ -36,7 +36,7 @@ def _safe_csv(url):
         p.scheme == "https" and p.hostname == "dados.antt.gov.br"
         and not p.username and not p.password and not p.query and not p.fragment
         and p.port in (None, 443)
-        and re.fullmatch(r"/dataset/[^/]+/resource/[^/]+/download/[^/]+\\.csv", p.path, re.I) is not None
+        and re.fullmatch(r"/dataset/[^/]+/resource/[^/]+/download/[^/]+\.csv", p.path, re.I) is not None
     )
 
 def _request(q, opener):
