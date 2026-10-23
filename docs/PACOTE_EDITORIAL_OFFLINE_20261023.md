@@ -26,3 +26,31 @@ Esse comando apenas lê um JSON contendo lista de pacotes e valida os
 preflights. Não existe opção de registrar ou enviar na CLI. Para registrar,
 o chamador interno precisa do registry confiável e de chaves externas.
 Lote não implica distribuição, nem considera dados antigos atuais.
+
+## Execução integrada — 23/10/2026
+
+- Novo módulo de preparação registra automaticamente um pacote completo
+  aprovado em SQLite, sem expor remetente/callback/HTTP.
+- O CLI permite verificar um pacote ou um **lote de até 200** com
+  --lote. Bloqueios por item são comunicados sem interromper os demais.
+- A interface de registro em lote isola rejeições de consentimento, prova,
+  identidade, notícia vencida e direitos. Pacotes inválidos não marcam
+  idempotência como processada; uma edição válida posterior com a mesma
+  chave pode ser registrada. O envio continua bloqueado.
+- Casos E2E executam de entrada editorial realista (fixtures) até
+  preflight -> provas -> registry -> registro da edição -> outbox,
+  inclusive segunda execução idempotente e CLI via subprocess.
+- A última validação GitHub Actions será citada na PR #53, no commit
+  exato do fechamento deste lote.
+
+### Critérios que ainda impedem operação
+
+Além de emissores e consentimentos reais, a publicação em canal exige
+**validade temporal da própria edição na data efetiva da tentativa**,
+independentemente da janela de notícias calculada no horário de geração.
+O pipeline offline aceita edições históricas para testes e auditoria;
+isso NÃO as torna atuais ou publicáveis. Antes de conectar transporte,
+o gate de reserva terá que impor/confirmar data de corte e expiração
+editorial com base em relógio e calendário confiáveis. Necessário
+também testar envio externo autorizado em ambiente homologado e
+backup/restauração de infraestrutura persistente.
