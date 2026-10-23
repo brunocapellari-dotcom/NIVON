@@ -40,6 +40,7 @@ def executar_edicao_conab(*,banco:str|Path,raw_dir:str|Path,
                           direitos_consulta:bool=False,
                           direitos_coleta:bool=False,
                           direitos_armazenamento:bool=False,
+                          semana_fim:str|None=None,
                           buscar_indice=consultar_indice,
                           buscar_pagina=consultar_pagina_semana,
                           capturar=capturar_xlsx_conab,
@@ -65,7 +66,26 @@ def executar_edicao_conab(*,banco:str|Path,raw_dir:str|Path,
     edicoes=indice.get('edicoes_candidatas',[])
     if not edicoes:
         return {'status':'SEM_EDICAO_NO_INDICE','capturas':0}
-    edicao=edicoes[0] # O indice apresenta as semanas mais recentes primeiro.
+    if semana_fim is not None:
+        # Selecionar somente a semana que REALMENTE aparece no índice.
+        # Não construir URL com data fornecida pelo operador.
+        from datetime import date,datetime
+        try:
+            fim=date.fromisoformat(semana_fim)
+        except (TypeError,ValueError) as exc:
+            raise ErroExecucaoConab('semana_fim deve ser YYYY-MM-DD') from exc
+        candidatas=[]
+        for item in edicoes:
+            fim_txt=item['periodo_rotulo'].split(' a ')[-1]
+            try:valor=datetime.strptime(fim_txt,'%d/%m/%y').date()
+            except ValueError:continue
+            if valor==fim:
+                candidatas.append(item)
+        if len(candidatas)!=1:
+            raise ErroExecucaoConab('semana solicitada ausente ou duplicada no indice')
+        edicao=candidatas[0]
+    else:
+        edicao=edicoes[0] # O indice apresenta as semanas mais recentes primeiro.
     pagina_url=edicao['pagina_oficial']
     pagina_html=buscar_pagina(pagina_url,executar=True,direitos_consulta=True,abridor=abridor)
     db=sqlite3.connect(str(path),timeout=20)
@@ -133,6 +153,7 @@ def main():
     p=argparse.ArgumentParser(description='NIVON CONAB: capturar uma edição XLSX autorizada')
     p.add_argument('--banco',required=True)
     p.add_argument('--pasta-raw',required=True)
+    p.add_argument('--semana-fim',default=None,help='YYYY-MM-DD (opcional, precisa constar no indice)')
     p.add_argument('--executar',action='store_true')
     p.add_argument('--direitos-consulta',action='store_true')
     p.add_argument('--direitos-coleta',action='store_true')
@@ -142,7 +163,8 @@ def main():
         banco=args.banco,raw_dir=args.pasta_raw,autorizado=args.executar,
         direitos_consulta=args.direitos_consulta,
         direitos_coleta=args.direitos_coleta,
-        direitos_armazenamento=args.direitos_armazenamento
+        direitos_armazenamento=args.direitos_armazenamento,
+        semana_fim=args.semana_fim
     )
     print(json.dumps(res,sort_keys=True,ensure_ascii=False))
 
