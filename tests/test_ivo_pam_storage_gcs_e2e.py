@@ -188,6 +188,32 @@ class TestIVOSyncGCS(unittest.TestCase):
         with self.assertRaises(ErroGCSState):
             self.cloud.download("../../outro-objeto")
 
+    def test_backup_posterior_nao_pode_reescrever_origem_de_captura_antiga(self):
+        original=self.estado("100",1)
+        publicar_backup_gcs(cliente=self.cloud,arquivo=original,
+                            permitir_bootstrap=True)
+        novo=self.estado("150",2,backup_anterior=original)
+        # A integridade dos bytes em quarentena ainda pode passar
+        # se alguém editar a origem de uma captura. A verificação
+        # de continuidade GCS precisa detectar essa mutação.
+        import sqlite3
+        from nivon.ivo_pam_backup import criar_backup_pam
+        from nivon.ivo_pam_qualidade import auditar_operacao_pam
+        state=self.root/"estado2"/"recuperado"
+        db=sqlite3.connect(state/"pam.sqlite")
+        db.row_factory=sqlite3.Row
+        db.execute("UPDATE pam_capturas SET origem='ALTERADO' "
+                   "WHERE coletado_em=(SELECT MIN(coletado_em) FROM pam_capturas)")
+        db.commit()
+        self.assertTrue(auditar_operacao_pam(db=db,raiz=state/"cofre")
+                        ["integridade_local_aprovada"])
+        alterado=self.root/"backup-adulterado.zip"
+        criar_backup_pam(db=db,raiz=state/"cofre",saida=alterado)
+        db.close()
+        with self.assertRaisesRegex(ErroGCSState,"alterou registros históricos"):
+            publicar_backup_gcs(cliente=self.cloud,arquivo=alterado)
+        self.assertEqual(self.cloud.ponteiro()[0]["capturas"],1)
+
     def test_nao_existe_estado_pra_restaurar(self):
         with self.assertRaises(ErroGCSState):
             baixar_backup_gcs(cliente=self.cloud,saida=self.root/"vazio.zip")
