@@ -36,6 +36,12 @@ class TestCoberturaWidgets(unittest.TestCase):
         self.assertIn("s.indicator_id='708192508838936581'", COBERTURA)
         self.assertIn("s.indicator_name='Preço soja disponível compra'", COBERTURA)
         self.assertIn("s.indicator_name='Preço milho disponível compra'", COBERTURA)
+        # Vinculos confirmados na consulta real IMEA de 23/10/2026.
+        self.assertIn("s.indicator_id='708192508935405570'", COBERTURA)
+        self.assertIn("s.indicator_name='Preço de pluma disponível'", COBERTURA)
+        self.assertIn("s.indicator_id='708192508809576456'", COBERTURA)
+        self.assertIn("s.indicator_name='Preço do boi gordo à vista'", COBERTURA)
+        self.assertIn("s.unit='R$/@'", COBERTURA)
         self.assertIn("s.price > 0", COBERTURA)
 
     def test_sem_coleta_direta_de_widget_ou_claim_gcp(self):
