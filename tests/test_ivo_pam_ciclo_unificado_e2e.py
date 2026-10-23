@@ -90,7 +90,7 @@ class TestIVOPAMCicloUnificadoE2E(unittest.TestCase):
         (existing/"marcador.txt").write_text("preservar")
         with self.assertRaises(ErroBackupPAM):
             restaurar_backup_pam(
-                arquivo=self.root/"ciclo1"/"estado_pam.zip",destino=existing)
+                arquivo_zip=self.root/"ciclo1"/"estado_pam.zip",destino=existing)
         self.assertEqual((existing/"marcador.txt").read_text(),"preservar")
 
     def test_zip_com_objeto_corrompido_rejeitado_antes_de_publicar(self):
@@ -126,7 +126,7 @@ class TestIVOPAMCicloUnificadoE2E(unittest.TestCase):
 
     def test_falha_de_tarefa_nao_sobrescreve_backup_anterior(self):
         a=self.ciclo(1,iniciar_novo=True)
-        arquivo=self.root/"ciclo1"/"estado_pam.zip"
+        arquivo_zip=self.root/"ciclo1"/"estado_pam.zip"
         sha=a["backup"]["sha256_arquivo"]
         self.arquivo.write_bytes(b"nao-json")
         with self.assertRaises(ErroBackupPAM):
@@ -143,7 +143,7 @@ class TestIVOPAMCicloUnificadoE2E(unittest.TestCase):
     def test_restauracao_atesta_integridade_antes_de_uso(self):
         self.ciclo(1,iniciar_novo=True)
         restaurar_backup_pam(
-            arquivo=self.root/"ciclo1"/"estado_pam.zip",
+            arquivo_zip=self.root/"ciclo1"/"estado_pam.zip",
             destino=self.root/"test-recovery")
         db=abrir_operacao_pam(self.root/"test-recovery"/"operacional.sqlite")
         try:
