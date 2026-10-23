@@ -154,7 +154,7 @@ def coletar(*, destino: str | Path, anos: list[int], habilitar_rede=False,
             saida.append({"ano": ano, "estado": "SEM_REVISAO", "registros": prev["registros"]})
             continue
         bruto = _http(recurso["url"], transporte=transporte)
-        linhas, meta = interpretar_csv_antt(bruto, ano=ano, coleta_utc=stamp)
+        linhas, meta = interpretar_csv_antt(bruto, ano=ano, coleta_utc=stamp, fonte_url=recurso["url"])
         jsonl = b"".join((json.dumps(x, ensure_ascii=False, sort_keys=True) + "\n").encode() for x in linhas)
         _atomic(destino / f"antt-od-{ano}.csv", bruto)
         _atomic(destino / f"antt-od-{ano}.jsonl", jsonl)
