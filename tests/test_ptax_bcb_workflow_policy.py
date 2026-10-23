@@ -31,7 +31,7 @@ class PoliticaEscritorUnicoPTAX(unittest.TestCase):
         self.assertNotIn("google-github-actions/auth",offline)
         for regra in ("NIVON_GCP_WRITE_APPROVED == 'true'",
                       "NIVON_GCP_COST_REVIEWED == 'true'",
-                      "NIVON_GCP_WIF_PROVIDER != ''",
+                      "NIVON_GCP_PROVIDER != ''",
                       "NIVON_GCP_SERVICE_ACCOUNT != ''",
                       "      id-token: write"):
             self.assertIn(regra,ingestao)
