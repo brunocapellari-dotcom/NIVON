@@ -255,18 +255,30 @@ def carregar_stage(*, arquivo, fonte_dataset, project_id, dataset_id,
         sql=(f"MERGE `{plano['tabela']}` T USING `{stage}` S "
              f"ON {on} AND DATE(T.data_coleta) BETWEEN @inicio AND @fim "
              f"WHEN NOT MATCHED THEN INSERT ({colunas}) VALUES ({valores})")
+        parametros=[
+            bigquery.ScalarQueryParameter("inicio","DATE",date.fromisoformat(plano["inicio"])),
+            bigquery.ScalarQueryParameter("fim","DATE",date.fromisoformat(plano["fim"])),
+        ]
+        # Bloqueio de custo antes de qualquer MERGE. Dry-run retorna bytes
+        # estimados e deve ser recusado se não houver estimativa confiável.
+        dry_run=bigquery.QueryJobConfig(
+            dry_run=True, use_query_cache=False, query_parameters=parametros)
+        ensaio=cli.query(sql,job_config=dry_run)
+        estimativa=getattr(ensaio,"total_bytes_processed",None)
+        if type(estimativa) is not int or estimativa<0:
+            raise ErroStagingAgro("dry-run sem estimativa de bytes")
+        if estimativa>max_bytes_billed:
+            raise ErroStagingAgro("MERGE bloqueado por limite de custo")
         cfg=bigquery.QueryJobConfig(
             maximum_bytes_billed=max_bytes_billed,
-            query_parameters=[
-                bigquery.ScalarQueryParameter("inicio","DATE",date.fromisoformat(plano["inicio"])),
-                bigquery.ScalarQueryParameter("fim","DATE",date.fromisoformat(plano["fim"])),
-            ])
+            query_parameters=parametros)
         cli.query(sql,job_config=cfg).result(timeout=150)
     finally:
         cli.delete_table(stage,not_found_ok=True)
     return {**plano, "executado":True,"linhas_enviadas":plano["linhas"],
             "estado":"BIGQUERY_STAGING_NAO_CANONICO",
-            "bigquery_executado":True,"promocao_canonica":False}
+            "bigquery_executado":True,"promocao_canonica":False,
+            "bytes_estimados":estimativa,"limite_bytes_cobraveis":max_bytes_billed}
 
 
 def verificar_ou_criar_tabela(*, projeto, dataset, verificar=False,
