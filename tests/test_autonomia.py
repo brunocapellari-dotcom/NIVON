@@ -103,6 +103,36 @@ class TestAutonomia(unittest.TestCase):
             self.assertIn(result["counts"]["done"] + result["counts"]["pending"], (1,))
             self.assertLessEqual(len(result["executions"]), 2)
 
+    def test_idle_codex_waits_for_delayed_claude_quota_handoff(self):
+        """Codex deve atender handoff sem consumir tokens enquanto espera."""
+        import time
+        with tempfile.TemporaryDirectory() as tmp:
+            dbpath = Path(tmp) / "queue.sqlite"
+            with connect(dbpath) as db:
+                seed(db, [{"id": "transfer", "title": "Transferir",
+                           "scope": ["src/transfer.py"], "preferred_agent": "claude"}])
+            calls = []
+            def fake(agent, task, **kwargs):
+                calls.append(agent)
+                if agent == "claude":
+                    time.sleep(0.35)
+                    return "quota", "quota Claude atingida; checkpoint salvo"
+                return "done", "Codex concluiu com testes sintéticos"
+            with patch.object(autonomia, "may_begin", return_value=True), \
+                 patch.object(autonomia, "preflight"), \
+                 patch.object(autonomia, "default_db", return_value=dbpath), \
+                 patch.object(autonomia, "HOME", Path(tmp)), \
+                 patch.object(autonomia, "refresh_plan", return_value={"added": 0}), \
+                 patch.object(autonomia, "prepare_integration", return_value=Path(tmp)/"integration"), \
+                 patch.object(autonomia, "get_issues", return_value=([], None)), \
+                 patch.object(autonomia, "do_task", side_effect=fake):
+                result = autonomia.run(max_tasks=2, minutes=2, per_task=2)
+            self.assertEqual(result["counts"]["done"], 1)
+            self.assertEqual(result["counts"]["pending"], 0)
+            self.assertEqual(result["counts"]["running"], 0)
+            self.assertEqual(sorted(calls), ["claude", "codex"])
+            self.assertEqual(len(result["executions"]), 2)
+
     def test_cli_usage_parsers_are_best_effort(self):
         with tempfile.TemporaryDirectory() as tmp:
             logfile = Path(tmp) / "usage.log"
