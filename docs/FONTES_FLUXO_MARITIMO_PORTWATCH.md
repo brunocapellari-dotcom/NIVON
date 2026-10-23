@@ -11,8 +11,8 @@ Rede desligada por padrão, paginação com limites e nenhuma dependência
 externa. Versões de cada dia preservadas em SQLite.
 
 **Semântica obrigatória:** `n_total` é contagem de cruzamentos AIS segundo
-a metodologia PortWatch. `capacity` é indicador de capacidade estimada,
-NÃO toneladas exportadas, carga realizada ou line-up de porto. Datas da
+a metodologia PortWatch. `capacity` é proxy de toneladas de carga em trânsito estimadas por AIS e calado,
+NÃO carga realizada confirmada, desembaraço aduaneiro ou line-up de porto. Datas da
 medição não são intercambiáveis com data de coleta.
 
 O portal é de acesso público, mas não foi concluída homologação das
@@ -29,3 +29,5 @@ Referências:
 Panamá também fornece API própria mediante cadastro de aplicação, token
 OpenID Connect e autenticação: https://developer.pancanal.com/.
 Essa API não deve ser representada como acesso sem credencial.
+
+**Auditoria metodológica (FMI WP/25/93):** o campo `capacity` da série de passagens é **volume de carga em trânsito estimado (t)** pelo FMI; não é simplesmente DWT total nem carga oficialmente certificada. Campo canônico: `volume_transito_estimado_t`, classificação `ESTIMADO_MODELO_FMI`. A coluna SQL `capacidade_proxy` permanece por compatibilidade, mas armazena proxy em toneladas de carga em trânsito. Referência: https://www.imf.org/en/-/media/files/publications/wp/2025/english/wpiea2025093-print-pdf.pdf
