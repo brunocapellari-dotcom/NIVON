@@ -46,5 +46,20 @@ class PoliticaEscritorUnicoPTAX(unittest.TestCase):
         self.assertIn("assertion.ref=='refs/heads/main'",BOOT)
         self.assertIn("PROVEDOR_PREEXISTENTE_COM_CONDICAO_DIFERENTE",BOOT)
 
+    def test_migracoes_reutilizam_provider_que_ja_autenticou_no_cloud(self):
+        workflows = [
+            ".github/workflows/ptax-neon-private-export.yml",
+            ".github/workflows/ptax-bcb-direto-gcp.yml",
+            ".github/workflows/nivon-gcp-migracao.yml",
+            ".github/workflows/nivon-gcp-zarc.yml",
+        ]
+        fonte_validada = (ROOT/".github/workflows/nivon-gcp-conexao-readonly.yml").read_text(encoding="utf-8")
+        self.assertIn("vars.NIVON_GCP_PROVIDER", fonte_validada)
+        for path in workflows:
+            with self.subTest(workflow=path):
+                workflow = (ROOT/path).read_text(encoding="utf-8")
+                self.assertIn("vars.NIVON_GCP_PROVIDER", workflow)
+                self.assertNotIn("NIVON_GCP_WIF_PROVIDER", workflow)
+
 if __name__=="__main__":
     unittest.main()
