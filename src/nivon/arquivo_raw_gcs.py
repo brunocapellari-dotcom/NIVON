@@ -32,9 +32,13 @@ def _validar_bucket(nome):
     return nome
 
 
-def preparar_manifesto(*, banco, raw_dir, bucket, limite=MAX_OBJECTS):
+def preparar_manifesto(*, banco, raw_dir, bucket, limite=MAX_OBJECTS,
+                       fonte_dataset=None):
     """Valida todos os objetos sem abrir cliente Google nem conexão de rede."""
     _validar_bucket(bucket)
+    if fonte_dataset is not None and (not isinstance(fonte_dataset,str)
+                                      or not DATASET.fullmatch(fonte_dataset)):
+        raise ErroArquivoCloud("fonte_dataset inválido")
     if type(limite) is not int or not 1 <= limite <= MAX_OBJECTS:
         raise ErroArquivoCloud("limite de objetos invalido")
     path = Path(banco)
@@ -46,7 +50,9 @@ def preparar_manifesto(*, banco, raw_dir, bucket, limite=MAX_OBJECTS):
     try:
         registros = db.execute("""SELECT dataset_id, snapshot_id, sha256, coletado_em,
                          content_type, tamanho, arquivo, url_publica FROM snapshots
-                         ORDER BY dataset_id, sha256""").fetchall()
+                         WHERE (? IS NULL OR dataset_id=?)
+                         ORDER BY dataset_id, sha256""",
+                         (fonte_dataset,fonte_dataset)).fetchall()
     finally:
         db.close()
     if not registros or len(registros) > limite:
@@ -85,8 +91,10 @@ def preparar_manifesto(*, banco, raw_dir, bucket, limite=MAX_OBJECTS):
             "bytes_total":sum(x["bytes"] for x in itens), "executado":False}
 
 
-def arquivar_gcs(*, banco, raw_dir, bucket, executar=False, client=None):
-    manifest = preparar_manifesto(banco=banco, raw_dir=raw_dir, bucket=bucket)
+def arquivar_gcs(*, banco, raw_dir, bucket, executar=False, client=None,
+                 fonte_dataset=None):
+    manifest = preparar_manifesto(banco=banco, raw_dir=raw_dir, bucket=bucket,
+                                   fonte_dataset=fonte_dataset)
     if executar is not True:
         raise PermissionError("UPLOAD_GCS_RAW_OFF")
     if client is None:
