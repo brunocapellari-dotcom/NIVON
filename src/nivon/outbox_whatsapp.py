@@ -18,6 +18,7 @@ from typing import Callable
 
 from .lineup_nacional import instante
 from .autorizacao_envio import verificar_autorizacao
+from .vigencia_editorial import calcular_vigencia_editorial, validar_reserva_editorial, _instante as _instante_vigencia
 from .provas_externas_envio import verificar_pacote_externo
 from .registry_emissores import (
     _esquema as _esquema_registry, emissores_confiaveis,
@@ -34,6 +35,11 @@ WEBHOOK_ESTADOS = {"sent": "ENVIADO", "delivered": "ENTREGUE",
                    "read": "LIDO", "failed": "FALHOU"}
 ORDEM = {"ENVIO_INDETERMINADO": 0, "ACEITO_PROVEDOR": 1,
          "ENVIADO": 2, "ENTREGUE": 3, "LIDO": 4}
+
+
+def _agora_reserva_utc() -> datetime:
+    """Relógio não controlado pelo payload; substituído SOMENTE por mocks de teste."""
+    return datetime.now(timezone.utc)
 
 
 def _hora() -> str:
@@ -158,6 +164,14 @@ def _esquema(con: sqlite3.Connection) -> None:
         idempotency_key TEXT PRIMARY KEY REFERENCES nivon_envios(idempotency_key),
         comprovantes_sha256 TEXT NOT NULL,
         registrado_em TEXT NOT NULL)""")
+    con.execute("""CREATE TABLE IF NOT EXISTS nivon_vigencia_editorial (
+        idempotency_key TEXT PRIMARY KEY REFERENCES nivon_envios(idempotency_key),
+        gerado_em_utc TEXT NOT NULL,
+        noticia_mais_antiga_utc TEXT NOT NULL,
+        valido_ate_utc TEXT NOT NULL,
+        sha256_editorial TEXT NOT NULL,
+        sha256_noticias TEXT NOT NULL,
+        registrado_em TEXT NOT NULL)""")
 
 
 def registrar_edicao(con: sqlite3.Connection, preparado: dict, *,
@@ -216,7 +230,8 @@ def registrar_autorizacao(con: sqlite3.Connection, preparado: dict, *,
                            edicao_editorial: dict, documento: dict,
                            assinatura: str, chave_auditoria: bytes,
                            comprovantes: list[dict] | None = None,
-                           emissores: dict | None = None) -> dict:
+                           emissores: dict | None = None,
+                           noticias_editoriais: list[dict] | None = None) -> dict:
     """Persiste apenas o SHA do documento assinado, nunca o texto/telefone.
 
     O documento e a edição são insumos de governança EXTERNOS: a verificação
@@ -233,12 +248,15 @@ def registrar_autorizacao(con: sqlite3.Connection, preparado: dict, *,
     if (edicao_editorial.get("sha256") != sha
             or documento.get("sha256_editorial") != sha):
         raise ErroOutbox("edição editorial diverge do hash da aprovação")
+    vigencia = calcular_vigencia_editorial(
+        preparado.get("gerado_em"), noticias_editoriais, sha)
     relatorio = edicao_editorial.get("preflight_editorial")
     if (not isinstance(relatorio, dict)
             or relatorio.get("apto_revisao") is not True
             or relatorio.get("sha256_texto") != sha
             or relatorio.get("bloqueios") != []
-            or relatorio.get("modo") != "OFFLINE_SEM_ENVIO"):
+            or relatorio.get("modo") != "OFFLINE_SEM_ENVIO"
+            or relatorio.get("noticia_mais_antiga_em") != vigencia["noticia_mais_antiga_utc"]):
         raise ErroOutbox("revisão editorial independente não comprovada no pacote")
     digest_doc = verificar_autorizacao(documento, assinatura, chave_auditoria=chave_auditoria)
     digest_provas = verificar_pacote_externo(
@@ -285,6 +303,19 @@ def registrar_autorizacao(con: sqlite3.Connection, preparado: dict, *,
             con.execute("""INSERT INTO nivon_provas_externas
                            (idempotency_key,comprovantes_sha256,registrado_em)
                            VALUES (?,?,?)""", (chave, digest_provas, _hora()))
+        anterior_vigencia = con.execute("""SELECT gerado_em_utc,noticia_mais_antiga_utc,
+            valido_ate_utc,sha256_editorial,sha256_noticias FROM nivon_vigencia_editorial
+            WHERE idempotency_key=?""", (chave,)).fetchone()
+        campos_vigencia = (vigencia["gerado_em_utc"],vigencia["noticia_mais_antiga_utc"],
+                          vigencia["valido_ate_utc"],vigencia["sha256_editorial"],
+                          vigencia["sha256_noticias"])
+        if anterior_vigencia and tuple(anterior_vigencia) != campos_vigencia:
+            raise ErroOutbox("vigência editorial divergente de edição já auditada")
+        if anterior_vigencia is None:
+            con.execute("""INSERT INTO nivon_vigencia_editorial
+                (idempotency_key,gerado_em_utc,noticia_mais_antiga_utc,valido_ate_utc,
+                 sha256_editorial,sha256_noticias,registrado_em)
+                VALUES (?,?,?,?,?,?,?)""", (chave,*campos_vigencia,_hora()))
         con.commit()
     except Exception:
         con.rollback()
@@ -409,6 +440,16 @@ def despachar_registrado(con: sqlite3.Connection, preparado: dict, *,
         if d[1]!=_fingerprint(preparado["payload"]):
             raise ErroOutbox("conteúdo divergente do registrado")
         _bloquear_se_optout(con, d[3])
+        prazo = con.execute("""SELECT gerado_em_utc,noticia_mais_antiga_utc,
+            valido_ate_utc,sha256_editorial,sha256_noticias FROM nivon_vigencia_editorial
+            WHERE idempotency_key=?""", (chave,)).fetchone()
+        if prazo is None:
+            raise PermissionError("vigência editorial ausente; edição legada bloqueada")
+        validar_reserva_editorial(dict(zip(
+            ("gerado_em_utc","noticia_mais_antiga_utc","valido_ate_utc",
+             "sha256_editorial","sha256_noticias"), prazo)),
+            gerado_em=preparado.get("gerado_em"),sha256_editorial=d[5],
+            agora=_agora_reserva_utc())
         prova_registrada = con.execute(
             "SELECT comprovantes_sha256 FROM nivon_provas_externas WHERE idempotency_key=?",
             (chave,)).fetchone()

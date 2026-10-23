@@ -265,6 +265,7 @@ def avaliar_previa_editorial(*, edicao: dict, gerado_em: str,
     if not isinstance(noticias, list) or not noticias:
         bloqueios.append("SEM_NOTICIAS_VERIFICADAS")
         noticias = []
+    publicacoes_validas = []
     chaves: set[str] = set()
     titulos: set[str] = set()
     eventos: set[str] = set()
@@ -276,6 +277,7 @@ def avaliar_previa_editorial(*, edicao: dict, gerado_em: str,
             if url in chaves or titulo in titulos or evento in eventos:
                 raise ValueError("notícia duplicada ou acontecimento repetido")
             chaves.add(url)
+            publicacoes_validas.append(_instante(item["publicado_em"]))
             titulos.add(titulo)
             eventos.add(evento)
             if titulo not in _normal(texto):
@@ -336,7 +338,9 @@ def avaliar_previa_editorial(*, edicao: dict, gerado_em: str,
             bloqueios.append("FRETE_LINHA_COMERCIAL_INCOMPLETA")
     for rota in sorted(ROTAS_PRIORITARIAS - rotas):
         lacunas.append("CORREDOR_SEM_DADO_VALIDO:" + "/".join(rota))
+    noticia_mais_antiga = min(publicacoes_validas).isoformat() if publicacoes_validas else None
     return {"apto_revisao": not bloqueios,
+            "noticia_mais_antiga_em": noticia_mais_antiga,
             "bloqueios": bloqueios, "lacunas": lacunas,
             "quantidades": {"noticias": len(noticias), "cotacoes": len(cotacoes),
                             "fretes": len(fretes)},

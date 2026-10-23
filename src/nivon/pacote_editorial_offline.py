@@ -103,6 +103,7 @@ def registrar_pacote_offline(
         con, modelo, edicao_editorial=comprovada,
         documento=documento, assinatura=sig, chave_auditoria=chave_auditoria,
         comprovantes=pacote["comprovantes"], emissores=emissores,
+        noticias_editoriais=pacote["noticias"],
     )
     return {
         "estado": "EDICAO_REGISTRADA_OFFLINE_SEM_ENVIO",
