@@ -11,7 +11,7 @@ from zoneinfo import ZoneInfo
 
 from .fretes_registros import OfertaFrete
 from .fretes_painel_pr30 import preparar_painel_pr30
-from .fretes_tendencia_pareada import tendencia_frete_pareado
+from .tendencias_mercados import tendencia_frete_anunciado
 
 
 def tendencia_ofertas_pareadas(
@@ -33,7 +33,9 @@ def tendencia_ofertas_pareadas(
         equipamento=equipamento, regime=regime, pedagio=pedagio, as_of=as_of,
     )
     corte_local = as_of.astimezone(ZoneInfo("America/Cuiaba")).date().isoformat()
-    resultado = tendencia_frete_pareado(
+    # Ponto de entrada R01 único: o modo sem pickup/carrier individual
+    # delega ao motor estatístico pareado e não à mediana de lotes legada.
+    resultado = tendencia_frete_anunciado(
         prep["observacoes"],
         origem_ibge=origem_ibge, destino_ibge=destino_ibge,
         descarga_entity_id=descarga_entity_id, produto=produto,
@@ -45,7 +47,7 @@ def tendencia_ofertas_pareadas(
     )
     return {
         **resultado,
-        "motor": "R01_PR30_PAREADO_PORTADO_NA_PR18",
+        "motor": "R01_PR30_PAREADO_UNIFICADO",
         "tipo_de_valor": "VARIACAO_PRECO_BASE_ANUNCIADO_NAO_PRECO_MUNICIPAL",
         "as_of_instante": prep["as_of"],
         "quantidade_bruta": prep["quantidade_bruta"],
