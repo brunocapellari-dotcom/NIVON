@@ -19,7 +19,7 @@ from .rotas_coleta import carregar_rotas,validar_rotas
 FONTES_AVALIADAS={
     'CEPEA_FISICO':('cotacao_lotes',"fonte_solicitada='CEPEA'"),
     'IMEA_FISICO':('cotacao_lotes',"fonte_solicitada='IMEA'"),
-    'CONAB_PROGRESSO_SEMANAL':('nivon_snapshots',"dataset_id='CONAB_PROGRESSO_SEMANAL'"),
+    'CONAB_PROGRESSO_SEMANAL':('conab_real_edicoes_quarentena','1=1'),
     'ARG_SAGYP_ESTIMACIONES_AGRICOLAS':('ar_ediciones','1=1'),
     'ARG_SIO_OPERACOES_DECLARADAS':('sio_edicoes','1=1'),
     'ARG_DJVE_DECLARACOES_EXPORTACAO':(None,None),
@@ -28,6 +28,7 @@ FONTES_AVALIADAS={
 CAMPOS_COLETA={
     'cotacao_lotes':'primeira_coleta_utc',
     'nivon_snapshots':None,
+    'conab_real_edicoes_quarentena':'coletado_utc',
     'ar_ediciones':'recogido_utc',
     'sio_edicoes':'coletado_em',
 }
@@ -58,6 +59,12 @@ def _datetime_utc(s):
 
 
 def _inspecionar(db,table,where):
+    if (table=='conab_real_edicoes_quarentena'
+            and table not in _tabelas(db)
+            and 'nivon_snapshots' in _tabelas(db)):
+        # Legado de snapshots sinteticos, nao equivalem a RAW real.
+        table='nivon_snapshots'
+        where="dataset_id='CONAB_PROGRESSO_SEMANAL'"
     if table not in _tabelas(db):
         return 0,None
     col={r[1] for r in db.execute('PRAGMA table_info('+table+')')}
