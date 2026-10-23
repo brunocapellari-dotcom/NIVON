@@ -237,7 +237,8 @@ def carregar_stage(*, arquivo, fonte_dataset, project_id, dataset_id,
     schema={col.name:col.field_type.upper() for col in tabela.schema}
     if (any(schema.get(k)!=tipo for k,tipo in TIPOS.items())
             or not getattr(tabela,"time_partitioning",None)
-            or tabela.time_partitioning.field!="data_coleta"):
+            or tabela.time_partitioning.field!="data_coleta"
+            or getattr(tabela,"require_partition_filter",False) is not True):
         raise ErroStagingAgro("schema/particionamento staging incompatível")
     stage=f"{project_id}.{dataset_id}._agro_stage_{uuid4().hex[:22]}"
     config = bigquery.LoadJobConfig(
@@ -303,6 +304,7 @@ def verificar_ou_criar_tabela(*, projeto, dataset, verificar=False,
         tabela.time_partitioning=bigquery.TimePartitioning(
             type_=bigquery.TimePartitioningType.DAY,field="data_coleta")
         tabela.clustering_fields=["dataset_id","identidade","snapshot_id"]
+        tabela.require_partition_filter=True
         tabela.description=(
             "NIVON staging privado: publicacoes IMEA/CONAB sem data-referencia; "
             "somente QUARANTINED, sem publicacao analitica canonica")
@@ -313,6 +315,7 @@ def verificar_ou_criar_tabela(*, projeto, dataset, verificar=False,
     if (any(schema.get(k)!=t for k,t in TIPOS.items())
             or not getattr(tabela,"time_partitioning",None)
             or tabela.time_partitioning.field!="data_coleta"
+            or getattr(tabela,"require_partition_filter",False) is not True
             or list(getattr(tabela,"clustering_fields",None) or [])
             != ["dataset_id","identidade","snapshot_id"]):
         raise ErroStagingAgro("tabela existente nao atende contrato staging")
