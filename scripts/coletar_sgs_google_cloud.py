@@ -24,6 +24,7 @@ def executar_sgs(*,base,project_id,dataset_id,bucket,autorizacoes=frozenset(),
                 executar=True,autorizacoes=autorizacoes,abridor=abridor,instante=instante)
     enviado=executar_envio(base=path,bucket=bucket,project_id=project_id,
              dataset_id=dataset_id,bigquery=True,executar=True,
+             fonte_dataset="BCB_SGS_TAXA_SELIC_DIARIA",
              autorizacoes=autorizacoes,evidencia=evidencia,
              storage_client=storage_client,bq_loader=bq_loader)
     return {"fonte":"BCB_SGS_TAXA_SELIC_DIARIA",

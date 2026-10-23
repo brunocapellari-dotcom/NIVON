@@ -7,10 +7,13 @@ from __future__ import annotations
 
 import hashlib
 import ipaddress
+import socket
+from http.client import HTTPSConnection
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from urllib.parse import urlsplit
-from urllib.request import Request, build_opener, HTTPRedirectHandler
+from urllib.request import (Request, build_opener, HTTPRedirectHandler,
+                            HTTPSHandler, ProxyHandler)
 
 
 class ErroAquisicao(ValueError):
@@ -20,6 +23,59 @@ class ErroAquisicao(ValueError):
 class _SemRedirecionar(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         return None
+
+
+
+def _ip_publico_resolvido(dominio: str, *, resolver=None) -> str:
+    """Recusa DNS A/AAAA misto ou não-global e retorna um IP para pinning TLS."""
+    consultar=resolver if resolver is not None else socket.getaddrinfo
+    try:
+        registros=consultar(dominio,443,type=socket.SOCK_STREAM)
+        enderecos=[registro[4][0] for registro in registros]
+        if not enderecos:
+            raise ErroAquisicao("dominio sem IP de DNS")
+        for ip in enderecos:
+            if not ipaddress.ip_address(ip).is_global:
+                raise ErroAquisicao("DNS aponta endereco nao publico")
+        return enderecos[0]
+    except ErroAquisicao:
+        raise
+    except (OSError, ValueError, IndexError, TypeError, KeyError) as exc:
+        raise ErroAquisicao("DNS nao verificavel") from exc
+
+
+class _ConexaoHTTPSFixada(HTTPSConnection):
+    """Conecta no IP DNS aprovado com TLS SNI/certificado do hostname original."""
+    def __init__(self, host, *, ip_fixo, **kwargs):
+        self._ip_fixo=ip_fixo
+        super().__init__(host, **kwargs)
+
+    def connect(self):
+        if self._tunnel_host:
+            raise ErroAquisicao("proxy/tunel proibido no coletor")
+        sock=socket.create_connection(
+            (self._ip_fixo,self.port),self.timeout,self.source_address)
+        try:
+            self.sock=self._context.wrap_socket(sock,server_hostname=self.host)
+        except BaseException:
+            sock.close()
+            raise
+
+
+class _HTTPSHandlerFixado(HTTPSHandler):
+    """Evita segunda resolucao DNS e restringe HTTPS ao dominio auditado."""
+    def __init__(self, dominio: str, ip_fixo: str):
+        super().__init__()
+        self._dominio=dominio
+        self._ip_fixo=ip_fixo
+
+    def https_open(self, req):
+        if urlsplit(req.full_url).hostname!=self._dominio:
+            raise ErroAquisicao("hostname divergente no HTTPS")
+        return self.do_open(
+            lambda host, **kwargs: _ConexaoHTTPSFixada(
+                host,ip_fixo=self._ip_fixo,**kwargs),
+            req,context=self._context,check_hostname=self._check_hostname)
 
 
 @dataclass(frozen=True)
@@ -37,34 +93,61 @@ class FonteWeb:
             raise PermissionError(f"FONTE_WEB_BLOQUEADA: {self.fonte_id}")
         if not self.fonte_id.strip() or not self.dominio_autorizado.strip():
             raise ErroAquisicao("fonte e domínio obrigatórios")
-        parsed = urlsplit(self.url)
-        if (parsed.scheme != "https" or parsed.username or parsed.password
-                or parsed.fragment or parsed.port not in (None, 443)
-                or parsed.hostname != self.dominio_autorizado):
-            raise ErroAquisicao("HTTPS/domínio/porta de fonte incompatível")
+        if (not isinstance(self.url,str) or not isinstance(self.dominio_autorizado,str)
+                or len(self.url)>2048 or any(ord(c)<=32 or ord(c)==127 for c in self.url)):
+            raise ErroAquisicao("URL oficial malformada ou com controles")
         try:
-            ipaddress.ip_address(parsed.hostname or "")
-            raise ErroAquisicao("IP literal proibido")
+            parsed=urlsplit(self.url)
+            host=parsed.hostname
+            porta=parsed.port
         except ValueError as exc:
-            if isinstance(exc, ErroAquisicao):
-                raise
+            raise ErroAquisicao("URL oficial malformada") from exc
+        if (parsed.scheme!="https" or parsed.username is not None
+                or parsed.password is not None or parsed.fragment
+                or porta not in (None,443) or host!=self.dominio_autorizado):
+            raise ErroAquisicao("HTTPS/domínio/porta de fonte incompatível")
+        if (not host or not host.isascii() or "." not in host
+                or host.endswith((".local",".internal",".localhost",".test"))
+                or host in {"localhost","localhost.localdomain"}
+                or host.startswith(".") or host.endswith(".")
+                or any(not label or len(label)>63 or label.startswith("-")
+                       or label.endswith("-") for label in host.split("."))):
+            raise ErroAquisicao("hostname nao publico ou invalido")
+        try:
+            ipaddress.ip_address(host)
+        except ValueError:
+            pass
+        else:
+            raise ErroAquisicao("IP literal proibido")
         if self.formato not in ("HTML", "PDF", "CSV", "JSON", "XLSX"):
             raise ErroAquisicao("formato não suportado")
         if not 0 < self.limite_bytes <= 25_000_000:
             raise ErroAquisicao("limite máximo inválido")
 
 
-def adquirir_fonte(fonte: FonteWeb, *, abridor=None, instante: datetime | None = None) -> dict:
+def adquirir_fonte(fonte: FonteWeb, *, abridor=None, instante: datetime | None = None,
+                   resolver=None) -> dict:
     """Obtém bytes com verificação e hash; SOMENTE quando autorizada.
 
-    `abridor` permite testar respostas sintéticas sem rede. DNS/TLS/egress
-    ainda requerem controles de infraestrutura antes de operação real.
+    Sem abridor injetado: valida TODOS os IPs DNS e fixa o socket no IP aprovado,
+    preservando TLS/SNI do dominio original e desabilitando proxies e redirects.
+    `abridor` e `resolver` sao dependencias de teste controladas; firewall de
+    egress e IAM permanecem controles obrigatorios da infraestrutura.
     """
     fonte.verificar()
     instante = instante or datetime.now(timezone.utc)
     if instante.tzinfo is None:
         raise ErroAquisicao("instante sem timezone")
-    cliente = abridor if abridor is not None else build_opener(_SemRedirecionar())
+    if abridor is None:
+        ip_aprovado=_ip_publico_resolvido(fonte.dominio_autorizado,resolver=resolver)
+        cliente=build_opener(
+            ProxyHandler({}),_SemRedirecionar(),
+            _HTTPSHandlerFixado(fonte.dominio_autorizado,ip_aprovado))
+    else:
+        # Testes injetados tambem podem ensaiar o bloqueio de DNS, sem rede.
+        if resolver is not None:
+            _ip_publico_resolvido(fonte.dominio_autorizado,resolver=resolver)
+        cliente=abridor
     req = Request(fonte.url, headers={
         "Accept": "text/html,application/pdf,text/csv,application/json",
         "User-Agent": "NIVON/0.1 (coleta oficial identificada)",
