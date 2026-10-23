@@ -1,0 +1,77 @@
+name: NIVON - Monitor oficial ANTT MDF-e
+on:
+  push:
+    branches:
+      - feat/antt-mdfe-volumes-od-20261022
+    paths:
+      - 'src/nivon/antt_mdfe_*.py'
+      - 'scripts/ingest_antt_mdfe*.py'
+      - 'tests/test_antt_mdfe*.py'
+      - '.github/workflows/antt-mdfe-catalogo.yml'
+  pull_request:
+    paths:
+      - 'src/nivon/antt_mdfe_*.py'
+      - 'scripts/ingest_antt_mdfe*.py'
+      - 'tests/test_antt_mdfe*.py'
+      - '.github/workflows/antt-mdfe-catalogo.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '20 11 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Compilar coletor ANTT
+        run: python -m compileall -q src/nivon/antt_mdfe_*.py scripts/ingest_antt_mdfe*.py tests/test_antt_mdfe*.py
+      - name: Rodar testes ANTT sem dados sintéticos publicados
+        env:
+          PYTHONPATH: 'src:.'
+        run: python -m unittest discover -s tests -p 'test_antt_mdfe*.py' -v
+
+  consultar-catalogo:
+    needs: validar
+    if: ${{ github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Consultar catalogo ANTT — metadados, nao toneladas
+        id: catalogo
+        continue-on-error: true
+        env:
+          PYTHONPATH: src
+        run: |
+          mkdir -p evidencias/antt
+          python -m nivon.antt_mdfe_catalogo --output evidencias/antt/mdfe_catalogo.json
+      - name: Resumo da verificacao
+        if: always()
+        run: |
+          echo '## ANTT MDF-e: status de acesso ao catálogo' >> "$GITHUB_STEP_SUMMARY"
+          if [ -f evidencias/antt/mdfe_catalogo.json ]; then
+            python -c "import json;d=json.load(open('evidencias/antt/mdfe_catalogo.json'));print('Estado:',d['status']);print('Candidatos CSV:',d.get('candidatos_csv_mdfe','não avaliados'))" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'Falha anterior à escrita da evidência.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: antt-mdfe-catalogo-${{ github.run_id }}
+          path: evidencias/antt/mdfe_catalogo.json
+          if-no-files-found: warn
+          retention-days: 90
