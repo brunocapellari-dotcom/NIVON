@@ -91,3 +91,60 @@ Nao há plugin GCP com escrita habilitada nesta conversa. Para go-live,
 um operador autenticado precisa configurar esses recursos na conta Google
 Cloud verdadeira; não pedir senha, chave de service account ou credencial
 privilegiada em mensagens. Sem isso, não afirmar coleta em produção.
+
+
+## Recuperação de falhas na gravação BigQuery
+
+A execução Cloud Run arquiva snapshots e páginas PortWatch por SHA-256
+e grava um manifesto de coleta imutável ANTES da etapa BigQuery.
+A rotina nivon.maritimo_replay_gcp reconstrói o staging a partir dos
+objetos GCS, verifica os hashes e aplica MERGE idempotente sem consultar
+novamente os portais.
+
+Acionamento de exemplo (não executado no Google Cloud real):
+
+    python -m nivon.maritimo_replay_gcp --bucket=BUCKET_REAL \
+       --manifesto=gs://BUCKET_REAL/nivon/maritimo/raw/_manifestos/RUN_UUID.json \
+       --projeto=PROJETO_REAL --dataset=nivon_maritimo --dry-run
+
+Após validação, remover o parâmetro dry-run para sincronizar.
+Se houver falha antes de arquivar o manifesto, os snapshots já escritos
+no GCS permanecem, mas a reconstrução automática do lote não é garantida.
+
+## Inspeção de infraestrutura Google Cloud (somente leitura)
+
+No ambiente gcloud/bq já autenticado, executar:
+
+    python infra/google_cloud/preflight_maritimo.py --projeto=PROJETO_REAL \
+      --regiao=REGIAO_REAL --bucket=BUCKET_REAL --dataset=nivon_maritimo
+
+A ferramenta consulta existência e estado do projeto, APIs necessárias,
+BigQuery dataset, bucket, Cloud Run Job e Cloud Scheduler. Não faz mutações,
+não imprime credenciais nem confunde falta de permissão com recurso ausente.
+É uma inspeção: NÃO ativa serviços.
+
+## Retrocarga histórica PortWatch (limitada)
+
+Existe o módulo nivon.maritimo_portwatch_backfill, separado da coleta
+rotineira. Ele fragmenta períodos em janelas de até 31 dias, permitindo
+no máximo quatro janelas por execução. Cada janela arquiva evidências,
+gera manifesto GCS e sincroniza por MERGE BigQuery, preservando
+classificação de carga estimada (não oficialmente realizada).
+
+Acionamento de exemplo somente após GCP IAM/recursos homologados:
+
+    NIVON_PORTWATCH_BACKFILL_HABILITADO=true \
+       python -m nivon.maritimo_portwatch_backfill \
+       --inicio=2019-01-01 --fim=2019-01-31 \
+       --projeto=PROJETO_REAL --bucket=BUCKET_REAL
+
+Não há evidência de retrocarga real no Google Cloud ainda. Limites,
+cotas, permissões, custos e proveniência deverão ser verificados
+antes da execução de intervalos maiores.
+
+## Status de homologação
+
+Testes automatizados validaram esses componentes sem credenciais por
+simulações; faltam project ID, bucket e dataset reais e direitos
+GCP de execução para testar Cloud Run -> GCS -> BigQuery na conta NIVON.
+Não confundir código no PR #141 com deploy/producao efetivamente implantada.
