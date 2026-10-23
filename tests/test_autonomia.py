@@ -110,6 +110,15 @@ class TestAutonomia(unittest.TestCase):
             logfile.write_text("texto sem métricas", encoding="utf-8")
             self.assertEqual(autonomia.usage_from_log(logfile), (None, None))
 
+    def test_supervisor_lock_blocks_parallel_processes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.object(autonomia, "HOME", Path(tmp)):
+                with autonomia.supervisor_lock():
+                    with self.assertRaises(RuntimeError):
+                        with autonomia.supervisor_lock():
+                            pass
+                self.assertFalse((Path(tmp) / "supervisor.pid").exists())
+
     def test_run_limits_and_no_llm_on_preflight(self):
         with patch.object(autonomia, "preflight", side_effect=RuntimeError("sem CLI")):
             self.assertEqual(autonomia.main(["run", "--max-tasks", "1"]), 2)
