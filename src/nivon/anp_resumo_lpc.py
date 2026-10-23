@@ -110,17 +110,21 @@ def _verificar_zip(payload: bytes):
 def ler_resumo_semanal_lpc(payload: bytes, *, coletado_em: str,
                           origem_url: str, municipios_mt: frozenset[str] | None = None,
                           aba: str = "MUNICIPIOS",
-                          cabecalho_linha: int = 7) -> dict:
+                          cabecalho_linha: int | None = None) -> dict:
     """Lê somente dados MT de diesel. Não publica e não presume semana atual.
 
-    Defaults do cabeçalho são CANDIDATOS, sujeitos a comparação com XLSX oficial.
+    Detecta cabeçalho com schema fechado nas primeiras 20 linhas.
+    Suporta planilhas oficiais 2026 (linha 10) e fixtures legados
+    (linha 7), preservando validação explícita quando fornecida.
     """
     captura=instante(coletado_em)
     if not (isinstance(origem_url,str) and origem_url.startswith("https://www.gov.br/anp/")
             and "/precos/arquivos-lpc/" in origem_url and origem_url.endswith(".xlsx")):
         raise ErroResumoANP("URL não corresponde a resumo semanal ANP identificado")
-    if not isinstance(aba,str) or aba!="MUNICIPIOS" or type(cabecalho_linha) is not int or not 1<=cabecalho_linha<=30:
-        raise ErroResumoANP("layout de resumo semanal requer aba MUNICIPIOS e linha explícita")
+    if (not isinstance(aba,str) or aba!="MUNICIPIOS"
+            or (cabecalho_linha is not None and
+                (type(cabecalho_linha) is not int or not 1<=cabecalho_linha<=30))):
+        raise ErroResumoANP("layout de resumo semanal requer aba MUNICIPIOS e cabeçalho válido")
     if municipios_mt is not None:
         if not isinstance(municipios_mt,frozenset) or not municipios_mt:
             raise ErroResumoANP("municípios solicitados inválidos")
@@ -143,11 +147,27 @@ def ler_resumo_semanal_lpc(payload: bytes, *, coletado_em: str,
             raise ErroResumoANP("aba MUNICIPIOS não encontrada; schema mudou")
         rows=wb[aba].iter_rows(values_only=True)
         header=None
-        for _ in range(cabecalho_linha):
-            try:
-                header=next(rows)
-            except StopIteration as exc:
-                raise ErroResumoANP("cabeçalho ausente") from exc
+        if cabecalho_linha is None:
+            # Descoberta conservadora: exige TODOS os campos canônicos,
+            # sem inferência por número da linha ou por texto parcial.
+            for n in range(1,21):
+                try:
+                    candidato=next(rows)
+                except StopIteration as exc:
+                    raise ErroResumoANP("cabeçalho oficial não localizado") from exc
+                nomes=[_canon(x) for x in candidato]
+                if set(HEADERS.values()).issubset(nomes):
+                    header=candidato
+                    cabecalho_linha=n
+                    break
+            if header is None:
+                raise ErroResumoANP("cabeçalho oficial não localizado nas 20 primeiras linhas")
+        else:
+            for _ in range(cabecalho_linha):
+                try:
+                    header=next(rows)
+                except StopIteration as exc:
+                    raise ErroResumoANP("cabeçalho ausente") from exc
         cols=[_canon(x) for x in header]
         if len([c for c in cols if c])!=len(set(c for c in cols if c)):
             raise ErroResumoANP("colunas duplicadas no XLSX")
