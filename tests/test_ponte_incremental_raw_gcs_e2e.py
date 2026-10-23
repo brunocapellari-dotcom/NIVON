@@ -214,6 +214,29 @@ class TestPonteR11GcsE2E(unittest.TestCase):
         with self.assertRaisesRegex(ErroPonteRaw, "promovido"):
             self.bridge(argentina=self.conf_ar(ar))
 
+    def test_stage_contaminado_por_observacao_analitica_e_recusado(self):
+        self.add_arg("200")
+        ar,_ = self.sync_arg()
+        self.bridge(argentina=self.conf_ar(ar))
+        with sqlite3.connect(self.stage) as db:
+            db.execute("""INSERT INTO observacoes (
+                 dataset_id,identidade,fingerprint,referencia,competencia,
+                 publicacao,coletado_em,unidade,valor,campos_json,snapshot_id,natureza
+                 ) SELECT dataset_id,'EVIDENCIA_TESTE',printf('%064d',0),
+                   '2026-10-20',NULL,NULL,coletado_em,NULL,NULL,'{}',snapshot_id,
+                   'ESTIMADO' FROM snapshots LIMIT 1""")
+        with self.assertRaisesRegex(ErroPonteRaw, "observações analíticas"):
+            self.bridge(argentina=self.conf_ar(ar))
+
+    def test_stage_com_dataset_estranho_e_recusado_antes_de_novo_raw(self):
+        self.add_arg("200")
+        ar,_=self.sync_arg()
+        self.bridge(argentina=self.conf_ar(ar))
+        with sqlite3.connect(self.stage) as db:
+            db.execute("UPDATE snapshots SET dataset_id='FONTE_DESCONHECIDA'")
+        with self.assertRaisesRegex(ErroPonteRaw, "não autorizado"):
+            self.bridge(argentina=self.conf_ar(ar))
+
     def test_privacidade_da_pasta_stage(self):
         self.add_arg("200")
         ar,_=self.sync_arg()
