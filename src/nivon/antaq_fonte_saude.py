@@ -8,7 +8,7 @@ import argparse
 import json
 from datetime import datetime, timezone
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlsplit
+from urllib.parse import urljoin, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 OFFICIAL_PAGE = "https://estatistica.antaq.gov.br/ea/sense/download.html"
@@ -50,7 +50,10 @@ def sondar(url: str, *, metodo: str = "GET", transport=None) -> dict:
     if status in (401,403):
         estado = "ACESSO_BLOQUEADO"
     elif status in (301,302,303,307,308):
-        estado = "REDIRECIONAMENTO_NAO_SEGUIDO"
+        alvo = urljoin(url, str(headers.get("Location", ""))) if headers else ""
+        estado = ("REDIRECIONAMENTO_PARA_AVISO_OFICIAL"
+                  if alvo.split("?",1)[0] == OFFICIAL_NOTICE
+                  else "REDIRECIONAMENTO_NAO_SEGUIDO")
     elif status == 404:
         estado = "NAO_LOCALIZADO"
     elif status in (429,500,502,503,504):
@@ -92,7 +95,7 @@ def monitorar(*, transport=None, relogio=None) -> dict:
         "sinais": [
             sondar(OFFICIAL_PAGE, transport=transport),
             sondar(OFFICIAL_ZIP, metodo="HEAD", transport=transport),
-            sondar(OFFICIAL_NOTICE, transport=transport),
+            sondar(OFFICIAL_NOTICE, metodo="HEAD", transport=transport),
             sondar(SECONDARY_API, transport=transport),
         ],
         "decisao": "NENHUMA_FONTE_E_HOMOLOGADA_POR_STATUS_HTTP",
