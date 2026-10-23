@@ -123,7 +123,7 @@ class CandidatosNoveExtrasTests(unittest.TestCase):
 
     def test_missing_required_extra_is_blocked(self):
         invalid = PROJECT.replace('"pdfplumber>=0.11,<1"', '"untrusted-package>=1,<2"')
-        with self.assertRaisesRegex(BloqueioRadar, "allowlist"):
+        with self.assertRaisesRegex(BloqueioRadar, "manifesto de dependências inválido"):
             _requirements(invalid)
 
     def test_versioned_release_mismatch_fails_entire_radar(self):
