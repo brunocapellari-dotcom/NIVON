@@ -24,7 +24,7 @@ class ErroUploadAgro(ValueError):
 
 _ID=re.compile(r'^[a-zA-Z][a-zA-Z0-9_-]{4,90}$')
 _TABELA='agro_fonte_stage'
-_TIPOS={**{k:'STRING' for k in _FIELDS},'coletado_utc':'TIMESTAMP'}
+_TIPOS={**{k:'STRING' for k in _FIELDS},'coletado_utc':'TIMESTAMP','data_coleta':'TIMESTAMP'}
 _MAX_BYTES=100_000_000
 _MAX_LINES=100_000
 
