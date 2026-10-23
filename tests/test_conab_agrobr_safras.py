@@ -95,12 +95,27 @@ class TestAgroBRContrato(TestCase):
             normalize(frame=bad)
 
     def test_metricas_nan_e_negativas_rejeitadas(self):
-        for badvalue in (float("inf"),-0.1,"NaN",float("nan"),"999999999999999999999"):
+        for badvalue in (float("inf"),-0.1,"999999999999999999999"):
             with self.subTest(badvalue=badvalue):
                 row=linhas()
                 row[0]["producao"]=badvalue
                 with self.assertRaisesRegex(ErroAgroBRSafras,"número"):
                     normalize(frame=row)
+
+    def test_nan_de_pandas_representa_ausencia_jamais_zero(self):
+        for missing in ("NaN",float("nan"),None):
+            with self.subTest(missing=str(missing)):
+                row=linhas()
+                row[0]["producao"]=missing
+                out=normalize(frame=row)
+                self.assertIsNone(out["registros"][0]["producao"])
+                self.assertFalse(out["habilita_backtest"])
+
+    def test_govbr_fora_do_namespace_conab_rejeita(self):
+        changed=meta()
+        changed.source_details["publicacao"]["url"]="https://www.gov.br/ibge/pt-br/estudos"
+        with self.assertRaisesRegex(ErroAgroBRSafras,"URL"):
+            normalize(source=changed)
 
     def test_uf_incoerente_e_duplicada_rejeitadas(self):
         with self.assertRaisesRegex(ErroAgroBRSafras,"UF/edição"):
