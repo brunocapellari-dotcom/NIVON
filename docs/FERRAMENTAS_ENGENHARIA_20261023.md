@@ -33,7 +33,7 @@ Data de avaliação: 23/10/2026. Inventário de oportunidades, não declaração
 2. `nivon.qualidade`: análise AST offline de `src/` e `tests/`, sem executar os arquivos, mais Ruff opcional selecionando regras críticas `E9,F821,F822,F823`.
 3. `nivon.ferramentas doctor`: informa disponibilidade de ferramentas, sem instalar nem configurar credenciais.
 4. `nivon.contexto_codigo`: indexação Python por hash e dicas de símbolos limitadas; não injeta arquivos inteiros no prompt.
-7. Claude Code é invocado com `--restricted --bare --no-session-persistence`, sem plugins/hook/MCP de usuário, e somente ferramentas de arquivo explicitadas; `AGENTS.md` deve ser lido diretamente pela tarefa. Isso reduz carregamento de contexto, mas ainda exige teste no host para validar a versão da CLI.
+7. Claude Code é invocado com `--restricted --safe-mode --no-session-persistence`, sem plugins/hook/MCP de usuário, e somente ferramentas de arquivo explicitadas; `AGENTS.md` deve ser lido diretamente pela tarefa. Isso reduz carregamento de contexto, mas ainda exige teste no host para validar a versão da CLI.
 5. `nivon.planejador`: tarefas priorizadas com dependências, gates de licença/risco e ítems de qualidade Ruff; não toma texto de issue como instrução livre.
 6. `nivon.autonomia`: duas worktrees em paralelo e integração serializada na branch local `autonomo/integracao`, com regressão offline em contêiner sem rede.
 
@@ -58,3 +58,7 @@ Quando, **à noite** e após validação no host, o operador poderá usar `bash 
 ## Evidências e próximo gate
 
 Código/testes de CI desta PR, sem comprovação de economia de tokens no PC. Próximo gate: verificar flags de versão do Claude/Codex, medidas de hardware, isolamento real, escolha de único mecanismo local de inferência e teste ponta a ponta noturno com orçamento autorizado.
+
+### Gate de autenticação no piloto
+
+`--bare` do Claude Code não suporta recuperar OAuth/keychain da assinatura. O NIVON utiliza `--safe-mode`, que reduz plugins, hooks, skills e MCPs e preserva login oficial. O `doctor` detecta as flags e métodos de autenticação **sem chamar modelos**; execução com credenciais de API faturada/terceiros é bloqueada. Fonte: [Claude CLI](https://code.claude.com/docs/en/cli-reference).
