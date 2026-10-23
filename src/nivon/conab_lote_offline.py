@@ -179,6 +179,7 @@ def main(argv=None) -> int:
     parser.add_argument("--manifest", required=True)
     parser.add_argument("--base-dir", required=True)
     parser.add_argument("--out", required=True)
+    parser.add_argument("--sqlite", help="arquivo SQLite de staging; sem backtest")
     args = parser.parse_args(argv)
     try:
         manifest = _json(Path(args.manifest), 200_000)
@@ -188,6 +189,16 @@ def main(argv=None) -> int:
             raise ErroLoteConab("saída já existe ou diretório indisponível")
         if destination.resolve().is_relative_to(Path(args.base_dir).resolve()):
             raise ErroLoteConab("saída não pode sobrescrever ou residir dentro de RAW")
+        if args.sqlite:
+            import sqlite3
+            from .conab_staging_sqlite import preparar_staging, gravar_dossie_conab
+            store = Path(args.sqlite)
+            if (store.is_symlink() or not store.parent.is_dir()
+                    or store.resolve().is_relative_to(Path(args.base_dir).resolve())):
+                raise ErroLoteConab("SQLite staging inseguro ou dentro dos RAWs")
+            with sqlite3.connect(str(store), timeout=5) as db:
+                preparar_staging(db)
+                result["persistencia_staging"] = gravar_dossie_conab(db, result)
         # O_EXCL evita sobrescrita silenciosa de artefatos anteriores.
         with destination.open("x", encoding="utf-8") as f:
             json.dump(result, f, ensure_ascii=False, indent=2, allow_nan=False)
