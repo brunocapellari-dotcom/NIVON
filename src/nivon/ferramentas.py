@@ -13,6 +13,7 @@ REQUIRED = ("git", "claude", "codex", "docker")
 OPTIONAL = ("gh", "ruff", "ty", "rg", "ast-grep", "sg", "serena", "codebase-memory-mcp", "rtk", "uv", "gitleaks", "semgrep", "osv-scanner", "ollama", "pytest")
 CLAUDE_FLAGS = ("--restricted", "--safe-mode", "--no-session-persistence", "--permission-prompts", "--tools")
 CODEX_FLAGS = ("--sandbox", "--json", "--ask-for-approval")
+APPROVED_IMAGES = {"python:3.11-slim", "python:3.11", "nivon-agentes:test-py311"}
 
 
 def call(args):
@@ -22,7 +23,7 @@ def call(args):
         return None
 
 
-def doctor():
+def doctor(image=None):
     found = {tool: bool(shutil.which(tool)) for tool in REQUIRED + OPTIONAL}
     flags = {}
     if found["claude"]:
@@ -57,8 +58,8 @@ def doctor():
             elif "api key" in output or "api_key" in output:
                 authentication["codex"] = "external_billing_blocked"
 
-    image = os.environ.get("NIVON_PYTHON_IMAGE", "python:3.11-slim")
-    image_ok = bool(re.fullmatch(r"python:3\.11(?:-slim)?", image))
+    image = image or os.environ.get("NIVON_PYTHON_IMAGE", "python:3.11-slim")
+    image_ok = image in APPROVED_IMAGES
     local_image = False
     if found["docker"] and image_ok:
         result = call(["docker", "image", "inspect", image])
@@ -75,6 +76,7 @@ def doctor():
         "supported_flags": flags,
         "authentication": authentication,
         "docker_image_local": local_image,
+        "docker_image_name": image,
         "docker_image_allowed": image_ok,
         "ready_for_pilot": (
             host_supported and all(found[x] for x in REQUIRED) and image_ok and local_image
