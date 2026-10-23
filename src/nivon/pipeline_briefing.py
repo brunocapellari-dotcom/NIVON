@@ -20,6 +20,7 @@ from .ptax_briefing import normalizar_snapshot_ptax, construir_indicador_ptax
 from .anp_diesel_briefing import montar_indicadores_diesel
 from .editorial_evidencias_pipeline import montar_candidatos_evidencias
 from .editorial_preflight import avaliar_previa_editorial
+from .proveniencia_rss_editorial import conciliar_rss_com_pagina_e_atestados
 
 
 class ErroPipelineBriefing(ValueError):
@@ -36,7 +37,12 @@ def gerar_edicao_offline(*, gerado_em: str, feeds: list[dict],
                          licencas_portuarias: dict | None = None,
                          ptax_snapshots: list[dict] | None = None,
                          diesel_resumos: list[dict] | None = None,
-                         catalogo: dict | None = None, escopo: dict | None = None) -> dict:
+                         catalogo: dict | None = None, escopo: dict | None = None,
+                         paginas_artigos: dict | None = None,
+                         atestados_publicacao: dict | None = None,
+                         eventos_editoriais: dict | None = None,
+                         chaves_emissores: dict | None = None,
+                         registrar_proveniencia: bool = False) -> dict:
     """Gera texto WhatsApp/auditoria a partir de dados offline já autorizados.
 
     Configurações de aprovação são insumos de governança, não derivadas dos XMLs.
@@ -168,9 +174,32 @@ def gerar_edicao_offline(*, gerado_em: str, feeds: list[dict],
         gerado_em=gerado_em, noticias=provas["noticias"],
         cotacoes=provas["cotacoes"],fretes=provas["fretes"],
     )
+    # Origem independente é opt-in de entrada EXPLÍCITA: sem atestados,
+    # jamais elevar o published do RSS à publicação original verificada.
+    entradas_prova = (paginas_artigos, atestados_publicacao,
+                      eventos_editoriais, chaves_emissores)
+    evidencias_verificadas = None
+    previa_com_origem = None
+    if any(v is not None for v in entradas_prova) or registrar_proveniencia:
+        if any(not isinstance(v, dict) for v in entradas_prova):
+            raise ErroPipelineBriefing("origem exige páginas, atestados, eventos e chaves completas")
+        evidencias_verificadas = conciliar_rss_com_pagina_e_atestados(
+            db,candidatos=provas,feeds=feeds,snapshots_xml=snapshots_xml,
+            paginas=paginas_artigos,atestados=atestados_publicacao,
+            eventos=eventos_editoriais,chaves_emissores=chaves_emissores,
+            registrar_hashes=registrar_proveniencia)
+        previa_com_origem = avaliar_previa_editorial(
+            edicao={"estado":"EDICAO_OFFLINE_PREPARADA_SEM_ENVIO",
+                    "gerado_em":gerado_em,"texto":briefing["texto"],
+                    "sha256":briefing["sha256"],"enviado":False},
+            gerado_em=gerado_em,noticias=evidencias_verificadas["noticias"],
+            cotacoes=evidencias_verificadas["cotacoes"],
+            fretes=evidencias_verificadas["fretes"])
     return {
         "evidencias_editoriais":provas,
         "preflight_editorial":previa,
+        "evidencias_origem_verificadas":evidencias_verificadas,
+        "preflight_com_origem":previa_com_origem,
         "estado":"EDICAO_OFFLINE_PREPARADA_SEM_ENVIO",
         "gerado_em":instante(gerado_em).isoformat(),
         "sha256":briefing["sha256"],"texto":briefing["texto"],
