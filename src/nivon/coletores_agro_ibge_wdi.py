@@ -14,7 +14,7 @@ from urllib.parse import urlencode
 from .coletores_dados_reais import _get, ErroColetor
 from .ingestao_fontes_reais import gravar_lote
 
-IBGE_BASE="https://servicodados.ibge.gov.br/api/v3/agregados/1612"
+IBGE_BASE="https://apisidra.ibge.gov.br/values/t/1612"
 WDI_BASE="https://api.worldbank.org/v2/country"
 ESTADOS={"MT":"51","MS":"50","GO":"52","PR":"41","RS":"43","SP":"35","MG":"31","BA":"29","PA":"15"}
 PAISES=frozenset({"BRA","ARG","PRY","USA","CHN","CAN","AUS"})
@@ -40,9 +40,7 @@ def plano_ibge_pam(*,ano,uf="MT",variavel=214):
         raise ErroFonteAgro("estado fora da allowlist")
     if variavel!=214:
         raise ErroFonteAgro("variavel PAM nao homologada")
-    query=urlencode({"localidades":f"N3[{ESTADOS[uf]}]",
-                    "classificacao":"81[all]"})
-    return f"{IBGE_BASE}/periodos/{ano}/variaveis/{variavel}?{query}"
+    return f"{IBGE_BASE}/n3/{ESTADOS[uf]}/p/{ano}/v/{variavel}/c81/all"
 
 def _decimal(x):
     if isinstance(x,bool) or x is None:
@@ -124,12 +122,64 @@ def parse_ibge_pam(raw, *,ano,uf,variavel=214):
                     "anual_nao_estimativa_mensal":True}})
     return output
 
+def parse_ibge_sidra(raw, *,ano,uf,variavel=214):
+    """SIDRA /values: valida colunas observadas em amostra HTTP real."""
+    try:
+        rows=json.loads(raw)
+    except (ValueError,UnicodeError) as exc:
+        raise ErroFonteAgro("SIDRA JSON invalido") from exc
+    if not isinstance(rows,list) or not 2<=len(rows)<=1000:
+        raise ErroFonteAgro("SIDRA sem tabela e cabecalho")
+    header=rows[0]
+    expected={"V":"Valor","D1C":"Unidade da Federação (Código)",
+        "D2C":"Ano (Código)","D3C":"Variável (Código)",
+        "D3N":"Variável","D4C":"Produto das lavouras temporárias (Código)",
+        "D4N":"Produto das lavouras temporárias"}
+    if not isinstance(header,dict) or any(header.get(k)!=v for k,v in expected.items()):
+        raise ErroFonteAgro("cabecalho SIDRA mudou; revisar parser")
+    out=[]
+    ids=set()
+    for row in rows[1:]:
+        if not isinstance(row,dict) or not all(k in row for k in ("V","D1C","D2C","D3C","D3N","D4C","D4N","MN")):
+            raise ErroFonteAgro("linha SIDRA sem campos obrigatorios")
+        if str(row["D1C"])!=ESTADOS[uf] or str(row["D2C"])!=str(ano) or str(row["D3C"])!=str(variavel):
+            raise ErroFonteAgro("SIDRA retornou ano, UF ou variavel diferente")
+        if str(row["D3N"]).strip().casefold()!="quantidade produzida":
+            raise ErroFonteAgro("SIDRA nome da variavel nao confirmado")
+        if str(row["MN"]).strip().casefold()!="toneladas":
+            raise ErroFonteAgro("SIDRA quantidade exige toneladas")
+        produto=str(row["D4N"]).strip().casefold()
+        if produto in ("soja (em grão)","soja (em grao)","soja"):
+            nome="SOJA"
+        elif produto in ("milho (em grão)","milho (em grao)","milho"):
+            nome="MILHO"
+        else:
+            continue
+        val=_decimal(row["V"])
+        if val is None:
+            continue
+        key=f"{ano}|{uf}|{nome}|{variavel}"
+        if key in ids:
+            raise ErroFonteAgro("duplicata de produto no SIDRA")
+        ids.add(key)
+        out.append({"identidade":key,"referencia":f"{ano}-12-31",
+            "competencia":str(ano),"natureza":"INFORMADO",
+            "valor":str(val),"unidade":"t",
+            "campos":{"fonte":"IBGE_SIDRA_PAM_TABELA_1612",
+              "ano_civil":ano,"uf":uf,"uf_codigo_ibge":ESTADOS[uf],
+              "produto":nome,"categoria_codigo":str(row["D4C"]),
+              "variavel_codigo":variavel,"valor_t":str(val),
+              "unidade_original":"Toneladas",
+              "data_publicacao_nao_informada":True,
+              "anual_nao_estimativa_mensal":True}})
+    return out
+
 def coletar_ibge_pam(*,ano,uf,banco,raw_dir,executar=False,cliente=None,instante=None):
     if executar is not True:
         raise PermissionError("IBGE_PAM_FETCH_OFF")
     url=plano_ibge_pam(ano=ano,uf=uf)
     raw,mime=_get(url,cliente=cliente,max_bytes=1_600_000,tipos={"application/json","text/json"})
-    linhas=parse_ibge_pam(raw,ano=ano,uf=uf)
+    linhas=parse_ibge_sidra(raw,ano=ano,uf=uf)
     now=instante if instante is not None else datetime.now(timezone.utc)
     saida=gravar_lote(banco=banco,diretorio_bruto=raw_dir,
         dataset_id="BR_IBGE_PAM_PRODUCAO_UF",origem=url,raw=raw,tipo="application/json",
