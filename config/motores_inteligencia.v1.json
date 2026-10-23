@@ -23,7 +23,23 @@
         "nivon.unidades_mercado:referencia_bolsa_cbot_usd_t",
         "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
         "nivon.agregacao_pam_ibge:agregar_municipios_pam",
-        "nivon.composicao_pam_sidra:montar_pam_municipal"
+        "nivon.composicao_pam_sidra:montar_pam_municipal",
+        "nivon.inteligencia_agricola_safras:estimar_oferta_remanescente",
+        "nivon.auditoria_conab_pam:preparar_tripla_conab",
+        "nivon.auditoria_conab_pam:confrontar_conab_pam",
+        "nivon.prova_raw_conab_agricola:verificar_raw_conab",
+        "nivon.inspecao_xls_conab_agricola:inspecionar_xls_conab_capturado",
+        "nivon.conab_levantamentos_candidatos:auditar_candidatos_levantamentos_conab",
+        "nivon.conab_anexo_xlsx_levantamento:conferir_anexo_xlsx_levantamento",
+        "nivon.conab_ooxml_metadados:inspecionar_abas_ooxml_conab",
+        "nivon.conab_celulas_xlsx:ler_amostra_celulas_conab",
+        "nivon.conab_lote_offline:executar_lote_conab",
+        "nivon.conab_staging_sqlite:gravar_dossie_conab",
+        "nivon.conab_progresso_csv_drive:normalizar_csv_progresso_conab",
+        "nivon.conab_comparar_capturas:comparar_capturas_sqlite",
+        "nivon.conab_coleta_pontual:coletar_uma_edicao",
+        "nivon.conab_progresso_auditoria:auditar_progresso_conab_drive",
+        "nivon.conab_agrobr_safras:consultar_safras_agrobr"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -66,7 +82,23 @@
         "nivon.unidades_mercado:referencia_bolsa_cbot_usd_t",
         "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
         "nivon.agregacao_pam_ibge:agregar_municipios_pam",
-        "nivon.composicao_pam_sidra:montar_pam_municipal"
+        "nivon.composicao_pam_sidra:montar_pam_municipal",
+        "nivon.inteligencia_agricola_safras:estimar_oferta_remanescente",
+        "nivon.auditoria_conab_pam:preparar_tripla_conab",
+        "nivon.auditoria_conab_pam:confrontar_conab_pam",
+        "nivon.prova_raw_conab_agricola:verificar_raw_conab",
+        "nivon.inspecao_xls_conab_agricola:inspecionar_xls_conab_capturado",
+        "nivon.conab_levantamentos_candidatos:auditar_candidatos_levantamentos_conab",
+        "nivon.conab_anexo_xlsx_levantamento:conferir_anexo_xlsx_levantamento",
+        "nivon.conab_ooxml_metadados:inspecionar_abas_ooxml_conab",
+        "nivon.conab_celulas_xlsx:ler_amostra_celulas_conab",
+        "nivon.conab_lote_offline:executar_lote_conab",
+        "nivon.conab_staging_sqlite:gravar_dossie_conab",
+        "nivon.conab_progresso_csv_drive:normalizar_csv_progresso_conab",
+        "nivon.conab_comparar_capturas:comparar_capturas_sqlite",
+        "nivon.conab_coleta_pontual:coletar_uma_edicao",
+        "nivon.conab_progresso_auditoria:auditar_progresso_conab_drive",
+        "nivon.conab_agrobr_safras:consultar_safras_agrobr"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_SERIES",
@@ -105,7 +137,8 @@
         "nivon.unidades_mercado:referencia_ice_centavos_libra_usd_t",
         "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
         "nivon.agregacao_pam_ibge:agregar_municipios_pam",
-        "nivon.composicao_pam_sidra:montar_pam_municipal"
+        "nivon.composicao_pam_sidra:montar_pam_municipal",
+        "nivon.inteligencia_agricola_safras:estimar_oferta_remanescente"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
@@ -201,7 +234,8 @@
         "nivon.unidades_mercado:referencia_bolsa_cbot_usd_t",
         "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
         "nivon.agregacao_pam_ibge:agregar_municipios_pam",
-        "nivon.composicao_pam_sidra:montar_pam_municipal"
+        "nivon.composicao_pam_sidra:montar_pam_municipal",
+        "nivon.inteligencia_agricola_safras:estimar_oferta_remanescente"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
@@ -229,7 +263,8 @@
         "nivon.inteligencia_temporal:decompor_mudanca_safra",
         "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
         "nivon.agregacao_pam_ibge:agregar_municipios_pam",
-        "nivon.composicao_pam_sidra:montar_pam_municipal"
+        "nivon.composicao_pam_sidra:montar_pam_municipal",
+        "nivon.inteligencia_agricola_safras:estimar_oferta_remanescente"
       ],
       "data_dependencies": [
         "CONAB_GRAOS_OUTRAS_CULTURAS",
@@ -520,7 +555,8 @@
         "nivon.inteligencia_temporal:comparar_progresso_safra",
         "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
         "nivon.agregacao_pam_ibge:agregar_municipios_pam",
-        "nivon.composicao_pam_sidra:montar_pam_municipal"
+        "nivon.composicao_pam_sidra:montar_pam_municipal",
+        "nivon.inteligencia_agricola_safras:estimar_oferta_remanescente"
       ],
       "data_dependencies": [
         "CONAB_CANA",
@@ -549,7 +585,8 @@
         "nivon.inteligencia_temporal:concentracao_fluxos",
         "nivon.auditoria_safra_preditiva:avaliar_backtest_safra",
         "nivon.agregacao_pam_ibge:agregar_municipios_pam",
-        "nivon.composicao_pam_sidra:montar_pam_municipal"
+        "nivon.composicao_pam_sidra:montar_pam_municipal",
+        "nivon.inteligencia_agricola_safras:estimar_oferta_remanescente"
       ],
       "data_dependencies": [
         "CONAB_GERGELIM_SERIES",

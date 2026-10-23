@@ -74,18 +74,26 @@ def normalizar_livro(livro, nome_arquivo: str, *, sha256: str, capturado_em: str
                 # na aba Produtividade. Recuperar APENAS a posição da safra
                 # validada na aba Área do mesmo XLS, registrando a inferência.
                 if (nome=="Área" or safras_esperadas is None
-                        or col-1 >= len(safras_esperadas)):
+                        or col not in safras_esperadas):
                     raise ErroConab(f"{nome} coluna {col+1}: {exc}") from exc
-                ano_coluna=safras_esperadas[col-1]
+                # Inferir apenas pela MESMA coluna física da aba Área.
+                # Índice posicional é inseguro se houve célula vazia ou
+                # deslocamento de cabeçalhos entre as três abas do XLS.
+                ano_coluna=safras_esperadas[col]
                 inferido=True
             safras.append((col,ano_coluna,str(raw),inferido))
         if len(safras)<20 or len({v for _,v,_,_ in safras})!=len(safras):
             raise ErroConab("safras históricas insuficientes ou repetidas")
         if sum(x[3] for x in safras)>12:
             raise ErroConab("mais de 12 cabeçalhos inferidos em uma aba")
-        if safras_esperadas is not None and [v for _,v,_,_ in safras]!=safras_esperadas:
-            raise ErroConab("diferença de safras entre as três abas")
-        safras_esperadas=[v for _,v,_,_ in safras]
+        mapa_colunas={col: ano for col,ano,_,_ in safras}
+        if safras_esperadas is not None and mapa_colunas!=safras_esperadas:
+            raise ErroConab("colunas físicas de safra divergem entre as três abas")
+        safras_esperadas=mapa_colunas
+        # Não descartar silenciosamente dados de MT/UF/BR que ficaram sob
+        # cabeçalho sem ano entre duas colunas históricas reconhecidas.
+        # Ausência de data/código não pode ser convertida em safra inferida.
+        lacunas=set(range(min(mapa_colunas),max(mapa_colunas)+1))-set(mapa_colunas)
         regioes=set()
         for row in range(header+1,aba.nrows):
             regiao=str(aba.cell_value(row,0)).strip().upper()
@@ -93,6 +101,12 @@ def normalizar_livro(livro, nome_arquivo: str, *, sha256: str, capturado_em: str
             if regiao not in UF and regiao!="BR": continue
             if regiao in regioes: raise ErroConab("região duplicada dentro da aba")
             regioes.add(regiao)
+            for col in lacunas:
+                raw_sem_safra=aba.cell_value(row,col)
+                if raw_sem_safra not in ("",None,"-","–","—"):
+                    raise ErroConab(
+                        f"{nome}: {regiao} tem dado sem safra na coluna {col+1}"
+                    )
             for col,safra,rotulo_original,inferido_rotulo in safras:
                 raw=aba.cell_value(row,col)
                 if raw in ("",None,"-","–","—"): continue

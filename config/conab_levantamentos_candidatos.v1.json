@@ -1,0 +1,38 @@
+[
+  {
+    "fonte_id": "CONAB",
+    "safra": "2023/24",
+    "numero_levantamento": 3,
+    "pagina_url": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/safra-de-graos/boletim-da-safra-de-graos/3o-levantamento-safra-2023-24",
+    "publicado_portal_em": "2023-12-07T09:00:00-03:00",
+    "atualizado_portal_em": "2025-01-24T12:45:00-03:00",
+    "inspecionado_dia": "2026-10-21"
+  },
+  {
+    "fonte_id": "CONAB",
+    "safra": "2024/25",
+    "numero_levantamento": 6,
+    "pagina_url": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/safra-de-graos/boletim-da-safra-de-graos/6o-levantamento-safra-2024-25",
+    "publicado_portal_em": "2025-03-13T09:00:00-03:00",
+    "atualizado_portal_em": "2025-04-22T11:54:00-03:00",
+    "inspecionado_dia": "2026-10-21"
+  },
+  {
+    "fonte_id": "CONAB",
+    "safra": "2024/25",
+    "numero_levantamento": 7,
+    "pagina_url": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/safra-de-graos/boletim-da-safra-de-graos/7o-levantamento-safra-2024-25",
+    "publicado_portal_em": "2025-04-10T09:00:00-03:00",
+    "atualizado_portal_em": "2025-05-13T17:27:00-03:00",
+    "inspecionado_dia": "2026-10-21"
+  },
+  {
+    "fonte_id": "CONAB",
+    "safra": "2026/27",
+    "numero_levantamento": 1,
+    "pagina_url": "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/safra-de-graos/boletim-da-safra-de-graos/1o-levantamento-safra-2026-27",
+    "publicado_portal_em": "2026-10-15T09:00:00-03:00",
+    "atualizado_portal_em": "2026-10-15T08:56:00-03:00",
+    "inspecionado_dia": "2026-10-21"
+  }
+]
