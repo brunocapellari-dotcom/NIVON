@@ -28,6 +28,7 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_transporte_multimodal.py' -v
           python -m unittest discover -s tests -p 'test_coleta_antt.py' -v
+          python -m unittest discover -s tests -p 'test_antt_bigquery.py' -v
       - name: Prova LIVE pontual ANTT 2025 e 2026 (nao publica)
         if: github.event_name == 'workflow_dispatch'
         env:
