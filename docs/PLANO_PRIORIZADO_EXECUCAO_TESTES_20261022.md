@@ -192,3 +192,33 @@ real e ingestão em ambiente com rede, guardar cabeçalhos e hashes,
 confrontar boletins originais, e homologar destino cloud antes de
 ativar escrita. Prioridades CEPEA/IMEA/CONAB e Argentina continuam
 em suas frentes sem substituir os processos próprios.
+
+
+## Pacote 23/10/2026 — coletor executável + reconciliação Google Cloud
+
+- Código: `src/nivon/coletor_ptax_quarentena.py` (captura HTTPS
+  oficial opt-in, com direitos e catálogo central, até oito janelas,
+  transação única de quarentena após validação integral);
+  `scripts/coletar_ptax_quarentena.py` (CLI com direitos, período
+  e arquivo de catálogo).
+- Cloud: `src/nivon/ptax_reconciliacao_gcs.py` (leitura e comparação
+  de bytes/hash), `src/nivon/ptax_sincronizacao_gcs.py` (retomada
+  idempotente de upload parcial, sem sobrescrita) e
+  `scripts/sincronizar_ptax_gcs.py` (dry-run por padrão, autorização
+  e custo obrigatórios para upload).
+- Testes integrados em
+  `tests/test_coleta_ptax_quarentena_integracao.py`: duas janelas
+  (uma sem cotação), HTTP inválido/rollback, source registry negado,
+  transporte real substituído por patch **apenas no teste**,
+  CLI sem permissão, recuperação por GCS simulado e dados divergentes.
+  O ensaio `scripts/ensaio_ptax_integrado.py` inclui agora o
+  coletor, a quarantena e a reconciliação GCS end-to-end
+  **sem rede**, sempre `publicavel=false`.
+
+**Próximo gate P0 material:** executar o coletor em máquina com
+conectividade `olinda.bcb.gov.br`, revalidar o contrato para
+USD/EUR, guardar um RAW real e headers com relógio auditável,
+confirmar e registrar direitos de ingestão, e somente depois
+conferir o bucket GCS já aprovado. O catálogo continua
+`enabled=false`, `collection_authorized=false`; não alegar
+acesso live, implantação cloud ou datas de publicação BCB.
