@@ -25,17 +25,17 @@ jobs:
       - name: Coletar BCRA/granos.ar com Canada
         run: python scripts/operar_fontes_reais.py --canada
       - name: Registrar modo sem nuvem
-        if: ${{ vars.NIVON_GCP_PROVIDER == '' || vars.NIVON_GCP_SERVICE_ACCOUNT == '' || vars.NIVON_BQ_PROJECT == '' || vars.NIVON_BQ_DATASET == '' }}
+        if: ${{ vars.NIVON_ZERO_COST_BQ_APPROVED != 'true' || vars.NIVON_GCP_PROVIDER == '' || vars.NIVON_GCP_SERVICE_ACCOUNT == '' || vars.NIVON_BQ_PROJECT == '' || vars.NIVON_BQ_DATASET == '' }}
         run: echo 'COLETA TEMPORARIA. BIGQUERY NAO CONFIGURADO; HISTORICO NAO PERSISTENTE.'
       - name: Credenciais efemeras GCP via OIDC
-        if: ${{ vars.NIVON_GCP_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && vars.NIVON_BQ_PROJECT != '' && vars.NIVON_BQ_DATASET != '' }}
+        if: ${{ vars.NIVON_ZERO_COST_BQ_APPROVED == 'true' && vars.NIVON_GCP_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && vars.NIVON_BQ_PROJECT != '' && vars.NIVON_BQ_DATASET != '' }}
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
           service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
       - name: Instalar extra BigQuery
-        if: ${{ vars.NIVON_GCP_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && vars.NIVON_BQ_PROJECT != '' && vars.NIVON_BQ_DATASET != '' }}
+        if: ${{ vars.NIVON_ZERO_COST_BQ_APPROVED == 'true' && vars.NIVON_GCP_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && vars.NIVON_BQ_PROJECT != '' && vars.NIVON_BQ_DATASET != '' }}
         run: python -m pip install -e '.[gcp]'
       - name: Carregar JSONL no BigQuery com MERGE idempotente
-        if: ${{ vars.NIVON_GCP_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && vars.NIVON_BQ_PROJECT != '' && vars.NIVON_BQ_DATASET != '' }}
+        if: ${{ vars.NIVON_ZERO_COST_BQ_APPROVED == 'true' && vars.NIVON_GCP_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && vars.NIVON_BQ_PROJECT != '' && vars.NIVON_BQ_DATASET != '' }}
         run: python -m nivon.carga_bigquery_fontes --arquivo data/nivon/staging_fontes_reais.jsonl --projeto "${{ vars.NIVON_BQ_PROJECT }}" --dataset "${{ vars.NIVON_BQ_DATASET }}" --executar
