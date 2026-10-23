@@ -17,7 +17,7 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .auditoria_evidencias_pacotes import ErroEvidencia
+from .auditoria_evidencias_pacotes import ErroEvidencia, _dentro_do_requisito
 from .auditoria_extras import analisar_requisito, ErroDependencias
 
 REPO = "brunocapellari-dotcom/NIVON"
@@ -224,7 +224,16 @@ def executar(project_text: str, *, pypi_fetch=_request, osv_fetch=_request,
         item["project_declared_requirement"] = next(
             x for x in tomllib.loads(project_text)["project"]["optional-dependencies"][PACKAGES[name]]
             if _name(x.split(">")[0].split("=")[0].strip()) == name)
-        item["constraint_status"] = "NOT_RESOLVED_FULL_PEP440"
+        try:
+            compatible = _dentro_do_requisito(item["version"], req)
+        except ErroEvidencia:
+            compatible = None
+        item["latest_satisfies_supported_numeric_requirement"] = compatible
+        item["constraint_status"] = (
+            "LATEST_WITHIN_DECLARED_NUMERIC_RANGE" if compatible is True else
+            "LATEST_OUTSIDE_DECLARED_NUMERIC_RANGE" if compatible is False else
+            "VERSION_REQUIRES_FULL_PEP440_RESOLVER"
+        )
         packages.append(item)
     queries = [
         {"package": {"ecosystem": "PyPI", "name": p["name"]},
@@ -249,6 +258,14 @@ def executar(project_text: str, *, pypi_fetch=_request, osv_fetch=_request,
         "packages": packages,
         "osv": vulnerabilities,
         "queried_package_count": len(packages),
+        "latest_outside_declared_range": [
+            p["name"] for p in packages
+            if p["latest_satisfies_supported_numeric_requirement"] is False
+        ],
+        "latest_range_not_evaluable": [
+            p["name"] for p in packages
+            if p["latest_satisfies_supported_numeric_requirement"] is None
+        ],
         "osv_total_ids_reported": sum(x["osv_count_reported"] for x in vulnerabilities),
         "full_dependency_resolution": False,
         "all_optional_extras_covered": False,
@@ -286,6 +303,7 @@ def main() -> int:
         "project": "NIVON", "source": result["source"],
         "queried_package_count": result["queried_package_count"],
         "versions": {item["name"]: item["version"] for item in result["packages"]},
+        "latest_outside_declared_range": result["latest_outside_declared_range"],
         "reported_osv_ids": result["osv_total_ids_reported"],
         "approved_for_production": False,
         "result_file": str(args.output),
