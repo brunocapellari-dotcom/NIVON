@@ -70,9 +70,17 @@ def executar_lote(*, fonte: str, base: str | Path,
             raw_dir=base/"raw",autorizacoes=SOURCE_OPS,
             executar=True,abridor=abridor,instante=instante)
         cloud_bigquery=True
+    # Processar somente o dataset da execução, preservando outras fontes
+    # e quarentenas do SQLite local sem contaminar o MERGE.
+    dataset_fonte={
+        "BCB_PTAX":"BCB_PTAX",
+        "IBGE_PAM":"IBGE_PAM",
+        "CONAB_ARMAZENS":"CONAB_ARMAZENS_CAPACIDADE",
+        "IMEA_WORKBOOK":"IMEA_WORKBOOK_LEGADO_STAGING",
+    }[fonte]
     cloud=executar_envio(
         base=base,bucket=bucket,project_id=project_id,dataset_id=dataset_id,
-        bigquery=cloud_bigquery,executar=True,
+        bigquery=cloud_bigquery,fonte_dataset=dataset_fonte,executar=True,
         autorizacoes=SOURCE_OPS,evidencia=evidencia,
         storage_client=storage_client,bq_loader=bq_loader)
     return {
