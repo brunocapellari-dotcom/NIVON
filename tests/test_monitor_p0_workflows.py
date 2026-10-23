@@ -32,7 +32,7 @@ class TestMonitorP0(unittest.TestCase):
            run(2,datetime(2026,10,22,14,0,tzinfo=UTC),"success","schedule")]
         self.assertEqual(assess("IMEA",x,now=NOW)["status"],"SCHEDULE_LAG")
     def test_two_missed_future_crons_raise_failure(self):
-        last=run(1,datetime(2026,10,23,15,0,tzinfo=UTC),"success","push")
+        last=run(1,datetime(2026,10,26,0,0,tzinfo=UTC),"success","push")
         later=datetime(2026,10,27,16,0,tzinfo=UTC)
         self.assertEqual(assess("IMEA",[last],now=later)["status"],"SCHEDULE_MISSING")
 
