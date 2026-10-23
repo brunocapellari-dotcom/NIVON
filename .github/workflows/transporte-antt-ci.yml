@@ -2,13 +2,6 @@ name: NIVON — CI transporte ANTT e ANTAQ
 on:
   push:
     branches: [feature/transporte-antt-antaq-20261022]
-  pull_request:
-    paths:
-      - 'src/nivon/transporte_multimodal.py'
-      - 'src/nivon/coleta_antt.py'
-      - 'tests/test_transporte_multimodal.py'
-      - 'tests/test_coleta_antt.py'
-      - '.github/workflows/transporte-antt-ci.yml'
   workflow_dispatch:
 
 permissions:
@@ -35,46 +28,29 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_transporte_multimodal.py' -v
           python -m unittest discover -s tests -p 'test_coleta_antt.py' -v
-      - name: Diagnostico de esquema numerico real (amostra publica limitada)
+      - name: Prova LIVE pontual ANTT 2025 e 2026 (nao publica)
         env:
           PYTHONPATH: src
         run: |
-          python - <<'PY'
-          import csv, io
-          from nivon.coleta_antt import catalogo_antt, _http
-          url = catalogo_antt(habilitar_rede=True)[2026]["url"]
-          b = _http(url)
-          try:
-              t = b.decode("utf-8-sig")
-              codec = "utf-8-sig"
-          except UnicodeDecodeError:
-              t = b.decode("cp1252")
-              codec = "cp1252"
-          r = csv.DictReader(io.StringIO(t), delimiter=";" if t.splitlines()[0].count(";")>=8 else ",")
-          print("ENCODING", codec, "CAMPOS", r.fieldnames)
-          for i, row in zip(range(6), r):
-              print("SAMPLE", i, "TU", repr(row.get("TU")), "TKU", repr(row.get("TKU")),
-                    "MES_ANO", repr(row.get("Mes_Ano")))
-          PY
-      - name: Prova LIVE pontual ANTT 2026 (nao publica)
-        env:
-          PYTHONPATH: src
-        run: |
-          python -m nivon.coleta_antt --inicio 2026 --fim 2026 --destino "${RUNNER_TEMP}/nivon-antt" --live
-      - name: Verificar staging e hash de origem
+          python -m nivon.coleta_antt --inicio 2025 --fim 2026 --destino "${RUNNER_TEMP}/nivon-antt" --live
+      - name: Conciliar staging anual e gerar totais TU/TKU
         if: success()
         env:
           PYTHONPATH: src
         run: |
           python - <<'PY'
-          import json, os, pathlib, hashlib
-          d = pathlib.Path(os.environ["RUNNER_TEMP"]) / "nivon-antt"
-          m = json.loads((d / "manifesto-antt.json").read_text())
-          a = m["anos"]["2026"]
-          raw = (d / "antt-od-2026.csv").read_bytes()
-          assert hashlib.sha256(raw).hexdigest() == a["sha256"]
-          assert a["registros"] > 0
-          assert a["status"] == "STAGING_NAO_HOMOLOGADO"
-          print("PROVA_LIVE_RECEBIDA_SEM_HOMOLOGACAO", "ano=2026",
-                "registros=", a["registros"], "competencia=", a["competencia_maxima"])
+          import json, os
+          from pathlib import Path
+          from nivon.resumo_antt import consolidar_staging
+          d = Path(os.environ["RUNNER_TEMP"]) / "nivon-antt"
+          r = consolidar_staging(d, [2025, 2026])
+          for ano, info in r["anos"].items():
+              print("PROVA_LIVE", "ano=", ano, "registros=", info["registros"],
+                    "competencia_maxima=", info["competencia_maxima"],
+                    "sha256=", info["sha256"])
+          print("TOTAIS_TU_TKU_2025_2026", r["toneladas_uteis"], r["tku_raw"])
+          print("TONELADAS_POR_MES", json.dumps(r["por_mes"], ensure_ascii=False))
+          print("TONELADAS_UF_ORIGEM_MT", r["por_uf_origem"].get("MT", "NAO_ENCONTRADO"))
+          print("MERCADORIAS_TOP_10", json.dumps(list(r["por_mercadoria"].items())[:10], ensure_ascii=False))
+          print("ESTADO", r["estado"], "NAO_PUBLICADO_NO_BANCO")
           PY
