@@ -86,7 +86,7 @@ def _anexo_real(url,root):
     # URL e EXPLICITAMENTE linkada pelo HTML; nunca sintetizada.
     # Alguns documentos terminam em .xlsx diretamente; os de Plone
     # usam @@download/file sob o documento.
-    return u.path==p if p.endswith('.xlsx') else u.path==p+'/@@download/file'
+    return (u.path==p and p.endswith('.xlsx')) or u.path==p+'/@@download/file'
 
 
 def resolver_html_documento(html:bytes,*,pagina_semana:str,url_documento:str,
