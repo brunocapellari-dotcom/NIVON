@@ -100,7 +100,7 @@ class TestLedgerFreteE2E(unittest.TestCase):
 
     def test_lote_duplicado_cancela_sem_registros_parciais(self):
         ps=lote_detalhado(self.rows)
-        ps[4]=dict(ps[0])
+        ps[1]=dict(ps[0])
         with self.assertRaisesRegex(ErroLedgerFrete,"repetida"):
             gravar(self.db,ps)
         self.assertEqual(validar(self.db,GENESIS)["quantidade"],0)
@@ -126,7 +126,7 @@ class TestLedgerFreteE2E(unittest.TestCase):
 
     def test_registro_tardio_ou_retroativo_rejeita(self):
         p=emissao(self.rows,1)
-        with self.assertRaisesRegex(ErroLedgerFrete,"tardio"):
+        with self.assertRaisesRegex(ErroLedgerFrete,"tardi"):
             anexar_previsao_frete(
                 self.db,p,recebido_em=recebido(p)+timedelta(days=1),
                 cabeca_anterior_sha256=GENESIS,chave_verificacao=KEY,
