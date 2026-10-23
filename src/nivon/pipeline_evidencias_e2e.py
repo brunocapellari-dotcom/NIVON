@@ -74,7 +74,8 @@ def _wheel(package: str, version: str, requirements: tuple[str, ...]) -> bytes:
     return out.getvalue()
 
 
-def executar(pyproject: bytes, *, source_sha: str, run_id: int, output: Path) -> dict:
+def executar(pyproject: bytes, *, source_sha: str, run_id: int, output: Path,
+            pr_head_sha: str | None = None) -> dict:
     """Executa etapas E2E e grava evidências locais se TODAS forem aprovadas.
 
     Acesso à saída só depois da validação dos controles; sem overwrites.
@@ -84,6 +85,10 @@ def executar(pyproject: bytes, *, source_sha: str, run_id: int, output: Path) ->
     if not isinstance(source_sha, str) or not _SHA.fullmatch(source_sha) or (
             type(run_id) is not int or run_id <= 0):
         raise ErroEvidencia("referência de execução inválida")
+    if pr_head_sha is None:
+        pr_head_sha = source_sha
+    if not isinstance(pr_head_sha, str) or not _SHA.fullmatch(pr_head_sha):
+        raise ErroEvidencia("SHA HEAD da PR inválido")
     if not isinstance(output, Path) or output.exists() or output.is_symlink():
         raise ErroEvidencia("saída já existe, não sobrescrever")
     if not output.parent.is_dir() or output.parent.is_symlink():
@@ -178,6 +183,9 @@ def executar(pyproject: bytes, *, source_sha: str, run_id: int, output: Path) ->
         "project": "NIVON",
         "run_type": "E2E_SYNTHETIC_INTEGRATION_NOT_REAL_AUDIT",
         "source_sha": source_sha,
+        "tested_checkout_sha": source_sha,
+        "pr_head_sha": pr_head_sha,
+        "checkout_is_distinct_from_pr_head": source_sha != pr_head_sha,
         "workflow_run_id": run_id,
         "generated_utc": now.isoformat(),
         "steps_executed": [
@@ -239,14 +247,18 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Executar cadeia E2E NIVON com fixtures reais em bytes sintéticos")
     parser.add_argument("--pyproject", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--source-sha", required=True)
+    parser.add_argument("--source-sha", required=True,
+                        help="GITHUB_SHA: commit testado no checkout (merge temporário em pull_request)")
+    parser.add_argument("--pr-head-sha",
+                        help="SHA do head da PR, diferente do merge temporário em pull_request")
     parser.add_argument("--run-id", type=int, required=True)
     args = parser.parse_args()
     try:
         if args.pyproject.is_symlink() or not args.pyproject.is_file():
             raise ErroEvidencia("pyproject ausente ou symlink")
         summary = executar(args.pyproject.read_bytes(), source_sha=args.source_sha,
-                          run_id=args.run_id, output=args.output)
+                          run_id=args.run_id, output=args.output,
+                          pr_head_sha=args.pr_head_sha)
     except (ErroEvidencia, OSError) as exc:
         parser.exit(2, f"E2E_BLOQUEADO: {exc}\n")
     print(json.dumps(summary, indent=2, ensure_ascii=False))
