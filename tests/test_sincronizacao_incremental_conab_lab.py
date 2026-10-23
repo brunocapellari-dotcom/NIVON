@@ -97,8 +97,11 @@ class TestIncrementalLabConab(unittest.TestCase):
         self.sync()
         other={**self.ref,"id":"AGROBR_20260208","arquivo":"agrobr_20260208.xlsx",
                "sha256":"0"*64}
+        # O catálogo de uma rodada não aceita duas entradas da mesma
+        # competência; apresentar somente a revisão contra a edição já
+        # persistida para exercitar a quarentena incremental.
         with self.assertRaisesRegex(ErroIncrementalConab,"REVISAO_DA_SEMANA"):
-            self.sync({**self.cat,"edicoes":[self.ref,other]})
+            self.sync({**self.cat,"edicoes":[other]})
 
     def test_backup_nao_sobrescreve_documento_existente(self):
         self.sync()
