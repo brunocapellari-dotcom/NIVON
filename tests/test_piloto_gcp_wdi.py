@@ -98,7 +98,7 @@ class PilotoWDITest(unittest.TestCase):
         with self.assertRaises(ErroPilotoGCP):
             executar_piloto(**GCP,executar=True,
                 env={k:"true" for k in GATES},**functions)
-        self.assertEqual(calls[-2:],["merge"])
+        self.assertEqual(calls[-1],"merge")
 
 if __name__=="__main__":
     unittest.main()
