@@ -164,3 +164,30 @@ def auditar_fontes_agro(
                 "permissao_de_publicacao_verificada":False}
     finally:
         conn.close()
+
+
+def main(argv: list[str] | None=None) -> int:
+    """CLI estritamente read-only; não revela preço, caminho ou credencial."""
+    import argparse
+    import json
+    import sys
+    parser=argparse.ArgumentParser(
+        description="NIVON: auditar recência, quarentena e SHA de CEPEA/IMEA/CONAB")
+    parser.add_argument("--banco",required=True,help="SQLite local já existente")
+    parser.add_argument("--raw",required=True,help="diretório raiz RAW permitido")
+    args=parser.parse_args(argv)
+    try:
+        result=auditar_fontes_agro(
+            banco=args.banco,agora=datetime.now(timezone.utc),
+            diretorio_raw=args.raw,
+        )
+    except (ErroFrescorAgro,sqlite3.DatabaseError,OSError,ValueError):
+        print(json.dumps({"estado":"FALHA_FECHADA","somente_leitura":True}),
+              file=sys.stderr)
+        return 2
+    print(json.dumps(result,ensure_ascii=False,sort_keys=True))
+    return 0
+
+
+if __name__=="__main__":
+    raise SystemExit(main())
