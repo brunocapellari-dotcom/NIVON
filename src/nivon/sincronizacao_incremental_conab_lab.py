@@ -262,6 +262,10 @@ def sincronizar_incremental_lab(catalogo: dict, db_path: str | Path, pasta_backu
     backupdir=_dir_private(pasta_backup)
     with closing(abrir_db_lab(db_path)) as db:
         plan=planejar_delta(db,validated)
+        # Retificações têm ledger/backup independentes, mas nenhum no-op
+        # do sincronizador base pode ignorar uma revisão adulterada.
+        from .revisoes_conab_lab import verificar_integridade_retificacoes_lab
+        verificar_integridade_retificacoes_lab(db,backupdir)
         if plan["conflitos"]:
             raise ErroIncrementalConab("conflito de edição/revisão/política parser: "+
                                        json.dumps(plan["conflitos"],ensure_ascii=False))
