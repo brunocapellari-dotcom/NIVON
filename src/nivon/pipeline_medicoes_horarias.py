@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS medidas_containers_origem (
  parent_sha256 TEXT NOT NULL,
  membro TEXT NOT NULL,
  membro_sha256 TEXT NOT NULL,
- pai_raw_arquivado INTEGER NOT NULL CHECK(pai_raw_arquivado=0),
+ pai_raw_arquivado INTEGER NOT NULL CHECK(pai_raw_arquivado=1),
  PRIMARY KEY(sha256,parent_sha256,membro)
 );
 CREATE INDEX IF NOT EXISTS idx_medidas_tempo ON medidas_registros(medido_utc,metrica);
@@ -207,17 +207,20 @@ def importar_ciclo_medicoes(db, *, raw_dir, edicoes):
             if (not isinstance(origin,dict) or
                 set(origin)!={"tipo","parent_sha256","membro","membro_sha256",
                              "pai_raw_arquivado_no_acervo",
-                             "integridade_zip_externa_revalidada"} or
+                             "integridade_zip_externa_revalidada",
+                             "arquivo_zip_local"} or
                 origin["tipo"]!="ZIP_INMET_ANUAL" or
                 e["dataset_id"]!="INMET_ESTACOES" or
                 not isinstance(origin["parent_sha256"],str) or
                 not _HASH.fullmatch(origin["parent_sha256"]) or
                 origin["membro_sha256"]!=e["sha256"] or
-                origin["pai_raw_arquivado_no_acervo"] is not False or
+                origin["pai_raw_arquivado_no_acervo"] is not True or
                 origin["integridade_zip_externa_revalidada"] is not True or
                 not isinstance(origin["membro"],str) or
                 not origin["membro"].endswith(".csv") or
-                len(origin["membro"])>260):
+                len(origin["membro"])>260 or
+                not isinstance(origin["arquivo_zip_local"],str) or
+                not origin["arquivo_zip_local"].endswith(".zip")):
                 raise ErroPipelineAmbiental("proveniência do ZIP incompatível")
     folder = _pasta(raw_dir, criar=True)
     prior_paths = {p.name for p in folder.glob("*.raw")}
