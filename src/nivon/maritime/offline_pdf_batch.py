@@ -153,16 +153,16 @@ def run_offline_pdf_batch(
     per_scope_current_counts: dict[tuple[str, str, str], int] = {}
     for port_id, source_id, series_key in scopes:
         series = series_key or None
-        known_existing = ledger.history_asof(
+        known_existing = ledger.paged_history_asof(
             port_id=port_id, source_id=source_id, series=series,
             as_of=cutoff, read_authorized=True,
         )
         # Audit-only history includes previously stored documents with
         # *unproven publication*. They remain UNAVAILABLE to all revision
         # comparisons, but must be visible as a quality blocker in readiness.
-        known_for_audit = ledger.audit_history_asof(
+        known_for_audit = ledger.paged_history_asof(
             port_id=port_id, source_id=source_id, series=series,
-            as_of=cutoff, read_authorized=True,
+            as_of=cutoff, read_authorized=True, audit_only=True,
         )
         all_current = [
             version for _, version, _ in prepared
@@ -184,8 +184,11 @@ def run_offline_pdf_batch(
             ):
                 raise ValueError("conflicting batch: stored audit programme edition")
             audit_index[stamp] = edition
-        if len(audit_index) > 200:
-            raise ValueError("combined source audit exceeds 200 editions: pagination required")
+        if (len(audit_index) > 2000 or sum(
+            len(PdfProgrammeLedger._canonical(edition)[2].encode("utf-8"))
+            for edition in audit_index.values()
+        ) > 48_000_000):
+            raise ValueError("combined source audit exceeds edition/byte quotas")
         readiness_history.extend(audit_index.values())
         staged = [
             version for _, version, _ in prepared
@@ -209,8 +212,8 @@ def run_offline_pdf_batch(
                 raise ValueError("conflicting batch: previously known programme edition")
             index[stamp] = version
         known = sorted(index.values(), key=lambda item: item.collected_utc)
-        if len(known) > 200:
-            raise ValueError("preflight history exceeds 200 editions; explicit pagination required")
+        if len(known) > 2000:
+            raise ValueError("preflight history exceeds 2000 editions")
         for older, newer in zip(known, known[1:]):
             baseline = {
                 "port_id": port_id, "source_id": source_id, "series": series,
