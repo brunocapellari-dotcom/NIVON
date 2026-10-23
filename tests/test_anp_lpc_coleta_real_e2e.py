@@ -155,6 +155,24 @@ class TestColetaANPLPCE2E(unittest.TestCase):
         self.assertEqual(resposta["repasse_ao_frete"],"INDETERMINADO")
         self.assertNotIn("variacao_custo_combustivel_brl_t",resposta)
 
+    def test_tendencia_vencida_nao_parece_preco_atual(self):
+        self.run_lote()
+        resposta=tendencia_diesel_preliminar(
+            self.db,municipio="SINOP",produto="DIESEL S10",
+            as_of="2027-01-01T12:00:00+00:00",
+        )
+        self.assertEqual(resposta["status"],"HISTORICO_VENCIDO")
+        self.assertEqual(resposta["ultima_semana_observada"],"2026-10-17")
+        self.assertGreater(resposta["defasagem_dias"],28)
+        self.assertNotIn("preco_revenda_atual_rs_l",resposta)
+        self.assertNotIn("direcao_observada",resposta)
+        with self.assertRaisesRegex(ValueError,"limite de atualização"):
+            tendencia_diesel_preliminar(
+                self.db,municipio="SINOP",produto="DIESEL S10",
+                as_of="2026-11-01T00:00:00+00:00",
+                idade_maxima_dias=True,
+            )
+
     def test_qualidade_revela_cobertura_semana_sem_raw_e_revisao(self):
         result=coletar_lpc(
             self.db,indice_bytes=self.html,arquivos_locais=self.planilhas,
