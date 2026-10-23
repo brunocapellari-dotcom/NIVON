@@ -6,6 +6,8 @@ on:
       - feat/fontes-gratuitas-ckan-apis-20261021
     paths:
       - .github/workflows/ensaio-staging-zarc.yml
+      - scripts/ensaio_staging_zarc_sintetico.py
+      - src/nivon/zarc_raw_vault.py
   workflow_dispatch:
 
 permissions:
