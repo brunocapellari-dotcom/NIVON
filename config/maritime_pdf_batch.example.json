@@ -1,0 +1,27 @@
+{
+  "_NOTICE": "TEMPLATE ONLY — DO NOT RUN WITH REAL DATA UNTIL RIGHTS ARE INDEPENDENTLY VERIFIED. FILE PATH, SHA256, URL AND DATES BELOW ARE PLACEHOLDERS.",
+  "documents": [
+    {
+      "port_id": "PARANAGUA",
+      "series": "EXPORT_OESTE",
+      "source_id": "PORTOS_PARANAGUA_REFERENCE",
+      "source_url": "https://www.portosdoparana.pr.gov.br/SUBSTITUIR-URL-EXATA.pdf",
+      "file": "SUBSTITUIR-ARQUIVO-LOCAL.pdf",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "reference_date": "2026-10-20",
+      "collected_at": "2026-10-20T12:00:00-03:00",
+      "published_at": null,
+      "publication_evidence_id": null,
+      "rights": {
+        "rights_status": "PENDING",
+        "evidence_reference": "PENDENTE_REVISAR_DIREITOS",
+        "reviewed_by": "PENDENTE_REVISOR",
+        "offline_processing": false,
+        "read_derived": false,
+        "store_derived": false
+      },
+      "programme_duv_evidence": [],
+      "independent_crosswalk_reviewed": false
+    }
+  ]
+}
