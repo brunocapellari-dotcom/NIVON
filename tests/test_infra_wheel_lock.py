@@ -42,7 +42,7 @@ class TestWheelLock(unittest.TestCase):
     def test_ci_reutiliza_workflow_e_nao_desabilita_gates(self):
         wf = (Path(__file__).resolve().parents[1] /
               ".github/workflows/infra_analytics_experiment.yml").read_text()
-        for txt in ("infra_wheel_lock", "NIVON_WHEEL_LOCK_CAPTURE=",
+        for txt in ("infra_wheel_lock", "--emit",
                     "sha256sum -c", "--build-context", "--network=none",
                     "NIVON_2_WORKERS_3_JOBS_CRASH_RESTORE_E2E_OK_NO_DEPLOY"):
             self.assertIn(txt, wf)
