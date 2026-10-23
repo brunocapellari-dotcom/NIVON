@@ -103,8 +103,11 @@ def carregar(pdf, *, data_coleta, cliente_bq=None, sdk=None, arquivador=arquivar
         raise ErroRGIGCP("SDK de teste ausente")
     ref=f"{PROJECT}.{DATASET}.{TABLE}"
     cliente_bq.get_dataset(f"{PROJECT}.{DATASET}")
+    not_found=getattr(sdk, "NotFound", None)
+    if not_found is None:
+        from google.api_core.exceptions import NotFound as not_found
     try: tabela=cliente_bq.get_table(ref)
-    except sdk.NotFound:
+    except not_found:
         tabela=sdk.Table(ref,schema=[sdk.SchemaField(k,v) for k,v in FIELDS.items()])
         tabela.time_partitioning=sdk.TimePartitioning(type_=sdk.TimePartitioningType.DAY,field="data_referencia")
         tabela.clustering_fields=["origem_uf","destino_uf","origem_rgi","destino_rgi"]
