@@ -15,6 +15,8 @@ from nivon.imea_legado_pipeline import (
     persistir_lote_local,
 )
 from nivon.imea_operacional_xlsx import parse_workbook
+from nivon.ingestao_fontes_reais import exportar_jsonl
+from nivon.carga_bigquery_fontes import planejar_carga, executar_carga
 
 
 REGIOES = (
@@ -137,6 +139,27 @@ class TestImeaLegadoPipeline(unittest.TestCase):
             self.assertEqual((snaps, obs, revisoes), (2, 20, 2))
             self.assertEqual(estados, [("QUARANTINED",)])
             self.assertEqual(len(list((base / "raw" / STAGING).glob("*.raw"))), 2)
+
+    def test_export_jsonl_para_plano_bigquery_sem_upload(self):
+        with tempfile.TemporaryDirectory() as folder:
+            base = Path(folder)
+            banco = base / "imea.sqlite"
+            raw_dir = base / "raw"
+            lote = preparar_lote(workbook_imea(), origem=ORIGEM, coletado_em=REF)
+            persistir_lote_local(lote, banco=banco, pasta_raw=raw_dir)
+            jsonl = base / "export.jsonl"
+            res = exportar_jsonl(banco=banco, destino=jsonl, dataset_id=STAGING)
+            self.assertEqual(res["observacoes"], 19)
+            linhas = [json.loads(l) for l in jsonl.read_text(encoding="utf-8").splitlines()]
+            self.assertEqual(len(linhas), 19)
+            self.assertTrue(all(x["dataset_id"] == STAGING for x in linhas))
+            self.assertTrue(all(x["natureza"] in ("INFORMADO", "ESTIMADO") for x in linhas))
+            plano = planejar_carga(arquivo=jsonl, project_id="nivon-data", dataset_id="staging")
+            self.assertFalse(plano["executado"])
+            self.assertEqual(plano["linhas"], 19)
+            with self.assertRaises(PermissionError):
+                executar_carga(arquivo=jsonl, project_id="nivon-data",
+                               dataset_id="staging", executar=False)
 
     def test_real_requires_explicit_rights(self):
         lote = preparar_lote(workbook_imea(), origem=ORIGEM, coletado_em=REF)
