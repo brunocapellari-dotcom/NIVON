@@ -55,9 +55,9 @@ def estado_logico(db: sqlite3.Connection) -> dict:
         raise ErroBackup("foreign key órfã no backup")
     # O digest anterior só cobria linhas: um schema adulterado de tabela
     # vazia poderia passar. Atar também DDL, views, índices e triggers.
-    schema=list(db.execute("""SELECT type,name,tbl_name,sql
+    schema=[tuple(row) for row in db.execute("""SELECT type,name,tbl_name,sql
         FROM sqlite_master WHERE sql IS NOT NULL AND name NOT LIKE 'sqlite_stat%'
-        ORDER BY type,name,tbl_name"""))
+        ORDER BY type,name,tbl_name""")]
     schema_blob=json.dumps(schema,ensure_ascii=False,sort_keys=True,
                            separators=(",",":")).encode("utf-8")
     esquema_sha256=hashlib.sha256(schema_blob).hexdigest()
