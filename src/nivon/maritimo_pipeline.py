@@ -277,7 +277,17 @@ def normalizar_eventos_ais_nivon(eventos):
     for item in eventos:
         if not isinstance(item, dict):
             continue
-        if "MessageType" in item:
+        # A API interna existente (parse_aisstream_message/stream_once) usa
+        # observed_at; preservar identificador MMSI sem inventar IMO.
+        if "observed_at" in item and "message_type" in item:
+            if item.get("message_type") != "PositionReport":
+                continue
+            record = {
+                "mmsi":item.get("mmsi"), "imo":item.get("imo"),
+                "latitude":item.get("latitude"), "longitude":item.get("longitude"),
+                "timestamp":item.get("observed_at"),
+            }
+        elif "MessageType" in item:
             if item.get("MessageType") != "PositionReport":
                 continue
             meta = item.get("MetaData") or {}

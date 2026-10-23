@@ -6,6 +6,7 @@ explicito; não realizar crawling de toda a base.
 from __future__ import annotations
 
 import hashlib
+from math import isfinite
 import json
 import re
 import sqlite3
@@ -121,7 +122,7 @@ def normalizar(resposta, *, consultadas, coletado_em):
         if type(count) is not int or count < 0:
             raise PortWatchErro("contagem AIS invalida")
         cap = a.get("capacity")
-        if cap is not None and (type(cap) not in (int, float) or cap < 0 or cap != cap):
+        if cap is not None and (type(cap) not in (int, float) or cap < 0 or not isfinite(cap)):
             raise PortWatchErro("volume de transito estimado invalido")
         dry, tank = a.get("n_dry_bulk"), a.get("n_tanker")
         if any(v is not None and (type(v) is not int or v < 0 or v > count) for v in (dry, tank)):

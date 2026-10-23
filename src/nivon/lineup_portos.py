@@ -306,7 +306,9 @@ def inferir_presenca_amaggi(eventos: Iterable[Mapping], *, geocerca_terminal: Se
         if momento.tzinfo is None or not (-90 <= lat <= 90 and -180 <= lon <= 180):
             continue
         if _dentro_poligono(lat, lon, geocerca_terminal):
-            chave = "IMO:" + imo if re.fullmatch(r"\d{7}", imo) else "MMSI:" + mmsi
+            # Preferir MMSI quando presente: a stream AIS de posicao pode
+            # chegar alternando mensagens com/sem IMO no mesmo navio.
+            chave = "MMSI:" + mmsi if re.fullmatch(r"\d{9}", mmsi) else "IMO:" + imo
             por_navio.setdefault(chave, []).append((momento.astimezone(timezone.utc), evento))
     resultados = []
     for chave, pontos in por_navio.items():

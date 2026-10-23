@@ -104,5 +104,25 @@ class IntegracaoMaritima(unittest.TestCase):
         self.assertEqual(repo.contagens()["atuais"],0)
         repo.fechar()
 
+    def test_stream_ais_nivon_integrado_sem_conversor_manual(self):
+        from nivon.maritimo_pipeline import normalizar_eventos_ais_nivon
+        from nivon.maritime.ais_stream import parse_aisstream_message
+        collected=[]
+        for h in (11,12,13):
+            frame={"MetaData":{"MMSI":123456789,"latitude":0.25,"longitude":0.25,
+                    "time_utc":f"2026-10-22T{h:02d}:00:00Z"},
+                   "MessageType":"PositionReport",
+                   "Message":{"PositionReport":{"UserID":123456789}}}
+            collected.append(parse_aisstream_message(frame,received_at="2026-10-22T13:01:00Z"))
+        positions=normalizar_eventos_ais_nivon(collected)
+        self.assertEqual(len(positions),3)
+        self.assertEqual(positions[0]["mmsi"],"123456789")
+        repo=HistoricoMaritimo()
+        outcome=processar_ais_amaggi(positions,repo,
+          geocerca_auditada=[(0,0),(0,1),(1,1),(1,0)],coletado_em=NOW)
+        self.assertEqual(outcome["registros"],1)
+        self.assertEqual(repo.contagens()["atuais"],0)
+        repo.fechar()
+
 if __name__ == "__main__":
     unittest.main()

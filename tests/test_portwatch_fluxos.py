@@ -56,5 +56,12 @@ class FluxosPortWatch(unittest.TestCase):
         with self.assertRaises(PortWatchErro):
             normalizar(json.dumps(bad).encode(), consultadas=["hormuz"], coletado_em=COLETA)
 
+
+    def test_capacity_infinita_rejeitada(self):
+        bad=json.loads(self.exemplo())
+        bad["features"][0]["attributes"]["capacity"]=float("inf")
+        with self.assertRaises(PortWatchErro):
+            normalizar(json.dumps(bad).encode(), consultadas=["hormuz"], coletado_em=COLETA)
+
 if __name__ == "__main__":
     unittest.main()
