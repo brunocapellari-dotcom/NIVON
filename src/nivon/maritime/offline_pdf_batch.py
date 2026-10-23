@@ -172,7 +172,7 @@ def run_offline_pdf_batch(
                 PdfProgrammeLedger._canonical(previous)[1:]
                 != PdfProgrammeLedger._canonical(version)[1:]
             ):
-                raise ValueError("batch conflicts with previously known programme edition")
+                raise ValueError("conflicting batch: previously known programme edition")
             index[stamp] = version
         known = sorted(index.values(), key=lambda item: item.collected_utc)
         if len(known) > 200:
