@@ -17,7 +17,7 @@ from nivon.anp_lpc_coletor_real import (
     ErroColetaANP, coletar_lpc, obter_documento,
 )
 from nivon.anp_lpc_staging_real import (
-    iniciar_staging, tendencia_diesel_preliminar,
+    iniciar_staging, tendencia_diesel_preliminar, painel_qualidade_lpc,
 )
 from nivon.cli_coletar_anp_lpc import main
 from test_anp_lpc_integracao import fixture, Workbook
@@ -112,6 +112,39 @@ class TestColetaANPLPCE2E(unittest.TestCase):
         self.assertEqual(self.db.execute(
             "SELECT COUNT(*) FROM sqlite_master WHERE name='anp_semanal_edicoes'"
         ).fetchone()[0],0)
+
+    def test_qualidade_revela_cobertura_semana_sem_raw_e_revisao(self):
+        result=coletar_lpc(
+            self.db,indice_bytes=self.html,arquivos_locais=self.planilhas,
+            ano=2026,limite_semanas=3,esperar_segundos=0,
+        )
+        self.assertEqual(result["status"],"LOTE_COMPLETO")
+        qa=painel_qualidade_lpc(
+            self.db,as_of="2026-11-01T00:00:00+00:00")
+        self.assertEqual(qa["semanas_unicas"],3)
+        self.assertEqual(qa["edicoes_distintas"],3)
+        self.assertEqual(qa["edicoes_sem_raw_arquivado"],3)
+        self.assertEqual(qa["semana_mais_recente"],"2026-10-17")
+        self.assertEqual(qa["semanas_faltantes_entre_extremos"],[])
+        self.assertEqual(qa["semanas_com_revisoes"],[])
+        self.assertFalse(qa["publicavel"])
+
+    def test_qualidade_assinala_semana_faltante_e_revisoes(self):
+        html,files=lote(semanas=(date(2026,9,27),date(2026,10,11)),
+                        precos=("5,80","6,05"))
+        coletar_lpc(self.db,indice_bytes=html,arquivos_locais=files,
+                   ano=2026,esperar_segundos=0)
+        revised=fixture(start=date(2026,10,11),preco="6,26")
+        files[revised["arquivo_url"]]=revised["xlsx"]
+        coletar_lpc(self.db,indice_bytes=html,arquivos_locais=files,
+                   ano=2026,esperar_segundos=0)
+        qa=painel_qualidade_lpc(
+            self.db,as_of="2026-11-01T00:00:00+00:00")
+        self.assertEqual(qa["semanas_unicas"],2)
+        self.assertEqual(qa["edicoes_distintas"],3)
+        self.assertEqual(qa["semanas_faltantes_entre_extremos"],
+                         ["2026-10-10"])
+        self.assertEqual(qa["semanas_com_revisoes"],["2026-10-17"])
 
     def test_recoleta_preserva_edicoes_e_cria_capturas(self):
         self.run_lote()
