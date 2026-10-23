@@ -12,14 +12,14 @@ from pathlib import Path
 
 from nivon.coletor_bcra_v4 import coletar_bcra
 from nivon.coletor_granos_ar import coletar_granos_ar
-from nivon.coletores_dados_reais import executar_coleta
+from nivon.coletores_dados_reais import executar_coleta, descobrir_recurso_ccee_ano
 from nivon.ingestao_fontes_reais import exportar_jsonl
 
 def safra_canadense(hoje):
     inicio=hoje.year if hoje.month>=8 else hoje.year-1
     return f"{inicio}-{(inicio+1)%100:02d}"
 
-def operar(*,base="data/nivon",hoje=None,coletar_canada=False,publicar_bigquery=False,
+def operar(*,base="data/nivon",hoje=None,coletar_canada=False,coletar_ccee=False,publicar_bigquery=False,
            projeto=None,dataset=None):
     hoje=date.today() if hoje is None else hoje
     if not isinstance(hoje,date):
@@ -40,6 +40,12 @@ def operar(*,base="data/nivon",hoje=None,coletar_canada=False,publicar_bigquery=
         jobs.append(("CAN_GRAINS_WEEKLY", lambda:executar_coleta(
             fonte="CAN_GRAINS_WEEKLY",banco=db,raw_dir=raw,
             safra=safra_canadense(hoje),executar=True)))
+    if coletar_ccee:
+        def _buscar_ccee():
+            id_recurso=descobrir_recurso_ccee_ano(hoje.year)
+            return executar_coleta(fonte="BR_CCEE_PLD",banco=db,raw_dir=raw,
+                       recurso_id=id_recurso,executar=True)
+        jobs.append(("BR_CCEE_PLD", _buscar_ccee))
     respostas=[]
     for nome,fn in jobs:
         try:
@@ -71,11 +77,13 @@ def main(argv=None):
     p=argparse.ArgumentParser(description="NIVON: coleta de fontes operacionais")
     p.add_argument("--base",default="data/nivon")
     p.add_argument("--canada",action="store_true")
+    p.add_argument("--ccee",action="store_true")
     p.add_argument("--bigquery",action="store_true")
     p.add_argument("--projeto")
     p.add_argument("--dataset")
     args=p.parse_args(argv)
     result=operar(base=args.base,coletar_canada=args.canada,
+          coletar_ccee=args.ccee,
           publicar_bigquery=args.bigquery,projeto=args.projeto,dataset=args.dataset)
     print(json.dumps(result,ensure_ascii=False,indent=2))
     return 0 if result["sucesso"]>0 else 2
