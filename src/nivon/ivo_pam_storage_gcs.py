@@ -289,14 +289,27 @@ def baixar_backup_gcs(*,cliente:ClienteGCS,saida):
 
 def main(argv=None):
     p=argparse.ArgumentParser(description="NIVON PAM: réplica verificada no Google Cloud Storage")
-    p.add_argument("operacao",choices=("upload","recuperar"))
+    p.add_argument("operacao",choices=("upload","recuperar","estado"))
     p.add_argument("--bucket",required=True)
-    p.add_argument("--arquivo",type=Path,required=True)
+    p.add_argument("--arquivo",type=Path)
     p.add_argument("--bootstrap",action="store_true")
     args=p.parse_args(argv)
     token=os.environ.get("NIVON_GCS_ACCESS_TOKEN")
     try:
         cliente=ClienteGCS(bucket=args.bucket,token=token)
+        if args.operacao=="estado":
+            if args.bootstrap or args.arquivo is not None:
+                raise ErroGCSState("estado não recebe arquivo/bootstrap")
+            p,_=cliente.ponteiro()
+            if p is None:
+                print(json.dumps({"estado":"SEM_BACKUP_GCS"},ensure_ascii=False))
+                return 3
+            print(json.dumps({"estado":"BACKUP_GCS_DISPONIVEL",
+                              "capturas":p["capturas"],"vintages":p["vintages"]},
+                              ensure_ascii=False))
+            return 0
+        if args.arquivo is None:
+            raise ErroGCSState("arquivo obrigatório")
         if args.operacao=="upload":
             r=publicar_backup_gcs(cliente=cliente,arquivo=args.arquivo,
                                   permitir_bootstrap=args.bootstrap)
