@@ -47,6 +47,11 @@ def main(argv=None):
                 and os.getenv("NIVON_ZERO_COST_BQ_APPROVED")=="true"
                 and os.getenv("NIVON_FONTE_BCB_SGS_TAXA_SELIC_DIARIA_ATIVA")=="true"):
             raise PermissionError("BCB SGS GCP não aprovado")
+        from nivon.preflight_google_cloud import verificar_recursos
+        verificar_recursos(
+            projeto=os.environ["NIVON_BQ_PROJECT"],
+            dataset=os.environ["NIVON_BQ_DATASET"],
+            bucket=os.environ["NIVON_GCS_BUCKET"])
         r=executar_sgs(
             base=args.base,project_id=os.environ["NIVON_BQ_PROJECT"],
             dataset_id=os.environ["NIVON_BQ_DATASET"],
