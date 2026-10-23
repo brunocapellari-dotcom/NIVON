@@ -32,7 +32,7 @@ MODULOS=frozenset({
     "grade_meteorologica_store","chirps_v3_conservacao",
     "meteorologia_probabilistica","hidrograma_bacia","calibracao_cn_bacias",
     "modelos_fisicos","verificacao_probabilistica","analogos_historicos","unidades_mercado","inmet_horario_qc","confronto_climatico_qc","noaa_roni","auditoria_safra_preditiva","agregacao_pam_ibge","composicao_pam_sidra",
-    "inteligencia_agricola_safras","auditoria_conab_pam","prova_raw_conab_agricola","inspecao_xls_conab_agricola","conab_levantamentos_candidatos","conab_anexo_xlsx_levantamento","conab_ooxml_metadados","conab_celulas_xlsx","conab_lote_offline","conab_staging_sqlite","conab_comparar_capturas","conab_progresso_csv_drive",
+    "inteligencia_agricola_safras","auditoria_conab_pam","prova_raw_conab_agricola","inspecao_xls_conab_agricola","conab_levantamentos_candidatos","conab_anexo_xlsx_levantamento","conab_ooxml_metadados","conab_celulas_xlsx","conab_lote_offline","conab_staging_sqlite","conab_comparar_capturas","conab_coleta_pontual","conab_progresso_auditoria","conab_progresso_csv_drive",
     "ensemble_hidrologico_bacia",
 })
 
