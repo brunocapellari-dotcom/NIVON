@@ -86,3 +86,17 @@ PYTHONPATH=src python -m nivon.imea_legado_pipeline /caminho/autorizado/arquivo.
 - CONAB: o NIVON já tem parsers próprios para XLS/XLSX e SICARM, incluindo snapshot ledger; comparar com contratos AgroLog, complementar temporalidade as-of sem duplicar pipeline.
 - IMEA: identificar feed/publicações correntes, capturar original de modo autorizado, testar parser em amostra real sem dados pessoais, registrar dataset canônico de frete e mapear os cinco grupos; só então agendar ingestão e integrar com motor de preços/fretes.
 - Nuvem: validar ADC, IAM, dataset, zero-cost, políticas de retenção e restore antes da persistência final BigQuery.
+
+
+## Terceiro lote — CONAB as-of com prova de disponibilidade histórica
+
+* `src/nivon/conab_vintage_asof.py`: sidecar `conab_disponibilidade_historica` junto ao **store CONAB já existente**, sem substituir `conab_store.py`. Exige documento oficial, hash do documento, data da publicação original, data da disponibilidade, registro da auditoria e aprovação explícita antes de aceitar um cutoff anterior à coleta. **URL e hash isolados não constituem prova: o status inicial é PENDENTE_AUDITORIA e não desbloqueia histórico**.
+* `tests/test_conab_vintage_asof.py`: casos de corte anterior/posterior à coleta, documento pendente, homologação expressa, revogação, fonte não oficial, datas inconsistentes, revisões conflitantes e publicação ausente.
+* Mantém `data_coleta` real, sem inventar momento histórico de coleta; para vintages distintos com mesma publicação, o retorno é `AMBIGUO_VINTAGE_MESMA_PUBLICACAO`, não um dado adivinhado.
+* Esta consulta específica não substitui consultas canônicas existentes, nem implica que qualquer documento CONAB já esteja homologado. Auditoria documental sobre versões reais continua pendente.
+
+Teste integrado offline:
+```bash
+PYTHONPATH=src python -m unittest discover -s tests -p test_conab_vintage_asof.py -v
+```
+
