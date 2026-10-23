@@ -1,0 +1,106 @@
+name: NIVON - Auditar Historico ANTT 21 Anos
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/nivon-antt-auditoria-historico-gcp.yml'
+      - 'src/nivon/antt_gcp_auditoria_historica.py'
+      - 'tests/test_antt_gcp_auditoria_historica.py'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/nivon-antt-auditoria-historico-gcp.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-antt-auditoria-21-anos
+  cancel-in-progress: false
+
+jobs:
+  contrato:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Testar baseline de 21 anos e limites do SQL
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m unittest discover -s tests -p 'test_antt_gcp_auditoria_historica.py' -v
+          python -m unittest discover -s tests -p 'test_antt_bigquery.py' -v
+
+  consultar-21-anos:
+    needs: contrato
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      PYTHONPATH: src
+      NIVON_PROJETO: ${{ vars.NIVON_BQ_PROJECT }}
+      NIVON_DATASET: ${{ vars.NIVON_BQ_DATASET }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Rejeitar projeto e dataset diferentes do NIVON
+        run: |
+          test "$NIVON_PROJETO" = "nivon-data"
+          test "$NIVON_DATASET" = "nivon_raw"
+      - name: Obter credencial temporaria OIDC
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ vars.NIVON_BQ_PROJECT }}
+          create_credentials_file: true
+      - name: Instalar cliente de BigQuery
+        run: |
+          python -m pip install --disable-pip-version-check --quiet 'google-cloud-bigquery>=3,<4'
+      - name: Conferir 2006 a agosto de 2026 diretamente na view BQ
+        run: |
+          python -m nivon.antt_gcp_auditoria_historica \
+            --projeto "$NIVON_PROJETO" --dataset "$NIVON_DATASET" \
+            --saida "$RUNNER_TEMP/nivon-antt-auditoria-21anos.json"
+      - name: Registrar indicadores e evidencias anuais
+        run: |
+          python - <<'PY'
+          import os,json
+          from pathlib import Path
+          r=json.loads((Path(os.environ["RUNNER_TEMP"])/"nivon-antt-auditoria-21anos.json").read_text(encoding='utf-8'))
+          print("AUDITORIA_BQ_21_ANOS",json.dumps({
+              "estado":r['estado'],"anos":r['anos'],
+              "registros":r['registros_origem_destino_acumulados'],
+              "tu":r['toneladas_uteis_ferroviarias_acumuladas'],
+              "bytes_processados_job":r['bytes_processados_job']
+          },ensure_ascii=False))
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as f:
+              f.write('### ANTT/SIADE — auditoria de 21 anos no BigQuery\n\n')
+              f.write(f"**{r['anos']} anos**, **{r['registros_origem_destino_acumulados']} OD**, **{r['toneladas_uteis_ferroviarias_acumuladas']} TU** acumuladas; 2026 parcial até agosto.\n\n")
+              f.write('| Ano | Registros OD | Toneladas úteis | Última competência |\n|---|---:|---:|---|\n')
+              for x in r['por_ano']:
+                  f.write(f"| {x['ano']} | {x['registros']} | {x['toneladas_uteis']} | {x['ultima_competencia']} |\n")
+              f.write('\nConsulta somente leitura. Não soma outras modalidades.\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: success()
+        with:
+          name: nivon-antt-auditoria-bq-21-anos-${{ github.run_id }}
+          path: ${{ runner.temp }}/nivon-antt-auditoria-21anos.json
+          retention-days: 90
+      - name: Limpar arquivos temporarios
+        if: always()
+        run: |
+          rm -f "$RUNNER_TEMP/nivon-antt-auditoria-21anos.json"
