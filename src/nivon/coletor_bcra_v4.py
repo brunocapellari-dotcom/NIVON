@@ -88,3 +88,21 @@ def coletar_bcra(*,inicio,fim,banco,raw_dir,executar=False,variavel=1,
     saida.update({"fonte":"ARG_BCRA","pagina_incompleta":incompleto,
          "unidade_pendente":True,"publicavel":False,"go_live":False})
     return saida
+
+def main(argv=None):
+    import argparse
+    p=argparse.ArgumentParser(description="BCRA v4 - serie oficial historica no SQLite NIVON")
+    p.add_argument("--inicio",required=True)
+    p.add_argument("--fim",required=True)
+    p.add_argument("--variavel",type=int,default=1)
+    p.add_argument("--banco",default="data/nivon/fontes_reais.sqlite")
+    p.add_argument("--raw-dir",default="data/nivon/raw")
+    p.add_argument("--executar",action="store_true")
+    args=p.parse_args(argv)
+    resp=coletar_bcra(inicio=args.inicio,fim=args.fim,variavel=args.variavel,
+       banco=args.banco,raw_dir=args.raw_dir,executar=args.executar)
+    print(json.dumps(resp,ensure_ascii=False,indent=2))
+    return 0
+
+if __name__=="__main__":
+    raise SystemExit(main())
