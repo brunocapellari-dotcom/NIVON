@@ -57,7 +57,7 @@ jobs:
           python - <<'PY'
           import json, os
           from pathlib import Path
-          from nivon.conciliacao_corredores_ferrovia import analisar_staging
+          from nivon.conciliacao_corredores_ferrovia import analisar_staging, comparar_mes_contra_ano_anterior
           pasta = Path(os.environ["RUNNER_TEMP"]) / "antt-siade"
           destino = Path(os.environ["RUNNER_TEMP"]) / "relatorios"
           manifesto = json.loads((pasta / "manifesto-antt.json").read_text(encoding="utf-8"))
@@ -93,6 +93,25 @@ jobs:
                          for k in ("estacao_origem","estacao_destino","mercadoria_fonte")]
                       f.write(f"| {a[0]} | {a[1]} | {a[2]} | {x['toneladas_ferroviarias']} |\n")
                   f.write("\n**A origem ferroviária observada NÃO prova transbordo rodoviário.**\n\n")
+          mes_ref=manifesto["anos"]["2026"]["competencia_maxima"]
+          doc_ant=analisar_staging(pasta,ano=2025,competencia="2025"+mes_ref[4:],
+                                  uf_origem="MT",limite=15)
+          doc_atual=analisar_staging(pasta,ano=2026,competencia=mes_ref,
+                                    uf_origem="MT",limite=15)
+          yoy=comparar_mes_contra_ano_anterior(doc_ant,doc_atual)
+          (destino / "antt-corredores-variacao-yoy.json").write_text(
+              json.dumps(yoy,ensure_ascii=False,indent=2),encoding="utf-8")
+          print("YOY_ESTACOES_MT",json.dumps(yoy["polos"],ensure_ascii=False))
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a",encoding="utf-8") as f:
+              f.write("### Comparação interanual: "+yoy["anterior_competencia"]+
+                      " x "+yoy["atual_competencia"]+"\n")
+              f.write("| Polo de origem (nome da estação) | TU ano anterior | TU atual | Variação YoY |\n")
+              f.write("|---|---:|---:|---:|\n")
+              for row in yoy["polos"]:
+                  f.write(f"| {row['polo_id']} | {row['tu_mes_anterior_ano'] or 'sem registro'} | "+
+                          f"{row['tu_mes_atual'] or 'sem registro'} | "+
+                          f"{row['variacao_percentual']+'%' if row['comparavel'] and row['variacao_percentual'] is not None else 'não calculada'} |\n")
+              f.write("\nSem registro não equivale a zero. Dados ferroviários não comprovam transbordo.\n\n")
           PY
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
