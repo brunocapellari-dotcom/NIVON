@@ -1,0 +1,107 @@
+# Benchmark de atualização de imagem BASE. Não é um gate de produção.
+# Mantém a varredura canônica infra_supplychain.yml, que FALHA com HIGH/CRITICAL.
+name: NIVON image base CVE benchmark
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/infra_base_benchmark.yml'
+      - 'infra/docker/Dockerfile.worker'
+      - '.dockerignore'
+      - 'src/nivon/infra_base_benchmark.py'
+      - 'tests/test_infra_base_benchmark.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-base-benchmark-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compare-os-bases:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - name: Checkout sem credenciais persistidas
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Testes da comparação com fixtures sintéticas
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -p test_infra_base_benchmark.py -v
+      - name: Instalar Trivy oficial com checksum fixo
+        shell: bash
+        env:
+          TRIVY_SHA: e24b1c51293c1b15e4ba8d45bbc7891ba053f90278ec2698f3562c993e145fe7
+        run: |
+          set -euo pipefail
+          umask 077
+          tool_dir="$RUNNER_TEMP/nivon-base-tool"
+          mkdir -p "$tool_dir"
+          archive="$RUNNER_TEMP/trivy_0.76.0_Linux-64bit.tar.gz"
+          curl -fsSL --retry 2 --connect-timeout 10 --max-time 180 \
+            "https://github.com/aquasecurity/trivy/releases/download/v0.76.0/trivy_0.76.0_Linux-64bit.tar.gz" \
+            -o "$archive"
+          printf '%s  %s\n' "$TRIVY_SHA" "$archive" | sha256sum -c
+          tar -xzf "$archive" -C "$tool_dir" trivy
+          chmod 0700 "$tool_dir/trivy"
+          printf '%s\n' "$tool_dir" >> "$GITHUB_PATH"
+      - name: Preparar Dockerfile candidato trixie sem alterar original
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          src = Path("infra/docker/Dockerfile.worker").read_text(encoding="utf-8")
+          found = [line for line in src.splitlines() if line.startswith("FROM ")]
+          approved = {
+              "FROM python:3.11-slim-bookworm@sha256:0a310eeecf4e1f5a0743f9a6520c90c88d089c903ca5fd283f501e3a805f5f89",
+              "FROM python:3.11-slim-trixie@sha256:cce12316475d7d56d605f76e1d811d0dc4e7227f2d4afd29951521264f504ff8",
+          }
+          if len(found) != 1 or found[0] not in approved:
+              raise SystemExit("Dockerfile não homologado: benchmark exige revisão")
+          for name, from_line in [
+              ("bookworm", "FROM python:3.11-slim-bookworm@sha256:0a310eeecf4e1f5a0743f9a6520c90c88d089c903ca5fd283f501e3a805f5f89"),
+              ("trixie", "FROM python:3.11-slim-trixie@sha256:cce12316475d7d56d605f76e1d811d0dc4e7227f2d4afd29951521264f504ff8"),
+          ]:
+              Path("/tmp/Dockerfile.nivon-" + name).write_text(
+                  src.replace(found[0], from_line, 1), encoding="utf-8"
+              )
+          PY
+      - name: Build das duas imagens isoladas sem publicação
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build -f /tmp/Dockerfile.nivon-bookworm \
+            -t nivon-worker-benchmark:bookworm .
+          docker pull python:3.11-slim-trixie@sha256:cce12316475d7d56d605f76e1d811d0dc4e7227f2d4afd29951521264f504ff8
+          echo "Digest do candidato (identificação, não aprovação):"
+          docker image inspect python:3.11-slim-trixie@sha256:cce12316475d7d56d605f76e1d811d0dc4e7227f2d4afd29951521264f504ff8 \
+            --format '{{index .RepoDigests 0}}'
+          docker build -f /tmp/Dockerfile.nivon-trixie \
+            -t nivon-worker-benchmark:trixie .
+      - name: Escanear ambas com mesmo banco e versão do Trivy
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          trivy image --quiet --scanners vuln --format json \
+            --output "$RUNNER_TEMP/nivon-bookworm.json" \
+            nivon-worker-benchmark:bookworm
+          trivy image --quiet --scanners vuln --format json \
+            --output "$RUNNER_TEMP/nivon-trixie.json" \
+            nivon-worker-benchmark:trixie
+      - name: Comparar bloqueios sem autorizar versão
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m nivon.infra_base_benchmark \
+            --bookworm "$RUNNER_TEMP/nivon-bookworm.json" \
+            --trixie "$RUNNER_TEMP/nivon-trixie.json"

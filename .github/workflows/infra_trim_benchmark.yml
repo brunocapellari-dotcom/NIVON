@@ -1,0 +1,96 @@
+# Experimento AMD64 isolado, NÃO um novo release nem gate de produção.
+# Build sem rede no RUN, usando mesma base Trixie imutável nos dois alvos.
+name: NIVON worker packaging trim benchmark
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/infra_trim_benchmark.yml'
+      - 'infra/docker/Dockerfile.worker'
+      - 'infra/docker/Dockerfile.worker-trim'
+      - '.dockerignore'
+      - 'src/nivon/infra_trim_compare.py'
+      - 'tests/test_infra_trim_compare.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-trim-benchmark-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  trim-experiment-amd64:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - name: Checkout sem credenciais persistentes
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Testes sintéticos do comparador e dos Dockerfiles
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -p test_infra_trim_compare.py -v
+      - name: Instalar scanner Trivy verificado por SHA-256
+        shell: bash
+        env:
+          TRIVY_SHA: e24b1c51293c1b15e4ba8d45bbc7891ba053f90278ec2698f3562c993e145fe7
+        run: |
+          set -euo pipefail
+          umask 077
+          tool_dir="$RUNNER_TEMP/nivon-trim-tool"
+          mkdir -p "$tool_dir"
+          archive="$RUNNER_TEMP/trivy_0.76.0_Linux-64bit.tar.gz"
+          curl -fsSL --retry 2 --connect-timeout 10 --max-time 180 \
+            "https://github.com/aquasecurity/trivy/releases/download/v0.76.0/trivy_0.76.0_Linux-64bit.tar.gz" \
+            -o "$archive"
+          printf '%s  %s\n' "$TRIVY_SHA" "$archive" | sha256sum -c
+          tar -xzf "$archive" -C "$tool_dir" trivy
+          chmod 0700 "$tool_dir/trivy"
+          printf '%s\n' "$tool_dir" >> "$GITHUB_PATH"
+      - name: Pull da base por digest e builds amd64 sem rede no RUN
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull --platform linux/amd64 \
+            python:3.11-slim-trixie@sha256:cce12316475d7d56d605f76e1d811d0dc4e7227f2d4afd29951521264f504ff8
+          docker build --network=none --platform linux/amd64 \
+            -f infra/docker/Dockerfile.worker -t nivon-worker-trim:baseline .
+          docker build --network=none --platform linux/amd64 \
+            -f infra/docker/Dockerfile.worker-trim -t nivon-worker-trim:candidate .
+      - name: Ensaiar worker candidato sem rede nem permissões amplas
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --network none --read-only --cap-drop ALL \
+            --security-opt no-new-privileges:true --user 65532:65532 \
+            --pids-limit 64 --memory 256m --cpus 0.5 \
+            nivon-worker-trim:candidate --mode self-check
+          docker run --rm --network none --read-only --cap-drop ALL \
+            --security-opt no-new-privileges:true --user 65532:65532 \
+            --entrypoint python nivon-worker-trim:candidate \
+            -c 'from importlib import metadata; names=("pip","setuptools","wheel","jaraco.context"); present=[n for n in names if any(d.metadata["Name"].lower()==n for d in metadata.distributions())]; assert not present, "packaging ainda instalado"; print("PACKAGING_TOOLS_REMOVED")'
+      - name: Comparar scanners Trivy na mesma execução sem upload
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          trivy image --quiet --scanners vuln --format json \
+            --output "$RUNNER_TEMP/nivon-trim-baseline.json" nivon-worker-trim:baseline
+          trivy image --quiet --scanners vuln --format json \
+            --output "$RUNNER_TEMP/nivon-trim-candidate.json" nivon-worker-trim:candidate
+      - name: Emitir somente resumo de CVEs sem autorizar release
+        shell: bash
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python -m nivon.infra_trim_compare \
+            --baseline "$RUNNER_TEMP/nivon-trim-baseline.json" \
+            --candidate "$RUNNER_TEMP/nivon-trim-candidate.json"

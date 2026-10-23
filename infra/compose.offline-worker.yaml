@@ -1,0 +1,36 @@
+# Candidate worker sem rede, cron ou publicação. Perfil OFF por padrão.
+# Execução de escrita somente sob --mode synthetic-once, em pasta host 0700
+# pertencente ao UID 65532, criada fora do checkout e com backup externo
+# NÃO pressuposto. Nenhum container de produção é definido aqui.
+services:
+  nivon-offline-worker:
+    profiles: ["offline-worker"]
+    build:
+      context: ..
+      dockerfile: infra/docker/Dockerfile.worker
+    image: nivon-offline-worker:local
+    user: "65532:65532"
+    read_only: true
+    network_mode: "none"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 64
+    mem_limit: 256m
+    cpus: 0.5
+    restart: "no"
+    environment:
+      NIVON_RUNTIME_ENABLED: "false"
+      NIVON_BACKUP_ENABLED: "false"
+      NIVON_COLLECTORS_ENABLED: "false"
+      NIVON_PUBLICATION_ENABLED: "false"
+      NIVON_OFFLINE_STATE_DIR: "/var/lib/nivon/state"
+    volumes:
+      - type: bind
+        source: ${NIVON_OFFLINE_STATE_DIR_HOST:?Private host directory 0700 owned by uid 65532 is required}
+        target: /var/lib/nivon/state
+        read_only: false
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    command: ["--mode", "self-check"]

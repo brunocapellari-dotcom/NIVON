@@ -3,6 +3,12 @@ name: Testes locais NIVON
 on:
   pull_request:
   workflow_dispatch:
+    inputs:
+      confirmar_diagnostico_fonte_real:
+        description: "Confirmo aprovacao da fonte e do escopo desta execucao"
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -53,7 +59,12 @@ jobs:
 
   conferir-schema-mapa:
     # Diagnóstico de fonte real somente manual. Não repetir downloads em todo PR.
-    if: github.event_name == 'workflow_dispatch'
+    # Fail-closed: acesso real apenas com aprovacao explicita por fonte.
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      inputs.confirmar_diagnostico_fonte_real == true &&
+      vars.NIVON_FONTE_MAPA_SIPEAGRO_HOMOLOGADA == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 3
     permissions:
@@ -81,7 +92,12 @@ jobs:
 
   inspecao-conab-xls:
     # Diagnóstico de fonte real somente manual. Não repetir downloads em todo PR.
-    if: github.event_name == 'workflow_dispatch'
+    # Fail-closed: acesso real apenas com aprovacao explicita por fonte.
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      inputs.confirmar_diagnostico_fonte_real == true &&
+      vars.NIVON_FONTE_CONAB_XLS_HOMOLOGADA == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 6
     permissions:
@@ -104,7 +120,12 @@ jobs:
 
   inspecao-antt-ferrovias:
     # Diagnóstico de fonte real somente manual. Não repetir downloads em todo PR.
-    if: github.event_name == 'workflow_dispatch'
+    # Fail-closed: acesso real apenas com aprovacao explicita por fonte.
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      inputs.confirmar_diagnostico_fonte_real == true &&
+      vars.NIVON_FONTE_ANTT_FERROVIAS_HOMOLOGADA == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 6
     permissions:
@@ -124,7 +145,12 @@ jobs:
   inspecao-antt-csv-2026:
     # Fonte oficial retornou página WAF Request Rejected (HTTP 200) em 19/10/2026.
     # Não insistir em PR nem contornar proteção; diagnóstico somente manual.
-    if: github.event_name == 'workflow_dispatch'
+    # Fail-closed: acesso real apenas com aprovacao explicita por fonte.
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      inputs.confirmar_diagnostico_fonte_real == true &&
+      vars.NIVON_FONTE_ANTT_CSV_HOMOLOGADA == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 4
     permissions:
@@ -141,7 +167,12 @@ jobs:
 
   inspecao-anp-diesel:
     # Diagnóstico de fonte real somente manual. Não repetir downloads em todo PR.
-    if: github.event_name == 'workflow_dispatch'
+    # Fail-closed: acesso real apenas com aprovacao explicita por fonte.
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      inputs.confirmar_diagnostico_fonte_real == true &&
+      vars.NIVON_FONTE_ANP_DIESEL_HOMOLOGADA == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:

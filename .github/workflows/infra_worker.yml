@@ -1,0 +1,64 @@
+# Worker container: build sem push ou deploy, somente fixtures.
+name: NIVON worker container offline
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/infra_worker.yml'
+      - '.dockerignore'
+      - 'infra/docker/Dockerfile.worker'
+      - 'infra/compose.offline-worker.yaml'
+      - 'infra/inventory.v1.json'
+      - 'src/nivon/infra_worker.py'
+      - 'src/nivon/infra_smoke.py'
+      - 'src/nivon/infra_job_ledger.py'
+      - 'src/nivon/infra_preflight.py'
+      - 'tests/test_infra_worker.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  worker-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout sem tokens persistidos
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Construir imagem isolada amd64 sem publicar
+        run: docker build --pull -f infra/docker/Dockerfile.worker -t nivon-worker-ci:offline .
+      - name: Conferir contrato do worker sem rede
+        run: |
+          docker run --rm --network none --read-only --cap-drop ALL \
+            --security-opt no-new-privileges:true --user 65532:65532 \
+            --pids-limit 64 --memory 256m --cpus 0.5 \
+            nivon-worker-ci:offline --mode self-check
+      - name: Validar Compose sem iniciar serviços
+        env:
+          NIVON_OFFLINE_STATE_DIR_HOST: /tmp/nivon-offline-worker-ci-placeholder
+        run: docker compose -f infra/compose.offline-worker.yaml --profile offline-worker config --quiet
+      - name: Exercitar persistência isolada com dado totalmente sintético
+        run: |
+          set -eu
+          state="$(mktemp -d)"
+          trap 'sudo rm -rf "$state"' EXIT
+          sudo chown 65532:65532 "$state"
+          sudo chmod 0700 "$state"
+          export NIVON_OFFLINE_STATE_DIR_HOST="$state"
+          docker compose -f infra/compose.offline-worker.yaml --profile offline-worker \
+            run --rm --no-deps nivon-offline-worker --mode synthetic-once \
+            --instante 2026-10-20T16:30:00-03:00
+          docker compose -f infra/compose.offline-worker.yaml --profile offline-worker \
+            run --rm --no-deps nivon-offline-worker --mode synthetic-once \
+            --instante 2026-10-20T16:30:00-03:00
+          # Host runner cannot traverse mode-0700 directory owned by uid 65532.
+          sudo test -s "$state/jobs.sqlite"
+          docker compose -f infra/compose.offline-worker.yaml --profile offline-worker \
+            run --rm --no-deps --entrypoint python nivon-offline-worker \
+            -m nivon.infra_health --ledger /var/lib/nivon/state/jobs.sqlite \
+            --agora 2026-10-20T17:00:00-03:00
+      - name: Validar geração do filesystem ARM64 sem executar código estrangeiro
+        run: docker buildx build --platform linux/arm64 --file infra/docker/Dockerfile.worker --output type=cacheonly .

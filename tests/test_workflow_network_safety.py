@@ -18,8 +18,13 @@ class TestWorkflowNetworkSafety(unittest.TestCase):
                             r"([\s\S]*?)(?=^  [A-Za-z0-9_-]+:\s*$|\Z)",conteudo)
             self.assertIsNotNone(match)
             resto=match.group(1)
-            self.assertIn("if: github.event_name == 'workflow_dispatch'",resto,
+            self.assertRegex(resto,r"(?m)^    if: >-\s*$",
+                msg=f"{nome} deve ter condicao explicita de job")
+            self.assertIn("github.event_name == 'workflow_dispatch'",resto,
                 msg=f"{nome} deve requerer disparo manual")
+            self.assertIn("github.ref == 'refs/heads/main'",resto)
+            self.assertIn("inputs.confirmar_diagnostico_fonte_real == true",resto)
+            self.assertRegex(resto,r"vars\.NIVON_FONTE_[A-Z_]+_HOMOLOGADA == 'true'")
 
     def test_validacao_offline_continua_em_pr(self):
         conteudo=CAMINHO.read_text(encoding="utf-8")

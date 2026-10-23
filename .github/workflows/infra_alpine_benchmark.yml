@@ -1,0 +1,178 @@
+# Ensaio isolado comparando Python Trixie + Alpine musl em AMD64 e ARM64 Nativos.
+# CI de experimento, nao promove imagem, nao autoriza go-live, nao usa segredos.
+name: NIVON base alternativa Alpine
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/infra_alpine_benchmark.yml'
+      - 'infra/docker/Dockerfile.worker-trim'
+      - 'infra/docker/Dockerfile.worker-alpine'
+      - '.dockerignore'
+      - 'src/nivon/infra_alpine_compare.py'
+      - 'src/nivon/infra_worker.py'
+      - 'tests/test_infra_alpine_compare.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-alpine-experiment-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compare:
+    if: github.event.repository.private == false
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            platform: linux/amd64
+            arch: amd64
+            trivy_tar: trivy_0.76.0_Linux-64bit.tar.gz
+            trivy_sha: e24b1c51293c1b15e4ba8d45bbc7891ba053f90278ec2698f3562c993e145fe7
+          - runner: ubuntu-24.04-arm
+            platform: linux/arm64
+            arch: arm64
+            trivy_tar: trivy_0.76.0_Linux-ARM64.tar.gz
+            trivy_sha: aab21e677a7b7071fc79f1711480840754c18a1b9d9cefa7ccd06af63a0e8f4c
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 19
+    steps:
+      - name: Checkout sem credenciais persistentes
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Python 3.11 para teste estatico local
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Verificar runner e Docker na arquitetura nativa
+        shell: bash
+        env:
+          EXPECTED: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os, platform, subprocess
+          want = os.environ["EXPECTED"]
+          names = {"aarch64": "arm64", "arm64": "arm64", "x86_64": "amd64", "amd64": "amd64"}
+          host = names.get(platform.machine().lower())
+          docker = subprocess.check_output(["docker", "info", "--format", "{{.Architecture}}"], text=True).strip().lower()
+          if host != want or names.get(docker) != want:
+              raise SystemExit("Arquitetura de host/Docker divergente")
+          print("NIVON_NATIVE_RUNNER_AND_DOCKER_OK", want)
+          PY
+      - name: Testar contrato de comparador e CI
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -p test_infra_alpine_compare.py -v
+      - name: Instalar Trivy oficial e validar SHA-256
+        shell: bash
+        env:
+          TRIVY_TAR: ${{ matrix.trivy_tar }}
+          TRIVY_SHA: ${{ matrix.trivy_sha }}
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p "$RUNNER_TEMP/nivon-alpine-tool"
+          curl --fail --silent --show-error --location --retry 2 --connect-timeout 10 --max-time 180 \
+            "https://github.com/aquasecurity/trivy/releases/download/v0.76.0/$TRIVY_TAR" \
+            --output "$RUNNER_TEMP/$TRIVY_TAR"
+          printf '%s  %s\n' "$TRIVY_SHA" "$RUNNER_TEMP/$TRIVY_TAR" | sha256sum -c
+          tar -xzf "$RUNNER_TEMP/$TRIVY_TAR" -C "$RUNNER_TEMP/nivon-alpine-tool" trivy
+          chmod 0700 "$RUNNER_TEMP/nivon-alpine-tool/trivy"
+          printf '%s\n' "$RUNNER_TEMP/nivon-alpine-tool" >> "$GITHUB_PATH"
+      - name: Pull imutável de ambas as imagens multiarquitetura e builds sem rede
+        shell: bash
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          docker pull --platform "$PLATFORM" \
+            python:3.11-slim-trixie@sha256:cce12316475d7d56d605f76e1d811d0dc4e7227f2d4afd29951521264f504ff8
+          docker pull --platform "$PLATFORM" \
+            python:3.11.17-alpine3.23@sha256:924d53e01cee5204d35fbcfb71b6c1568c857d7c31141f960ff6a37e111ecc7f
+          docker build --network=none --platform "$PLATFORM" \
+            -f infra/docker/Dockerfile.worker-trim -t nivon-worker-distro:trixie .
+          docker build --network=none --platform "$PLATFORM" \
+            -f infra/docker/Dockerfile.worker-alpine -t nivon-worker-distro:alpine .
+          for name in trixie alpine; do
+            real="$(docker image inspect "nivon-worker-distro:$name" --format '{{.Architecture}}')"
+            test "$real" = "$ARCH" || { echo "::error::Arquitetura divergente"; exit 1; }
+          done
+      - name: Testar Alpine musl, SQLite, TLS e worker isolado
+        shell: bash
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -euo pipefail
+          docker run --rm --platform "$PLATFORM" --network none --read-only \
+            --cap-drop ALL --security-opt no-new-privileges:true --user 65532:65532 \
+            --entrypoint python nivon-worker-distro:alpine -c \
+            'import sqlite3, ssl, zoneinfo, platform; assert ssl.OPENSSL_VERSION; assert sqlite3.sqlite_version; assert platform.libc_ver()[0] != "glibc"; print("NIVON_ALPINE_STDLIB_OK")'
+          docker run --rm --platform "$PLATFORM" --network none --read-only \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            --user 65532:65532 --pids-limit 64 --memory 256m --cpus 0.5 \
+            nivon-worker-distro:alpine --mode self-check
+          docker run --rm --platform "$PLATFORM" --network none --read-only \
+            --cap-drop ALL --security-opt no-new-privileges:true --user 65532:65532 \
+            --entrypoint sh nivon-worker-distro:alpine -c \
+            'grep -qx "ID=alpine" /etc/os-release'
+          state="$(mktemp -d)"
+          trap 'sudo rm -rf "$state"' EXIT
+          sudo chown 65532:65532 "$state"
+          sudo chmod 0700 "$state"
+          for i in 1 2; do
+            docker run --rm --platform "$PLATFORM" --network none --read-only \
+              --cap-drop ALL --security-opt no-new-privileges:true \
+              --user 65532:65532 --pids-limit 64 --memory 256m --cpus 0.5 \
+              --tmpfs /tmp:rw,noexec,nosuid,size=16m \
+              -e NIVON_RUNTIME_ENABLED=false -e NIVON_COLLECTORS_ENABLED=false \
+              -e NIVON_BACKUP_ENABLED=false -e NIVON_PUBLICATION_ENABLED=false \
+              -e NIVON_OFFLINE_STATE_DIR=/var/lib/nivon/state \
+              --mount "type=bind,source=$state,target=/var/lib/nivon/state" \
+              nivon-worker-distro:alpine --mode synthetic-once \
+              --instante 2026-10-20T16:30:00-03:00
+          done
+          sudo test -s "$state/jobs.sqlite"
+      - name: Executar suíte Python NIVON na Alpine com workspace somente leitura
+        shell: bash
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -euo pipefail
+          docker run --rm --platform "$PLATFORM" --network none --read-only \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            --user 65532:65532 --pids-limit 64 --memory 512m --cpus 1.0 \
+            --tmpfs /tmp:rw,nosuid,nodev,size=64m \
+            --mount "type=bind,source=$PWD,target=/workspace,readonly" \
+            --workdir /workspace -e PYTHONPATH=/workspace/src \
+            --entrypoint python nivon-worker-distro:alpine \
+            -m unittest discover -s tests -v
+      - name: Escanear ambas as imagens com MESMO banco Trivy e criar SBOM
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          trivy image --quiet --scanners vuln --format json \
+            --output "$RUNNER_TEMP/nivon-distro-trixie.json" nivon-worker-distro:trixie
+          trivy image --quiet --scanners vuln --format json \
+            --output "$RUNNER_TEMP/nivon-distro-alpine.json" nivon-worker-distro:alpine
+          trivy image --quiet --format cyclonedx \
+            --output "$RUNNER_TEMP/nivon-alpine-bom.json" nivon-worker-distro:alpine
+      - name: Contar achados sem publicar CVEs e sem aprovar substituição
+        shell: bash
+        env:
+          PYTHONPATH: src
+          ARCH: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          python -m nivon.infra_alpine_compare \
+            --debian-json "$RUNNER_TEMP/nivon-distro-trixie.json" \
+            --alpine-json "$RUNNER_TEMP/nivon-distro-alpine.json" \
+            --alpine-sbom "$RUNNER_TEMP/nivon-alpine-bom.json" --architecture "$ARCH"
+          echo "NIVON_ALPINE_EXPERIMENT_NO_PRODUCTION_RELEASE"

@@ -1,0 +1,121 @@
+# Probe de extras em musl E glibc: 8 Alpine + 4 Debian, sem sdist nem release.
+# Pacotes obtidos SOMENTE como wheels PyPI para teste, nunca para release.
+# O módulo impõe pip download --only-binary=:all: e instalação --no-index em segunda fase.
+name: NIVON optional wheels Alpine Debian
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/infra_optional_wheels.yml'
+      - 'pyproject.toml'
+      - 'src/nivon/infra_optional_wheels.py'
+      - 'tests/test_infra_optional_wheels.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-optional-wheels-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  resolve-and-smoke:
+    if: github.event.repository.private == false
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {runner: ubuntu-latest, arch: amd64, platform: linux/amd64, distro: alpine, group: agro, image: python:3.11.17-alpine3.23@sha256:924d53e01cee5204d35fbcfb71b6c1568c857d7c31141f960ff6a37e111ecc7f}
+          - {runner: ubuntu-latest, arch: amd64, platform: linux/amd64, distro: alpine, group: forecast, image: python:3.11.17-alpine3.23@sha256:924d53e01cee5204d35fbcfb71b6c1568c857d7c31141f960ff6a37e111ecc7f}
+          - {runner: ubuntu-latest, arch: amd64, platform: linux/amd64, distro: alpine, group: ports, image: python:3.11.17-alpine3.23@sha256:924d53e01cee5204d35fbcfb71b6c1568c857d7c31141f960ff6a37e111ecc7f}
+          - {runner: ubuntu-latest, arch: amd64, platform: linux/amd64, distro: alpine, group: excel, image: python:3.11.17-alpine3.23@sha256:924d53e01cee5204d35fbcfb71b6c1568c857d7c31141f960ff6a37e111ecc7f}
+          - {runner: ubuntu-24.04-arm, arch: arm64, platform: linux/arm64, distro: alpine, group: agro, image: python:3.11.17-alpine3.23@sha256:924d53e01cee5204d35fbcfb71b6c1568c857d7c31141f960ff6a37e111ecc7f}
+          - {runner: ubuntu-24.04-arm, arch: arm64, platform: linux/arm64, distro: alpine, group: forecast, image: python:3.11.17-alpine3.23@sha256:924d53e01cee5204d35fbcfb71b6c1568c857d7c31141f960ff6a37e111ecc7f}
+          - {runner: ubuntu-24.04-arm, arch: arm64, platform: linux/arm64, distro: alpine, group: ports, image: python:3.11.17-alpine3.23@sha256:924d53e01cee5204d35fbcfb71b6c1568c857d7c31141f960ff6a37e111ecc7f}
+          - {runner: ubuntu-24.04-arm, arch: arm64, platform: linux/arm64, distro: alpine, group: excel, image: python:3.11.17-alpine3.23@sha256:924d53e01cee5204d35fbcfb71b6c1568c857d7c31141f960ff6a37e111ecc7f}
+          - {runner: ubuntu-latest, arch: amd64, platform: linux/amd64, distro: debian, group: agro, image: python:3.11-slim-trixie@sha256:cce12316475d7d56d605f76e1d811d0dc4e7227f2d4afd29951521264f504ff8}
+          - {runner: ubuntu-latest, arch: amd64, platform: linux/amd64, distro: debian, group: forecast, image: python:3.11-slim-trixie@sha256:cce12316475d7d56d605f76e1d811d0dc4e7227f2d4afd29951521264f504ff8}
+          - {runner: ubuntu-24.04-arm, arch: arm64, platform: linux/arm64, distro: debian, group: agro, image: python:3.11-slim-trixie@sha256:cce12316475d7d56d605f76e1d811d0dc4e7227f2d4afd29951521264f504ff8}
+          - {runner: ubuntu-24.04-arm, arch: arm64, platform: linux/arm64, distro: debian, group: forecast, image: python:3.11-slim-trixie@sha256:cce12316475d7d56d605f76e1d811d0dc4e7227f2d4afd29951521264f504ff8}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 12
+    steps:
+      - name: Checkout read-only sem persistir token
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Validar ambiente Docker nativo e especificação de extras
+        shell: bash
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          host_arch="$(docker info --format '{{.Architecture}}')"
+          host_arch="${host_arch/aarch64/arm64}"
+          host_arch="${host_arch/x86_64/amd64}"
+          test "$host_arch" = "$ARCH"
+          PYTHONPATH=src python3 -m unittest discover -s tests -p test_infra_optional_wheels.py -v
+      - name: Confirmar identidade da imagem e distro pela matriz
+        shell: bash
+        env:
+          IMAGE: ${{ matrix.image }}
+          DISTRO: ${{ matrix.distro }}
+        run: |
+          set -euo pipefail
+          case "$DISTRO" in
+            alpine) test "$IMAGE" = 'python:3.11.17-alpine3.23@sha256:924d53e01cee5204d35fbcfb71b6c1568c857d7c31141f960ff6a37e111ecc7f' ;;
+            debian) test "$IMAGE" = 'python:3.11-slim-trixie@sha256:cce12316475d7d56d605f76e1d811d0dc4e7227f2d4afd29951521264f504ff8' ;;
+            *) exit 1 ;;
+          esac
+      - name: Preparar imagem oficial imutável e diretório privado efêmero
+        shell: bash
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          IMAGE: ${{ matrix.image }}
+        run: |
+          set -euo pipefail
+          docker pull --platform "$PLATFORM" \
+            "$IMAGE"
+          sudo install -d -o 65532 -g 65532 -m 0700 "$RUNNER_TEMP/nivon-wheels"
+      - name: Resolver apenas wheels PyPI na imagem de teste (rede limitada à etapa)
+        shell: bash
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          GROUP: ${{ matrix.group }}
+          DISTRO: ${{ matrix.distro }}
+          IMAGE: ${{ matrix.image }}
+        run: |
+          set -euo pipefail
+          docker run --rm --platform "$PLATFORM" --network bridge --read-only \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            --user 65532:65532 --pids-limit 128 --memory 2g --cpus 1.0 \
+            --tmpfs /tmp:rw,nosuid,nodev,size=256m,uid=65532,gid=65532 \
+            --mount "type=bind,source=$PWD,target=/workspace,readonly" \
+            --mount "type=bind,source=$RUNNER_TEMP/nivon-wheels,target=/var/nivon-wheels" \
+            -e PYTHONPATH=/workspace/src -e PIP_NO_INPUT=1 \
+            -e PIP_INDEX_URL=https://pypi.org/simple -e PIP_EXTRA_INDEX_URL= \
+            --entrypoint python \
+            "$IMAGE" \
+            -m nivon.infra_optional_wheels --group "$GROUP" --distro "$DISTRO" --phase download
+          echo "Wheels baixadas da PyPI oficial, sem sdist/build e sem instalar fontes agro"
+      - name: Instalar wheels da pasta privada e smoke de imports SEM REDE
+        shell: bash
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          GROUP: ${{ matrix.group }}
+          DISTRO: ${{ matrix.distro }}
+          IMAGE: ${{ matrix.image }}
+        run: |
+          set -euo pipefail
+          docker run --rm --platform "$PLATFORM" --network none --read-only \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            --user 65532:65532 --pids-limit 128 --memory 2g --cpus 1.0 \
+            --tmpfs /tmp:rw,nosuid,nodev,size=1024m,uid=65532,gid=65532 \
+            --mount "type=bind,source=$PWD,target=/workspace,readonly" \
+            --mount "type=bind,source=$RUNNER_TEMP/nivon-wheels,target=/var/nivon-wheels" \
+            -e PYTHONPATH=/workspace/src -e PIP_NO_INPUT=1 -e PIP_NO_INDEX=1 \
+            --entrypoint python \
+            "$IMAGE" \
+            -m nivon.infra_optional_wheels --group "$GROUP" --distro "$DISTRO" --phase offline
+          echo "MAX-WHEEL-DEPENDENCY-GATE: TESTE EXPERIMENTAL, SEM AUTORIZAÇÃO DE RELEASE"
