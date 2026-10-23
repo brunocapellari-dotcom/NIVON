@@ -137,6 +137,39 @@ class TestIncrementalLabConab(unittest.TestCase):
         with self.assertRaises(ErroIncrementalConab):
             sincronizar_incremental_lab(self.cat,self.db,self.backups)
 
+    def test_historico_alterado_mesma_quantidade_bloqueia_noop(self):
+        self.sync()
+        with sqlite3.connect(str(self.db)) as db:
+            db.execute("""UPDATE lab_observacao_conab SET observacao_json='{"falso":true}'
+                          WHERE rowid=(SELECT MIN(rowid) FROM lab_observacao_conab)""")
+        with self.assertRaisesRegex(ErroIncrementalConab,"adulterado"):
+            self.sync()
+
+    def test_uma_linha_excluida_do_historico_bloqueia_noop(self):
+        self.sync()
+        with sqlite3.connect(str(self.db)) as db:
+            db.execute("DELETE FROM lab_observacao_conab WHERE rowid=(SELECT MIN(rowid) FROM lab_observacao_conab)")
+        with self.assertRaisesRegex(ErroIncrementalConab,"adulterado"):
+            self.sync()
+
+    def test_backup_atual_corrompido_bloqueia_noop(self):
+        self.sync()
+        only=next(self.backups.glob("*.sqlite"))
+        with only.open("ab") as f:
+            f.write(b"adulterado")
+        # SQLite às vezes tolera bytes após EOF; testar contra divergência
+        # real de linhas, sem confiar somente no formato do arquivo.
+        with sqlite3.connect(str(only)) as db:
+            db.execute("DELETE FROM lab_observacao_conab WHERE rowid=(SELECT MIN(rowid) FROM lab_observacao_conab)")
+        with self.assertRaisesRegex(ErroIncrementalConab,"backup atual diverge"):
+            self.sync()
+
+    def test_backup_ausente_nao_equivale_a_sincronizacao_verde(self):
+        self.sync()
+        next(self.backups.glob("*.sqlite")).unlink()
+        with self.assertRaisesRegex(ErroIncrementalConab,"backup da última execução ausente"):
+            self.sync()
+
     def test_catalogo_original_tres_novos_sem_simular_bytes(self):
         doc=json.loads(CAT.read_text())
         with abrir_db_lab(self.db) as db:
