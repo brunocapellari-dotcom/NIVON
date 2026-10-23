@@ -5,6 +5,9 @@ on:
       - 'src/nivon/coletores_agro_ibge_wdi.py'
       - 'src/nivon/coletores_dados_reais.py'
       - 'tests/test_coletores_agro_ibge_wdi.py'
+      - 'tests/test_agenda_fontes_ibge_wdi.py'
+      - 'scripts/operar_fontes_reais.py'
+      - '.github/workflows/coleta-recorrente-fontes.yml'
       - 'scripts/ensaio_ibge_wdi_live.py'
       - 'scripts/diagnosticar_ibge_endpoints.py'
       - '.github/workflows/ibge-wdi-e2e.yml'
@@ -24,6 +27,7 @@ jobs:
           python-version: '3.11'
       - run: python -m pip install -e .
       - run: python -m unittest discover -s tests -p 'test_coletores_agro_ibge_wdi.py' -v
+      - run: python -m unittest discover -s tests -p 'test_agenda_fontes_ibge_wdi.py' -v
       - name: Diagnosticar rotas IBGE com timeout curto
         run: python scripts/diagnosticar_ibge_endpoints.py
       - name: Smoke oficial HTTPS sem dados privados
