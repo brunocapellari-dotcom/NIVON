@@ -123,6 +123,7 @@ class TestCincoProvasIndependentes(unittest.TestCase):
                 "apto_revisao": True, "bloqueios": [],
                 "modo": "OFFLINE_SEM_ENVIO",
                 "sha256_texto": doc["sha256_editorial"],
+                "noticia_mais_antiga_em": "2026-10-20T09:00:00+00:00",
             }
         }
         from test_outbox_whatsapp import CHAVE_AUDITORIA
@@ -131,6 +132,11 @@ class TestCincoProvasIndependentes(unittest.TestCase):
                 self.f.con, self.f.modelo, edicao_editorial=edicao,
                 documento=doc, assinatura=self.f.assinatura,
                 chave_auditoria=CHAVE_AUDITORIA,
+                noticias_editoriais=[{
+                    "fonte_id":"FONTE_SINTETICA",
+                    "url":"https://nivon.example/noticia-teste",
+                    "publicado_em":"2026-10-20T06:00:00-03:00",
+                }],
             )
         self.assertEqual(self.f.con.execute(
             "SELECT count(*) FROM nivon_autorizacoes").fetchone()[0], 0)

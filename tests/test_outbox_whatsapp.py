@@ -4,6 +4,7 @@ import io
 import json
 import sqlite3
 import unittest
+from unittest.mock import patch
 from datetime import datetime, timedelta, timezone
 
 from nivon.autorizacao_envio import conteudo_canonico, verificar_autorizacao
@@ -26,6 +27,10 @@ CHAVE_AUDITORIA=b"auditor-independente-sintetico-com-mais-de-32-bytes"
 
 class TestOutboxWhatsApp(unittest.TestCase):
     def setUp(self):
+        # Teste histórico: simular relógio somente via mock da suíte.
+        self.clock_patch = patch("nivon.outbox_whatsapp._agora_reserva_utc",
+            return_value=datetime.fromisoformat("2026-10-20T07:30:00-03:00"))
+        self.clock_patch.start()
         self.temp=TemporaryDirectory()
         self.path=Path(self.temp.name)/"outbox.sqlite"
         self.con=sqlite3.connect(self.path)
@@ -40,6 +45,7 @@ class TestOutboxWhatsApp(unittest.TestCase):
     def tearDown(self):
         self.con.close()
         self.temp.cleanup()
+        self.clock_patch.stop()
 
     def registrar(self, modelo=None):
         return registrar_edicao(self.con,modelo or self.modelo,edicao="2026-10-20",
@@ -90,7 +96,8 @@ class TestOutboxWhatsApp(unittest.TestCase):
             "sha256": hash_editorial,
             "preflight_editorial": {
                 "apto_revisao": True, "bloqueios": [],
-                "sha256_texto": hash_editorial, "modo": "OFFLINE_SEM_ENVIO"
+                "sha256_texto": hash_editorial, "modo": "OFFLINE_SEM_ENVIO",
+                "noticia_mais_antiga_em": "2026-10-20T09:00:00+00:00"
             }
         }
         self.documento = doc
@@ -102,6 +109,11 @@ class TestOutboxWhatsApp(unittest.TestCase):
             documento=doc, assinatura=assinatura,
             chave_auditoria=CHAVE_AUDITORIA,
             comprovantes=self.comprovantes, emissores=self.emissores,
+            noticias_editoriais=[{
+                "fonte_id":"FONTE_SINTETICA",
+                "url":"https://nivon.example/noticia-teste",
+                "publicado_em":"2026-10-20T06:00:00-03:00",
+            }],
         )
 
     def despachar(self, remetente):

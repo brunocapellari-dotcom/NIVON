@@ -7,6 +7,7 @@ import os
 import sqlite3
 import tempfile
 import unittest
+from unittest.mock import patch
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -63,13 +64,19 @@ def preparar(con):
         "estado":"EDICAO_OFFLINE_PREPARADA_SEM_ENVIO",
         "enviado":False, "texto":texto, "sha256":sha,
         "preflight_editorial":{"apto_revisao":True, "bloqueios":[],
-                               "modo":"OFFLINE_SEM_ENVIO","sha256_texto":sha}
+                               "modo":"OFFLINE_SEM_ENVIO","sha256_texto":sha,
+                               "noticia_mais_antiga_em":"2026-10-20T09:00:00+00:00"}
     }
     comprovantes, emissores = provas_sinteticas(doc)
     provisionar_teste(con, emissores)
     registrar_autorizacao(con,modelo,edicao_editorial=editorial,
                           documento=doc,assinatura=sig,chave_auditoria=AUDITOR,
-                          comprovantes=comprovantes, emissores=emissores)
+                          comprovantes=comprovantes, emissores=emissores,
+                          noticias_editoriais=[{
+                              "fonte_id":"FONTE_SINTETICA",
+                              "url":"https://nivon.example/noticia-teste",
+                              "publicado_em":"2026-10-20T06:00:00-03:00",
+                          }])
     return modelo,doc,sig,comprovantes,emissores
 
 
@@ -102,6 +109,9 @@ def tentar_processo(path, modelo, documento, assinatura, comprovantes, emissores
 @unittest.skipUnless(os.name=="posix", "multiprocessos POSIX no CI Ubuntu")
 class TestOutboxIntegracaoProcessos(unittest.TestCase):
     def setUp(self):
+        self.clock_patch = patch("nivon.outbox_whatsapp._agora_reserva_utc",
+            return_value=datetime.fromisoformat("2026-10-20T07:30:00-03:00"))
+        self.clock_patch.start()
         self.tmp=tempfile.TemporaryDirectory()
         self.path=Path(self.tmp.name)/"envios.sqlite"
         self.con=sqlite3.connect(self.path,timeout=5)
@@ -110,6 +120,7 @@ class TestOutboxIntegracaoProcessos(unittest.TestCase):
     def tearDown(self):
         self.con.close()
         self.tmp.cleanup()
+        self.clock_patch.stop()
 
     def test_duas_reservas_simultaneas_so_um_callback(self):
         self.con.close()
