@@ -158,12 +158,27 @@ def main(argv=None):
     parser.add_argument("--confirmar-direitos",action="store_true")
     parser.add_argument("--gravar",action="store_true")
     parser.add_argument("--banco")
+    parser.add_argument("--consultar",action="store_true",
+                        help="consulta historica read-only, sem rede e sem escrita")
+    parser.add_argument("--especie",choices=("BOVINO","SUINO","FRANGO"))
+    parser.add_argument("--corte",help="ISO 8601 com fuso, exigido em --consultar")
     args=parser.parse_args(argv)
     try:
-        result=executar_backfill_quarentena(
-            periodos=args.periodo,rede=args.rede,
-            direitos_confirmados=args.confirmar_direitos,
-            gravar=args.gravar,banco=args.banco)
+        if args.consultar:
+            if (not args.banco or not args.especie or not args.corte
+                or args.rede or args.gravar):
+                raise DadoInvalido(
+                    "--consultar exige --banco --especie --corte e proibe --rede/--gravar")
+            result=consultar_backfill_quarentena(
+                banco=args.banco,especie=args.especie,
+                periodos=args.periodo,corte_asof=args.corte)
+        else:
+            if args.especie or args.corte:
+                raise DadoInvalido("--especie/--corte apenas em --consultar")
+            result=executar_backfill_quarentena(
+                periodos=args.periodo,rede=args.rede,
+                direitos_confirmados=args.confirmar_direitos,
+                gravar=args.gravar,banco=args.banco)
         print(json.dumps(result,ensure_ascii=False,indent=2,sort_keys=True))
         return 0
     except (DadoInvalido, PermissionError, ValueError, OSError) as exc:
