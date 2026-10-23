@@ -72,21 +72,42 @@ jobs:
       - name: Coletar apenas anos atuais oficiais em staging descartavel
         run: |
           python - <<'PY'
-          import os,subprocess
+          import os,subprocess,time,json
           from datetime import datetime,timezone
           ano=datetime.now(timezone.utc).year
           if ano < 2026 or ano > 2100:
               raise RuntimeError('ano fora da janela esperada')
           anos=[ano-1,ano]
           root=os.path.join(os.environ['RUNNER_TEMP'],'antt-vigia')
-          subprocess.run(['python','-m','nivon.coleta_antt',
+          cmd=['python','-m','nivon.coleta_antt',
               '--inicio',str(anos[0]),'--fim',str(anos[-1]),
-              '--destino',root,'--live','--usar-url-verificada-contingencia'],check=True)
-          subprocess.run(['python','-m','nivon.antt_vigia_revisoes',
+              '--destino',root,'--live','--usar-url-verificada-contingencia']
+          for tentativa in range(1,4):
+              proc=subprocess.run(cmd,text=True,capture_output=True,check=False)
+              try:
+                  resposta=json.loads(proc.stdout.strip().splitlines()[-1])
+              except (ValueError,IndexError):
+                  raise RuntimeError('ANTT_RESPOSTA_INESPERADA_SEM_RELATORIO') from None
+              if proc.returncode == 0:
+                  print('COLETA_ANTT_OK_TENTATIVA',tentativa,resposta.get('estado'))
+                  break
+              erro=resposta.get('erro')
+              if erro not in {'catalogo CKAN invalido','ANTT_FALHA_TRANSITORIA',
+                              'schema ANTT inesperado'}:
+                  raise RuntimeError('ANTT_ERRO_NAO_RECUPERAVEL_SEM_CARGA: '+str(erro))
+              if tentativa == 3:
+                  raise RuntimeError('ANTT_FONTE_INVALIDA_APOS_TRES_TENTATIVAS')
+              print('ANTT_TENTATIVA_LIMITADA',tentativa,erro,flush=True)
+              time.sleep(2*tentativa)
+          resultado=subprocess.run(['python','-m','nivon.antt_vigia_revisoes',
               '--staging',root,'--anos',*[str(x) for x in anos],
               '--projeto',os.environ['NIVON_PROJETO'],
               '--dataset',os.environ['NIVON_DATASET'],
-              '--saida',os.path.join(os.environ['RUNNER_TEMP'],'antt-revisoes-status.json')],check=False)
+              '--saida',os.path.join(os.environ['RUNNER_TEMP'],'antt-revisoes-status.json')],
+              text=True,capture_output=True,check=False)
+          if resultado.returncode not in (0,3):
+              raise RuntimeError('VIGIA_BQ_FALHOU_SEM_COMPROVANTE')
+          print('VIGIA_BQ_EXECUTADA_STATUS',resultado.returncode)
           PY
       - name: Classificar divergencias e registrar evidencia
         run: |
