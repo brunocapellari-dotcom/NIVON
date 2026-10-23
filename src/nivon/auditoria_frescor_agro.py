@@ -88,16 +88,31 @@ def auditar_fontes_agro(
         if not _tabelas(conn):
             raise ErroFrescorAgro("schema de ingestão ausente")
         datasets={}
+        capturas={x[0] for x in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'")}
         for dataset in DATASETS:
-            ss=conn.execute("""SELECT snapshot_id,coletado_em,sha256,tamanho,
-                arquivo,estado FROM snapshots WHERE dataset_id=?
-                ORDER BY coletado_em DESC,snapshot_id DESC LIMIT 1""",
-                (dataset,)).fetchone()
+            if "capturas_fonte" in capturas:
+                ss=conn.execute("""SELECT s.snapshot_id,c.coletado_em,
+                    s.sha256,s.tamanho,s.arquivo,s.estado
+                    FROM capturas_fonte c
+                    JOIN snapshots s ON s.snapshot_id=c.snapshot_id
+                    WHERE c.dataset_id=? AND s.dataset_id=?
+                    ORDER BY c.coletado_em DESC,c.snapshot_id DESC LIMIT 1""",
+                    (dataset,dataset)).fetchone()
+                total_capturas=conn.execute("""SELECT COUNT(*)
+                    FROM capturas_fonte WHERE dataset_id=?""",(dataset,)).fetchone()[0]
+            else:
+                ss=conn.execute("""SELECT snapshot_id,coletado_em,sha256,
+                    tamanho,arquivo,estado FROM snapshots WHERE dataset_id=?
+                    ORDER BY coletado_em DESC,snapshot_id DESC LIMIT 1""",
+                    (dataset,)).fetchone()
+                total_capturas=None
             counts=conn.execute("""SELECT
                 (SELECT COUNT(*) FROM snapshots WHERE dataset_id=?),
                 (SELECT COUNT(*) FROM observacoes WHERE dataset_id=?)""",
                 (dataset,dataset)).fetchone()
             out={"snapshots":counts[0],"observacoes":counts[1],
+                 "capturas_verificadas":total_capturas,
                  "referencia_verificada":False,"publicavel":False,
                  "persistencia_cloud_verificada":False}
             if ss is None:
