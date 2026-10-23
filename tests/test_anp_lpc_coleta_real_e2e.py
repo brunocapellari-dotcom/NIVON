@@ -126,7 +126,7 @@ class TestColetaANPLPCE2E(unittest.TestCase):
             distancia_validada=True,premissas_documentadas=True,
         )
         self.assertEqual(resposta["status"],"CENARIO_HIPOTETICO_PRELIMINAR")
-        self.assertEqual(resposta["variacao_custo_combustivel_brl_t"],"1.40")
+        self.assertEqual(Decimal(resposta["variacao_custo_combustivel_brl_t"]),Decimal("1.40"))
         self.assertEqual(resposta["repasse_ao_frete"],"INDETERMINADO")
         self.assertFalse(resposta["frete_negociado"])
         self.assertFalse(resposta["frete_anunciado"])
