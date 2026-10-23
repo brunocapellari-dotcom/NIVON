@@ -4,6 +4,30 @@ on:
     paths:
       - 'pyproject.toml'
       - 'src/nivon/arquivo_raw_gcs.py'
+      - 'src/nivon/agro_origem_gcp.py'
+      - 'src/nivon/agro_staging_bigquery.py'
+      - 'sql/bigquery/003_agro_publicacoes_staging.sql'
+      - 'tests/test_agro_staging_bigquery.py'
+      - 'tests/test_bootstrap_agro_staging_gcp.py'
+      - 'scripts/bootstrap_agro_staging_gcp.py'
+      - '.github/workflows/bootstrap-agro-staging-gcp.yml'
+      - 'tests/test_agro_incremental_pipeline.py'
+      - 'src/nivon/cepea_web_primario.py'
+      - 'src/nivon/imea_publico.py'
+      - 'src/nivon/imea_lotes.py'
+      - 'src/nivon/conab_publicacoes.py'
+      - 'src/nivon/conab_job.py'
+      - 'src/nivon/conab_safras.py'
+      - 'scripts/coletar_agro_google_cloud.py'
+      - 'tests/test_agro_origem_gcp.py'
+      - 'tests/test_cepea_web_primario.py'
+      - 'tests/test_imea_lotes.py'
+      - '.github/workflows/fontes-agro-gcp.yml'
+      - 'src/nivon/lote_cloud_recuperavel.py'
+      - 'scripts/lote_cloud_recuperavel.py'
+      - 'tests/test_lote_cloud_recuperavel.py'
+      - 'tests/test_backfill_cloud_stage.py'
+      - '.github/workflows/recuperar-lote-gcp.yml'
       - 'src/nivon/verificacao_cloud_fontes.py'
       - '.github/workflows/coleta-recorrente-fontes.yml'
       - 'src/nivon/carga_bigquery_fontes.py'
@@ -38,16 +62,26 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install
-        run: python -m pip install -e .
+        run: |
+          python -m pip install -e .
+          python -m pip install 'beautifulsoup4==4.12.3'
       - name: Compile and check imports
-        run: python -m compileall -q src/nivon/arquivo_raw_gcs.py src/nivon/verificacao_cloud_fontes.py src/nivon/carga_bigquery_fontes.py src/nivon/consulta_analitica_bq.py src/nivon/preflight_gcp_fontes.py src/nivon/ingestao_fontes_reais.py src/nivon/coletores_dados_reais.py scripts
+        run: python -m compileall -q src/nivon/arquivo_raw_gcs.py src/nivon/agro_staging_bigquery.py src/nivon/lote_cloud_recuperavel.py src/nivon/verificacao_cloud_fontes.py src/nivon/carga_bigquery_fontes.py src/nivon/consulta_analitica_bq.py src/nivon/preflight_gcp_fontes.py src/nivon/ingestao_fontes_reais.py src/nivon/coletores_dados_reais.py scripts
       - name: Testes completos dos coletores e persistencia simulada
         shell: bash
         run: |
           set -euo pipefail
           for name in \
             test_arquivo_raw_gcs.py \
+            test_lote_cloud_recuperavel.py \
+            test_agro_origem_gcp.py \
+            test_agro_staging_bigquery.py \
+            test_bootstrap_agro_staging_gcp.py \
+            test_agro_incremental_pipeline.py \
+            test_cepea_web_primario.py \
+            test_imea_lotes.py \
             test_backfill_fontes_reais.py \
+            test_backfill_cloud_stage.py \
             test_bigquery_merge_simulado.py \
             test_carga_bigquery_fontes.py \
             test_coletor_bcra_v4.py \

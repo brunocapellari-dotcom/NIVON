@@ -15,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
+      NIVON_ZERO_COST_BQ_APPROVED: ${{ vars.NIVON_ZERO_COST_BQ_APPROVED }}
+      NIVON_RAW_ARCHIVE_APPROVED: ${{ vars.NIVON_RAW_ARCHIVE_APPROVED }}
       NIVON_BQ_PROJECT: ${{ vars.NIVON_BQ_PROJECT }}
       NIVON_BQ_DATASET: ${{ vars.NIVON_BQ_DATASET }}
       NIVON_GCS_BUCKET: ${{ vars.NIVON_GCS_BUCKET }}
@@ -52,6 +54,10 @@ jobs:
       - name: Arquivar todos os RAWs no GCS antes do BigQuery
         run: |
           python -m nivon.arquivo_raw_gcs --banco data/nivon/fontes_reais.sqlite --raw-dir data/nivon/raw --bucket "$NIVON_GCS_BUCKET" --executar
+      - name: Arquivar stage e manifesto recuperavel no GCS antes do MERGE
+        if: ${{ vars.NIVON_RECOVERABLE_STAGE_APPROVED == 'true' }}
+        run: |
+          python scripts/lote_cloud_recuperavel.py --fase arquivar --banco data/nivon/fontes_reais.sqlite --arquivo data/nivon/staging_fontes_reais.jsonl --projeto "$NIVON_BQ_PROJECT" --dataset "$NIVON_BQ_DATASET" --bucket "$NIVON_GCS_BUCKET" --executar
       - name: Carregar observacoes com MERGE historico no BigQuery
         run: |
           python -m nivon.carga_bigquery_fontes --arquivo data/nivon/staging_fontes_reais.jsonl --projeto "$NIVON_BQ_PROJECT" --dataset "$NIVON_BQ_DATASET" --executar
