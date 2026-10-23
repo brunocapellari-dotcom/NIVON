@@ -168,7 +168,10 @@ def normalizar_csv_canada(raw):
             raise ErroColetor("Ktonnes canada invalido")
         data=str(d.get("Week Ending Date") or "").split(" ")[0]
         try:
-            data=date.fromisoformat(data).isoformat()
+            if re.fullmatch(r"\\d{2}/\\d{2}/\\d{4}", data):
+                data=datetime.strptime(data, "%d/%m/%Y").date().isoformat()
+            else:
+                data=date.fromisoformat(data).isoformat()
         except ValueError as exc:
             raise ErroColetor("data semanal canada invalida") from exc
         identidade="|".join([str(d.get(k) or "") for k in
