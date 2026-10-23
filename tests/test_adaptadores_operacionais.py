@@ -94,7 +94,7 @@ class AdaptadoresTests(unittest.TestCase):
         r=painel["quantitativo"][0]
         self.assertEqual(r["tendencia"],"ALTA")
         self.assertFalse(r["publicavel"])
-        self.assertEqual(r["dinamica_historica"]["motivo"],"fingerprint_original_ausente")
+        self.assertEqual(r["dinamica_historica"]["motivo"],"banda_comercial_ausente")
         self.assertEqual(painel["fretes_consolidados"]["registros_elegiveis"],6)
 
     def test_preco_futuro_omitido_sem_alterar_amostra(self):
@@ -175,7 +175,7 @@ class AdaptadoresTests(unittest.TestCase):
             self.assertEqual(result["replays_ais"][0]["eventos_lidos"],4)
             self.assertEqual(result["quantitativo"][0]["tendencia"],"ALTA")
             self.assertEqual(result["quantitativo"][0]["dinamica_historica"]
-                             ["motivo"],"fingerprint_original_ausente")
+                             ["motivo"],"banda_comercial_ausente")
             self.assertFalse(result["quantitativo"][0]["publicavel"])
 
 
