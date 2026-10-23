@@ -72,7 +72,7 @@ def validar_lote(arquivo:str|Path)->dict:
 def carregar_bigquery(*,arquivo:str|Path,projeto:str,dataset:str,
                      executar:bool=False,custos_autorizados:bool=False,
                      armazenamento_autorizado:bool=False,licencas_conferidas:bool=False,
-                     cliente=None,tipos_bq=None)->dict:
+                     cliente=None,tipos_bq=None,tipo_nao_encontrado=None)->dict:
     """Preflight local por padrão, cloud somente com quatro flags e dataset preexistente."""
     info=validar_lote(arquivo)
     if not isinstance(projeto,str) or not re.fullmatch(r'[a-z][a-z0-9-]{4,61}[a-z0-9]',projeto):
@@ -94,6 +94,11 @@ def carregar_bigquery(*,arquivo:str|Path,projeto:str,dataset:str,
             raise RuntimeError('instale o extra google-cloud-bigquery no executor autorizado') from exc
         cliente=cliente if cliente is not None else bigquery.Client(project=projeto)
         tipos_bq=tipos_bq if tipos_bq is not None else bigquery
+    if tipo_nao_encontrado is None:
+        try:
+            from google.api_core.exceptions import NotFound as tipo_nao_encontrado
+        except ImportError as exc:
+            raise RuntimeError('google-api-core nao instalado no executor') from exc
     # Checar tabela e campos: jamais criar dataset silenciosamente.
     destino=cliente.get_table(tabela)
     campos={x.name:x.field_type.upper() for x in destino.schema}
@@ -112,7 +117,7 @@ def carregar_bigquery(*,arquivo:str|Path,projeto:str,dataset:str,
     # desconhecida. Reparo exige auditoria e decisão operacional separada.
     try:
         anterior=cliente.get_job(job_id,location=localizacao)
-    except tipos_bq.exceptions.NotFound:
+    except tipo_nao_encontrado:
         anterior=None
     if anterior is not None:
         anterior.result(timeout=180)
