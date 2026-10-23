@@ -1,0 +1,116 @@
+# Piloto de METADADOS PÚBLICOS REAIS: não baixa wheels nem instala software.
+# Restrito à PR #27; a rotina não passa a operar automaticamente em outras PRs.
+name: Radar leitura publica PyPI OSV
+
+on:
+  pull_request:
+    paths:
+      - 'src/nivon/radar_pypi_osv.py'
+      - 'src/nivon/radar_compatibilidade_pypi.py'
+      - 'src/nivon/inspecao_compatibilidade_wheels.py'
+      - 'tests/test_radar_pypi_osv.py'
+      - 'tests/test_radar_compatibilidade_pypi.py'
+      - 'tests/test_inspecao_compatibilidade_wheels.py'
+      - '.github/workflows/radar-pypi-osv.yml'
+      - 'pyproject.toml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-radar-pypi-osv-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  radar-metadata-real:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == 'brunocapellari-dotcom/NIVON' && github.event.pull_request.head.ref == 'research/github-tooling-gates-20261020'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout sem credenciais persistentes
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Python 3.11 da maquina hospedada
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Suite de contrato do radar sem rede
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -p 'test_radar_pypi_osv.py' -v
+      - name: Executar testes integrados de nove dependencias opcionais
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -p 'test_radar_compatibilidade_pypi.py' -v
+      - name: Consultar PyPI e OSV para candidatos compativeis dos nove pacotes diretos
+        env:
+          PYTHONPATH: src
+        run: |
+          mkdir -p evidencias-pypi
+          python -m nivon.radar_compatibilidade_pypi \
+            --pyproject pyproject.toml \
+            --output evidencias-pypi/candidatos_nove_extras.json
+      - name: Inspecionar tags de wheel Python 3.11 Linux e dependencias transitivas declaradas
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m unittest discover -s tests -p 'test_inspecao_compatibilidade_wheels.py' -v
+          python -m nivon.inspecao_compatibilidade_wheels \
+            --input evidencias-pypi/candidatos_nove_extras.json \
+            --output evidencias-pypi/compatibilidade_cp311_glibc217.json \
+            --glibc-minor 17
+          python -m nivon.inspecao_compatibilidade_wheels \
+            --input evidencias-pypi/candidatos_nove_extras.json \
+            --output evidencias-pypi/compatibilidade_cp311_glibc228.json \
+            --glibc-minor 28
+          python -c 'import json; a=json.load(open("evidencias-pypi/compatibilidade_cp311_glibc217.json")); b=json.load(open("evidencias-pypi/compatibilidade_cp311_glibc228.json")); assert a["packages_examined"]==b["packages_examined"]==9 and a["target_glibc_minor"]==17 and b["target_glibc_minor"]==28; assert a["approved_for_install"] is False and b["approved_for_production"] is False and a["full_pep508_dependency_resolution"] is False and b["glibc_abi_runtime_verified"] is False'
+      - name: Registrar versao e glibc do runner desta CI, sem afirmar que e Google Cloud
+        run: |
+          python - <<'PY'
+          import json, os, platform, sys, sysconfig
+          info = {
+              "scope": "GITHUB_ACTIONS_RUNNER_ONLY_NOT_GCP_RUNTIME",
+              "python_implementation": sys.implementation.name,
+              "python_version": ".".join(map(str, sys.version_info[:3])),
+              "machine": platform.machine(),
+              "platform": sysconfig.get_platform(),
+              "libc": platform.libc_ver()[0],
+              "libc_version": platform.libc_ver()[1],
+              "run_id": os.environ.get("GITHUB_RUN_ID"),
+              "tested_checkout_sha": os.environ.get("GITHUB_SHA"),
+              "gcp_runtime_verified": False,
+              "wheel_bytes_inspected": False,
+              "approved_for_production": False,
+          }
+          with open("evidencias-pypi/runner_python_glibc.json", "w", encoding="utf-8") as out:
+              json.dump(info, out, indent=2, sort_keys=True)
+          print(json.dumps(info))
+          PY
+      - name: Validar cobertura total de extras e avisos antes de publicar
+        run: |
+          python -c 'import json; d=json.load(open("evidencias-pypi/candidatos_nove_extras.json")); assert d["direct_distributions_covered"] == 9 and len(d["optional_extras_covered"]) == 7; assert d["pypi_release_json_requests"] == 9 and d["pypi_index_json_requests"] == 8 and d["osv_batch_queries"] == 9; assert d["source"] == "LIVE_PUBLIC_PYPI_AND_OSV_METADATA" and d["approved_for_install"] is False and d["approved_for_production"] is False and d["full_pep440_pep508_resolved"] is False'
+      - name: Consultar quatro releases PyPI e avisos OSV sem baixar wheels
+        env:
+          PYTHONPATH: src
+        run: |
+          mkdir -p evidencias-pypi
+          python -m nivon.radar_pypi_osv \
+            --pyproject pyproject.toml \
+            --output evidencias-pypi/radar_pypi_osv.json
+      - name: Verificar contrato do relatório externo e digest local
+        run: |
+          python -c 'import json; p="evidencias-pypi/radar_pypi_osv.json"; d=json.load(open(p)); assert d["queried_package_count"] == 4 and d["approved_for_production"] is False and d["approved_for_install"] is False and d["full_dependency_resolution"] is False; assert len(d["packages"]) == len(d["osv"]) == 4'
+          cd evidencias-pypi
+          sha256sum radar_pypi_osv.json candidatos_nove_extras.json compatibilidade_cp311_glibc217.json compatibilidade_cp311_glibc228.json runner_python_glibc.json > sha256sums.txt
+          sha256sum -c sha256sums.txt
+      - name: Publicar somente inventario normalizado de APIs publicas
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nivon-radar-pypi-osv-real-readonly
+          path: evidencias-pypi/
+          retention-days: 3
+          if-no-files-found: error

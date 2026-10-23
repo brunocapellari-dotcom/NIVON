@@ -1,0 +1,65 @@
+# NIVON — piloto SOMENTE sintético, sem pip/coletores e sem rede de dados.
+# Este workflow_dispatch só é reconhecido quando existir na branch default.
+# A criação nesta PR NÃO o ativa. Atesta o ZIP INTERNO, não o ZIP externo
+# disponibilizado pelo download de actions/upload-artifact.
+name: Atestacao manual de evidencia sintetica NIVON
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: nivon-piloto-atestacao-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  atestar-fixture:
+    # Não executar em fork ou refs de PR/branch experimental.
+    if: github.repository == 'brunocapellari-dotcom/NIVON' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - name: Obter apenas codigo sem persistir credenciais
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Preparar Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+
+      - name: Validar gerador somente com fixtures locais
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -p 'test_pacote_proveniencia_sintetico.py' -v
+
+      - name: Criar ZIP sintético e verificar bytes localmente
+        env:
+          PYTHONPATH: src
+        run: |
+          mkdir -p evidencias
+          python -m nivon.pacote_proveniencia_sintetico \
+            --pyproject pyproject.toml \
+            --output evidencias/nivon-pipeline-sintetico.zip \
+            --repository "$GITHUB_REPOSITORY" \
+            --source-sha "$GITHUB_SHA" \
+            --run-id "$GITHUB_RUN_ID"
+
+      - name: Atestar assinatura de origem do ZIP sintético
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: evidencias/nivon-pipeline-sintetico.zip
+
+      - name: Disponibilizar somente ZIP sintético para inspecao
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nivon-evidencias-dependencias
+          path: evidencias/nivon-pipeline-sintetico.zip
+          retention-days: 3
+          if-no-files-found: error
