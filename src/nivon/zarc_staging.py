@@ -62,7 +62,8 @@ def abrir_zarc_staging(caminho=":memory:") -> Connection:
         nivon_snapshots(dataset_id,sha256)
     );
     CREATE TABLE IF NOT EXISTS zarc_linhas (
-      sha256 TEXT NOT NULL REFERENCES zarc_edicoes(sha256),
+      sha256 TEXT NOT NULL REFERENCES zarc_edicoes(sha256)
+        DEFERRABLE INITIALLY DEFERRED,
       linha_fisica INTEGER NOT NULL CHECK(linha_fisica>0),
       chave_logica_sha TEXT NOT NULL,
       conteudo_sha TEXT NOT NULL,
