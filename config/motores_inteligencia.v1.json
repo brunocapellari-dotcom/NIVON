@@ -891,7 +891,8 @@
         "nivon.fretes_recibos_ancora:auditar_ledger_frete_com_recibo",
         "nivon.fretes_recibos_ancora:salvar_recibo_em_diretorio_local",
         "nivon.fretes_recibos_gcs:gravar_recibo_gcs_condicional",
-        "nivon.fretes_recibos_gcs:conferir_recibo_gcs_generation"
+        "nivon.fretes_recibos_gcs:conferir_recibo_gcs_generation",
+        "nivon.fretes_recuperacao_poscommit:recuperar_recibo_poscommit_frete"
       ],
       "data_dependencies": [
         "FRETES_WHATSAPP_AUTORIZADO",
