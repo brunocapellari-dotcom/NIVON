@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import sys
+from hashlib import sha256
 from datetime import datetime, timezone
 
 from nivon.captura_ptax_http import capturar_ptax_odata
@@ -21,6 +22,8 @@ from nivon.ptax_migracao_reversa import materializar_visao_legada_em_copia
 from nivon.ptax_plano import planejar_consultas_ptax
 from nivon.ptax_raw_sqlite import guardar_raw_ptax
 from nivon.registro_snapshots import abrir_registro
+from nivon.ptax_quarentena_coleta import receber_amostra_ptax, listar_amostras_ptax
+from nivon.ptax_google_cloud import preparar_objetos_gcs_ptax, enviar_objetos_gcs_ptax
 from nivon.ptax_cobertura_mercados import diagnosticar_cobertura_ptax
 from nivon.indicadores_historicos import compor_pacote_historico
 from nivon.rotina_diaria import preparar_rotina
@@ -41,7 +44,7 @@ def mock(_url):
 
 def executar() -> dict:
     legado = abrir_registro(":memory:")
-    inicial = None
+    quarentena = None
     restaurado = None
     isolado = None
     visao = None
@@ -97,6 +100,43 @@ def executar() -> dict:
         assert ensaio_editorial["status"] == "BLOQUEADO_INDICADORES_ESSENCIAIS"
         assert ensaio_editorial["agendado"] is False
 
+        # Recepção de arquivo OData EXTERNO declarativo em quarentena.
+        # A origem da fixture é SINTÉTICA, nunca BCB validado ao vivo.
+        quarentena=abrir_registro(":memory:")
+        manifest={
+            "moeda":"USD", "consulta_url":PLANO["url"],
+            "coletado_em":T.isoformat(), "status_http":200,
+            "cabecalhos_http":{
+                "content-type":"application/json",
+                "content-length":str(len(RAW)),
+            },
+            "raw_sha256":sha256(RAW).hexdigest(),
+            "fonte_declarada":"BCB_PTAX",
+        }
+        recibido=receber_amostra_ptax(
+            quarentena,raw=RAW,manifesto=manifest,
+        )
+        assert recibido["status"]=="AMOSTRA_EXTERNA_NAO_HOMOLOGADA"
+        repetido=receber_amostra_ptax(
+            quarentena,raw=RAW,manifesto=manifest,
+        )
+        assert repetido["nova_versao"] is False
+        assert len(listar_amostras_ptax(quarentena))==1
+        preparo=preparar_objetos_gcs_ptax(
+            quarentena,evento_sha256=recibido["evento_sha256"],
+            bucket="nivon-amostras-pesquisa",
+        )
+        assert len(preparo["objetos"])==2
+        assert preparo["objetos"][0]["bytes"]==RAW
+        try:
+            enviar_objetos_gcs_ptax(preparo)
+        except PermissionError:
+            pass
+        else:
+            raise AssertionError("upload GCS não foi bloqueado por padrão")
+        assert quarentena.execute(
+            "SELECT COUNT(*) FROM nivon_snapshots").fetchone()[0] == 0
+
         # Exercita a direção inversa RAW-first, sem escrever no banco-fonte.
         isolado=abrir_registro(":memory:")
         captura=capturar_ptax_odata(
@@ -129,6 +169,10 @@ def executar() -> dict:
                 "modo_ptax_paralelo_no_compositor",
                 "bloqueio_briefing_na_falta_de_homologacao",
                 "bloqueio_promocao_editorial",
+                "recepcao_raw_externo_na_quarentena",
+                "idempotencia_de_integridade_da_quarentena",
+                "preparacao_objetos_google_cloud",
+                "bloqueio_upload_sem_autorizacao",
             ],
             "capturas":lote["consultas_concluidas"],
             "raw_sha256":salvo["sha256"],
@@ -143,6 +187,8 @@ def executar() -> dict:
             visao["copia"].close()
         if isolado is not None:
             isolado.close()
+        if quarentena is not None:
+            quarentena.close()
         if restaurado is not None:
             restaurado.close()
         legado.close()
