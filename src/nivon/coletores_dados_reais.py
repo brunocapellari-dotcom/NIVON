@@ -335,7 +335,7 @@ def executar_coleta(*, fonte, banco, raw_dir, executar=False,
         url=_recurso_ccee(resources,recurso_id)
         raw,mime=_get(url,cliente=cliente,tipos={"text/csv","text/plain","application/octet-stream","application/csv"})
         dados=normalizar_ccee_pld(raw)
-        dataset="BR_CCEE_PLD_HORARIO_2026"
+        dataset="BR_CCEE_PLD_HORARIO"
         estado="NORMALIZED"
         notas={"recurso_id":recurso_id,"hash_catalogo":hashlib.sha256(meta).hexdigest(),
                "licenca":licenca,"observacoes_parseadas":len(dados)}
