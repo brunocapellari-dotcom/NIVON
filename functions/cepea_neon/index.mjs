@@ -61,19 +61,44 @@ async function store(rows,claims){
    [status,latest,inserted,age>4?'Data CEPEA defasada: não promover como preço atual':null,rows[0].url,String(claims.run_id||'')]
   );
   await c.query(
-   "UPDATE public.nivon_p0_sources SET ingest_state='TESTED_NOT_SCHEDULED', allow_automated_ingest=TRUE,last_checked_at=$1,last_success_at=$1,last_reference_on=$2,freshness_state=$3,updated_at=now() WHERE source='CEPEA'",
+   "UPDATE public.nivon_p0_sources SET ingest_state='ACTIVE', allow_automated_ingest=TRUE,last_checked_at=$1,last_success_at=$1,last_reference_on=$2,freshness_state=$3,updated_at=now() WHERE source='CEPEA'",
    [now,latest,status]
   );
   await c.query('COMMIT');
   return {status,received:rows.length,inserted,duplicates:rows.length-inserted,latest_reference:latest};
  }catch(e){await c.query('ROLLBACK');throw e}finally{c.release()}
 }
+async function registerFailure(product,claims){
+ const spec=product==='MILHO'?SERIES.milho_esalq_b3:SERIES.soja_paranagua;
+ const c=await POOL.connect();
+ try{
+   await c.query('BEGIN');
+   await c.query(
+     "INSERT INTO public.nivon_p0_source_checks(source,check_kind,status,inserted_rows,warning,provenance_uri,job_identifier) VALUES('CEPEA','PRIMARY_SOURCE_FAILURE','ERROR',0,$1,$2,$3)",
+     ['Falha de execução do coletor CEPEA ('+product+'); preço anterior NÃO atualizado',spec.url,String(claims.run_id||'')]
+   );
+   await c.query(
+     "UPDATE public.nivon_p0_sources SET last_checked_at=now(),freshness_state='COLLECTOR_ERROR',ingest_state='ACTIVE',updated_at=now() WHERE source='CEPEA'"
+   );
+   await c.query('COMMIT');
+   return {status:'RECORDED',source:'CEPEA',product,canonical_quotes_inserted:0};
+ }catch(e){await c.query('ROLLBACK');throw e}finally{c.release()}
+}
+
 export default {
  async fetch(req){
   const path=new URL(req.url).pathname;
   if(path==='/health'&&req.method==='GET')return Response.json({service:'NIVON-CEPEA',status:'DEPLOYED'});
-  if(path!=='/ingest'||req.method!=='POST')return Response.json({error:'NOT_FOUND'},{status:404});
+  if(!['/ingest','/report-failure'].includes(path)||req.method!=='POST')return Response.json({error:'NOT_FOUND'},{status:404});
   let claims;try{claims=await authenticate(req)}catch(e){return Response.json({error:'OIDC_REJECTED'},{status:401})}
+  if(path==='/report-failure'){
+    try{
+      const txt=await req.text();if(txt.length>2000)throw Error('SIZE');
+      const body=JSON.parse(txt);
+      if(body.source!=='CEPEA'||!['SOJA','MILHO'].includes(body.product)||body.event!=='WORKFLOW_FAILED')throw Error('BAD_REPORT');
+      return Response.json(await registerFailure(body.product,claims));
+    }catch(e){console.error('CEPEA source failure reporting error');return Response.json({error:'REPORT_REJECTED'},{status:422})}
+  }
   let rows;
   try{
    const data=await req.text();
