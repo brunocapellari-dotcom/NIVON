@@ -20,6 +20,7 @@ from urllib.request import Request, build_opener
 from .transporte_multimodal import (
     _SemRedirecionamento, ErroTransporte, interpretar_csv_antt, link_antt
 )
+from .antt_historico_verificado import referencia_antt_verificada
 
 CATALOGO = "https://dados.antt.gov.br/api/3/action/package_show?id=438a5184-09db-49a3-88c8-0bad418b4409"
 _CSV = re.compile(r"/dataset/438a5184-09db-49a3-88c8-0bad418b4409/resource/"
@@ -170,11 +171,19 @@ def coletar(*, destino: str | Path, anos: list[int], habilitar_rede=False,
             raise
         recursos = {}
         for ano in anos:
-            url = link_antt(ano)  # falha fechada para ano sem URL comprovada
-            recursos[ano] = {
-                "url": url, "id": None, "last_modified": None,
-                "revision_id": None,
-            }
+            try:
+                url = link_antt(ano)  # 2025/2026 ja verificadas
+                recursos[ano] = {
+                    "url": url, "id": None, "last_modified": None,
+                    "revision_id": None,
+                }
+            except ErroTransporte:
+                # 2006-2024: URL e SHA preservados do CKAN oficial.
+                # Nao aceita arquivo alterado sem catalogo atualizado.
+                recursos[ano] = {
+                    **referencia_antt_verificada(ano),
+                    "last_modified": None, "revision_id": None,
+                }
         descoberta = "URL_OFICIAL_PREVALIDADA_SEM_CKAN_ATUAL"
     if any(a not in recursos for a in anos):
         raise ErroTransporte("ano nao publicado no CKAN")
@@ -198,13 +207,17 @@ def coletar(*, destino: str | Path, anos: list[int], habilitar_rede=False,
             saida.append({"ano": ano, "estado": "SEM_REVISAO", "registros": prev["registros"]})
             continue
         bruto = _http(recurso["url"], transporte=transporte)
+        sha_real = hashlib.sha256(bruto).hexdigest()
+        sha_anterior = recurso.get("sha_anterior")
+        if descoberta != "CKAN_LIVE" and sha_anterior and sha_real != sha_anterior:
+            raise ErroTransporte("ANTT_SHA_DIVERGENTE_SEM_CKAN_ATUAL")
         linhas, meta = interpretar_csv_antt(bruto, ano=ano, coleta_utc=stamp, fonte_url=recurso["url"])
         jsonl = b"".join((json.dumps(x, ensure_ascii=False, sort_keys=True) + "\n").encode() for x in linhas)
         _atomic(destino / f"antt-od-{ano}.csv", bruto)
         _atomic(destino / f"antt-od-{ano}.jsonl", jsonl)
         manifesto["anos"][str(ano)] = {
             **recurso, "descoberta_fonte": descoberta,
-            "sha256": hashlib.sha256(bruto).hexdigest(),
+            "sha256": sha_real,
             "verificado_utc": stamp, "competencia_maxima": meta.referencia_maxima,
             "registros": meta.registros, "status": "STAGING_NAO_HOMOLOGADO"
         }
