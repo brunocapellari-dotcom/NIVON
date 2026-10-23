@@ -43,7 +43,7 @@ class TestColetorValuesQuarentena(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.banco=Path(self.temp.name)/"sidra-quarentena.sqlite"
 
-    def teste(self,**overrides):
+    def executar_simulado(self,**overrides):
         kw={"periodo":"202602","direitos_confirmados":True,
             "transporte":transporte_sintetico}
         kw.update(overrides)
@@ -56,7 +56,7 @@ class TestColetorValuesQuarentena(unittest.TestCase):
         self.assertFalse(self.banco.exists())
 
     def test_coleta_simulada_e2e_preview_sem_gravacao(self):
-        r=self.teste()
+        r=self.executar_simulado()
         self.assertEqual(len(r["capturas"]),6)
         self.assertEqual(len(r["diagnosticos"]),3)
         self.assertTrue(all(x["linhas_vigentes"]==4
@@ -70,9 +70,9 @@ class TestColetorValuesQuarentena(unittest.TestCase):
         json.dumps(r,ensure_ascii=False)
 
     def test_coleta_gravada_atomica_e_idempotencia_por_hash(self):
-        a=self.teste(banco=self.banco,gravar=True)
+        a=self.executar_simulado(banco=self.banco,gravar=True)
         self.assertEqual(len(set(a["ids"])),6)
-        b=self.teste(banco=self.banco,gravar=True)
+        b=self.executar_simulado(banco=self.banco,gravar=True)
         self.assertEqual(b["ids"],a["ids"])
         with sqlite3.connect(self.banco) as cx:
             self.assertEqual(cx.execute(
@@ -91,23 +91,23 @@ class TestColetorValuesQuarentena(unittest.TestCase):
                         "corpo":b"rate limited"}
             return transporte_sintetico(url=url,timeout=timeout,limite=limite)
         with self.assertRaisesRegex(DadoInvalido,"HTTP"):
-            self.teste(banco=self.banco,gravar=True,transporte=falha)
+            self.executar_simulado(banco=self.banco,gravar=True,transporte=falha)
         self.assertEqual(contagem[0],6)
         self.assertFalse(self.banco.exists())
 
     def test_sem_direitos_bloqueia_captura_e_escrita(self):
         for gr in (False,True):
             with self.assertRaises(PermissionError):
-                self.teste(direitos_confirmados=False,gravar=gr,banco=self.banco)
+                self.executar_simulado(direitos_confirmados=False,gravar=gr,banco=self.banco)
             self.assertFalse(self.banco.exists())
 
     def test_periodo_nao_homologado_falha_fechado(self):
         for periodo in ("199701","202603","202601","202602/redirect"):
             with self.assertRaises(DadoInvalido):
-                self.teste(periodo=periodo)
+                self.executar_simulado(periodo=periodo)
 
     def test_bytes_adulterados_nao_recuperados(self):
-        r=self.teste(banco=self.banco,gravar=True)
+        r=self.executar_simulado(banco=self.banco,gravar=True)
         with sqlite3.connect(self.banco) as cx:
             cx.execute("DROP TRIGGER pecuaria_quarentena_sem_update")
             cx.execute("UPDATE valores_pecuaria_quarentena SET bruto=? WHERE id=?",
