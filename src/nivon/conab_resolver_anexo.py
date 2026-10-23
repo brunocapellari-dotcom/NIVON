@@ -32,6 +32,12 @@ CREATE TABLE IF NOT EXISTS conab_anexos_resolvidos(
  estado TEXT NOT NULL CHECK(estado='LINK_XLSX_DESCOBERTO_NAO_BAIXADO'),
  PRIMARY KEY(pagina_semana,url_documento,url_anexo)
 );
+CREATE TABLE IF NOT EXISTS conab_anexos_html_historico(
+ pagina_semana TEXT NOT NULL, url_documento TEXT NOT NULL,
+ url_anexo TEXT NOT NULL, hash_html_documento TEXT NOT NULL,
+ coletado_em_utc TEXT NOT NULL,
+ PRIMARY KEY(pagina_semana,url_documento,url_anexo,hash_html_documento)
+);
 """
 
 
@@ -183,15 +189,24 @@ def registrar_resolucao(db:sqlite3.Connection,*,resolucao:dict) -> dict:
         raise ErroIndiceConab('hash da pagina invalido')
     db.executescript(_SCHEMA)
     with db:
-        old=db.execute('''SELECT url_anexo,pagina_publicada_data,hash_html_documento
-                           FROM conab_anexos_resolvidos WHERE pagina_semana=? AND url_documento=?''',
-                       (resolucao['pagina_semana'],resolucao['url_documento'])).fetchone()
-        if old and tuple(old)!=(resolucao['url_anexo'],resolucao['publicacao_data'],resolucao['hash_html_documento']):
-            raise ErroIndiceConab('documento da mesma URL mudou: requer revisao de versao')
-        if not old:
+        old=db.execute('''SELECT pagina_publicada_data
+                           FROM conab_anexos_resolvidos
+                           WHERE pagina_semana=? AND url_documento=? AND url_anexo=?''',
+                       (resolucao['pagina_semana'],resolucao['url_documento'],
+                        resolucao['url_anexo'])).fetchone()
+        if old is not None and old[0]!=resolucao['publicacao_data']:
+            raise ErroIndiceConab('publicacao mudou sem nova URL: revisar historico')
+        if old is None:
             db.execute('INSERT INTO conab_anexos_resolvidos VALUES (?,?,?,?,?,?,?)',
                        (resolucao['pagina_semana'],resolucao['url_documento'],
                         resolucao['url_anexo'],resolucao['publicacao_data'],
                         resolucao['hash_html_documento'],resolucao['coletado_em_utc'],
                         resolucao['estado']))
+        # Alteracao de menus/HTML com o mesmo link nao deve impedir o
+        # coletor incremental. Registrar snapshot e preservar link antigo.
+        db.execute('''INSERT OR IGNORE INTO conab_anexos_html_historico
+                      VALUES (?,?,?,?,?)''',
+                   (resolucao['pagina_semana'],resolucao['url_documento'],
+                    resolucao['url_anexo'],resolucao['hash_html_documento'],
+                    resolucao['coletado_em_utc']))
     return {'novo':old is None,'status':'DOCUMENTO_OFICIAL_RESOLVIDO_SEM_DOWNLOAD'}
