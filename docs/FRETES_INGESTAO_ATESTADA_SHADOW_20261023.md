@@ -64,3 +64,37 @@ Um emissor externo deve anexar seu horário de registro independente, verificar 
 - `tests/test_fretes_baseline_shadow_e2e.py`: emissão as-of → assinatura HMAC de TESTE por emissor fictício → ledger de previsões → comparação posterior D+7/30/90; valores MAE artificialmente previsíveis não comprovam modelagem real.
 
 **Gates ainda bloqueados:** integração com provedor real e consentimento/licença verificáveis; coleta e conservação segura de bytes RAW por tenant; atestadores reais com revogação/custódia; recibo de tempo/WORM externo; recepção automática autorizada; forecast assinado pelo próprio serviço em tempo real; e holdout fora da amostra com dados reais e benchmark comparável. Nenhum agendamento, cloud, emissão para clientes ou despesa foi habilitado.
+
+
+## 5. Comando único para preparar previsões shadow
+
+`scripts/preparar_shadow_fretes_local.py` é **somente leitura**. Recebe SQLite de ofertas com a cabeça SHA-256 fornecida externamente, filtra explicitamente a identidade econômica, usa o relógio **atual** do processo (não aceita `as_of` histórico pela CLI) e cria **propostas não assinadas** D+7, D+30 e D+90.
+
+Exemplo `shadow.json` local e privado (modo `0600`, sem chaves):
+
+```json
+{
+  "arquivo_ofertas_sqlite": "/var/lib/nivon-privado/fretes.sqlite",
+  "cabeca_ofertas_sha256": "CABECALHO_SHA256_FORNECIDO_INDEPENDENTEMENTE",
+  "condicoes": {
+    "origem_ibge": "5107925",
+    "destino_ibge": "5107602",
+    "descarga_entity_id": "terminal:exemplo",
+    "produto": "SOJA",
+    "equipamento": "RODOTREM",
+    "regime": "PJ",
+    "pedagio": "ADICIONAL"
+  },
+  "fonte_id": "FONTE_ATESTADA",
+  "emissor_id": "EMISSOR_CREDENCIADO",
+  "horizontes_dias": [7, 30, 90]
+}
+```
+
+Os códigos e nomes acima são apenas exemplos de formato, não evidência de mercado real. A cabeça deve ter **64 caracteres hexadecimais** e corresponder exatamente ao store. Na ausência de ao menos dois pares da mesma rota/produto/equipamento/regime no dia da emissão, a função recusa o lote, sem utilizar preços de outros estabelecimentos.
+
+```bash
+PYTHONPATH=src python scripts/preparar_shadow_fretes_local.py --config /caminho/privado/shadow.json
+```
+
+O JSON contém `previsoes_para_assinatura_externa` sem `registrado_em` ou `assinatura_hmac_sha256`. Isso é **uma intenção de emissão**, não uma previsão existente no ledger. A integração com o assinador externo e a gravação imediata e verificável do resultado continuam pendentes. Testes de integração agora executam os **dois comandos subprocess** (`ingerir_fretes_atestados_local.py` → `preparar_shadow_fretes_local.py`) sobre o mesmo banco SQLite privado e verificam que a preparação não o altera.
