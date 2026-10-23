@@ -256,6 +256,7 @@ def painel_qualidade_lpc(db: sqlite3.Connection, *, as_of: str) -> dict:
 
 def tendencia_diesel_preliminar(
     db: sqlite3.Connection, *, municipio: str, produto: str, as_of: str,
+    idade_maxima_dias: int = 28,
 ) -> dict:
     """Comparação apenas entre mesmas praça/produto, semanas contíguas.
 
@@ -263,6 +264,8 @@ def tendencia_diesel_preliminar(
     prévia interna, jamais saída pública/operacional.
     """
     tempo = _tempo(as_of, "as_of")
+    if type(idade_maxima_dias) is not int or not 1 <= idade_maxima_dias <= 90:
+        raise ErroStagingANP("limite de atualização inválido")
     if (not isinstance(municipio, str) or municipio != municipio.strip().upper()
             or not 1 <= len(municipio) <= 120
             or produto not in ("DIESEL", "DIESEL S10")):
@@ -285,6 +288,15 @@ def tendencia_diesel_preliminar(
     }
     if not rows:
         return {**base, "status": "SEM_DADOS_OBSERVADOS"}
+    from datetime import date
+    atraso = (tempo.date()-date.fromisoformat(rows[0]["semana_fim"])).days
+    if atraso > idade_maxima_dias:
+        return {
+            **base, "status": "HISTORICO_VENCIDO",
+            "ultima_semana_observada": rows[0]["semana_fim"],
+            "defasagem_dias": atraso,
+            "limite_defasagem_dias": idade_maxima_dias,
+        }
     semanas = {}
     for row in rows:
         semanas.setdefault(row["semana_fim"], []).append(row)
