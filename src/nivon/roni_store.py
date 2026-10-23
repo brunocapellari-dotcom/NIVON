@@ -11,6 +11,7 @@ from hashlib import sha256
 from pathlib import Path
 import json
 import os
+import re
 import sqlite3
 import tempfile
 
@@ -76,6 +77,8 @@ def abrir_arquivo_roni(caminho=":memory:"):
 
 
 def _guard_raw(root, digest, raw=None):
+    if not isinstance(digest, str) or re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+        raise ErroRONI("hash RAW inválido no índice de snapshots")
     path = root / (digest + ".ascii")
     if path.is_symlink():
         raise ErroRONI("snapshot RAW symlink proibido")
