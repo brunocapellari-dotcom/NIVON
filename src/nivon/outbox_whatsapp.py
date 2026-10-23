@@ -19,6 +19,9 @@ from typing import Callable
 from .lineup_nacional import instante
 from .autorizacao_envio import verificar_autorizacao
 from .provas_externas_envio import verificar_pacote_externo
+from .registry_emissores import (
+    _esquema as _esquema_registry, emissores_confiaveis,
+)
 
 
 class ErroOutbox(ValueError):
@@ -117,6 +120,7 @@ def _bloquear_se_optout(con: sqlite3.Connection, destinatario_hmac: str) -> None
 def _esquema(con: sqlite3.Connection) -> None:
     if con.in_transaction:
         raise ErroOutbox("conexão deve estar sem transação antes de iniciar a outbox")
+    _esquema_registry(con)
     con.execute("""CREATE TABLE IF NOT EXISTS nivon_envios (
         idempotency_key TEXT PRIMARY KEY,
         edicao TEXT NOT NULL,
@@ -249,6 +253,12 @@ def registrar_autorizacao(con: sqlite3.Connection, preparado: dict, *,
         if row is None or row[3] != "PREPARADO":
             raise ErroOutbox("reserva editorial requer registro PREPARADO sem tentativas")
         _bloquear_se_optout(con, row[1])
+        # Não aceitar chaves/roles recebidos no payload sem cadastro
+        # raiz externo previamente persistido; confirmar sob lock.
+        confiaveis = emissores_confiaveis(con, emissores)
+        if verificar_pacote_externo(documento, comprovantes, confiaveis,
+                 chave_auditoria=chave_auditoria) != digest_provas:
+            raise PermissionError("registry diverge do pacote aprovado")
         if (documento["idempotency_key"] != chave
                 or documento["edicao"] != row[0]
                 or documento["destinatario_hmac"] != row[1]
@@ -380,11 +390,13 @@ def despachar_registrado(con: sqlite3.Connection, preparado: dict, *,
     _esquema(con)
     con.execute("BEGIN IMMEDIATE")
     try:
-        # Revalidar validade temporal sob a mesma reserva atômica.
-        # A janela pode expirar enquanto a conexão espera o lock SQLite.
+        # Revalidar sob o mesmo lock que reserva a única tentativa,
+        # inclusive revogação de emissor entre cadastro e despacho.
         verificar_autorizacao(documento, assinatura, chave_auditoria=chave_auditoria)
-        verificar_pacote_externo(documento, comprovantes, emissores,
-                                chave_auditoria=chave_auditoria)
+        confiaveis = emissores_confiaveis(con, emissores)
+        if verificar_pacote_externo(documento, comprovantes, confiaveis,
+                 chave_auditoria=chave_auditoria) != digest_provas:
+            raise PermissionError("pacote externo diferente do aprovado")
         d=con.execute("""SELECT e.estado,e.payload_sha256,e.edicao,e.destinatario_hmac,
                            a.documento_sha256,a.sha256_editorial,a.revogado_em
                            FROM nivon_envios e LEFT JOIN nivon_autorizacoes a
