@@ -110,7 +110,7 @@ class TestEditorialPipelineIntegrado(unittest.TestCase):
                           "publicacao_original_verificada": True}],
             "cotacoes": [], "fretes": [],
         }
-        with self.assertRaisesRegex(ValueError, "prova externa"):
+        with self.assertRaisesRegex(ValueError, "ID isolado"):
             conciliar_complementos(pacote, complemento)
         complemento["noticias"][0]["evidencia_publicacao_original_id"] = "FONTE_PUBLISHED_TESTE"
         with self.assertRaisesRegex(ValueError, "ID isolado"):
