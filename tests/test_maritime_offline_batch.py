@@ -3,7 +3,7 @@ import hashlib
 import unittest
 from contextlib import contextmanager
 from dataclasses import replace
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from unittest.mock import patch
 
 from nivon.maritime.maritime_store import MaritimeStore
@@ -177,6 +177,99 @@ class OfflineMaritimeBatchTests(unittest.TestCase):
             self.assertEqual(gate["documents_known_as_of"], 2)
             self.assertIn("SOME_EDITIONS_UNKNOWN_OR_FUTURE_AT_ASOF", gate["blockers"])
 
+    def test_three_independent_editions_accumulate_across_separate_runs(self):
+        first = input_doc()
+        second = input_doc(collected="2026-10-20T14:00:00Z",
+                           published="2026-10-20T13:00:00Z", seed=b"B")
+        third = input_doc(collected="2026-10-20T16:00:00Z",
+                          published="2026-10-20T15:00:00Z", seed=b"C")
+        with MaritimeStore() as store:
+            first_run = run(store, [first, second],
+                            [programmed(), programmed()], commit=True)
+            self.assertEqual(first_run["source_readiness"][0]["distinct_edition_count_for_review"], 2)
+            dry = run(store, [third], [programmed(eta="21/10/2026 11:30")],
+                      commit=False)
+            self.assertEqual(dry["edition_writes"]["inserted"], 0)
+            before = dry["source_readiness"][0]
+            self.assertEqual(before["documents_in_current_batch"], 1)
+            self.assertEqual(before["persisted_audit_editions_prior_to_batch"], 2)
+            self.assertEqual(before["documents_supplied"], 3)
+            self.assertEqual(before["documents_known_as_of"], 3)
+            self.assertEqual(before["distinct_edition_count_for_review"], 3)
+            self.assertTrue(before["document_set_has_three_distinct_known_editions"])
+            self.assertNotIn("FEWER_THAN_THREE_DISTINCT_DATED_EDITIONS", before["blockers"])
+            self.assertIn("EXTERNAL_RIGHTS_VERIFICATION_REQUIRED", before["blockers"])
+            self.assertEqual(len(dry["revisions"]), 2)
+            self.assertFalse(before["release_allowed"])
+            self.assertEqual(PdfProgrammeLedger(store).count_editions(
+                port_id="PARANAGUA", source_id="OFFICIAL_PARANAGUA_TEST",
+                series="EXPORT_OESTE", read_authorized=True), 2)
+            commit = run(store, [third], [programmed(eta="21/10/2026 11:30")],
+                         commit=True)
+            self.assertEqual(commit["edition_writes"], {"inserted": 1, "already_present": 0})
+            self.assertEqual(commit["revisions"], dry["revisions"])
+            self.assertEqual(commit["source_readiness"], dry["source_readiness"])
+            replay = run(store, [third], [programmed(eta="21/10/2026 11:30")],
+                         commit=True)
+            self.assertEqual(replay["edition_writes"]["already_present"], 1)
+            self.assertEqual(replay["source_readiness"][0]["distinct_edition_count_for_review"], 3)
+            self.assertEqual(replay["source_readiness"][0]["documents_supplied"], 3)
+
+    def test_stored_unknown_publication_is_an_audit_blocker_across_runs(self):
+        unknown = input_doc(published=None)
+        valid = input_doc(collected="2026-10-20T16:00:00Z",
+                          published="2026-10-20T15:00:00Z", seed=b"B")
+        with MaritimeStore() as store:
+            run(store, [unknown], [programmed()], commit=True)
+            later = run(store, [valid], [programmed()], commit=False)
+            readiness = later["source_readiness"][0]
+            self.assertEqual(readiness["documents_supplied"], 2)
+            self.assertEqual(readiness["documents_known_as_of"], 1)
+            self.assertEqual(readiness["persisted_audit_editions_prior_to_batch"], 1)
+            self.assertIn("SOME_EDITIONS_UNKNOWN_OR_FUTURE_AT_ASOF", readiness["blockers"])
+            self.assertEqual(later["revisions"], [])
+            self.assertEqual(readiness["distinct_edition_count_for_review"], 1)
+            self.assertFalse(readiness["release_allowed"])
+
+    def test_replaying_old_version_does_not_inflate_histogram(self):
+        first = input_doc()
+        newer = input_doc(collected="2026-10-20T16:00:00Z",
+                          published="2026-10-20T15:00:00Z", seed=b"B")
+        with MaritimeStore() as store:
+            run(store, [first, newer], [programmed(), programmed()], commit=True)
+            view = run(store, [first], [programmed()], commit=False)
+            gate = view["source_readiness"][0]
+            self.assertEqual(gate["documents_supplied"], 2)
+            self.assertEqual(gate["documents_in_current_batch"], 1)
+            self.assertEqual(gate["persisted_audit_editions_prior_to_batch"], 2)
+            self.assertEqual(gate["distinct_edition_count_for_review"], 2)
+            self.assertNotIn("DUPLICATED_COLLECTION_INSTANT", gate["blockers"])
+
+    def test_future_persisted_edition_does_not_leak_into_earlier_cutoff(self):
+        early = input_doc()
+        late = input_doc(collected="2026-10-20T16:00:00Z",
+                         published="2026-10-20T15:00:00Z", seed=b"B")
+        with MaritimeStore() as store:
+            run(store, [early, late], [programmed(), programmed()], commit=True)
+            historical = run(store, [early], [programmed()], commit=False,
+                             asof="2026-10-20T13:00:00Z")
+            gate = historical["source_readiness"][0]
+            self.assertEqual(gate["documents_known_as_of"], 1)
+            self.assertEqual(gate["persisted_audit_editions_prior_to_batch"], 1)
+            self.assertEqual(historical["revisions"], [])
+            self.assertIn("FEWER_THAN_THREE_DISTINCT_DATED_EDITIONS", gate["blockers"])
+
+    def test_readiness_audit_history_failure_blocks_new_write(self):
+        first = input_doc()
+        with MaritimeStore() as store:
+            with patch("nivon.maritime.offline_pdf_batch.PdfProgrammeLedger.paged_history_asof",
+                       side_effect=ValueError("audit history corrupted")):
+                with self.assertRaisesRegex(ValueError, "audit history corrupted"):
+                    run(store, [first], [programmed()], commit=True)
+            self.assertEqual(PdfProgrammeLedger(store).count_editions(
+                port_id="PARANAGUA", source_id="OFFICIAL_PARANAGUA_TEST",
+                series="EXPORT_OESTE", read_authorized=True), 0)
+
     def test_invalid_second_pdf_prevents_any_write(self):
         first = input_doc()
         bad = input_doc(seed=b"B", collected="2026-10-20T16:00:00Z",
@@ -210,7 +303,7 @@ class OfflineMaritimeBatchTests(unittest.TestCase):
     def test_historical_read_failure_before_commit_leaves_ledger_empty(self):
         item = input_doc()
         with MaritimeStore() as store:
-            with patch("nivon.maritime.offline_pdf_batch.PdfProgrammeLedger.history_asof",
+            with patch("nivon.maritime.offline_pdf_batch.PdfProgrammeLedger.paged_history_asof",
                        side_effect=ValueError("historical scan unavailable")):
                 with self.assertRaisesRegex(ValueError, "historical scan unavailable"):
                     run(store, [item], [programmed()], commit=True)
@@ -325,6 +418,43 @@ class OfflineMaritimeBatchTests(unittest.TestCase):
                     port_id="PARANAGUA", source_id="OFFICIAL_PARANAGUA_TEST",
                     series="EXPORT_OESTE", as_of="2026-10-20T17:00:00Z",
                     read_authorized=True, max_editions=1)
+
+    def test_new_pdf_batch_reconstructs_over_two_hundred_prior_editions(self):
+        from test_maritime_pdf_programme_ledger import edition as source_edition
+        latest = input_doc(
+            collected="2026-10-20T16:30:00Z",
+            published="2026-10-20T15:30:00Z", seed=b"LATEST",
+        )
+        baseline = source_edition()
+        start = datetime(2026, 10, 20, 12, tzinfo=timezone.utc)
+        previous = tuple(replace(
+            baseline,
+            source_id="OFFICIAL_PARANAGUA_TEST",
+            source_url=latest.contract.fonte.url,
+            collected_at=(start + timedelta(minutes=i)).isoformat(),
+            source_sha256=hashlib.sha256(f"HIST-{i}".encode()).hexdigest(),
+        ) for i in range(205))
+        with MaritimeStore() as store:
+            ledger = PdfProgrammeLedger(store)
+            for offset in range(0, len(previous), 100):
+                ledger.save_batch(previous[offset:offset + 100],
+                                  storage_authorized=True)
+            out = run(store, [latest], [programmed()], commit=True)
+            self.assertEqual(out["edition_writes"]["inserted"], 1)
+            self.assertEqual(len(out["revisions"]), 205)
+            readiness = out["source_readiness"][0]
+            self.assertEqual(readiness["documents_in_current_batch"], 1)
+            self.assertEqual(readiness["persisted_audit_editions_prior_to_batch"], 205)
+            self.assertEqual(readiness["documents_known_as_of"], 206)
+            self.assertEqual(readiness["distinct_edition_count_for_review"], 206)
+            self.assertFalse(readiness["release_allowed"])
+            self.assertIsNone(out["realized_tonnes"])
+            history = ledger.paged_history_asof(
+                port_id="PARANAGUA", source_id="OFFICIAL_PARANAGUA_TEST",
+                series="EXPORT_OESTE", as_of="2026-10-20T17:00:00Z",
+                read_authorized=True,
+            )
+            self.assertEqual(len(history), 206)
 
     def test_historic_doc_added_after_first_run_generates_one_revision(self):
         first = input_doc()

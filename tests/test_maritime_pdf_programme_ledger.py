@@ -3,6 +3,7 @@
 Programme references are deliberately not DUVs and never count realized calls.
 """
 from dataclasses import replace
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import hashlib
 import tempfile
@@ -274,6 +275,74 @@ class ProgrammeLedgerTests(unittest.TestCase):
             self.assertEqual(
                 MaritimeStore.validate_restore(backup)["pdf_programme_edition_rows"], 0,
             )
+
+    def test_paged_longitudinal_history_over_200_documents_without_truncation(self):
+        start = datetime(2026, 10, 20, 12, tzinfo=timezone.utc)
+        docs = tuple(edition(
+            stamp=(start + timedelta(minutes=i)).isoformat(),
+            digest=hashlib.sha256(f"SYNTHETIC-{i}".encode()).hexdigest(),
+        ) for i in range(205))
+        with MaritimeStore() as store:
+            ledger = PdfProgrammeLedger(store)
+            for offset in range(0, len(docs), 100):
+                ledger.save_batch(docs[offset:offset + 100], storage_authorized=True)
+            history = ledger.paged_history_asof(
+                port_id="PARANAGUA", source_id=SOURCE, series="EXPORT_OESTE",
+                as_of="2026-10-20T20:00:00Z",
+                page_size=17, max_total_editions=205,
+                read_authorized=True,
+            )
+            self.assertEqual(len(history), 205)
+            self.assertEqual(history[0].source_sha256, docs[0].source_sha256)
+            self.assertEqual(history[-1].source_sha256, docs[-1].source_sha256)
+            self.assertEqual(len({x.collected_utc for x in history}), 205)
+            with self.assertRaisesRegex(ValueError, "exceeds explicit"):
+                ledger.paged_history_asof(
+                    port_id="PARANAGUA", source_id=SOURCE, series="EXPORT_OESTE",
+                    as_of="2026-10-20T20:00:00Z",
+                    page_size=30, max_total_editions=204,
+                    read_authorized=True,
+                )
+            with self.assertRaisesRegex(ValueError, "exceeds explicit"):
+                ledger.paged_history_asof(
+                    port_id="PARANAGUA", source_id=SOURCE, series="EXPORT_OESTE",
+                    as_of="2026-10-20T20:00:00Z",
+                    max_payload_bytes=20, read_authorized=True,
+                )
+
+    def test_paged_audit_separates_unknown_publication_from_known_history(self):
+        known = edition()
+        unknown = edition(
+            stamp="2026-10-20T16:00:00Z", digest="b" * 64,
+            published=None, proof=None,
+        )
+        with MaritimeStore() as store:
+            ledger = PdfProgrammeLedger(store)
+            ledger.save_batch((known, unknown), storage_authorized=True)
+            options = dict(
+                port_id="PARANAGUA", source_id=SOURCE, series="EXPORT_OESTE",
+                read_authorized=True, page_size=1,
+                as_of="2026-10-20T17:00:00Z",
+            )
+            self.assertEqual(len(ledger.paged_history_asof(**options)), 1)
+            audit = ledger.paged_history_asof(**options, audit_only=True)
+            self.assertEqual(len(audit), 2)
+            self.assertIsNone(audit[-1].published_utc)
+            earlier = ledger.paged_history_asof(
+                **{**options, "as_of": "2026-10-20T13:00:00Z"},
+                audit_only=True,
+            )
+            self.assertEqual(len(earlier), 1)
+            self.assertEqual(earlier[0].source_sha256, known.source_sha256)
+
+    def test_paged_history_read_is_deny_by_default(self):
+        with MaritimeStore() as store:
+            ledger = PdfProgrammeLedger(store)
+            with self.assertRaises(PermissionError):
+                ledger.paged_history_asof(
+                    port_id="ITAQUI", source_id="PORTO_ITAQUI_SYNTHETIC",
+                    series=None, as_of="2026-10-20T17:00:00Z"
+                )
 
     def test_no_automatic_rights_to_release_even_with_published_snapshot(self):
         with MaritimeStore() as store:

@@ -136,6 +136,18 @@ jobs:
           bash scripts/run_maritime_pdf_container.sh \
             "${MARITIME_E2E_ROOT}/inputs" "${MARITIME_E2E_ROOT}/outputs" \
             input_manifest.json audit_replay.json 2026-10-20T18:00:00+00:00 --commit
+      - name: Ingerir quarta edicao em lote posterior SEM rede
+        run: |
+          set -euo pipefail
+          bash scripts/run_maritime_pdf_container.sh \
+            "${MARITIME_E2E_ROOT}/inputs" "${MARITIME_E2E_ROOT}/outputs" \
+            incremental_manifest.json audit_incremental.json 2026-10-20T20:00:00+00:00 --commit
+      - name: Reexecutar lote incremental sem duplicar edicoes SEM rede
+        run: |
+          set -euo pipefail
+          bash scripts/run_maritime_pdf_container.sh \
+            "${MARITIME_E2E_ROOT}/inputs" "${MARITIME_E2E_ROOT}/outputs" \
+            incremental_manifest.json audit_incremental_replay.json 2026-10-20T20:00:00+00:00 --commit
       - name: Afirmar arquivos, relatorio, SQLite, diferencas e bloqueio de release
         env:
           PYTHONPATH: .:src:tests

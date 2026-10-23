@@ -6,6 +6,7 @@ script never obtains third-party data and does not grant a source licence.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 import sqlite3
@@ -29,6 +30,23 @@ def prepare(inputs: Path, outputs: Path) -> None:
     ])
     if (outputs / "maritime.sqlite").exists():
         raise AssertionError("fresh fixture output must not contain SQLite")
+    # A *different* command and manifest, later in time, represents the
+    # next edition arriving on another collection run (not the first batch).
+    later_pdf = paranagua_pdf(duv="", clock="14:45")
+    filename = "fixture_incremental.pdf"
+    (inputs / filename).write_bytes(later_pdf)
+    first = json.loads((inputs / "input_manifest.json").read_text())
+    west = dict(first["documents"][0])
+    west.update({
+        "file": filename,
+        "sha256": hashlib.sha256(later_pdf).hexdigest(),
+        "collected_at": "2026-10-20T19:00:00+00:00",
+        "published_at": "2026-10-20T18:00:00+00:00",
+        "publication_evidence_id": "SYNTHETIC_PUB_3",
+    })
+    (inputs / "incremental_manifest.json").write_text(
+        json.dumps({"documents": [west]}), encoding="utf-8"
+    )
 
 
 def assert_report(report: dict, *, mode: str, inserted: int, repeated: int) -> None:
@@ -74,18 +92,43 @@ def verify(outputs: Path) -> None:
     assert_report(committed, mode="PERSIST_AUTHORIZED_DERIVED_ONLY", inserted=3, repeated=0)
     assert_report(replay, mode="PERSIST_AUTHORIZED_DERIVED_ONLY", inserted=0, repeated=3)
     assert dry["revisions"] == committed["revisions"] == replay["revisions"]
+    incremental = json.loads((outputs / "audit_incremental.json").read_text())
+    rerun_incremental = json.loads(
+        (outputs / "audit_incremental_replay.json").read_text()
+    )
+    assert incremental["edition_writes"] == {"inserted": 1, "already_present": 0}
+    assert rerun_incremental["edition_writes"] == {"inserted": 0, "already_present": 1}
+    assert incremental["documents_processed"] == 1
+    assert incremental["revisions"] == rerun_incremental["revisions"]
+    assert len(incremental["revisions"]) == 2
+    combined_readiness = incremental["source_readiness"]
+    assert len(combined_readiness) == 1
+    west = combined_readiness[0]
+    assert west["port_id"] == "PARANAGUA"
+    assert west["documents_in_current_batch"] == 1
+    assert west["persisted_audit_editions_prior_to_batch"] == 2
+    assert west["documents_known_as_of"] == 3
+    assert west["distinct_edition_count_for_review"] == 3
+    assert west["document_set_has_three_distinct_known_editions"] is True
+    assert "FEWER_THAN_THREE_DISTINCT_DATED_EDITIONS" not in west["blockers"]
+    assert "EXTERNAL_RIGHTS_VERIFICATION_REQUIRED" in west["blockers"]
+    assert west["release_allowed"] is False
+    assert incremental["publication_allowed"] is False
+    assert incremental["port_call_count"] is None
+    assert incremental["realized_tonnes"] is None
     with sqlite3.connect(outputs / "maritime.sqlite") as db:
         tables = db.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
         assert ("maritime_pdf_programme_editions",) in tables
         assert db.execute(
             "SELECT COUNT(*) FROM maritime_pdf_programme_editions"
-        ).fetchone()[0] == 3
+        ).fetchone()[0] == 4
         if ("maritime_lineup_vintages",) in tables:
             assert db.execute(
                 "SELECT COUNT(*) FROM maritime_lineup_vintages"
             ).fetchone()[0] == 0
-    print("CONTAINER_PDF_E2E_PASS: 3 sources editions, 1 declared ETA revision, "
-          "dry-run, atomic commit, idempotent replay, zero physical claims")
+    print("CONTAINER_PDF_E2E_PASS: 3 first-batch editions plus one later edition, "
+          "cumulative 3-unique-source readiness, 2 ETA revisions, "
+          "dry-run, atomic commit, idempotent replay across two manifests, zero physical claims")
 
 
 if __name__ == "__main__":

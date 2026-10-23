@@ -148,12 +148,48 @@ def run_offline_pdf_batch(
     scopes = sorted({(v.port_id, v.source_id, v.series or "")
                     for _, v, _ in prepared})
     revision_reports: list[dict[str, Any]] = []
+    readiness_history: list[PdfProgrammeEdition] = []
+    per_scope_existing_audit_counts: dict[tuple[str, str, str], int] = {}
+    per_scope_current_counts: dict[tuple[str, str, str], int] = {}
     for port_id, source_id, series_key in scopes:
         series = series_key or None
-        known_existing = ledger.history_asof(
+        known_existing = ledger.paged_history_asof(
             port_id=port_id, source_id=source_id, series=series,
             as_of=cutoff, read_authorized=True,
         )
+        # Audit-only history includes previously stored documents with
+        # *unproven publication*. They remain UNAVAILABLE to all revision
+        # comparisons, but must be visible as a quality blocker in readiness.
+        known_for_audit = ledger.paged_history_asof(
+            port_id=port_id, source_id=source_id, series=series,
+            as_of=cutoff, read_authorized=True, audit_only=True,
+        )
+        all_current = [
+            version for _, version, _ in prepared
+            if (version.port_id, version.source_id, version.series or "") ==
+               (port_id, source_id, series_key)
+        ]
+        scope = (port_id, source_id, series_key)
+        per_scope_existing_audit_counts[scope] = len(known_for_audit)
+        per_scope_current_counts[scope] = len(all_current)
+        audit_index: dict[str, PdfProgrammeEdition] = {
+            edition.collected_utc.isoformat(): edition for edition in known_for_audit
+        }
+        for edition in all_current:
+            stamp = edition.collected_utc.isoformat()
+            earlier = audit_index.get(stamp)
+            if earlier is not None and (
+                PdfProgrammeLedger._canonical(earlier)[1:]
+                != PdfProgrammeLedger._canonical(edition)[1:]
+            ):
+                raise ValueError("conflicting batch: stored audit programme edition")
+            audit_index[stamp] = edition
+        if (len(audit_index) > 2000 or sum(
+            len(PdfProgrammeLedger._canonical(edition)[2].encode("utf-8"))
+            for edition in audit_index.values()
+        ) > 48_000_000):
+            raise ValueError("combined source audit exceeds edition/byte quotas")
+        readiness_history.extend(audit_index.values())
         staged = [
             version for _, version, _ in prepared
             if (version.port_id, version.source_id, version.series or "") ==
@@ -176,8 +212,8 @@ def run_offline_pdf_batch(
                 raise ValueError("conflicting batch: previously known programme edition")
             index[stamp] = version
         known = sorted(index.values(), key=lambda item: item.collected_utc)
-        if len(known) > 200:
-            raise ValueError("preflight history exceeds 200 editions; explicit pagination required")
+        if len(known) > 2000:
+            raise ValueError("preflight history exceeds 2000 editions")
         for older, newer in zip(known, known[1:]):
             baseline = {
                 "port_id": port_id, "source_id": source_id, "series": series,
@@ -203,6 +239,19 @@ def run_offline_pdf_batch(
                 "changes": [item.summary() for item in changes],
                 "physical_operation_claimed": False,
             })
+    # Readiness is computed from FULL pre-existing audit history plus this
+    # incoming batch, with same-instant replay deduplicated. Compute it BEFORE
+    # writing so report-construction failures cannot strand a committed batch.
+    readiness = source_readiness_dossiers(tuple(readiness_history), as_of=cutoff)
+    for dossier in readiness:
+        scope = (
+            dossier["port_id"], dossier["source_id"], dossier["series"] or "",
+        )
+        dossier["population_basis"] = "PERSISTED_AUDIT_HISTORY_PLUS_CURRENT_BATCH"
+        dossier["documents_in_current_batch"] = per_scope_current_counts[scope]
+        dossier["persisted_audit_editions_prior_to_batch"] = per_scope_existing_audit_counts[scope]
+        dossier["history_with_unproven_publication_included_for_quality_only"] = True
+
     # SQLite transaction is the last stage: no edition is committed unless
     # report reconstruction and all historical checks have succeeded.
     writes = (
@@ -218,9 +267,7 @@ def run_offline_pdf_batch(
         "document_bytes_processed": total_pdf_bytes,
         "edition_writes": writes,
         "documents": [audit for _, _, audit in prepared],
-        "source_readiness": source_readiness_dossiers(
-            tuple(version for _, version, _ in prepared), as_of=cutoff,
-        ),
+        "source_readiness": readiness,
         "revisions": revision_reports,
         "port_call_count": None,
         "realized_tonnes": None,
