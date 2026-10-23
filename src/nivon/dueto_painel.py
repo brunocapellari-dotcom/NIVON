@@ -30,7 +30,11 @@ def summary(data, night):
     counts = {key: int(data.get("counts", {}).get(key, 0))
               for key in ("pending", "running", "done", "blocked")}
     tasks = []
-    for row in data.get("tasks", [])[-MAX_TASKS:]:
+    recent = sorted(data.get("tasks", []),
+                    key=lambda r: (str(r.get("finished_at") or r.get("claimed_at") or ""),
+                                   str(r.get("id") or "")),
+                    reverse=True)
+    for row in recent[:MAX_TASKS]:
         state = row.get("status", "blocked")
         if state not in ALLOWED_STATUS:
             state = "blocked"
