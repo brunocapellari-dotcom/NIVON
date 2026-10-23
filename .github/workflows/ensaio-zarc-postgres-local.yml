@@ -1,0 +1,51 @@
+name: NIVON ZARC - PostgreSQL isolado com dados sinteticos
+
+on:
+  push:
+    branches:
+      - feat/fontes-gratuitas-ckan-apis-20261021
+    paths:
+      - .github/workflows/ensaio-zarc-postgres-local.yml
+      - scripts/ensaio_zarc_postgres_local.py
+      - src/nivon/zarc_pg_loader_teste.py
+      - tests/test_zarc_pg_loader_teste.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  zarc-postgres-sintetico:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: nivon_stage_test
+          POSTGRES_USER: nivon_test
+          POSTGRES_PASSWORD: somente_teste_local_nivon
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nivon_test -d nivon_stage_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout do codigo da PR sem token persistido
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Instalar Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Instalar driver PostgreSQL no runner
+        run: python -m pip install 'psycopg[binary]>=3.2,<3.3'
+      - name: DDL e 27918 registros ficticios com replay, SHA e transacao
+        env:
+          PYTHONPATH: ".:src"
+          NIVON_PG_TEST_HOST: 127.0.0.1
+          NIVON_PG_TEST_PASSWORD: somente_teste_local_nivon
+        run: python -m scripts.ensaio_zarc_postgres_local
