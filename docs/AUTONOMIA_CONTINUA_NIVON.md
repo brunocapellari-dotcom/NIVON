@@ -161,3 +161,7 @@ Se o supervisor **não conseguir confirmar** o encerramento da árvore, registra
 **Atenção ao sistema operacional:** o mecanismo de confirmação de árvore de processos está homologado apenas no caminho POSIX. O `doctor` recusa piloto autônomo no **Windows nativo** até existir isolamento verificável para processos filhos. Em PCs Windows, usar WSL2 com Git, Python, Docker e ambas as CLIs dentro do Linux. Não habilitar modos sem sandbox para contornar esse bloqueio.
 
 A CI testa encerramento real de subprocessos locais e simula STOP durante a inicialização; isso ainda não substitui o piloto noturno com as duas CLIs autenticadas. A CI também não confirma o consumo de tokens do provedor, que depende do host.
+
+## Painel Dueto local
+
+Os comandos `bash scripts/nivon-autonomo.sh dueto` e `bash scripts/nivon-autonomo.sh painel` consultam o ledger local e apresentam estado Claude/Codex, tarefas, transferências e consumo realmente observado. **Não iniciam modelos.** O HTML é uma fotografia local privada em `.nivon-local/painel-dueto.html` (0600), sem servidor, sem JavaScript nem logs/segredos. Consulte [DUETO_DESENVOLVIMENTO_NIVON.md](DUETO_DESENVOLVIMENTO_NIVON.md). A geração pode ocorrer de dia, mas o trabalho autônomo das CLIs continua restrito ao horário noturno.
