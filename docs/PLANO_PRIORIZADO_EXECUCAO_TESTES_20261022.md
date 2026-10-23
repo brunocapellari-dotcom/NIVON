@@ -91,3 +91,57 @@ não podem ser considerados aprovados por um teste sintético bem-sucedido.
 Backup em memória **não é** retenção em nuvem, cópia WORM ou recuperação
 de infraestrutura externa; executar esses testes somente no ambiente
 autorizado após aprovação de acesso/custo.
+
+
+## Pacote executado — 23/10/2026: cobertura PTAX e diagnóstico no briefing
+
+### P0 concluídos em código + CI
+
+- `ptax_cobertura_mercados.py`: percorre todas as capturas RAW
+  pertinentes ao corte as-of e classifica cobertura por boletins
+  **explicitamente Fechamento**; bloqueia valores conflitantes por
+  data, detecta boletins sem tipo e preserva identidades RAW,
+  referências e primeiras coletas. Sem calendário oficial, as
+  sessões faltantes são **desconhecidas**, não feriados inferidos.
+  Sem prova de hora de publicação: **não alimentar modelos
+  preditivos/backtest**.
+- `indicadores_historicos.py`: o compositor ganhou
+  `modo_ptax="AUDITAR_RAW"` e `db_ptax_raw`. Neste modo,
+  chama comparação de paridade legado/Decimal e diagnóstico
+  de cobertura; devolve `resultados` **sem inserir PTAX em
+  `pacote.indicadores`**, mesmo quando a classe local do
+  snapshot está marcada REAL_AUTORIZADO. O modo padrão
+  `LEGADO` foi mantido integralmente compatível para não
+  alterar briefing já existente.
+- `scripts/ensaio_ptax_integrado.py` e
+  `.github/workflows/testes.yml`: ensaio E2E agora contém
+  **13 etapas**, inclusive cobertura, compositor em paralelo e
+  bloqueio do briefing sem homologação. Não acessa internet.
+- `tests/test_ptax_ponte_editorial.py`: testes de as-of,
+  vintage conflitante, preço sem fechamento explícito,
+  exclusão sintética, direitos, paridade e roteamento editorial.
+  Fixtures que declaram REAL_AUTORIZADO existem **somente em
+  memória**, sem vínculo com dados do Banco Central.
+- CI verificável [#39946287391](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39946287391):
+  1.487 testes, 5 skipped, zero falhas; os 13 passos E2E foram
+  executados, todos `publicavel=false`.
+
+### Restrições externas P0 remanescentes
+
+A documentação oficial em
+https://dadosabertos.bcb.gov.br/dataset/dolar-americano-usd-todos-os-boletins-diarios
+declara licença **ODbL** e origem Sistema PTAX, com atualizações diárias
+(e mais de um boletim diário em certas séries). A licença aberta não
+dispensa atribuição e avaliação das condições para base derivada;
+o **catálogo interno do NIVON** ainda exige ativação específica.
+A captura HTTPS real **não foi executada neste PR**; o acesso de
+pesquisa pública não retornou um corpo OData conferível. Logo,
+não foi homologado desempenho operacional, catálogo interno,
+horário de publicação de vintage, calendário nem divulgação WhatsApp.
+
+**Próximo pacote preferencial:** integração de fonte real autorizada
+(BCB PTAX e CEPEA/IMEA/CONAB nas frentes competentes), alinhamento
+de schema/versionamento com banco operacional, verificação de
+calendário e de data de disponibilidade; depois análise de preços
+físicos/CBOT/frete com direitos separados. Somente após isso,
+habilitar motores preditivos e camada editorial, com aprovação.
