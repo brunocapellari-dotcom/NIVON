@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from contextlib import closing
 from datetime import datetime, timezone
+import re
 from hashlib import sha256
 import json
 from pathlib import Path
@@ -103,9 +104,70 @@ def _url_values(tabela, periodo, territorio):
             .replace("/v/allxp/", "/v/284,285/"))
 
 
+def _validar_periodo(periodo):
+    """Periodo trimestral encerrado desde 1997, nao presume mapa homologado."""
+    if not isinstance(periodo, str) or not re.fullmatch(
+            r"(?:19|20)[0-9]{2}0[1-4]", periodo):
+        raise DadoInvalido("competencia AAAA0T invalida")
+    ano, trimestre = int(periodo[:4]), int(periodo[-1])
+    if ano < 1997:
+        raise DadoInvalido("periodo anterior ao SIDRA de abate")
+    inicio_proximo = datetime(
+        ano + (trimestre == 4), 1 if trimestre == 4 else trimestre * 3 + 1,
+        1, tzinfo=timezone.utc)
+    if inicio_proximo > datetime.now(timezone.utc):
+        raise DadoInvalido("trimestre ainda aberto ou futuro")
+    return periodo
+
+
+def _checar_semantica_extrato(*, bruto, especie, periodo):
+    """Prova local de dimensoes/variaveis observadas na propria resposta.
+
+    Nao prova validade da classificacao fora do agregado ou em outras edicoes.
+    """
+    try:
+        doc = json.loads(bruto.decode("utf-8-sig"))
+    except (UnicodeError, ValueError) as exc:
+        raise DadoInvalido("JSON SIDRA malformado") from exc
+    if not isinstance(doc, list) or len(doc) < 2 or not isinstance(doc[0], dict):
+        raise DadoInvalido("resposta SIDRA sem header e observacoes")
+    cabecalho = doc[0]
+    mapa = contrato_sidra_observado(
+        especie=especie,tabela_sidra=TABELAS_SIDRA[especie])
+    esperado = {"variavel": "variavel", "referencia_temporal": "referencia temporal",
+                "inspecao": "tipo de inspecao", "rebanho": "tipo de rebanho bovino"}
+    def sem_acentos(s):
+        import unicodedata
+        return "".join(ch for ch in unicodedata.normalize("NFKD", s.lower())
+                       if not unicodedata.combining(ch))
+    for dim, rotulo in esperado.items():
+        if dim not in mapa["dimensoes"]:
+            continue
+        nome_campo = mapa["dimensoes"][dim]
+        real = cabecalho.get(nome_campo)
+        if not isinstance(real, str) or rotulo not in sem_acentos(real):
+            raise DadoInvalido("header de dimensao diverge do mapa observado")
+    for linha in doc[1:]:
+        if not isinstance(linha, dict):
+            raise DadoInvalido("linha SIDRA nao e objeto")
+        if str(linha.get("D2C")) != periodo:
+            raise DadoInvalido("resposta pertence a outro trimestre")
+        codigo = str(linha.get("D3C"))
+        if codigo not in ("284","285"):
+            raise DadoInvalido("variavel SIDRA nao esperada no extrato")
+        descricao = linha.get("D3N")
+        if not isinstance(descricao, str):
+            raise DadoInvalido("nome real da variavel ausente")
+        nome = sem_acentos(descricao)
+        if (codigo == "284" and "animais abatidos" not in nome or
+            codigo == "285" and "peso total das carcacas" not in nome):
+            raise DadoInvalido("nome de variavel contradiz ID SIDRA")
+    return {"mapeamento_conferido_na_resposta": True,
+            "historico_homologado": False}
+
+
 def _preparar(*, periodo, transporte, timeout):
-    if periodo != "202602":
-        raise DadoInvalido("contrato de dimensoes observado apenas para 2026-T2")
+    _validar_periodo(periodo)
     if not callable(transporte):
         raise DadoInvalido("transporte ausente")
     if type(timeout) not in (int,float) or isinstance(timeout,bool) or not 1 <= timeout <= 10:
@@ -124,6 +186,7 @@ def _preparar(*, periodo, transporte, timeout):
             if (not isinstance(ct,str) or "json" not in ct.lower()
                 or not isinstance(bruto,bytes) or not 2 <= len(bruto) <= 2_000_000):
                 raise DadoInvalido("captura com tipo/bytes invalidos")
+            _checar_semantica_extrato(bruto=bruto, especie=especie, periodo=periodo)
             # A hora da observacao e um limite CONSERVADOR, nao a hora da
             # publicacao do IBGE. Guardamos ambas as noções separadamente.
             agora = datetime.now(timezone.utc).isoformat()
@@ -159,8 +222,7 @@ def executar_captura_values_quarentena(
     """
     if type(rede) is not bool or type(gravar) is not bool or type(direitos_confirmados) is not bool:
         raise DadoInvalido("flags devem ser booleanos")
-    if periodo != "202602":
-        raise DadoInvalido("mapeamento vigente somente no trimestre 202602")
+    _validar_periodo(periodo)
     if gravar and (not direitos_confirmados or banco is None):
         raise PermissionError("gravar requer direitos confirmados e banco")
     if not rede and transporte is None:
@@ -232,11 +294,13 @@ def recuperar_values_quarentena(*, banco, id_captura):
     if linha is None:
         raise DadoInvalido("captura nao encontrada")
     esp,tab,per,geo,url,coleta,hash_,bruto,status = linha
-    if (TABELAS_SIDRA.get(esp) != tab or per != "202602"
+    if (TABELAS_SIDRA.get(esp) != tab
         or url != _url_values(tab,per,geo)
         or status != "QUARENTENA_VALUES_SEM_METADATA_V3"
         or not isinstance(bruto,bytes) or sha256(bruto).hexdigest() != hash_):
         raise DadoInvalido("integridade/identidade de quarentena corrompidas")
+    _validar_periodo(per)
+    _checar_semantica_extrato(bruto=bruto,especie=esp,periodo=per)
     return {"especie":esp,"tabela_sidra":tab,"periodo":per,"territorio":geo,
             "url_declarada":url,"primeira_coleta_em":coleta,
             "sha256_bruto":hash_,"bruto":bruto,"status":status,
