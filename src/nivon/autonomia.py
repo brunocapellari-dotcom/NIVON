@@ -24,6 +24,7 @@ from nivon.contexto_codigo import capsule
 from nivon.token_guard import summarize
 from nivon.metricas import parse_file
 from nivon.ferramentas import doctor as check_tools
+from nivon.processos import executar_cli
 from nivon.janela_noturna import may_begin, status as night_status
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -197,7 +198,6 @@ def do_task(agent, task, *, timeout_minutes=15):
     if make.returncode:
         raise RuntimeError("Falha criando worktree: " + make.stderr[:400])
     logfile = HOME / "logs" / (name + ".log")
-    logfile.touch(mode=0o600, exist_ok=False)
     runtime_env = os.environ.copy()
     for key in tuple(runtime_env):
         if key.startswith(("AWS_", "GOOGLE_", "GCP_", "AZURE_", "VERCEL_", "NEON_", "SUPABASE_")) or key in (
@@ -211,15 +211,21 @@ def do_task(agent, task, *, timeout_minutes=15):
         ):
             runtime_env.pop(key, None)
     try:
-        with logfile.open("w", encoding="utf-8") as log:
-            process = subprocess.run(cli(agent, task), cwd=worktree, stdout=log,
-                                     stderr=subprocess.STDOUT, env=runtime_env,
-                                     timeout=timeout_minutes * 60, check=False)
-        raw = logfile.read_text(encoding="utf-8", errors="replace")
-        if process.returncode:
+        process = executar_cli(cli(agent, task), cwd=worktree, logfile=logfile,
+                               env=runtime_env, timeout_seconds=timeout_minutes * 60)
+        if process.timed_out:
+            if not process.cleanup_confirmed:
+                # Falha em provar a parada dos descendentes: não iniciar novas tarefas.
+                (HOME / "STOP").write_text(
+                    "Timeout sem encerramento confirmado do grupo de processos; revisão humana\n",
+                    encoding="utf-8")
+                return "blocked", f"{branch}; timeout, parada dos descendentes NÃO comprovada"
+            return "blocked", f"{branch}; timeout de {timeout_minutes} min; processos encerrados"
+        if process.exit_code:
+            raw = logfile.read_text(encoding="utf-8", errors="replace")
             if QUOTA.search(raw) and task["attempts"] == 1:
                 return "quota", f"{branch}; {summarize(raw, 1200)}"
-            return "blocked", f"{branch}; CLI código {process.returncode}; {summarize(raw, 1200)}"
+            return "blocked", f"{branch}; CLI código {process.exit_code}; {summarize(raw, 1200)}"
         modified = within_scope(worktree, json.loads(task["scope"]))
         if not modified:
             return "blocked", f"{branch}; nenhuma alteração produzida"
