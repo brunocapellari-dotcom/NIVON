@@ -22,6 +22,12 @@ jobs:
           python-version: '3.11'
       - name: Instalar leitor local de dados secundarios
         run: python -m pip install --quiet 'pyarrow>=18,<24' 'huggingface_hub>=0.30,<2'
+      - name: Validar taxonomia e juncoes sem rede
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m pip install --quiet 'duckdb>=1.2,<2'
+          python -m unittest discover -s tests -p 'test_antaq_replica_detalhe.py' -v
       - name: Inspecionar 2025 somente metadados e campos
         run: |
           python - <<'PY'
@@ -46,4 +52,28 @@ jobs:
               for x in dados:
                   print('AMOSTRA_3P',path,json.dumps(x,default=str,ensure_ascii=False)[:1300])
           print('CLASSIFICACAO','FONTE_DERIVADA_NAO_HOMOLOGADA')
+          PY
+      - name: Cruzar cargas de 2025 por hidrovia, navegacao e commodity
+        env:
+          PYTHONPATH: src
+        run: |
+          python - <<'PY'
+          import json
+          from huggingface_hub import HfApi,hf_hub_download
+          from nivon.antaq_replica_detalhe import resumo_parquets,resumo_agro
+          repo='vinicius-souza/antaq'
+          rev=HfApi().dataset_info(repo_id=repo).sha
+          def get(table):
+              return hf_hub_download(repo_id=repo,repo_type='dataset',revision=rev,
+                         filename='silver/'+table+'/ano=2025/data.parquet')
+          doc=resumo_parquets(get('Carga_Hidrovia'),get('Carga'))
+          agro=resumo_agro(doc)
+          print("PROVENIENCIA",rev,"TERCEIRO_NAO_HOMOLOGADO")
+          print("QUANTIDADE_LINHAS_HIDROVIA",doc["linhas_hidrovia"])
+          print("QUANTIDADE_LINHAS_CARGA",doc["linhas_carga"])
+          print("CHAVES_SEM_VINCULO",doc["linhas_sem_vinculo"])
+          interiores=[r for r in agro["recortes_agro"] if r["navegacao"] == "Interior"]
+          print("NAVEGACAO_INTERIOR_AGRO_TOP_60",json.dumps(interiores[:60],ensure_ascii=False))
+          print("TOTAL_RECORTES_AGRO",len(agro["recortes_agro"]),"INTERIOR",len(interiores))
+          print("ESTADO","DADOS_TERCEIRO_SEM_CONCILIACAO_OFICIAL")
           PY
