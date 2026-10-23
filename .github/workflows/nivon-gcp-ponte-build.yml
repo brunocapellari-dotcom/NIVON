@@ -1,0 +1,49 @@
+name: NIVON - build seguro da ponte legado Neon
+on:
+  push:
+    paths:
+      - 'functions/nivon_legacy_export/index.mjs'
+      - '.github/workflows/nivon-gcp-ponte-build.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Compilar ponte privada sem chaves
+        run: |
+          npm install --no-audit --no-fund --no-save pg@8.13.0 jose@6.1.0 esbuild@0.25.0
+          mkdir -p functions/nivon_legacy_export/dist
+          ./node_modules/.bin/esbuild functions/nivon_legacy_export/index.mjs \
+            --bundle --platform=node --target=node24 --format=esm \
+            --banner:js="import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);" \
+            --outfile=functions/nivon_legacy_export/dist/index.mjs
+          node --check functions/nivon_legacy_export/dist/index.mjs
+      - name: Bloqueio de acesso nao autenticado
+        run: |
+          node --input-type=module - <<'NODE'
+          import fn from './functions/nivon_legacy_export/dist/index.mjs'
+          for (const route of ['/checkpoint?dataset=imea','/export?dataset=cepea&upto=2']) {
+            const response=await fn.fetch(new Request('https://invalid.example'+route))
+            if (response.status!==401) throw Error('EXPOSURE_WITHOUT_OIDC')
+          }
+          const health=await fn.fetch(new Request('https://invalid.example/health'))
+          if (health.status!==200 || (await health.json()).records_exposed!==false)
+            throw Error('HEALTH_INCORRECT')
+          console.log('NIVON_LEGACY_OIDC_DENY_BY_DEFAULT=OK')
+          NODE
+      - name: Versionar bundle para deploy
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f functions/nivon_legacy_export/dist/index.mjs
+          if ! git diff --cached --quiet; then
+            git commit -m "build(gcp): empacotar ponte legada [skip ci]"
+            git push origin HEAD:${{ github.ref_name }}
+          fi
