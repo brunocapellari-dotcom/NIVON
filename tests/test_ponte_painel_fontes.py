@@ -3,6 +3,7 @@ import unittest
 
 from nivon.painel_operacional import ErroMotor
 from nivon.ponte_painel_fontes import analisar_fontes
+from nivon.painel_operacional import ErroMotor
 from test_painel_operacional import AS_OF, preco
 
 
@@ -31,17 +32,28 @@ class AdaptacaoFonteTests(unittest.TestCase):
         def ler(**kwargs):
             chamadas.append(kwargs)
             return {"executado": True, "fonte": CONSULTA["fonte"],
-                    "as_of": AS_OF.replace("Z", "+00:00"), "quantidade": 7,
-                    "observacoes": REGISTROS + [preco(20, 999, serie_id="OUTRA_SERIE")]}
+                    "as_of": AS_OF.replace("Z", "+00:00"), "quantidade": 6,
+                    "observacoes": REGISTROS}
         r = analisar_fontes({"consultas_bigquery": [CONSULTA]}, as_of=AS_OF,
                            executar_bigquery=True, leitor_bq=ler, cliente_bigquery="mock")
         self.assertEqual(len(chamadas), 1)
         self.assertTrue(chamadas[0]["executar"])
         self.assertEqual(chamadas[0]["client"], "mock")
+        self.assertEqual(chamadas[0]["classe"], "FRETE_ANUNCIADO")
+        self.assertEqual(chamadas[0]["serie_id"], CONSULTA["serie_id"])
         self.assertEqual(r["quantitativo"][0]["tendencia"], "ALTA")
         self.assertEqual(r["fontes_bigquery"][0]["linhas_filtradas"], 6)
         self.assertTrue(r["executou_bigquery"])
         self.assertFalse(r["quantitativo"][0]["publicavel"])
+
+    def test_resposta_fora_do_escopo_e_recusada_sem_filtrar_silenciosamente(self):
+        def responder_errado(**kwargs):
+            return {"executado":True, "fonte":CONSULTA["fonte"], "as_of":AS_OF,
+                    "quantidade":7,
+                    "observacoes":REGISTROS+[preco(20,999,serie_id="OUTRA_SERIE")]}
+        with self.assertRaises(ErroMotor):
+            analisar_fontes({"consultas_bigquery":[CONSULTA]},as_of=AS_OF,
+                           executar_bigquery=True,leitor_bq=responder_errado)
 
     def test_lote_truncado_nao_publica_tendencia_parcial(self):
         def ler(**kwargs):
