@@ -63,6 +63,7 @@ def recuperar_recibo_poscommit_frete(
     chave_previsao: bytes, emissor_recibo: str, chave_recibo: bytes,
     instante_recuperacao: datetime, diretorio_recibos: str | Path,
     horizontes_dias: tuple[int, ...] = (7, 30, 90),
+    permitir_recuperacao_tardia: bool = False,
 ) -> dict:
     """Restaura SOMENTE recibo de lote já persistido, conferido de ponta a ponta.
 
@@ -70,6 +71,8 @@ def recuperar_recibo_poscommit_frete(
     independente anterior ao commit. Sem checkpoint externo, negar
     certificação; é inseguro aceitar auto-descoberta da cabeça prefixo.
     """
+    if type(permitir_recuperacao_tardia) is not bool:
+        raise ErroRecuperacaoFrete("política de recuperação tardia deve ser booleana")
     _validar_configuracao(
         condicoes=condicoes, horizontes_dias=horizontes_dias,
         quantidade_anterior=quantidade_previsoes_anterior,
@@ -134,11 +137,10 @@ def recuperar_recibo_poscommit_frete(
     ):
         raise ErroRecuperacaoFrete("lote shadow misturou emitente, instante ou condições")
     from .fretes_previsoes_arquivadas import MT
-    if emissao.astimezone(MT).date() != momento.astimezone(MT).date():
-        # Não se pode emitir recibo retroativo em dia posterior
-        # e afirmá-lo como testemunha do dia anterior.
-        raise ErroRecuperacaoFrete("recuperação tardia requer testemunha externa")
-    ofertas = _ofertas_rota(
+    tardia = emissao.astimezone(MT).date() != momento.astimezone(MT).date()
+    # Após a virada do dia, NUNCA emitir recibo com hora da emissão.
+    # Um recibo NOVO comprova somente a presença do ledger no momento
+    # da recuperação, e não a existência original daquela previsão.    ofertas = _ofertas_rota(
         origem["ofertas"], fonte_id=fonte_id, condicoes=condicoes
     )
     disponiveis = [
@@ -203,6 +205,10 @@ def recuperar_recibo_poscommit_frete(
             "testemunha_independente": False,
             "publicavel": False,
         }
+    if tardia and not permitir_recuperacao_tardia:
+        raise ErroRecuperacaoFrete(
+            "recuperação tardia exige opt-in explícito e não atesta emissão anterior"
+        )
     # O recibo de recuperação usa o instante ATUAL, nunca o da emissão.
     recibo = criar_recibo_local_frete(
         tipo_ledger="PREVISOES", emissor_id=emissor_recibo,
@@ -216,7 +222,12 @@ def recuperar_recibo_poscommit_frete(
     except (OSError, ValueError) as exc:
         raise ErroRecuperacaoFrete("recuperação do recibo falhou; ledger inalterado") from exc
     return {
-        "status": "RECIBO_RECUPERADO_LOCALMENTE_SEM_PROVA_TEMPORAL_EXTERNA",
+        "status": ("RECIBO_TARDIO_CRIA_APENAS_EVIDENCIA_DE_INTEGRIDADE_ATUAL"
+                   if tardia else
+                   "RECIBO_RECUPERADO_LOCALMENTE_SEM_PROVA_TEMPORAL_EXTERNA"),
+        "recuperacao_tardia": tardia,
+        "emissao_anterior_comprovada_por_testemunha": False,
+        "apto_para_avaliacao_oos_homologada": False,
         "cabeca_sha256": candidato, "total_previsoes": n,
         "recibo_local_caminho": gravado["caminho_local"],
         "recibo_local_sha256": gravado["sha256"],
