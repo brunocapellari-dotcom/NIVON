@@ -1,7 +1,7 @@
 name: NIVON — CI transporte ANTT e ANTAQ
 on:
   push:
-    branches: [main, fix/antt-gcp-unificar-config-20261023]
+    branches: [main, fix/antt-bq-readiness-20261023]
   workflow_dispatch:
 
 permissions:
