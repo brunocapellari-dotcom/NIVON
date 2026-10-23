@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import json
 import sqlite3
+from contextlib import closing
 from datetime import datetime
 
 from .ivo_planejador import ErroPlanejamento, planejar_consulta
@@ -50,7 +51,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise ValueError("consulta PAM exige município, produto, variável e anos explícitos")
             corte=_dt(args.corte)
             inicio_alertas=_dt(args.alertas_desde)
-            with abrir_pam_somente_leitura(args.pam_db) as db:
+            with closing(abrir_pam_somente_leitura(args.pam_db)) as db:
                 painel=painel_pam_ivo(
                     db,municipio_ibge=args.municipio,produto=args.produto,
                     variavel=args.variavel,ano_inicio=args.inicio,
