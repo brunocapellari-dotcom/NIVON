@@ -117,6 +117,13 @@ def exportar_backup_medicoes(db, *, raw_dir, destino):
             copy.close()
         for row in db.execute("SELECT sha256 FROM medidas_edicoes"):
             shutil.copyfile(src / (row[0]+".raw"),temp/"raw"/(row[0]+".raw"))
+        pais=sorted(row[0] for row in db.execute(
+            "SELECT DISTINCT parent_sha256 FROM medidas_containers_origem"))
+        if pais:
+            (temp/"raw"/"origens").mkdir(mode=0o700)
+            for digest in pais:
+                shutil.copyfile(src/"origens"/(digest+".zip"),
+                                temp/"raw"/"origens"/(digest+".zip"))
         check=abrir_banco_medicoes(temp/"medicoes.sqlite")
         try:
             validation=auditar_acervo_medicoes(check,raw_dir=temp/"raw")
@@ -128,6 +135,7 @@ def exportar_backup_medicoes(db, *, raw_dir, destino):
             "schema":"1.0","tipo":"BACKUP_INMET_ANA",
             "db_sha256":sha256((temp/"medicoes.sqlite").read_bytes()).hexdigest(),
             "raw_shas":sorted(row[0] for row in db.execute("SELECT sha256 FROM medidas_edicoes")),
+            "zip_originais_sha256":pais,
             "edicoes":validation["edicoes_auditadas"],
             "medidas":validation["medidas_auditadas"],
             "homologado":False,
@@ -164,7 +172,11 @@ def validar_backup_medicoes(*, caminho):
     try:
         out=auditar_acervo_medicoes(db,raw_dir=root/"raw")
         names=sorted(r[0] for r in db.execute("SELECT sha256 FROM medidas_edicoes"))
-        if (names!=doc["raw_shas"] or out["edicoes_auditadas"]!=doc["edicoes"]
+        zip_parents=sorted(r[0] for r in db.execute(
+            "SELECT DISTINCT parent_sha256 FROM medidas_containers_origem"))
+        if (names!=doc["raw_shas"] or
+                zip_parents!=doc.get("zip_originais_sha256",[]) or
+                out["edicoes_auditadas"]!=doc["edicoes"]
                 or out["medidas_auditadas"]!=doc["medidas"]):
             raise ErroPipelineAmbiental("reconciliação do backup falhou")
     finally:
