@@ -879,7 +879,10 @@
         "nivon.fretes_ledger_persistente:anexar_lote_previsoes_frete",
         "nivon.fretes_ledger_persistente:verificar_ledger_frete",
         "nivon.fretes_ledger_persistente:avaliar_ledger_frete",
-        "nivon.fretes_entrada_jsonl:carregar_ofertas_frete_jsonl"
+        "nivon.fretes_entrada_jsonl:carregar_ofertas_frete_jsonl",
+        "nivon.fretes_ofertas_store:inicializar_store_ofertas_frete",
+        "nivon.fretes_ofertas_store:anexar_lote_ofertas_frete",
+        "nivon.fretes_ofertas_store:verificar_store_ofertas_frete"
       ],
       "data_dependencies": [
         "FRETES_WHATSAPP_AUTORIZADO",
