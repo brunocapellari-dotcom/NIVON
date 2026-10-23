@@ -1,9 +1,8 @@
 name: Inspecao pontual PAM/IBGE NIVON
 
+# Diagnostico de coleta REAL sob demanda; nao repetir a cada push do PR.
+# Uma cadencia automatica deve ser ativada junto ao storage persistente.
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/ivo-pam-piloto.yml'
   workflow_dispatch:
 
 permissions:
