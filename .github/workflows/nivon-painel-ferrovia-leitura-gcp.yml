@@ -85,15 +85,29 @@ jobs:
         run: |
           set -euo pipefail
           NOW="$(python -c 'from datetime import datetime,timezone;print(datetime.now(timezone.utc).isoformat())')"
-          python -m nivon.ferrovia_painel_bq \
-            --projeto "$NIVON_PROJETO" --dataset "$NIVON_DATASET" \
-            --competencia '2026-08' --uf-origem MT \
-            --as-of "$NOW" --executar > "$RUNNER_TEMP/ferrovia-view.json"
           python - <<'PY'
           import json,os
-          from decimal import Decimal
           from pathlib import Path
-          doc=json.loads((Path(os.environ["RUNNER_TEMP"])/"ferrovia-view.json").read_text())
+          Path(os.environ["RUNNER_TEMP"],"ferrovia-config.json").write_text(json.dumps({
+              "ferrovia_bigquery":{
+                  "projeto":os.environ["NIVON_PROJETO"],
+                  "dataset":os.environ["NIVON_DATASET"],
+                  "competencia":"2026-08","uf_origem":"MT"
+              }
+          }),encoding="utf-8")
+          PY
+          python scripts/rodar_painel_operacional.py \
+            --entrada "$RUNNER_TEMP/ferrovia-config.json" \
+            --as-of "$NOW" --executar-bigquery > "$RUNNER_TEMP/ferrovia-view.json"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          painel=json.loads((Path(os.environ["RUNNER_TEMP"])/"ferrovia-view.json").read_text())
+          if painel["status"]!="ANALISE_SHADOW_NAO_HOMOLOGADA":
+              raise RuntimeError("PAINEL_NAO_SHADOW")
+          if painel["executou_bigquery"] is not True or painel["conciliacao_intermodal"] is None:
+              raise RuntimeError("SIADE_BQ_NAO_LIDO_PELO_PAINEL")
+          doc=painel["ferrovia"]
           if doc["estado"]!="REVISAO_ATUAL_CONSULTADA_NAO_HOMOLOGADA":
               raise RuntimeError("SIADE_SEM_LINHAS_NAO_CONFIRMAR_ZERO")
           if (not doc["executado"] or doc["historico_pit_reconstruido"]
@@ -123,4 +137,4 @@ jobs:
           retention-days: 30
       - name: Limpar extrato temporario
         if: always()
-        run: rm -f "$RUNNER_TEMP/ferrovia-view.json"
+        run: rm -f "$RUNNER_TEMP/ferrovia-view.json" "$RUNNER_TEMP/ferrovia-config.json"
