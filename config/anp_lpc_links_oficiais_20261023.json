@@ -1,0 +1,27 @@
+{
+  "dataset_id": "ANP_LPC_PRECOS_MEDIOS_SEMANAIS",
+  "verificado_em_data": "2026-10-23",
+  "tipo_evidencia": "LINKS_OFICIAIS_PUBLICADOS_NA_PAGINA_SEM_BYTES_XLSX",
+  "indice_url": "https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/levantamento-de-precos-de-combustiveis-ultimas-semanas-pesquisadas",
+  "publicavel": false,
+  "coleta_bytes_executada": false,
+  "schema_xlsx_homologado": false,
+  "semanas": [
+    {
+      "inicio": "2026-09-27",
+      "fim": "2026-10-03",
+      "url": "https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/arquivos-lpc/2026/resumo_semanal_lpc_2026-09-27_2026-10-03.xlsx"
+    },
+    {
+      "inicio": "2026-10-04",
+      "fim": "2026-10-10",
+      "url": "https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/arquivos-lpc/2026/resumo_semanal_lpc_2026-10-04_2026-10-10.xlsx"
+    },
+    {
+      "inicio": "2026-10-11",
+      "fim": "2026-10-17",
+      "url": "https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/arquivos-lpc/2026/resumo_semanal_lpc_2026_10_11-2026_10_17.xlsx"
+    }
+  ],
+  "nota": "Metadata de descoberta: ao iniciar uma coleta real sempre recapturar o índice e verificar os próprios XLSX. URLs não são preços e não comprovam download."
+}
