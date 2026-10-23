@@ -48,3 +48,41 @@ A ferramenta entrega: número de fontes, correspondência do provedor, datasets 
 ## Regra de continuidade
 
 Usar o relatório gerado por `nivon.legado_agrolog` como uma fila de reconciliação, não como a fonte de verdade operacional. Antes de portar qualquer coletor, comparar hashes/linhas/contratos com o código já presente nas branches do NIVON e reutilizar uma implementação existente quando ela for equivalente ou superior.
+
+
+## Segundo lote — parser e persistência IMEA operacional (implementado na PR #147)
+
+A migração deixou de ser somente documental. Componentes portados/adaptados do AgroLog:
+
+- `src/nivon/xlsx_legado.py`: leitura XLSX protegida contra arquivo ZIP exagerado, DTD/entidades XML, path traversal e planilhas fora de dimensão; não avalia fórmulas. Baseado no `collector/xlsx_reader.py` AgroLog. Dependência `defusedxml` substituída por verificação explícita de DTD/ENTITY e limites.
+- `src/nivon/imea_operacional_xlsx.py`: interpretação das **cinco abas** `indicadores diarios`, `indicadores semanais`, `frete`, `semeadura`, `colheita`, mantida a proveniência `collector/imea_operational_xlsx.py` e QA de chave natural.
+- `src/nivon/imea_legado_pipeline.py`: adapter que transforma dados de planilha em observações versionadas, usa o módulo NIVON preexistente `ingestao_fontes_reais.gravar_lote` e mantém lote **somente em `IMEA_WORKBOOK_LEGADO_STAGING` no estado `QUARANTINED`**.
+- `src/nivon/ingestao_fontes_reais.py`: aceita MIME XLSX real para persistência local versionada.
+- `tests/test_imea_legado_pipeline.py`: ensaio integrado de ZIP/XML -> cinco abas -> 19 observações sintéticas -> RAW SHA-256 -> SQLite -> replay idempotente -> revisão de preço -> exportação JSONL -> plano de BigQuery `executado=False`. Inclui casos de entrada perigosa, dados inválidos e autorização por operação.
+
+Proveniência preservada: URL do workbook original, hash do conteúdo e de cada observação, referencia, competencia, publicacao (se comprovada externamente), coleta com timezone; diferenciam-se `INFORMADO` e `ESTIMADO`. Frete publicado não é frete contratado. A revisão de preço entra como nova versão distinta, sem apagar o vintage anterior.
+
+### Limites deliberados
+
+1. **Não ler mais dados do Drive como única verdade.** O arquivo histórico servirá como backfill e conciliação após a confirmação de publicações contemporâneas. A obtenção incremental diretamente do IMEA ainda não foi integrada aqui.
+2. A base local e o JSONL não são BigQuery em operação. A configuração de destino do `IMEA_WORKBOOK_LEGADO_STAGING` não constitui permissão para publicar/consultar em marts.
+3. O mapeamento de indicadores IMEA é conservador: produção/safra pode sugerir `IMEA_MT_SAFRA` mas valores de preços, CBOT e frete não serão forçados para `IMEA_FISICO`; o contrato canônico de frete ainda requer cadastro e validação.
+4. Para chamar `persistir_lote_local(...,tipo="REAL_AUTORIZADO")`, o código exige explicitamente `COLETA`, `ARMAZENAMENTO`, `USO_INTERNO` e uma evidência textual; isso NÃO é verificação independente de direito comercial ou divulgação.
+5. CLI aceita somente validação sem persistir ou fixture `--sintetico`. **Nunca indicar --sintetico para registrar dado real como sintético**.
+6. Os exemplos de testes são sintéticos: não demonstram que um workbook real de 2026 tem esse layout.
+
+Comandos E2E sem rede:
+
+```bash
+PYTHONPATH=src python -m unittest discover -s tests -p test_imea_legado_pipeline.py -v
+# Exemplo de validacao de workbook local sem gravacao:
+PYTHONPATH=src python -m nivon.imea_legado_pipeline /caminho/autorizado/arquivo.xlsx \\
+  --origem https://drive.google.com/file/d/FILE_ID_REAL \\
+  --coletado-em 2026-10-23T10:00:00-04:00
+```
+
+### Próximos gates
+
+- CONAB: o NIVON já tem parsers próprios para XLS/XLSX e SICARM, incluindo snapshot ledger; comparar com contratos AgroLog, complementar temporalidade as-of sem duplicar pipeline.
+- IMEA: identificar feed/publicações correntes, capturar original de modo autorizado, testar parser em amostra real sem dados pessoais, registrar dataset canônico de frete e mapear os cinco grupos; só então agendar ingestão e integrar com motor de preços/fretes.
+- Nuvem: validar ADC, IAM, dataset, zero-cost, políticas de retenção e restore antes da persistência final BigQuery.
