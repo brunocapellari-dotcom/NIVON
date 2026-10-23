@@ -26,6 +26,8 @@ def preco(dia, valor, **alteracoes):
             "origem": "RONDONOPOLIS", "destino": "SANTOS",
             "transportadora": "OPERADOR_A", "equipamento": "GRANELEIRO",
             "regime": "PJ", "modal": "RODOVIARIO", "terminal": "TERMINAL_X",
+            "ponto_embarque": "SILO_UNICO", "pedagio": "ADICIONAL",
+            "tipo_preco": "BASE", "mercado": "CME", "praca": "RONDONOPOLIS",
             "contrato": None,
         },
     }
@@ -87,7 +89,9 @@ class PainelOperacionalTests(unittest.TestCase):
 
     def test_frete_outra_transportadora_e_unidade_recusadas(self):
         for mudanca in ({"transportadora": "OPERADOR_B"}, {"unidade": "USD/bu"},
-                        {"regime": "PF"}, {"terminal": "OUTRO"}):
+                        {"regime": "PF"}, {"terminal": "OUTRO"},
+                        {"ponto_embarque": "SILO_DOIS"}, {"pedagio": "INCLUSO"},
+                        {"tipo_preco": "CHEIO"}):
             with self.subTest(diferenca=mudanca), self.assertRaises(ErroMotor):
                 tendencia_precos(seis_precos() + [preco(21, 200, **mudanca)],
                                  classe="FRETE_ANUNCIADO",
@@ -101,6 +105,15 @@ class PainelOperacionalTests(unittest.TestCase):
                              serie_id="RONDONOPOLIS_SANTOS_SOJA_A", as_of=AS_OF)
         self.assertEqual(r["status"], "DADOS_INSUFICIENTES")
         self.assertEqual(r["dias_validos"], 4)
+
+    def test_condicoes_faltantes_nao_geram_falso_sinal(self):
+        for campo in ("ponto_embarque", "pedagio", "tipo_preco"):
+            with self.subTest(campo=campo):
+                dados = seis_precos()
+                dados[0]["campos"][campo] = None
+                r = tendencia_precos(dados, classe="FRETE_ANUNCIADO",
+                                     serie_id="RONDONOPOLIS_SANTOS_SOJA_A", as_of=AS_OF)
+                self.assertEqual(r["status"], "DADOS_INSUFICIENTES")
 
     def test_nao_comparar_contratos_cbot(self):
         rows = [preco(d, 100 + d, classe="CBOT", contrato="Z26", unidade="cents/bu")
