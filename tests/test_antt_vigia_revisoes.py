@@ -42,6 +42,19 @@ class FakeClient:
 
 
 class VigiaTest(unittest.TestCase):
+    def test_workflow_limita_retry_e_nao_homologa_fonte_invalida(self):
+        from pathlib import Path
+        workflow=(Path(__file__).resolve().parents[1]/
+                  ".github/workflows/antt-vigia-revisoes-gcp.yml").read_text()
+        self.assertIn("for tentativa in range(1,4)",workflow)
+        self.assertIn("ANTT_FONTE_INVALIDA_APOS_TRES_TENTATIVAS",workflow)
+        self.assertIn("erro not in {'catalogo CKAN invalido'",workflow)
+        self.assertIn("ANTT_ERRO_NAO_RECUPERAVEL_SEM_CARGA",workflow)
+        self.assertNotIn("ANTT_ACESSO_BLOQUEADO','schema",workflow)
+        self.assertIn("VIGIA_BQ_FALHOU_SEM_COMPROVANTE",workflow)
+        self.assertIn("maximum_bytes_billed",__import__(
+            "inspect").getsource(_consulta_bq))
+
     def test_mesmo_sha_e_totais(self):
         with patch("nivon.antt_vigia_revisoes.montar_lote",side_effect=lambda s,y:meta(y)):
             r=comparar_staging_bq(staging="/nao-acessado",anos=[2026],resumos_bq=[bq()])
