@@ -99,21 +99,13 @@ def executar_manifesto_roni(
         raise ErroRONI("diretório de DB inexistente ou symlink")
     db = abrir_arquivo_roni(path)
     try:
-        results = []
-        for item in items:
-            result = executar_lote_roni(
-                db, raw_dir=raw_dir, raw=item["raw"],
-                coletado_em=item["coletado_em"], classe=item["classe"])
-            results.append({"arquivo": item["filename"], **result})
+        from .roni_ciclo import processar_ciclo_roni
+        result = processar_ciclo_roni(db, raw_dir=raw_dir, itens=items)
         types = sorted(set(item["classe"] for item in items))
         return {
-            "estado": "LOTES_PERSISTIDOS_OFFLINE_NAO_HOMOLOGADOS",
-            "lotes_processados": len(results),
-            "resultados": results,
+            **result,
             "panoramas": {t: panorama_local_roni(
                 db, raw_dir=raw_dir, classe=t) for t in types},
-            "http": 0, "agendamento": False, "publicacao": False,
-            "homologado": False,
         }
     finally:
         db.close()
@@ -121,7 +113,7 @@ def executar_manifesto_roni(
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description="NIVON RONI: pipeline offline")
-    ap.add_argument("modo", choices=["validar", "executar", "capturar", "auditar"])
+    ap.add_argument("modo", choices=["validar", "executar", "capturar", "auditar", "relatorio", "backup", "validar-backup"])
     ap.add_argument("--manifesto")
     ap.add_argument("--banco")
     ap.add_argument("--raw-dir")
@@ -129,9 +121,34 @@ def main(argv=None):
     ap.add_argument("--autorizar-http", action="store_true")
     ap.add_argument("--direitos-fonte")
     ap.add_argument("--confirmar-revisao", action="store_true")
+    ap.add_argument("--classe", default="SINTETICO")
+    ap.add_argument("--corte-em")
+    ap.add_argument("--destino-backup")
     a = ap.parse_args(argv)
     try:
-        if a.modo == "auditar":
+        if a.modo == "validar-backup":
+            if not a.destino_backup:
+                raise ErroRONI("pasta do backup obrigatória")
+            from .roni_ciclo import validar_backup_roni
+            result = validar_backup_roni(caminho=a.destino_backup)
+        elif a.modo in ("relatorio", "backup"):
+            if not a.banco or not a.raw_dir or not Path(a.banco).is_file():
+                raise ErroRONI("acervo SQLite pré-existente obrigatório")
+            from .roni_ciclo import relatorio_revisoes_roni, gerar_backup_roni
+            db = abrir_arquivo_roni(a.banco)
+            try:
+                if a.modo == "relatorio":
+                    result = relatorio_revisoes_roni(
+                        db, raw_dir=a.raw_dir, classe=a.classe,
+                        corte_em=a.corte_em)
+                else:
+                    if not a.destino_backup:
+                        raise ErroRONI("pasta de destino backup obrigatória")
+                    result = gerar_backup_roni(
+                        db, raw_dir=a.raw_dir, destino=a.destino_backup)
+            finally:
+                db.close()
+        elif a.modo == "auditar":
             if not a.banco or not a.raw_dir or not Path(a.banco).is_file():
                 raise ErroRONI("acervo SQLite pré-existente obrigatório na auditoria")
             db = abrir_arquivo_roni(a.banco)
