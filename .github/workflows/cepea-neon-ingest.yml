@@ -6,11 +6,12 @@ on:
       - '.github/workflows/cepea-neon-ingest.yml'
   workflow_dispatch:
   schedule:
-    # Dias uteis, apos horario de fechamento do mercado brasileiro.
+    # Soja 23:00 UTC (19h MT), milho 23:45 UTC (19h45 MT), dias uteis.
+    # Depois do horario indicativo de fechamento CEPEA; nao presume dado novo.
     # Rotina operacional isolada da PR; checkout em commit imutável e homologado.
-    - cron: '30 21 * * 1-5'
+    - cron: '0 23 * * 1-5'
     # Milho separado duas horas depois para reduzir carga e isolar falhas.
-    - cron: '30 23 * * 1-5'
+    - cron: '45 23 * * 1-5'
 permissions:
   contents: read
   id-token: write
@@ -34,21 +35,33 @@ jobs:
       - name: CEPEA fonte original, validar e gravar sob OIDC
         env:
           NIVON_CEPEA_INGEST_URL: https://br-twilight-cell-b77ukd6x-cepeaingest.compute.c-13.us-east-1.aws.neon.tech/ingest
-          NIVON_CEPEA_PRODUTO: ${{ github.event.schedule == '30 23 * * 1-5' && 'MILHO' || 'SOJA' }}
+          NIVON_CEPEA_PRODUTO: ${{ github.event.schedule == '45 23 * * 1-5' && 'MILHO' || 'SOJA' }}
         run: |
           python - <<'PY'
-          import json, os
+          import json, os, time
           from urllib.parse import quote
           from urllib.request import Request, urlopen
-          from urllib.error import URLError
+          from urllib.error import HTTPError, URLError
           from nivon.cepea_web_primario import consultar_pagina_primaria,extrair_precos_html,URL_SOJA,URL_MILHO
+          # Somente pagina oficial; tentativas limitadas para falhas transitorias.
+          # Erro definitivo nunca gera registro no Neon nem fallback em widgets.
           def abrir_com_timeout(req,timeout):
-              return urlopen(req,timeout=30)
+              return urlopen(req,timeout=25)
           def ler_pagina(url):
-              try:
-                  return consultar_pagina_primaria(url,open_url=abrir_com_timeout)
-              except (TimeoutError,URLError):
-                  return consultar_pagina_primaria(url,open_url=abrir_com_timeout)
+              for tentativa in range(1,4):
+                  try:
+                      return consultar_pagina_primaria(url,open_url=abrir_com_timeout)
+                  except HTTPError as exc:
+                      if exc.code not in (408,425,429,500,502,503,504,520,522,524):
+                          raise
+                      classe='HTTP_'+str(exc.code)
+                  except (TimeoutError, URLError):
+                      classe='TIMEOUT_OU_REDE'
+                  print('::warning::CEPEA fonte oficial indisponivel tentativa='+str(tentativa)+'/3 classe='+classe)
+                  if tentativa==3:
+                      raise SystemExit('CEPEA_SOURCE_UNAVAILABLE_'+classe)
+                  time.sleep(6 if tentativa==1 else 18)
+              raise SystemExit('CEPEA_SOURCE_UNAVAILABLE')
           produto=os.environ['NIVON_CEPEA_PRODUTO']
           if produto=='MILHO':
               html=ler_pagina(URL_MILHO)
@@ -78,4 +91,31 @@ jobs:
               'recebidos':result['received'],'inseridos':result['inserted'],
               'duplicados':result['duplicates'],'referencia':result['latest_reference']},
               ensure_ascii=False))
+          PY
+      - name: Registrar falha de coleta no Neon sem alterar preços
+        if: ${{ failure() }}
+        continue-on-error: true
+        env:
+          NIVON_CEPEA_INGEST_URL: https://br-twilight-cell-b77ukd6x-cepeaingest.compute.c-13.us-east-1.aws.neon.tech/ingest
+          NIVON_CEPEA_PRODUTO: ${{ github.event.schedule == '45 23 * * 1-5' && 'MILHO' || 'SOJA' }}
+        run: |
+          python - <<'PY'
+          import json,os
+          from urllib.parse import quote
+          from urllib.request import Request,urlopen
+          audience='urn:nivon:cepea:ingest'
+          oidc_url=os.environ['ACTIONS_ID_TOKEN_REQUEST_URL']+'&audience='+quote(audience,safe='')
+          req=Request(oidc_url,headers={'Authorization':'Bearer '+os.environ['ACTIONS_ID_TOKEN_REQUEST_TOKEN']})
+          with urlopen(req,timeout=20) as response:
+              jwt=json.load(response)['value']
+          url=os.environ['NIVON_CEPEA_INGEST_URL'].removesuffix('/ingest')+'/report-failure'
+          data=json.dumps({'source':'CEPEA','product':os.environ['NIVON_CEPEA_PRODUTO'],
+                           'event':'WORKFLOW_FAILED'}).encode('utf8')
+          req=Request(url,data=data,method='POST',headers={
+              'Authorization':'Bearer '+jwt,'Content-Type':'application/json'})
+          with urlopen(req,timeout=25) as response:
+              result=json.load(response)
+          if result.get('status')!='RECORDED' or result.get('canonical_quotes_inserted')!=0:
+              raise SystemExit('CEPEA_FAILURE_LOG_UNCONFIRMED')
+          print('CEPEA_FAILURE_LOGGED='+result['product'])
           PY
