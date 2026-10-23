@@ -525,7 +525,7 @@ class TestColetaANPLPCE2E(unittest.TestCase):
     def test_ciclo_gcs_retoma_upload_orfao_sem_confiar_nos_bytes(self):
         bucket=FakeGCSBucket()
         bucket.data["nivon/anp/lpc/v1/indices/"+"a"*64+".html"]={
-            "bytes":b"<html>fixture orfã</html>",
+            "bytes":"<html>fixture orfa</html>".encode("ascii"),
             "metadata":{"sha256":"a"*64},
             "tipo":"text/html",
             "criado_em":datetime.now(timezone.utc),
