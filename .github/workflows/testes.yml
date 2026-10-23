@@ -46,6 +46,10 @@ jobs:
         env:
           PYTHONPATH: src
         run: python scripts/ensaio_quarentena_ptax_gcs.py
+      - name: Verificar webhook Meta original e anúncios rotulados R01 offline
+        env:
+          PYTHONPATH: src
+        run: python scripts/ensaio_fretes_texto_whatsapp.py
       - name: Conferir catálogo mestre e cobertura de indicadores
         env:
           PYTHONPATH: src
