@@ -138,6 +138,23 @@ jobs:
               exit 0
             fi
           done
+          # Migracao PARA main: nao reiniciar em 6 capturas por engano.
+          # Importar o ultimo pacote real auditado de 24 capturas da
+          # branch de origem. Bloquear se o artifact tiver expirado.
+          if test "$GITHUB_REF" = "refs/heads/main"; then
+            rm -rf "$BASE/anterior"
+            mkdir -p "$BASE/anterior"
+            if gh run download 39946796466 --repo "$GITHUB_REPOSITORY" \
+                --name nivon-pam-estado --dir "$BASE/anterior" >/dev/null 2>&1 \
+                && test -s "$BASE/anterior/estado_pam.zip"; then
+              echo "PAM_PRIOR=$BASE/anterior/estado_pam.zip" >> "$GITHUB_ENV"
+              echo "PAM_LEGADO=0" >> "$GITHUB_ENV"
+              echo "BACKUP_RECUPERADO=SEMENTE_MT_24_CAPTURAS"
+              exit 0
+            fi
+            echo "::error::Migracao sem a semente auditada de 24 capturas: restaure em GCS antes de iniciar."
+            exit 4
+          fi
           # Bootstrap UMA vez com o piloto real auditado de 23/10/2026.
           # Este artifact eh temporario: falha se tiver expirado, sem
           # apagar ou reiniciar historico silenciosamente.
