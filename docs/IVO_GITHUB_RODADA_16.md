@@ -121,3 +121,39 @@ impossível para aquele evento.
    se o objetivo for benchmark retrospectivo antes das erratas.
 5. Nenhum merge, deploy, gasto ou alteração de fonte privada sem
    autorização específica; manter PR #7 em draft.
+
+
+## Complemento final da rodada: 24 capturas e proteção contra coleta redundante
+
+Depois de registrar a rodada, o GitHub Actions executou um ciclo
+adicional na própria branch, pois o workflow recém-adicionado ainda
+estava marcado com evento `pull_request`. **Esta causa foi corrigida**:
+o workflow passa a aceitar `workflow_dispatch` e contém uma cadência
+proposta para dias úteis, `17 11 * * 1-5` (11:17 UTC). O evento
+`schedule` do GitHub Actions **só opera no branch padrão após o merge**;
+o PR #7 continua draft, sem agendamento ativo.
+
+- [GitHub Actions 39946796466](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39946796466):
+  restaurou **18 capturas** a partir de
+  `BACKUP_RECUPERADO=run-39946544006` e concluiu **24 capturas**.
+  Seis respostas atuais da PAM se repetiram sem alterar os valores ou
+  os SHA de conteúdo, logo permanecem **6 vintages distintas**.
+- Download do artifact 12497929412 e verificação independente do ZIP
+  interno: `manifesto.schema=nivon_pam_backup_v1`, **31 arquivos** no
+  manifesto, todos conferidos por SHA-256, SQLite
+  `PRAGMA integrity_check=ok`, 24 `pam_capturas` e 6 `pam_vintages`.
+- Copiado adicionalmente para
+  [Google Drive NIVON — PAM 24 capturas](https://drive.google.com/file/d/1cDbsBRI5aQFeanKlkcoNmPxYx--vqCEc/view?usp=drivesdk).
+  É backup pontual, não automação de upload Drive.
+- Um job intermediário falhou por escape de barra inversa no shell do
+  *recovery guard*; erro corrigido e workflow rodou posteriormente
+  com **sucesso comprovado**, sem perda de dados.
+- [Testes NIVON da revisão do workflow](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39946544007)
+  continuaram aprovados; todo PR segue coberto pela suíte offline.
+
+**Próxima pendência real:** exportação *automática* de cada ZIP validado
+para um armazenamento externo durável, usando credenciais dedicadas e
+sem ativar cobranças; o GitHub artifact retém apenas 30 dias, não pode
+servir como único backup permanente. O schedule ainda não está ativo e
+poderá depender de política de recuperação de estado entre branches
+quando ocorrer a integração ao `main`.
