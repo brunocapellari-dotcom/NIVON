@@ -7,19 +7,23 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from nivon.carga_bigquery_fontes import executar_carga
+from nivon.carga_bigquery_fontes import executar_carga, ErroCargaBigQuery
 
 
 class FakeJob:
+    def __init__(self,bytes_processados=1024):
+        self.total_bytes_processed=bytes_processados
     def result(self,timeout=None):
         return self
 
 
 class FakeClient:
-    def __init__(self):
+    def __init__(self,bytes_processados=1024):
         self.sql=None
         self.stage_bytes=0
         self.deleted=False
+        self.bytes_processados=bytes_processados
+        self.queries=[]
     def get_dataset(self, ref):
         assert ref=="nivon-data.agro"
     def get_table(self, ref):
@@ -36,6 +40,9 @@ class FakeClient:
     def query(self, sql, job_config=None):
         self.sql=sql
         assert job_config is not None
+        self.queries.append(job_config)
+        if getattr(job_config,"dry_run",False):
+            return FakeJob(self.bytes_processados)
         return FakeJob()
     def delete_table(self, name, not_found_ok=False):
         assert not_found_ok
@@ -49,6 +56,7 @@ def modulos_gcp():
     bigquery.LoadJobConfig=lambda **kw: types.SimpleNamespace(**kw)
     bigquery.QueryJobConfig=lambda **kw: types.SimpleNamespace(**kw)
     bigquery.SchemaField=lambda name,t: types.SimpleNamespace(name=name,field_type=t)
+    bigquery.ScalarQueryParameter=lambda name,t,value: types.SimpleNamespace(name=name,type_=t,value=value)
     cloud=types.ModuleType("google.cloud")
     cloud.bigquery=bigquery
     google=types.ModuleType("google")
@@ -79,6 +87,42 @@ class BigQueryMERGETest(unittest.TestCase):
             self.assertIn("CAST(S.coletado_em AS TIMESTAMP)",client.sql)
             self.assertIn("MERGE `nivon-data.agro.nivon_observacoes`",client.sql)
             self.assertIn("fingerprint",client.sql)
+            self.assertIn("T.data_referencia BETWEEN @ref_inicio AND @ref_fim",client.sql)
+            self.assertIn("T.data_referencia = CAST(S.referencia AS DATE)",client.sql)
+            self.assertEqual(result["referencia_inicio"],"2026-10-01")
+            self.assertEqual(result["referencia_fim"],"2026-10-01")
+            self.assertEqual(result["bytes_estimados"],1024)
+            self.assertEqual(len(client.queries),2)
+            self.assertTrue(client.queries[0].dry_run)
+            self.assertEqual(client.queries[1].maximum_bytes_billed,10_000_000)
+            self.assertEqual(
+                {p.name for p in client.queries[1].query_parameters},
+                {"ref_inicio","ref_fim"})
+
+
+
+    def test_dry_run_acima_do_limite_bloqueia_e_limpa_stage(self):
+        with tempfile.TemporaryDirectory() as d:
+            p=Path(d)/"stage.jsonl"
+            row={
+                "dataset_id":"BR_CCEE_PLD_HORARIO","identidade":"2026|NORDESTE|23|00",
+                "fingerprint":"a"*64,"referencia":"2026-10-23",
+                "competencia":"202610","publicacao":None,
+                "coletado_em":"2026-10-23T04:00:00+00:00",
+                "unidade":"R$/MWh","valor":"60",
+                "campos":{"submercado":"NORDESTE"},"snapshot_id":"b"*64,
+                "natureza":"INFORMADO"}
+            p.write_text(json.dumps(row)+"\\n",encoding="utf-8")
+            for estimate in (10_000_001,None):
+                with self.subTest(estimate=estimate):
+                    client=FakeClient(bytes_processados=estimate)
+                    with patch.dict(sys.modules,modulos_gcp()):
+                        with self.assertRaises(ErroCargaBigQuery):
+                            executar_carga(arquivo=p,project_id="nivon-data",
+                               dataset_id="agro",executar=True,client=client)
+                    self.assertTrue(client.deleted)
+                    self.assertEqual(len(client.queries),1)
+                    self.assertTrue(client.queries[0].dry_run)
 
 if __name__=="__main__":
     unittest.main()
