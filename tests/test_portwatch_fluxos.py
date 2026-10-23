@@ -31,7 +31,7 @@ class FluxosPortWatch(unittest.TestCase):
     def test_normalizar_sem_confundir_capacidade_e_tonelagem(self):
         rows, more = normalizar(self.exemplo(), consultadas=["hormuz"], coletado_em=COLETA)
         self.assertEqual(rows[0]["transitos_ais"], 12)
-        self.assertEqual(rows[0]["proxy_capacidade_dwt"], 123456)
+        self.assertEqual(rows[0]["volume_transito_estimado_t"], 123456)
         self.assertIsNone(rows[0]["volume_realizado_t"])
         self.assertFalse(rows[0]["operacoes_confirmadas"])
         self.assertFalse(more)

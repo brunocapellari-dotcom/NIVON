@@ -41,3 +41,5 @@ de Itacoatiara e Amaggi sao entidades distintas.
 Schema `nivon_maritimo` criado no projeto conectado NIVON (NIVON-PTAX-OPERACIONAL), sem tocar nas tabelas CEPEA, IMEA, CONAB ou PTAX. Migracao versionada em `migrations/001_maritimo_neon.sql`. Adaptador `maritimo_neon.py` faz UPSERT parametrizado por hash/revisao, na mesma transacao de cada sincronizacao; nao registra dados sinteticos no banco de producao.
 
 A coleta agendada so inicia quando a variavel `NIVON_MARITIMO_COLETA_HABILITADA` for habilitada e o secret `NIVON_MARITIMO_DSN` estiver configurado. Ate la, nao ha alimentacao online do banco. Nao imprimir DSN.
+
+**PortWatch:** variável normalizada `volume_transito_estimado_t` estima cargo em trânsito, não volume oficial realizado. A coluna legada `capacidade_proxy` é mantida para compatibilidade e documentada como tal.

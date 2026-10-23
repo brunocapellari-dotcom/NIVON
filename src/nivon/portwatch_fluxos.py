@@ -91,7 +91,7 @@ def baixar_pagina(url, *, permitir_rede=False, transporte=None):
 
 
 def normalizar(resposta, *, consultadas, coletado_em):
-    """n_total e contagem AIS; capacity e proxy de capacidade, nao volume realizado."""
+    """n_total e contagem AIS; capacity e estimativa de carga em transito, nao volume operacional certificado."""
     try:
         raw = json.loads(resposta)
     except (UnicodeError, ValueError, TypeError) as exc:
@@ -122,7 +122,7 @@ def normalizar(resposta, *, consultadas, coletado_em):
             raise PortWatchErro("contagem AIS invalida")
         cap = a.get("capacity")
         if cap is not None and (type(cap) not in (int, float) or cap < 0 or cap != cap):
-            raise PortWatchErro("capacidade estimada invalida")
+            raise PortWatchErro("volume de transito estimado invalido")
         dry, tank = a.get("n_dry_bulk"), a.get("n_tanker")
         if any(v is not None and (type(v) is not int or v < 0 or v > count) for v in (dry, tank)):
             raise PortWatchErro("categorias de navio invalidas")
@@ -138,8 +138,8 @@ def normalizar(resposta, *, consultadas, coletado_em):
             "fonte": "FMI_PORTWATCH", "passagem": names[name],
             "nome_oficial": name, "portid": identifier, "data_referencia": reference,
             "transitos_ais": count, "navios_graneleiros_ais": dry, "navios_tanque_ais": tank,
-            "proxy_capacidade_dwt": cap, "natureza_transitos": "OBSERVADO_SINAL_AIS",
-            "natureza_capacidade": "ESTIMADO_MODELO_FMI",
+            "volume_transito_estimado_t": cap, "natureza_transitos": "OBSERVADO_SINAL_AIS",
+            "natureza_volume_estimado": "ESTIMADO_MODELO_FMI",
             "operacoes_confirmadas": False, "volume_realizado_t": None,
             "coletado_em": collected.astimezone(timezone.utc).isoformat(),
             "flags_qualidade": ["SOURCE_LAG"] if lag > 14 else [],

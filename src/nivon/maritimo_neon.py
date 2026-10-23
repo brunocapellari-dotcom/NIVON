@@ -64,7 +64,7 @@ def sincronizar(destino, banco_lineup, *, banco_portwatch=None):
                 VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb)
                 ON CONFLICT(fonte,passagem,data_referencia,revisao_sha256) DO NOTHING
             """, ("FMI_PORTWATCH",r["passagem"],r["data_referencia"],r["revisao_sha256"],
-                  r["coletado_em"],data["transitos_ais"],data.get("proxy_capacidade_dwt"),
+                  r["coletado_em"],data["transitos_ais"],data.get("volume_transito_estimado_t"),
                   r["dados_json"]))
     return {"capturas_processadas":len(fontes),"revisoes_processadas":len(escalas),
             "passagens_processadas":len(fluxos)}
