@@ -27,6 +27,7 @@ CAMPOS=frozenset({
     "condicoes","fonte_id","emissor_previsao","emissor_recibo",
     "diretorio_recibos","horizontes_dias",
 })
+OPCIONAIS=frozenset({"permitir_recuperacao_tardia"})
 ECON=frozenset({
     "origem_ibge","destino_ibge","descarga_entity_id",
     "produto","equipamento","regime","pedagio",
@@ -58,8 +59,12 @@ def _chave_env(var: str) -> bytes:
 
 
 def executar(config: dict, *, agora: datetime) -> dict:
-    if not isinstance(config,dict) or set(config)!=CAMPOS:
+    if (not isinstance(config,dict) or not CAMPOS.issubset(config)
+            or set(config)-CAMPOS-OPCIONAIS):
         raise ValueError("configuração de recuperação incompatível")
+    permitir_tardia=config.get("permitir_recuperacao_tardia",False)
+    if type(permitir_tardia) is not bool:
+        raise ValueError("permitir_recuperacao_tardia exige true/false")
     econ=config["condicoes"]
     hs=config["horizontes_dias"]
     if (not isinstance(econ,dict) or set(econ)!=ECON
@@ -92,6 +97,7 @@ def executar(config: dict, *, agora: datetime) -> dict:
             chave_recibo=chave_recibo,
             instante_recuperacao=agora,
             diretorio_recibos=pasta,horizontes_dias=tuple(hs),
+            permitir_recuperacao_tardia=permitir_tardia,
         )
 
 
