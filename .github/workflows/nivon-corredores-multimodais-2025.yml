@@ -5,10 +5,6 @@ on:
       - '.github/workflows/nivon-corredores-multimodais-2025.yml'
       - 'src/nivon/corredores_multimodais_2025.py'
       - 'tests/test_corredores_multimodais_2025.py'
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/nivon-corredores-multimodais-2025.yml'
   workflow_dispatch:
 
 permissions:
@@ -37,7 +33,7 @@ jobs:
 
   consultar-ambas-as-fontes:
     needs: validar-camada-de-comparacao
-    if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     timeout-minutes: 7
     permissions:
