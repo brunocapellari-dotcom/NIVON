@@ -119,3 +119,74 @@ def resumo_agro(doc: dict) -> dict:
         "recortes_agro": recortes,
         "observacao": "Volumes por hidrovia e tipo navegacao; NAO SOMAR como carga unica ou tipo interior sem verificacao",
     }
+
+
+def soma_carga_unica_2025(hidrovia: str | Path, carga: str | Path) -> dict:
+    """Confronta navegação interior deduplicada por IDCarga com o total oficial.
+
+    As linhas de Carga_Hidrovia são segmentos que podem repetir IDCarga.
+    Somar apenas Carga, que deve ter IDCarga única no ano (falha fechada).
+    """
+    try:
+        import duckdb
+    except ImportError:
+        raise ErroReplicaANTAQ("duckdb nao instalado") from None
+    for caminho in (hidrovia,carga):
+        p = Path(caminho)
+        if not p.is_file() or not 100 <= p.stat().st_size <= 65_000_000:
+            raise ErroReplicaANTAQ("arquivo ausente/tamanho inesperado")
+    with duckdb.connect(database=":memory:") as db:
+        db.execute("PRAGMA memory_limit='2GB'")
+        db.execute("PRAGMA threads=2")
+        c, h = str(carga), str(hidrovia)
+        meta = db.execute(
+            'SELECT COUNT(*), COUNT(DISTINCT "IDCarga"),'
+            ' COUNT(*) FILTER (WHERE "IDCarga" IS NULL OR "VLPesoCargaBruta" IS NULL OR "VLPesoCargaBruta" < 0)'
+            ' FROM read_parquet(?)',[c]).fetchone()
+        if meta[0] != meta[1] or meta[2]:
+            raise ErroReplicaANTAQ("Carga com chaves ou pesos nao confiaveis")
+        grouped = db.execute("""
+          WITH trechos AS (
+              SELECT DISTINCT "IDCarga" FROM read_parquet(?)
+          )
+          SELECT c."Tipo Navegação" AS navegacao,
+                 c."CDMercadoria" AS sh4,
+                 COUNT(*) AS n,
+                 SUM(c."VLPesoCargaBruta") AS peso_total,
+                 COUNT(*) FILTER (WHERE t."IDCarga" IS NOT NULL) AS n_trecho,
+                 SUM(c."VLPesoCargaBruta") FILTER (WHERE t."IDCarga" IS NOT NULL) AS peso_trecho
+            FROM read_parquet(?) c
+            LEFT JOIN trechos t ON c."IDCarga" = t."IDCarga"
+           GROUP BY 1,2
+        """,[h,c]).fetchall()
+    totais = {}
+    por_produto = {}
+    for nav, sh4, n, peso, n_trecho, peso_trecho in grouped:
+        nave = normalizar_texto(nav)
+        if peso is None or not math.isfinite(float(peso)) or float(peso) < 0:
+            raise ErroReplicaANTAQ("peso agregado invalido")
+        t = totais.setdefault(nave, {"cargas_unicas":0,"toneladas":0.0,
+                                      "cargas_com_hidrovia":0,"toneladas_com_hidrovia":0.0})
+        t["cargas_unicas"] += int(n)
+        t["toneladas"] += float(peso)
+        t["cargas_com_hidrovia"] += int(n_trecho)
+        t["toneladas_com_hidrovia"] += float(peso_trecho or 0)
+        if nave == "Interior":
+            prod = classificar_sh4(sh4)
+            por_produto[prod] = por_produto.get(prod,0.0) + float(peso)
+    interior = totais.get("Interior")
+    if interior is None:
+        raise ErroReplicaANTAQ("navegacao interior ausente na fonte")
+    return {
+        "estado": "DERIVADO_TERCEIRO_2025_NAO_HOMOLOGADO",
+        "ano": 2025, "universo": "CARGA_NAVEGACAO_INTERIOR_IDCARGA_UNICA",
+        "total_ton": round(interior["toneladas"],3),
+        "cargas_unicas": interior["cargas_unicas"],
+        "ton_com_classificacao_hidrovia": round(interior["toneladas_com_hidrovia"],3),
+        "cargas_com_classificacao_hidrovia": interior["cargas_com_hidrovia"],
+        "por_grupo_produto": {k: round(v,3) for k,v in sorted(por_produto.items())},
+        "todos_tipos_navegacao": {k: {"cargas_unicas":v["cargas_unicas"],
+                                     "toneladas":round(v["toneladas"],3)}
+                                  for k,v in sorted(totais.items())},
+        "nao_somar_hidrovias": True,
+    }
