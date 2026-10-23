@@ -25,6 +25,7 @@ from nivon.token_guard import summarize
 
 ROOT = Path(__file__).resolve().parents[2]
 HOME = ROOT / ".nivon-local"
+INTEGRATION_LOCK = threading.Lock()
 QUOTA = re.compile(r"(rate.limit|usage.limit|quota.exceed|limit.reach|too.many.requests|resets.in)", re.I)
 IDENT = re.compile(r"^[a-zA-Z0-9_-]{1,70}$")
 
@@ -57,9 +58,27 @@ def preflight():
     (HOME / "logs").mkdir(exist_ok=True)
 
 
+def prepare_integration():
+    """Cria uma única branch/worktree de integração local, nunca a main."""
+    location = HOME / "integration"
+    if location.exists():
+        head = command(["git", "branch", "--show-current"], location)
+        if head.returncode or head.stdout.strip() != "autonomo/integracao":
+            raise RuntimeError("Worktree de integração inválida")
+        return location
+    known = command(["git", "show-ref", "--verify", "refs/heads/autonomo/integracao"])
+    args = (["git", "worktree", "add", str(location), "autonomo/integracao"]
+            if known.returncode == 0
+            else ["git", "worktree", "add", "-b", "autonomo/integracao", str(location), "HEAD"])
+    created = command(args, timeout=60)
+    if created.returncode:
+        raise RuntimeError("Não foi possível preparar branch de integração local")
+    return location
+
+
 def prompt(task):
     scope = json.loads(task["scope"])
-    context = capsule(task, root=ROOT, limit=450)
+    context = capsule(task, root=(HOME / "integration" if (HOME / "integration").is_dir() else ROOT), limit=450)
     hint = ("Mapa de símbolos (somente metadados): " + context + "\n") if context else ""
     return (
         "NIVON: você é implementador, trabalhando em PARALELO com outro agente. "
@@ -132,6 +151,41 @@ def within_scope(worktree, allowed):
     return paths
 
 
+def integrate_local(commit_sha, image):
+    """Promove commit aprovado somente à branch interna, com teste pós-integração."""
+    with INTEGRATION_LOCK:
+        integration = prepare_integration()
+        before = command(["git", "rev-parse", "HEAD"], integration)
+        if before.returncode:
+            return False, "HEAD da integração indisponível"
+        clean = command(["git", "status", "--porcelain"], integration)
+        if clean.returncode or clean.stdout.strip():
+            return False, "Worktree de integração alterada externamente"
+        cherry = command(["git", "-c", "core.hooksPath=/dev/null",
+                          "-c", "commit.gpgsign=false", "cherry-pick", commit_sha],
+                         integration, timeout=60)
+        if cherry.returncode:
+            command(["git", "cherry-pick", "--abort"], integration, timeout=20)
+            return False, "Conflito de integração; alterações preservadas na branch da tarefa"
+        sandbox = ["docker", "run", "--rm", "--pull", "never", "--network", "none",
+                   "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
+                   "--pids-limit", "128", "--memory", "512m", "--cpus", "1",
+                   "--read-only", "--tmpfs", "/tmp:rw,noexec,nosuid,size=64m",
+                   "--mount", f"type=bind,src={integration},dst=/workspace",
+                   "--workdir", "/workspace", "--env", "PYTHONPATH=/workspace/src"]
+        if hasattr(os, "getuid") and hasattr(os, "getgid"):
+            sandbox += ["--user", f"{os.getuid()}:{os.getgid()}"]
+        tests = command([*sandbox, image, "python", "-m", "unittest",
+                         "discover", "-s", "tests", "-q"], integration, timeout=180)
+        if tests.returncode:
+            # Safe: restores only our own dedicated integration worktree.
+            command(["git", "-c", "core.hooksPath=/dev/null",
+                     "reset", "--hard", before.stdout.strip()], integration, timeout=30)
+            return False, "Regressão pós-cherry-pick; branch de implementação preservada"
+        sha = command(["git", "rev-parse", "HEAD"], integration).stdout.strip()
+        return True, f"SHA de integração {sha}; testes offline OK"
+
+
 def do_task(agent, task, *, timeout_minutes=15):
     if not IDENT.fullmatch(task["id"]) or task["attempts"] > 2:
         raise RuntimeError("ID inseguro ou limite de tentativas")
@@ -140,7 +194,8 @@ def do_task(agent, task, *, timeout_minutes=15):
     branch = "autonomo/" + name
     if worktree.exists():
         raise RuntimeError("Worktree já existe; verifique antes de retomar")
-    make = command(["git", "worktree", "add", "-b", branch, str(worktree), "HEAD"], timeout=60)
+    make = command(["git", "worktree", "add", "-b", branch, str(worktree),
+                    "autonomo/integracao"], timeout=60)
     if make.returncode:
         raise RuntimeError("Falha criando worktree: " + make.stderr[:400])
     logfile = HOME / "logs" / (name + ".log")
@@ -195,11 +250,16 @@ def do_task(agent, task, *, timeout_minutes=15):
         staged = command(["git", "add", "--", *scope], worktree)
         if staged.returncode:
             return "blocked", f"{branch}; git add falhou"
-        committed = command(["git", "commit", "-m", f"feat(nivon): {task['id']} ({agent})"], worktree)
+        committed = command(["git", "-c", "core.hooksPath=/dev/null",
+                             "-c", "commit.gpgsign=false", "commit",
+                             "-m", f"feat(nivon): {task['id']} ({agent})"], worktree)
         if committed.returncode:
             return "blocked", f"{branch}; git commit falhou: {summarize(committed.stderr, 500)}"
         sha = command(["git", "rev-parse", "HEAD"], worktree).stdout.strip()
-        return "done", f"{branch}; commit {sha}; {len(modified)} arquivos; compileall/unittest OK"
+        merged, integration_note = integrate_local(sha, image)
+        if not merged:
+            return "blocked", f"{branch}; commit {sha}; integração pendente: {integration_note}"
+        return "done", f"{branch}; commit {sha}; integrado localmente; {integration_note}"
     except subprocess.TimeoutExpired:
         return "blocked", f"{branch}; timeout de {timeout_minutes} min; revisar worktree"
 
@@ -237,8 +297,9 @@ def _run_locked(*, max_tasks=8, minutes=120, per_task=15):
             github_issues, _ = get_issues()
         except (OSError, subprocess.SubprocessError):
             pass
+    prepare_integration()
     with connect(dbpath) as db:
-        refresh_plan(db, root=ROOT, issues=github_issues)
+        refresh_plan(db, root=HOME / "integration", issues=github_issues)
     deadline = time.monotonic() + minutes * 60
     guard = threading.Lock()
     count = {"value": 0}
@@ -271,7 +332,7 @@ def _run_locked(*, max_tasks=8, minutes=120, per_task=15):
                 # Replanejar a partir das dependências que acabaram de ser entregues.
                 # Não invoca outro LLM e não reativa tarefas bloqueadas.
                 if outcome == "done":
-                    refresh_plan(db, root=ROOT, issues=github_issues)
+                    refresh_plan(db, root=HOME / "integration", issues=github_issues)
             with guard:
                 events.append({"task": task["id"], "agent": agent, "status": outcome,
                                "tokens_input": usage_in, "tokens_output": usage_out,
