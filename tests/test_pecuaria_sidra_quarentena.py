@@ -112,6 +112,11 @@ class TestColetorValuesQuarentena(unittest.TestCase):
             cx.execute("DROP TRIGGER pecuaria_quarentena_sem_update")
             cx.execute("UPDATE valores_pecuaria_quarentena SET bruto=? WHERE id=?",
                        (b'[]',r["ids"][0]))
+            # Reconstituir o trigger para passar pelo gate de schema e entao
+            # comprovar que o SHA tambem detecta adulteracao dos bytes.
+            cx.execute("""CREATE TRIGGER pecuaria_quarentena_sem_update
+              BEFORE UPDATE ON valores_pecuaria_quarentena
+              BEGIN SELECT RAISE(ABORT,'append_only'); END""")
         with self.assertRaisesRegex(DadoInvalido,"integridade"):
             recuperar_values_quarentena(banco=self.banco,id_captura=r["ids"][0])
 
