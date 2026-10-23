@@ -214,6 +214,44 @@ class TestAutonomia(unittest.TestCase):
                 autonomia.preflight()
             cmd.assert_not_called()
 
+    def test_stop_request_survives_delayed_supervisor_start(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            location = Path(tmp)
+            dbpath = location / "coop.sqlite"
+            stop = location / "STOP"
+            stop.write_text("parar, nenhuma nova tarefa", encoding="utf-8")
+            with patch.object(autonomia, "HOME", location), \
+                 patch.object(autonomia, "default_db", return_value=dbpath), \
+                 patch.object(autonomia, "refresh_plan", return_value={"added": 0}), \
+                 patch.object(autonomia, "prepare_integration", return_value=location), \
+                 patch.object(autonomia, "get_issues", return_value=([], None)), \
+                 patch.object(autonomia, "may_begin", return_value=True), \
+                 patch.object(autonomia, "do_task") as do_task:
+                result = autonomia._run_locked(max_tasks=2, minutes=1, per_task=2)
+            self.assertTrue(stop.exists())
+            self.assertEqual(result["executions"], [])
+            do_task.assert_not_called()
+
+    def test_unconfirmed_process_cleanup_halts_entire_cycle(self):
+        from nivon.processos import Resultado
+        with tempfile.TemporaryDirectory() as tmp:
+            location = Path(tmp)
+            (location / "worktrees").mkdir()
+            (location / "logs").mkdir()
+            task = {"id": "cleanup", "title": "Verificar encerramento",
+                    "scope": '["src/nivon/file.py"]', "attempts": 1}
+            fake = subprocess.CompletedProcess([], 0, "", "")
+            with patch.object(autonomia, "HOME", location), \
+                 patch.object(autonomia, "command", return_value=fake), \
+                 patch.object(autonomia, "cli", return_value=["falso-modelo"]), \
+                 patch.object(autonomia, "executar_cli",
+                              return_value=Resultado(exit_code=0, timed_out=False,
+                                                     cleanup_confirmed=False)):
+                outcome, note = autonomia.do_task("claude", task, timeout_minutes=2)
+            self.assertEqual(outcome, "blocked")
+            self.assertIn("encerramento", note)
+            self.assertTrue((location / "STOP").exists())
+
     def test_run_limits_and_no_llm_on_preflight(self):
         with patch.object(autonomia, "preflight", side_effect=RuntimeError("sem CLI")):
             self.assertEqual(autonomia.main(["run", "--max-tasks", "1"]), 2)
