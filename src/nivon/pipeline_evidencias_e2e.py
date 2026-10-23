@@ -152,6 +152,20 @@ def executar(pyproject: bytes, *, source_sha: str, run_id: int, output: Path) ->
         if not incomplete_rejected:
             raise ErroEvidencia("controle adversarial aceitou cobertura parcial")
 
+        # Preservar bytes de TODOS os artefatos para replay independente pela
+        # CLI auditora; nenhum arquivo do mundo real é baixado neste estágio.
+        replay = {
+            "requirements-sinteticos.lock": lock.encode("utf-8"),
+            "pip-audit-sintetico.json": report.encode("utf-8"),
+            "metadata-sinteticos.json": (
+                json.dumps(metadata, indent=2, sort_keys=True) + "\n"
+            ).encode("utf-8"),
+        }
+        replay.update({
+            "wheelhouse/" + file.name: file.read_bytes()
+            for file in sorted(wheelhouse.glob("*.whl"))
+        })
+
     synthetic_archive = criar_pacote(
         pyproject, repo=REPO, source_sha=source_sha, run_id=run_id)
     archive_check = verificar_pacote(
@@ -175,6 +189,9 @@ def executar(pyproject: bytes, *, source_sha: str, run_id: int, output: Path) ->
             "reject_incomplete_scan_report_even_with_updated_hash",
             "generate_and_reverify_synthetic_provenance_zip",
         ],
+        "synthetic_inputs_saved_for_cli_replay": True,
+        "replay_files_sha256": {name: _digest(data)
+                                for name, data in sorted(replay.items())},
         "synthetic_wheels_processed": positive["wheels_hash_verified"],
         "supported_dependencies_checked": positive["supported_wheel_dependencies_checked"],
         "license_files_verified": positive["license_files_declared"],
@@ -194,12 +211,21 @@ def executar(pyproject: bytes, *, source_sha: str, run_id: int, output: Path) ->
     output.mkdir(mode=0o700)
     try:
         (output / "proveniencia_sintetica.zip").write_bytes(synthetic_archive)
+        (output / "wheelhouse").mkdir(mode=0o700)
+        for filename, raw in replay.items():
+            (output / filename).write_bytes(raw)
         (output / "resumo_integracao.json").write_text(
             json.dumps(summary, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
             encoding="utf-8")
+        checksums = [
+            archive_check["zip_sha256"] + "  proveniencia_sintetica.zip",
+        ]
+        checksums.extend(
+            _digest(raw) + "  " + name
+            for name, raw in sorted(replay.items())
+        )
         (output / "sha256sums.txt").write_text(
-            archive_check["zip_sha256"] + "  proveniencia_sintetica.zip\n",
-            encoding="ascii")
+            "\n".join(checksums) + "\n", encoding="ascii")
     except BaseException:
         # Evita deixar evidências incompletas que possam ser confundidas
         # com uma execução aprovada.
