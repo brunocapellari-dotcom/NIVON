@@ -40,7 +40,7 @@ class TestBackfillRecuperavel(unittest.TestCase):
             result=mod.executar_historico(
                 fonte="BR_CCEE_PLD",inicio=2026,fim=2026,
                 projeto="nivon-data",dataset="agro",bucket="nivon-raw-archive",
-                executar=True)
+                executar=True,arquivar_recuperacao=True)
         self.assertEqual(eventos,["raw","jsonl","manifesto","merge"])
         self.assertEqual(result["estado"],"CONCLUIDO")
         self.assertEqual(result["cargas_bigquery"][0]["manifesto_sha256"],"b"*64)
