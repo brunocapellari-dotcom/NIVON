@@ -132,3 +132,11 @@ O primeiro oferece apenas indicadores consolidados por agente, sem anexar logs g
 ### Próxima validação antes de ampliar a autonomia
 
 Executar um piloto noturno real e confrontar as métricas com as saídas das CLIs. Medir: tarefas aprovadas por 100 mil tokens de entrada+saída, proporção de reexecução, duração das tentativas e tempo total até integração. Não atribuir economia percentual sem comparação de tarefas equivalentes. A branch `autonomo/integracao` segue estritamente local; nunca fazer merge remoto automático por causa de um relatório de divergências.
+
+## Compatibilidade real com a assinatura do Claude e dependências Parquet
+
+O modo `--bare` **não** é usado no supervisor: embora economize contexto, ele não recupera a autenticação OAuth da assinatura Claude. A execução passou a usar `--restricted --safe-mode` com ferramentas de arquivo limitadas e prompts não interativos; o modo `--safe-mode` desliga customizações opcionais mantendo a autenticação. Antes de iniciar, `doctor` exige `claude auth status` com método de assinatura e `codex login status` usando ChatGPT, além de confirmar as flags e imagem Docker local. Logins por API faturada são bloqueados por padrão, sem expor credenciais nem iniciar modelos.
+
+Os novos testes de hidrovias ANTAQ incorporados à `main` usam `pyarrow`. O GitHub Actions executa as fixtures com wheel fixado `pyarrow==21.0.0` em runner efêmero; isso não habilita coleta real nem cria uma dependência implícita no host. **O contêiner local `python:3.11-slim` não inclui PyArrow**, portanto o piloto noturno com a `main` ampliada deve continuar bloqueado até que exista imagem local homologada com as dependências de teste; nenhuma instalação automática é feita pelos agentes. Não confundir êxito de CI com homologação E2E no host.
+
+A suíte do supervisor passa a executar análise AST + unittest dentro de Docker com **bind mount de código somente leitura**, sem rede, com tmpfs e `PYTHONDONTWRITEBYTECODE=1`, protegendo os arquivos da worktree contra alterações feitas durante os testes. 
