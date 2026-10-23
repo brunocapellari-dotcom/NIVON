@@ -24,6 +24,8 @@ from nivon.ptax_raw_sqlite import guardar_raw_ptax
 from nivon.registro_snapshots import abrir_registro
 from nivon.ptax_quarentena_coleta import receber_amostra_ptax, listar_amostras_ptax
 from nivon.ptax_google_cloud import preparar_objetos_gcs_ptax, enviar_objetos_gcs_ptax
+from nivon.coletor_ptax_quarentena import executar_coleta_ptax_quarentena
+from nivon.ptax_sincronizacao_gcs import sincronizar_pacote_ptax_gcs
 from nivon.ptax_cobertura_mercados import diagnosticar_cobertura_ptax
 from nivon.indicadores_historicos import compor_pacote_historico
 from nivon.rotina_diaria import preparar_rotina
@@ -136,6 +138,51 @@ def executar() -> dict:
             raise AssertionError("upload GCS não foi bloqueado por padrão")
         assert quarentena.execute(
             "SELECT COUNT(*) FROM nivon_snapshots").fetchone()[0] == 0
+        coletado=executar_coleta_ptax_quarentena(
+            quarentena,planos=[PLANO],catalogo=CAT,
+            transporte=mock,relogio=lambda:T,
+        )
+        assert coletado["tipo"]=="SINTETICO"
+        assert coletado["consultas"]==1
+        assert coletado["linhas"][0]["nova_captura"] is False
+        assert len(listar_amostras_ptax(quarentena))==1
+        # Simulação de retorno GCS em memória: nunca usar esse recibo
+        # de teste como autorização real ou evidência de armazenamento.
+        class _Objeto:
+            def __init__(self,arquivos,chave):
+                self.arquivos,self.chave=arquivos,chave
+            def exists(self):
+                return self.chave in self.arquivos
+            def download_as_bytes(self,*,timeout):
+                return self.arquivos[self.chave]
+            def upload_from_string(self,dados,*,content_type,if_generation_match,timeout):
+                assert if_generation_match==0 and self.chave not in self.arquivos
+                self.arquivos[self.chave]=dados
+        class _Bucket:
+            def __init__(self,arquivos):
+                self.arquivos=arquivos
+            def blob(self,chave):
+                return _Objeto(self.arquivos,chave)
+        class _CloudFicticio:
+            def __init__(self):
+                self.arquivos={}
+            def bucket(self,ident):
+                return _Bucket(self.arquivos)
+        cloud=_CloudFicticio()
+        confirmado=sincronizar_pacote_ptax_gcs(
+            preparo,cliente=cloud,permitir_upload=True,
+            referencia_direitos="DIREITOS_FICTICIOS_CI",
+            referencia_custo="ORCAMENTO_FICTICIO_CI",
+        )
+        assert confirmado["total_conferidos"]==2
+        assert confirmado["publicavel"] is False
+        # Uma segunda rodada deve ser idempotente, sem re-upload.
+        repetido_cloud=sincronizar_pacote_ptax_gcs(
+            preparo,cliente=cloud,permitir_upload=True,
+            referencia_direitos="DIREITOS_FICTICIOS_CI",
+            referencia_custo="ORCAMENTO_FICTICIO_CI",
+        )
+        assert repetido_cloud["objetos_novos"]==0
 
         # Exercita a direção inversa RAW-first, sem escrever no banco-fonte.
         isolado=abrir_registro(":memory:")
@@ -173,6 +220,10 @@ def executar() -> dict:
                 "idempotencia_de_integridade_da_quarentena",
                 "preparacao_objetos_google_cloud",
                 "bloqueio_upload_sem_autorizacao",
+                "coletor_https_com_transporte_injetado",
+                "coleta_quarentena_idempotente",
+                "reconciliacao_gcs_simulada",
+                "retomada_gcs_idempotente_simulada",
             ],
             "capturas":lote["consultas_concluidas"],
             "raw_sha256":salvo["sha256"],
