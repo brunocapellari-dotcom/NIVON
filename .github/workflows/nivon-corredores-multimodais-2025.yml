@@ -82,10 +82,8 @@ jobs:
           assert not doc["totais_das_modalidades_somaveis"]
           with open(os.environ["GITHUB_STEP_SUMMARY"],"a",encoding="utf8") as f:
               f.write("### NIVON — corredores 2025, fontes independentes\n\n")
-              f.write("| Polo | Toneladas estação ferroviária origem | Fluxos rodoviários de RGI mesmo nome |
-")
-              f.write("|---|---:|---|
-")
+              f.write("| Polo | Toneladas estação ferroviária origem | Fluxos rodoviários de RGI mesmo nome |\n")
+              f.write("|---|---:|---|\n")
               for p in doc["polos"]:
                   entradas=len(p["rodovia_rgi_top16_entradas"])
                   saidas=len(p["rodovia_rgi_top16_saidas"])
