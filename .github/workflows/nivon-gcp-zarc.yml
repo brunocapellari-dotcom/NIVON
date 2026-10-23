@@ -1,0 +1,72 @@
+name: NIVON ZARC - verificacao e carga BigQuery
+on:
+  push:
+    paths:
+      - 'scripts/zarc_neon_para_bigquery.py'
+      - 'tests/test_zarc_neon_bigquery.py'
+      - '.github/workflows/nivon-gcp-zarc.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: nivon-gcp-zarc
+  cancel-in-progress: false
+jobs:
+  testar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m unittest discover -s tests -p 'test_zarc_neon_bigquery.py' -v
+  migrar:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    needs: testar
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    env:
+      NIVON_GCP_WRITE_APPROVED: ${{ vars.NIVON_GCP_WRITE_APPROVED }}
+      NIVON_GCP_COST_REVIEWED: ${{ vars.NIVON_GCP_COST_REVIEWED }}
+      NIVON_GCP_WIF_PROVIDER: ${{ vars.NIVON_GCP_WIF_PROVIDER }}
+      NIVON_GCP_SERVICE_ACCOUNT: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+      NIVON_ZARC_NEON_DSN: ${{ secrets.NIVON_ZARC_NEON_DSN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Bloquear migracao sem GCP/WIF/DSN revisados
+        run: |
+          if [ "$NIVON_GCP_WRITE_APPROVED" != true ] ||
+             [ "$NIVON_GCP_COST_REVIEWED" != true ] ||
+             [ -z "$NIVON_GCP_WIF_PROVIDER" ] ||
+             [ -z "$NIVON_GCP_SERVICE_ACCOUNT" ] ||
+             [ -z "$NIVON_ZARC_NEON_DSN" ]; then
+            echo "ZARC_GCP_CONFIG_PENDENTE; sem dados copiados ou Neon alterado"
+            exit 0
+          fi
+          echo 'ZARC_GCP_GATE=AUTHORIZED'
+      - uses: actions/setup-python@v5
+        if: ${{ env.NIVON_GCP_WRITE_APPROVED == 'true' && env.NIVON_GCP_COST_REVIEWED == 'true' && env.NIVON_GCP_WIF_PROVIDER != '' && env.NIVON_GCP_SERVICE_ACCOUNT != '' && env.NIVON_ZARC_NEON_DSN != '' }}
+        with:
+          python-version: '3.11'
+      - name: Autenticar em GCP por WIF
+        if: ${{ env.NIVON_GCP_WRITE_APPROVED == 'true' && env.NIVON_GCP_COST_REVIEWED == 'true' && env.NIVON_GCP_WIF_PROVIDER != '' && env.NIVON_GCP_SERVICE_ACCOUNT != '' && env.NIVON_ZARC_NEON_DSN != '' }}
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.NIVON_GCP_WIF_PROVIDER }}
+          service_account: ${{ env.NIVON_GCP_SERVICE_ACCOUNT }}
+      - name: Extrair snapshot ZARC read-only, carregar e reconciliar
+        if: ${{ env.NIVON_GCP_WRITE_APPROVED == 'true' && env.NIVON_GCP_COST_REVIEWED == 'true' && env.NIVON_GCP_WIF_PROVIDER != '' && env.NIVON_GCP_SERVICE_ACCOUNT != '' && env.NIVON_ZARC_NEON_DSN != '' }}
+        run: |
+          set -euo pipefail
+          umask 077
+          python -m pip install --disable-pip-version-check "psycopg[binary]==3.2.9" google-cloud-bigquery==3.38.0
+          input="$RUNNER_TEMP/nivon-zarc-private-${{ github.run_id }}.jsonl"
+          trap 'rm -f "$input"' EXIT
+          python -m scripts.zarc_neon_para_bigquery --arquivo "$input" --extrair --carregar
+          echo 'ZARC_MIGRATION_FINISHED; no source deletion'
