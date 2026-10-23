@@ -136,26 +136,24 @@ def adquirir_fonte(
     """Obtém bytes com verificação e hash; SOMENTE quando autorizada.
 
     `abridor` é somente um adaptador de teste; não garante a rota/IP real.
-    A execução padrão valida TODOS os endereços DNS, fixa o socket no IP
-    aprovado e usa SNI/TLS para o domínio oficial. Egress/firewall independente
-    continua obrigatório em produção; `resolver` injeta apenas fixtures DNS.
+    A execução sem transporte injetado permanece desligada. Classes
+    de resolução DNS e socket fixado com TLS/SNI são ferramentas para
+    executor externo homologado com egress firewall independente;
+    `resolver` injeta apenas fixtures DNS de testes.
     """
     fonte.verificar()
     instante = instante or datetime.now(timezone.utc)
     if instante.tzinfo is None:
         raise ErroAquisicao("instante sem timezone")
+    # Validar DNS não é autorização operacional para acessar a rede.
+    # Exigir transporte homologado explicitamente injetado pelo executor.
     if abridor is None:
-        endereco = _ip_publico_resolvido(fonte.dominio_autorizado, resolver=resolver)
-        cliente = build_opener(
-            ProxyHandler({}), _SemRedirecionar(),
-            _HTTPSHandlerFixado(fonte.dominio_autorizado, endereco),
+        raise PermissionError(
+            "EGRESS_NAO_HOMOLOGADO: transporte HTTPS auditado obrigatório"
         )
-    else:
-        # Teste sintético: nunca aceitar abridor arbitrário como transporte
-        # comprovadamente seguro em produção.
-        if resolver is not None:
-            _ip_publico_resolvido(fonte.dominio_autorizado, resolver=resolver)
-        cliente = abridor
+    if resolver is not None:
+        _ip_publico_resolvido(fonte.dominio_autorizado, resolver=resolver)
+    cliente = abridor
     req = Request(fonte.url, headers={
         "Accept": "text/html,application/pdf,text/csv,application/json,application/rss+xml,application/atom+xml,application/xml",
         "User-Agent": "NIVON/0.1 (coleta oficial identificada)",
