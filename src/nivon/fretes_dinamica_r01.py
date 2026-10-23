@@ -6,7 +6,7 @@ Não é cotação de mercado, frete contratado, previsão nem probabilidade.
 """
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Sequence
 from zoneinfo import ZoneInfo
 
@@ -24,6 +24,7 @@ def dinamica_ofertas_pareadas(
     as_of: datetime, janela: int = 6, minimo_pares: int = 2,
     tolerancia_absoluta: float = 2.0,
     mudanca_minima_forca_em_limiares: float = 1.0,
+    max_defasagem_dias: int = 10,
 ) -> dict:
     """Compara 2 janelas disjuntas com identidade econômica CONSTANTE.
 
@@ -42,6 +43,10 @@ def dinamica_ofertas_pareadas(
         mudanca_minima_forca_em_limiares, bool
     ):
         raise ErroTendencia("limiar de força numérico obrigatório")
+    # Frequência SESSOES admite no máximo dez dias entre observações,
+    # antes de QC por calendário externo. SLA operacional configurável.
+    if type(max_defasagem_dias) is not int or not 1 <= max_defasagem_dias <= 30:
+        raise ErroTendencia("limite de defasagem entre 1 e 30 dias obrigatório")
     painel = preparar_painel_pr30(
         ofertas, origem_ibge=origem_ibge, destino_ibge=destino_ibge,
         descarga_entity_id=descarga_entity_id, produto=produto,
@@ -68,6 +73,11 @@ def dinamica_ofertas_pareadas(
             "homologacao_origem": "PENDENTE",
         }
     amostras = base["serie_pareada"]
+    ultimo_periodo = date.fromisoformat(amostras[-1]["periodo"])
+    defasagem = (date.fromisoformat(data_local) - ultimo_periodo).days
+    if defasagem < 0:
+        raise ErroTendencia("última observação posterior à data de corte")
+    defasado = defasagem > max_defasagem_dias
     dinamica = comparar_forca_tendencia(
         amostras, as_of=data_local,
         fonte_id="NIVON_FRETE_VARIACAO_PAREADA",
@@ -79,7 +89,17 @@ def dinamica_ofertas_pareadas(
     )
     return {
         **dinamica,
-        "tendencia": dinamica["tendencia_atual"],
+        "status": "DADOS_DEFASADOS" if defasado else dinamica["status"],
+        "tendencia_historica": dinamica["tendencia_atual"],
+        "dinamica_historica": dinamica["dinamica"],
+        "tendencia_atual": "INDETERMINADA" if defasado else dinamica["tendencia_atual"],
+        "tendencia": "INDETERMINADA" if defasado else dinamica["tendencia_atual"],
+        "dinamica": "INDETERMINADA" if defasado else dinamica["dinamica"],
+        "ultimo_periodo_observado": ultimo_periodo.isoformat(),
+        "defasagem_dias": defasagem,
+        "max_defasagem_dias": max_defasagem_dias,
+        "dados_defasados": defasado,
+        "frescor": "DEFASADO" if defasado else "RECENTE",
         "segmento": "FRETE_ANUNCIADO",
         "metrica_tendencia": "DINAMICA_DE_VARIACOES_PAREADAS_BRLT_BASE",
         "origem_ibge": origem_ibge, "destino_ibge": destino_ibge,
