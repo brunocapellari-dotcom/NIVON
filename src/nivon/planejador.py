@@ -228,7 +228,10 @@ def refresh(db, *, root=HERE, manifest=None, issues=None, include_coverage=True)
     for task in tasks:
         unique.setdefault(task["id"], task)
     tasks = dependency_order(list(unique.values()))
-    states = {r["id"]: r["status"] for r in db.execute("SELECT id,status FROM tasks")}
+    known = [dict(r) for r in db.execute("SELECT id,status,scope FROM tasks")]
+    states = {r["id"]: r["status"] for r in known}
+    reserved = [json.loads(r["scope"]) for r in known
+                if r["status"] in {"pending", "running"}]
     ready = []
     waiting = []
     for t in sorted(tasks, key=lambda x: (x["priority"], x["id"])):
@@ -240,6 +243,9 @@ def refresh(db, *, root=HERE, manifest=None, issues=None, include_coverage=True)
         pending_deps = [d for d in t["depends_on"] if states.get(d) != "done"]
         if pending_deps:
             waiting.append({"id": t["id"], "reason": "dependências " + ",".join(pending_deps)})
+            continue
+        if any(overlap(t["scope"], scope) for scope in reserved):
+            waiting.append({"id": t["id"], "reason": "escopo já reservado na fila"})
             continue
         if any(overlap(t["scope"], prev["scope"]) for prev in ready):
             # Conflitos são resolvidos via fila no ciclo posterior, sem perda de tarefas.
