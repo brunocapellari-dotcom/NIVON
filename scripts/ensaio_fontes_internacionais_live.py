@@ -8,6 +8,7 @@ import tempfile
 from datetime import date, timedelta
 from pathlib import Path
 from nivon.coletores_dados_reais import executar_coleta
+from nivon.coletor_bcra_v4 import coletar_bcra
 
 def main():
     # Data antiga e delimitada, sem depender de uma cotação no dia corrente.
@@ -32,6 +33,14 @@ def main():
             except Exception as exc:
                 resultado.append({"fonte":fonte,"http":"FALHOU",
                   "tipo_erro":type(exc).__name__,"mensagem":str(exc)[:150]})
+        try:
+            resp=coletar_bcra(inicio="2026-09-01",fim="2026-09-05",
+                        banco=base/"smoke.sqlite",raw_dir=base/"raw",executar=True)
+            resultado.append({"fonte":"ARG_BCRA","http":"SUCESSO",
+                "estado":resp.get("estado"),"observacoes":resp.get("novas_observacoes")})
+        except Exception as exc:
+            resultado.append({"fonte":"ARG_BCRA","http":"FALHOU",
+                "tipo_erro":type(exc).__name__,"mensagem":str(exc)[:150]})
     print(json.dumps({"ensaios":resultado,"homologacao":"NAO","dados_fora_do_banco":True},
           ensure_ascii=False,indent=2))
     return 0 if all(x["http"]=="SUCESSO" for x in resultado) else 2
