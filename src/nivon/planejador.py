@@ -195,6 +195,57 @@ def coverage_candidates(root=HERE, *, maximum=4):
     return candidates[:maximum]
 
 
+def ruff_candidates(root=HERE, *, maximum=4):
+    """Use optional local Ruff JSON output to propose reproducible repair tasks."""
+    if not shutil.which("ruff"):
+        return []
+    try:
+        proc = subprocess.run(["ruff", "check", "--output-format", "json", "--no-cache",
+                               "src/nivon"], cwd=str(root), capture_output=True,
+                              text=True, timeout=15, check=False)
+        if proc.returncode not in (0, 1):
+            return []
+        issues = json.loads(proc.stdout)
+        if not isinstance(issues, list):
+            return []
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return []
+    by_file = {}
+    for issue in issues[:200]:
+        if not isinstance(issue, dict):
+            continue
+        file = issue.get("filename")
+        code = issue.get("code")
+        if not isinstance(file, str) or not isinstance(code, str):
+            continue
+        if not code.startswith(("F", "E")):
+            continue
+        try:
+            relative = Path(file).resolve().relative_to(root.resolve()).as_posix()
+            safe_path(relative, root)
+        except (ValueError, OSError):
+            continue
+        if Path(relative).suffix != ".py":
+            continue
+        by_file.setdefault(relative, []).append(code)
+    candidates = []
+    for filename, codes in sorted(by_file.items()):
+        name = Path(filename).stem
+        scope = [filename]
+        test = f"tests/test_{name}.py"
+        if (root / test).exists():
+            scope.append(test)
+        signature = hashlib.sha256((filename + ":" + ",".join(sorted(codes))).encode()).hexdigest()[:10]
+        candidates.append(normalized({
+            "id": f"ruff-{signature}",
+            "title": f"Corrigir diagnósticos estáticos de {name}",
+            "scope": scope, "priority": 65, "preferred_agent": "any",
+            "acceptance": f"Ruff deve passar no arquivo. Códigos: {','.join(sorted(set(codes))[:8])}. Executar testes offline.",
+            "source": "ruff-offline"
+        }, root))
+    return candidates[:maximum]
+
+
 def dependency_order(tasks):
     ids = {t["id"] for t in tasks}
     if len(ids) != len(tasks):
@@ -224,6 +275,7 @@ def refresh(db, *, root=HERE, manifest=None, issues=None, include_coverage=True)
     tasks.extend(imported)
     if include_coverage:
         tasks.extend(coverage_candidates(root))
+        tasks.extend(ruff_candidates(root))
     unique = {}
     for task in tasks:
         unique.setdefault(task["id"], task)
