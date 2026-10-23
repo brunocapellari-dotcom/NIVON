@@ -68,6 +68,53 @@ def verificar(observed: dict, expected_file: Path) -> None:
         raise ErroSupplyChain("wheelhouse diverge do lock versionado")
 
 
+
+def constraints_from_lock(path: Path, arch: str) -> str:
+    """Reconstrói todas as restrições transitivas do snapshot imutável.
+
+    Impede que pip selecione implicitamente um certifi (ou qualquer wheel)
+    mais novo enquanto o lock de hash permanecer antigo.
+    """
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > 75_000:
+        raise ErroSupplyChain("lock de constraints ausente ou inseguro")
+    try:
+        with path.open("r", encoding="utf-8") as stream:
+            locked = json.load(stream)
+    except (OSError, UnicodeError, ValueError) as exc:
+        raise ErroSupplyChain("lock de constraints inválido") from exc
+    if (not isinstance(locked, dict)
+        or locked.get("schema") != "nivon.infra.analytics_wheel_lock.v1"
+        or locked.get("arch") != arch or locked.get("base_image") != BASE
+        or locked.get("requirements") != list(REQUIREMENTS)
+        or locked.get("python_minor") != "3.11"
+        or locked.get("wheel_only") is not True):
+        raise ErroSupplyChain("contrato da wheelhouse não homologado")
+    files = locked.get("files")
+    if not isinstance(files, list) or not 3 <= len(files) <= MAX_ENTRIES:
+        raise ErroSupplyChain("lista lock não homologada")
+    versions = {}
+    for row in files:
+        if not isinstance(row, dict):
+            raise ErroSupplyChain("item lock inválido")
+        filename, sha = row.get("filename"), row.get("sha256")
+        if (not isinstance(filename, str) or not FILENAME.fullmatch(filename)
+            or not isinstance(sha, str) or not SHA.fullmatch(sha)):
+            raise ErroSupplyChain("hash ou arquivo de lock inválido")
+        parts = filename.split("-")
+        if len(parts) < 5:
+            raise ErroSupplyChain("formato wheel não homologado")
+        pkg, ver = parts[:2]
+        if (not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.]{0,100}", pkg)
+            or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._+!]{0,100}", ver)):
+            raise ErroSupplyChain("nome ou versão de wheel inválido")
+        normalized = re.sub(r"[-_.]+", "-", pkg).lower()
+        if normalized in versions and versions[normalized] != ver:
+            raise ErroSupplyChain("lock contém versões conflitantes")
+        versions[normalized] = ver
+    if len(versions) != len(files):
+        raise ErroSupplyChain("lock contém pacotes repetidos")
+    return "".join(f"{pkg}=={versions[pkg]}\n" for pkg in sorted(versions))
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Inventário imutável de wheels PyPI")
     p.add_argument("--folder", required=True)

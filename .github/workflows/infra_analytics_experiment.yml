@@ -79,15 +79,30 @@ jobs:
             python:3.11-slim-trixie@sha256:cce12316475d7d56d605f76e1d811d0dc4e7227f2d4afd29951521264f504ff8
           mkdir -p "$RUNNER_TEMP/nivon-analytics-wheels"
           sudo chown 65532:65532 "$RUNNER_TEMP/nivon-analytics-wheels"
+          # Derivar um pip --constraint das 59 versões já aprovadas NO lock.
+          # Não aceitar nova versão só por aparecer mais recente na PyPI.
+          PYTHONPATH=src NIVON_LOCK="infra/locks/analytics-${{ matrix.arch }}.json" \
+            NIVON_CONSTRAINTS="$RUNNER_TEMP/nivon-wheel-constraints.txt" python - <<'PY'
+          import os
+          from pathlib import Path
+          from nivon.infra_wheel_lock import constraints_from_lock
+          contents=constraints_from_lock(Path(os.environ["NIVON_LOCK"]),
+                                         "${{ matrix.arch }}")
+          destination=Path(os.environ["NIVON_CONSTRAINTS"])
+          destination.write_text(contents,encoding="utf-8")
+          destination.chmod(0o644)
+          print("NIVON_LOCKED_TRANSITIVE_CONSTRAINTS",len(contents.splitlines()))
+          PY
           docker run --rm --platform "$PLATFORM" --network bridge --read-only \
             --cap-drop ALL --security-opt no-new-privileges:true --user 65532:65532 \
             --pids-limit 128 --memory 2g --cpus 1 \
             --tmpfs /tmp:rw,nosuid,nodev,size=256m,uid=65532,gid=65532 \
             -e PIP_CONFIG_FILE=/dev/null -e PIP_EXTRA_INDEX_URL= \
             --mount "type=bind,source=$RUNNER_TEMP/nivon-analytics-wheels,target=/wheelhouse" \
+            --mount "type=bind,source=$RUNNER_TEMP/nivon-wheel-constraints.txt,target=/opt/nivon-constraints.txt,readonly" \
             --entrypoint python python:3.11-slim-trixie@sha256:cce12316475d7d56d605f76e1d811d0dc4e7227f2d4afd29951521264f504ff8 \
             -m pip download --only-binary=:all: --no-cache-dir --no-input \
-            --index-url https://pypi.org/simple --dest /wheelhouse \
+            --index-url https://pypi.org/simple --constraint /opt/nivon-constraints.txt --dest /wheelhouse \
             "agrobr==2.0.0" "pandas>=2.2,<3" "statsforecast>=2,<3" \
             > "$RUNNER_TEMP/nivon-analytics-download.log" 2>&1 || {
               PYTHONPATH=src PIP_LOG="$RUNNER_TEMP/nivon-analytics-download.log" python - <<'PY'
