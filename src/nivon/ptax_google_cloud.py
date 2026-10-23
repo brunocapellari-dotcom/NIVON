@@ -121,6 +121,44 @@ def enviar_objetos_gcs_ptax(
         raise PermissionError("faltam referências explícitas de direitos e orçamento")
     if not isinstance(pacote.get("objetos"), list) or len(pacote["objetos"]) != 2:
         raise ErroExportacaoPTAX("objetos de GCS inválidos")
+    bucket_nome = pacote.get("bucket")
+    prefixo = pacote.get("prefixo")
+    if (not isinstance(bucket_nome, str) or not re.fullmatch(
+            r"[a-z][a-z0-9-]{2,62}", bucket_nome
+    ) or not isinstance(prefixo, str) or not re.fullmatch(
+            r"[a-z0-9_-]+(?:/[a-z0-9_-]+){0,7}", prefixo
+    )):
+        raise ErroExportacaoPTAX("destino GCS modificado ou inválido")
+    raw_obj, manifest_obj = pacote["objetos"]
+    if any(not isinstance(x, Mapping) or set(x) != {
+        "chave", "mime", "sha256", "bytes"
+    } for x in (raw_obj, manifest_obj)):
+        raise ErroExportacaoPTAX("objeto GCS fora do contrato")
+    if any(type(x["bytes"]) is not bytes or
+           len(x["bytes"]) > 2_500_000 or
+           not isinstance(x["sha256"], str) or
+           sha256(x["bytes"]).hexdigest() != x["sha256"] or
+           x["mime"] != "application/json"
+           for x in (raw_obj, manifest_obj)):
+        raise ErroExportacaoPTAX("objeto GCS adulterado ou excessivo")
+    try:
+        meta = json.loads(manifest_obj["bytes"])
+        evento = meta["evento_sha256"]
+        if (not isinstance(evento, str) or not re.fullmatch(
+                r"[0-9a-f]{64}", evento
+        ) or meta["estado"] != ESTADO or
+            meta["raw_sha256"] != raw_obj["sha256"] or
+            meta["origem_independente_comprovada"] is not False or
+            meta["publicacao_independente_comprovada"] is not False):
+            raise ErroExportacaoPTAX("proveniência de objeto GCS incoerente")
+        if raw_obj["chave"] != f"{prefixo}/raw/{raw_obj['sha256']}.json" or (
+            manifest_obj["chave"] != f"{prefixo}/manifestos/{evento}.json"
+        ):
+            raise ErroExportacaoPTAX("chaves de armazenamento fora do contrato")
+    except (KeyError, TypeError, ValueError) as exc:
+        if isinstance(exc, ErroExportacaoPTAX):
+            raise
+        raise ErroExportacaoPTAX("manifesto GCS adulterado") from exc
     if cliente is None:
         try:
             from google.cloud import storage
