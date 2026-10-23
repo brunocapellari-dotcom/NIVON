@@ -149,3 +149,100 @@ evidência canônica após cada HEAD.
 - Pesquisa e tabelas IBGE: https://sidra.ibge.gov.br/pesquisa/abate/tabelas/
 - API Agregados v3: https://servicodados.ibge.gov.br/api/docs/agregados?versao=3
 - Esquema/API conceitual independente: https://docs.ropensci.org/ibger/articles/api-concepts.html
+
+
+## Execução real: constatações de 23/10/2026 e quarentena de values
+
+O bloqueio de conectividade aos **valores** foi parcialmente superado:
+**GitHub Actions** conseguiu HTTP 200 real e retornos JSON para as tabelas
+1092/1093/1094, no 2º trimestre de 2026. Endpoints da API **v3
+metadados** expiraram por timeout no mesmo runner (não prova indisponibilidade
+na origem).
+
+**Evidências do runner, sem gravar valores brutos no repositório:**
+
+- [Acesso aos valores das 3 tabelas](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39945037846)
+- [Identificação de DnC e códigos reais](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39945191701)
+- [Normalização real Brasil e UFs](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39945474689)
+- [Diagnóstico de censura e UFs não retornadas](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39945756036)
+- [Coletor de quarentena em modo real sem gravação](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39946527270)
+
+### Mapeamento observado no endpoint values
+
+O arquivo \`src/nivon/pecuaria_sidra_mapa_observado.py\` contém o mapa
+**verificado no recorte nacional 2026-T2**, NÃO homologado para qualquer outra
+competência, geografia, variável ou publicação:
+
+| Tabela | Variáveis | Dimensões de classificação | Códigos TOTAL |
+|---|---|---|---|
+| 1092 bovino | 284 cabeças; 285 carcaças | D4C rebanho; D5C inspeção; D6C referência temporal | rebanho=992; inspeção=118225; referência=115236 |
+| 1093 suíno | 284; 285 | D4C inspeção; D5C referência temporal | inspeção=118225; referência=115236 |
+| 1094 frango | 284; 285 | D4C inspeção; D5C referência temporal | inspeção=118225; referência=115236 |
+
+Nos seis retornos oficiais \`n1/1\` e \`n3/all\`, filtrados explicitamente
+por \`v/284,285\`, o parser já foi executado **com sucesso sem salvar bytes**.
+Os relatórios abaixo preservam dados censurados e UFs não retornadas
+**sem imputação**:
+
+| Espécie | UFs numéricas por indicador | UFs censuradas por indicador | UFs ausentes |
+|---|---:|---|---|
+| Bovino | 25 | AP, DF (2) | nenhuma |
+| Suíno | 21 | AC, AM, PA, RR, SE (5) | AP |
+| Frango | 19 | AC, AL, AM, DF, RN, RR, SE (7) | AP |
+
+Valores numéricos nacionais foram retornados, mas nenhuma soma residual
+BR-Estados foi promovida ou homologada, pois ainda há censura/cobertura
+não confirmada por metadados v3.
+
+### Novo coletor: values em QUARENTENA, sem fabricar metadados
+
+\`src/nivon/pecuaria_sidra_quarentena.py\` recebe seis respostas HTTPS
+oficiais, normaliza em memória, avalia cobertura e pode armazenar
+**somente os bytes de values** em SQLite local separado. Não inventa um
+JSON de metadados apenas para satisfazer o arquivo anterior
+\`pecuaria_sidra_arquivo.py\`.
+
+A primeira execução é sempre **sem rede**:
+
+\`\`\`bash
+PYTHONPATH=src python -m nivon.pecuaria_sidra_quarentena
+\`\`\`
+
+A leitura das APIs, se houver permissão de consulta e condições de rede
+apropriadas, é explícita e a **prévia não salva nada**:
+
+\`\`\`bash
+PYTHONPATH=src python -m nivon.pecuaria_sidra_quarentena \
+  --periodo 202602 --rede --confirmar-direitos
+\`\`\`
+
+Armazenamento local em quarentena requer uma decisão independente,
+\`--gravar\`, permissões e um caminho fora do GitHub:
+
+\`\`\`bash
+PYTHONPATH=src python -m nivon.pecuaria_sidra_quarentena \
+  --periodo 202602 --rede --confirmar-direitos \
+  --gravar --banco /dados/sidra/quarentena-values.sqlite
+\`\`\`
+
+Isso **não foi executado com gravação real** no GitHub Actions. O CI
+executou apenas prévias reais e testes de gravação em banco temporário com
+JSON **sintético**.
+
+- Nenhum agendamento, merge, deploy, WhatsApp ou banco cloud ativado;
+- dados em quarentena não alimentam série/histórico CANÔNICO;
+- o horário da captura apenas informa a primeira observação, **não**
+  a publicação original do IBGE;
+- somente \`202602\` está habilitado, pois é o único período cujo mapa foi
+  confrontado ao vivo;
+- o reprocessamento é idempotente por espécie/tabela/trimestre/geografia/
+  SHA-256 do bruto e diferentes bytes são capturas distintas;
+- banco sem índices/triggers esperados é bloqueado; não há migração
+  silenciosa;
+- autorização é declaração explícita do operador, nunca prova técnica
+  ou jurídica de licença.
+
+Próximas frentes de maior impacto: obter metadados v3 autênticos ou
+documentação oficial equivalente; reconciliar cobertura efetiva por
+competência; definir regras de publicação de revisões; integrar quarentena
+ao banco transacional somente depois de validar direitos e proveniência.
