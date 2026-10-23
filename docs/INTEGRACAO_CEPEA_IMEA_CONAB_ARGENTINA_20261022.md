@@ -52,3 +52,25 @@ Frequências **propostas**: CEPEA/IMEA após fechamento oficial em dias úteis; 
 - Validar CKAN real e URL de CSV argentino em executor autorizado; conferir CC BY 4.0 do recurso específico e condições efetivas, tamanho e período.
 - Criar os adaptadores de arquivos SIO e DJVE depois de confirmar formatos e direitos — sem inventar endpoint privado.
 - Criar job de execução + histórico Cloud Storage/BigQuery somente após confirmar a estrutura real do projeto Google Cloud.
+
+
+## Avanços executados em 22/10 (continuação)
+
+- `src/nivon/conab_indice_progresso.py`: leitura opt-in do **índice oficial semanal CONAB** (`www.gov.br/conab/.../progresso-de-safra`), extração de páginas candidatas a partir de HTML, allowlist de host e caminho, SHA da resposta e deduplicação. **Não baixa planilha.**
+- `src/nivon/argentina_download_csv.py`: download controlado `GET` de CSV oficial identificado por metadados SAGyP, limitado a hosts públicos específicos, sem redirects, com gate de direitos, MIME, tamanho, proteção anti-HTML/WAF e SHA.
+- `src/nivon/argentina_pipeline_local.py`: execução opt-in de `CKAN resource_show -> CSV -> RAW privado (0700/0600) -> SQLite de quarentena`, idempotente por hash, sem publicação no briefing e sem secrets.
+- Foram acrescentadas suítes de testes sintéticos para índice CONAB, transporte CSV e pipeline integral local, sem dados externos reais.
+- Evidência de CI: GitHub Actions `Testes locais NIVON`, execução #39889930077, commit `a949457adf1dc5e8f61a4259ffa8787e6bf307af`: **1406 testes, 5 ignorados, job validado com sucesso**.
+- Em paralelo, o workflow `acessos-privados.yml` aparece como **falha no GitHub Actions sem jobs legíveis**. É um bloqueio de configuração/reconhecimento do workflow, não prova de falha de conexão SAGyP. Não se considera homologado.
+
+### API real, RAW real e Google Cloud
+
+Nesta sessão, `https://datos.magyp.gob.ar/api/3/action/resource_show?id=...` não pôde ser confirmado por requisição real no ambiente de trabalho. Logo, a coleta real ainda não ocorreu. O downloader aceita apenas domínio/arquivo oficial explicitamente validado e não ignora restrições de rede. O CSV sintético dos testes não é dado de mercado. O índice CONAB foi confirmado no portal, mas os novos módulos não fizeram GET real.
+
+O pipeline usa exclusivamente SQLite + arquivo privado em ambiente local. **Ainda não está implantado nem agendado no Google Cloud, não foi validado BigQuery/GCS e não publica indicadores ao vivo.** Antes de cron, comprovar URL de download, licença de cada dataset, execução real com identificação de origem, retenção RAW no storage privado e mapeamento ao banco canônico. Não extrapolar direitos de CC BY 4.0 do dataset agrícola para SIO Granos ou DJVE.
+
+Próximas tarefas:
+1. Integrar índice de progresso CONAB aos parsers XLSX e storage revisionado já presentes nas PRs históricas, após teste de bytes reais.
+2. Confirmar o CKAN real argentino e a URL dos CSV por recurso em executor autorizado; capturar e auditar ao menos uma edição.
+3. Documentar schemas de SIO Granos e DJVE, especialmente diferença entre contratos/registro e embarque realizado.
+4. Conciliar PRs #119/#122 e de CONAB antes de promover o código à base principal; validar `main` e Google Cloud existentes antes de qualquer deploy.
