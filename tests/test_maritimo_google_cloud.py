@@ -57,8 +57,10 @@ class FakeBigQueryClient:
     def load_table_from_json(self,rows,target,job_config):
         self.loads.append((target,rows,job_config))
         return FakeJob()
-    def query(self,sql):
+    def query(self,sql,job_config=None):
         self.sql.append(sql)
+        if job_config is None or getattr(job_config,"limit",0)!=100_000_000:
+            raise AssertionError("limite de custos BigQuery nao aplicado")
         return FakeJob()
     def delete_table(self,target,not_found_ok):
         self.deleted.append(target)
@@ -68,6 +70,8 @@ class FakeBigQueryModule:
         def __init__(self,name,kind):self.name,self.kind=name,kind
     class LoadJobConfig:
         def __init__(self,**args):self.config=args
+    class QueryJobConfig:
+        def __init__(self,maximum_bytes_billed):self.limit=maximum_bytes_billed
     class SourceFormat:
         NEWLINE_DELIMITED_JSON="NEWLINE_DELIMITED_JSON"
     class WriteDisposition:
@@ -104,6 +108,14 @@ class TestCloud(unittest.TestCase):
             self.assertEqual(len(fake.sql),3)
             self.assertTrue(all("MERGE" in s and "INSERT ROW" in s for s in fake.sql))
             self.assertFalse(next(r for r in fake.loads[1][1] if r["fonte"]=="santarem_cdp")["publicavel"])
+
+    def test_teto_de_faturamento_invalido_bloqueado_antes_de_qualquer_job(self):
+        with self.assertRaises(ValueError):
+            sincronizar_bigquery("/tmp/nao-existe.sqlite",projeto="nivon-data",
+                  dataset="nivon_raw",max_bytes_cobraveis=100_000_000_000)
+        with self.assertRaises(ValueError):
+            sincronizar_bigquery("/tmp/nao-existe.sqlite",projeto="nivon-data",
+                  dataset="nivon_raw",max_bytes_cobraveis=True)
 
     def test_bigquery_injection_rejeitada(self):
         for bad in ["other.project","a;delete","x"]:

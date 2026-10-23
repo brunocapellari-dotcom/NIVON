@@ -20,6 +20,26 @@ apagadas. Implementação em PR não equivale a implantação no Google Cloud.
   clusterização e visão de frescor das fontes.
 - infra/google_cloud/Dockerfile.maritimo e cloudbuild.maritimo.yaml: imagem.
 
+
+## Configuração confirmada do projeto NIVON (sem credenciais)
+
+Projeto: nivon-data; região: southamerica-east1 (São Paulo);
+BigQuery: dataset já criado nivon_raw; bucket GCS: nivon-data-raw-2026;
+identidade dos coletores: nivon-coletor-de-dados@nivon-data.iam.gserviceaccount.com.
+
+Essas identificações vieram da configuração anterior da conta. **Não foram
+revalidadas por acesso autenticado nesta execução.** Não criar outro bucket
+nem outro projeto. Adotar NIVON_BQ_PROJECT, NIVON_BQ_DATASET e
+NIVON_GCS_BUCKET como variáveis compartilhadas com o PR #147 de fontes GCP.
+No primeiro go-live, tabelas marítimas usam o dataset já existente nivon_raw;
+se um dataset analítico dedicado for criado depois, migrar por processo
+versionado, sem criar por suposição.
+
+O MERGE BigQuery tem agora limite padrão de 100.000.000 bytes faturáveis
+por query, mesmo no replay/backfill. Um lote que exceder esse teto deve
+falhar com evidência preservada no GCS; custos zero NÃO são garantidos.
+O limite deve ser ajustado somente com medição de jobs reais.
+
 ## Pré-requisitos para executar no Google Cloud real
 
 1. Descobrir qual PROJECT_ID, REGION, bucket e repositório Artifact Registry

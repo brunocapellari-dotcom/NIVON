@@ -27,8 +27,10 @@ class FakeClient:
     def load_table_from_json(self,rows,table,job_config):
         self.loads.append((table,rows))
         return FakeJob()
-    def query(self,sql):
+    def query(self,sql,job_config=None):
         self.queries.append(sql)
+        if job_config is None or getattr(job_config,"limit",None)!=100_000_000:
+            raise AssertionError("sem teto BigQuery")
         return FakeJob()
     def delete_table(self,*args,**kwargs):pass
 
@@ -37,6 +39,8 @@ class FakeBQ:
         def __init__(self,*args):pass
     class LoadJobConfig:
         def __init__(self,**kwargs):pass
+    class QueryJobConfig:
+        def __init__(self,maximum_bytes_billed):self.limit=maximum_bytes_billed
     class SourceFormat:
         NEWLINE_DELIMITED_JSON="NEWLINE_DELIMITED_JSON"
     class WriteDisposition:

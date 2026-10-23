@@ -127,14 +127,18 @@ def sql_merge(projeto,dataset,table,staging):
     return (f"MERGE {mark}{base}.{table}{mark} T USING {mark}{base}.{staging}{mark} S "
             f"ON {match} {update}WHEN NOT MATCHED THEN INSERT ROW")
 
-def sincronizar_bigquery(banco, *, portwatch_banco=None, projeto, dataset="nivon_maritimo",
-                        client=None, bigquery_module=None, dry_run=False):
+def sincronizar_bigquery(banco, *, portwatch_banco=None, projeto, dataset="nivon_raw",
+                        client=None, bigquery_module=None, dry_run=False,
+                        max_bytes_cobraveis=100_000_000):
     """Carga de staging + MERGE, fail-safe e recuperavel por replay.
 
     O dataset e tabelas devem existir (migracao SQL). Sem provisionamento
     implicito nem tabelas sinteticas no banco de producao.
     """
     base=validar_destino(projeto,dataset)
+    if (type(max_bytes_cobraveis) is not int or
+        not 10_000_000 <= max_bytes_cobraveis <= 1_000_000_000):
+        raise ValueError("teto de bytes faturaveis BigQuery invalido")
     rows=preparar_linhas(banco,portwatch_banco)
     amounts={k:len(v) for k,v in rows.items()}
     if dry_run: return {"destino":base,"contagens":amounts,"gravado":False}
@@ -153,7 +157,8 @@ def sincronizar_bigquery(banco, *, portwatch_banco=None, projeto, dataset="nivon
                 write_disposition=bigquery_module.WriteDisposition.WRITE_EMPTY)
         try:
             client.load_table_from_json(payload,target,job_config=config).result()
-            client.query(sql_merge(projeto,dataset,table,staging)).result()
+            limit=bigquery_module.QueryJobConfig(maximum_bytes_billed=max_bytes_cobraveis)
+            client.query(sql_merge(projeto,dataset,table,staging),job_config=limit).result()
             done.append(table)
         finally:
             client.delete_table(target,not_found_ok=True)
@@ -164,11 +169,13 @@ def main(argv=None):
     p.add_argument("--banco",type=Path,required=True)
     p.add_argument("--portwatch-banco",type=Path)
     p.add_argument("--projeto",required=True)
-    p.add_argument("--dataset",default="nivon_maritimo")
+    p.add_argument("--dataset",default="nivon_raw")
+    p.add_argument("--max-bytes-cobraveis",type=int,default=100_000_000)
     p.add_argument("--dry-run",action="store_true")
     args=p.parse_args(argv)
     out=sincronizar_bigquery(args.banco,portwatch_banco=args.portwatch_banco,
-           projeto=args.projeto,dataset=args.dataset,dry_run=args.dry_run)
+           projeto=args.projeto,dataset=args.dataset,dry_run=args.dry_run,
+           max_bytes_cobraveis=args.max_bytes_cobraveis)
     print(json.dumps(out,ensure_ascii=False))
 
 if __name__=="__main__":
