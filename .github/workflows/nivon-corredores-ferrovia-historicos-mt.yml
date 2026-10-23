@@ -1,0 +1,151 @@
+name: NIVON - Corredores Ferroviarios Historicos MT
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/nivon-corredores-ferrovia-historicos-mt.yml'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/nivon-corredores-ferrovia-historicos-mt.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-corredores-ferroviarios-historicos-mt
+  cancel-in-progress: false
+
+jobs:
+  consultar-e-publicar-evidencias:
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      NIVON_PROJETO: ${{ vars.NIVON_BQ_PROJECT }}
+      NIVON_DATASET: ${{ vars.NIVON_BQ_DATASET }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Restringir recursos autorizados
+        run: |
+          test "$NIVON_PROJETO" = 'nivon-data'
+          test "$NIVON_DATASET" = 'nivon_raw'
+      - name: Credencial OIDC efemera
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ vars.NIVON_BQ_PROJECT }}
+          create_credentials_file: true
+      - name: Instalar biblioteca BigQuery
+        run: |
+          python -m pip install --disable-pip-version-check --quiet 'google-cloud-bigquery>=3,<4'
+      - name: Consultar historico dos polos e produtos, sem escrever no GCP
+        run: |
+          python - <<'PY'
+          import json,os
+          from decimal import Decimal
+          from pathlib import Path
+          from google.cloud import bigquery
+
+          projeto=os.environ['NIVON_PROJETO']
+          dataset=os.environ['NIVON_DATASET']
+          tabela=f"{projeto}.{dataset}.vw_nivon_corredores_ferrovia_mensal"
+          cliente=bigquery.Client(project=projeto)
+          conf=bigquery.QueryJobConfig(maximum_bytes_billed=150_000_000)
+          def executar(sql):
+              job=cliente.query(sql,job_config=conf)
+              return list(job.result(timeout=120))
+          # Consulta 1: apenas estacoes de origem mapeadas explicitamente.
+          sql_anos=(
+              "SELECT EXTRACT(YEAR FROM data_referencia) AS ano, polo_id, "
+              "CAST(SUM(toneladas_uteis) AS STRING) AS tu "
+              f"FROM `{tabela}` "
+              "WHERE data_referencia BETWEEN DATE '2006-01-01' AND DATE '2026-08-31' "
+              "GROUP BY ano,polo_id ORDER BY ano,polo_id")
+          anuais=[{"ano":int(r.ano),"polo_id":r.polo_id,"toneladas_uteis":str(r.tu)}
+                  for r in executar(sql_anos)]
+          if not anuais:
+              raise RuntimeError("NAO_HA_POLOS_COM_DADOS_FERROVIARIOS_OBSERVADOS")
+          sql_produtos=(
+              "SELECT polo_id, mercadoria_antt, produto_normalizado, "
+              "CAST(SUM(toneladas_uteis) AS STRING) AS tu "
+              f"FROM `{tabela}` "
+              "WHERE data_referencia BETWEEN DATE '2025-01-01' AND DATE '2025-12-31' "
+              "GROUP BY polo_id,mercadoria_antt,produto_normalizado "
+              "ORDER BY tu DESC LIMIT 50")
+          produtos=[{"polo_id":r.polo_id,"mercadoria_antt":r.mercadoria_antt,
+                     "produto_normalizado":r.produto_normalizado,
+                     "toneladas_uteis":str(r.tu)} for r in executar(sql_produtos)]
+          sql_destinos=(
+              "SELECT polo_id, estacao_destino, uf_destino, "
+              "CAST(SUM(toneladas_uteis) AS STRING) AS tu "
+              f"FROM `{tabela}` "
+              "WHERE data_referencia BETWEEN DATE '2025-01-01' AND DATE '2025-12-31' "
+              "GROUP BY polo_id,estacao_destino,uf_destino "
+              "ORDER BY tu DESC LIMIT 50")
+          destinos=[{"polo_id":r.polo_id,"estacao_destino":r.estacao_destino,
+                    "uf_destino":r.uf_destino,
+                    "toneladas_uteis":str(r.tu)} for r in executar(sql_destinos)]
+          polos=("MT_RONDONOPOLIS_FERRO","MT_ITIQUIRA_FERRO",
+                 "MT_ALTO_ARAGUAIA_FERRO","MT_DOM_AQUINO_BR070")
+          volume={(x['ano'],x['polo_id']):Decimal(x['toneladas_uteis']) for x in anuais}
+          variacoes=[]
+          for p in polos:
+              v2024=volume.get((2024,p))
+              v2025=volume.get((2025,p))
+              if v2024 is None or v2025 is None or v2024==0:
+                  classe="SEM_COMPARABILIDADE_OBSERVADA"
+                  pct=None
+              else:
+                  pct=str(((v2025/v2024)-1)*100)
+                  classe=("ALTA" if (v2025/v2024)-1>Decimal('0.02')
+                          else "BAIXA" if (v2025/v2024)-1<Decimal('-0.02')
+                          else "ESTABILIDADE")
+              variacoes.append({
+                  "polo_id":p,"ano_base":2024,"ano_atual":2025,
+                  "tu_2024":None if v2024 is None else str(v2024),
+                  "tu_2025":None if v2025 is None else str(v2025),
+                  "variacao_percentual":pct,"classe_variacao_anual":classe})
+          doc={
+              "estado":"CORREDORES_FERROVIARIOS_MT_HISTORICO_BQ_REAL",
+              "fonte":"ANTT_SIADE_FERROVIARIO",
+              "projeto":projeto,"view":tabela,
+              "periodo":"2006-01 a 2026-08",
+              "recorte_comparavel_tendencia":"2024 versus 2025, anos completos",
+              "nao_comprova_fluxo_rodoviario_nem_transbordo":True,
+              "variacao_classificada_nao_e_previsao":True,
+              "serie_anual_polos":anuais,
+              "variacao_2025_vs_2024":variacoes,
+              "mercadorias_por_polo_2025":produtos,
+              "destinos_ferroviarios_por_polo_2025":destinos,
+          }
+          path=Path(os.environ['RUNNER_TEMP'])/'nivon-corredores-historicos-mt.json'
+          path.write_text(json.dumps(doc,ensure_ascii=False,indent=2),encoding='utf-8')
+          print("EVOLUCAO_POLOS_2024_2025",json.dumps(variacoes,ensure_ascii=False))
+          print("PRODUTOS_POLOS_2025",json.dumps(produtos[:15],ensure_ascii=False))
+          print("DESTINOS_POLOS_2025",json.dumps(destinos[:12],ensure_ascii=False))
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as f:
+              f.write('### NIVON — corredores ferroviários de MT (ANTT/SIADE)\n\n')
+              f.write('| Polo | TU 2024 | TU 2025 | Variação anual observada | Classe |\n|---|---:|---:|---:|---|\n')
+              for x in variacoes:
+                  f.write(f"| {x['polo_id']} | {x['tu_2024'] or 'Sem observação'} | {x['tu_2025'] or 'Sem observação'} | {x['variacao_percentual'] or 'Não comparável'} | {x['classe_variacao_anual']} |\n")
+              f.write('\nFonte ferroviária; Dom Aquino não vira zero quando ausente. Classes não são previsão.\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: success()
+        with:
+          name: nivon-corredores-mt-historico-bq-${{ github.run_id }}
+          path: ${{ runner.temp }}/nivon-corredores-historicos-mt.json
+          retention-days: 90
+      - name: Limpar artefato temporario
+        if: always()
+        run: rm -f "$RUNNER_TEMP/nivon-corredores-historicos-mt.json"
