@@ -47,6 +47,25 @@ jobs:
             --repo "$GITHUB_REPOSITORY" --branch "$PAM_BRANCH" \
             --status success --limit 30 --json databaseId \
             --jq '.[].databaseId')"
+          # Depois do primeiro ciclo com manifesto, nunca voltar ao
+          # piloto legado apenas porque o backup mais recente expirou.
+          # A indisponibilidade do backup atual e BLOQUEIO de continuidade.
+          for run_id in $ids; do
+            if test "$run_id" -gt 39891299927; then
+              rm -rf "$BASE/anterior"
+              mkdir -p "$BASE/anterior"
+              if gh run download "$run_id" --repo "$GITHUB_REPOSITORY" \\
+                  --name nivon-pam-estado --dir "$BASE/anterior" >/dev/null 2>&1 \\
+                  && test -s "$BASE/anterior/estado_pam.zip"; then
+                echo "PAM_PRIOR=$BASE/anterior/estado_pam.zip" >> "$GITHUB_ENV"
+                echo "PAM_LEGADO=0" >> "$GITHUB_ENV"
+                echo "BACKUP_RECUPERADO=run-$run_id"
+                exit 0
+              fi
+              echo "::error::O ciclo $run_id foi concluido, mas seu backup atual nao esta disponivel."
+              exit 3
+            fi
+          done
           for run_id in $ids; do
             rm -rf "$BASE/anterior"
             mkdir -p "$BASE/anterior"
