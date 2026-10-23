@@ -1,4 +1,5 @@
 name: NIVON - ANTT Rodovia RGI 2025 para Google Cloud
+# Execucao controlada de recuperacao: BigQuery NotFound corrigido em 23/10/2026.
 on:
   pull_request:
     paths:
