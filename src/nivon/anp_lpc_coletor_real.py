@@ -6,7 +6,7 @@ dentro de índice oficial. Limite de 1 índice + até 3 XLSX por execução.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from hashlib import sha256
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -119,6 +119,8 @@ def coletar_lpc(
     raw_dir: str | Path | None = None, abridor=None,
     indice_bytes: bytes | None = None, arquivos_locais: dict[str, bytes] | None = None,
     esperar_segundos: float = 1.0,
+    semana_desde: str | None = None,
+    semana_ate: str | None = None,
 ) -> dict:
     """Execução de lote: modo HTTP ou offline reprocessável.
 
@@ -126,8 +128,22 @@ def coletar_lpc(
     Captura indica instante DESTA execução, não publicação pela ANP.
     """
     if (type(ano) is not int or ano < 2020 or ano > 2100
-            or type(limite_semanas) is not int or not 1 <= limite_semanas <= 3):
+            or type(limite_semanas) is not int or not 1 <= limite_semanas <= 12):
         raise ErroColetaANP("ano/limite fora da política de coleta moderada")
+    def validar_corte(corte, campo):
+        if corte is None:
+            return None
+        if (not isinstance(corte, str) or len(corte) != 10
+                or not __import__("re").fullmatch(r"\\d{4}-\\d{2}-\\d{2}", corte)):
+            raise ErroColetaANP(f"{campo}: data ISO YYYY-MM-DD obrigatória")
+        try:
+            return date.fromisoformat(corte)
+        except ValueError as exc:
+            raise ErroColetaANP(f"{campo}: data de período inválida") from exc
+    desde = validar_corte(semana_desde, "semana_desde")
+    ate = validar_corte(semana_ate, "semana_ate")
+    if desde and ate and desde > ate:
+        raise ErroColetaANP("intervalo de backfill invertido")
     offline = indice_bytes is not None or arquivos_locais is not None
     if offline and (not isinstance(indice_bytes, bytes)
                     or not isinstance(arquivos_locais, dict)):
@@ -144,10 +160,16 @@ def coletar_lpc(
         html = obter_documento(URL_INDICE, tipo="HTML", abridor=abridor)
     index_time = datetime.now(timezone.utc).isoformat()
     info = descobrir_semanas_lpc(html, ano=ano)
+    semanas_catalogadas = len(info["semanas"])
     weeks = sorted(info["semanas"], key=lambda x:x["semana_inicio"], reverse=True)
+    if desde is not None:
+        weeks = [w for w in weeks if date.fromisoformat(w["semana_inicio"]) >= desde]
+    if ate is not None:
+        weeks = [w for w in weeks if date.fromisoformat(w["semana_fim"]) <= ate]
+    elegiveis = len(weeks)
     weeks = weeks[:limite_semanas]
     if not weeks:
-        raise ErroColetaANP("nenhuma planilha LPC encontrada no índice oficial")
+        raise ErroColetaANP("nenhuma planilha LPC encontrada para o recorte oficial")
     if arquivo_raw is not None:
         _raw_privado(arquivo_raw, subpasta="indices",
                      nome=sha256(html).hexdigest()+".html", payload=html)
@@ -201,7 +223,12 @@ def coletar_lpc(
         "status": "LOTE_COMPLETO" if not erros else
                   "LOTE_PARCIAL" if resultados else "LOTE_FALHOU",
         "tipo":"ANP_LPC_DIESEL_MT_REAL_PRELIMINAR",
-        "semanas_encontradas": len(weeks), "edicoes_integradas":len(resultados),
+        "semanas_catalogadas": semanas_catalogadas,
+        "semanas_elegiveis_periodo": elegiveis,
+        "semanas_encontradas": len(weeks),
+        "ainda_pendentes_recorte": elegiveis-len(weeks),
+        "semana_desde": semana_desde, "semana_ate": semana_ate,
+        "edicoes_integradas":len(resultados),
         "edicoes_novas":sum(x["edicao_nova"] for x in resultados),
         "capturas_novas":sum(x["captura_nova"] for x in resultados),
         "observacoes_integradas":sum(x["observacoes"] for x in resultados),
