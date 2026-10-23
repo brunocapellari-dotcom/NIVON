@@ -197,6 +197,7 @@ def extrair_lineup_html(html: str, fonte: str, *, coletado_em: str) -> list[dict
                 "porto": FONTES[fonte]["porto"],
                 "navio": navio,
                 "imo": _campo(row, "IMO/INSCRIÇÃO DA CAPITANIA", "IMO") or None,
+                "duv": _campo(row, "DUV", "DOCUMENTO UNICO VIRTUAL") or None,
                 "status": status,
                 "berco": _campo(row, "BERÇO", "BERÇO DE ATRACAÇÃO") or None,
                 "produto_informado": _campo(row, "CARGA", "TIPO DO PRODUTO") or None,
@@ -294,7 +295,8 @@ def inferir_presenca_amaggi(eventos: Iterable[Mapping], *, geocerca_terminal: Se
     por_navio: dict[str, list[tuple[datetime, Mapping]]] = {}
     for evento in eventos:
         imo = str(evento.get("imo") or "").strip()
-        if not re.fullmatch(r"\d{7}", imo):
+        mmsi = str(evento.get("mmsi") or "").strip()
+        if not re.fullmatch(r"\d{7}", imo) and not re.fullmatch(r"\d{9}", mmsi):
             continue
         try:
             lat, lon = float(evento["latitude"]), float(evento["longitude"])
@@ -304,16 +306,19 @@ def inferir_presenca_amaggi(eventos: Iterable[Mapping], *, geocerca_terminal: Se
         if momento.tzinfo is None or not (-90 <= lat <= 90 and -180 <= lon <= 180):
             continue
         if _dentro_poligono(lat, lon, geocerca_terminal):
-            por_navio.setdefault(imo, []).append((momento.astimezone(timezone.utc), evento))
+            chave = "IMO:" + imo if re.fullmatch(r"\d{7}", imo) else "MMSI:" + mmsi
+            por_navio.setdefault(chave, []).append((momento.astimezone(timezone.utc), evento))
     resultados = []
-    for imo, pontos in por_navio.items():
+    for chave, pontos in por_navio.items():
         pontos.sort(key=lambda x: x[0])
         distintos = {momento for momento, _ in pontos}
         duracao = (pontos[-1][0] - pontos[0][0]).total_seconds() / 60
         if len(distintos) < min_pontos or duracao < min_permanencia_minutos:
             continue
         resultados.append({
-            "fonte": "itacoatiara_amaggi", "porto": "ITACOATIARA_AMAGGI", "imo": imo,
+            "fonte": "itacoatiara_amaggi", "porto": "ITACOATIARA_AMAGGI",
+            "imo": chave[4:] if chave.startswith("IMO:") else None,
+            "mmsi": chave[5:] if chave.startswith("MMSI:") else None,
             "navio": None, "status": "PRESENCA_TERMINAL_PROVAVEL",
             "primeira_posicao": pontos[0][0].isoformat(),
             "ultima_posicao": pontos[-1][0].isoformat(),

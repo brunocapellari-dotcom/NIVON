@@ -75,5 +75,34 @@ class IntegracaoMaritima(unittest.TestCase):
         with self.assertRaises(ColetaMaritimaErro):
             baixar_html("ponta_madeira", habilitar_rede=True)
 
+
+    def test_gpv_importa_arquivo_autorizado_no_historico(self):
+        from nivon.maritimo_pipeline import processar_gpv
+        repo=HistoricoMaritimo()
+        csv_content="Navio,IMO,Status,BERÇO,Produto,Toneladas\\nNAVIO SIMULADO,1234567,Esperado,1,Minério,1200"
+        result=processar_gpv(csv_content,repo,acesso_autorizado=True,coletado_em=NOW)
+        self.assertEqual(result["revisoes_novas"],1)
+        self.assertEqual(len(repo.atuais("ponta_madeira")),1)
+        with self.assertRaises(PermissionError):
+            processar_gpv(csv_content,repo,acesso_autorizado=False,coletado_em=NOW)
+        repo.fechar()
+
+    def test_ais_nivon_mmsi_sem_imo_e_geocerca(self):
+        from nivon.maritimo_pipeline import normalizar_eventos_ais_nivon
+        events=[{"MessageType":"PositionReport",
+            "MetaData":{"MMSI":123456789,"Latitude":0.5,"Longitude":0.5},
+            "Message":{"PositionReport":{"UserID":123456789,"Valid":True}},
+            "recebido_em":f"2026-10-22T{hour:02d}:00:00Z"}
+            for hour in (12,13,14)]
+        normalized=normalizar_eventos_ais_nivon(events)
+        self.assertEqual(len(normalized),3)
+        self.assertIsNone(normalized[0].get("imo"))
+        repo=HistoricoMaritimo()
+        output=processar_ais_amaggi(normalized,repo,geocerca_auditada=[(0,0),(0,1),(1,1),(1,0)],coletado_em=NOW)
+        self.assertEqual(output["registros"],1)
+        self.assertEqual(repo.contagens()["revisoes"],1)
+        self.assertEqual(repo.contagens()["atuais"],0)
+        repo.fechar()
+
 if __name__ == "__main__":
     unittest.main()
