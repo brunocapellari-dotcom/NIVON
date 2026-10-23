@@ -102,6 +102,39 @@ class TestRecuperacaoCrashFretesE2E(unittest.TestCase):
             )
         self.assertEqual(len(list(self.f.receipts.iterdir())),0)
 
+    def test_recuperar_tardiamente_exige_optin_e_nao_retrodata(self):
+        self.ciclo_sem_recibo()
+        late=self.f.now+timedelta(days=1,minutes=3)
+        r=self.recuperar(
+            instante_recuperacao=late,
+            permitir_recuperacao_tardia=True,
+        )
+        self.assertEqual(
+            r["status"],
+            "RECIBO_TARDIO_CRIA_APENAS_EVIDENCIA_DE_INTEGRIDADE_ATUAL",
+        )
+        self.assertTrue(r["recuperacao_tardia"])
+        self.assertFalse(r["emissao_anterior_comprovada_por_testemunha"])
+        self.assertFalse(r["apto_para_avaliacao_oos_homologada"])
+        recibo=json.loads(Path(r["recibo_local_caminho"]).read_text())
+        self.assertEqual(recibo["assinado_em"],late.isoformat())
+        self.assertNotEqual(recibo["assinado_em"],self.f.now.isoformat())
+        self.assertEqual(len(list(self.f.receipts.glob("*.json"))),1)
+
+    def test_recibo_emitido_ontem_pode_ser_verificado_hoje(self):
+        r=self.f.ciclo()
+        out=self.recuperar(
+            instante_recuperacao=self.f.now+timedelta(days=1),
+        )
+        self.assertEqual(out["status"],"RECIBO_JA_EXISTENTE_VALIDADO_LOCALMENTE")
+        self.assertEqual(out["recibo_local_caminho"],r["recibo_local_caminho"])
+        self.assertEqual(len(list(self.f.receipts.glob("*.json"))),1)
+
+    def test_optin_tardio_exige_booleano(self):
+        self.ciclo_sem_recibo()
+        with self.assertRaisesRegex(ErroRecuperacaoFrete,"booleana"):
+            self.recuperar(permitir_recuperacao_tardia="sim")
+
     def test_cabeca_de_ofertas_nao_confiavel_recusa(self):
         self.ciclo_sem_recibo()
         with self.assertRaisesRegex(ValueError,"cabeça"):
