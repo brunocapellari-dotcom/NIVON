@@ -221,3 +221,36 @@ def recuperar_values_quarentena(*, banco, id_captura):
             "url_declarada":url,"primeira_coleta_em":coleta,
             "sha256_bruto":hash_,"bruto":bruto,"status":status,
             "metadata_v3_confirmado":False,"homologado":False}
+
+
+def main(argv=None):
+    """Operacao manual e explicita. Nunca agenda nem envia dados para terceiros."""
+    import argparse
+    import sys
+    parser = argparse.ArgumentParser(
+        description="NIVON: consulta IBGE values em quarentena (sem metadata v3)")
+    parser.add_argument("--periodo", default="202602")
+    parser.add_argument("--rede", action="store_true",
+                        help="opt-in para seis requisicoes HTTPS oficiais")
+    parser.add_argument("--confirmar-direitos", action="store_true",
+                        help="declara direitos de consulta/armazenamento")
+    parser.add_argument("--gravar", action="store_true",
+                        help="armazena JSONs de values no banco SQLite local")
+    parser.add_argument("--banco", help="caminho de SQLite fora do repositorio")
+    args = parser.parse_args(argv)
+    try:
+        resposta = executar_captura_values_quarentena(
+            periodo=args.periodo, rede=args.rede,
+            direitos_confirmados=args.confirmar_direitos,
+            gravar=args.gravar, banco=args.banco)
+        print(json.dumps(resposta, indent=2, ensure_ascii=False, sort_keys=True))
+        return 0
+    except (DadoInvalido, PermissionError, OSError, ValueError) as exc:
+        print(json.dumps({"status":"BLOQUEADO","erro":type(exc).__name__,
+                          "detalhe":str(exc)[:150]},ensure_ascii=False),
+              file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
