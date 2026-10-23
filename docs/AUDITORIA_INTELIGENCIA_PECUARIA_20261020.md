@@ -263,3 +263,25 @@ Reproduzir testes sinteticos: PYTHONPATH=src python -m unittest tests.test_pecua
 - Evidência CI com teste de revisão as-of: https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39983435093 com 1.319 testes, 0 falhas, 5 ignorados (inclui o teste HTTPS temporário removido depois). Runbook atualizado: docs/RUNBOOK_SIDRA_PECUARIA_LOTES_20261022.md.
 
 **Bloqueios remanescentes:** obter metadados oficiais completos, garantir direitos específicos de retenção/redistribuição, datas reais de publicação e eventual contrato de armazenamento Google Cloud; sem merge/deploy/cron/agendamento, sem dados reais em banco persistente e sem previsões operacionalmente homologadas.
+
+## Continuidade 23/10/2026 — correção do histórico real de revisões e exportação de quarentena
+
+**Problema P0 resolvido em código:** a reconstrução anterior retinha apenas a versão mais recente por território/trimestre antes de chamar o motor de revisões. Isso eliminava evidência de revisões intermediárias. Além disso, linhas que desapareciam de um novo extrato podiam herdar indevidamente o valor antigo quando snapshots eram mesclados por chave.
+
+### Implementações
+- `src/nivon/pecuaria_sidra_revisoes.py`: novo motor para comparar edições completas no mesmo escopo BR ou UFs, por trimestre. Os estados são `VALOR`, `CENSURADO` e `AUSENTE_NO_EXTRATO`. Ausência não é zero nem censura criada artificialmente. Cada mudança preserva IDs, hashes, primeiras coletas e status antigo/novo.
+- `src/nivon/pecuaria_sidra_backfill.py`: a consulta temporal lê todas as capturas existentes no corte (limite de 300 versões; acima disso falha fechado), reconstrói revisões e, separadamente, escolhe última edição de cada escopo para o diagnóstico territorial vigente. A saída distingue capturas históricas, vigentes e superadas, sem confundir primeira coleta com publicação do IBGE.
+- `src/nivon/pecuaria_sidra_quarentena.py`: a gravação transacional rejeita duas capturas diferentes do mesmo escopo e horário declarado; rollback de toda a transação em conflito.
+- `src/nivon/pecuaria_sidra_exportacao.py`: exportador de estágio para uso futuro em nuvem, sem rede. Exige direitos declarados de transferência, verifica hashes/recorte/corte temporal e escreve arquivos originais e manifesto SHA-256 num novo diretório por renomeação, sem sobrescrever pacotes existentes. Nenhum upload Google Cloud foi feito.
+- `config/motores_inteligencia.v1.json` e `src/nivon/registro_motores.py`: consulta as-of e auditoria de edições registradas em BOI, SUINO e FRANGO; gates operational_enabled=false e scheduled_enabled=false preservados.
+
+### Testes e evidências
+- Testes E2E `tests/test_pecuaria_sidra_backfill_integrado.py`: revisão numérica conserva valor anterior/novo; linha MT ausente em edição posterior deixa de compor estado vigente e SP passa a constar; colisão de mesmo instante rejeitada; duas versões não antecipam resultados; exportação 12 JSONs em manifesto com hashes, replay, cutoff, direitos, tampering e CLI read-only.
+- GitHub Actions https://github.com/brunocapellari-dotcom/NIVON/actions/runs/40001123587 — 1.325 testes executados, 0 falhas e 5 ignorados, incluindo os cenários novos.
+- Toda validação desta rodada usa capturas sintéticas já persistidas em SQLite de testes. A evidência anterior de 12 respostas HTTPS SIDRA reais (2025-T2 e 2026-T1) permanece em https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39983108842, mas nenhuma captura real foi armazenada nesta rodada.
+
+### Prioridades de liberação
+- P0: autenticar metadados agregados v3 e publicação original de cada edição, comprovando direitos específicos de retenção e transferência antes da carga real.
+- P1: integrar pacote de quarentena a armazenamento Google Cloud somente após identificar projeto, credenciais, budget/limite e permissões; a implementação atual não ativa serviços nem faturamento.
+- P1: ensaiar revisões efetivamente observadas em datas distintas e avaliar qualidade por UF/indicador, sem tratar histórico baixado agora como vintage autêntico.
+- P2: só então liberar motores de tendência e relatórios pecuários, mantendo os estados estimado/observado/inferido e fontes auditadas.
