@@ -272,3 +272,29 @@ Leitura por data de corte, sem rede e sem escrita:
 Testes E2E: tests/test_pecuaria_sidra_backfill_integrado.py, incluindo revisão capturada em datas diferentes, consulta CLI, ID de variável divergente, mapa temporal alterado, falha HTTP final e rollback SQL.
 
 **Estados:** funcionalidade implementada e testada; metadados v3, comprovação de licença e data histórica oficial continuam pendentes. Não ativado em produção, Google Cloud, WhatsApp ou agendamento.
+
+## Continuidade 23/10/2026 — revisões completas, lacunas e exportação portátil
+
+### Motor de revisões por escopo
+
+- `src/nivon/pecuaria_sidra_revisoes.py`: compara versões inteiras do MESMO recorte espécie/tabela/trimestre/território. Estados `VALOR`, `CENSURADO` e `AUSENTE_NO_EXTRATO` são distintos. Toda captura nova substitui seu recorte territorial por completo; linhas omissas não herdam valores antigos, nem viram zero.
+- `consultar_backfill_quarentena` preserva duas visões: `capturas_historicas_no_corte` (todas as versões já conhecidas) e `capturas_conhecidas_no_corte` (apenas a última por trimestre/recorte). O diagnóstico territorial é calculado SOMENTE sobre as versões vigentes.
+- `revisoes_observadas`, `total_revisoes_observadas` e `capturas_superadas_no_corte` explicitam mudanças de valor, censura ou desaparecimento, identificando os IDs e SHA-256 de ambas as capturas. A data continua sendo PRIMEIRA COLETA NIVON, não publicação histórica atestada do IBGE.
+- `pecuaria_sidra_quarentena.py` impede novas versões conflitantes no mesmo instante por recorte, dentro da transação: nenhuma inserção parcial é mantida.
+
+### Exportação local pronta para futura carga em staging
+
+- `src/nivon/pecuaria_sidra_exportacao.py`: lê SQLite em modo somente leitura, verifica hashes e corte, exige declaração específica de direito de transferência, prepara diretório novo com bytes JSON originais e `manifesto.json`, contendo período, UF/BR, espécie, URL declarada, primeira coleta e SHA-256. A escrita do diretório usa staging temporário e renomeação.
+- Não há conexão com Google Cloud Storage/Cloud SQL, upload, bucket, serviço ativado ou despesa. O pacote é transportável apenas após verificação externa das permissões de transferência e da autenticidade dos dados.
+
+**Comando de exportação exclusivamente local:**
+
+    PYTHONPATH=src python -m nivon.pecuaria_sidra_backfill --periodo 202502 --periodo 202601 --banco /dados/sidra/quarentena-values.sqlite --corte 2026-10-23T23:59:00+00:00 --confirmar-direitos --exportar-para /dados/entregas/sidra-quarentena-v1
+
+- O destino deve ser diretório NOVO, com pai existente; não sobrescreve pacotes anteriores, nem publica conteúdo. Depois de gerar, o operador pode conferir SHA-256 dos blobs frente ao manifesto e manter o pacote fora do repositório público.
+- A exportação contém TODAS as capturas conhecidas no corte para reconstruir revisões, não somente os valores vigentes. Faltando capturas anteriores, não se pode reconstruir edições nunca observadas.
+- Testes E2E: `tests/test_pecuaria_sidra_backfill_integrado.py` verifica UF desaparecida e substituída, alteração de preço/volume inexistente não inventada, revisão numérica, conflito de timestamp, replay, hashes, exportação, falta de permissão, corte anterior e bloqueio de diretório já existente.
+
+**CI verificado:** https://github.com/brunocapellari-dotcom/NIVON/actions/runs/40001123587 — 1.325 testes executados, 0 falhas, 5 ignorados. Nenhuma execução real de armazenamento em nuvem ou captura de novos dados oficiais nesta rodada.
+
+**Pendências de aceitação antes de produção:** P0 homologar metadata v3 (ou documentação primária equivalente), classificação territorial por versão, termos de consulta/retencao/transferencia e calendário de publicação IBGE; P1 integração GCP de staging sem custos não autorizados; P1 aferição da exatidão de revisões retrospectivas com edições capturadas em datas efetivamente diferentes.
