@@ -165,15 +165,17 @@ def interpretar_csv_antt(raw: bytes, *, ano: int, coleta_utc: str,
         if not (re.fullmatch(r"[A-Z]{2}", uf_o) and re.fullmatch(r"[A-Z]{2}", uf_d)):
             raise ErroTransporte("UF OD invalida")
         tu, tku = _numero(linha["TU"]), _numero(linha["TKU"])
-        if (tu == 0) != (tku == 0):
-            raise ErroTransporte("TU e TKU inconsistentes")
+        anomalia_tu_tku = (tu == 0) != (tku == 0)
+        # Fontes historicas podem ter medidas divergentes; preservar como
+        # observado declarado e sinalizar, sem fabricar valor ou interromper toda a serie.
         saida.append({
             "fonte": "ANTT_SIADE_ORIGEM_DESTINO", "ano": ano, "competencia": mes,
             "ferrovia": linha["Ferrovia"], "mercadoria": linha["Mercadoria_ANTT"],
             "estacao_origem": linha["Estacao_Origem"], "uf_origem": uf_o,
             "estacao_destino": linha["Estacao_Destino"], "uf_destino": uf_d,
             "toneladas_uteis": str(tu), "tku_raw": str(tku),
-            "unidade_tku_confirmada": False, "natureza_tu": "OBSERVADO_DECLARADO",
+            "unidade_tku_confirmada": False, "anomalia_tu_tku": anomalia_tu_tku,
+            "natureza_tu": "OBSERVADO_DECLARADO",
             "natureza_tku": "OBSERVADO_DECLARADO_A_CONCILIAR",
             "data_coleta_utc": coleta_utc, "fonte_url": link,
         })
