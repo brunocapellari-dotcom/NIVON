@@ -53,6 +53,9 @@ def preflight():
     result = command(["git", "status", "--porcelain", "--untracked-files=no"])
     if result.returncode or result.stdout.strip():
         raise RuntimeError("Checkout principal precisa estar limpo antes da execução")
+    identity = command(["git", "var", "GIT_AUTHOR_IDENT"])
+    if identity.returncode:
+        raise RuntimeError("Git sem identidade de autor configurada; não iniciar agentes")
     # Testes executam código produzido por LLM: exigir Docker local offline.
     if not shutil.which("docker"):
         raise RuntimeError("Docker requerido para testes isolados sem rede")
