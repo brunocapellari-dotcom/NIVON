@@ -190,8 +190,8 @@ def normalizar_csv_canada(raw):
               "source_ktonnes":str(decimal),"tonnes":str(tonnes),
               "unidade_original":"Ktonnes"}
         })
-        if len(registros)>18000:
-            raise ErroColetor("mais de 18000 series canada; particionar antes")
+        if len(registros)>75000:
+            raise ErroColetor("mais de 75000 series canada; particionar antes")
     return registros,{"status_parser":"MAPPED","linhas_total_csv":lidas,
              "observacoes_alvo":len(registros),"grains":sorted(selecionados)}
 
