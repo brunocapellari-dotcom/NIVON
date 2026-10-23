@@ -165,6 +165,30 @@ class TestCicloRONIRecuperavel(unittest.TestCase):
         with self.assertRaises(ErroRONI):
             gerar_backup_roni(self.db, raw_dir=self.raw, destino=folder)
 
+    def test_rede_real_negada_pelo_catalogo_e_cli_nao_cria_banco(self):
+        from nivon.roni_captura_manual import (
+            capturar_roni_manual, exigir_direitos_catalogo_roni,
+        )
+        with self.assertRaisesRegex(PermissionError, "CANDIDATE/OFF"):
+            exigir_direitos_catalogo_roni()
+        with self.assertRaises(PermissionError):
+            capturar_roni_manual(
+                self.db, raw_dir=self.raw, autorizar_http=True,
+                autorizacoes=frozenset({"COLETA", "ARMAZENAMENTO"}),
+                evidencia_direitos="NOAA PUBLIC TEST DECLARATION")
+        self.assertFalse(self.raw.exists())
+        dbpath = self.root / "nao_criado.sqlite"
+        proc = subprocess.run([
+            sys.executable, "-m", "nivon.roni_cli", "capturar",
+            "--banco", str(dbpath), "--raw-dir", str(self.raw),
+            "--confirmar-gravacao-local", "--autorizar-http",
+            "--direitos-fonte", "DECLARACAO_NAO_SUBSTITUI_HOMOLOGACAO",
+        ], capture_output=True, text=True, timeout=15)
+        self.assertEqual(proc.returncode, 2)
+        self.assertIn("BLOQUEADO", proc.stdout)
+        self.assertFalse(dbpath.exists())
+        self.assertFalse(self.raw.exists())
+
     def test_cli_relatorio_backup_e_verificar_backup_em_lote(self):
         self._importar_versoes()
         base = [sys.executable, "-m", "nivon.roni_cli"]
