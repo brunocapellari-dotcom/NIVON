@@ -48,3 +48,14 @@ Execução https://github.com/brunocapellari-dotcom/NIVON/actions/runs/398912366
 3. **Concluído em execuções consecutivas:** validação de idempotência `ON CONFLICT`. Pendente comprovar atualização em dias distintos e registrar revisões temporais reais quando ocorrerem.
 4. Estender para algodão, boi e frete, respeitando unidade, praça, tempo de referência, safra e classificações.
 5. Não promover candidatos para preço diário operacional nem motor de tendência antes de resolver `data_referencia` ou dispor de metodologia explícita para indicadores de publicação.
+
+## Ampliação operacional confirmada — 23/10/2026
+
+- Fonte oficial via `agrobr==2.0.0` com metadados da API, sem scraping de widgets; 2 cadeias adicionais: algodão (ID 1) e bovinocultura de corte (ID 2).
+- https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39943520307 — validação real sem escrita: algodão 111, bovinocultura 684 registros aceitos para staging, com 0 datas de referência verificadas.
+- Função Neon `imeastage` implantada, deployment 2 `completed`; valida assinatura OIDC do workflow, endpoint oficial por cadeia, hash de identidade/versão e lotes de até 80 itens.
+- https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39943738026 — primeira ingestão de 4 cadeias: algodão +111, bovinocultura +684, soja e milho duplicados (+0); **zero promoções para dados de cotação canônicos**.
+- https://github.com/brunocapellari-dotcom/NIVON/actions/runs/39943963140 — workflow principal `main` idempotente: 1.012/1.012 duplicatas, +0 inserções; cron de 2 janelas diárias em dias úteis mantido.
+- Query de validação no Neon: **1.012 registros** (algodão 111; bovinocultura 684; milho 110; soja 107). Todas as `reference_date` permanecem NULL.
+- Mapeamentos precisos no catálogo (não de todas as linhas do staging): soja IMEA #199 (23), milho IMEA #198 (23), algodão IMEA #131 (13 pluma disponível), boi à vista IMEA #122 (150 boi gordo à vista). Outras séries preservadas com unidade e proveniência, não promovidas indevidamente.
+- Pendência real: nenhuma dessas publicações deve ser usada como referência diária no motor de tendências até resolver tempo econômico, escopo de autorização e QA. A verificação de cron em datas distintas é futura, não concluída.
