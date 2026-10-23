@@ -17,6 +17,9 @@ from nivon.ivo_pam_operacao import (
     executar_lote_pam, main, ErroOperacaoPAM,
 )
 
+from nivon.ivo_pam_consulta import painel_pam_ivo
+from nivon.ivo_pam_qualidade import auditar_operacao_pam
+
 UTC=timezone.utc
 
 
@@ -215,6 +218,57 @@ class TestIVOOperacaoPAME2E(unittest.TestCase):
         self.salvar()
         with self.assertRaises(ErroOperacaoPAM):
             self.consultar(corte_coleta=datetime(2026,10,21))
+
+    def test_lote_e2e_painel_e_auditoria_de_bytes(self):
+        tarefas=[]
+        for ano,valor in ((2019,100),(2020,130),(2021,170)):
+            name=f"soja_{ano}.json"
+            (self.entrada/name).write_bytes(fixture(ano=ano,valor=str(valor)))
+            tarefas.append(self.tarefa(name,ano=ano))
+        resultado=executar_lote_pam(db=self.db,raiz=self.cofre,
+            tarefas=tarefas,modo="LOCAL",entrada=self.entrada)
+        self.assertEqual(resultado["aprovados"],3)
+        painel=painel_pam_ivo(self.db,municipio_ibge="5107958",
+            produto="2713",variavel="214",ano_inicio=2019,ano_fim=2021)
+        self.assertEqual([s["valor"] for s in painel["serie_anual"]],[100.,130.,170.])
+        self.assertEqual(painel["serie_anual"][2]["variacao_pct_anual"],100*(40/130))
+        self.assertFalse(painel["previsao_homologada"])
+        audit=auditar_operacao_pam(db=self.db,raiz=self.cofre)
+        self.assertTrue(audit["integridade_local_aprovada"])
+        self.assertEqual(audit["vintages_verificadas"],3)
+        self.assertEqual(audit["capturas_registradas"],3)
+        self.assertFalse(audit["treinamento_real_liberado"])
+
+    def test_auditoria_detecta_valor_sql_adulterado(self):
+        self.salvar()
+        self.db.execute("UPDATE pam_vintages SET valor=999")
+        a=auditar_operacao_pam(db=self.db,raiz=self.cofre)
+        self.assertFalse(a["integridade_local_aprovada"])
+        self.assertTrue(any("valor" in x["problema"] for x in a["erros"]))
+
+    def test_auditoria_detecta_bytes_originais_adulterados(self):
+        self.salvar()
+        sha=self.consultar()["ultima"]["sha256"]
+        (self.cofre/"objetos_sha256"/(sha+".bin")).write_bytes(b"corrompido")
+        a=auditar_operacao_pam(db=self.db,raiz=self.cofre)
+        self.assertFalse(a["integridade_local_aprovada"])
+        self.assertEqual(len(a["erros"]),1)
+
+    def test_painel_nao_calcula_variacao_entre_anos_com_lacuna(self):
+        self.salvar(fixture(ano=2019,valor="100"),p=plano(ano=2019),
+                    tempo=instante(19))
+        self.salvar(fixture(ano=2021,valor="300"),p=plano(ano=2021),
+                    tempo=instante(21))
+        panel=painel_pam_ivo(self.db,municipio_ibge="5107958",
+            produto="2713",variavel="214",ano_inicio=2019,ano_fim=2021)
+        self.assertIsNone(panel["serie_anual"][2]["variacao_pct_anual"])
+        self.assertEqual(panel["anos_sem_captura_numerica"],1)
+
+    def test_nao_aceita_retrodatacao_de_captura_no_mesmo_alvo(self):
+        self.salvar(fixture(valor="100"),tempo=instante(21))
+        with self.assertRaises(ErroOperacaoPAM):
+            self.salvar(fixture(valor="50"),tempo=instante(20))
+        self.assertEqual(self.consultar()["capturas"],1)
 
 if __name__=="__main__":
     unittest.main()
