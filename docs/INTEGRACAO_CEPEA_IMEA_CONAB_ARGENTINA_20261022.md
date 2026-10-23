@@ -74,3 +74,50 @@ Próximas tarefas:
 2. Confirmar o CKAN real argentino e a URL dos CSV por recurso em executor autorizado; capturar e auditar ao menos uma edição.
 3. Documentar schemas de SIO Granos e DJVE, especialmente diferença entre contratos/registro e embarque realizado.
 4. Conciliar PRs #119/#122 e de CONAB antes de promover o código à base principal; validar `main` e Google Cloud existentes antes de qualquer deploy.
+
+## Avanços adicionais — continuação da implementação
+
+### CONAB: índice oficial -> páginas -> fila -> bytes -> normalização
+
+Os módulos da branch agora são:
+- `src/nivon/conab_sync_metadados.py`: CLI opt-in que lê **índice e páginas oficiais** (máximo de 10 páginas por chamada), sem downloads de anexos, e registra candidatos novos em SQLite.
+- `src/nivon/conab_fila_publicacoes.py`: metadados versionados da semana e URLs candidatas de Plantio e Colheita, Fenologia e Monitoramento, com hash do HTML e filas idempotentes. Não infere a data de publicação.
+- `src/nivon/auditoria_publicacao_conab.py`, `conab_replay_xlsx.py`, `captura_xlsx_conab.py`: reaproveitados das branches de dados CONAB, com prova de transporte para uma edição, validação de OOXML e RAW privado por pasta vazia; não há cron nem download ativo por padrão.
+- `src/nivon/conab_ingestao_xlsx.py`: conecta um XLSX **já adquirido licitamente** e identificado na fila ao parser e ao armazenamento histórico `progresso_conab_historico.registrar_progresso_local`. A importação `REAL_AUTORIZADO` continua bloqueada pelo catálogo quando `enabled=false`.
+
+Exemplo apenas após validar direito de consulta de metadados do portal:
+```bash
+PYTHONPATH=src python -m nivon.conab_sync_metadados \
+  --banco /dados/privados/nivon_fontes.sqlite \
+  --limite-paginas 3 --executar --direitos-consulta
+```
+O caminho local deve estar em volume privado durável. **Metadados não são planilhas baixadas.** Para captura XLSX de uma edição, usar o contrato `captura_xlsx_conab.py`, cuja interface exige os dados reais da página e do anexo e o diretório de destino privado e vazio. Não executar captura de XLSX com direitos desconhecidos.
+
+### CEPEA e IMEA: coleta autorizada via biblioteca agrobr
+
+- `src/nivon/cotacoes_agrobr_coletor.py`: `agrobr.cepea.indicador(produto,return_meta=True)` e `agrobr.imea.cotacoes(cadeia,return_meta=True)`, coletando apenas quando direitos individuais para consulta e armazenamento foram verificados e o operador ativa as flags.
+- Estados em SQLite: `cotacao_lotes`, `cotacao_linhas`, `cotacao_lotes_coletas`; `QUARENTENA_SEM_HOMOLOGACAO_TEMPORAL`; dados nunca alimentam motor/briefing enquanto publicação e legalidade específicas não forem homologadas.
+- Preservar indicador IMEA com ID de texto e praça/safra/unidade; não tratar `NaT`, `NaN` ou zero como publicação atual; duplicatas de valores distintos ficam documentadas, e origem `noticias_agricolas` não é atribuída automaticamente ao CEPEA primário.
+- O CEPEA possui **API comercial oficial** com termos próprios no portal One-to-One: https://onetoone.cepea.org.br/termocontratacao-regulamentoapi/ . Não contratar neste projeto. A modalidade não comercial de indicadores públicos e a coleta por biblioteca de terceiros exigem respeito aos termos pertinentes.
+- Documentação agrobr: https://github.com/bruno-portfolio/agrobr/blob/main/docs/api/cepea.md e https://github.com/bruno-portfolio/agrobr/blob/main/docs/api/imea.md .
+- Status IMEA: o endpoint público usado pelo agrobr não equivale a licença escrita de extração/armazenamento ou redistribuição; direitos por operação ainda precisam ser verificados.
+
+Exemplo técnico (NÃO executar até homologar direitos específicos):
+```bash
+pip install -e '.[agro]'
+PYTHONPATH=src python -m nivon.cotacoes_agrobr_coletor \
+  --fonte CEPEA --produto soja --banco /dados/privados/mercado.sqlite \
+  --executar --direitos-consulta --direitos-armazenamento
+PYTHONPATH=src python -m nivon.cotacoes_agrobr_coletor \
+  --fonte IMEA --produto soja --banco /dados/privados/mercado.sqlite \
+  --executar --direitos-consulta --direitos-armazenamento
+```
+
+### Argentina comercialização — contrato ainda não validado
+- SIO Granos (https://www.siogranos.com.ar/) publica **documentação de API pública** em arquivo RAR, além de dados de operações informadas; o contrato de campos/endpoint não foi homologado neste ambiente. **Não inventar endpoint**.
+- Monitor Comercial (https://monitorssma.magyp.gob.ar/) cobre compras do exportador/indústria, transportes e DJVE em painéis com cortes variáveis.
+- Compras / DJVE (https://www.magyp.gob.ar/sitio/areas/ss_mercados_agropecuarios/areas/granos/_archivos/000058_Estad%C3%ADsticas/000020_Compras%20y%20DJVE%20de%20Granos.php?accion=imp): tabelas por safra, produto, comprador e volumes acumulados.
+- Codificar normalizadores de comercialização **após verificar layout real de saída e licença**; registros informados de compra não são comprovantes de entrega e DJVE não é embarque efetivo.
+
+### Homologação restante
+Testes unitários/offline devem passar em PR. Ainda faltam execução HTTP real autorizada, bytes fonte verificados, aquisição incremental monitorada, API e licença SIO/DJVE, fila operando como scheduler, persistência em armazenamento cloud e integração ao banco/briefing NIVON. Não executar jobs de produção nem gerar custos enquanto essas dependências permanecerem.
