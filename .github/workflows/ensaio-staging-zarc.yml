@@ -1,0 +1,32 @@
+name: ZARC staging - ensaio sintetico sem rede
+
+on:
+  push:
+    branches:
+      - feat/fontes-gratuitas-ckan-apis-20261021
+    paths:
+      - .github/workflows/ensaio-staging-zarc.yml
+      - scripts/ensaio_staging_zarc_sintetico.py
+      - src/nivon/zarc_raw_vault.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validar-staging-sintetico:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - name: Checkout sem credenciais persistentes
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Gerar 27918 registros ficticios e verificar staging/backup
+        env:
+          PYTHONPATH: src
+        run: python scripts/ensaio_staging_zarc_sintetico.py

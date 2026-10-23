@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "project": "NIVON",
-  "updated_on": "2026-10-21",
+  "updated_on": "2026-10-22",
   "default_policy": "DENY_ALL_SCHEDULED_FETCHES_UNTIL_RIGHTS_AND_PARSER_HOMOLOGATED",
   "go_live_status": "NOT_READY",
   "dates_required": [
@@ -970,6 +970,734 @@
       "access": "AUTHENTICATED_API",
       "rights": "RESTRICTED",
       "notes": "Swagger publico, dados apenas com JWT autorizado; sem credencial no NIVON."
+    },
+    {
+      "id": "ARG_SIO_GRANOS",
+      "provider": "SIO Granos Argentina",
+      "official_url": "https://www.siogranos.com.ar/",
+      "access": "API_DOC",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "ARG_BCR_GEA",
+      "provider": "Bolsa de Comercio Rosario GEA",
+      "official_url": "https://www.bcr.com.ar/es/mercados/gea",
+      "access": "REPORT",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "ARG_BOLSA_CEREALES",
+      "provider": "Bolsa de Cereales Buenos Aires PAS ECC",
+      "official_url": "https://www.bolsadecereales.com/estimaciones-informes",
+      "access": "REPORT",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "ARG_BCCBA",
+      "provider": "Bolsa Cereales Cordoba",
+      "official_url": "https://bccba.org.ar/informes-cultivos/",
+      "access": "REPORT",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "ARG_SENASA",
+      "provider": "SENASA Argentina",
+      "official_url": "https://www.argentina.gob.ar/senasa/transparencia/datosabiertos",
+      "access": "DATASET",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "ARG_INDEC",
+      "provider": "INDEC Catalogo API",
+      "official_url": "https://api.indec.gob.ar/",
+      "access": "API_KEY",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "ARG_BCRA",
+      "provider": "BCRA API estadisticas monetarias",
+      "official_url": "https://api.bcra.gob.ar/",
+      "access": "API",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "ARG_SMN",
+      "provider": "Servicio Meteorologico Nacional Argentina",
+      "official_url": "https://datos.gob.ar/dataset?organization=smn",
+      "access": "DATASET",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "ARG_MERCADO_GANADERO",
+      "provider": "Mercado Agroganadero Argentina",
+      "official_url": "https://www.mercadoagroganadero.com.ar/",
+      "access": "WEB",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "ARG_INTA_GEO",
+      "provider": "INTA Geo Argentina",
+      "official_url": "https://geo.inta.gob.ar/",
+      "access": "WMS",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "BR_DERAL",
+      "provider": "DERAL Parana",
+      "official_url": "https://www.agricultura.pr.gov.br/deral/precos",
+      "access": "XLS",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "BR_IEA",
+      "provider": "IEA Sao Paulo",
+      "official_url": "https://iea.agricultura.sp.gov.br/out/Bancodedados.php",
+      "access": "XLS",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "BR_EPAGRI_PRECOS",
+      "provider": "Epagri CEPA Precos",
+      "official_url": "https://cepa.epagri.sc.gov.br/index.php/mercado-agricola/",
+      "access": "XLS",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "BR_EPAGRI_CUSTOS",
+      "provider": "Epagri CEPA Custos",
+      "official_url": "https://cepa.epagri.sc.gov.br/index.php/custos-de-producao/",
+      "access": "XLS",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "BR_CCEE_PLD",
+      "provider": "CCEE dados abertos",
+      "official_url": "https://dadosabertos.ccee.org.br/",
+      "access": "CKAN",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "BR_SIAGAS",
+      "provider": "SGB SIAGAS hidrogeologia",
+      "official_url": "https://siagasweb.sgb.gov.br/layout/",
+      "access": "WEB",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "BR_IRGA",
+      "provider": "IRGA Rio Grande do Sul",
+      "official_url": "https://irga.rs.gov.br/safra",
+      "access": "REPORT",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "BR_ABRAPA",
+      "provider": "Associacao Brasileira Produtores Algodao",
+      "official_url": "https://abrapa.com.br/",
+      "access": "REPORT",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "BR_EMBRAPA_MLOG",
+      "provider": "Embrapa Macrologistica SITE-MLog",
+      "official_url": "https://www.embrapa.br/en/web/territorial/macrologistica/apresentacao",
+      "access": "GEODATA",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "BR_CONSECANA",
+      "provider": "Consecana Sao Paulo",
+      "official_url": "https://www.consecana.com.br/download.asp",
+      "access": "XLS",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "WTO_TIMESERIES",
+      "provider": "WTO Timeseries API",
+      "official_url": "https://api.wto.org/",
+      "access": "API_KEY",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "WTO_EPING",
+      "provider": "WTO ePing SPS TBT",
+      "official_url": "https://epingalert.org/",
+      "access": "API_DOC",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "OECD_SDMX",
+      "provider": "OECD SDMX API",
+      "official_url": "https://sdmx.oecd.org/",
+      "access": "SDMX",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "IGC_GOI",
+      "provider": "International Grains Council",
+      "official_url": "https://www.igc.int/",
+      "access": "REPORT",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "USGS_MINERALS",
+      "provider": "USGS Mineral Commodity",
+      "official_url": "https://www.usgs.gov/centers/national-minerals-information-center",
+      "access": "CSV",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "UNECE_UNLOCODE",
+      "provider": "UNECE UN LOCODE",
+      "official_url": "https://unece.org/trade/uncefact/unlocode",
+      "access": "CSV",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "WB_WITS",
+      "provider": "World Bank WITS API",
+      "official_url": "https://wits.worldbank.org/witsapiintro.aspx",
+      "access": "API",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "UNCTAD_DATA",
+      "provider": "UNCTAD Data Hub",
+      "official_url": "https://unctadstat.unctad.org/",
+      "access": "DATASET",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "EU_AGRIFOOD",
+      "provider": "European Commission Agri-food",
+      "official_url": "https://agridata.ec.europa.eu/",
+      "access": "API",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "USDA_MMN",
+      "provider": "USDA AMS MyMarketNews",
+      "official_url": "https://mymarketnews.ams.usda.gov/mymarketnews-api",
+      "access": "API_KEY",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "FEWSNET",
+      "provider": "FEWS NET Data Explorer",
+      "official_url": "https://fews.net/data",
+      "access": "DATASET",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "TERRACLIMATE",
+      "provider": "TerraClimate",
+      "official_url": "https://www.climatologylab.org/terraclimate.html",
+      "access": "RASTER",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "NASA_SMAP",
+      "provider": "NASA SMAP",
+      "official_url": "https://smap.jpl.nasa.gov/",
+      "access": "EARTHDATA",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "HYDROBASINS",
+      "provider": "HydroBASINS",
+      "official_url": "https://www.hydrosheds.org/products/hydrobasins",
+      "access": "VECTOR",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "HYDROATLAS",
+      "provider": "HydroATLAS",
+      "official_url": "https://www.hydrosheds.org/hydroatlas",
+      "access": "VECTOR",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "GRDC_RUNOFF",
+      "provider": "Global Runoff Data Centre",
+      "official_url": "https://www.bafg.de/GRDC/EN/Home/homepage_node.html",
+      "access": "PORTAL",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "JRC_ASAP",
+      "provider": "JRC ASAP Agricultural Early Warning",
+      "official_url": "https://agricultural-production-hotspots.ec.europa.eu/",
+      "access": "WFS_CSV",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "EU_GDO",
+      "provider": "Copernicus Global Drought Observatory",
+      "official_url": "https://drought.emergency.copernicus.eu/",
+      "access": "GEODATA",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "IRI_CLIMATE",
+      "provider": "Columbia IRI Data Library",
+      "official_url": "https://iridl.ldeo.columbia.edu/",
+      "access": "API_DOC",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "EUMETSAT_DATA",
+      "provider": "EUMETSAT Data Store",
+      "official_url": "https://data.eumetsat.int/",
+      "access": "API_KEY",
+      "rights": "REVIEW",
+      "notes": "Expansao 2026-10-22; cadastro nao comprova endpoint, licenca de coleta ou execucao."
+    },
+    {
+      "id": "BR_CEAGESP_COTACOES",
+      "provider": "CEAGESP cotações atacado",
+      "official_url": "https://ceagesp.gov.br/cotacoes",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "BR_CEASA_PR",
+      "provider": "CEASA Paraná preços",
+      "official_url": "https://www.ceasa.pr.gov.br/Pagina/Cotacao-Diaria-de-Precos",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "BR_CEASA_GO",
+      "provider": "CEASA Goiás preços",
+      "official_url": "https://dadosabertos.go.gov.br/dataset/cotacao-ceasa",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "BR_CEASA_RS",
+      "provider": "CEASA Rio Grande do Sul",
+      "official_url": "https://ceasa.rs.gov.br/cotacoes-de-precos",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "BR_PRF_ACIDENTES",
+      "provider": "PRF acidentes em rodovias",
+      "official_url": "https://www.gov.br/prf/pt-br/acesso-a-informacao/dados-abertos/dados-abertos-da-prf",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "BR_PRF_INFRACOES",
+      "provider": "PRF infrações rodoviárias",
+      "official_url": "https://www.gov.br/prf/pt-br/acesso-a-informacao/dados-abertos/dados-abertos-da-prf",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "BR_SGB_RIMAS",
+      "provider": "SGB RIMAS",
+      "official_url": "https://www.sgb.gov.br/rede-integrada-de-monitoramento-das-aguas-subterraneas-rimas",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "BR_SGB_SACE",
+      "provider": "SGB SACE",
+      "official_url": "https://www.sgb.gov.br/sace/",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "BR_EMBRAPA_SATVEG",
+      "provider": "Embrapa SATVeg API",
+      "official_url": "https://www.agroapi.cnptia.embrapa.br/store/apis/info?name=SATVeg&provider=agroapi&tag=Modis&version=v2",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "BR_IBGE_PIMPF",
+      "provider": "IBGE PIM-PF",
+      "official_url": "https://www.ibge.gov.br/estatisticas/economicas/industria/9294-pesquisa-industrial-mensal-producao-fisica-brasil.html",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "BR_IBGE_PIA_PROD",
+      "provider": "IBGE PIA-Produto",
+      "official_url": "https://www.ibge.gov.br/estatisticas/economicas/industria/9044-pesquisa-industrial-anual.html",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "BR_IBGE_CENSO_AGRO",
+      "provider": "IBGE Censo Agropecuário 2017",
+      "official_url": "https://www.ibge.gov.br/estatisticas/economicas/agricultura-e-pecuaria/21814-2017-censo-agropecuario.html",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "BR_SNIF",
+      "provider": "Serviço Florestal SNIF",
+      "official_url": "https://snif.florestal.gov.br/pt-br",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "BR_IBAMA_EMBARGOS",
+      "provider": "IBAMA embargos ambientais",
+      "official_url": "https://www.gov.br/pt-br/servicos/consultar-autuacoes-ambientais-e-embargos",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "BR_DNIT_PNCT",
+      "provider": "DNIT PNCT dados de tráfego",
+      "official_url": "https://servicos.dnit.gov.br/dadospnct",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "BR_CNT_RODOVIAS",
+      "provider": "CNT Pesquisa Rodovias",
+      "official_url": "https://data.cnt.org.br/transporte/painel-da-pesquisa-cnt-de-rodovias/",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "BR_ANTF_FERROVIAS",
+      "provider": "ANTF ferrovia dados históricos",
+      "official_url": "https://www.antf.org.br/dados/",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "BR_CEASAMINAS",
+      "provider": "CEASAMINAS boletim diário preços",
+      "official_url": "https://www.ceasaminas.com.br/informacoesmercadogeral.asp",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "BR_IBGE_PNAD",
+      "provider": "IBGE PNAD Contínua",
+      "official_url": "https://www.ibge.gov.br/estatisticas/sociais/trabalho/9173-pnad-continua.html",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "BR_INPE_BDC_STAC",
+      "provider": "INPE Brazil Data Cube STAC",
+      "official_url": "https://data.inpe.br/bdc/stac/v1/",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "ARG_SERIES_API",
+      "provider": "API Séries de Tiempo",
+      "official_url": "https://apis.datos.gob.ar/series/api/",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "ARG_BCSF_SEA",
+      "provider": "Bolsa Comércio Santa Fe SEA",
+      "official_url": "https://www.bcsf.com.ar/ces/base_datos_sea.php",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "ARG_PUERTO_QUEQUEN",
+      "provider": "Puerto Quequén estatísticas",
+      "official_url": "https://puertoquequen.com/estadisticas-anuales/",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "ARG_PUERTO_BAHIABLANCA",
+      "provider": "Puerto Bahía Blanca",
+      "official_url": "https://puertobahiablanca.com/estadisticas.html",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "ARG_ROSARIO_COMEX",
+      "provider": "Rosario comércio exterior",
+      "official_url": "https://datos.rosario.gob.ar/economia/comercio-exterior",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "ARG_CNRT_FERROVIAS",
+      "provider": "CNRT ferrovias cargas",
+      "official_url": "https://www.argentina.gob.ar/transporte/cnrt/estadisticas-ferroviarias",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "ARG_BCP_BAHIABLANCA",
+      "provider": "Bolsa Cereales y Productos Bahía Blanca",
+      "official_url": "https://www.bcp.org.ar/informes.asp",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "ARG_CAMARA_ROSARIO",
+      "provider": "Cámara Arbitral Rosario preços pizarra",
+      "official_url": "https://cac.bcr.com.ar/es/precios-de-pizarra",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "ARG_A3_MERCADOS",
+      "provider": "A3 Mercados futuros argentinos",
+      "official_url": "https://a3mercados.com.ar/",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "ARG_BUENOS_AIRES_EST",
+      "provider": "Buenos Aires estimativas agro",
+      "official_url": "https://catalogo.datos.gba.gob.ar/es_AR/dataset/estimaciones-agro",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "CAN_GRAINS_WEEKLY",
+      "provider": "Canadian Grain Commission semanal",
+      "official_url": "https://www.canada.ca/en/grain-commission/services/statistics/grain-statistics-weekly.html",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "CAN_AGRI_OUTLOOK",
+      "provider": "Agriculture Canada Outlook",
+      "official_url": "https://agriculture.canada.ca/en/sector/crops/reports-statistics/canada-outlook-principal-field-crops-2026-09-25",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "CAN_STAT_API",
+      "provider": "Statistics Canada Web Data Service",
+      "official_url": "https://www.statcan.gc.ca/en/developers/wds",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "CAN_DROUGHT",
+      "provider": "Canadian Drought Monitor",
+      "official_url": "https://agriculture.canada.ca/en/agriculture-and-environment/drought-watch-and-agroclimate/canadian-drought-monitor",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "CAN_CROP_METRICS",
+      "provider": "Canadian Crop Metrics",
+      "official_url": "https://agriculture.canada.ca/en/agricultural-production/weather/canadian-crop-metrics",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "AUS_ABARES_CROP",
+      "provider": "ABARES Australian Crop Report",
+      "official_url": "https://www.agriculture.gov.au/abares/research-topics/agricultural-outlook/australian-crop-report",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "AUS_ABS_API",
+      "provider": "Australian Bureau Statistics Data API",
+      "official_url": "https://www.abs.gov.au/statistics/application-programming-interfaces-apis/data-api-user-guide",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "AUS_BOM_CLIMATE",
+      "provider": "BOM Australia Climate Data Online",
+      "official_url": "https://www.bom.gov.au/climate/data/",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "AUS_ABARES_DATA",
+      "provider": "ABARES data releases",
+      "official_url": "https://www.agriculture.gov.au/abares/data",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "USA_USDA_GRAIN_INSPECTIONS",
+      "provider": "USDA FGIS Export Grain Inspections",
+      "official_url": "https://fgisonline.ams.usda.gov/ExportGrainReport/default.aspx",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "USA_BTS_FAF",
+      "provider": "US BTS Freight Analysis Framework",
+      "official_url": "https://faf.ornl.gov/",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "USA_DROUGHT_MONITOR",
+      "provider": "U.S. Drought Monitor Downloads",
+      "official_url": "https://www.droughtmonitor.unl.edu/DmData/DataDownload.aspx",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "USA_NOAA_NWM_ARCHIVE",
+      "provider": "NOAA National Water Model Archive",
+      "official_url": "https://registry.opendata.aws/nwm-archive/",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "COP_AGERA5",
+      "provider": "Copernicus AgERA5 v2",
+      "official_url": "https://cds.climate.copernicus.eu/datasets/sis-agrometeorological-indicators?tab=overview",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "FAO_AQUASTAT",
+      "provider": "FAO AQUASTAT",
+      "official_url": "https://www.fao.org/land-water/resources/tools/databases/aquastat/en",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "FAO_HIH_GEO",
+      "provider": "FAO Hand-in-Hand Geospatial",
+      "official_url": "https://www.fao.org/hih-geospatial-platform/en/",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "MYS_MPOB_PALM",
+      "provider": "MPOB estatísticas óleo palma",
+      "official_url": "https://bepi.mpob.gov.my/",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "ZAF_SAGIS",
+      "provider": "SAGIS weekly grain deliveries",
+      "official_url": "https://www.sagis.org.za/sagis-weekly-data/",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "IND_ENAM",
+      "provider": "India eNAM Agmarknet",
+      "official_url": "https://www.enam.gov.in/web/dashboard/agmarknet",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "JODI_OIL",
+      "provider": "JODI Oil",
+      "official_url": "https://www.jodidata.org/oil/database/overview.aspx",
+      "access": "TO_VERIFY_PER_DATASET",
+      "rights": "REVIEW",
+      "notes": "Segundo lote pesquisado; acessos e direitos de coleta ainda sujeitos a verificacao."
+    },
+    {
+      "id": "ARG_GRANOS_AR",
+      "provider": "granos.ar — API pública secundária de mercado argentino",
+      "official_url": "https://granos.ar/api-docs/",
+      "access": "PUBLIC_JSON_API",
+      "rights": "ATTRIBUTION_REVIEW",
+      "notes": "API gratuita sem token; atribuir granos.ar. Fonte secundaria de cotacoes; nenhum numero homologado como preco oficial."
     }
   ],
   "datasets": [
@@ -1375,13 +2103,13 @@
       "products": [
         "LOGISTICA"
       ],
-      "topic": "operacoes_rota_sem_prova_tonelada",
+      "topic": "quantidade_mensal_ciot_declarada_em_portal_antt_nao_frete_preco_nem_tonelagem",
       "mode": "CSV",
       "cadence": "MONTHLY",
-      "stage": "DISCOVERY_ONLY",
+      "stage": "CODE_PRESENT",
       "priority": "P2",
-      "existing_module": null,
-      "notes": "",
+      "existing_module": "fontes_abertas_lote.py",
+      "notes": "Catálogo CIOT público retornou 161 recursos em teste real, mas teste posterior obteve MIME incompatível; parser apenas de metadados, sem preço de frete ou tonelada homologada.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
@@ -5043,10 +5771,10 @@
       "topic": "risco_e_janelas_semeadura",
       "mode": "DOWNLOAD",
       "cadence": "SEASONAL",
-      "stage": "CANDIDATE",
+      "stage": "CODE_PRESENT",
       "priority": "P2",
-      "existing_module": null,
-      "notes": "",
+      "existing_module": "zarc_stream_mt.py",
+      "notes": "Leitura real integral da edição ZARC 2026/27 validada estruturalmente em GitHub Actions #39854814268: 211652014 bytes/957490 linhas Brasil/27918 MT/142 municípios/16 portarias; 17 nomes de culturas. Dicionário oficial ciclo/solo/manejo em zarc_dicionario_oficial.py. Nenhum risco decendial interpretado nem persistência/automação ativa; falta QC agronômico e direitos por operação.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,
@@ -6187,6 +6915,2697 @@
       "priority": "P1",
       "existing_module": "cemaden_ped.py",
       "notes": "Exige token legítimo, fuso bruto e validação independente de estações e observação.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BCB_SICOR_MDCR",
+      "source_id": "BCB",
+      "group": "MACRO",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "ALGODAO",
+        "TRIGO"
+      ],
+      "topic": "credito_rural_sicor_matriz_odata_amostra_exploratoria_sem_serie_homologada",
+      "mode": "OFFICIAL_ODATA_API",
+      "cadence": "MONTHLY",
+      "stage": "CODE_PRESENT",
+      "priority": "P1",
+      "existing_module": "bcb_sicor_mdcr.py",
+      "notes": "Amostra OData SICOR v2 de até 25 linhas por requisição; não é total regional, não usar em relatórios até schema temporal e licença ODbL homologados.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_SIO_GRANOS_V1",
+      "source_id": "ARG_SIO_GRANOS",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "operacoes_granos_preco_volume",
+      "mode": "API_DOC",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_BCR_GEA_V1",
+      "source_id": "ARG_BCR_GEA",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "estimativas_plantio_colheita_produtividade",
+      "mode": "REPORT",
+      "cadence": "WEEKLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_BOLSA_CEREALES_V1",
+      "source_id": "ARG_BOLSA_CEREALES",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "progresso_safra_argentina",
+      "mode": "REPORT",
+      "cadence": "WEEKLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_BCCBA_V1",
+      "source_id": "ARG_BCCBA",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "estimativas_regionais_cordoba",
+      "mode": "REPORT",
+      "cadence": "WEEKLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_SENASA_V1",
+      "source_id": "ARG_SENASA",
+      "group": "PECUARIA",
+      "products": [
+        "BOI",
+        "FRANGO"
+      ],
+      "topic": "sanidade_rebanhos",
+      "mode": "DATASET",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_INDEC_V1",
+      "source_id": "ARG_INDEC",
+      "group": "COMEX",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "comercio_exterior_argentina",
+      "mode": "API_KEY",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_BCRA_V1",
+      "source_id": "ARG_BCRA",
+      "group": "MACRO",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "taxas_cambio_monetarias",
+      "mode": "API",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_SMN_V1",
+      "source_id": "ARG_SMN",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "estacoes_clima_argentina",
+      "mode": "DATASET",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_MERCADO_GANADERO_V1",
+      "source_id": "ARG_MERCADO_GANADERO",
+      "group": "PECUARIA",
+      "products": [
+        "BOI"
+      ],
+      "topic": "precos_bovinos_argentina",
+      "mode": "WEB",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_INTA_GEO_V1",
+      "source_id": "ARG_INTA_GEO",
+      "group": "GEO",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "solos_cultivos_geodados",
+      "mode": "WMS",
+      "cadence": "IRREGULAR",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_DERAL_V1",
+      "source_id": "BR_DERAL",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "preco_produtor_pr",
+      "mode": "XLS",
+      "cadence": "WEEKLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_IEA_V1",
+      "source_id": "BR_IEA",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "BOI"
+      ],
+      "topic": "precos_produtor_atacado_sp",
+      "mode": "XLS",
+      "cadence": "WEEKLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_EPAGRI_PRECOS_V1",
+      "source_id": "BR_EPAGRI_PRECOS",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "BOI"
+      ],
+      "topic": "precos_agricolas_sc",
+      "mode": "XLS",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_EPAGRI_CUSTOS_V1",
+      "source_id": "BR_EPAGRI_CUSTOS",
+      "group": "INDUSTRIA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "custos_producao_sc",
+      "mode": "XLS",
+      "cadence": "SEASONAL",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_CCEE_PLD_V1",
+      "source_id": "BR_CCEE_PLD",
+      "group": "ENERGIA",
+      "products": [
+        "LOGISTICA"
+      ],
+      "topic": "preco_energia_pld_horario",
+      "mode": "CKAN",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_SIAGAS_V1",
+      "source_id": "BR_SIAGAS",
+      "group": "HIDRO",
+      "products": [
+        "SOJA"
+      ],
+      "topic": "pocos_aquiferos_disponibilidade",
+      "mode": "WEB",
+      "cadence": "IRREGULAR",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_IRGA_V1",
+      "source_id": "BR_IRGA",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "ARROZ"
+      ],
+      "topic": "progresso_safra_rs",
+      "mode": "REPORT",
+      "cadence": "WEEKLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_ABRAPA_V1",
+      "source_id": "BR_ABRAPA",
+      "group": "SAFRA",
+      "products": [
+        "ALGODAO"
+      ],
+      "topic": "safra_algodao",
+      "mode": "REPORT",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_EMBRAPA_MLOG_V1",
+      "source_id": "BR_EMBRAPA_MLOG",
+      "group": "LOGISTICA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "bacias_corredores_logisticos",
+      "mode": "GEODATA",
+      "cadence": "IRREGULAR",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_CONSECANA_V1",
+      "source_id": "BR_CONSECANA",
+      "group": "PRECOS",
+      "products": [
+        "CANA",
+        "ACUCAR"
+      ],
+      "topic": "historico_atr_precos",
+      "mode": "XLS",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "WTO_TIMESERIES_V1",
+      "source_id": "WTO_TIMESERIES",
+      "group": "COMEX",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "trade_timeseries_wto",
+      "mode": "API_KEY",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "WTO_EPING_V1",
+      "source_id": "WTO_EPING",
+      "group": "RADAR",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "barreiras_sanitarias_comercio",
+      "mode": "API_DOC",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "OECD_SDMX_V1",
+      "source_id": "OECD_SDMX",
+      "group": "MACRO",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "indicadores_agricolas_macro",
+      "mode": "SDMX",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "IGC_GOI_V1",
+      "source_id": "IGC_GOI",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "indices_precos_graos_igc",
+      "mode": "REPORT",
+      "cadence": "WEEKLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "USGS_MINERALS_V1",
+      "source_id": "USGS_MINERALS",
+      "group": "FERTILIZANTES",
+      "products": [
+        "FERTILIZANTES"
+      ],
+      "topic": "minerais_potassio_fosfatos",
+      "mode": "CSV",
+      "cadence": "ANNUAL",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "UNECE_UNLOCODE_V1",
+      "source_id": "UNECE_UNLOCODE",
+      "group": "GEO",
+      "products": [
+        "LOGISTICA"
+      ],
+      "topic": "codigos_portos_localidades",
+      "mode": "CSV",
+      "cadence": "BIWEEKLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "WB_WITS_V1",
+      "source_id": "WB_WITS",
+      "group": "COMEX",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "barreiras_tarifas_comercio",
+      "mode": "API",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "UNCTAD_DATA_V1",
+      "source_id": "UNCTAD_DATA",
+      "group": "PORTOS",
+      "products": [
+        "LOGISTICA"
+      ],
+      "topic": "comercio_maritimo",
+      "mode": "DATASET",
+      "cadence": "ANNUAL",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "EU_AGRIFOOD_V1",
+      "source_id": "EU_AGRIFOOD",
+      "group": "FERTILIZANTES",
+      "products": [
+        "FERTILIZANTES",
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "preco_fertilizantes_europa",
+      "mode": "API",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "USDA_MMN_V1",
+      "source_id": "USDA_MMN",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "BOI"
+      ],
+      "topic": "precos_mercado_eua",
+      "mode": "API_KEY",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "FEWSNET_V1",
+      "source_id": "FEWSNET",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "choques_preco_seguranca_alimentar",
+      "mode": "DATASET",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "TERRACLIMATE_V1",
+      "source_id": "TERRACLIMATE",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "balanco_hidrico_deficit_evapotranspiracao",
+      "mode": "RASTER",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "NASA_SMAP_V1",
+      "source_id": "NASA_SMAP",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "umidade_solo_superficial_radicular",
+      "mode": "EARTHDATA",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "HYDROBASINS_V1",
+      "source_id": "HYDROBASINS",
+      "group": "HIDRO",
+      "products": [
+        "LOGISTICA"
+      ],
+      "topic": "hierarquia_bacias",
+      "mode": "VECTOR",
+      "cadence": "IRREGULAR",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "HYDROATLAS_V1",
+      "source_id": "HYDROATLAS",
+      "group": "HIDRO",
+      "products": [
+        "LOGISTICA"
+      ],
+      "topic": "variaveis_bacias_hidrologicas",
+      "mode": "VECTOR",
+      "cadence": "IRREGULAR",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "GRDC_RUNOFF_V1",
+      "source_id": "GRDC_RUNOFF",
+      "group": "HIDRO",
+      "products": [
+        "LOGISTICA"
+      ],
+      "topic": "vazoes_historicas_estacoes",
+      "mode": "PORTAL",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "JRC_ASAP_V1",
+      "source_id": "JRC_ASAP",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "alertas_anomalia_cultivo",
+      "mode": "WFS_CSV",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "EU_GDO_V1",
+      "source_id": "EU_GDO",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "indicadores_seca_global",
+      "mode": "GEODATA",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "IRI_CLIMATE_V1",
+      "source_id": "IRI_CLIMATE",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "previsao_sazonal_clima",
+      "mode": "API_DOC",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "EUMETSAT_DATA_V1",
+      "source_id": "EUMETSAT_DATA",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "observacao_satelite_meteorologia",
+      "mode": "API_KEY",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Dataset candidato; dados e formatos a homologar.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_CEAGESP_COTACOES_V1",
+      "source_id": "BR_CEAGESP_COTACOES",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "preços_de_hortifrúti_em_centrais_atacadistas",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_CEASA_PR_V1",
+      "source_id": "BR_CEASA_PR",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "cotações_de_hortifrúti_e_sazonalidade",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_CEASA_GO_V1",
+      "source_id": "BR_CEASA_GO",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "séries_abertas_de_preço_de_atacado",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_CEASA_RS_V1",
+      "source_id": "BR_CEASA_RS",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "cotações_atacadistas_do_sul",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_PRF_ACIDENTES_V1",
+      "source_id": "BR_PRF_ACIDENTES",
+      "group": "LOGISTICA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "microdados_de_acidentes_por_rodovia_e_trecho",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_PRF_INFRACOES_V1",
+      "source_id": "BR_PRF_INFRACOES",
+      "group": "LOGISTICA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "infrações_e_riscos_operacionais_rodoviários",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_SGB_RIMAS_V1",
+      "source_id": "BR_SGB_RIMAS",
+      "group": "HIDRO",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "nível_da_água_subterrânea_e_tendências",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_SGB_SACE_V1",
+      "source_id": "BR_SGB_SACE",
+      "group": "HIDRO",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "alertas_e_níveis_de_rios",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_EMBRAPA_SATVEG_V1",
+      "source_id": "BR_EMBRAPA_SATVEG",
+      "group": "GEO",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "ndvi_evi_token_e_direitos_pendentes",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_IBGE_PIMPF_V1",
+      "source_id": "BR_IBGE_PIMPF",
+      "group": "INDUSTRIA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "índice_mensal_de_produção_industrial",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_IBGE_PIA_PROD_V1",
+      "source_id": "BR_IBGE_PIA_PROD",
+      "group": "INDUSTRIA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "quantidade_produzida_e_vendida_por_produto",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_IBGE_CENSO_AGRO_V1",
+      "source_id": "BR_IBGE_CENSO_AGRO",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "base_estrutural_de_estabelecimentos_rurais",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_SNIF_V1",
+      "source_id": "BR_SNIF",
+      "group": "GEO",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "florestas_produção_e_uso_florestal",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P2",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_IBAMA_EMBARGOS_V1",
+      "source_id": "BR_IBAMA_EMBARGOS",
+      "group": "GEO",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "restrições_espaciais_e_ambientais",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_DNIT_PNCT_V1",
+      "source_id": "BR_DNIT_PNCT",
+      "group": "LOGISTICA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "volumetria_por_rodovia_e_classe_veicular",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_CNT_RODOVIAS_V1",
+      "source_id": "BR_CNT_RODOVIAS",
+      "group": "LOGISTICA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "qualidade_e_características_das_rodovias",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_ANTF_FERROVIAS_V1",
+      "source_id": "BR_ANTF_FERROVIAS",
+      "group": "LOGISTICA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "origem_destino_tu_portuárias_e_investimentos",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_CEASAMINAS_V1",
+      "source_id": "BR_CEASAMINAS",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "preços_de_atacado_e_oferta",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_IBGE_PNAD_V1",
+      "source_id": "BR_IBGE_PNAD",
+      "group": "MACRO",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "trabalho_e_renda_por_setor_e_região",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P2",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "BR_INPE_BDC_STAC_V1",
+      "source_id": "BR_INPE_BDC_STAC",
+      "group": "GEO",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "cubos_de_satélite_prontos_para_análise",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_SERIES_CAMBIO_DIARIO",
+      "source_id": "ARG_SERIES_API",
+      "group": "MACRO",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "séries_econômicas_e_agro_api_padronizada",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "CODE_PRESENT",
+      "priority": "P0",
+      "existing_module": "nivon.coletores_dados_reais",
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_BCSF_SEA_V1",
+      "source_id": "ARG_BCSF_SEA",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "estimativas_agrícolas_de_santa_fe",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_PUERTO_QUEQUEN_V1",
+      "source_id": "ARG_PUERTO_QUEQUEN",
+      "group": "PORTOS",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "navios_e_embarques_anuais",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_PUERTO_BAHIABLANCA_V1",
+      "source_id": "ARG_PUERTO_BAHIABLANCA",
+      "group": "PORTOS",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "operações_portuárias_por_produto",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_ROSARIO_COMEX_V1",
+      "source_id": "ARG_ROSARIO_COMEX",
+      "group": "COMEX",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "estatística_aduaneira_regional",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_CNRT_FERROVIAS_V1",
+      "source_id": "ARG_CNRT_FERROVIAS",
+      "group": "LOGISTICA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "toneladas_e_tonelada_km_ferroviárias",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_BCP_BAHIABLANCA_V1",
+      "source_id": "ARG_BCP_BAHIABLANCA",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "informes_comerciais_e_granários_regionais",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_CAMARA_ROSARIO_V1",
+      "source_id": "ARG_CAMARA_ROSARIO",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "referências_de_preços_em_rosario",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_A3_MERCADOS_V1",
+      "source_id": "ARG_A3_MERCADOS",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "futuros_de_grãos_e_câmbio_termos_de_mercado",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_BUENOS_AIRES_EST_V1",
+      "source_id": "ARG_BUENOS_AIRES_EST",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "séries_históricas_agrícolas_provinciais",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "CAN_GRAINS_CROP_YEAR_WEEKLY",
+      "source_id": "CAN_GRAINS_WEEKLY",
+      "group": "LOGISTICA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "entregas_e_embarques_por_semana",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P0",
+      "existing_module": "nivon.coletores_dados_reais",
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "CAN_AGRI_OUTLOOK_V1",
+      "source_id": "CAN_AGRI_OUTLOOK",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "produção_e_uso_de_grãos",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "CAN_STAT_API_V1",
+      "source_id": "CAN_STAT_API",
+      "group": "MACRO",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "séries_estatísticas_e_produção_canadense",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "CAN_DROUGHT_V1",
+      "source_id": "CAN_DROUGHT",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "seca_agrícola_regional",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "CAN_CROP_METRICS_V1",
+      "source_id": "CAN_CROP_METRICS",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "condição_e_previsão_de_rendimento_agrícola",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "AUS_ABARES_CROP_V1",
+      "source_id": "AUS_ABARES_CROP",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "safra_e_projeções_australianas",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "AUS_ABS_API_V1",
+      "source_id": "AUS_ABS_API",
+      "group": "MACRO",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "estatísticas_econômicas_australianas",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "AUS_BOM_CLIMATE_V1",
+      "source_id": "AUS_BOM_CLIMATE",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "histórico_observacional_meteorológico",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "AUS_ABARES_DATA_V1",
+      "source_id": "AUS_ABARES_DATA",
+      "group": "SAFRA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "mercados_e_custos_agropecuários",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "USA_USDA_GRAIN_INSPECTIONS_V1",
+      "source_id": "USA_USDA_GRAIN_INSPECTIONS",
+      "group": "PORTOS",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "inspeções_de_grãos_para_exportação_eua",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "USA_BTS_FAF_V1",
+      "source_id": "USA_BTS_FAF",
+      "group": "LOGISTICA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "fluxos_origem_destino_multimodais_americanos",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "USA_DROUGHT_MONITOR_V1",
+      "source_id": "USA_DROUGHT_MONITOR",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "histórico_espacial_das_secas_eua",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "USA_NOAA_NWM_ARCHIVE_V1",
+      "source_id": "USA_NOAA_NWM_ARCHIVE",
+      "group": "HIDRO",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "histórico_simulação_hidrológica_eua",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P2",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "COP_AGERA5_V1",
+      "source_id": "COP_AGERA5",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "reanálise_agroclimática_diária_global",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "FAO_AQUASTAT_V1",
+      "source_id": "FAO_AQUASTAT",
+      "group": "HIDRO",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "água_agrícola_irrigação_e_stress_hídrico",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "FAO_HIH_GEO_V1",
+      "source_id": "FAO_HIH_GEO",
+      "group": "GEO",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "dados_geoespaciais_agro_e_socioeconômicos",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "MYS_MPOB_PALM_V1",
+      "source_id": "MYS_MPOB_PALM",
+      "group": "INDUSTRIA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "oferta_estoques_e_preço_de_palma_acesso_restrito_para_partes",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ZAF_SAGIS_V1",
+      "source_id": "ZAF_SAGIS",
+      "group": "LOGISTICA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "entregas_semanais_de_milho_trigo_e_soja_áfrica_do_sul",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "DAILY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "IND_ENAM_V1",
+      "source_id": "IND_ENAM",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "preços_e_volumes_agrícolas_na_índia",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P1",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "JODI_OIL_V1",
+      "source_id": "JODI_OIL",
+      "group": "ENERGIA",
+      "products": [
+        "SOJA",
+        "MILHO"
+      ],
+      "topic": "diesel_refino_oferta_estoques_globais",
+      "mode": "API_OR_PUBLISHED_FILE",
+      "cadence": "MONTHLY",
+      "stage": "DISCOVERY_ONLY",
+      "priority": "P0",
+      "existing_module": null,
+      "notes": "Fonte identificada; rota sem ativacao, dados reais dependem de contrato verificavel.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_PIZARRA",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_pizarra",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P0",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_PIZARRA_HISTORICO",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_pizarra_historico",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P0",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_DOLAR",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "MACRO",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_dolar",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P1",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_RIESGO_PAIS",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "MACRO",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_riesgo-pais",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P1",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_CLIMA",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_clima",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P1",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_LLUVIAS",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "CLIMA",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_lluvias",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P1",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_CBOT_DIFERENCIAL",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_cbot_diferencial",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P0",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_CBOT_HISTORICO",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "PRECOS",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_cbot_historico",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P0",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_WASDE",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "BALANCO",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_wasde",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "MONTHLY",
+      "stage": "CODE_PRESENT",
+      "priority": "P1",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_INDICADORES",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "RADAR",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_indicadores",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P1",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_ALERTAS",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "RADAR",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_alertas",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P1",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
+      "enabled": false,
+      "collection_authorized": false,
+      "commercial_redistribution_authorized": false,
+      "data_dates_required": [
+        "competencia",
+        "referencia",
+        "publicacao",
+        "coleta"
+      ],
+      "downstream_contract": "OBSERVACAO_CANONICA_V1"
+    },
+    {
+      "id": "ARG_GRANOS_AR_STATUS",
+      "source_id": "ARG_GRANOS_AR",
+      "group": "RADAR",
+      "products": [
+        "SOJA",
+        "MILHO",
+        "TRIGO"
+      ],
+      "topic": "argentina_status",
+      "mode": "PUBLIC_JSON_API",
+      "cadence": "DAILY",
+      "stage": "CODE_PRESENT",
+      "priority": "P1",
+      "existing_module": "nivon.coletor_granos_ar",
+      "notes": "Secundaria, dados e latencia da publicacao condicionam utilizacao operacional.",
       "enabled": false,
       "collection_authorized": false,
       "commercial_redistribution_authorized": false,

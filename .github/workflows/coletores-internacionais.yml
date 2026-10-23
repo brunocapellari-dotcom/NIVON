@@ -1,0 +1,50 @@
+name: NIVON - fontes internacionais operacionais
+on:
+  pull_request:
+    paths:
+      - 'config/fontes_nivon_master.v1.json'
+      - 'config/rotas_coleta.v1.json'
+      - 'src/nivon/catalogo_fontes.py'
+      - 'src/nivon/rotas_coleta.py'
+      - 'src/nivon/coletores_dados_reais.py'
+      - 'src/nivon/ingestao_fontes_reais.py'
+      - 'tests/test_coletores_dados_reais.py'
+      - 'scripts/ensaio_fontes_internacionais_live.py'
+      - 'tests/test_fontes_expansao_20261022.py'
+      - '.github/workflows/coletores-internacionais.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  integracao-dados:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - name: Contratos novos e coletores RAW versionados
+        run: python -m unittest discover -s tests -p 'test_coletores_dados_reais.py' -v
+      - name: Compatibilidade com primeiro lote de 50
+        run: python -m unittest discover -s tests -p 'test_fontes_expansao_20261022.py' -v
+      - name: Integridade de catalogo
+        run: |
+          python -m nivon.catalogo_fontes --resumo
+          python -m nivon.rotas_coleta --resumo
+
+  ensaio-http-fontes-publicas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - name: HTTP real Argentina, Canada, CCEE (sem dados publicados)
+        run: python scripts/ensaio_fontes_internacionais_live.py

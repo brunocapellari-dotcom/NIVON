@@ -1,4 +1,4 @@
-"""Plano operacional das rotas de coleta NIVON: 86 datasets, fail-closed.
+"""Plano operacional versionado das rotas de coleta NIVON, fail-closed.
 
 Combina catálogo mestre (um só cadastro de produto, estágio, prioridade, cadência,
 fonte) e rotas técnicas. Nenhum acesso HTTP ou execução de collector aqui.
@@ -38,7 +38,7 @@ class ErroRota(ValueError):
 
 def carregar_rotas(path: str | Path = ROTAS) -> dict:
     p = Path(path)
-    if p.suffix != ".json" or not p.is_file() or p.is_symlink() or p.stat().st_size > 250_000:
+    if p.suffix != ".json" or not p.is_file() or p.is_symlink() or p.stat().st_size > 400_000:
         raise ErroRota("arquivo de rotas ausente, inválido ou grande demais")
     try:
         o = json.loads(p.read_text(encoding="utf-8"))
@@ -105,6 +105,7 @@ def validar_rotas(rotas: dict, catalogo: dict) -> dict:
             # para evitar transformar host arbitrário em endpoint de dados.
             homologados = {
                 "MAPA": {"dados.agricultura.gov.br"},
+                "ZARC": {"dados.agricultura.gov.br"},
                 "BCB": {"olinda.bcb.gov.br", "dadosabertos.bcb.gov.br", "api.bcb.gov.br"},
                 "OPEN_METEO": {"api.open-meteo.com", "archive-api.open-meteo.com", "flood-api.open-meteo.com", "ensemble-api.open-meteo.com"},
                 "INPE_TERRABRASILIS": {"terrabrasilis.dpi.inpe.br"},

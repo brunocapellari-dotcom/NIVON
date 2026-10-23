@@ -10,6 +10,7 @@ import sqlite3
 from datetime import date, datetime, timezone
 
 from .transacoes_sqlite import savepoint_atomico
+from .zarc_licenca_manual import validar_licenca_manual
 
 
 class ErroSnapshot(ValueError):
@@ -25,6 +26,8 @@ _TIPOS = {"SINTETICO", "REAL_AUTORIZADO"}
 _LIMITE_PADRAO = 20_000_000
 _LIMITE_POR_DATASET = {
     "CONAB_ARMAZENS_CAPACIDADE": 120_000_000,
+    # Somente metadados/hash do CSV oficial ZARC (211.652.014 B medidos).
+    "ZARC_JANELAS": 230_000_000,
     # CSV MDIC publicado por ano pode ultrapassar o limite padrão;
     # ledger armazena somente metadados e hashes, jamais os CSVs.
     "MDIC_COMEX_NCM": 1_500_000_000,
@@ -89,7 +92,8 @@ def registrar_snapshot(db: sqlite3.Connection, catalogo: dict, *,
                        publicacao: str | None = None,
                        tipo: str = "SINTETICO",
                        autorizacoes: frozenset[str] = frozenset(),
-                       evidencia_direitos: str | None = None) -> dict:
+                       evidencia_direitos: str | None = None,
+                       licenca_manual=None) -> dict:
     """Registra proveniência, nunca os bytes. SINTETICO jamais implica direito real.
 
     Uma mesma versão (dataset + SHA) com semântica temporal divergente é conflito.
@@ -127,18 +131,21 @@ def registrar_snapshot(db: sqlite3.Connection, catalogo: dict, *,
     if tipo not in _TIPOS:
         raise ErroSnapshot("tipo de snapshot desconhecido")
     if tipo == "REAL_AUTORIZADO":
-        # Este é o gate CENTRAL: a declaração de direitos do chamador não
-        # pode contornar o estado OFF no catálogo canônico.
-        if (match[0].get("enabled") is not True
-                or match[0].get("collection_authorized") is not True):
-            raise PermissionError("snapshot real bloqueado: dataset desativado no catálogo")
+        # Habilitação produtiva segue DENY-ALL. ÚNICA exceção explicitamente
+        # controlada: ZARC CC-BY em quarentena MANUAL, sem cron/publicação.
+        autorizado_producao=(match[0].get("enabled") is True
+                and match[0].get("collection_authorized") is True)
+        autorizado_manual=validar_licenca_manual(
+            licenca_manual,dataset_id=dataset_id,evidence_id=evidencia_direitos)
+        if not autorizado_producao and not autorizado_manual:
+            raise PermissionError("snapshot real bloqueado: fonte sem autorização operacional")
         if not {"COLETA", "ARMAZENAMENTO"}.issubset(autorizacoes):
             raise PermissionError("direitos por operação não aprovados")
         if (not isinstance(evidencia_direitos, str) or not
                 re.fullmatch(r"[A-Za-z0-9._:/-]{6,160}", evidencia_direitos)):
             raise PermissionError("identificador de evidência de direitos obrigatório")
     else:
-        if evidencia_direitos is not None or autorizacoes:
+        if evidencia_direitos is not None or autorizacoes or licenca_manual is not None:
             raise ErroSnapshot("snapshot sintético não pode simular autorização real")
     estado = (dataset_id, fonte_id, sha256, tamanho, mime, schema_versao,
               competencia, ref, pub, tipo, evidencia_direitos)
