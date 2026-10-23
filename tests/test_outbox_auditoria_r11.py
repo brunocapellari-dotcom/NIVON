@@ -108,6 +108,7 @@ class TestAuditoriaOutboxR11(unittest.TestCase):
         report=auditar_integridade_envios(self.con)
         self.assertGreaterEqual(report["anomalias"]["LEGADO_SEM_RESERVA_CORRESPONDENTE"],1)
         self.assertGreaterEqual(report["anomalias"]["ACK_SEM_RECIBO_CANONICO"],1)
+        self.assertGreaterEqual(report["anomalias"]["LEGADO_SEM_CONSENTIMENTO"],1)
         self.assertGreater(report["total_anomalias"],0)
 
     def test_reserva_consentimento_revogado_sem_bloqueio_detectado(self):
@@ -116,6 +117,7 @@ class TestAuditoriaOutboxR11(unittest.TestCase):
         self.con.commit()
         report=auditar_integridade_envios(self.con)
         self.assertEqual(report["anomalias"]["RESERVA_ATIVA_COM_OPTOUT"],1)
+        self.assertEqual(report["anomalias"]["LEGADO_ATIVO_COM_OPTOUT"],1)
 
     def test_snapshot_esperado_bloqueia_mutacao_durante_backup(self):
         preparar_briefing(self.con,destino="b"*64)
