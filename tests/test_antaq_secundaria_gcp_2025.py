@@ -1,6 +1,7 @@
 """Valida segregacao de fonte terceira, auditoria e idempotencia sem rede."""
 import tempfile
 import unittest
+import sys
 from datetime import datetime,timezone
 from decimal import Decimal
 from pathlib import Path
@@ -124,7 +125,8 @@ class Replica2025(unittest.TestCase):
     def test_idempotencia_no_bq_apartado(self):
         rows,p=self.montar()
         cli=BQ()
-        a=persistir(rows,p,cliente=cli,sdk=SDK,not_found=FakeNotFound)
+        a=persistir(rows,p,permitir_criar_tabela=True,
+                    cliente=cli,sdk=SDK,not_found=FakeNotFound)
         b=persistir(rows,p,cliente=cli,sdk=SDK,not_found=FakeNotFound)
         self.assertEqual(a["estado"],"ANTAQ_REPLICA_SECUNDARIA_2025_BQ_CONCILIADA")
         self.assertEqual(b["bq_estado"],"JA_ARQUIVADO_IDEMPOTENTE")
@@ -170,6 +172,60 @@ class Replica2025(unittest.TestCase):
         with self.assertRaises(ErroReplicaANTAQ):
             persistir(rows,p,cliente=cli,sdk=SDK,not_found=FakeNotFound)
         self.assertEqual(cli.loads,0)
+
+    def test_bootstrap_exige_gate_independente(self):
+        rows,p=self.montar()
+        cli=BQ()
+        with self.assertRaisesRegex(ErroReplicaANTAQ,"bootstrap exige aprovacao"):
+            persistir(rows,p,cliente=cli,sdk=SDK,not_found=FakeNotFound)
+        self.assertIsNone(cli.table)
+        self.assertEqual(cli.loads,0)
+
+    def test_cache_hf_symlink_vira_arquivo_regular(self):
+        from types import SimpleNamespace
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            fonte=root/"original.parquet"
+            fonte.write_bytes(b"P"*2048)
+            link=root/"cache_link.parquet"
+            link.symlink_to(fonte)
+            destino=root/"staging"
+            destino.mkdir()
+            received=[]
+            def downloader(*,repo_id,repo_type,filename,revision):
+                self.assertEqual(repo_id,"vinicius-souza/antaq")
+                self.assertEqual(repo_type,"dataset")
+                self.assertEqual(revision,HF_COMMIT)
+                received.append(filename)
+                return str(link)
+            fake=SimpleNamespace(hf_hub_download=downloader)
+            with patch.dict(sys.modules,{"huggingface_hub":fake}):
+                arquivos=baixar_revisao_fixada(destino)
+            self.assertEqual(len(received),2)
+            self.assertEqual(set(arquivos),{"hidrovia","carga"})
+            for arquivo in arquivos.values():
+                p=Path(arquivo)
+                self.assertTrue(p.is_file())
+                self.assertFalse(p.is_symlink())
+                self.assertEqual(p.read_bytes(),b"P"*2048)
+
+    def test_workflow_nao_escreve_sem_dispatch_e_gates(self):
+        path=(Path(__file__).resolve().parents[1] /
+              ".github/workflows/nivon-antaq-secundaria-gcp-2025.yml")
+        yaml=path.read_text(encoding="utf-8")
+        job=yaml.split("  publicar-somente-terceiro:",1)[1].split("    runs-on:",1)[0]
+        self.assertIn("github.event_name == 'workflow_dispatch'",job)
+        self.assertIn("inputs.aceitar_fonte_secundaria == true",job)
+        for gate in ("NIVON_ANTAQ_REPLICA_WRITE_APPROVED",
+                     "NIVON_ZERO_COST_BQ_APPROVED",
+                     "NIVON_ANTAQ_REPLICA_BOOTSTRAP_APPROVED"):
+            self.assertIn("vars."+gate+" == 'true'",job)
+        self.assertNotIn("github.event_name == 'push'",job)
+        self.assertIn("--permitir-criar-tabela",yaml)
+        reader=yaml.split("  validar-replica-real-sem-gcp:",1)[1].split(
+            "  publicar-somente-terceiro:",1)[0]
+        self.assertNotIn("google-github-actions/auth",reader)
+        self.assertNotIn("id-token: write",reader)
 
     def test_snapshot_parcial_bloqueia_reimportacao(self):
         rows,p=self.montar()
