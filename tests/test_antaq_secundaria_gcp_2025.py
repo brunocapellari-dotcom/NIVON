@@ -143,17 +143,23 @@ class Replica2025(unittest.TestCase):
             refs.mkdir(parents=True)
             simb=refs/"data.parquet"
             simb.symlink_to(blob)
-            with patch("huggingface_hub.hf_hub_download",return_value=str(simb)) as mock:
+            calls=[]
+            def mocked(**kwargs):
+                calls.append(kwargs)
+                return str(simb)
+            with patch.dict("sys.modules",{"huggingface_hub":SimpleNamespace(hf_hub_download=mocked)}):
                 p=baixar_revisao_fixada()
             self.assertEqual(p["hidrovia"],str(blob))
             self.assertEqual(p["carga"],str(blob))
-            self.assertEqual(mock.call_count,2)
+            self.assertEqual(len(calls),2)
+            self.assertTrue(all(c["revision"]==HF_COMMIT for c in calls))
 
     def test_cache_hf_rejeita_arquivo_fora_do_dataset(self):
         with tempfile.TemporaryDirectory() as root:
             p=Path(root)/"estranho.parquet"
             p.write_bytes(b"X"*200)
-            with patch("huggingface_hub.hf_hub_download",return_value=str(p)):
+            with patch.dict("sys.modules",{
+                "huggingface_hub":SimpleNamespace(hf_hub_download=lambda **_:str(p))}):
                 with self.assertRaisesRegex(ErroReplicaANTAQ,"cache esperado"):
                     baixar_revisao_fixada()
 
