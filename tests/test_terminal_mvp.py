@@ -121,7 +121,7 @@ class MVPTest(unittest.TestCase):
         self.assertIn(b"textContent",js["body"])
         css=request("/terminal.css")
         self.assertEqual(css["status"],"200 OK")
-        self.assertIn(b"NIVON",css["body"])
+        self.assertIn(b"--green",css["body"])
 
     def test_get_validado_sem_inventar_dado(self):
         falso={
