@@ -75,3 +75,11 @@ Não há instalação automática, crawl em lote, login, clique de confirmação
 | P2 Book-to-Skill | Gerador auditável de rascunhos | Revisão humana e testes da skill antes da ativação |
 
 **Não usar o sucesso dos testes offline como declaração de go-live, nem alterar o estado do M1 a partir destes resultados.**
+
+## Evidências de inspeção automática do código
+
+O workflow `.github/workflows/nivon-integracoes-ia-ci.yml` executa, sem credenciais nem serviços externos, o **grafo AST dos módulos Python atuais** e o diagnóstico P0–P2, ancorados no `GITHUB_SHA`.
+
+Em cada PR ou push que alterar o pacote de integrações, salva por sete dias um artefato de GitHub Actions, `nivon-integracoes-evidencias`, com `grafo-python.json`, `diagnostico.json` e `evidencia.json`. O sumário exibe contagem real de módulos, relações de importação e capacidades encontradas. Erros de sintaxe ou redução anormal de cobertura fazem a execução falhar.
+
+**Limites:** o grafo representa apenas imports estáticos em Python e não substitui Graphify externo, integração real de provedores, dependências dinâmicas, inventário BigQuery nem aceite do Cloud Run. Os diagnósticos diferenciam `None` (dependência não averiguada ou não aplicável) de `True` (pacote detectado). Ter Node.js no executor não comprova instalação de Magnitude. Um workflow bem-sucedido não confirma dados atualizados nem go-live.
