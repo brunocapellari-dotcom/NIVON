@@ -183,21 +183,21 @@
 | `fix/noaa-mei-missing-sentinel-20261021` | 20261021 | NÃO MESCLADA — 450 commit(s) à frente |2026-10-21T20:55:54Z — MAIS DE 3 DIAS |
 | `fix/open-meteo-ensemble-control-20261021` | 20261021 | NÃO MESCLADA — 453 commit(s) à frente |2026-10-21T21:21:54Z — MAIS DE 3 DIAS |
 | `fix/p0-antt-rgi-ci-separado-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente |2026-10-23T12:22:42Z — MAIS DE 3 DIAS |
-| `fix/ptax-ponte-ci-isolada-diagnostico-http-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/workflow-inmet-runner-context-20261021` | 20261021 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
-| `integration/base-gcp-coletor-20261023` | 20261023 | NÃO MESCLADA — 632 commit(s) à frente | PENDENTE — conferir commit |
-| `release/nivon-go-live-conab-20261025` | 20261025 | NÃO MESCLADA — 15 commit(s) à frente | PENDENTE — conferir commit |
-| `release/nivon-go-live-interno-gates-20261025` | 20261025 | NÃO MESCLADA — 7 commit(s) à frente | PENDENTE — conferir commit |
-| `release/ptax-mainline-go-live-20261025` | 20261025 | NÃO MESCLADA — 10 commit(s) à frente | PENDENTE — conferir commit |
-| `release/terminal-privado-aceite-live-20261025` | 20261025 | NÃO MESCLADA — 7 commit(s) à frente | PENDENTE — conferir commit |
-| `release/validacao-terminal-privado-20261025` | 20261025 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
-| `reorg/f1-governanca-20261026` | 20261026 | NÃO MESCLADA — 23 commit(s) à frente | PENDENTE — conferir commit |
-| `review/nivon-ciencia-base-20261019` | 20261019 | NÃO MESCLADA — 238 commit(s) à frente | PENDENTE — conferir commit |
-| `test/qa-faostat-qcl-zip-once-20261021` | 20261021 | NÃO MESCLADA — 458 commit(s) à frente | PENDENTE — conferir commit |
-| `test/smoke-eurostat-faostat-qcl-20261021` | 20261021 | NÃO MESCLADA — 456 commit(s) à frente | PENDENTE — conferir commit |
-| `test/smoke-flood-ensemble-fpma-20261021` | 20261021 | NÃO MESCLADA — 456 commit(s) à frente | PENDENTE — conferir commit |
-| `test/smoke-fontes-publicas-20261021` | 20261021 | NÃO MESCLADA — 455 commit(s) à frente | PENDENTE — conferir commit |
-| `tmp/ptax-fastlane-reconcile-20261025` | 20261025 | NÃO MESCLADA — 10 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/ptax-ponte-ci-isolada-diagnostico-http-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-26T01:23:22Z — RECENTE |
+| `fix/workflow-inmet-runner-context-20261021` | 20261021 | MESCLADA — ancestral da main |2026-10-21T18:26:54Z — MAIS DE 3 DIAS |
+| `integration/base-gcp-coletor-20261023` | 20261023 | NÃO MESCLADA — 632 commit(s) à frente |2026-10-23T11:55:32Z — MAIS DE 3 DIAS |
+| `release/nivon-go-live-conab-20261025` | 20261025 | NÃO MESCLADA — 15 commit(s) à frente |2026-10-26T02:10:33Z — RECENTE |
+| `release/nivon-go-live-interno-gates-20261025` | 20261025 | NÃO MESCLADA — 7 commit(s) à frente |2026-10-26T03:03:08Z — RECENTE |
+| `release/ptax-mainline-go-live-20261025` | 20261025 | NÃO MESCLADA — 10 commit(s) à frente |2026-10-26T03:04:18Z — RECENTE |
+| `release/terminal-privado-aceite-live-20261025` | 20261025 | NÃO MESCLADA — 7 commit(s) à frente |2026-10-26T03:00:08Z — RECENTE |
+| `release/validacao-terminal-privado-20261025` | 20261025 | NÃO MESCLADA — 4 commit(s) à frente |2026-10-26T02:59:41Z — RECENTE |
+| `reorg/f1-governanca-20261026` | 20261026 | NÃO MESCLADA — 23 commit(s) à frente |2026-10-26T17:39:46Z — RECENTE |
+| `review/nivon-ciencia-base-20261019` | 20261019 | NÃO MESCLADA — 238 commit(s) à frente |2026-10-20T02:47:43Z — MAIS DE 3 DIAS |
+| `test/qa-faostat-qcl-zip-once-20261021` | 20261021 | NÃO MESCLADA — 458 commit(s) à frente |2026-10-22T00:17:10Z — MAIS DE 3 DIAS |
+| `test/smoke-eurostat-faostat-qcl-20261021` | 20261021 | NÃO MESCLADA — 456 commit(s) à frente |2026-10-21T23:07:54Z — MAIS DE 3 DIAS |
+| `test/smoke-flood-ensemble-fpma-20261021` | 20261021 | NÃO MESCLADA — 456 commit(s) à frente |2026-10-21T21:22:55Z — MAIS DE 3 DIAS |
+| `test/smoke-fontes-publicas-20261021` | 20261021 | NÃO MESCLADA — 455 commit(s) à frente |2026-10-21T20:57:00Z — MAIS DE 3 DIAS |
+| `tmp/ptax-fastlane-reconcile-20261025` | 20261025 | NÃO MESCLADA — 10 commit(s) à frente |2026-10-26T03:09:42Z — RECENTE |
 
 ## Decisão solicitada ao proprietário (após auditoria conclusiva)
 
