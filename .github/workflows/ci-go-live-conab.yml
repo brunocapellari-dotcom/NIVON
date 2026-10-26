@@ -62,6 +62,7 @@ jobs:
             test_conab_incremental.py \
             test_conab_sync_metadados.py \
             test_conab_gcs_archive.py \
+            test_conab_gcp_schema.py \
             test_conab_quarentena_stage.py \
             test_agro_bigquery_loader.py
           do
