@@ -7,25 +7,23 @@ from __future__ import annotations
 
 import argparse
 import json
-from dataclasses import dataclass
+from .preflight_gcp_fontes import validar_config, STAGE, CANONICOS
+from .agro_staging_bigquery import TIPOS as TIPOS_AGRO
 
-from .preflight_gcp_fontes import validar_config
-
-ESQUEMA_CANONICO = {
-    "dataset_id": "STRING",
-    "identidade": "STRING",
-    "fingerprint": "STRING",
-    "data_referencia": "DATE",
-    "data_coleta": "TIMESTAMP",
-    "data_publicacao": "TIMESTAMP",
-    "snapshot_id": "STRING",
-    "natureza": "STRING",
-}
-ESQUEMA_AGRO = {
-    "data_coleta": "TIMESTAMP",
-    "data_referencia": "DATE",
-    "snapshot_id": "STRING",
-}
+# O auditor usa os mesmos schemas da criação e da carga. Não manter
+# cópias parciais, pois a auditoria alimenta gates do bootstrap.
+ESQUEMA_CANONICO=dict(STAGE+CANONICOS)
+ESQUEMA_AGRO=dict(TIPOS_AGRO)
+REQUIRED_CANONICO=frozenset({
+    "dataset_id","identidade","fingerprint","referencia","coletado_em",
+    "data_referencia","data_coleta","snapshot_id","natureza"
+})
+REQUIRED_AGRO=frozenset({
+    "dataset_id","snapshot_id","identidade","fingerprint","origem_url",
+    "referencia_tecnica","data_coleta","natureza","campos","estado"
+})
+CLUSTER_CANONICO=("dataset_id","identidade","fingerprint")
+CLUSTER_AGRO=("dataset_id","identidade","snapshot_id")
 
 
 class ErroAuditoriaCloud(ValueError):
@@ -38,17 +36,27 @@ def _regiao(valor):
     return valor.strip().lower()
 
 
-def _analisar_tabela(nome, tabela, esperados, particao):
+def _analisar_tabela(nome, tabela, esperados, particao, *, obrigatorios, cluster):
     if tabela is None:
         return {"tabela":nome,"existe":False,"schema_conforme":False,
-                "particao_conforme":False}
-    schema={str(f.name):str(f.field_type).upper() for f in tabela.schema}
-    incorretos=sorted(k for k, tipo in esperados.items() if schema.get(k)!=tipo)
-    temporal=getattr(tabela,"time_partitioning",None)
-    tem_particao=temporal is not None and getattr(temporal,"field",None)==particao
-    return {"tabela":nome,"existe":True,"schema_conforme":not incorretos,
-            "colunas_pendentes_ou_incorretas":incorretos,
-            "particao_conforme":tem_particao,
+                "particao_conforme":False,"cluster_conforme":False,
+                "filtro_particao_obrigatorio":False}
+    schema={str(f.name):(str(f.field_type).upper(),
+                         str(getattr(f,"mode","NULLABLE")).upper())
+            for f in tabela.schema}
+    erros=sorted(k for k,tipo in esperados.items()
+                 if schema.get(k)!=(tipo,"REQUIRED" if k in obrigatorios else "NULLABLE"))
+    part=getattr(tabela,"time_partitioning",None)
+    particao_correta=part is not None and getattr(part,"field",None)==particao
+    filtro=getattr(tabela,"require_partition_filter",None) is True
+    ordem=tuple(getattr(tabela,"clustering_fields",None) or ())
+    cluster_correto=ordem==tuple(cluster)
+    return {"tabela":nome,"existe":True,"schema_conforme":not erros,
+            "colunas_pendentes_ou_incorretas":erros,
+            "particao_conforme":particao_correta and filtro,
+            "filtro_particao_obrigatorio":filtro,
+            "cluster_conforme":cluster_correto,
+            "cluster_esperado":list(cluster),
             "campo_particao_esperado":particao}
 
 
@@ -60,9 +68,11 @@ def avaliar_metadados(*, projeto, dataset, bucket, local_dataset,
     esperado="southamerica-east1"
     tabelas=[
         _analisar_tabela("nivon_observacoes",tabela_canonica,
-            ESQUEMA_CANONICO,"data_referencia"),
+            ESQUEMA_CANONICO,"data_referencia",
+            obrigatorios=REQUIRED_CANONICO,cluster=CLUSTER_CANONICO),
         _analisar_tabela("agro_publicacoes_staging",tabela_agro,
-            ESQUEMA_AGRO,"data_coleta"),
+            ESQUEMA_AGRO,"data_coleta",
+            obrigatorios=REQUIRED_AGRO,cluster=CLUSTER_AGRO),
     ]
     return {
         "projeto":info["projeto"],"dataset":info["dataset"],"bucket":info["bucket"],
