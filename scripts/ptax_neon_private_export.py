@@ -18,6 +18,7 @@ import re
 import sys
 from urllib.parse import urlencode, urlsplit
 from urllib.request import Request, urlopen
+from urllib.error import HTTPError
 from typing import Callable, Any
 
 from scripts.ptax_neon_to_bigquery_jsonl import normalize, InvalidQuote, SOURCE_FIELDS
@@ -191,6 +192,13 @@ def main(argv=None)->int:
     try:
         token=token_from_actions()
         result=export(args.endpoint,args.source_jsonl,args.target_jsonl,after=args.after_id,token=token)
+    except HTTPError as exc:
+        # Nunca imprimir URL, resposta, query, corpo ou token.
+        # O erro pode ser 401/403 (OIDC/permissao), 429 (limite) ou 5xx (origem).
+        status=exc.code if type(exc.code) is int and 100<=exc.code<=599 else 0
+        print("PTAX_PRIVATE_EXPORT_FAILED:HTTP_"+str(status)+":NO_CLOUD_WRITE",
+              file=sys.stderr)
+        return 3
     except PrivateExportError as exc:
         # Apenas codigos internos constantes: nunca incluir token, URL ou preco.
         print("PTAX_PRIVATE_EXPORT_FAILED:"+str(exc)+":NO_CLOUD_WRITE",file=sys.stderr)
