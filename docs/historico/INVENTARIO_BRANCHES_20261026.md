@@ -28,21 +28,21 @@
 | `docs/antt-21anos-corredores-operacional-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
 | `docs/antt-gcp-operacao-atualizada-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
 | `docs/antt-rodovia-rgi-2025-provas-custo-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
-| `docs/catalogo-faostat-qcl-validado-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `docs/evidencia-antt-gcp-operacional-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `docs/evidencias-smoke-fontes-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `docs/homologacao-eurostat-faostat-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `docs/homologacao-flood-ensemble-fpma-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `docs/nivon-github-fontes-complementares-20261026` | 20261026 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `docs/trimodal-real-2025-consolidar-e-desarmar-push-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/agro-live-probe-temporario-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/agro-staging-replay-gcs-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/agrobr-comex-cftc-ledger-20261026` | 20261026 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/antaq-aquarela-nova-fonte-saude-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/antaq-hf-metadata-source-size-audit-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/antaq-hidrovia-derivada-2025-bq-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/antaq-hidrovia-produtos-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/antaq-historico-qualidade-lineup-20261019` | 20261019 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `docs/catalogo-faostat-qcl-validado-20261021` | 20261021 | NÃO MESCLADA — 461 commit(s) à frente | PENDENTE — conferir commit |
+| `docs/evidencia-antt-gcp-operacional-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
+| `docs/evidencias-smoke-fontes-20261021` | 20261021 | NÃO MESCLADA — 450 commit(s) à frente | PENDENTE — conferir commit |
+| `docs/homologacao-eurostat-faostat-20261021` | 20261021 | NÃO MESCLADA — 456 commit(s) à frente | PENDENTE — conferir commit |
+| `docs/homologacao-flood-ensemble-fpma-20261021` | 20261021 | NÃO MESCLADA — 453 commit(s) à frente | PENDENTE — conferir commit |
+| `docs/nivon-github-fontes-complementares-20261026` | 20261026 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `docs/trimodal-real-2025-consolidar-e-desarmar-push-20261025` | 20261025 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/agro-live-probe-temporario-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/agro-staging-replay-gcs-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/agrobr-comex-cftc-ledger-20261026` | 20261026 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/antaq-aquarela-nova-fonte-saude-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/antaq-hf-metadata-source-size-audit-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/antaq-hidrovia-derivada-2025-bq-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/antaq-hidrovia-produtos-20261023` | 20261023 | NÃO MESCLADA — 14 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/antaq-historico-qualidade-lineup-20261019` | 20261019 | NÃO MESCLADA — 231 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/antaq-monitor-disponibilidade-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
 | `feat/antt-2025-readonly-gcp-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
 | `feat/antt-2026-primeira-carga-unica-gcp-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
