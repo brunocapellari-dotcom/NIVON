@@ -24,8 +24,12 @@ jobs:
     # NIVON_MARITIMO_GITHUB_SCHEDULE=disabled para evitar cron duplo.
     if: >-
       github.ref == 'refs/heads/main' &&
-      (github.event_name != 'schedule' ||
-       vars.NIVON_MARITIMO_GITHUB_SCHEDULE != 'disabled')
+      vars.NIVON_ZERO_COST_BQ_APPROVED == 'true' &&
+      vars.NIVON_RAW_ARCHIVE_APPROVED == 'true' &&
+      ((github.event_name == 'schedule' &&
+        vars.NIVON_MARITIMO_GITHUB_SCHEDULE == 'enabled') ||
+       github.event_name == 'workflow_dispatch' ||
+       github.event_name == 'push')
     runs-on: ubuntu-latest
     timeout-minutes: 13
     env:
