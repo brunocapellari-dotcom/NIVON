@@ -1,0 +1,40 @@
+name: NIVON - Web MVP E2E publico sem credenciais
+
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'vercel.json'
+      - 'api/mercado.js'
+      - 'tests_web/mercado.test.cjs'
+      - '.github/workflows/nivon-web-mvp-ci.yml'
+  push:
+    branches: [main, feat/nivon-web-mvp-real-20261025]
+    paths:
+      - 'index.html'
+      - 'vercel.json'
+      - 'api/mercado.js'
+      - 'tests_web/mercado.test.cjs'
+      - '.github/workflows/nivon-web-mvp-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validar-web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - name: Testar endpoint de dados oficiais, indisponibilidade e segurança
+        run: node --test tests_web/mercado.test.cjs
+      - name: Validar HTML e Vercel sem instalar dependências
+        run: |
+          node --check api/mercado.js
+          node -e "const f=require('fs'); JSON.parse(f.readFileSync('vercel.json','utf8')); if(!f.readFileSync('index.html','utf8').includes('NIVON')) process.exit(1)"
