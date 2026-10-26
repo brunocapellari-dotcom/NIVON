@@ -2,17 +2,17 @@
 # Go-live interno NIVON: serviço Cloud Run PRIVADO, somente leitura.
 # Não habilita APIs, concede IAM nem agenda coletas.
 set -euo pipefail
-: "\${NIVON_PROJETO:?}"
-: "\${NIVON_DATASET:?}"
-: "\${NIVON_TERMINAL_REPO:?}"
-: "\${NIVON_TERMINAL_READONLY_SA:?}"
-: "\${NIVON_TERMINAL_DEPLOY_APPROVED:?}"
-: "\${NIVON_GCP_COST_REVIEWED:?}"
+: "${NIVON_PROJETO:?}"
+: "${NIVON_DATASET:?}"
+: "${NIVON_TERMINAL_REPO:?}"
+: "${NIVON_TERMINAL_READONLY_SA:?}"
+: "${NIVON_TERMINAL_DEPLOY_APPROVED:?}"
+: "${NIVON_GCP_COST_REVIEWED:?}"
 test "$NIVON_PROJETO" = nivon-data || { echo PROJETO_NAO_AUTORIZADO; exit 3; }
 test "$NIVON_DATASET" = nivon_raw || { echo DATASET_NAO_AUTORIZADO; exit 3; }
 test "$NIVON_TERMINAL_DEPLOY_APPROVED" = true || { echo DEPLOY_NAO_AUTORIZADO; exit 3; }
 test "$NIVON_GCP_COST_REVIEWED" = true || { echo CUSTO_NAO_APROVADO; exit 3; }
-test "\${GITHUB_REF:-}" = refs/heads/main || { echo SOMENTE_MAIN; exit 3; }
+test "${GITHUB_REF:-}" = refs/heads/main || { echo SOMENTE_MAIN; exit 3; }
 [[ "$NIVON_TERMINAL_REPO" =~ ^[a-z][a-z0-9-]{0,61}[a-z0-9]$ ]] || {
  echo REPOSITORIO_ARTIFACT_NAO_VALIDO; exit 3;
 }
@@ -21,9 +21,9 @@ test "\${GITHUB_REF:-}" = refs/heads/main || { echo SOMENTE_MAIN; exit 3; }
 }
 REGION=southamerica-east1
 SERVICE=nivon-terminal
-SHA="\${GITHUB_SHA:-}"
+SHA="${GITHUB_SHA:-}"
 [[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || { echo COMMIT_NAO_VALIDADO; exit 3; }
-TAG="\${SHA:0:12}"
+TAG="${SHA:0:12}"
 IMAGE="$REGION-docker.pkg.dev/$NIVON_PROJETO/$NIVON_TERMINAL_REPO/$SERVICE:$TAG"
 
 # Não cria Artifact Registry nem permissões; aborta quando faltam.
