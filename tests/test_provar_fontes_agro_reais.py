@@ -8,7 +8,9 @@ from datetime import datetime,timezone
 from pathlib import Path
 from unittest.mock import patch
 from nivon.ingestao_fontes_reais import gravar_lote
-from scripts.provar_fontes_agro_reais import conferir,provar
+from datetime import date
+from scripts.provar_fontes_agro_reais import (conferir,provar,avaliar_frescor,
+    dias_uteis_entre,main)
 
 NOW=datetime(2026,10,25,12,tzinfo=timezone.utc)
 
@@ -83,6 +85,48 @@ class ProvaAgro(unittest.TestCase):
         self.assertEqual(result["estado"],"COLETA_REAL_CONCILIADA_EM_RUNNER")
         self.assertEqual(coletor.call_count,1)
         self.assertFalse(result["producao_ativada"])
+
+
+class FrescorAgro(unittest.TestCase):
+    def test_dias_uteis_ignoram_fim_de_semana(self):
+        # sexta 23/10 -> segunda 26/10 = 1 dia útil
+        self.assertEqual(dias_uteis_entre(date(2026,10,23),date(2026,10,26)),1)
+        self.assertEqual(dias_uteis_entre(date(2026,10,23),date(2026,10,23)),0)
+
+    def test_cepea_fresco_apos_fim_de_semana(self):
+        r=avaliar_frescor("CEPEA_SOJA",date(2026,10,23),date(2026,10,26))
+        self.assertEqual((r["frescor"],r["frescor_idade"]),("FRESCO",1))
+
+    def test_cepea_limite_de_tres_dias_uteis(self):
+        r=avaliar_frescor("CEPEA_MILHO",date(2026,10,20),date(2026,10,23))
+        self.assertEqual(r["frescor"],"FRESCO")
+        r=avaliar_frescor("CEPEA_MILHO",date(2026,10,16),date(2026,10,23))
+        self.assertEqual(r["frescor"],"DEFASADO")
+
+    def test_imea_conab_contam_dias_corridos_de_publicacao(self):
+        self.assertEqual(avaliar_frescor("IMEA",date(2026,10,13),date(2026,10,23))["frescor"],"FRESCO")
+        self.assertEqual(avaliar_frescor("IMEA",date(2026,10,12),date(2026,10,23))["frescor"],"DEFASADO")
+        r=avaliar_frescor("CONAB",date(2026,10,15),date(2026,10,26))
+        self.assertEqual((r["frescor"],r["frescor_criterio"]),("FRESCO","DIAS_CORRIDOS_DESDE_PUBLICACAO"))
+
+    def test_exigir_frescor_retorna_3_quando_defasado(self):
+        import io,contextlib
+        for estado,codigo in (("FRESCO",0),("DEFASADO",3)):
+            with patch("scripts.provar_fontes_agro_reais.provar",return_value={"frescor":estado}):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(main(["--fonte","IMEA","--executar","--exigir-frescor"]),codigo)
+
+    def test_sem_exigir_frescor_mantem_codigo_zero(self):
+        import io,contextlib
+        with patch("scripts.provar_fontes_agro_reais.provar",return_value={"frescor":"DEFASADO"}):
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(main(["--fonte","IMEA","--executar"]),0)
+
+    def test_plano_sem_rede_com_exigencia_nao_passa(self):
+        import io,contextlib
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(main(["--fonte","CONAB","--exigir-frescor"]),3)
+
 
 if __name__=="__main__":
     unittest.main()

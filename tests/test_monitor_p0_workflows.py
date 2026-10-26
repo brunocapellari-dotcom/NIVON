@@ -1,6 +1,7 @@
 import unittest
 from datetime import datetime, timedelta, timezone
-from nivon.monitor_p0_workflows import assess,expected_slots,render_markdown
+from nivon.monitor_p0_workflows import (assess,expected_slots,render_markdown,cron_slots,
+    PLANS,FAILURE_STATES)
 
 UTC=timezone.utc
 NOW=datetime(2026,10,23,19,0,tzinfo=UTC) # sexta, 15h MT
@@ -71,5 +72,79 @@ class TestMonitorP0(unittest.TestCase):
         resultado=assess("IMEA",[run(99,NOW-timedelta(minutes=5),"success")],now=NOW)
         self.assertFalse(resultado["data_freshness_evaluated"])
         self.assertNotIn("DADO_ATUAL",resultado["status"])
+
+
+class TestMonitorPipelinesGCP(unittest.TestCase):
+    def test_cron_seis_horas_maritimo(self):
+        slots=cron_slots("17 */6 * * *",datetime(2026,10,26,0,0,tzinfo=UTC),
+                         datetime(2026,10,26,23,59,tzinfo=UTC))
+        self.assertEqual([(x.hour,x.minute) for x in slots],[(0,17),(6,17),(12,17),(18,17)])
+
+    def test_cron_dia_da_semana_utc(self):
+        # 2-6 = terça a sábado UTC; 25/10/2026 é domingo e 26/10 é segunda.
+        slots=cron_slots("15 1 * * 2-6",datetime(2026,10,24,0,0,tzinfo=UTC),
+                         datetime(2026,10,28,23,0,tzinfo=UTC))
+        self.assertEqual([x.day for x in slots],[24,27,28])
+
+    def test_cron_fora_do_subconjunto_rejeitado(self):
+        with self.assertRaises(ValueError):
+            cron_slots("0 1 1 * *",NOW-timedelta(days=1),NOW)
+
+    def test_crons_dos_planos_iguais_aos_workflows(self):
+        from pathlib import Path
+        base=Path(__file__).resolve().parents[1]/".github/workflows"
+        for nome,plano in PLANS.items():
+            if "cron_utc" in plano:
+                texto=(base/plano["workflow"]).read_text(encoding="utf-8")
+                self.assertIn(f"cron: '{plano['cron_utc']}'",texto,nome)
+
+    def test_maritimo_sem_cron_apos_dois_slots_falha(self):
+        last=run(1,datetime(2026,10,26,1,58,tzinfo=UTC),"success","push")
+        r=assess("MARITIMO_GCP",[last],now=datetime(2026,10,26,15,0,tzinfo=UTC))
+        self.assertEqual(r["status"],"SCHEDULE_MISSING")
+
+    def test_maritimo_recem_ativado_pendente(self):
+        last=run(1,datetime(2026,10,26,1,58,tzinfo=UTC),"success","push")
+        r=assess("MARITIMO_GCP",[last],now=datetime(2026,10,26,2,10,tzinfo=UTC))
+        self.assertEqual(r["status"],"SCHEDULE_NOT_OBSERVED")
+        self.assertNotIn(r["status"],FAILURE_STATES)
+
+    def test_maritimo_cron_recente_ok(self):
+        at=datetime(2026,10,26,12,40,tzinfo=UTC)
+        r=assess("MARITIMO_GCP",[run(1,at,"success","schedule")],
+                 now=datetime(2026,10,26,14,0,tzinfo=UTC))
+        self.assertEqual(r["status"],"RUN_OK_NO_DATA_FRESHNESS_ASSERTION")
+        self.assertFalse(r["data_freshness_evaluated"])
+
+    def test_gate_fechado_nao_e_saude_nem_falha(self):
+        r=assess("AGRO_GCP",[run(7,NOW-timedelta(hours=8),"skipped","schedule")],now=NOW)
+        self.assertEqual(r["status"],"GATED_NOT_ACTIVE")
+        self.assertNotIn(r["status"],FAILURE_STATES)
+        self.assertEqual(r["last_result"],"skipped")
+        self.assertIn("Gate de aprovação fechado",render_markdown([r]))
+
+    def test_gate_sem_execucoes(self):
+        self.assertEqual(assess("SGS11_GCP",[],now=NOW)["status"],"GATED_NOT_ACTIVE")
+
+    def test_gate_aberto_volta_a_exigir_execucao(self):
+        x=[run(2,NOW-timedelta(hours=1),"failure","workflow_dispatch"),
+           run(1,NOW-timedelta(days=1),"skipped","schedule")]
+        self.assertEqual(assess("AGRO_GCP",x,now=NOW)["status"],"EXECUTION_FAILURE")
+
+    def test_fonte_nao_gated_pulada_e_falha(self):
+        r=assess("PTAX_GCP",[run(1,NOW-timedelta(hours=1),"skipped","schedule")],now=NOW)
+        self.assertEqual(r["status"],"EXECUTION_FAILURE")
+
+    def test_consulta_publica_sem_token_nao_envia_authorization(self):
+        from unittest import mock
+        import io,json
+        from nivon import monitor_p0_workflows as m
+        capturado={}
+        def falso(req,timeout):
+            capturado.update(req.headers)
+            return io.BytesIO(json.dumps({"workflow_runs":[]}).encode())
+        with mock.patch.object(m,"urlopen",falso):
+            self.assertEqual(m.fetch_runs("x.yml",None),[])
+        self.assertNotIn("Authorization",capturado)
 
 if __name__=="__main__":unittest.main()

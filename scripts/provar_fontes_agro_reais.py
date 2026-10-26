@@ -9,7 +9,7 @@ import json
 import re
 import sqlite3
 import tempfile
-from datetime import datetime, date, timezone
+from datetime import datetime, date, timedelta, timezone
 from pathlib import Path
 from nivon.agro_origem_gcp import FONTES, executar as coletar
 
@@ -20,6 +20,34 @@ DATASETS={
     "CONAB":"CONAB_SAFRAS_STAGING",
 }
 SHA=re.compile(r"^[0-9a-f]{64}$")
+# Limites operacionais de defasagem. CEPEA: dias úteis desde a data de
+# referência (tolera um feriado). IMEA/CONAB: dias corridos desde a publicação,
+# que não equivale à data de referência do dado.
+LIMITES_FRESCOR={
+    "CEPEA_SOJA":("DIAS_UTEIS_DESDE_REFERENCIA",3),
+    "CEPEA_MILHO":("DIAS_UTEIS_DESDE_REFERENCIA",3),
+    "IMEA":("DIAS_CORRIDOS_DESDE_PUBLICACAO",10),
+    "CONAB":("DIAS_CORRIDOS_DESDE_PUBLICACAO",45),
+}
+
+
+def dias_uteis_entre(inicio,fim):
+    """Dias úteis em (inicio, fim]; não conhece feriados."""
+    n=0
+    dia=inicio
+    while dia<fim:
+        dia+=timedelta(days=1)
+        if dia.weekday()<5:
+            n+=1
+    return n
+
+
+def avaliar_frescor(fonte,ultima,hoje):
+    criterio,limite=LIMITES_FRESCOR[fonte]
+    idade=(dias_uteis_entre(ultima,hoje) if criterio.startswith("DIAS_UTEIS")
+           else (hoje-ultima).days)
+    return {"frescor":"FRESCO" if idade<=limite else "DEFASADO",
+            "frescor_criterio":criterio,"frescor_idade":idade,"frescor_limite":limite}
 
 
 def conferir(fonte,retorno,banco,agora=None):
@@ -64,6 +92,7 @@ def conferir(fonte,retorno,banco,agora=None):
     if ref>today:
         raise ValueError("data futura")
     return {"fonte":fonte,"estado":"COLETA_REAL_CONCILIADA_EM_RUNNER",
+            **avaliar_frescor(fonte,ref,today),
             "registros":len(linhas),"snapshots":len(ids),
             "ultima_data":ultima,"dias_desde_ultima_data":(today-ref).days,
             "tipo_data":("REFERENCIA_VERIFICADA" if fonte.startswith("CEPEA_")
@@ -87,11 +116,15 @@ def main(argv=None):
     parser=argparse.ArgumentParser(description="NIVON prova agro sem escrita Cloud")
     parser.add_argument("--fonte",choices=FONTES,required=True)
     parser.add_argument("--executar",action="store_true")
+    parser.add_argument("--exigir-frescor",action="store_true",
+                        help="retorna 3 quando a fonte estiver DEFASADO")
     opts=parser.parse_args(argv)
     resultado=(provar(opts.fonte) if opts.executar else
                {"fonte":opts.fonte,"estado":"PLANO_SEM_REDE",
                 "gcs_escritas":0,"bigquery_jobs":0})
     print(json.dumps(resultado,sort_keys=True,ensure_ascii=False))
+    if opts.exigir_frescor and resultado.get("frescor")!="FRESCO":
+        return 3
     return 0
 
 
