@@ -145,10 +145,10 @@ def baixar_revisao_fixada(destino: str | Path):
     repo e revisão constantes; limite de bytes é aplicado também na cópia.
     A etapa seguinte valida SHA de conteúdo e agregados esperados de 2025.
     """
-    from huggingface_hub import hf_hub_download
     raiz = Path(destino)
     if not raiz.is_dir() or raiz.is_symlink():
         raise ErroReplicaANTAQ("staging seguro ausente")
+    from huggingface_hub import hf_hub_download
     saida = {}
     for chave, relativo in ARQUIVOS.items():
         origem = Path(hf_hub_download(
