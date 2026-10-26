@@ -56,11 +56,13 @@ class MVPFixture(unittest.TestCase):
         data = json.dumps(obj, ensure_ascii=False, sort_keys=True).encode("utf-8")
         self.file.write_bytes(data)
         self.sha = hashlib.sha256(data).hexdigest()
-        self.config = {
+        # Preservar a identidade da configuração passada ao HTTP server:
+        # atualizar o pacote muda o hash aprovado no mesmo objeto.
+        self.config.update({
             "NIVON_RELEASE_APPROVED": "true",
             "NIVON_RELEASE_FILE": str(self.file),
             "NIVON_RELEASE_SHA256": self.sha,
-        }
+        })
         return data
 
     def release(self, now=T):
