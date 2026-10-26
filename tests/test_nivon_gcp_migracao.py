@@ -119,6 +119,15 @@ class MigrationContracts(unittest.TestCase):
             path.chmod(0o600)
             with self.assertRaises(MigracaoBloqueada):
                 validar_arquivo(path)
+    def test_migracao_bloqueia_atualizacao_destrutiva_no_sql(self):
+        from inspect import getsource
+        codigo=getsource(carregar_bigquery)
+        self.assertIn("CONFLITO_VINTAGE_ORIGEM",codigo)
+        self.assertIn("WHEN NOT MATCHED THEN INSERT",codigo)
+        self.assertNotIn("WHEN MATCHED",codigo)
+        self.assertLess(codigo.index("client.query(conflitos"),codigo.index("client.query(sql,job_config=qconf(False))"))
+        self.assertIn("tabela_tmp.expires",codigo)
+
     def test_never_load_before_cost_and_auth_approval(self):
         with TemporaryDirectory() as d:
             path=Path(d)/"file.jsonl"

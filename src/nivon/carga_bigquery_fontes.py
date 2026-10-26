@@ -6,7 +6,7 @@ Sem provisionar projeto/dataset, sem ações em cron; valida custo e schema.
 from __future__ import annotations
 import json
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from hashlib import sha256
 from uuid import uuid4
@@ -114,6 +114,10 @@ def executar_carga(*,arquivo,project_id,dataset_id,executar=False,
     try:
         with open(arquivo,"rb") as fp:
             cli.load_table_from_file(fp,staging,job_config=job_config).result(timeout=150)
+        # TTL obrigatorio antes do MERGE: staging temporario nao persiste indefinidamente.
+        tmp_table=cli.get_table(staging)
+        tmp_table.expires=datetime.now(timezone.utc)+timedelta(hours=6)
+        cli.update_table(tmp_table,["expires"])
         inseridos = COLS + ("data_referencia","data_publicacao","data_coleta")
         colunas = ", ".join(inseridos)
         valores = (["S."+k for k in COLS] + [
@@ -147,8 +151,13 @@ def executar_carga(*,arquivo,project_id,dataset_id,executar=False,
         cfg=bigquery.QueryJobConfig(
             maximum_bytes_billed=p["max_bytes_billed"],
             query_parameters=parametros)
-        cli.query(sql,job_config=cfg).result(timeout=150)
-        p.update({"executado":True,"projeto":project_id,"linhas_enviadas":p["linhas"],
+        merge_job=cli.query(sql,job_config=cfg)
+        merge_job.result(timeout=150)
+        afetadas=getattr(merge_job,"num_dml_affected_rows",None)
+        if type(afetadas) is not int or not 0 <= afetadas <= p["linhas"]:
+            raise ErroCargaBigQuery("MERGE sem contagem confiavel de linhas afetadas")
+        p.update({"linhas_inseridas":afetadas,"job_id":getattr(merge_job,"job_id",None),
+                  "executado":True,"projeto":project_id,"linhas_enviadas":p["linhas"],
                   "bytes_estimados":bytes_estimados,
                   "particoes_referencia":[p["referencia_inicio"],p["referencia_fim"]],
                   "nuvem":"BIGQUERY","dados_publicados":False})

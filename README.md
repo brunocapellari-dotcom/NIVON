@@ -28,3 +28,7 @@ O trabalho de implementação inicial ficará em uma branch e em PR para revisã
 ## Licenciamento do código
 
 **Ainda não foi concedida uma licença aberta para este código.** A visibilidade pública do repositório não deve ser interpretada como permissão genérica de cópia ou sublicenciamento. Componentes de terceiros só serão incorporados após exame das respectivas licenças.
+
+## Auditoria C1 — correcoes em revisao
+
+A PR #246 contem correcoes de integridade RAW/replay, gates de escrita, migracao Neon e controles de seguranca. **Ainda nao estao homologadas nem implantadas em producao.** A situacao de cada achado, as dependencias administrativas e os criterios de aceite estao registrados em [docs/AUDITORIA_C1_CORRECOES.md](docs/AUDITORIA_C1_CORRECOES.md). Nao habilitar novas cargas recorrentes nem ampliar IAM antes de revisar essa PR e os controles externos.

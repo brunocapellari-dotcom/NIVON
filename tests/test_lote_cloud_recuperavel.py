@@ -157,6 +157,19 @@ class TestLoteCloudE2E(unittest.TestCase):
                            client=self.client, executar=True,**DESTINO)
         self.assertFalse(self.client.storage.objects)
 
+    def test_replay_rejeita_raw_corrompido_com_metadados_preservados(self):
+        enviado=self._stage_salvo()
+        raw=next(x for x in self.client.storage.objects if x.endswith(".raw"))
+        payload,metadados=self.client.storage.objects[raw]
+        self.client.storage.objects[raw]=(b"X"*len(payload),metadados)
+        carregamentos=[]
+        with self.assertRaisesRegex(ErroLoteCloud,"conteudo GCS"):
+            reprocessar_manifesto(
+                manifesto_sha256=enviado["manifesto_sha256"],client=self.client,
+                loader=lambda **kw: carregamentos.append(kw),
+                executar=True,**DESTINO)
+        self.assertEqual(carregamentos,[])
+
     def test_replay_nao_muda_destino_nem_aceita_stage_adulterado(self):
         enviado=self._stage_salvo()
         sha=enviado["manifesto_sha256"]

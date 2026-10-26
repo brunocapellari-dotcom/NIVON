@@ -56,10 +56,18 @@ jobs:
           PYTHONPATH: src
           GITHUB_TOKEN: ${{ github.token }}
         run: python -m nivon.monitor_p0_workflows
+      - name: Conferir se pipelines GCP executaram escrita (nao certifica dados)
+        if: ${{ always() }}
+        env:
+          PYTHONPATH: src
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python -m nivon.monitor_integridade_gcp
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: ${{ always() }}
         with:
           name: nivon-status-fontes-p0-${{ github.run_id }}
-          path: status_p0.json
+          path: |
+            status_p0.json
+            status_persistencia_gcp.json
           if-no-files-found: ignore
           retention-days: 14

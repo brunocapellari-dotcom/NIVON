@@ -11,8 +11,10 @@ from nivon.carga_bigquery_fontes import executar_carga, ErroCargaBigQuery
 
 
 class FakeJob:
-    def __init__(self,bytes_processados=1024):
+    def __init__(self,bytes_processados=1024,linhas_afetadas=1):
         self.total_bytes_processed=bytes_processados
+        self.num_dml_affected_rows=linhas_afetadas
+        self.job_id="job-falso-offline"
     def result(self,timeout=None):
         return self
 
@@ -24,15 +26,22 @@ class FakeClient:
         self.deleted=False
         self.bytes_processados=bytes_processados
         self.queries=[]
+        self.expiration_validada=False
     def get_dataset(self, ref):
         assert ref=="nivon-data.agro"
     def get_table(self, ref):
+        if "._nivon_stage_" in ref:
+            return types.SimpleNamespace(expires=None)
         assert ref=="nivon-data.agro.nivon_observacoes"
         schema=[types.SimpleNamespace(name=n,field_type=t)
                 for n,t in (("data_referencia","DATE"),
                             ("data_coleta","TIMESTAMP"),
                             ("data_publicacao","TIMESTAMP"))]
         return types.SimpleNamespace(schema=schema)
+    def update_table(self,table,fields):
+        assert fields==["expires"] and table.expires is not None
+        self.expiration_validada=True
+        return table
     def load_table_from_file(self, fileobj, table, job_config=None):
         self.stage_bytes=len(fileobj.read())
         assert self.stage_bytes>0 and "._nivon_stage_" in table
@@ -82,6 +91,7 @@ class BigQueryMERGETest(unittest.TestCase):
                   dataset_id="agro",executar=True,client=client)
             self.assertTrue(result["executado"])
             self.assertTrue(client.deleted)
+            self.assertTrue(client.expiration_validada)
             self.assertIn("data_referencia",client.sql)
             self.assertIn("CAST(S.referencia AS DATE)",client.sql)
             self.assertIn("CAST(S.coletado_em AS TIMESTAMP)",client.sql)
@@ -92,6 +102,8 @@ class BigQueryMERGETest(unittest.TestCase):
             self.assertEqual(result["referencia_inicio"],"2026-10-01")
             self.assertEqual(result["referencia_fim"],"2026-10-01")
             self.assertEqual(result["bytes_estimados"],1024)
+            self.assertEqual(result["linhas_inseridas"],1)
+            self.assertEqual(result["job_id"],"job-falso-offline")
             self.assertEqual(len(client.queries),2)
             self.assertTrue(client.queries[0].dry_run)
             self.assertEqual(client.queries[1].maximum_bytes_billed,10_000_000)

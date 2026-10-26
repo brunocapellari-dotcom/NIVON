@@ -19,8 +19,11 @@ from nivon.agro_staging_bigquery import (
 
 class Objeto:
     def __init__(self,bytes_,metadata):
+        self.raw=bytes_
         self.size=len(bytes_)
         self.metadata=metadata
+    def download_to_filename(self,path):
+        Path(path).write_bytes(self.raw)
 
 
 class Bucket:

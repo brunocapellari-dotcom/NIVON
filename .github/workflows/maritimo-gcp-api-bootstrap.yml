@@ -1,64 +1,17 @@
-name: NIVON - Habilitar APIs Cloud Run (sem deploy)
+# Auditoria C1: habilitar APIs de nuvem requer operador humano autorizado.
+# Este workflow nao recebe OIDC e nao modifica Google Cloud.
+name: NIVON - Orientacoes de APIs Cloud Run (sem escrita)
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/maritimo-gcp-api-bootstrap.yml'
   workflow_dispatch:
 permissions:
   contents: read
-  id-token: write
-concurrency:
-  group: nivon-maritimo-ativar-apis
-  cancel-in-progress: false
 jobs:
-  habilitar-apis:
-    if: ${{ github.ref == 'refs/heads/main' }}
+  orientacoes:
     runs-on: ubuntu-latest
-    timeout-minutes: 9
-    env:
-      NIVON_PROJETO: ${{ vars.NIVON_BQ_PROJECT }}
+    timeout-minutes: 3
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          persist-credentials: false
-      - name: Bloquear outros projetos
-        run: test "$NIVON_PROJETO" = "nivon-data"
-      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
-        with:
-          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
-          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
-          project_id: ${{ vars.NIVON_BQ_PROJECT }}
-          create_credentials_file: true
-      - uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ vars.NIVON_BQ_PROJECT }}
-      - name: Tentar ativacao idempotente somente das quatro APIs
-        shell: bash
+      - name: Informar bloqueio administrativo sem token de nuvem
         run: |
-          set -euo pipefail
-          LOG="$(mktemp)"
-          trap 'rm -f "$LOG"' EXIT
-          if gcloud services enable \
-             run.googleapis.com artifactregistry.googleapis.com \
-             cloudbuild.googleapis.com cloudscheduler.googleapis.com \
-             --project="$NIVON_PROJETO" --quiet >"$LOG" 2>&1; then
-             echo 'APIS_MARITIMAS_HABILITADAS=OK'
-             echo 'APIs Cloud Run, Artifact Registry, Cloud Build e Scheduler habilitadas ou previamente ativas.' >> "$GITHUB_STEP_SUMMARY"
-          else
-             python - "$LOG" <<'PY'
-          import pathlib,sys
-          msg=pathlib.Path(sys.argv[1]).read_text(errors='replace').lower()
-          if any(x in msg for x in ('permission_denied','permission denied','403','does not have permission')):
-              print('BLOQUEIO_IAM=serviceusage.services.enable')
-              print('A identidade federada precisa de permissao de ativacao de APIs no projeto.')
-          elif 'billing' in msg:
-              print('BLOQUEIO_BILLING_OU_QUOTA=VERIFICAR_NO_CONSOLE')
-          else:
-              print('BLOQUEIO_API=NAO_VERIFICADO')
-          PY
-             exit 4
-          fi
-      - name: 'Preservar estado sem criar Job nem Scheduler'
-        run: |
-          echo 'NAO_FORAM_CRIADOS_JOBS_CLOUD_RUN_NEM_SCHEDULERS'
+          echo 'CLOUD_RUN_API_BOOTSTRAP=ACAO_ADMINISTRATIVA_PENDENTE'
+          echo 'Nenhuma API foi ativada, nenhum recurso foi criado.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Habilitar apenas APIs necessarias mediante revisao de IAM e Billing no GCP.' >> "$GITHUB_STEP_SUMMARY"
