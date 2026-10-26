@@ -184,7 +184,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m nivon.diagnostico_terminal_cloudrun > "$RUNNER_TEMP/nivon-preflight-terminal.json"
+          python -m nivon.diagnostico_terminal_cloudrun --descobrir-candidatos > "$RUNNER_TEMP/nivon-preflight-terminal.json"
           python - <<'PY'
           import json,os
           from pathlib import Path
@@ -205,7 +205,30 @@ jobs:
               else:
                   output.write('Nenhum bloqueio de metadados. DEPLOY e custos ainda NÃO aprovados.\n')
               output.write('\nEstado geral: **'+gate['status']+'**.\n')
+              candidates=x.get("descoberta_candidatos")
+              if candidates:
+                  output.write("\n\n### Recursos já existentes — sem criar ou alterar nada\n")
+                  output.write("\n| Descoberta | Estado | Candidatos |\n|---|---|---:|\n")
+                  output.write("| Artifact Registry Docker | "+candidates["consulta_artifact_registry"]+
+                               " | "+str(candidates["repositorios_encontrados"])+" |\n")
+                  output.write("| Contas de serviço GCP | "+candidates["consulta_service_accounts"]+
+                               " | "+str(candidates["contas_encontradas"])+" |\n")
+                  output.write("\nPara configurar na página de variáveis GitHub, revisar os candidatos abaixo. ")
+                  output.write("Os nomes não garantem permissões de execução, BigQuery ou build.\n")
+                  for r in candidates["repositorios_docker_existentes"]:
+                      output.write("\n- NIVON_TERMINAL_ARTIFACT_REPO = `"+r+"`")
+                  for a in candidates["contas_existentes_necessitam_revisao_iam"]:
+                      output.write("\n- NIVON_TERMINAL_EXECUTION_SA = `"+a+"`")
+                  output.write("\n\nNenhum candidato foi selecionado ou ativado automaticamente.\n")
               output.write("\n\nSem build, IAM, SQL ou deploy. Custos/permissões de escrita não foram testados.\n")
+          for nome, estado in sorted(x["componentes"].items()):
+              print("NIVON_GOLIVE_GATE_"+nome.upper().replace("-","_").replace(".","_")+"="+estado)
+          c=x.get("descoberta_candidatos")
+          if c is not None:
+              print("NIVON_GOLIVE_ARTIFACT_REGISTRY_DESCOVERY="+c["consulta_artifact_registry"])
+              print("NIVON_GOLIVE_EXISTING_DOCKER_REPOS="+str(c["repositorios_encontrados"]))
+              print("NIVON_GOLIVE_SA_DISCOVERY="+c["consulta_service_accounts"])
+              print("NIVON_GOLIVE_EXISTING_SERVICE_ACCOUNTS="+str(c["contas_encontradas"]))
           print("NIVON_CLOUD_RUN_PREFLIGHT="+x["proxima_acao"])
           print("NIVON_GO_LIVE_GATE="+gate["status"])
           PY

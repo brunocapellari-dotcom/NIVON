@@ -50,6 +50,66 @@ def _comando(args, *, runner=subprocess.run):
         return "INDETERMINADO",None
 
 
+def _comando_lista(args, *, runner=subprocess.run):
+    """Executa gcloud list somente leitura; sem shell e sem logar stderr."""
+    assert args and args[0] == "gcloud" and "--format=json" in args
+    try:
+        result = runner(args, capture_output=True, text=True,
+                        timeout=24, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        return "INDETERMINADO", []
+    if result.returncode:
+        return _classificar(result.stderr), []
+    try:
+        value = json.loads(result.stdout)
+        if not isinstance(value, list):
+            raise ValueError("lista de metadados inválida")
+        return "CONFIRMADO", value
+    except (ValueError, TypeError):
+        return "INDETERMINADO", []
+
+
+def descobrir_recursos_existentes(*, runner=subprocess.run):
+    """Inventário GCP apenas read-only; candidatos NUNCA são homologação IAM.
+
+    Não cria ou modifica recursos; expõe nomes, não tokens nem permissões.
+    Nenhuma conta é selecionada automaticamente por ter nome semelhante.
+    """
+    repo_state, repos = _comando_lista([
+        "gcloud", "artifacts", "repositories", "list",
+        "--location=" + REGION, "--project=" + PROJECT, "--format=json"
+    ], runner=runner)
+    sa_state, service_accounts = _comando_lista([
+        "gcloud", "iam", "service-accounts", "list",
+        "--project=" + PROJECT, "--format=json"
+    ], runner=runner)
+    registry_names = sorted({
+        r["name"].split("/")[-1] for r in repos
+        if isinstance(r, dict) and r.get("format") == "DOCKER"
+        and isinstance(r.get("name"), str)
+        and REPO_PATTERN.fullmatch(r["name"].split("/")[-1])
+    })
+    sa_names = sorted({
+        x["email"] for x in service_accounts
+        if isinstance(x, dict) and isinstance(x.get("email"), str)
+        and SA_PATTERN.fullmatch(x["email"])
+        and x.get("disabled") is not True
+    })
+    return {
+        "alteracoes_cloud": 0, "sql_executado": False,
+        "consulta_artifact_registry": repo_state,
+        "consulta_service_accounts": sa_state,
+        "repositorios_docker_existentes": registry_names[:50],
+        "contas_existentes_necessitam_revisao_iam": sa_names[:50],
+        "repositorios_encontrados": len(registry_names),
+        "contas_encontradas": len(sa_names),
+        "proxima_acao": "ESCOLHER_RECURSOS_EXISTENTES_E_VERIFICAR_PERMISSOES",
+        "selecao_automatica": False,
+        "autorizacao_de_deploy_verificada": False,
+        "orcamento_verificado": False,
+    }
+
+
 def _bigquery(reader=None):
     if reader is None:
         from google.cloud import bigquery
@@ -70,7 +130,7 @@ def _bigquery(reader=None):
 
 
 def diagnosticar(*,repositoriodeimagens="",contaexecucao="",runner=subprocess.run,
-                reader=None):
+                reader=None, descobrir_candidatos=False):
     if not isinstance(repositoriodeimagens,str) or not isinstance(contaexecucao,str):
         raise ErroDiagnostico("configuracao deve ser string")
     if repositoriodeimagens and not REPO_PATTERN.fullmatch(repositoriodeimagens):
@@ -133,9 +193,14 @@ def diagnosticar(*,repositoriodeimagens="",contaexecucao="",runner=subprocess.ru
     safe_existing=(statuses["terminal_cloudrun_existente"]=="AUSENTE"
         or (statuses["terminal_cloudrun_existente"]=="CONFIRMADO"
             and statuses["terminal_iam_privado"]=="CONFIRMADO"))
+    candidatos = (descobrir_recursos_existentes(runner=runner)
+                  if descobrir_candidatos and (
+                      not repositoriodeimagens or not contaexecucao
+                  ) else None)
     return {
        "projeto":PROJECT,"dataset":DATASET,"regiao":REGION,
-       "componentes":statuses,"metadados_basicos_confirmados":meta_ok and safe_existing,
+       "componentes":statuses,
+       "descoberta_candidatos": candidatos,"metadados_basicos_confirmados":meta_ok and safe_existing,
        "autorizacao_de_deploy_verificada":False,"permissao_de_escrita_verificada":False,
        "orcamento_verificado":False,"sql_executado":False,
        "alteracoes_cloud":0,"go_live_homologado":False,
@@ -148,8 +213,11 @@ def main(argv=None):
     p=argparse.ArgumentParser(description="Auditoria sem escrita do terminal Cloud Run")
     p.add_argument("--repo",default=os.environ.get("NIVON_TERMINAL_ARTIFACT_REPO",""))
     p.add_argument("--sa",default=os.environ.get("NIVON_TERMINAL_EXECUTION_SA",""))
+    p.add_argument("--descobrir-candidatos",action="store_true",
+                   help="Listar Artifact Registry e SAs existentes sem criar recursos")
     a=p.parse_args(argv)
-    print(json.dumps(diagnosticar(repositoriodeimagens=a.repo,contaexecucao=a.sa),
+    print(json.dumps(diagnosticar(repositoriodeimagens=a.repo,contaexecucao=a.sa,
+                     descobrir_candidatos=a.descobrir_candidatos),
                      ensure_ascii=False,indent=2,sort_keys=True))
     return 0
 
