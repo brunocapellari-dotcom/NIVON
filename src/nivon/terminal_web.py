@@ -7,6 +7,7 @@ Exige Cloud Run IAM authentication no deploy; HTTP local é apenas para teste.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from pathlib import Path
 from decimal import Decimal, InvalidOperation
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from importlib.resources import files
@@ -19,6 +20,7 @@ from urllib.parse import urlsplit
 from .terminal_snapshot_gcs import EstadoSnapshot
 from .antt_bigquery import DestinoBQ
 from .transporte_multimodal import ErroTransporte
+from .mercado_bcb_ro import consultar as consultar_mercado
 
 PROJETO = "nivon-data"
 DATASET = "nivon_raw"
@@ -26,6 +28,13 @@ LIMITE_BYTES = 250_000_000
 TTL_SEGUNDOS = 900
 ANOS_INICIAIS = 2006
 MAX_ANOS = 35
+PUBLIC_ROOT=Path(__file__).resolve().parents[2]/"public"
+PUBLIC_ASSETS={
+    "/painel":("index.html","text/html; charset=utf-8"),
+    "/assets/nivon.js":("assets/nivon.js","application/javascript; charset=utf-8"),
+    "/assets/nivon.css":("assets/nivon.css","text/css; charset=utf-8"),
+    "/assets/mercado.js":("assets/mercado.js","application/javascript; charset=utf-8"),
+}
 
 HTML = r"""<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8">
@@ -230,12 +239,23 @@ def consultar_ferrovia(*, cliente=None, sdk=None, agora=None) -> dict:
 
 class TerminalState:
     """Memória curta para evitar consulta BQ em cada acesso ao terminal."""
-    def __init__(self, consulta=None, relogio=None):
+    def __init__(self, consulta=None, relogio=None, mercado=None):
         self.consulta=consulta or consultar_ferrovia
+        self.consulta_mercado=mercado or consultar_mercado
+        self.mercado_cache=None
+        self.mercado_expira=0.0
         self.relogio=relogio or time.monotonic
         self.bloqueio=Lock()
         self.dados=None
         self.expira_em=0.0
+
+    def obter_mercado(self):
+        with self.bloqueio:
+            agora=self.relogio()
+            if self.mercado_cache is None or agora>=self.mercado_expira:
+                self.mercado_cache=self.consulta_mercado()
+                self.mercado_expira=agora+600
+            return self.mercado_cache
 
     def obter(self):
         with self.bloqueio:
@@ -264,7 +284,7 @@ def servidor(state=None, snapshot=None):
             self.send_header("Referrer-Policy","no-referrer")
             self.send_header("Content-Security-Policy",
                 "default-src 'none'; script-src 'self' 'unsafe-inline'; "
-                "style-src 'self' 'unsafe-inline'; connect-src 'self'; base-uri 'none'; "
+                "style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.github.com; base-uri 'none'; "
                 "frame-ancestors 'none'")
             self.end_headers()
             self.wfile.write(corpo)
@@ -300,6 +320,24 @@ def servidor(state=None, snapshot=None):
                     return
                 body=json.dumps(snapshot_real,ensure_ascii=False).encode("utf-8")
                 self.responder(200,body,"application/json; charset=utf-8")
+                return
+            if path in PUBLIC_ASSETS:
+                name,mime=PUBLIC_ASSETS[path]
+                file=PUBLIC_ROOT/name
+                if not file.is_file() or file.is_symlink() or file.stat().st_size>750_000:
+                    self.responder(503,b'{"estado":"ASSET_NAO_DISPONIVEL"}',
+                                   "application/json; charset=utf-8")
+                else:
+                    self.responder(200,file.read_bytes(),mime)
+                return
+            if path=="/api/mercado":
+                try:
+                    doc=estado.obter_mercado()
+                    body=json.dumps(doc,ensure_ascii=False,allow_nan=False).encode("utf-8")
+                    code=503 if doc["status"]=="INDISPONIVEL" else 200
+                except Exception:
+                    code,body=503,b'{"status":"FONTE_INDISPONIVEL"}'
+                self.responder(code,body,"application/json; charset=utf-8")
                 return
             if path=="/api/v1/ferrovia":
                 try:

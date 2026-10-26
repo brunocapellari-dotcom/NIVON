@@ -13,15 +13,14 @@ vm.createContext(ctx);
 vm.runInContext(js+"\nglobalThis.NIVON_TEST={classify,safeRunUrl,GROUPS};",ctx);
 const {classify,safeRunUrl,GROUPS}=ctx.NIVON_TEST;
 
-test("Vercel publica somente assets publicos e impõe headers de proteção",()=>{
-  const conf=JSON.parse(fs.readFileSync(path.join(root,"vercel.json"),"utf8"));
-  assert.equal(conf.outputDirectory,"public");
-  assert.equal(conf.framework,null);
-  const headers=conf.headers.flatMap(r=>r.headers);
-  const policy=headers.find(h=>h.key==="Content-Security-Policy");
-  assert.match(policy.value,/default-src 'none'/);
-  assert.match(policy.value,/connect-src https:\/\/api\.github\.com/);
-  assert.match(headers.find(h=>h.key==="X-Robots-Tag").value,/noindex/);
+test("Cloud Run inclui frontend e utiliza mesma origem para backend",()=>{
+  const docker=fs.readFileSync(path.join(root,"infra/google_cloud/Dockerfile.terminal"),"utf8");
+  const service=fs.readFileSync(path.join(root,"src/nivon/terminal_web.py"),"utf8");
+  assert.match(docker,/COPY public \.\/public/);
+  assert.match(service,/\/api\/mercado/);
+  assert.match(service,/\/painel/);
+  assert.match(service,/Content-Security-Policy/);
+  assert.doesNotMatch(docker,/vercel/i);
 });
 test("fonte externa limitada ao repositório público NIVON",()=>{
   assert.match(js,/https:\/\/api\.github\.com\/repos\/|const REPO = "brunocapellari-dotcom\/NIVON"/);

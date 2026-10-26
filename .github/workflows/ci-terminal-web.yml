@@ -3,14 +3,20 @@ on:
   pull_request:
     paths:
       - 'public/**'
-      - 'vercel.json'
+      - 'src/nivon/terminal_web.py'
+      - 'src/nivon/mercado_bcb_ro.py'
+      - 'infra/google_cloud/Dockerfile.terminal'
+      - 'tests/test_terminal_gcp_unico.py'
       - 'tests/terminal_publico.test.js'
       - '.github/workflows/ci-terminal-web.yml'
   push:
     branches: [main]
     paths:
       - 'public/**'
-      - 'vercel.json'
+      - 'src/nivon/terminal_web.py'
+      - 'src/nivon/mercado_bcb_ro.py'
+      - 'infra/google_cloud/Dockerfile.terminal'
+      - 'tests/test_terminal_gcp_unico.py'
       - 'tests/terminal_publico.test.js'
       - '.github/workflows/ci-terminal-web.yml'
   workflow_dispatch:
@@ -28,6 +34,13 @@ jobs:
         run: |
           node --check public/assets/nivon.js
           node --test tests/terminal_publico.test.js
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Testar rotas reais do unico backend Cloud Run
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -p 'test_terminal_gcp_unico.py' -v
       - name: Comprovar build estático, sem fontes internas expostas
         shell: bash
         run: |
@@ -42,11 +55,11 @@ jobs:
           python3 - <<'PY'
           import json
           from pathlib import Path
-          manifest=json.loads(Path('vercel.json').read_text())
-          assert manifest['outputDirectory']=='public'
-          assert manifest.get('functions') == {'api/mercado.js': {'maxDuration': 10}}
-          assert not any(k in manifest for k in ('crons','rewrites'))
-          assert Path('api/mercado.js').is_file()
+          docker=Path('infra/google_cloud/Dockerfile.terminal').read_text()
+          service=Path('src/nivon/terminal_web.py').read_text()
+          assert 'COPY public ./public' in docker
+          assert '/painel' in service and '/api/mercado' in service
           assert Path('public/assets/mercado.js').is_file()
-          print('NIVON_WEB_BCB_FUNC_ALLOWLIST_OK')
+          assert not Path('vercel.json').exists()
+          print('NIVON_GCP_UNICO_FRONTEND_OK')
           PY

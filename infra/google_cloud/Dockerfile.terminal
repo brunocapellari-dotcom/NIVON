@@ -3,6 +3,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PORT=8080
 WORKDIR /app
 COPY pyproject.toml ./
 COPY src ./src
+COPY public ./public
 RUN python -m pip install --no-cache-dir '.[gcp]'
 USER 65532:65532
 CMD ["python","-m","nivon.terminal_web"]
