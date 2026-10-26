@@ -27,7 +27,8 @@ class AmbienteSimulado:
                 "regiao_conforme":self.regiao,
                 "tabelas":[{"tabela":n,"existe":self.tabelas[n],
                     "schema_conforme":n!=self.corrompido and self.tabelas[n],
-                    "particao_conforme":n!=self.corrompido and self.tabelas[n]}
+                    "particao_conforme":n!=self.corrompido and self.tabelas[n],
+                    "cluster_conforme":n!=self.corrompido and self.tabelas[n]}
                     for n in NOMES]}
 
     def canon(self,*,projeto,dataset,bucket,criar_tabela):
@@ -101,6 +102,28 @@ class BootstrapE2ETest(unittest.TestCase):
                ("NIVON_ZERO_COST_BQ_APPROVED","NIVON_BQ_BOOTSTRAP_TABLE_APPROVED")}
         ret=e.run(aplicar=True,alvo="canonico",env=gates)
         self.assertEqual(ret["criou_tabelas"],[NOMES[0]])
+        self.assertFalse(e.tabelas[NOMES[1]])
+
+    def test_cluster_divergente_impede_bootstrap_e_readback(self):
+        e=AmbienteSimulado(canon=True,agro=False)
+        def cluster_falso(**kwargs):
+            dados=e.ler(**kwargs)
+            dados["tabelas"][0]["cluster_conforme"]=False
+            return dados
+        with self.assertRaises(ErroBootstrap):
+            executar_bootstrap(**BASE,aplicar=True,env=GATES,leitura=cluster_falso,
+                    bootstrap_canonico=e.canon,bootstrap_agro=e.agro)
+        self.assertEqual(e.criacoes,[])
+
+    def test_canonico_sem_prova_de_criacao_bloqueia_staging(self):
+        e=AmbienteSimulado()
+        def sem_prova(**kwargs):
+            e.chamadas.append(("canon",kwargs["criar_tabela"]))
+            return {"tabela_validada":True,"tabela_criada":False}
+        with self.assertRaises(ErroBootstrap):
+            executar_bootstrap(**BASE,aplicar=True,env=GATES,leitura=e.ler,
+                    bootstrap_canonico=sem_prova,bootstrap_agro=e.agro)
+        self.assertEqual(e.criacoes,[])
         self.assertFalse(e.tabelas[NOMES[1]])
 
     def test_readback_obrigatorio(self):
