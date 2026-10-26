@@ -19,11 +19,13 @@ from urllib.parse import urlsplit
 from .terminal_snapshot_gcs import EstadoSnapshot
 from .antt_bigquery import DestinoBQ
 from .transporte_multimodal import ErroTransporte
+from .piloto_ptax_readonly import executar as executar_piloto_ptax
 
 PROJETO = "nivon-data"
 DATASET = "nivon_raw"
 LIMITE_BYTES = 250_000_000
 TTL_SEGUNDOS = 900
+PTAX_TTL_SEGUNDOS = 1800
 ANOS_INICIAIS = 2006
 MAX_ANOS = 35
 
@@ -71,6 +73,16 @@ header{flex-wrap:wrap}.year{font-size:9px}.bar-col{gap:4px}}
 <h1>Ferrovia brasileira, em números.</h1>
 <p>Movimentação por origem–destino registrada na ANTT/SIADE, lida diretamente do BigQuery.
 Dados históricos declarados; 2026 ainda parcial. Sem mistura com volumes rodoviários ou hidroviários.</p>
+<section class="section panel" id="painel-ptax" aria-labelledby="titulo-ptax">
+<h2 id="titulo-ptax">Câmbio de referência — PTAX USD</h2>
+<p id="ptax-situacao" role="status" aria-live="polite">Verificando disponibilidade da fonte oficial…</p>
+<div class="grid" id="ptax-cards" hidden>
+<div class="metric"><div class="label">Dólar PTAX venda · R$/US$</div><div class="value" id="ptax-valor">—</div></div>
+<div class="metric"><div class="label">Variação ante a observação anterior</div><div class="value" id="ptax-variacao">—</div></div>
+<div class="metric"><div class="label">Competência da observação</div><div class="value" id="ptax-data">—</div></div>
+</div>
+<p class="muted">BCB · OBSERVADO. Exibição exclusivamente interna e de leitura, sem persistência; dados defasados ficam indisponíveis. Não representa câmbio negociado.</p>
+</section>
 <div id="estado" class="status" role="status" aria-live="polite">Carregando dados reais…</div>
 <div class="grid" id="cards" hidden>
 <div class="metric"><div class="label">Toneladas úteis acumuladas</div><div id="tu" class="value">—</div>
@@ -124,6 +136,27 @@ async function carregar(){
     set('estado','DADOS INDISPONÍVEIS: '+e.message+' Nenhum número foi estimado.');
   }
 }carregar();
+async function carregarPtax(){
+ try{
+   const resposta=await fetch('/api/v1/ptax',{cache:'no-store'});
+   if(!resposta.ok){set('ptax-situacao','PTAX indisponível neste momento.');return;}
+   const dado=await resposta.json();
+   if(dado.status!=='PREVIA_INTERNA_VALIDA'||
+      dado.moeda!=='USD'||dado.cotacao_venda===null||
+      dado.cotacao_venda===undefined){
+     set('ptax-situacao','PTAX aguardando habilitação ou atualização da fonte. Nenhum valor presumido.');
+     return;
+   }
+   const brl=new Intl.NumberFormat('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:4});
+   const pct=new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+   set('ptax-valor',brl.format(Number(dado.cotacao_venda)));
+   set('ptax-data',dado.competencia);
+   set('ptax-variacao',dado.variacao_venda_pct_vs_dia_anterior_observado===null?
+      'Não disponível':pct.format(Number(dado.variacao_venda_pct_vs_dia_anterior_observado))+'%');
+   set('ptax-situacao','BCB/PTAX · Observação disponível · Idade '+dado.idade_horas+' horas. Não homologado para redistribuição.');
+   document.getElementById('ptax-cards').hidden=false;
+ }catch(_erro){set('ptax-situacao','PTAX indisponível. Nenhum valor foi inferido.');}
+}carregarPtax();
 </script></body></html>"""
 
 
@@ -249,9 +282,42 @@ class TerminalState:
             return self.dados
 
 
-def servidor(state=None, snapshot=None):
+class PtaxState:
+    """Cache de consulta BCB sem persistência; fonte desativada por padrão."""
+    def __init__(self, consulta=None, relogio=None, *, enabled=False):
+        self.enabled=enabled is True
+        self.consulta=consulta or (lambda: executar_piloto_ptax(
+            agora=datetime.now(timezone.utc)))
+        self.relogio=relogio or time.monotonic
+        self.lock=Lock()
+        self.cached=None
+        self.expires=0.0
+
+    def obter(self):
+        if not self.enabled:
+            return {
+                "status":"MODULO_AGUARDANDO_HABILITACAO",
+                "fonte":"Banco Central do Brasil — PTAX/OData",
+                "aprovado_go_live":False,
+                "publicacao_autorizada":False,
+                "cotacao_venda":None,
+            }
+        with self.lock:
+            now=self.relogio()
+            if self.cached is None or now>=self.expires:
+                result=self.consulta()
+                if not isinstance(result,dict) or result.get("status") not in (
+                        "PREVIA_INTERNA_VALIDA","INDISPONIVEL_FRESCURA"):
+                    raise ValueError("PTAX não retornou status confiável")
+                self.cached=result
+                self.expires=now+PTAX_TTL_SEGUNDOS
+            return self.cached
+
+
+def servidor(state=None, snapshot=None, ptax_state=None):
     estado=state or TerminalState()
     dados_integrados=snapshot or EstadoSnapshot()
+    ptax=ptax_state if ptax_state is not None else PtaxState()
 
     class Handler(BaseHTTPRequestHandler):
         def responder(self, status:int, corpo:bytes, content_type:str):
@@ -301,6 +367,17 @@ def servidor(state=None, snapshot=None):
                 body=json.dumps(snapshot_real,ensure_ascii=False).encode("utf-8")
                 self.responder(200,body,"application/json; charset=utf-8")
                 return
+            if path=="/api/v1/ptax":
+                try:
+                    doc=ptax.obter()
+                except Exception:
+                    self.responder(
+                        503,b'{"status":"FONTE_TEMPORARIAMENTE_INDISPONIVEL"}',
+                        "application/json; charset=utf-8")
+                    return
+                body=json.dumps(doc,ensure_ascii=False,allow_nan=False).encode("utf-8")
+                self.responder(200,body,"application/json; charset=utf-8")
+                return
             if path=="/api/v1/ferrovia":
                 try:
                     doc=estado.obter()
@@ -330,7 +407,8 @@ def main():
     porta=int(os.environ.get("PORT","8080"))
     if not 1 <= porta <= 65535:
         raise SystemExit("PORT_INVALIDA")
-    srv=ThreadingHTTPServer(("0.0.0.0",porta),servidor())
+    bcb=PtaxState(enabled=os.environ.get("NIVON_PTAX_INTERNAL_READ_ENABLED")=="true")
+    srv=ThreadingHTTPServer(("0.0.0.0",porta),servidor(ptax_state=bcb))
     srv.serve_forever()
 
 
