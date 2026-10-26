@@ -1,0 +1,31 @@
+name: NIVON - Testar ativacao e primeira carga GCP
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/ativar-tabelas-nivon-gcp.yml'
+      - 'tests/test_workflow_ativacao_carga_integrada.py'
+      - '.github/workflows/ci-ativacao-carga-integrada.yml'
+  push:
+    branches: ['feat/gcp-ativacao-carga-integrada-20261025']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validar-fluxo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Validar politicas do workflow sem executar Cloud
+        run: |
+          python -m unittest discover -s tests -p 'test_workflow_ativacao_carga_integrada.py' -v
+          python -m unittest discover -s tests -p 'test_bootstrap_tabelas_gcp.py' -v
+          python -m unittest discover -s tests -p 'test_sgs11_gcp.py' -v
