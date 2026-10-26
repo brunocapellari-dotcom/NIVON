@@ -73,3 +73,14 @@ account de runtime precisa de BigQuery jobs + escrita apenas no dataset
 e de escrita/leitura controlada no bucket. Verificar o papel efetivamente
 usado por Cloud Build antes de ampliar grants. Ativar Cloud Scheduler
 apenas depois de um job Cloud Run real com dados GCS e BQ verificados.
+
+## Agendamento Cloud Scheduler (ainda desabilitado)
+
+O workflow maritimo-gcp-cloudscheduler.yml pode criar o agendamento
+a cada seis horas, após a homologação real no Cloud Run. Exige
+acionamento manual na main, a opção autorizar_agendamento e a variável
+NIVON_MARITIMO_E2E_CLOUDRUN_CONFIRMADO=true. Também exige uma identidade
+NIVON_MARITIMO_SCHEDULER_SA existente com autorização run.jobs.run somente
+sobre o Job nivon-maritimo. O script verifica labels de propriedade,
+execução Cloud Run concluída com sucesso e eventual agendamento preexistente.
+Ele não habilita APIs nem altera IAM.
