@@ -64,23 +64,23 @@
 | `feat/bootstrap-duas-tabelas-gcp-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente |2026-10-23T19:00:07Z — RECENTE |
 | `feat/brasilapi-refs-nivon-20261021` | 20261021 | NÃO MESCLADA — 443 commit(s) à frente |2026-10-21T17:30:50Z — MAIS DE 3 DIAS |
 | `feat/catalogo-fontes-gratuitas-20261021` | 20261021 | NÃO MESCLADA — 451 commit(s) à frente |2026-10-21T18:30:55Z — MAIS DE 3 DIAS |
-| `feat/coleta-gcp-nucleo-main-20261023` | 20261023 | NÃO MESCLADA — 26 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/coleta-real-camadas-20261022` | 20261022 | NÃO MESCLADA — 629 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/coletores-apis-gratuitas-reais-20261021` | 20261021 | NÃO MESCLADA — 447 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/conectores-gcp-conab-sgs-20261023` | 20261023 | NÃO MESCLADA — 658 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/conectores-google-cloud-lote1-20261023` | 20261023 | NÃO MESCLADA — 628 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/connectores-gtr-noaa-pinksheet-geodata-20261021` | 20261021 | NÃO MESCLADA — 459 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/connectores-publicos-inpe-cftc-antt-20261021` | 20261021 | NÃO MESCLADA — 450 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/consulta-analitica-bq-fontes-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/corredores-ferrovia-historico-21anos-bq-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/corredores-ferroviarios-estacoes-20261023` | 20261023 | NÃO MESCLADA — 14 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/corredores-primeira-view-bq-real-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/earthsearch-usda-gtr-bases-20261021` | 20261021 | NÃO MESCLADA — 453 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/eurostat-faostat-qcl-api-20261021` | 20261021 | NÃO MESCLADA — 460 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/expansao-50-fontes-20261022` | 20261022 | NÃO MESCLADA — 549 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/faostat-bulk-manifest-20261021` | 20261021 | NÃO MESCLADA — 460 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/faostat-qcl-bigquery-contract-20261021` | 20261021 | NÃO MESCLADA — 464 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/faostat-qcl-stream-sqlite-20261021` | 20261021 | NÃO MESCLADA — 461 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/coleta-gcp-nucleo-main-20261023` | 20261023 | NÃO MESCLADA — 26 commit(s) à frente |2026-10-23T11:31:18Z — MAIS DE 3 DIAS |
+| `feat/coleta-real-camadas-20261022` | 20261022 | NÃO MESCLADA — 629 commit(s) à frente |2026-10-23T11:25:34Z — MAIS DE 3 DIAS |
+| `feat/coletores-apis-gratuitas-reais-20261021` | 20261021 | NÃO MESCLADA — 447 commit(s) à frente |2026-10-21T19:18:00Z — MAIS DE 3 DIAS |
+| `feat/conectores-gcp-conab-sgs-20261023` | 20261023 | NÃO MESCLADA — 658 commit(s) à frente |2026-10-23T15:52:37Z — MAIS DE 3 DIAS |
+| `feat/conectores-google-cloud-lote1-20261023` | 20261023 | NÃO MESCLADA — 628 commit(s) à frente |2026-10-23T11:52:18Z — MAIS DE 3 DIAS |
+| `feat/connectores-gtr-noaa-pinksheet-geodata-20261021` | 20261021 | NÃO MESCLADA — 459 commit(s) à frente |2026-10-21T20:43:46Z — MAIS DE 3 DIAS |
+| `feat/connectores-publicos-inpe-cftc-antt-20261021` | 20261021 | NÃO MESCLADA — 450 commit(s) à frente |2026-10-21T19:37:23Z — MAIS DE 3 DIAS |
+| `feat/consulta-analitica-bq-fontes-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-23T12:17:22Z — MAIS DE 3 DIAS |
+| `feat/corredores-ferrovia-historico-21anos-bq-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente |2026-10-23T18:15:40Z — RECENTE |
+| `feat/corredores-ferroviarios-estacoes-20261023` | 20261023 | NÃO MESCLADA — 14 commit(s) à frente |2026-10-23T12:19:55Z — MAIS DE 3 DIAS |
+| `feat/corredores-primeira-view-bq-real-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente |2026-10-23T16:06:52Z — MAIS DE 3 DIAS |
+| `feat/earthsearch-usda-gtr-bases-20261021` | 20261021 | NÃO MESCLADA — 453 commit(s) à frente |2026-10-21T20:28:56Z — MAIS DE 3 DIAS |
+| `feat/eurostat-faostat-qcl-api-20261021` | 20261021 | NÃO MESCLADA — 460 commit(s) à frente |2026-10-21T23:00:48Z — MAIS DE 3 DIAS |
+| `feat/expansao-50-fontes-20261022` | 20261022 | NÃO MESCLADA — 549 commit(s) à frente |2026-10-23T11:26:41Z — MAIS DE 3 DIAS |
+| `feat/faostat-bulk-manifest-20261021` | 20261021 | NÃO MESCLADA — 460 commit(s) à frente |2026-10-21T23:06:48Z — MAIS DE 3 DIAS |
+| `feat/faostat-qcl-bigquery-contract-20261021` | 20261021 | NÃO MESCLADA — 464 commit(s) à frente |2026-10-22T00:23:17Z — MAIS DE 3 DIAS |
+| `feat/faostat-qcl-stream-sqlite-20261021` | 20261021 | NÃO MESCLADA — 461 commit(s) à frente |2026-10-22T00:15:31Z — MAIS DE 3 DIAS |
 | `feat/fontes-complementares-glam-wapor-portwatch-20261021` | 20261021 | NÃO MESCLADA — 453 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/fontes-ibge-worldbank-operacionais-20261023` | 20261023 | NÃO MESCLADA — 16 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/gcp-ativacao-carga-integrada-20261025` | 20261025 | NÃO MESCLADA — 6 commit(s) à frente | PENDENTE — conferir commit |
