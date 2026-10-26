@@ -15,6 +15,7 @@ on:
       - 'scripts/smoke_terminal_container.py'
       - 'src/nivon/aceite_terminal_privado.py'
       - 'tests/test_aceite_terminal_privado.py'
+      - 'tests/test_terminal_m1_iap_policy.py'
       - '.github/workflows/nivon-terminal-go-live.yml'
   push:
     branches: [main]
@@ -29,6 +30,7 @@ on:
       - 'scripts/smoke_terminal_container.py'
       - 'src/nivon/aceite_terminal_privado.py'
       - 'tests/test_aceite_terminal_privado.py'
+      - 'tests/test_terminal_m1_iap_policy.py'
       - '.github/workflows/nivon-terminal-go-live.yml'
   workflow_dispatch:
     inputs:
@@ -64,6 +66,7 @@ jobs:
           python -m compileall -q src/nivon/terminal_web.py
           python -m unittest discover -s tests -p 'test_terminal_web.py' -v
           python -m unittest discover -s tests -p 'test_aceite_terminal_privado.py' -v
+          python -m unittest discover -s tests -p 'test_terminal_m1_iap_policy.py' -v
           python -m unittest discover -s tests -p 'test_terminal_snapshot_gcs.py' -v
           python -m unittest discover -s tests -p 'test_terminal_go_live_policy.py' -v
           python -m unittest discover -s tests -p 'test_diagnostico_terminal_cloudrun.py' -v
