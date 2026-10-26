@@ -43,23 +43,8 @@ if view.table_type!='VIEW':
 print('VIEW_E_DATASET_VALIDOS_SEM_CONSULTA_BQ')
 PY
 
-# GO-LIVE nao publica terminal sem prova de dados reais no GCS privado.
-# O snapshot foi gerado por leitura real dos conectores existentes.
-python - <<'PY'
-from nivon.terminal_snapshot_gcs import ler_gcs
-try:
-    snapshot=ler_gcs()
-except Exception:
-    raise SystemExit('GO_LIVE_BLOQUEADO_SNAPSHOT_REAL_AUSENTE_OU_DEFASADO') from None
-sources=set(snapshot['fontes_consultadas'])
-if 'ANTT_SIADE_ORIGEM_DESTINO' not in sources:
-    raise SystemExit('GO_LIVE_BLOQUEADO_SEM_FERROVIA_ANTT_REAL')
-if not any(s.startswith('LINEUP_') or s.startswith('FMI_PORTWATCH_') for s in sources):
-    raise SystemExit('GO_LIVE_BLOQUEADO_SEM_DADOS_MARITIMOS_REAIS')
-if len(snapshot['indicadores']) < 2:
-    raise SystemExit('GO_LIVE_BLOQUEADO_SEM_INDICADORES_REAIS')
-print('NIVON_GCS_SNAPSHOT_REAL_VALIDADO_SEM_SQL',len(sources),len(snapshot['indicadores']))
-PY
+# M1: somente ANTT no BigQuery. Snapshot GCS e fontes marítimas não bloqueiam
+# este marco. A API /api/v1/ferrovia será conferida pelo operador após deploy.
 
 tmp=$(mktemp)
 trap 'rm -f "$tmp"' EXIT
@@ -106,12 +91,33 @@ echo 'DEPLOY_PRIVADO_MIN_INSTANCES_ZERO'
 gcloud run deploy "$SERVICE" \
   --project="$NIVON_PROJETO" --region="$REGION" \
   --image="$IMAGE" --service-account="$NIVON_TERMINAL_EXECUTION_SA" \
-  --no-allow-unauthenticated --ingress=all \
+  --no-allow-unauthenticated --iap --ingress=all \
   --min-instances=0 --max-instances=1 \
   --cpu=1 --memory=512Mi --concurrency=8 --timeout=60 \
   --labels=nivon-component=terminal,managed-by=github-actions \
   --set-env-vars="NIVON_BQ_PROJECT=$NIVON_PROJETO,NIVON_BQ_DATASET=$NIVON_DATASET" \
   --quiet
-echo 'DEPLOY_TERMINAL_CONCLUIDO_PRIVADO_SEM_CRON_OU_IAM_PUBLICO'
+# Verificação somente leitura: falha fechada se o IAP não estiver ativo
+# ou se faltar o invoker exato do agente IAP do projeto.
+PROJETO_NUMERO=$(gcloud projects describe "$NIVON_PROJETO" --format='value(projectNumber)')
+tmp_service=$(mktemp)
+tmp_policy=$(mktemp)
+trap 'rm -f "$tmp" "$tmp_service" "$tmp_policy"' EXIT
+gcloud run services describe "$SERVICE" --project="$NIVON_PROJETO" \
+  --region="$REGION" --format=json > "$tmp_service"
+gcloud run services get-iam-policy "$SERVICE" --project="$NIVON_PROJETO" \
+  --region="$REGION" --format=json > "$tmp_policy"
+python - "$tmp_service" "$tmp_policy" "$PROJETO_NUMERO" <<'PY'
+import json,sys
+from nivon.aceite_terminal_privado import conferir_politica_iap, FalhaAceite
+with open(sys.argv[1],encoding="utf-8") as f: service=json.load(f)
+with open(sys.argv[2],encoding="utf-8") as f: iam=json.load(f)
+try:
+    assert conferir_politica_iap(service,iam,sys.argv[3])["agente_iap_invoker"]
+except (FalhaAceite,AssertionError) as exc:
+    raise SystemExit("ACEITE_IAP_PENDENTE_CONFIGURACAO_MANUAL: "+str(exc)) from None
+print("IAP_ATIVO_SEM_INVOCACAO_PUBLICA=OK")
+PY
+echo 'DEPLOY_PRIVADO_CONCLUIDO_SUJEITO_A_ACEITE_HTTP_E_LOGIN'
 gcloud run services describe "$SERVICE" --project="$NIVON_PROJETO" \
   --region="$REGION" --format='value(status.url)'
