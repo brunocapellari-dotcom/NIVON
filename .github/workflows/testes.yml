@@ -42,6 +42,51 @@ jobs:
         run: python scripts/smoke_go_live_mvp.py
       - name: Construir imagem Docker do MVP sem enviar a registry
         run: docker build -f Dockerfile --tag nivon-mvp:ci .
+      - name: Executar contêiner MVP em loopback sem dados e sem credenciais
+        run: |
+          set -euo pipefail
+          docker run --detach --name nivon-mvp-smoke \
+            --read-only --tmpfs /tmp --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --memory 256m --cpus 1 \
+            --publish 127.0.0.1:18080:8080 \
+            --env NIVON_PRIVATE_DEPLOY_APPROVED=true \
+            nivon-mvp:ci
+          trap 'docker rm --force nivon-mvp-smoke >/dev/null 2>&1 || true' EXIT
+          python - <<'PY'
+          import json
+          import time
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+          host = "http://127.0.0.1:18080"
+          for _ in range(30):
+              try:
+                  with urllib.request.urlopen(host+"/healthz",timeout=2) as r:
+                      assert r.status == 200
+                  break
+              except (OSError,AssertionError):
+                  time.sleep(.2)
+          else:
+              raise SystemExit("container não iniciou")
+          with urllib.request.urlopen(host+"/api/status",timeout=3) as r:
+              status=json.loads(r.read())
+              assert status["status"]=="PREVIEW_SEM_EDICAO_HOMOLOGADA"
+          try:
+              urllib.request.urlopen(host+"/api/edicao",timeout=3)
+              raise AssertionError("edição ausente não pode retornar sucesso")
+          except urllib.error.HTTPError as ex:
+              assert ex.code==503
+          payload=urllib.parse.urlencode(
+              {"pergunta":"analisar soja clima e frete"}).encode()
+          request=urllib.request.Request(host+"/ivo",data=payload,
+              headers={"Content-Type":"application/x-www-form-urlencoded"})
+          with urllib.request.urlopen(request,timeout=3) as r:
+              assert r.status==200
+              body=r.read().decode()
+              assert "PLANO_OFFLINE_SEM_DADOS_HOMOLOGADOS" in body
+          print("CONTAINER_MVP_PRIVADO_E2E_OK — sem edicao, sem rede externa")
+          PY
       - name: Conferir catálogo mestre e cobertura de indicadores
         env:
           PYTHONPATH: src
