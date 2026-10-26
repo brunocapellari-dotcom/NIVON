@@ -174,11 +174,26 @@ class TestAceiteTerminalPrivado(unittest.TestCase):
         self.assertIn('NIVON_GCP_COST_REVIEWED',script)
         self.assertIn('curl',script)
         self.assertIn('print-identity-token',script)
-        self.assertIn('NAO_PRIVADA' if 'NAO_PRIVADA' in script else 'NAO_PRIVADA', script)
+        self.assertIn("GO_LIVE_BLOQUEADO_URL_NAO_PRIVADA",script)
         for prohibited in ("gcloud run services add-iam-policy-binding",
                            "gcloud services enable","gcloud run deploy",
                            "gcloud iam service-accounts create"):
             self.assertNotIn(prohibited,script)
+
+    def test_rollback_e_explicitamente_autorizado_e_nao_altera_iam(self):
+        root=Path(__file__).resolve().parents[1]
+        script=(root/"scripts/rollback_terminal_privado.sh").read_text()
+        for gate in ("GITHUB_REF","NIVON_ROLLBACK_APPROVED",
+                     "NIVON_GO_LIVE_DEPLOY_APPROVED",
+                     "NIVON_GCP_COST_REVIEWED",
+                     "NIVON_ROLLBACK_TARGET_REVISION",
+                     "SERVICO_SEM_POSSE_NIVON","ROLLBACK_IAM_PUBLICO"):
+            self.assertIn(gate,script)
+        self.assertIn("gcloud run revisions describe",script)
+        self.assertIn("gcloud run services update-traffic",script)
+        for forbidden in ("--allow-unauthenticated","add-iam-policy-binding",
+                          "gcloud services enable","gcloud run deploy"):
+            self.assertNotIn(forbidden,script)
 
 if __name__=="__main__":
     unittest.main()
