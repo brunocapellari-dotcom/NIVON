@@ -49,41 +49,23 @@ jobs:
           create_credentials_file: true
       - name: Instalar clientes readonly
         run: python -m pip install --quiet --disable-pip-version-check 'google-cloud-bigquery>=3,<4' 'google-cloud-storage>=2.18,<4'
-      - name: Verificar dataset bucket e tabela staging sem criar recursos
+      - name: Verificar METADADOS do piloto ferroviario sem SQL ou mutacao
         env:
           PYTHONPATH: src
-          NIVON_BQ_PROJECT: ${{ vars.NIVON_BQ_PROJECT }}
-          NIVON_BQ_DATASET: ${{ vars.NIVON_BQ_DATASET }}
-          NIVON_GCS_BUCKET: ${{ vars.NIVON_GCS_BUCKET }}
         run: |
+          set -euo pipefail
+          python scripts/verificar_golive_gcp_readonly.py --executar > "$RUNNER_TEMP/nivon-readiness.json"
           python - <<'PY'
-          import os,json,sys
-          from google.cloud import bigquery,storage
-          from google.api_core.exceptions import NotFound
-          from nivon.agro_bigquery_loader import _TIPOS
-          project=os.environ['NIVON_BQ_PROJECT']
-          dataset=os.environ['NIVON_BQ_DATASET']
-          bucketname=os.environ['NIVON_GCS_BUCKET']
-          bq=bigquery.Client(project=project)
-          ds=bq.get_dataset(f'{project}.{dataset}')
-          bucket=storage.Client(project=project).get_bucket(bucketname)
-          result={'status':'METADADOS_AUTENTICADOS_READONLY',
-                  'dataset_regiao':str(ds.location).lower(),
-                  'bucket_regiao':str(bucket.location).lower(),
-                  'tabela_agro_fonte_stage':None}
-          if result['dataset_regiao']!='southamerica-east1' or result['bucket_regiao']!='southamerica-east1':
-              print(json.dumps({**result,'status':'BLOQUEIO_REGIAO'}))
-              sys.exit(3)
-          try:
-              tbl=bq.get_table(f'{project}.{dataset}.agro_fonte_stage')
-          except NotFound:
-              result['tabela_agro_fonte_stage']='AUSENTE'
-              print(json.dumps(result,sort_keys=True))
-              sys.exit(4)
-          cols={f.name:f.field_type.upper() for f in tbl.schema}
-          p=getattr(tbl,'time_partitioning',None)
-          valido=(cols==_TIPOS and p is not None and p.field=='coletado_utc')
-          result['tabela_agro_fonte_stage']='SCHEMA_OK' if valido else 'SCHEMA_DIVERGENTE'
-          print(json.dumps(result,sort_keys=True))
-          if not valido:sys.exit(5)
+          import json,os
+          from pathlib import Path
+          r=json.loads((Path(os.environ['RUNNER_TEMP'])/'nivon-readiness.json').read_text())
+          assert r['estado']=='PILOTO_DADOS_READONLY_PRONTO'
+          assert r['consultas_sql_executadas']==0
+          assert not r['libera_deploy'] and not r['libera_whatsapp']
+          print('NIVON_GOLIVE_PILOTO_READONLY='+json.dumps(r,sort_keys=True))
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as out:
+              out.write('### NIVON — dados do piloto ANTT (somente metadados)\n\n')
+              out.write('Estado: '+r['estado']+'\n\n')
+              out.write('Stage Agro: '+r['stage_agro']+' — separado do piloto ferroviário.\n\n')
+              out.write('Cloud Run: não verificado. Nenhum deploy autorizado.\n')
           PY
