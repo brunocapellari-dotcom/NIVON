@@ -13,6 +13,12 @@ on:
       - 'src/nivon/ptax_plano.py'
       - 'src/nivon/bcb_ptax.py'
   workflow_dispatch:
+    inputs:
+      confirmar_consulta:
+        description: 'Executar um GET oficial PTAX sem persistir ou divulgar preços'
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -23,7 +29,13 @@ concurrency:
 
 jobs:
   bcb-live-readonly:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == 'brunocapellari-dotcom/NIVON' && github.event.pull_request.head.ref == 'release/mvp-interno-ptax-20261025'
+    if: >-
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == 'brunocapellari-dotcom/NIVON' &&
+       github.event.pull_request.head.ref == 'release/mvp-interno-ptax-20261025') ||
+      (github.event_name == 'workflow_dispatch' &&
+       github.ref == 'refs/heads/main' &&
+       inputs.confirmar_consulta == true)
     runs-on: ubuntu-latest
     timeout-minutes: 3
     permissions:
