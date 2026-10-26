@@ -180,8 +180,12 @@ class TestSmoke(unittest.TestCase):
     def test_block_missing_security_headers(self):
         with self.assertRaisesRegex(ErroAceite,"cabeçalhos"):
             validar_terminal_privado(url=URL,token=TOKEN,agora=NOW,
-                opener=Opener(headers={"Cache-Control":"private",
-                                      "X-Frame-Options":"ALLOW"}))
+                opener=Opener(headers={"X-Frame-Options":"ALLOW"}))
+
+    def test_block_unsafe_cache_policy(self):
+        with self.assertRaisesRegex(ErroAceite,"MIME/cache"):
+            validar_terminal_privado(url=URL,token=TOKEN,agora=NOW,
+                opener=Opener(headers={"Cache-Control":"public"}))
 
     def test_fail_closed_without_leaking_http_errors(self):
         c=Opener(error_path=True)
