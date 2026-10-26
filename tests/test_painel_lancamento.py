@@ -98,7 +98,7 @@ class TestPrimeiroGoLive(unittest.TestCase):
         self.assertIsNone(p["imbituba"]["toneladas_realizadas"])
         self.assertFalse(p["ferrovia"]["somar_com_rodovia"])
         h=renderizar_html(p)
-        for val in ("130.001 t","IMBITUBA","PortWatch","SHADOW","noindex,nofollow"):
+        for val in ("130.001 t","Imbituba","PortWatch","SHADOW","noindex,nofollow"):
             self.assertIn(val,h)
         self.assertNotIn("https://cdn",h)
 
