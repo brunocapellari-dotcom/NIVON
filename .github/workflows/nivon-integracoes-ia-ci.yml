@@ -1,0 +1,36 @@
+name: NIVON - Contratos de integrações IA (offline)
+on:
+  pull_request:
+    paths:
+      - 'src/nivon/integracoes_ia/**'
+      - 'tests/test_integracoes_ia.py'
+      - '.github/workflows/nivon-integracoes-ia-ci.yml'
+      - 'scripts/nivon_magnitude_piloto.mjs'
+  push:
+    branches: [main]
+    paths:
+      - 'src/nivon/integracoes_ia/**'
+      - 'tests/test_integracoes_ia.py'
+      - '.github/workflows/nivon-integracoes-ia-ci.yml'
+      - 'scripts/nivon_magnitude_piloto.mjs'
+permissions:
+  contents: read
+jobs:
+  contratos-sem-rede:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Testar contratos sem rede, credenciais ou servicos pagos
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -p 'test_integracoes_ia.py' -v
+      - name: Verificar sintaxe offline das integrações
+        run: |
+          python -m compileall -q src/nivon/integracoes_ia
+          node --check scripts/nivon_magnitude_piloto.mjs
