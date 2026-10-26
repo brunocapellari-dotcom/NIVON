@@ -4,7 +4,7 @@
   "snapshot_date": "2026-10-25",
   "repository": "brunocapellari-dotcom/NIVON",
   "default_branch": "main",
-  "notice": "Fila GitHub curada; não inicia Codex Cloud nem equivale a execução LIVE.",
+  "notice": "Backlog rastreável, não executa Codex/Claude. Vercel excluído da arquitetura; implantação única no Google Cloud requer gates humanos de IAM/custo.",
   "tasks": [
     {
       "id": "p0-go-live-terminal",
@@ -187,6 +187,214 @@
       ],
       "depends_on": [],
       "acceptance": "Vintages IBGE/PAM e direitos antes de promover dados"
+    },
+    {
+      "id": "p0-release-gcp",
+      "issue": 281,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/281",
+      "priority": "P0",
+      "preferred_agent": "human",
+      "readiness": "external_gate",
+      "files": [
+        "docs/GO_LIVE_PRIVADO_NIVON_20261025.md"
+      ],
+      "depends_on": [],
+      "acceptance": "Publicação no Google Cloud sujeita a IAM/custo explícitos; Vercel fora do projeto"
+    },
+    {
+      "id": "p0-retirar-vercel",
+      "issue": 286,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/286",
+      "priority": "P0",
+      "preferred_agent": "codex",
+      "readiness": "ready_code",
+      "files": [
+        "apps/nivon-terminal/README.md"
+      ],
+      "depends_on": [],
+      "acceptance": "Retirar artefatos/configurações Vercel sem excluir front, e manter Google Cloud como único host"
+    },
+    {
+      "id": "p0-portal-unico",
+      "issue": 287,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/287",
+      "priority": "P0",
+      "preferred_agent": "codex",
+      "readiness": "ready_code",
+      "files": [
+        "apps/nivon-terminal/app.js"
+      ],
+      "depends_on": [],
+      "acceptance": "Unificar interface Cloud Run com #276, sem duplicar app; dependente do estado real do PR"
+    },
+    {
+      "id": "p0-gcp-preflight",
+      "issue": 288,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/288",
+      "priority": "P0",
+      "preferred_agent": "codex",
+      "readiness": "ready_code",
+      "files": [
+        "scripts/deploy_terminal_privado.sh"
+      ],
+      "depends_on": [],
+      "acceptance": "Read-only: diagnóstico IAM, billing, AR e Cloud Run; sem deploy"
+    },
+    {
+      "id": "p0-terminal-readback",
+      "issue": 289,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/289",
+      "priority": "P0",
+      "preferred_agent": "codex",
+      "readiness": "ready_code",
+      "files": [
+        "tests/test_terminal_web.py"
+      ],
+      "depends_on": [],
+      "acceptance": "E2E URL API offline, freshness, dado nulo, sem acesso público"
+    },
+    {
+      "id": "p0-rollback-terminal",
+      "issue": 290,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/290",
+      "priority": "P0",
+      "preferred_agent": "codex",
+      "readiness": "ready_code",
+      "files": [
+        "tests/test_terminal_go_live_policy.py"
+      ],
+      "depends_on": [],
+      "acceptance": "Teste dry-run de rollback, proteção 401/403, latência e custo"
+    },
+    {
+      "id": "p0-source-health",
+      "issue": 291,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/291",
+      "priority": "P0",
+      "preferred_agent": "codex",
+      "readiness": "ready_code",
+      "files": [
+        "src/nivon/antaq_fonte_saude.py"
+      ],
+      "depends_on": [],
+      "acceptance": "Freshness/lag/indisponibilidade/quarentena sem valores inventados"
+    },
+    {
+      "id": "p0-agro-e2e",
+      "issue": 292,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/292",
+      "priority": "P0",
+      "preferred_agent": "codex",
+      "readiness": "ready_code",
+      "files": [
+        "src/nivon/agro_staging_bigquery.py"
+      ],
+      "depends_on": [],
+      "acceptance": "Eliminar lacuna E2E CEPEA/IMEA/CONAB sem coleta restrita nem promover staging"
+    },
+    {
+      "id": "p1-lineups",
+      "issue": 293,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/293",
+      "priority": "P1",
+      "preferred_agent": "codex",
+      "readiness": "ready_code",
+      "files": [
+        "src/nivon/lineup_portos.py"
+      ],
+      "depends_on": [],
+      "acceptance": "Reconciliar CDP/AIS por status e proveniência, sem estimar carga como observada"
+    },
+    {
+      "id": "p1-backfill",
+      "issue": 294,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/294",
+      "priority": "P1",
+      "preferred_agent": "codex",
+      "readiness": "ready_code",
+      "files": [
+        "scripts/backfill_fontes_cloud.py"
+      ],
+      "depends_on": [],
+      "acceptance": "Idempotência e replay RAW GCS para BigQuery sem perder vintages"
+    },
+    {
+      "id": "p1-anp-diesel",
+      "issue": 295,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/295",
+      "priority": "P1",
+      "preferred_agent": "codex",
+      "readiness": "ready_code",
+      "files": [
+        "docs/FONTES_TRANSPORTE_ANTT_ANTAQ_20261022.md"
+      ],
+      "depends_on": [],
+      "acceptance": "Localizar e reutilizar conector ANP, comprovar unidade/fonte/competência"
+    },
+    {
+      "id": "p0-neon-reconciliacao",
+      "issue": 296,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/296",
+      "priority": "P0",
+      "preferred_agent": "codex",
+      "readiness": "ready_code",
+      "files": [
+        "scripts/ptax_neon_to_bigquery_jsonl.py"
+      ],
+      "depends_on": [],
+      "acceptance": "Shadow-read, reconciliação e rollback antes de qualquer corte Neon→GCP"
+    },
+    {
+      "id": "p1-coleta-recorrente",
+      "issue": 297,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/297",
+      "priority": "P1",
+      "preferred_agent": "codex",
+      "readiness": "ready_code",
+      "files": [
+        ".github/workflows/coleta-recorrente-fontes.yml"
+      ],
+      "depends_on": [],
+      "acceptance": "Dry run e health dos schedules existentes; não ativar execuções cobradas"
+    },
+    {
+      "id": "p1-observabilidade",
+      "issue": 298,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/298",
+      "priority": "P1",
+      "preferred_agent": "codex",
+      "readiness": "ready_code",
+      "files": [
+        "src/nivon/auditoria_gcp_readonly.py"
+      ],
+      "depends_on": [],
+      "acceptance": "Métricas de custo, IAM, latência e freshness; sem novos serviços pagos"
+    },
+    {
+      "id": "p1-backtest-quant",
+      "issue": 299,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/299",
+      "priority": "P1",
+      "preferred_agent": "codex",
+      "readiness": "ready_code",
+      "files": [
+        "docs/PAINEL_LOGISTICA_MARITIMO_QUANT_20261023.md"
+      ],
+      "depends_on": [],
+      "acceptance": "Backtest PIT sem leakage, com fretes comparáveis e dados observados"
+    },
+    {
+      "id": "p1-relatorios",
+      "issue": 300,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/300",
+      "priority": "P1",
+      "preferred_agent": "codex",
+      "readiness": "ready_code",
+      "files": [
+        "public/index.html"
+      ],
+      "depends_on": [],
+      "acceptance": "Painel/boletim com dados reais e ausências explícitas, sem Vercel"
     }
   ]
 }
