@@ -94,23 +94,23 @@
 | `feat/go-live-terminal-leitura-20261025` | 20261025 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/go-live-terminal-ptax-gcp-20261025` | 20261025 | NÃO MESCLADA — 11 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/hidromet-fontes-publicas-power-glofas-20261021` | 20261021 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
-| `feat/integracoes-ia-p0-p2-optin-20261026` | 20261026 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/integracoes-lineup-nacional-20261019` | 20261019 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/inteligencia-corredores-intermodais-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/ivo-cerebro-historico-20261019` | 20261019 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/lineup-itaqui-codeba-20261019` | 20261019 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/maritimo-cloudrun-deploy-seguro-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/maritimo-gcp-esquema-real-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/maritimo-gcp-primeira-coleta-real-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/maritimo-gcp-principal-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/maritimo-go-live-gha-6h-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/maritimo-preflight-main-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/maritimo-scheduler-seguro-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/mercado-bcb-portal-existente-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/meteo-publica-inmet-cptec-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/migracao-neon-para-gcp-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/nivon-ais-geocercas-evidencia-inferida-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/nivon-ais-ledger-replay-e2e-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/integracoes-ia-p0-p2-optin-20261026` | 20261026 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/integracoes-lineup-nacional-20261019` | 20261019 | NÃO MESCLADA — 216 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/inteligencia-corredores-intermodais-20261023` | 20261023 | NÃO MESCLADA — 7 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/ivo-cerebro-historico-20261019` | 20261019 | NÃO MESCLADA — 226 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/lineup-itaqui-codeba-20261019` | 20261019 | NÃO MESCLADA — 212 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/maritimo-cloudrun-deploy-seguro-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/maritimo-gcp-esquema-real-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/maritimo-gcp-primeira-coleta-real-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/maritimo-gcp-principal-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/maritimo-go-live-gha-6h-20261025` | 20261025 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/maritimo-preflight-main-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/maritimo-scheduler-seguro-20261025` | 20261025 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/mercado-bcb-portal-existente-20261025` | 20261025 | NÃO MESCLADA — 9 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/meteo-publica-inmet-cptec-20261021` | 20261021 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
+| `feat/migracao-neon-para-gcp-20261023` | 20261023 | NÃO MESCLADA — 12 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/nivon-ais-geocercas-evidencia-inferida-20261025` | 20261025 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
+| `feat/nivon-ais-ledger-replay-e2e-20261025` | 20261025 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
 | `feat/nivon-catalogo-total-github-20261026` | 20261026 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
 | `feat/nivon-go-live-painel-interno-gcs-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
 | `feat/nivon-go-live-rotina-dias-uteis-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
