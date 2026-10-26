@@ -19,6 +19,10 @@ analytics = ["duckdb>=1.4,<2", "polars>=1,<2", "pydantic>=2,<3"]
 agents = ["pydantic>=2,<3"]
 auth = ["google-auth>=2.40,<4", "requests>=2.31,<3"]
 gcp = ["google-cloud-bigquery>=3,<4", "google-cloud-storage>=2.18,<4", "google-crc32c>=1.6,<3"]
+mvp = ["gunicorn>=22,<24"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+nivon = ["mvp_web/*.html", "mvp_web/*.css", "mvp_web/*.js"]
