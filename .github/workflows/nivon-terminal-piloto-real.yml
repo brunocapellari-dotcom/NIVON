@@ -31,7 +31,7 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_golive_readiness_workflow.py' -v
   piloto-real:
     needs: validar-preflight
-    if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && vars.NIVON_TERMINAL_READ_APPROVED == 'true' && vars.NIVON_GCP_COST_REVIEWED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 17
     env:

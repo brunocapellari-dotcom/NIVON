@@ -23,7 +23,9 @@ class GateReadiness(unittest.TestCase):
         self.assertNotIn("gcloud",job)
         actual=self.src.split("  piloto-real:",1)[1].split("    runs-on:",1)[0]
         self.assertIn("github.ref == 'refs/heads/main'",actual)
-        self.assertIn("github.event_name != 'pull_request'",actual)
+        self.assertIn("github.event_name == 'workflow_dispatch'",actual)
+        self.assertIn("NIVON_TERMINAL_READ_APPROVED == 'true'",actual)
+        self.assertIn("NIVON_GCP_COST_REVIEWED == 'true'",actual)
 
     def test_preflight_nao_publica_nem_vaza_valor_da_variavel(self):
         self.assertIn("NIVON_GO_LIVE_PREFLIGHT=",self.src)
