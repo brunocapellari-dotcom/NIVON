@@ -1,0 +1,60 @@
+name: NIVON - Prova real sem escrita das fontes agro
+
+on:
+  pull_request:
+    paths:
+      - 'src/nivon/agro_origem_gcp.py'
+      - 'src/nivon/cepea_web_primario.py'
+      - 'src/nivon/imea_lotes.py'
+      - 'src/nivon/conab_job.py'
+      - 'scripts/provar_fontes_agro_reais.py'
+      - 'tests/test_provar_fontes_agro_reais.py'
+      - '.github/workflows/prova-real-fontes-agro.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-prova-real-agro-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contrato-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Instalar somente o pacote local
+        run: python -m pip install -e .
+      - name: Provar reconciliacao de snapshots e ausencia de persistencia permanente
+        run: python -m unittest discover -s tests -p 'test_provar_fontes_agro_reais.py' -v
+
+  fontes-reais:
+    needs: contrato-offline
+    # Prova pontual em PR/manual. Sem agenda, GCP, IAM, custos de BigQuery ou Neon.
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        fonte: [CEPEA_SOJA, CEPEA_MILHO, IMEA, CONAB]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Instalar bibliotecas de origem fixadas
+        run: python -m pip install -e '.[agro]'
+      - name: Validar lote real em diretorio efemero do runner
+        env:
+          NIVON_PROVA_FONTE: ${{ matrix.fonte }}
+        run: |
+          python scripts/provar_fontes_agro_reais.py --fonte "$NIVON_PROVA_FONTE" --executar
