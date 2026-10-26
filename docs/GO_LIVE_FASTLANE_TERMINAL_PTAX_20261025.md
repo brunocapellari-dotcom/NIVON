@@ -48,3 +48,31 @@ Esta branch **não** executa deploy, IAM, BigQuery real, GCS escrita ou coleta a
 - **#13:** integração ampla de frentes, **não** bloqueia o go-live privado reduzido com dados já observados.
 
 **Próxima ação material:** uma revisão técnica da PR Fast Lane baseada em `main`, verificar as configurações já existentes e obter aprovação explícita de deploy/custos. Não integrar Vercel.
+
+## Diagnóstico de infraestrutura verificado — 26/10/2026 UTC
+
+Fonte: [GitHub Actions 40261748288](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/40261748288) e [diagnóstico do terminal 40262034829](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/40262034829). São respostas do pipeline **somente leitura**, não prova de autorização para mutações.
+
+| Requisito | Estado observado |
+| --- | --- |
+| Dataset BigQuery `nivon-data.nivon_raw` | CONFIRMADO |
+| View ferroviária no BigQuery | CONFIRMADO |
+| Bucket privado e região do dataset | `southamerica-east1`, confirmados |
+| Artifact Registry (nome do repositório do terminal) | NAO_CONFIGURADO nas variáveis do job |
+| Service Account de execução do Cloud Run | NAO_CONFIGURADO nas variáveis do job |
+| Existência/descrição do serviço Cloud Run | SEM_PERMISSAO para diagnosticar |
+| IAM privado do serviço | SEM_PERMISSAO para diagnosticar |
+| Estados das APIs Run/Build/Artifact | INDETERMINADO na identidade do job |
+| `agro_fonte_stage` | AUSENTE, mas **opcional** para o terminal ferroviário inicial |
+
+O retrato interno foi gravado no bucket privado em [Actions 40257509093](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/40257509093). Isso **não comprova** que um terminal Cloud Run esteja acessível nem que uma API HTTP da nossa PR tenha sido implantada.
+
+### Gates restantes: ação humana somente onde é material
+
+1. Reconhecer/completar os nomes de Artifact Registry e Service Account **existentes** para o terminal, ou autorizar sua criação após avaliação de custos. Não criar automaticamente recursos de Google Cloud.
+2. Conferir permissões read-only da SA em `nivon-data.nivon_raw`, permissões de implantação da identidade GitHub e controles de acesso privado do Cloud Run; a verificação atual indica `SEM_PERMISSAO` ou `INDETERMINADO`.
+3. Após revisão técnica da PR e definição de limite de custos, conceder aprovação explícita de deploy e custos nas variáveis do workflow e executar o despacho manual `confirmar_deploy=true`. O script exige `main` e `--no-allow-unauthenticated`.
+4. PTAX só liga com **duplo opt-in** `NIVON_PTAX_INTERNAL_READ_ENABLED=true` e `NIVON_PTAX_INTERNAL_SOURCE_APPROVED=true`; fora disso a seção permanece indisponível, sem consulta BCB.
+5. Validar com identidade autenticada os endpoints `/healthz`, `/api/v1/ferrovia` e `/api/v1/ptax`; observar freshness e não liberar serviço público.
+
+A PR #283 já foi incorporada à `main` durante esta rodada; a branch foi reconciliada sobre o HEAD atualizado da `main`, **sem duplicar o patch**. A PR #305 permanece como origem dos módulos PTAX, mas não deve ser integrada outra vez sobre esta entrega sem reconciliação.
