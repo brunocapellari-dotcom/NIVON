@@ -199,6 +199,7 @@ def normalizar_xlsx(raw: bytes, *, hoje=None):
                             "semana_inicio": ini.isoformat(),
                             "semana_fim": fim.isoformat(),
                             "indicador": "paridade_importacao",
+                            "preco_ppi": format(valor, "f"),
                             "sem_tributos": True,
                             "fonte_primaria": "ANP",
                             "pagina_fonte": FONTE_PAGINA,
