@@ -1,0 +1,617 @@
+{
+  "schema": "nivon.integracoes.github.v1",
+  "referencia": "2026-10-26",
+  "proprietario": "NIVON",
+  "descricao": "Inventario consolidado de projetos GitHub e datasets agrobr. Catalogado nao significa coletado, homologado ou publicado.",
+  "politica": {
+    "projeto_unico": "NIVON",
+    "infraestrutura": "Google Cloud existente",
+    "nao_duplicar_apis": true,
+    "nao_ativar_rotinas_automaticamente": true,
+    "testes": "ADIADOS_A_PEDIDO_DO_PROPRIETARIO",
+    "captura_original": "Somente com bytes/proveniencia reais da fonte",
+    "licenciamento": "Codigo e dados sujeitos a verificacoes independentes",
+    "estados_operacionais": "NAO_HOMOLOGADO"
+  },
+  "repositorios": [
+    {
+      "id": "bruno-portfolio/agrobr",
+      "github": "https://github.com/bruno-portfolio/agrobr",
+      "licenca_codigo": "MIT",
+      "decisao": "ADOPT",
+      "uso_nivon": "Núcleo de 41 fontes, 55 datasets; reutilizar contratos existentes",
+      "modulo_existente": "src/nivon/conab_agrobr.py;src/nivon/agrobr_mercados.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "jmagomez/anp-ppi-dashboard",
+      "github": "https://github.com/jmagomez/anp-ppi-dashboard",
+      "licenca_codigo": "MIT",
+      "decisao": "INTEGRADO",
+      "uso_nivon": "PPI semanal oficial ANP; código adaptado e incorporado",
+      "modulo_existente": "src/nivon/anp_ppi.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "StrategicProjects/comexpy",
+      "github": "https://github.com/StrategicProjects/comexpy",
+      "licenca_codigo": "MIT",
+      "decisao": "RESERVA",
+      "uso_nivon": "Comex Stat complementar; evitar duplicar agrobr",
+      "modulo_existente": "src/nivon/agrobr_mercados.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "Mcamin/cftc-cot",
+      "github": "https://github.com/Mcamin/cftc-cot",
+      "licenca_codigo": "MIT",
+      "decisao": "RESERVA",
+      "uso_nivon": "Arquivos COT históricos; agrobr usa Socrata",
+      "modulo_existente": "src/nivon/agrobr_mercados.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "NDelventhal/cot_reports",
+      "github": "https://github.com/NDelventhal/cot_reports",
+      "licenca_codigo": "INDETERMINADA",
+      "decisao": "REFERENCIA",
+      "uso_nivon": "CFTC COT: comparar só quando faltar arquivo histórico",
+      "modulo_existente": "src/nivon/agrobr_mercados.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "McNultyyy/cot-reports",
+      "github": "https://github.com/McNultyyy/cot-reports",
+      "licenca_codigo": "INDETERMINADA",
+      "decisao": "REFERENCIA",
+      "uso_nivon": "Visualizações COT; evitar copiar telas",
+      "modulo_existente": "src/nivon/agrobr_mercados.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "fdfoneill/wasdeparser",
+      "github": "https://github.com/fdfoneill/wasdeparser",
+      "licenca_codigo": "NAO_IDENTIFICADA",
+      "decisao": "RESERVA",
+      "uso_nivon": "Parser WASDE antigo; preferir USDA PSD via agrobr",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "andradericardo/usda_psd",
+      "github": "https://github.com/andradericardo/usda_psd",
+      "licenca_codigo": "NAO_IDENTIFICADA",
+      "decisao": "RESERVA",
+      "uso_nivon": "Usar como referência se PSD oficial falhar",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "ropensci/rnassqs",
+      "github": "https://github.com/ropensci/rnassqs",
+      "licenca_codigo": "NOASSERTION",
+      "decisao": "REFERENCIA",
+      "uso_nivon": "Cliente R USDA NASS; usar API oficial em Python",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "ropensci/nasapower",
+      "github": "https://github.com/ropensci/nasapower",
+      "licenca_codigo": "NOASSERTION",
+      "decisao": "REFERENCIA",
+      "uso_nivon": "Cliente R NASA POWER; agrobr já dispõe da fonte",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "FAOSTAT/faostat-api",
+      "github": "https://github.com/FAOSTAT/faostat-api",
+      "licenca_codigo": "GPL-2.0",
+      "decisao": "RESERVA",
+      "uso_nivon": "API antiga FAOSTAT; não usar código como backend",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "earthaccess-dev/earthaccess",
+      "github": "https://github.com/earthaccess-dev/earthaccess",
+      "licenca_codigo": "MIT",
+      "decisao": "RESERVA",
+      "uso_nivon": "Dados NASA Earthdata para sensoriamento remoto",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "meteostat/meteostat",
+      "github": "https://github.com/meteostat/meteostat",
+      "licenca_codigo": "MIT",
+      "decisao": "RESERVA",
+      "uso_nivon": "Meteorologia histórica para validação",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "ecmwf/ecmwf-opendata",
+      "github": "https://github.com/ecmwf/ecmwf-opendata",
+      "licenca_codigo": "Apache-2.0",
+      "decisao": "RESERVA",
+      "uso_nivon": "Download GRIB e previsões ECMWF; comparar com INMET",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "blaylockbk/Herbie",
+      "github": "https://github.com/blaylockbk/Herbie",
+      "licenca_codigo": "MIT",
+      "decisao": "RESERVA",
+      "uso_nivon": "GFS/IFS/HRRR e previsão numérica; manter pipeline existente",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "ipea/geobr",
+      "github": "https://github.com/ipea/geobr",
+      "licenca_codigo": "NAO_IDENTIFICADA",
+      "decisao": "RESERVA",
+      "uso_nivon": "Geometrias e identificadores; privilegiar IBGE oficial",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "AlanTaranti/sidrapy",
+      "github": "https://github.com/AlanTaranti/sidrapy",
+      "licenca_codigo": "A_CONFIRMAR",
+      "decisao": "RESERVA",
+      "uso_nivon": "SIDRA IBGE; usar módulos NIVON já existentes",
+      "modulo_existente": "src/nivon/coletores_agro_ibge_wdi.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "wilsonfreitas/python-bcb",
+      "github": "https://github.com/wilsonfreitas/python-bcb",
+      "licenca_codigo": "MIT",
+      "decisao": "REFERENCIA",
+      "uso_nivon": "PTAX/SGS já coletados no NIVON",
+      "modulo_existente": "scripts/ptax_bigquery_incremental.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "ipea/pyIpeaData",
+      "github": "https://github.com/ipea/pyIpeaData",
+      "licenca_codigo": "NAO_IDENTIFICADA",
+      "decisao": "RESERVA",
+      "uso_nivon": "Macroeconomia IpeaData",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "mapbiomas-brazil/user-toolkit",
+      "github": "https://github.com/mapbiomas-brazil/user-toolkit",
+      "licenca_codigo": "NAO_IDENTIFICADA",
+      "decisao": "RESERVA",
+      "uso_nivon": "Mudanças de uso da terra; dependente GEE/licença",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "GlobalFishingWatch/gfw-api-python-client",
+      "github": "https://github.com/GlobalFishingWatch/gfw-api-python-client",
+      "licenca_codigo": "Apache-2.0",
+      "decisao": "RESERVA",
+      "uso_nivon": "AIS pesqueiro/portos; não inferir escalas de graneleiros",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "aisstream/aisstream",
+      "github": "https://github.com/aisstream/aisstream",
+      "licenca_codigo": "A_CONFIRMAR",
+      "decisao": "REFERENCIA",
+      "uso_nivon": "AIS já tem parser/motor no NIVON",
+      "modulo_existente": "src/nivon/maritime/ais_stream.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "xang1234/neptune",
+      "github": "https://github.com/xang1234/neptune",
+      "licenca_codigo": "NAO_IDENTIFICADA",
+      "decisao": "REFERENCIA",
+      "uso_nivon": "Fusão AIS e visitas a porto; sem licença identificada",
+      "modulo_existente": "src/nivon/maritime/ais_geofence_inference.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "duartejr/pyHidroWeb",
+      "github": "https://github.com/duartejr/pyHidroWeb",
+      "licenca_codigo": "NAO_IDENTIFICADA",
+      "decisao": "REFERENCIA",
+      "uso_nivon": "ANA; NIVON já tem Hidrowebservice",
+      "modulo_existente": "src/nivon/ana_hidrowebservice.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "Wwerneck/FuelPrice-Analytics",
+      "github": "https://github.com/Wwerneck/FuelPrice-Analytics",
+      "licenca_codigo": "NAO_IDENTIFICADA",
+      "decisao": "REFERENCIA",
+      "uso_nivon": "ANP diesel; não copiar sem licença",
+      "modulo_existente": "src/nivon/anp_ppi.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "geo-credito-rural/sicor",
+      "github": "https://github.com/geo-credito-rural/sicor",
+      "licenca_codigo": "GPL-3.0",
+      "decisao": "RESERVA",
+      "uso_nivon": "Crédito rural BCB SICOR via contratos agrobr",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "BrasilAPI/BrasilAPI",
+      "github": "https://github.com/BrasilAPI/BrasilAPI",
+      "licenca_codigo": "A_CONFIRMAR",
+      "decisao": "EXISTENTE_CATALOGO",
+      "uso_nivon": "Complemento NCM/PTAX/Taxas/IBGE/CPTEC, não primário",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "GoogleCloudPlatform/bigquery-utils",
+      "github": "https://github.com/GoogleCloudPlatform/bigquery-utils",
+      "licenca_codigo": "A_CONFIRMAR",
+      "decisao": "REFERENCIA",
+      "uso_nivon": "SQL, custo, otimização BigQuery; sem novo backend",
+      "modulo_existente": "src/nivon/carga_bigquery_fontes.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "GoogleCloudPlatform/public-datasets-pipelines",
+      "github": "https://github.com/GoogleCloudPlatform/public-datasets-pipelines",
+      "licenca_codigo": "A_CONFIRMAR",
+      "decisao": "REFERENCIA",
+      "uso_nivon": "Padrões de ingestão GCP; não copiar deploy paralelo",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "basedosdados/mais",
+      "github": "https://github.com/basedosdados/mais",
+      "licenca_codigo": "A_CONFIRMAR",
+      "decisao": "RESERVA",
+      "uso_nivon": "Metadados e dados brasileiros de qualidade variável",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "ocfgaldino/inmetpy",
+      "github": "https://github.com/ocfgaldino/inmetpy",
+      "licenca_codigo": "A_CONFIRMAR",
+      "decisao": "REFERENCIA",
+      "uso_nivon": "INMET já tem coletores no NIVON",
+      "modulo_existente": "src/nivon/inmet_historico.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "open-meteo/open-meteo",
+      "github": "https://github.com/open-meteo/open-meteo",
+      "licenca_codigo": "AGPL-3.0",
+      "decisao": "RESERVA",
+      "uso_nivon": "Modelo/séries clima; verificar condições dados e serviço",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "GlobalFishingWatch/pipe-events",
+      "github": "https://github.com/GlobalFishingWatch/pipe-events",
+      "licenca_codigo": "A_CONFIRMAR",
+      "decisao": "REFERENCIA",
+      "uso_nivon": "Eventos marítimos; foco pesqueiro, não escala confirmada",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    }
+  ],
+  "datasets_agrobr_2_0": [
+    {
+      "id": "abate_trimestral",
+      "integracao": "ADAPTADOR_GITHUB_NOVO",
+      "executado_20261026": false
+    },
+    {
+      "id": "autorizacoes_defensivos",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "balanco",
+      "integracao": "CATALOGADO_CONCILIAR_COM_MODULO_NIVON",
+      "executado_20261026": false
+    },
+    {
+      "id": "cadastro_rural",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "censo_agropecuario",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "censo_agropecuario_historico",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "censo_agropecuario_legado",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "censo_agropecuario_municipal_1985",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "clima",
+      "integracao": "CATALOGADO_CONCILIAR_COM_MODULO_NIVON",
+      "executado_20261026": false
+    },
+    {
+      "id": "comercio_internacional",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "comparacao_anual_anec",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "composicao_defensivos",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "condicao_lavouras",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "cotacoes_cambio",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "credito_rural",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "cultivares_protegidas",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "cultivares_registradas",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "custo_producao",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "custo_sociobiodiversidade",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "defensivos_formulados",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "defensivos_tecnicos",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "desmatamento",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "destinos_anec",
+      "integracao": "CATALOGADO_DIREITOS_PENDENTES",
+      "executado_20261026": false
+    },
+    {
+      "id": "embarques_anec",
+      "integracao": "CATALOGADO_DIREITOS_PENDENTES",
+      "executado_20261026": false
+    },
+    {
+      "id": "embarques_mensais_anec",
+      "integracao": "CATALOGADO_DIREITOS_PENDENTES",
+      "executado_20261026": false
+    },
+    {
+      "id": "empregadores_lista_suja",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "estimativa_safra",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "expectativas_mercado",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "exportacao",
+      "integracao": "EXISTENTE_OU_IMPLEMENTADA",
+      "executado_20261026": false
+    },
+    {
+      "id": "extrativismo_vegetal",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "fertilizante",
+      "integracao": "CATALOGADO_DIREITOS_PENDENTES",
+      "executado_20261026": false
+    },
+    {
+      "id": "futuros_agricolas",
+      "integracao": "CATALOGADO_DIREITOS_PENDENTES",
+      "executado_20261026": false
+    },
+    {
+      "id": "importacao",
+      "integracao": "EXISTENTE_OU_IMPLEMENTADA",
+      "executado_20261026": false
+    },
+    {
+      "id": "leite_industrial",
+      "integracao": "ADAPTADOR_GITHUB_NOVO",
+      "executado_20261026": false
+    },
+    {
+      "id": "moedas_cambio",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "movimentacao_portuaria",
+      "integracao": "CATALOGADO_CONCILIAR_COM_MODULO_NIVON",
+      "executado_20261026": false
+    },
+    {
+      "id": "oferta_demanda_global",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "pecuaria_municipal",
+      "integracao": "ADAPTADOR_GITHUB_NOVO",
+      "executado_20261026": false
+    },
+    {
+      "id": "pib_agro",
+      "integracao": "ADAPTADOR_GITHUB_NOVO",
+      "executado_20261026": false
+    },
+    {
+      "id": "posicionamento_fundos",
+      "integracao": "EXISTENTE_OU_IMPLEMENTADA",
+      "executado_20261026": false
+    },
+    {
+      "id": "preco_atacado",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "preco_diario",
+      "integracao": "CATALOGADO_DIREITOS_PENDENTES",
+      "executado_20261026": false
+    },
+    {
+      "id": "precos_diesel",
+      "integracao": "ADAPTADOR_GITHUB_NOVO",
+      "executado_20261026": false
+    },
+    {
+      "id": "producao_acucar_etanol",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "producao_anual",
+      "integracao": "ADAPTADOR_GITHUB_NOVO",
+      "executado_20261026": false
+    },
+    {
+      "id": "progresso_safra",
+      "integracao": "EXISTENTE_OU_IMPLEMENTADA",
+      "executado_20261026": false
+    },
+    {
+      "id": "queimadas",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "seguro_rural",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "serie_historica_safra",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "series_economicas",
+      "integracao": "CATALOGADO_CONCILIAR_COM_MODULO_NIVON",
+      "executado_20261026": false
+    },
+    {
+      "id": "silvicultura",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "unidades_conservacao",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "unidades_conservacao_federais",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "uso_do_solo",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    },
+    {
+      "id": "zoneamento_agricola",
+      "integracao": "CATALOGADO_A_PRIORIZAR",
+      "executado_20261026": false
+    }
+  ],
+  "fluxos_existentes": [
+    "src/nivon/ingestao_fontes_reais.py",
+    "src/nivon/carga_bigquery_fontes.py",
+    "src/nivon/arquivo_raw_gcs.py"
+  ],
+  "referencias_relacionadas": [
+    "docs/GITHUB_COLETORES_AUDITORIA_20261026.md",
+    "docs/ANP_PPI_INTEGRACAO_20261026.md"
+  ],
+  "prontidao": {
+    "catalogo": "INTEGRADO",
+    "adapter_agrobr_extra": "CODIGO_SEM_TESTES",
+    "nuvem": "NAO_EXECUTADA",
+    "dados_reais": "NAO_COMPROVADOS",
+    "go_live": "NAO_HOMOLOGADO",
+    "datasets_catalogados": 55,
+    "coletores_setoriais_registrados": [
+      "pecuaria_municipal",
+      "abate_trimestral",
+      "leite_industrial",
+      "producao_anual",
+      "precos_diesel",
+      "pib_agro"
+    ]
+  }
+}

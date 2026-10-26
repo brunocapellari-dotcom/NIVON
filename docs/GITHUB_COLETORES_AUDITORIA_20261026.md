@@ -1,3 +1,5 @@
+> **Atualização de 26/10/2026 — inventário canônico ampliado:** a auditoria original abaixo foi preservada como referência histórica. O inventário vigente inclui **33 repositórios e 55 datasets agrobr** em `config/catalogo_integracoes_github_20261026.json`, com plano e código setorial em `docs/INCLUSAO_INTEGRAL_FONTES_GITHUB_NIVON_20261026.md`. A inclusão dos seis adaptadores setoriais **não foi testada nem homologada**, conforme pedido do proprietário. Não confundir catálogo com coleta em produção.
+
 # NIVON — Auditoria aprofundada de repositórios para coleta de dados
 **Data da auditoria:** 2026-10-26  
 **Escopo:** pesquisa de software público reutilizável, cotejada com árvore \`main\` e PRs existentes do NIVON.  
