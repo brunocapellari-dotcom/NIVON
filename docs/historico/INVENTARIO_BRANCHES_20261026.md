@@ -13,23 +13,23 @@
 
 | Branch | Sinal do nome | Mesclada na main? | Último commit > 3 dias? |
 |---|---|---|---|
-| `ci/antaq-2025-repetir-hf-realpath-20261025` | 20261025 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
-| `ci/antt-rgi-reexecucao-corrigida-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
-| `claude/auto-cepea-disponibilidade` | sem data | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
-| `claude/auto-monitor-frescor` | sem data | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
-| `claude/auto-testes-agrobr-setoriais` | sem data | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
-| `codex/go-live-checkpoint` | sem data | NÃO MESCLADA — 11 commit(s) à frente | PENDENTE — conferir commit |
-| `codex/286-remove-vercel` | sem data | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
-| `codex/287-single-private-interface` | sem data | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
-| `codex/288-gcp-readiness` | sem data | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
-| `codex/289-antt-reader-contract` | sem data | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
-| `codex/290-operation-smoke` | sem data | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `codex/291-source-health` | sem data | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
-| `docs/antt-21anos-corredores-operacional-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
-| `docs/antt-gcp-operacao-atualizada-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
-| `docs/antt-rodovia-rgi-2025-provas-custo-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
-| `docs/catalogo-faostat-qcl-validado-20261021` | 20261021 | NÃO MESCLADA — 461 commit(s) à frente | PENDENTE — conferir commit |
-| `docs/evidencia-antt-gcp-operacional-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
+| `ci/antaq-2025-repetir-hf-realpath-20261025` | 20261025 | NÃO MESCLADA — 1 commit(s) à frente |2026-10-26T01:18:21Z — RECENTE |
+| `ci/antt-rgi-reexecucao-corrigida-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente |2026-10-23T19:11:33Z — RECENTE |
+| `claude/auto-cepea-disponibilidade` | sem data | NÃO MESCLADA — 1 commit(s) à frente |2026-10-26T03:36:48Z — RECENTE |
+| `claude/auto-monitor-frescor` | sem data | NÃO MESCLADA — 2 commit(s) à frente |2026-10-26T03:37:29Z — RECENTE |
+| `claude/auto-testes-agrobr-setoriais` | sem data | NÃO MESCLADA — 1 commit(s) à frente |2026-10-26T15:35:40Z — RECENTE |
+| `codex/go-live-checkpoint` | sem data | NÃO MESCLADA — 11 commit(s) à frente |2026-10-26T02:53:41Z — RECENTE |
+| `codex/286-remove-vercel` | sem data | NÃO MESCLADA — 2 commit(s) à frente |2026-10-26T02:31:06Z — RECENTE |
+| `codex/287-single-private-interface` | sem data | NÃO MESCLADA — 2 commit(s) à frente |2026-10-26T02:41:44Z — RECENTE |
+| `codex/288-gcp-readiness` | sem data | NÃO MESCLADA — 1 commit(s) à frente |2026-10-26T02:34:17Z — RECENTE |
+| `codex/289-antt-reader-contract` | sem data | NÃO MESCLADA — 1 commit(s) à frente |2026-10-26T02:38:04Z — RECENTE |
+| `codex/290-operation-smoke` | sem data | NÃO MESCLADA — 3 commit(s) à frente |2026-10-26T02:47:09Z — RECENTE |
+| `codex/291-source-health` | sem data | NÃO MESCLADA — 1 commit(s) à frente |2026-10-26T02:50:48Z — RECENTE |
+| `docs/antt-21anos-corredores-operacional-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente |2026-10-23T18:18:40Z — RECENTE |
+| `docs/antt-gcp-operacao-atualizada-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente |2026-10-23T12:16:03Z — MAIS DE 3 DIAS |
+| `docs/antt-rodovia-rgi-2025-provas-custo-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente |2026-10-23T19:25:16Z — RECENTE |
+| `docs/catalogo-faostat-qcl-validado-20261021` | 20261021 | NÃO MESCLADA — 461 commit(s) à frente |2026-10-22T00:18:57Z — MAIS DE 3 DIAS |
+| `docs/evidencia-antt-gcp-operacional-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente |2026-10-23T16:09:58Z — MAIS DE 3 DIAS |
 | `docs/evidencias-smoke-fontes-20261021` | 20261021 | NÃO MESCLADA — 450 commit(s) à frente | PENDENTE — conferir commit |
 | `docs/homologacao-eurostat-faostat-20261021` | 20261021 | NÃO MESCLADA — 456 commit(s) à frente | PENDENTE — conferir commit |
 | `docs/homologacao-flood-ensemble-fpma-20261021` | 20261021 | NÃO MESCLADA — 453 commit(s) à frente | PENDENTE — conferir commit |
