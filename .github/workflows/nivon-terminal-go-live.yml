@@ -7,6 +7,9 @@ on:
       - 'tests/test_diagnostico_terminal_cloudrun.py'
       - 'tests/test_terminal_web.py'
       - 'tests/test_terminal_go_live_policy.py'
+      - 'scripts/nivon_release_readiness.py'
+      - 'tests/test_nivon_release_readiness.py'
+      - '.github/workflows/maritimo-gcp-primeiro-lote.yml'
       - 'infra/google_cloud/Dockerfile.terminal'
       - 'infra/google_cloud/cloudbuild.terminal.yaml'
       - 'scripts/deploy_terminal_privado.sh'
@@ -54,6 +57,16 @@ jobs:
           python -m compileall -q src/nivon/terminal_web.py
           python -m unittest discover -s tests -p 'test_terminal_web.py' -v
           python -m unittest discover -s tests -p 'test_terminal_go_live_policy.py' -v
+          python -m unittest discover -s tests -p 'test_nivon_release_readiness.py' -v
+          python scripts/nivon_release_readiness.py --strict-policy > "$RUNNER_TEMP/nivon-go-live-readiness.json"
+          python - <<'PY'
+          import os,json
+          from pathlib import Path
+          r=json.loads((Path(os.environ["RUNNER_TEMP"])/"nivon-go-live-readiness.json").read_text())
+          assert r["violacoes_de_politica"]==[]
+          assert r["escritas_cloud"]==0 and r["deploys"]==0
+          print("NIVON_GO_LIVE_PREFLIGHT_OFFLINE_OK")
+          PY
           python -m unittest discover -s tests -p 'test_diagnostico_terminal_cloudrun.py' -v
       - name: Ensaiar bloqueio de deploy fora de main sem acessar GCP
         run: |
