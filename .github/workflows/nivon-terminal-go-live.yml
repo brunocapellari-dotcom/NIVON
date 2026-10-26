@@ -4,6 +4,7 @@ on:
     paths:
       - 'src/nivon/terminal_web.py'
       - 'tests/test_terminal_web.py'
+      - 'tests_web/terminal_ferrovia_ui.test.cjs'
       - 'tests/test_terminal_go_live_policy.py'
       - 'infra/google_cloud/Dockerfile.terminal'
       - 'infra/google_cloud/cloudbuild.terminal.yaml'
@@ -14,6 +15,7 @@ on:
     paths:
       - 'src/nivon/terminal_web.py'
       - 'tests/test_terminal_web.py'
+      - 'tests_web/terminal_ferrovia_ui.test.cjs'
       - 'tests/test_terminal_go_live_policy.py'
       - 'infra/google_cloud/Dockerfile.terminal'
       - 'scripts/deploy_terminal_privado.sh'
@@ -52,6 +54,7 @@ jobs:
           python -m compileall -q src/nivon/terminal_web.py
           python -m unittest discover -s tests -p 'test_terminal_web.py' -v
           python -m unittest discover -s tests -p 'test_terminal_go_live_policy.py' -v
+          node --test tests_web/terminal_ferrovia_ui.test.cjs
       - name: Ensaiar bloqueio de deploy fora de main sem acessar GCP
         run: |
           if GITHUB_REF=refs/pull/999/merge \

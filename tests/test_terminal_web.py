@@ -2,7 +2,8 @@
 import json
 import threading
 import unittest
-from datetime import datetime, timezone
+from concurrent.futures import ThreadPoolExecutor
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from http.server import ThreadingHTTPServer
 from urllib.request import urlopen
@@ -25,6 +26,9 @@ def rows():
         "tu":"10000",
         "ultima_competencia":f"{year}-"+("08" if year==2026 else "12"),
         "versoes_sha":1,
+        "arquivo_sha256":"a"*64,
+        "campos_ausentes":0,
+        "ultima_referencia":date(year,8 if year==2026 else 12,1),
         "ultima_coleta":NOW,
     } for year in range(2006,2027)]
 
@@ -47,6 +51,76 @@ class FakeBQ:
 
 
 class TestSerie(unittest.TestCase):
+    def test_proveniencia_e_tempos_distintos(self):
+        doc=interpretar_serie(rows(),ultimo_ano=2026,agora=NOW)
+        last=doc["serie"][-1]
+        self.assertEqual(last["arquivo_sha256"],"a"*64)
+        self.assertEqual(last["data_referencia"],"2026-08-01")
+        self.assertEqual(last["data_coleta_utc"],NOW.isoformat())
+        self.assertEqual(doc["freshness"]["idade_competencia_meses"],2)
+        self.assertFalse(doc["freshness"]["sla_oficial"])
+
+    def test_zero_observado_nao_e_nulo_ou_vazio(self):
+        a=rows();a[-1]["tu"]="0"
+        self.assertEqual(interpretar_serie(a,ultimo_ano=2026,agora=NOW)["serie"][-1]["toneladas_uteis"],"0")
+        for value in (None,"", "NaN", "-1"):
+            with self.subTest(value=value),self.assertRaises(ErroTransporte):
+                a[-1]["tu"]=value
+                interpretar_serie(a,ultimo_ano=2026,agora=NOW)
+        with self.assertRaises(ErroTransporte):
+            interpretar_serie([],ultimo_ano=2026,agora=NOW)
+
+    def test_nulos_parciais_nao_sao_ocultados_pela_agregacao_sql(self):
+        a=rows();a[-1]["campos_ausentes"]=1
+        with self.assertRaises(ErroTransporte):
+            interpretar_serie(a,ultimo_ano=2026,agora=NOW)
+
+    def test_fonte_antiga_com_coleta_recente_continua_defasada(self):
+        a=rows();a[-1].update(ultima_competencia="2026-03",ultima_referencia=date(2026,3,1))
+        doc=interpretar_serie(a,ultimo_ano=2026,agora=NOW)
+        self.assertEqual(doc["freshness"]["estado"],"SOURCE_LAG")
+        self.assertEqual(doc["ultima_coleta_utc"],NOW.isoformat())
+        self.assertEqual(doc["ultima_competencia"],"2026-03")
+
+    def test_referencia_coleta_sha_e_fuso_invalidos_bloqueiam(self):
+        changes=[("arquivo_sha256",None),("arquivo_sha256","z"*64),
+                 ("ultima_referencia",date(2026,7,1)),
+                 ("ultima_coleta",datetime(2026,7,1,tzinfo=timezone.utc)),
+                 ("ultima_coleta",NOW.replace(tzinfo=None))]
+        for key,value in changes:
+            with self.subTest(key=key,value=value),self.assertRaises(ErroTransporte):
+                a=rows();a[-1][key]=value
+                interpretar_serie(a,ultimo_ano=2026,agora=NOW)
+
+    def test_leitura_idempotente_sem_dml_e_com_limite_em_todas_as_queries(self):
+        client=FakeBQ(rows())
+        before=rows()
+        first=consultar_ferrovia(cliente=client,sdk=FakeSDK,agora=NOW)
+        self.assertEqual(first,consultar_ferrovia(cliente=client,sdk=FakeSDK,agora=NOW))
+        self.assertEqual(client.rows,before)
+        self.assertEqual(len(client.calls),2)
+        for sql,cfg in client.calls:
+            self.assertEqual(cfg.maximum_bytes_billed,250_000_000)
+            self.assertTrue(sql.startswith("SELECT "))
+            self.assertIn("COUNTIF(",sql)
+            self.assertNotRegex(sql,r"\b(INSERT|UPDATE|DELETE|MERGE|CREATE)\b")
+
+    def test_expiracao_concorrente_e_falha_nao_retornam_cache_vencido(self):
+        now=[0.];calls=[];fail=[False]
+        def source():
+            calls.append(1)
+            if fail[0]:raise RuntimeError("INTERNAL_SECRET")
+            return {"estado":"ANTT_SERIE_OBSERVADA_DECLARADA","generation":len(calls)}
+        state=TerminalState(consulta=source,relogio=lambda:now[0])
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            self.assertEqual([x["generation"] for x in pool.map(lambda _:state.obter(),range(16))],[1]*16)
+        now[0]=TTL_SEGUNDOS
+        self.assertEqual(state.obter()["generation"],2)
+        fail[0]=True;now[0]+=TTL_SEGUNDOS
+        with self.assertRaises(RuntimeError):state.obter()
+        fail[0]=False
+        self.assertEqual(state.obter()["generation"],4)
+
     def test_agregados_reais_e_ano_parcial(self):
         doc=interpretar_serie(rows(),ultimo_ano=2026,agora=NOW)
         self.assertEqual(doc["anos"],21)
@@ -136,6 +210,9 @@ class TestAPI(unittest.TestCase):
             self.assertEqual(doc["anos"],21)
             self.assertEqual(doc["natureza"],"OBSERVADO_DECLARADO")
             self.assertFalse(doc["homologacao_editorial"])
+            self.assertIn("ANTT/SIADE",doc["fonte"])
+            self.assertEqual(doc["ultima_competencia"],"2026-08")
+            self.assertEqual(doc["serie"][-1]["arquivo_sha256"],"a"*64)
             self.assertEqual(r.headers["Cache-Control"],"no-store")
 
     def test_erro_interno_nao_vaza_segredos(self):

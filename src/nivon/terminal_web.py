@@ -6,7 +6,7 @@ Exige Cloud Run IAM authentication no deploy; HTTP local é apenas para teste.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
@@ -24,6 +24,8 @@ LIMITE_BYTES = 250_000_000
 TTL_SEGUNDOS = 900
 ANOS_INICIAIS = 2006
 MAX_ANOS = 35
+# Alerta operacional explícito; não representa SLA oficial da ANTT.
+ALERTA_DEFASAGEM_MESES = 3
 
 HTML = r"""<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8">
@@ -82,7 +84,7 @@ Dados históricos declarados; 2026 ainda parcial. Sem mistura com volumes rodovi
 </section>
 <section class="section panel" id="tabela" hidden><h2>Histórico detalhado por ano</h2>
 <div class="table-wrap"><table><thead><tr><th>Ano</th><th>Toneladas úteis</th>
-<th>Registros OD</th><th>Última competência</th></tr></thead><tbody id="linhas"></tbody></table></div></section>
+<th>Registros OD</th><th>Última competência</th><th>SHA-256 da fonte</th></tr></thead><tbody id="linhas"></tbody></table></div></section>
 <footer>Fonte: Agência Nacional de Transportes Terrestres (ANTT), SIADE.
 Natureza: OBSERVADO_DECLARADO. Revisão atual da fonte; não é reconstrução point-in-time.
 NIVON — visualização privada para avaliação, ainda sem homologação editorial plena.</footer>
@@ -100,7 +102,8 @@ async function carregar(){
     set('competencia',dados.ultima_competencia);
     set('atualizacao','Última coleta: '+dados.ultima_coleta_utc.slice(0,16).replace('T',' ')+' UTC');
     const chart=document.getElementById('chart'),rows=document.getElementById('linhas');
-    const peak=Math.max(...dados.serie.map(x=>Number(x.toneladas_uteis)));
+    chart.replaceChildren();rows.replaceChildren();
+    const peak=Math.max(...dados.serie.map(x=>Number(x.toneladas_uteis)))||1;
     for(const a of dados.serie){
       const col=document.createElement('div');col.className='bar-col';
       const bar=document.createElement('div');bar.className='bar'+(a.parcial?' partial':'');
@@ -110,13 +113,17 @@ async function carregar(){
       col.append(bar,yr);chart.append(col);
       const tr=document.createElement('tr');
       for(const v of [String(a.ano),fmt.format(a.toneladas_uteis),
-                      fmt.format(a.registros),a.ultima_competencia]){
+                      fmt.format(a.registros),a.ultima_competencia,a.arquivo_sha256]){
         const td=document.createElement('td');td.textContent=v;tr.append(td);
       }rows.append(tr);
     }
-    set('estado','DADOS DECLARADOS DA ANTT · Consulta real BigQuery · Última versão');
+    set('estado',dados.freshness.estado==='SOURCE_LAG'
+      ?'FONTE DEFASADA · Competência '+dados.ultima_competencia+' · Coleta recente não significa dado novo.'
+      :'DADOS DECLARADOS DA ANTT · Consulta real BigQuery · Última versão');
     for(const id of ['cards','serie','tabela'])document.getElementById(id).hidden=false;
   }catch(e){
+    for(const id of ['cards','serie','tabela'])document.getElementById(id).hidden=true;
+    document.getElementById('chart').replaceChildren();document.getElementById('linhas').replaceChildren();
     const status=document.getElementById('estado');status.classList.add('error');
     set('estado','DADOS INDISPONÍVEIS: '+e.message+' Nenhum número foi estimado.');
   }
@@ -129,6 +136,8 @@ def _ano_valido(ano: int, fim: int) -> bool:
 
 
 def interpretar_serie(linhas, *, ultimo_ano: int, agora: datetime) -> dict:
+    if agora.utcoffset() is None:
+        raise ErroTransporte("relógio sem timezone")
     if (not _ano_valido(ultimo_ano, agora.year)
             or ultimo_ano - ANOS_INICIAIS + 1 > MAX_ANOS):
         raise ErroTransporte("janela de anos invalida")
@@ -149,17 +158,27 @@ def interpretar_serie(linhas, *, ultimo_ano: int, agora: datetime) -> dict:
             comp = str(obj["ultima_competencia"])
             nversoes = int(obj["versoes_sha"])
             coleta = obj["ultima_coleta"]
+            referencia = obj["ultima_referencia"]
+            sha = obj["arquivo_sha256"]
+            ausentes = obj["campos_ausentes"]
         except (KeyError, ValueError, TypeError, InvalidOperation) as exc:
             raise ErroTransporte("retorno BigQuery incompleto") from exc
-        if (ano != esperado or registros < 1 or not tu.is_finite() or tu <= 0
+        if (ano != esperado or registros < 1 or not tu.is_finite() or tu < 0
                 or nversoes != 1 or len(comp) != 7 or comp[:4] != str(ano)
                 or comp[4] != "-" or not comp[5:].isdigit()
                 or not 1 <= int(comp[5:]) <= 12):
             raise ErroTransporte("ano, versao, competencia ou volume inconsistente")
+        if comp > agora.strftime("%Y-%m"):
+            raise ErroTransporte("competencia futura")
+        if (type(ausentes) is not int or ausentes != 0 or not isinstance(sha, str)
+                or len(sha) != 64 or any(c not in "0123456789abcdef" for c in sha)):
+            raise ErroTransporte("proveniencia ausente ou inconsistente")
+        if type(referencia) is not date or referencia.isoformat() != comp + "-01":
+            raise ErroTransporte("data de referencia divergente da competencia")
         if not isinstance(coleta, datetime) or coleta.utcoffset() is None:
             raise ErroTransporte("data de coleta sem fuso")
         coleta = coleta.astimezone(timezone.utc)
-        if coleta > agora or coleta.year < ano:
+        if coleta > agora or coleta.date() < referencia:
             raise ErroTransporte("data de coleta futura ou anterior ao ano")
         if ultima_coleta is None or coleta > ultima_coleta:
             ultima_coleta = coleta
@@ -167,10 +186,12 @@ def interpretar_serie(linhas, *, ultimo_ano: int, agora: datetime) -> dict:
         total_od += registros
         anos.append({
             "ano":ano,"registros":registros,"toneladas_uteis":str(tu),
+            "arquivo_sha256":sha,"data_referencia":referencia.isoformat(),
+            "data_coleta_utc":coleta.isoformat(),
             "ultima_competencia":comp,"parcial":ano == ultimo_ano and comp != f"{ano}-12"
         })
-    if anos[-1]["ultima_competencia"] > agora.strftime("%Y-%m"):
-        raise ErroTransporte("competencia futura")
+    referencia_final = date.fromisoformat(anos[-1]["data_referencia"])
+    idade_meses = (agora.year - referencia_final.year) * 12 + agora.month - referencia_final.month
     return {
         "estado":"ANTT_SERIE_OBSERVADA_DECLARADA",
         "fonte":"ANTT/SIADE — transporte ferroviario origem-destino",
@@ -182,6 +203,9 @@ def interpretar_serie(linhas, *, ultimo_ano: int, agora: datetime) -> dict:
         "tu_acumuladas":str(total_tu),
         "ultima_competencia":anos[-1]["ultima_competencia"],
         "ultima_coleta_utc":ultima_coleta.isoformat(),
+        "freshness":{"estado":"SOURCE_LAG" if idade_meses > ALERTA_DEFASAGEM_MESES else "DENTRO_DA_JANELA_DE_ALERTA",
+                     "idade_competencia_meses":idade_meses,
+                     "limite_alerta_meses":ALERTA_DEFASAGEM_MESES,"sla_oficial":False},
         "soma_multimodal_permitida":False,
         "point_in_time_historico":False,
         "status_publicacao":"PREVIA_PRIVADA",
@@ -209,6 +233,10 @@ def consultar_ferrovia(*, cliente=None, sdk=None, agora=None) -> dict:
         "CAST(SUM(toneladas_uteis) AS STRING) AS tu, "
         "MAX(competencia) AS ultima_competencia, "
         "COUNT(DISTINCT arquivo_sha256) AS versoes_sha, "
+        "MIN(arquivo_sha256) AS arquivo_sha256, "
+        "MAX(data_referencia) AS ultima_referencia, "
+        "COUNTIF(toneladas_uteis IS NULL OR competencia IS NULL OR "
+        "arquivo_sha256 IS NULL OR data_coleta IS NULL OR data_referencia IS NULL) AS campos_ausentes, "
         "MAX(data_coleta) AS ultima_coleta "
         "FROM " + chr(96) + destino.view_completa + chr(96)
         + " WHERE ano BETWEEN 2006 AND @fim "
