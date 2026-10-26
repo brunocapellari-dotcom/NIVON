@@ -37,6 +37,26 @@ class TestLedger(unittest.TestCase):
             (pasta/'manifest.json').write_text(json.dumps(m))
             with self.assertRaises(ValueError): persistir_raw(**args)
 
+    def test_readback_bloqueia_corrupcao(self):
+        path = Path(__file__).parents[1]/'scripts/coletar_argentina_magyp.py'
+        spec = importlib.util.spec_from_file_location('coletor_arg_readback', path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        import hashlib
+        class Fake:
+            raw = b'original'
+            def bucket(self, name): return self
+            def blob(self, name): return self
+            def download_as_bytes(self, timeout): return self.raw
+        manifesto = {'quantidade': 1, 'objetos': [{'objeto': 'x', 'bytes': 8,
+                    'sha256': hashlib.sha256(b'original').hexdigest()}]}
+        client = Fake()
+        with patch.object(mod, 'preparar_manifesto', return_value=manifesto):
+            kwargs = dict(banco='x', raw_dir='x', bucket='x', snapshot_ids=['x'], client=client)
+            self.assertTrue(mod.conferir_gcs(**kwargs)['sha256_readback'])
+            client.raw = b'corrupto'
+            with self.assertRaises(ValueError): mod.conferir_gcs(**kwargs)
+
     def test_cli_dry_run_e_gate_antes_http(self):
         path = Path(__file__).parents[1]/'scripts/coletar_argentina_magyp.py'
         spec = importlib.util.spec_from_file_location('coletor_arg', path)

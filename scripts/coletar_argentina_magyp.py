@@ -1,10 +1,24 @@
 """MAGyP oficial -> ledger canônico -> GCS opcional; sem carga BigQuery."""
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
 from nivon.argentina_magyp import persistir_raw
-from nivon.arquivo_raw_gcs import arquivar_gcs
+from nivon.arquivo_raw_gcs import arquivar_gcs, preparar_manifesto
+
+
+def conferir_gcs(*, banco, raw_dir, bucket, snapshot_ids, client=None):
+    manifesto = preparar_manifesto(banco=banco, raw_dir=raw_dir, bucket=bucket,
+                                  snapshot_ids=snapshot_ids)
+    if client is None:
+        from google.cloud import storage
+        client = storage.Client()
+    for item in manifesto['objetos']:
+        raw = client.bucket(bucket).blob(item['objeto']).download_as_bytes(timeout=90)
+        if len(raw) != item['bytes'] or hashlib.sha256(raw).hexdigest() != item['sha256']:
+            raise ValueError('Readback GCS divergente')
+    return {'objetos_conferidos': manifesto['quantidade'], 'sha256_readback': True}
 
 
 def executar(*, base, executar=False, gcs=False, bucket=None):
@@ -23,6 +37,9 @@ def executar(*, base, executar=False, gcs=False, bucket=None):
             banco=base/'fontes_reais.sqlite', raw_dir=base/'raw', bucket=bucket,
             snapshot_ids=[x['snapshot_id'] for x in saida['snapshots']], executar=True)
         saida['gcs_executado'] = True
+        saida['readback'] = conferir_gcs(
+            banco=base/'fontes_reais.sqlite', raw_dir=base/'raw', bucket=bucket,
+            snapshot_ids=[x['snapshot_id'] for x in saida['snapshots']])
     return saida
 
 

@@ -25,3 +25,7 @@ A reexecução de bytes idênticos preserva a primeira coleta do snapshot. Não 
 ## Evidência executada nesta continuidade
 
 Base de código: main `06c213e75ef2c09f3b8fef16a36d6ba23fe0797d`. Coleta oficial HTTP, ledger SQLite real e segunda execução sem alteração de código: 160.499 registros, safras 1969/1970–2024/2025; SHA256 `7a47a6d356258a69ce0010031f9b2f45ea4c873901d8f812c7c394d9946f9395`. Primeira coleta desta rodada: `2026-10-26T01:24:25.248305+00:00` (UTC; noite de 25/10 em MT). Duas execuções conservaram dois snapshots e zero observações analíticas. Essa data é coleta, não publicação. Oito testes focados passaram (inclui dois do arquivador existente); GCS exclusivamente simulado, sem carga BigQuery. RAW real permanece fora do repositório público.
+
+## Caminho curto para operação no Cloud
+
+Workflow manual `Argentina MAGyP - coleta e prova GCS` (`argentina-magyp-gcs.yml`): executa na main usando WIF e destino existentes, coleta duas vezes, arquiva por SHA e baixa os dois objetos para comparar bytes/SHA. Só imprime recibo agregado; não publica RAW como artifact. Exige os gates já utilizados no projeto (arquivo e custo), sem nova infraestrutura nem agendamento. Usa environment `nivon-gcp-producao`. Sem BigQuery neste passo. Se a fonte mudar entre as duas capturas, o teste exige repetição em vez de declarar falsa idempotência. A CLI faz readback obrigatório após upload. Teste adicional detecta corrupção com mesmo tamanho. Execução remota ainda depende do despacho do workflow; não foi demonstrada por CI sintética.
