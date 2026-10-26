@@ -6,6 +6,9 @@ on:
       - release/nivon-go-live-conab-20261025
     paths:
       - 'src/nivon/conab_*.py'
+      - 'src/nivon/agro_bigquery_*.py'
+      - 'sql/bigquery/002_agro_fontes_staging.sql'
+      - 'tests/test_agro_bigquery_loader.py'
       - 'src/nivon/auditoria_publicacao_conab.py'
       - 'src/nivon/captura_xlsx_conab.py'
       - 'src/nivon/conciliacao_progresso_stores.py'
@@ -57,7 +60,10 @@ jobs:
             test_conab_resolver_anexo.py \
             test_conab_execucao_edicao.py \
             test_conab_incremental.py \
-            test_conab_sync_metadados.py
+            test_conab_sync_metadados.py \
+            test_conab_gcs_archive.py \
+            test_conab_quarentena_stage.py \
+            test_agro_bigquery_loader.py
           do
             python -m unittest discover -s tests -p "$testfile" -v
           done
