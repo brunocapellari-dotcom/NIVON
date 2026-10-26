@@ -118,7 +118,9 @@ class LedgerAISBatchTests(unittest.TestCase):
     def test_nao_confirmar_ponto_isolado_ou_intervalo_grande(self):
         with tempfile.TemporaryDirectory() as d:
             db=Path(d)/"ais.sqlite"
-            _insert(db,[_item(0),_item(270)])
+            registrar_lote(banco=db,porto_id="IMBITUBA",
+                          mensagens=[_item(0),_item(270)],
+                          as_of="2026-10-25T17:00:00Z")
             with sqlite3.connect(db) as con:
                 rows=con.execute("SELECT quality_status FROM maritime_ais ORDER BY observed_at").fetchall()
             self.assertTrue(all(r[0]=="UNCONFIRMED_SINGLE" for r in rows))
