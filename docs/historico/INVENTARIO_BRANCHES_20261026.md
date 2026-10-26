@@ -115,23 +115,23 @@
 | `feat/nivon-go-live-painel-interno-gcs-20261025` | 20261025 | MESCLADA — ancestral da main |2026-10-26T02:06:48Z — RECENTE |
 | `feat/nivon-go-live-rotina-dias-uteis-20261025` | 20261025 | MESCLADA — ancestral da main |2026-10-26T02:09:03Z — RECENTE |
 | `feat/nivon-ia-evidencias-ci-20261026` | 20261026 | NÃO MESCLADA — 4 commit(s) à frente |2026-10-26T14:16:19Z — RECENTE |
-| `feat/nivon-ia-pilotos-operacionais-20261026` | 20261026 | NÃO MESCLADA — 7 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/nivon-maritime-readonly-bigquery-panel-20261023` | 20261023 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
-| `feat/nivon-painel-integrado-logistica-maritimo-quant-20261023` | 20261023 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
-| `feat/nivon-terminal-interno-golive-20261025` | 20261025 | NÃO MESCLADA — 9 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/nivon-terminal-privado-go-live-20261025` | 20261025 | NÃO MESCLADA — 9 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/nivon-terminal-web-go-live-20261025` | 20261025 | NÃO MESCLADA — 6 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/nivon-web-mvp-real-20261025` | 20261025 | NÃO MESCLADA — 6 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/painel-trimodal-2025-fonte-hidrovia-isolada-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/piloto-gcp-wdi-e2e-20261023` | 20261023 | NÃO MESCLADA — 6 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/portal-gcs-cloudrun-privado-20261025` | 20261025 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
-| `feat/preflight-golive-cloudrun-20261025` | 20261025 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/prova-real-sgs-gcp-fontes-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/ptax-bcb-agendamento-wif-escritor-unico-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/series-corredores-antt-bigquery-20261023` | 20261023 | NÃO MESCLADA — 7 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/sisfogo-roi-fonte-oficial-20261021` | 20261021 | NÃO MESCLADA — 445 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/soilgrids-embrapa-solos-20261021` | 20261021 | NÃO MESCLADA — 449 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/terminal-gcs-dados-reais-unificado-20261025` | 20261025 | NÃO MESCLADA — 8 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/nivon-ia-pilotos-operacionais-20261026` | 20261026 | NÃO MESCLADA — 7 commit(s) à frente |2026-10-26T14:42:59Z — RECENTE |
+| `feat/nivon-maritime-readonly-bigquery-panel-20261023` | 20261023 | MESCLADA — ancestral da main |2026-10-23T19:05:28Z — RECENTE |
+| `feat/nivon-painel-integrado-logistica-maritimo-quant-20261023` | 20261023 | MESCLADA — ancestral da main |2026-10-23T17:59:08Z — RECENTE |
+| `feat/nivon-terminal-interno-golive-20261025` | 20261025 | NÃO MESCLADA — 9 commit(s) à frente |2026-10-26T02:05:57Z — RECENTE |
+| `feat/nivon-terminal-privado-go-live-20261025` | 20261025 | NÃO MESCLADA — 9 commit(s) à frente |2026-10-26T02:03:59Z — RECENTE |
+| `feat/nivon-terminal-web-go-live-20261025` | 20261025 | NÃO MESCLADA — 6 commit(s) à frente |2026-10-26T02:05:05Z — RECENTE |
+| `feat/nivon-web-mvp-real-20261025` | 20261025 | NÃO MESCLADA — 6 commit(s) à frente |2026-10-26T02:06:52Z — RECENTE |
+| `feat/painel-trimodal-2025-fonte-hidrovia-isolada-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-26T01:36:59Z — RECENTE |
+| `feat/piloto-gcp-wdi-e2e-20261023` | 20261023 | NÃO MESCLADA — 6 commit(s) à frente |2026-10-23T19:05:44Z — RECENTE |
+| `feat/portal-gcs-cloudrun-privado-20261025` | 20261025 | MESCLADA — ancestral da main |2026-10-26T03:04:00Z — RECENTE |
+| `feat/preflight-golive-cloudrun-20261025` | 20261025 | NÃO MESCLADA — 5 commit(s) à frente |2026-10-26T02:48:52Z — RECENTE |
+| `feat/prova-real-sgs-gcp-fontes-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-23T19:00:37Z — RECENTE |
+| `feat/ptax-bcb-agendamento-wif-escritor-unico-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente |2026-10-23T12:44:05Z — MAIS DE 3 DIAS |
+| `feat/series-corredores-antt-bigquery-20261023` | 20261023 | NÃO MESCLADA — 7 commit(s) à frente |2026-10-23T12:44:17Z — MAIS DE 3 DIAS |
+| `feat/sisfogo-roi-fonte-oficial-20261021` | 20261021 | NÃO MESCLADA — 445 commit(s) à frente |2026-10-21T18:18:12Z — MAIS DE 3 DIAS |
+| `feat/soilgrids-embrapa-solos-20261021` | 20261021 | NÃO MESCLADA — 449 commit(s) à frente |2026-10-21T19:48:40Z — MAIS DE 3 DIAS |
+| `feat/terminal-gcs-dados-reais-unificado-20261025` | 20261025 | NÃO MESCLADA — 8 commit(s) à frente |2026-10-26T03:03:41Z — RECENTE |
 | `feat/terminal-nivon-go-live-visao-publica-20261025` | 20261025 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/verificacao-cloud-gcp-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/visao-multimodal-anttrgi-ferrovia-2025-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
