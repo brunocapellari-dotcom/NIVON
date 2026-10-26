@@ -149,23 +149,23 @@
 | `fix/antt-bq-readiness-20261023` | 20261023 | NÃO MESCLADA — 6 commit(s) à frente |2026-10-23T15:49:41Z — MAIS DE 3 DIAS |
 | `fix/antt-ckan-fallback-verificado-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-23T15:55:01Z — MAIS DE 3 DIAS |
 | `fix/antt-ckan-historico-provas-sha-20261023` | 20261023 | NÃO MESCLADA — 8 commit(s) à frente |2026-10-23T18:07:58Z — RECENTE |
-| `fix/antt-ckan-retry-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/antt-fallback-csv-oficial-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/antt-gcp-precise-gates-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/antt-gcp-unificar-config-20261023` | 20261023 | NÃO MESCLADA — 8 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/antt-piloto-manual-unico-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/antt-piloto-sem-reexecucao-automatica-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/antt-rgi-gcp-google-api-notfound-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/antt-rgi-smoke-main-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/antt-vigia-fonte-indisponivel-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/antt-vigia-retry-fonte-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/auditoria-gcp-diaria-sem-escrita-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/bigquery-merge-particoes-custo-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/cepea-estado-ledger-verificado-20261025` | 20261025 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/formatos-reais-noaa-gtr-wb-esa-20261021` | 20261021 | NÃO MESCLADA — 453 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/gcp-auditoria-estado-por-tabela-20261025` | 20261025 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/gcp-auditoria-schema-integral-20261025` | 20261025 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/gcp-preflight-particao-e-regiao-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/antt-ckan-retry-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-23T11:38:39Z — MAIS DE 3 DIAS |
+| `fix/antt-fallback-csv-oficial-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente |2026-10-23T15:56:34Z — MAIS DE 3 DIAS |
+| `fix/antt-gcp-precise-gates-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-23T15:53:07Z — MAIS DE 3 DIAS |
+| `fix/antt-gcp-unificar-config-20261023` | 20261023 | NÃO MESCLADA — 8 commit(s) à frente |2026-10-23T12:06:44Z — MAIS DE 3 DIAS |
+| `fix/antt-piloto-manual-unico-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente |2026-10-23T17:49:03Z — RECENTE |
+| `fix/antt-piloto-sem-reexecucao-automatica-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-23T17:49:43Z — RECENTE |
+| `fix/antt-rgi-gcp-google-api-notfound-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente |2026-10-23T19:08:55Z — RECENTE |
+| `fix/antt-rgi-smoke-main-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente |2026-10-23T11:26:25Z — MAIS DE 3 DIAS |
+| `fix/antt-vigia-fonte-indisponivel-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-23T19:11:59Z — RECENTE |
+| `fix/antt-vigia-retry-fonte-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente |2026-10-23T19:08:18Z — RECENTE |
+| `fix/auditoria-gcp-diaria-sem-escrita-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente |2026-10-23T19:09:09Z — RECENTE |
+| `fix/bigquery-merge-particoes-custo-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente |2026-10-23T17:53:41Z — RECENTE |
+| `fix/cepea-estado-ledger-verificado-20261025` | 20261025 | NÃO MESCLADA — 4 commit(s) à frente |2026-10-26T01:28:32Z — RECENTE |
+| `fix/formatos-reais-noaa-gtr-wb-esa-20261021` | 20261021 | NÃO MESCLADA — 453 commit(s) à frente |2026-10-21T20:53:15Z — MAIS DE 3 DIAS |
+| `fix/gcp-auditoria-estado-por-tabela-20261025` | 20261025 | NÃO MESCLADA — 1 commit(s) à frente |2026-10-26T01:25:52Z — RECENTE |
+| `fix/gcp-auditoria-schema-integral-20261025` | 20261025 | NÃO MESCLADA — 5 commit(s) à frente |2026-10-26T01:22:46Z — RECENTE |
+| `fix/gcp-preflight-particao-e-regiao-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente |2026-10-23T17:57:27Z — RECENTE |
 | `fix/gcp-provider-canonico-migracoes-20261023` | 20261023 | NÃO MESCLADA — 12 commit(s) à frente | PENDENTE — conferir commit |
 | `fix/gcp-regiao-inventario-destinos-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
 | `fix/go-live-cloudrun-authenticated-acceptance-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
