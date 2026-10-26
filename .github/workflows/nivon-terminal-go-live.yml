@@ -4,6 +4,8 @@ on:
     paths:
       - 'src/nivon/terminal_web.py'
       - 'src/nivon/diagnostico_terminal_cloudrun.py'
+      - 'src/nivon/aceite_golive_terminal.py'
+      - 'tests/test_aceite_golive_terminal.py'
       - 'tests/test_diagnostico_terminal_cloudrun.py'
       - 'tests/test_terminal_web.py'
       - 'tests/test_terminal_go_live_policy.py'
@@ -15,6 +17,8 @@ on:
     branches: [main]
     paths:
       - 'src/nivon/terminal_web.py'
+      - 'src/nivon/aceite_golive_terminal.py'
+      - 'tests/test_aceite_golive_terminal.py'
       - 'tests/test_terminal_web.py'
       - 'tests/test_terminal_go_live_policy.py'
       - 'infra/google_cloud/Dockerfile.terminal'
@@ -55,6 +59,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_terminal_web.py' -v
           python -m unittest discover -s tests -p 'test_terminal_go_live_policy.py' -v
           python -m unittest discover -s tests -p 'test_diagnostico_terminal_cloudrun.py' -v
+          python -m unittest discover -s tests -p 'test_aceite_golive_terminal.py' -v
       - name: Ensaiar bloqueio de deploy fora de main sem acessar GCP
         run: |
           if GITHUB_REF=refs/pull/999/merge \
@@ -115,6 +120,31 @@ jobs:
         run: python -m pip install --disable-pip-version-check -e '.[gcp]'
       - name: Build e deploy somente com recursos existentes e IAM privado
         run: bash scripts/deploy_terminal_privado.sh
+      - name: Homologar autenticacao e resposta real do terminal privado
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="$(gcloud run services describe nivon-terminal \
+            --project="$NIVON_PROJETO" --region=southamerica-east1 \
+            --format='value(status.url)')"
+          TOKEN="$(gcloud auth print-identity-token --audiences="$URL")"
+          export NIVON_TERMINAL_IDENTITY_TOKEN="$TOKEN"
+          python -m nivon.aceite_golive_terminal --executar --url="$URL" \
+            > "$RUNNER_TEMP/nivon-terminal-smoke.json"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          r=json.loads((Path(os.environ['RUNNER_TEMP'])/'nivon-terminal-smoke.json').read_text())
+          assert r['status']=='SMOKE_PRIVADO_AUTENTICADO_PASSOU'
+          assert r['go_live_final_homologado'] is False
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as f:
+              f.write('### Aceite interno autenticado do NIVON\n\n')
+              f.write('Smoke HTTPS privado: **PASSOU**. Fonte: ANTT/SIADE; ')
+              f.write('competência: '+r['ultima_competencia']+'; ')
+              f.write('anos cobertos: '+str(r['anos'])+'.\n\n')
+              f.write('Sem divulgação de TU, OD, token ou preço. Custos e ')
+              f.write('aprovação editorial ainda exigem verificação.\n')
+          PY
 
   diagnostico-metadados:
     needs: testes-e2e
@@ -158,7 +188,9 @@ jobs:
           python - <<'PY'
           import json,os
           from pathlib import Path
+          from nivon.aceite_golive_terminal import avaliar_preflight_cloudrun
           x=json.loads((Path(os.environ["RUNNER_TEMP"])/"nivon-preflight-terminal.json").read_text())
+          gate=avaliar_preflight_cloudrun(x)
           assert x["alteracoes_cloud"]==0 and x["sql_executado"] is False
           with open(os.environ["GITHUB_STEP_SUMMARY"],"a",encoding="utf-8") as output:
               output.write("### NIVON — diagnóstico Cloud Run sem escrita\n\n")
@@ -166,6 +198,14 @@ jobs:
               for name,status in sorted(x["componentes"].items()):
                   output.write(f"| {name} | {status} |\n")
               output.write("\n**Metadados prontos:** "+str(x["metadados_basicos_confirmados"]))
+              output.write("\n\n### Bloqueios acionáveis\n\n")
+              if gate['bloqueios']:
+                  for item in gate['bloqueios']:
+                      output.write('- '+item['componente']+': '+item['estado']+' — '+item['acao']+'\n')
+              else:
+                  output.write('Nenhum bloqueio de metadados. DEPLOY e custos ainda NÃO aprovados.\n')
+              output.write('\nEstado geral: **'+gate['status']+'**.\n')
               output.write("\n\nSem build, IAM, SQL ou deploy. Custos/permissões de escrita não foram testados.\n")
           print("NIVON_CLOUD_RUN_PREFLIGHT="+x["proxima_acao"])
+          print("NIVON_GO_LIVE_GATE="+gate["status"])
           PY
