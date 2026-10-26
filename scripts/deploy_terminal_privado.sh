@@ -16,6 +16,14 @@ fi
 : "${NIVON_TERMINAL_EXECUTION_SA:?Informe service account EXISTENTE somente leitura}"
 test "${NIVON_PROJETO:-}" = "nivon-data" || { echo 'PROJETO_DIVERGENTE'; exit 3; }
 test "${NIVON_DATASET:-}" = "nivon_raw" || { echo 'DATASET_DIVERGENTE'; exit 3; }
+# PTAX somente após aprovação independente dos direitos da fonte.
+PTAX_ENABLED="${NIVON_PTAX_INTERNAL_READ_ENABLED:-false}"
+if [[ "$PTAX_ENABLED" != true && "$PTAX_ENABLED" != false ]]; then
+  echo 'PTAX_OPT_IN_INVALIDO'; exit 3
+fi
+if [[ "$PTAX_ENABLED" == true && "${NIVON_PTAX_INTERNAL_SOURCE_APPROVED:-false}" != true ]]; then
+  echo 'PTAX_SEM_REVISAO_DIREITOS_DA_FONTE'; exit 3
+fi
 REGION=southamerica-east1
 SERVICE=nivon-terminal
 [[ "$NIVON_TERMINAL_ARTIFACT_REPO" =~ ^[a-z][a-z0-9-]{1,62}$ ]] ||
@@ -110,7 +118,7 @@ gcloud run deploy "$SERVICE" \
   --min-instances=0 --max-instances=1 \
   --cpu=1 --memory=512Mi --concurrency=8 --timeout=60 \
   --labels=nivon-component=terminal,managed-by=github-actions \
-  --set-env-vars="NIVON_BQ_PROJECT=$NIVON_PROJETO,NIVON_BQ_DATASET=$NIVON_DATASET" \
+  --set-env-vars="NIVON_BQ_PROJECT=$NIVON_PROJETO,NIVON_BQ_DATASET=$NIVON_DATASET,NIVON_PTAX_INTERNAL_READ_ENABLED=$PTAX_ENABLED" \
   --quiet
 echo 'DEPLOY_TERMINAL_CONCLUIDO_PRIVADO_SEM_CRON_OU_IAM_PUBLICO'
 gcloud run services describe "$SERVICE" --project="$NIVON_PROJETO" \
