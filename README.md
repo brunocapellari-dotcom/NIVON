@@ -31,7 +31,7 @@ O trabalho de implementação inicial ficará em uma branch e em PR para revisã
 
 ## Integrações GitHub e fontes reutilizadas (26/10/2026)
 
-- **Inventário canônico:** `config/catalogo_integracoes_github_20261026.json` — 33 projetos avaliados e 55 datasets agrobr listados, com licenças e estados. Consulta: `python -m nivon.catalogo_github`.
+- **Inventário canônico:** `config/catalogo_integracoes_github_20261026.json` — 37 projetos avaliados e 55 datasets agrobr listados, com licenças e estados. Consulta: `python -m nivon.catalogo_github`.
 - **Coletores já incorporados:** `src/nivon/anp_ppi.py` (PPI ANP) e `src/nivon/agrobr_mercados.py` (Comex Stat/CFTC).
 - **Novos adaptadores setoriais, ainda sem testes:** `src/nivon/agrobr_setoriais.py` (IBGE PPM, abate, leite, produção anual, PIB agro e ANP diesel revenda). Reutilizam o ledger existente; não criam serviços novos.
 - **Registro de inclusão e pendências:** `docs/INCLUSAO_INTEGRAL_FONTES_GITHUB_NIVON_20261026.md`.
