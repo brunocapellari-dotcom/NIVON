@@ -4,14 +4,18 @@ on:
     paths:
       - 'src/nivon/integracoes_ia/**'
       - 'tests/test_integracoes_ia.py'
+      - 'tests/test_integracoes_ia_pilotos.py'
       - '.github/workflows/nivon-integracoes-ia-ci.yml'
+      - '.github/workflows/nivon-integracoes-ia-pilotos.yml'
       - 'scripts/nivon_magnitude_piloto.mjs'
   push:
     branches: [main]
     paths:
       - 'src/nivon/integracoes_ia/**'
       - 'tests/test_integracoes_ia.py'
+      - 'tests/test_integracoes_ia_pilotos.py'
       - '.github/workflows/nivon-integracoes-ia-ci.yml'
+      - '.github/workflows/nivon-integracoes-ia-pilotos.yml'
       - 'scripts/nivon_magnitude_piloto.mjs'
 permissions:
   contents: read
@@ -29,7 +33,7 @@ jobs:
       - name: Testar contratos sem rede, credenciais ou servicos pagos
         env:
           PYTHONPATH: src
-        run: python -m unittest discover -s tests -p 'test_integracoes_ia.py' -v
+        run: |\n          python -m unittest discover -s tests -p 'test_integracoes_ia.py' -v\n          python -m unittest discover -s tests -p 'test_integracoes_ia_pilotos.py' -v
       - name: Verificar sintaxe offline das integrações
         run: |
           python -m compileall -q src/nivon/integracoes_ia
