@@ -132,23 +132,23 @@
 | `feat/sisfogo-roi-fonte-oficial-20261021` | 20261021 | NÃO MESCLADA — 445 commit(s) à frente |2026-10-21T18:18:12Z — MAIS DE 3 DIAS |
 | `feat/soilgrids-embrapa-solos-20261021` | 20261021 | NÃO MESCLADA — 449 commit(s) à frente |2026-10-21T19:48:40Z — MAIS DE 3 DIAS |
 | `feat/terminal-gcs-dados-reais-unificado-20261025` | 20261025 | NÃO MESCLADA — 8 commit(s) à frente |2026-10-26T03:03:41Z — RECENTE |
-| `feat/terminal-nivon-go-live-visao-publica-20261025` | 20261025 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/verificacao-cloud-gcp-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/visao-multimodal-anttrgi-ferrovia-2025-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
-| `feature/nivon-anp-ppi-direto-20261026` | 20261026 | NÃO MESCLADA — 7 commit(s) à frente | PENDENTE — conferir commit |
-| `feature/transporte-antt-antaq-20261022` | 20261022 | NÃO MESCLADA — 50 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/agro-http-seguro-e-bq-custo-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/antaq-hf-cache-inspecao-estrita-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/antaq-hf-cache-realpath-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/antaq-hf-revision-file-size-pinned-20261025` | 20261025 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
-| `fix/antaq-hf-staging-manual-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/antaq-parquet-cache-staging-safe-20261025` | 20261025 | NÃO MESCLADA — 6 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/antaq-replica-manual-isolada-20261025` | 20261025 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/antt-2025-inspecao-schema-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/antt-backfill-manual-gates-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/antt-bq-readiness-20261023` | 20261023 | NÃO MESCLADA — 6 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/antt-ckan-fallback-verificado-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/antt-ckan-historico-provas-sha-20261023` | 20261023 | NÃO MESCLADA — 8 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/terminal-nivon-go-live-visao-publica-20261025` | 20261025 | NÃO MESCLADA — 1 commit(s) à frente |2026-10-26T02:06:54Z — RECENTE |
+| `feat/verificacao-cloud-gcp-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente |2026-10-23T12:12:16Z — MAIS DE 3 DIAS |
+| `feat/visao-multimodal-anttrgi-ferrovia-2025-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente |2026-10-23T19:20:06Z — RECENTE |
+| `feature/nivon-anp-ppi-direto-20261026` | 20261026 | NÃO MESCLADA — 7 commit(s) à frente |2026-10-26T14:39:37Z — RECENTE |
+| `feature/transporte-antt-antaq-20261022` | 20261022 | NÃO MESCLADA — 50 commit(s) à frente |2026-10-23T11:34:51Z — MAIS DE 3 DIAS |
+| `fix/agro-http-seguro-e-bq-custo-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente |2026-10-23T19:03:26Z — RECENTE |
+| `fix/antaq-hf-cache-inspecao-estrita-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-26T01:23:10Z — RECENTE |
+| `fix/antaq-hf-cache-realpath-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-26T01:16:38Z — RECENTE |
+| `fix/antaq-hf-revision-file-size-pinned-20261025` | 20261025 | MESCLADA — ancestral da main |2026-10-26T01:30:44Z — RECENTE |
+| `fix/antaq-hf-staging-manual-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-26T01:21:56Z — RECENTE |
+| `fix/antaq-parquet-cache-staging-safe-20261025` | 20261025 | NÃO MESCLADA — 6 commit(s) à frente |2026-10-26T01:28:10Z — RECENTE |
+| `fix/antaq-replica-manual-isolada-20261025` | 20261025 | NÃO MESCLADA — 2 commit(s) à frente |2026-10-26T01:20:10Z — RECENTE |
+| `fix/antt-2025-inspecao-schema-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente |2026-10-23T17:54:36Z — RECENTE |
+| `fix/antt-backfill-manual-gates-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-23T17:58:01Z — RECENTE |
+| `fix/antt-bq-readiness-20261023` | 20261023 | NÃO MESCLADA — 6 commit(s) à frente |2026-10-23T15:49:41Z — MAIS DE 3 DIAS |
+| `fix/antt-ckan-fallback-verificado-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-23T15:55:01Z — MAIS DE 3 DIAS |
+| `fix/antt-ckan-historico-provas-sha-20261023` | 20261023 | NÃO MESCLADA — 8 commit(s) à frente |2026-10-23T18:07:58Z — RECENTE |
 | `fix/antt-ckan-retry-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
 | `fix/antt-fallback-csv-oficial-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
 | `fix/antt-gcp-precise-gates-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
