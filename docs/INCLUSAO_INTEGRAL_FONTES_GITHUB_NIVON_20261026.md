@@ -71,3 +71,16 @@ As consultas são delimitadas, opt-in e não disparam Cloud Run, BigQuery ou hor
 - Status terminal: **SEM NOVA PUBLICAÇÃO NESTA ENTREGA**.
 
 A consolidação posterior precisa conciliar contratos/dados reais, direitos, idempotência e GCP antes de declarar disponibilidade operacional. Nenhuma configuração nova deve ser solicitada ao proprietário por rotina enquanto puder ser resolvida no próprio projeto.
+
+## Complemento de pesquisa — fontes de coleta (26/10/2026)
+
+O catálogo passou de **33 para 37 repositórios** com quatro clientes de aquisição relevantes para o NIVON. **Nenhum deles foi instalado nem acionado**; o estado é `RESERVA` até a consolidação do M1 e auditoria de contratos:
+
+| Biblioteca | Uso previsto | Prioridade | Licença do código |
+|---|---|---|---|
+| [ckan/ckanapi](https://github.com/ckan/ckanapi) | Descoberta/consulta e download de datasets CKAN, usando a infraestrutura atual e evitando duplicar a rotina CCEE | P1 | MIT, arquivo COPYING |
+| [mercator-ocean/copernicus-marine-toolbox](https://github.com/mercator-ocean/copernicus-marine-toolbox) | Correntes, ondas e temperatura oceânica, úteis ao planejamento marítimo quando houver datasets com cobertura relevante | P2 | EUPL-1.2 |
+| [stac-utils/pystac-client](https://github.com/stac-utils/pystac-client) | Pesquisa de imagens de satélite em catálogos STAC para agricultura e hidrologia | P2 | Apache-2.0, arquivo LICENSE |
+| [ioos/erddapy](https://github.com/ioos/erddapy) | Cliente ERDDAP para dados meteo-oceanográficos; disponibilidade brasileira não comprovada | P2 | BSD-3-Clause |
+
+**Gate para ativação:** localizar endpoint oficial, comprovar cobertura geográfica, datas, atualização e permissões dos dados; preservar snapshots e proveniência no ledger NIVON; estimar custos e confrontar coletores já existentes. Não implantar serviço separado, não incluir nas rotinas automáticas e não divulgar dados não homologados. Os testes permanecem adiados conforme solicitação do proprietário.
