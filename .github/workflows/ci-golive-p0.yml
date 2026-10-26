@@ -1,0 +1,34 @@
+name: NIVON - Gate P0 go-live offline
+on:
+  pull_request:
+    paths:
+      - "src/nivon/prontidao_golive_piloto.py"
+      - "scripts/verificar_golive_gcp_readonly.py"
+      - "tests/test_golive_p0.py"
+      - "tests/test_golive_readiness_workflow.py"
+      - ".github/workflows/nivon-go-live-interno.yml"
+      - ".github/workflows/nivon-go-live-readonly.yml"
+      - ".github/workflows/nivon-terminal-piloto-real.yml"
+      - ".github/workflows/ci-golive-p0.yml"
+permissions:
+  contents: read
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Testar caminho critico sem GCP ou token
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python -m compileall -q src/nivon/prontidao_golive_piloto.py scripts/verificar_golive_gcp_readonly.py
+          python -m unittest discover -s tests -p 'test_golive_p0.py' -v
+          python -m unittest discover -s tests -p 'test_golive_readiness_workflow.py' -v
+          python scripts/verificar_golive_gcp_readonly.py | python -c 'import json,sys; assert json.load(sys.stdin)["estado"]=="PLANO_SEM_REDE"'
