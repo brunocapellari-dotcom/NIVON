@@ -81,23 +81,23 @@
 | `feat/faostat-bulk-manifest-20261021` | 20261021 | NÃO MESCLADA — 460 commit(s) à frente |2026-10-21T23:06:48Z — MAIS DE 3 DIAS |
 | `feat/faostat-qcl-bigquery-contract-20261021` | 20261021 | NÃO MESCLADA — 464 commit(s) à frente |2026-10-22T00:23:17Z — MAIS DE 3 DIAS |
 | `feat/faostat-qcl-stream-sqlite-20261021` | 20261021 | NÃO MESCLADA — 461 commit(s) à frente |2026-10-22T00:15:31Z — MAIS DE 3 DIAS |
-| `feat/fontes-complementares-glam-wapor-portwatch-20261021` | 20261021 | NÃO MESCLADA — 453 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/fontes-ibge-worldbank-operacionais-20261023` | 20261023 | NÃO MESCLADA — 16 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/gcp-ativacao-carga-integrada-20261025` | 20261025 | NÃO MESCLADA — 6 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/gcp-bootstrap-tabelas-consolidadas-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/gcp-main-integracao-resiliente-20261023` | 20261023 | NÃO MESCLADA — 62 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/gcp-preflight-iam-readonly-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/gcp-readonly-infra-audit-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/gcp-wif-smoke-leitura-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/go-live-portal-interno-20261025` | 20261025 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
-| `feat/go-live-terminal-interno-20261025` | 20261025 | NÃO MESCLADA — 11 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/go-live-terminal-leitura-20261025` | 20261025 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/go-live-terminal-ptax-gcp-20261025` | 20261025 | NÃO MESCLADA — 11 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/hidromet-fontes-publicas-power-glofas-20261021` | 20261021 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
-| `feat/integracoes-ia-p0-p2-optin-20261026` | 20261026 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/integracoes-lineup-nacional-20261019` | 20261019 | NÃO MESCLADA — 216 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/inteligencia-corredores-intermodais-20261023` | 20261023 | NÃO MESCLADA — 7 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/ivo-cerebro-historico-20261019` | 20261019 | NÃO MESCLADA — 226 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/fontes-complementares-glam-wapor-portwatch-20261021` | 20261021 | NÃO MESCLADA — 453 commit(s) à frente |2026-10-21T20:07:55Z — MAIS DE 3 DIAS |
+| `feat/fontes-ibge-worldbank-operacionais-20261023` | 20261023 | NÃO MESCLADA — 16 commit(s) à frente |2026-10-23T15:56:48Z — MAIS DE 3 DIAS |
+| `feat/gcp-ativacao-carga-integrada-20261025` | 20261025 | NÃO MESCLADA — 6 commit(s) à frente |2026-10-26T01:29:03Z — RECENTE |
+| `feat/gcp-bootstrap-tabelas-consolidadas-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente |2026-10-23T18:06:24Z — RECENTE |
+| `feat/gcp-main-integracao-resiliente-20261023` | 20261023 | NÃO MESCLADA — 62 commit(s) à frente |2026-10-23T17:49:07Z — RECENTE |
+| `feat/gcp-preflight-iam-readonly-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-23T17:53:12Z — RECENTE |
+| `feat/gcp-readonly-infra-audit-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente |2026-10-23T17:58:43Z — RECENTE |
+| `feat/gcp-wif-smoke-leitura-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-23T15:40:57Z — MAIS DE 3 DIAS |
+| `feat/go-live-portal-interno-20261025` | 20261025 | MESCLADA — ancestral da main |2026-10-26T02:48:37Z — RECENTE |
+| `feat/go-live-terminal-interno-20261025` | 20261025 | NÃO MESCLADA — 11 commit(s) à frente |2026-10-26T02:07:21Z — RECENTE |
+| `feat/go-live-terminal-leitura-20261025` | 20261025 | NÃO MESCLADA — 2 commit(s) à frente |2026-10-26T02:04:54Z — RECENTE |
+| `feat/go-live-terminal-ptax-gcp-20261025` | 20261025 | NÃO MESCLADA — 11 commit(s) à frente |2026-10-26T03:12:19Z — RECENTE |
+| `feat/hidromet-fontes-publicas-power-glofas-20261021` | 20261021 | MESCLADA — ancestral da main |2026-10-21T20:44:19Z — MAIS DE 3 DIAS |
+| `feat/integracoes-ia-p0-p2-optin-20261026` | 20261026 | NÃO MESCLADA — 1 commit(s) à frente |2026-10-26T13:15:12Z — RECENTE |
+| `feat/integracoes-lineup-nacional-20261019` | 20261019 | NÃO MESCLADA — 216 commit(s) à frente |2026-10-19T23:46:39Z — MAIS DE 3 DIAS |
+| `feat/inteligencia-corredores-intermodais-20261023` | 20261023 | NÃO MESCLADA — 7 commit(s) à frente |2026-10-23T11:45:58Z — MAIS DE 3 DIAS |
+| `feat/ivo-cerebro-historico-20261019` | 20261019 | NÃO MESCLADA — 226 commit(s) à frente |2026-10-20T02:30:36Z — MAIS DE 3 DIAS |
 | `feat/lineup-itaqui-codeba-20261019` | 20261019 | NÃO MESCLADA — 212 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/maritimo-cloudrun-deploy-seguro-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/maritimo-gcp-esquema-real-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
