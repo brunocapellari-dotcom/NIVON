@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="NIVON: inteligência em agronegócio e logística com indicadores oficiais, origem identificada e frescor verificável.">
+  <title>NIVON | Terminal de inteligência agro</title>
+  <style>
+    :root{font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:#e9f0e8;background:#091710;
+      font-synthesis:none;--bg:#091710;--panel:#11261a;--panel2:#15301f;--line:#304333;--text:#e9f0e8;
+      --muted:#a7baaa;--green:#81d092;--gold:#dcbf70;--alert:#f2b375;--shadow:0 18px 50px #0004}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:radial-gradient(circle at 90% 0%,#173c254f,transparent 40%),var(--bg)}
+    .shell{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:100vh}
+    .sidebar{background:#0b1c13;border-right:1px solid #223829;padding:28px 18px;display:flex;flex-direction:column;gap:28px}
+    .brand{display:flex;gap:13px;align-items:center;padding:5px 12px}
+    .mark{height:47px;width:47px;border-radius:14px;background:linear-gradient(135deg,#376a42,#132c1b);display:grid;place-items:center;
+      font-size:29px;font-weight:850;color:#d7e6ce;box-shadow:inset 0 0 0 1px #ffffff24}
+    .brand strong{font-size:21px;letter-spacing:.2em;display:block}
+    .brand small{color:var(--gold);font-size:10px;letter-spacing:.09em;text-transform:uppercase}
+    .navhead{color:#839a86;font-size:11px;text-transform:uppercase;letter-spacing:.15em;padding:0 14px;margin-bottom:10px}
+    nav{display:flex;flex-direction:column;gap:7px}
+    .navitem{width:100%;text-align:left;border:1px solid transparent;background:transparent;color:#b7c9ba;font:inherit;
+      font-size:14px;border-radius:10px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px}
+    .navitem:hover,.navitem:focus-visible{background:#1a3624;color:#fff;outline:none}
+    .navitem[aria-current="page"]{background:#20422b;border-color:#38634a;color:#e8f6e8}
+    .navsymbol{font-weight:800;color:var(--gold);width:18px;text-align:center}
+    .side-bottom{margin-top:auto;color:#879d8a;font-size:12px;line-height:1.6;padding:14px;border-top:1px solid #283e2d}
+    .side-bottom strong{color:#d6e8da}
+    main{padding:34px clamp(20px,3vw,55px) 55px;max-width:1550px;width:100%;margin:0 auto}
+    header{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:35px;flex-wrap:wrap}
+    .eyebrow{font-size:11px;letter-spacing:.17em;text-transform:uppercase;color:var(--gold);font-weight:750}
+    h1{font-weight:710;letter-spacing:-.045em;line-height:1.12;margin:9px 0 8px;font-size:clamp(27px,3.7vw,42px)}
+    h2{font-size:18px;font-weight:700;letter-spacing:-.025em;margin:0}
+    p{line-height:1.55}
+    .sub{color:var(--muted);margin:0;font-size:14px}
+    .status{padding:10px 14px;border-radius:100px;background:#193924;border:1px solid #3b6345;color:#b7ddba;
+      display:flex;align-items:center;gap:9px;font-size:12px;font-weight:680;white-space:nowrap}
+    .status::before{content:"";height:8px;width:8px;border-radius:100%;background:#81d092}
+    .status.loading{background:#352c1c;border-color:#796038;color:#f2d7a7}
+    .status.loading::before{background:#dcbf70}
+    .status.error{background:#362324;border-color:#814944;color:#f4b3aa}
+    .status.error::before{background:#dc7f74}
+    .hero{background:linear-gradient(135deg,#1b422a,#12271c 67%);border:1px solid #3c664a;border-radius:18px;
+      padding:26px 28px;display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:26px}
+    .hero h2{font-size:24px;line-height:1.25;margin:7px 0}
+    .hero p{margin:0;max-width:700px;color:#bbcfbc;font-size:14px}
+    .hero-icon{font-size:55px;font-weight:300;color:#d7bd77;line-height:1;opacity:.75}
+    .section-title{display:flex;align-items:center;justify-content:space-between;margin:26px 0 13px;gap:15px;flex-wrap:wrap}
+    .section-meta{font-size:12px;color:#96ae9b}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+    .card{background:linear-gradient(155deg,var(--panel),#0d2016);border:1px solid var(--line);
+      border-radius:16px;padding:23px;box-shadow:var(--shadow)}
+    .card-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
+    .card-label{font-size:13px;font-weight:650;color:#c6d8c7}
+    .code{font-size:11px;color:var(--gold);background:#574c251a;border:1px solid #b5a25b38;
+      border-radius:6px;padding:4px 7px;white-space:nowrap}
+    .amount{font-size:clamp(29px,3vw,45px);letter-spacing:-.04em;font-weight:700;margin:20px 0 5px;min-height:57px}
+    .amount.empty{color:#8da393;font-size:23px;letter-spacing:0;display:flex;align-items:center}
+    .unit{font-size:14px;color:#8fbd97;margin-left:7px;font-weight:500;letter-spacing:0}
+    .line{height:1px;background:#ffffff17;margin:18px 0}
+    .foot{font-size:12px;color:#a3b9a6;display:flex;justify-content:space-between;gap:9px;flex-wrap:wrap}
+    .foot a{color:#b7daa4}
+    a{color:#bcdba7;text-underline-offset:3px}
+    a:hover{color:#f0d58e}
+    .note{border:1px solid #394538;border-left:3px solid var(--gold);border-radius:12px;background:#182519;
+      padding:17px 19px;color:#d4ded1;font-size:13px;line-height:1.6}
+    .note strong{color:#e9ecce}
+    .coverage{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .coverage article{border:1px solid var(--line);background:#112519;border-radius:13px;padding:18px}
+    .coverage h3{margin:0 0 7px;font-size:15px;color:#e7f3e8}
+    .coverage p{font-size:13px;color:#b6c6b6;margin:0}
+    .pill{display:inline-block;font-size:11px;padding:4px 9px;border:1px solid #666a44;border-radius:100px;
+      color:#e5d6a1;margin-top:12px}
+    .pill.good{border-color:#426e4d;color:#b3dfbb}
+    .button{border:1px solid #497853;border-radius:9px;background:#254b30;color:#e6f5e7;
+      font:inherit;font-size:13px;padding:11px 14px;font-weight:650;cursor:pointer}
+    .button:hover{background:#32653e}
+    .button:disabled{opacity:.5;cursor:wait}
+    [hidden]{display:none!important}
+    .source-list{display:grid;gap:12px}
+    .source-entry{display:flex;justify-content:space-between;align-items:center;gap:14px;
+      border:1px solid var(--line);background:#13251a;border-radius:11px;padding:16px;flex-wrap:wrap}
+    .source-entry b{font-size:14px}
+    .source-entry small{display:block;color:#9eb49f;margin-top:4px}
+    .muted{color:#9fb3a1}
+    footer{margin-top:42px;color:#8ca38f;font-size:12px;line-height:1.6;border-top:1px solid #254031;padding-top:20px}
+    @media(max-width:900px){.shell{grid-template-columns:1fr}.sidebar{border-right:0;border-bottom:1px solid #2d4431;
+      padding:13px 17px;gap:15px}.sidebar .brand{padding:0}.sidebar nav{flex-direction:row;overflow-x:auto}
+      .sidebar .navhead,.side-bottom{display:none}.navitem{white-space:nowrap} main{padding:22px 17px}}
+    @media(max-width:640px){.grid,.coverage{grid-template-columns:1fr}.hero{padding:20px}.hero-icon{display:none}
+      h1{font-size:29px}.card{padding:21px}}
+    @media(prefers-reduced-motion:no-preference){button,.navitem{transition:background .15s}}
+  </style>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" aria-label="Navegação NIVON">
+    <div class="brand"><div class="mark" aria-hidden="true">N</div><div><strong>NIVON</strong><small>Inteligência agro</small></div></div>
+    <div><div class="navhead">Terminal</div>
+      <nav aria-label="Seções">
+        <button class="navitem" aria-current="page" data-view="geral"><span class="navsymbol">◈</span> Visão geral</button>
+        <button class="navitem" data-view="mercado"><span class="navsymbol">↗</span> Mercado e câmbio</button>
+        <button class="navitem" data-view="fontes"><span class="navsymbol">▤</span> Fontes e cobertura</button>
+      </nav></div>
+    <div class="side-bottom"><strong>Versão operacional inicial</strong><br>Somente fontes verificadas. Sem estimar fretes, preços físicos ou operações não observadas.</div>
+  </aside>
+  <main id="conteudo">
+    <header>
+      <div><div class="eyebrow">Dados, mercado e logística • Brasil</div><h1 id="page-title">Visão geral</h1>
+        <p class="sub">Indicadores com origem identificada, referência temporal e estado da fonte.</p></div>
+      <div id="api-status" class="status loading" role="status" aria-live="polite">Verificando fontes</div>
+    </header>
+
+    <section id="view-geral">
+      <div class="hero">
+        <div><div class="eyebrow">NIVON / PRIMEIRA VERSÃO</div><h2>Inteligência começa em dados verificáveis.</h2>
+          <p>Esta interface está em funcionamento em modo de leitura. Apenas fontes com resposta válida exibem valores. Os demais módulos aguardam conexão homologada com o Google Cloud.</p></div>
+        <div class="hero-icon" aria-hidden="true">◫</div>
+      </div>
+      <div class="section-title"><h2>Painel de mercado</h2><button class="button" id="refresh-main" type="button">Atualizar dados</button></div>
+      <div class="grid" id="overview-cards"></div>
+      <div class="section-title"><h2>Escopo operacional</h2><span class="section-meta">Sem preenchimento por estimativas</span></div>
+      <div class="coverage">
+        <article><h3>Câmbio e juros</h3><p>Séries públicas verificadas do Banco Central, com unidade, data e indicador de atraso.</p><span class="pill good">Leitura em produção</span></article>
+        <article><h3>Preços físicos, safra e logística</h3><p>CEPEA, IMEA, CONAB, fretes, ferrovias e portos entram após ligação operacional e conferência das tabelas canônicas.</p><span class="pill">Integração em andamento</span></article>
+      </div>
+    </section>
+
+    <section id="view-mercado" hidden>
+      <div class="section-title"><h2>Indicadores do Banco Central</h2><button id="refresh-market" class="button" type="button">Consultar novamente</button></div>
+      <div class="grid" id="market-cards"></div>
+      <div class="section-title"><h2>Critérios de apresentação</h2></div>
+      <div class="note"><strong>Origem e precisão:</strong> o dólar exibido é a série diária SGS 1 (venda), e a Selic é a série SGS 11 (% ao dia). Não são cotações negociadas, contratos futuros nem Selic-meta anual. O terminal mostra a referência da fonte e nunca converte automaticamente uma série em outra.</div>
+    </section>
+
+    <section id="view-fontes" hidden>
+      <div class="section-title"><h2>Cobertura e proveniência</h2><span class="section-meta">Situação consultada em tempo real</span></div>
+      <div id="source-entries" class="source-list"></div>
+      <div class="section-title"><h2>Fases seguintes</h2></div>
+      <div class="note">Os coletores agrícolas e logísticos fazem parte do NIVON, mas não são declarados como fonte ativa deste terminal antes de comprovar coleta, arquivamento RAW, carga no BigQuery e verificação dos resultados. <strong>Dados ausentes não são zeros.</strong></div>
+    </section>
+    <footer><span id="last-check">Ainda não consultado</span> · Banco Central do Brasil, séries SGS 1 e 11 · Informações para análise, não constituem oferta de transporte nem recomendação financeira.</footer>
+  </main>
+</div>
+<script>
+(function(){
+  "use strict";
+  const state={payload:null,loading:false,tab:"geral"};
+  const $=id=>document.getElementById(id);
+  const SOURCE={
+    ptax_usd_venda:{code:"SGS 1",dec:4,title:"Dólar (venda)",unit:"R$/US$"},
+    selic_diaria:{code:"SGS 11",dec:6,title:"Selic diária",unit:"% a.d."}
+  };
+  function dateBR(value){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(value||""))return "não verificada";
+    const a=value.split("-");return a[2]+"/"+a[1]+"/"+a[0];
+  }
+  function itemMarkup(key){
+    const conf=SOURCE[key],value=state.payload?.series?.[key];
+    const has=typeof value?.value==="number" && Number.isFinite(value.value);
+    const text=has?new Intl.NumberFormat("pt-BR",{minimumFractionDigits:conf.dec,maximumFractionDigits:conf.dec}).format(value.value):"Indisponível";
+    const line=has?"Referência: "+dateBR(value.referencia):"Sem dado válido da fonte";
+    const status=value?.status==="SOURCE_LAG"?" · Fonte defasada":
+      value?.status==="INFORMADO"?" · Informado pelo BCB":"";
+    const link=key==="ptax_usd_venda"?
+      "https://dadosabertos.bcb.gov.br/dataset/1-taxa-de-cambio---livre---dolar-americano-venda---diario":
+      "https://dadosabertos.bcb.gov.br/dataset/11-taxa-de-juros---selic";
+    return '<article class="card"><div class="card-head"><div class="card-label">'+conf.title+
+      '</div><div class="code">'+conf.code+'</div></div><div class="amount'+(has?"":" empty")+'">'+text+
+      (has?'<span class="unit">'+conf.unit+'</span>':"")+'</div><div class="line"></div>'+
+      '<div class="foot"><span>'+line+status+'</span><a href="'+link+'" target="_blank" rel="noopener noreferrer">Fonte oficial</a></div></article>';
+  }
+  function render(){
+    const keys=Object.keys(SOURCE);
+    const cards=keys.map(itemMarkup).join("");
+    $("overview-cards").innerHTML=cards;
+    $("market-cards").innerHTML=cards;
+    $("source-entries").innerHTML=keys.map(k=>{
+      const conf=SOURCE[k],v=state.payload?.series?.[k];
+      const status=v?.status==="INFORMADO"?"Disponível":v?.status==="SOURCE_LAG"?"Defasado":"Sem resposta";
+      return '<div class="source-entry"><div><b>'+conf.title+' — '+conf.code+
+        '</b><small>Banco Central · referência '+dateBR(v?.referencia)+'</small></div><span class="pill'+
+        (v?.status==="INFORMADO"?" good":"")+'">'+status+'</span></div>';
+    }).join("")+'<div class="source-entry"><div><b>CEPEA / IMEA / CONAB / ANTT / ANTAQ</b>'+
+    '<small>Exige carga GCS/BigQuery e homologação da atualização</small></div><span class="pill">Não disponível nesta versão</span></div>';
+    const status=$("api-status");
+    status.className="status"+(state.loading?" loading":state.payload?.status==="DISPONIVEL"?"":state.payload?.status==="PARCIAL"?" loading":" error");
+    status.textContent=state.loading?"Consultando BCB":state.payload?.status==="DISPONIVEL"?
+      "Fontes consultadas":state.payload?.status==="PARCIAL"?"Disponibilidade parcial":"Fonte indisponível";
+    $("last-check").textContent=state.payload?.consultado_em?
+      "Consultado em "+new Date(state.payload.consultado_em).toLocaleString("pt-BR",{timeZone:"America/Cuiaba"}):
+      "Sem consulta concluída";
+    ["refresh-main","refresh-market"].forEach(k=>$(k).disabled=state.loading);
+  }
+  async function refresh(){
+    if(state.loading)return;
+    state.loading=true;render();
+    try{
+      const response=await fetch("/api/mercado",{cache:"no-store",headers:{"Accept":"application/json"}});
+      const payload=await response.json();
+      if(!payload || !payload.series || !["DISPONIVEL","PARCIAL","INDISPONIVEL"].includes(payload.status))
+        throw Error("Contrato ausente");
+      state.payload=payload;
+    }catch(_){state.payload={status:"INDISPONIVEL",series:{},consultado_em:null}}
+    finally{state.loading=false;render()}
+  }
+  document.querySelectorAll("[data-view]").forEach(b=>{
+    b.addEventListener("click",()=>{
+      state.tab=b.dataset.view;
+      document.querySelectorAll("[data-view]").forEach(n=>n.setAttribute("aria-current",
+        n.dataset.view===state.tab?"page":"false"));
+      ["geral","mercado","fontes"].forEach(n=>$("view-"+n).hidden=n!==state.tab);
+      $("page-title").textContent=state.tab==="geral"?"Visão geral":
+        state.tab==="mercado"?"Mercado e câmbio":"Fontes e cobertura";
+    });
+  });
+  $("refresh-main").addEventListener("click",refresh);
+  $("refresh-market").addEventListener("click",refresh);
+  refresh();
+})();
+</script>
+</body></html>
