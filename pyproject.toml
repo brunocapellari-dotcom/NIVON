@@ -22,3 +22,6 @@ gcp = ["google-cloud-bigquery>=3,<4", "google-cloud-storage>=2.18,<4", "google-c
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+nivon = ["terminal_index.html", "terminal.css", "terminal.js"]
