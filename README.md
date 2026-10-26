@@ -1,41 +1,30 @@
-# NIVON — Inteligência de Mercado, Indústria e Logística
+# NIVON — inteligência do agronegócio e logística
 
-Plataforma independente de análise agroindustrial, de granéis e de logística do Brasil, com foco inicial em Mato Grosso.
+Projeto de uso **não comercial** para pesquisa e inteligência sobre agricultura, pecuária, preços, transporte de granéis, portos, clima e cadeias de suprimento.
 
-## Estado
+## Situação do projeto (26/10/2026)
+**Em reorganização. Go-live e acesso privado NÃO comprovados por esta documentação.** A verdade operacional é o código mesclado na `main`, evidências dos testes e o estado conferido diretamente no Google Cloud; PR aberta, plano e teste sintético não significam produção.
 
-**Implementação inicial em andamento; NÃO HOMOLOGADO para uso operacional.**
+A direção técnica e revisão das cinco frentes cabe a Claude. Bruno decide merges, autorização de `producao`, gastos, IAM e configurações do GitHub. Os executores só alteram os arquivos das suas frentes.
 
-Auditorias de 16/10/2026: **GO COM CONDIÇÕES para implementação**, não para go-live. Nenhuma saída sintética pode ser apresentada como observação real.
+## Decisões vigentes
+- **Um único provedor de execução:** Google Cloud. Não usar Vercel. Neon está em processo de substituição, sem desligamento antes de reconciliação aprovada.
+- **Topologia desejada, ainda sujeita a homologação:** um terminal privado Cloud Run com IAP e um coletor Cloud Run Job; no máximo seis workflows e oito variáveis; catálogo único `config/fontes.yaml`.
+- Código modular planejado: `nucleo/`, `fontes/<fonte>/`, `carga/`, `analise/`, `terminal/`, `ops/`, `experimental/`. Isto descreve a meta, **não** afirma migração concluída.
+- Dados verdadeiros separados de sintéticos, preservando fonte, quatro datas, unidade, revisão, situação e direitos de uso. Dado ausente não equivale a zero.
+- Meta financeira **R$ 0**, nunca garantia de ausência de custos: nenhum recurso pago nem alteração de IAM sem autorização.
+- Este repositório **público** deve conter apenas código, documentação publicável e dados sintéticos; não publicar credenciais, dados privados ou séries protegidas.
+- CEPEA somente para uso interno autorizado; licença de consulta não implica redistribuição.
 
-## Diretrizes vinculantes
+## Documentos de referência
+- [Arquitetura — provisória](docs/ARQUITETURA.md)
+- [Operação — provisória](docs/OPERACAO.md)
+- [Decisões](docs/DECISOES.md)
+- [Fontes — responsabilidade F4, pendente](docs/FONTES.md)
+- [Segurança — responsabilidade F5, pendente](docs/SEGURANCA.md)
+- [Arquivo de documentos anteriores](docs/historico/)
 
-- Somente código, documentação e dados sintéticos publicáveis neste repositório público. **Nunca** credenciais, arquivos privados ou séries de terceiros sem direito de redistribuição.
-- Custos de implantação e operação: objetivo **R$ 0**; nenhuma contratação ou deploy sem autorização.
-- Fontes de dados: permissões separadas por operação; direitos restritos ou desconhecidos implicam **bloqueio por padrão**.
-- Dados OBSERVADOS, INFORMADOS, ESTIMADOS, INFERIDOS e PROJETADOS jamais são intercambiáveis.
-- Dados ausentes são ausentes, não zeros imputados.
-- Não misturar ano civil e safra sem mapeamento explícito; preservar competência, referência, publicação e coleta.
-- CEPEA: 440 L etanol, 331 kg DDG, 20,4 L óleo por t de milho são **parâmetros de análise de margem**, não um trio automaticamente válido para balanço físico.
-- ANTT/MDF-e: recortes por NCM são amostrais, e municípios com terminal e fábrica são AMBÍGUOS; jamais publicar volume amostral como total observado.
-- Line-up PROGRAMADO não é realizado; aquisição de página não é operação portuária concluída.
-- Reuso de projetos antigos exige proveniência/licença/testes e não pode forçar dependências em BigQuery, Cloud Run, Hermes ou Holding.
+## Fluxo de contribuição
+Abrir issue → escolher `frente:F1` a `frente:F5` → implementar somente no escopo → apresentar relatório verificável na PR → revisão de Claude → merge manual de Bruno. Fechar PRs antigas e apagar branches somente com **APROVADO** explícito.
 
-## Desenvolvimento
-
-O trabalho de implementação inicial ficará em uma branch e em PR para revisão. Os testes locais usam somente fixtures sintéticas. A aprovação dos auditores não equivale à homologação operacional.
-
-## Licenciamento do código
-
-**Ainda não foi concedida uma licença aberta para este código.** A visibilidade pública do repositório não deve ser interpretada como permissão genérica de cópia ou sublicenciamento. Componentes de terceiros só serão incorporados após exame das respectivas licenças.
-
-## Integrações GitHub e fontes reutilizadas (26/10/2026)
-
-- **Inventário canônico:** `config/catalogo_integracoes_github_20261026.json` — 37 projetos avaliados e 55 datasets agrobr listados, com licenças e estados. Consulta: `python -m nivon.catalogo_github`.
-- **Coletores já incorporados:** `src/nivon/anp_ppi.py` (PPI ANP) e `src/nivon/agrobr_mercados.py` (Comex Stat/CFTC).
-- **Novos adaptadores setoriais, ainda sem testes:** `src/nivon/agrobr_setoriais.py` (IBGE PPM, abate, leite, produção anual, PIB agro e ANP diesel revenda). Reutilizam o ledger existente; não criam serviços novos.
-- **Registro de inclusão e pendências:** `docs/INCLUSAO_INTEGRAL_FONTES_GITHUB_NIVON_20261026.md`.
-- **Bibliotecas de coleta disponíveis como dependências opcionais:** `ckanapi==4.11`, `copernicusmarine==2.5.0`, `pystac-client==0.9.1` e `erddapy==3.3.1`. Estão declaradas em `pyproject.toml` no extra `fontes`. A instalação acontece **somente no ambiente coletor que escolher esse extra**, com `pip install -e '.[fontes]'`. Não alteram a imagem do terminal M1 nem instalam automaticamente no Google Cloud; ver `docs/INCLUSAO_INTEGRAL_FONTES_GITHUB_NIVON_20261026.md`.
-
-
-**Registro no GitHub não é coleta comprovada.** Os testes foram adiados a pedido do proprietário. Nenhum dado novo foi publicado no terminal ou carregado no Google Cloud por essa inclusão; componentes com licença ou permissão não confirmada continuam apenas referenciados.
+**Importante:** o repositório público não concede automaticamente licença aberta sobre o código. Respeitar licenças dos componentes e termos das fontes.
