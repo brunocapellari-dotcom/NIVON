@@ -8,6 +8,18 @@ on:
         type: boolean
         required: true
         default: false
+      primeira_fonte:
+        description: 'Primeira carga REAL opcional após validar/criar tabelas; exige gates individuais'
+        type: choice
+        required: true
+        default: NENHUMA
+        options:
+          - NENHUMA
+          - BCB_SGS11
+          - IMEA
+          - CONAB
+          - CEPEA_SOJA
+          - CEPEA_MILHO
 
 permissions:
   contents: read
@@ -32,6 +44,15 @@ jobs:
       NIVON_AGRO_GCP_WRITE_APPROVED: ${{ vars.NIVON_AGRO_GCP_WRITE_APPROVED }}
       NIVON_ZERO_COST_BQ_APPROVED: ${{ vars.NIVON_ZERO_COST_BQ_APPROVED }}
       NIVON_APLICAR: ${{ inputs.aplicar }}
+      NIVON_PRIMEIRA_FONTE: ${{ inputs.primeira_fonte }}
+      NIVON_RAW_ARCHIVE_APPROVED: ${{ vars.NIVON_RAW_ARCHIVE_APPROVED }}
+      NIVON_AGRO_STAGING_BIGQUERY_APPROVED: ${{ vars.NIVON_AGRO_STAGING_BIGQUERY_APPROVED }}
+      NIVON_SGS11_GCP_WRITE_APPROVED: ${{ vars.NIVON_SGS11_GCP_WRITE_APPROVED }}
+      NIVON_SGS11_EVIDENCIA_USO: ${{ vars.NIVON_SGS11_EVIDENCIA_USO }}
+      NIVON_IMEA_FONTE_AUTORIZADA: ${{ vars.NIVON_IMEA_FONTE_AUTORIZADA }}
+      NIVON_CONAB_FONTE_AUTORIZADA: ${{ vars.NIVON_CONAB_FONTE_AUTORIZADA }}
+      NIVON_CEPEA_FONTE_AUTORIZADA: ${{ vars.NIVON_CEPEA_FONTE_AUTORIZADA }}
+      NIVON_CEPEA_HOMOLOGACAO_APROVADA: ${{ vars.NIVON_CEPEA_HOMOLOGACAO_APROVADA }}
     steps:
       - name: Impedir criação sem aprovação dos dois contratos e orçamento
         shell: bash
@@ -42,6 +63,34 @@ jobs:
             test "$NIVON_AGRO_STAGING_SCHEMA_APPROVED" == 'true'
             test "$NIVON_AGRO_GCP_WRITE_APPROVED" == 'true'
             test "$NIVON_ZERO_COST_BQ_APPROVED" == 'true'
+          fi
+      - name: Validar autorização individual ANTES da autenticação e qualquer carga
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$NIVON_PRIMEIRA_FONTE" in
+            NENHUMA) ;;
+            BCB_SGS11)
+              [[ "$NIVON_APLICAR" == "true" &&
+                 "$NIVON_SGS11_GCP_WRITE_APPROVED" == "true" &&
+                 -n "$NIVON_SGS11_EVIDENCIA_USO" ]] ;;
+            IMEA)
+              [[ "$NIVON_APLICAR" == "true" &&
+                 "$NIVON_IMEA_FONTE_AUTORIZADA" == "true" &&
+                 "$NIVON_AGRO_STAGING_BIGQUERY_APPROVED" == "true" ]] ;;
+            CONAB)
+              [[ "$NIVON_APLICAR" == "true" &&
+                 "$NIVON_CONAB_FONTE_AUTORIZADA" == "true" &&
+                 "$NIVON_AGRO_STAGING_BIGQUERY_APPROVED" == "true" ]] ;;
+            CEPEA_SOJA|CEPEA_MILHO)
+              [[ "$NIVON_APLICAR" == "true" &&
+                 "$NIVON_CEPEA_FONTE_AUTORIZADA" == "true" &&
+                 "$NIVON_CEPEA_HOMOLOGACAO_APROVADA" == "true" ]] ;;
+            *) echo "FONTE_NAO_PERMITIDA" >&2; exit 2 ;;
+          esac
+          if [[ "$NIVON_PRIMEIRA_FONTE" != "NENHUMA" ]]; then
+            [[ "$NIVON_RAW_ARCHIVE_APPROVED" == "true" &&
+               "$NIVON_ZERO_COST_BQ_APPROVED" == "true" ]]
           fi
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -64,9 +113,38 @@ jobs:
           args=(--projeto "$NIVON_BQ_PROJECT" --dataset "$NIVON_BQ_DATASET" --bucket "$NIVON_GCS_BUCKET" --executar-preflight)
           if [[ "$NIVON_APLICAR" == 'true' ]]; then args+=(--aplicar); fi
           python -m nivon.bootstrap_tabelas_gcp "${args[@]}" | tee estado-tabelas.json
-      - name: Registrar que o bootstrap não é carga de dados
+      - name: Registrar diagnóstico do bootstrap
         if: success()
         run: |
           echo '### NIVON — Esquemas do BigQuery conferidos' >> "$GITHUB_STEP_SUMMARY"
           echo 'Verificadas/criadas apenas nivon_observacoes e agro_publicacoes_staging.' >> "$GITHUB_STEP_SUMMARY"
-          echo 'Sem upload RAW, sem MERGE, sem consultas analíticas nem dados públicos publicados.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'A etapa de bootstrap não realiza upload, MERGE ou publicação; primeira carga ocorre em passo separado se autorizada.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Primeira carga única em Cloud depois do bootstrap validado
+        if: ${{ inputs.aplicar && inputs.primeira_fonte != 'NENHUMA' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$NIVON_PRIMEIRA_FONTE" in
+            BCB_SGS11)
+              python -m nivon.sgs11_gcp --executar ;;
+            IMEA|CONAB)
+              NIVON_AGRO_FONTE_AUTORIZADA=true \
+                python scripts/coletar_agro_google_cloud.py \
+                  --fonte "$NIVON_PRIMEIRA_FONTE" \
+                  --base "data/nivon/ativacao/$NIVON_PRIMEIRA_FONTE" \
+                  --executar --gcs --staging-bigquery ;;
+            CEPEA_SOJA|CEPEA_MILHO)
+              NIVON_AGRO_FONTE_AUTORIZADA=true \
+                python scripts/coletar_agro_google_cloud.py \
+                  --fonte "$NIVON_PRIMEIRA_FONTE" \
+                  --base "data/nivon/ativacao/$NIVON_PRIMEIRA_FONTE" \
+                  --executar --gcs --homologar-cepea --bigquery ;;
+            *) exit 2 ;;
+          esac
+      - name: Resumo de operação, distinto do bootstrap
+        if: success()
+        run: |
+          echo '### NIVON - Ativacao e primeira fonte' >> "$GITHUB_STEP_SUMMARY"
+          echo "Fonte solicitada: $NIVON_PRIMEIRA_FONTE" >> "$GITHUB_STEP_SUMMARY"
+          echo 'O sucesso dos coletores exige confirmação específica da gravação conforme seu contrato.' >> "$GITHUB_STEP_SUMMARY"
+
