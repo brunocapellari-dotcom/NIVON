@@ -4,11 +4,11 @@
 
 ## Resultado classificado para revisão (sem autorização de fechamento)
 
-- Inventário: **132 PRs**, correspondentes às 131 iniciais e uma nova surgida durante a auditoria (PR #335); a PR própria da F1 (#337) ficou fora deste lote.
-- **Por classe preliminar:** INCORPORADA: 0; DUPLICADA: 0; OBSOLETA: 5; ÚTIL: 127.
-- **Frentes da tabela:** F4=73; F1=2; F3=24; F2=22; F5=11.
+- Inventário: **134 PRs** no snapshot atualizado, incluindo #335, #336 e a PR própria da F1 #337. A classificação das 132 anteriores foi baseada em comparação com `main`; #336 e #337 estão identificadas pelo conteúdo alterado, sem confronto de incorporação.
+- **Por classe preliminar:** INCORPORADA: 0; DUPLICADA: 0; OBSOLETA: 5; ÚTIL: 129.
+- **Frentes da tabela:** F4=73; F1=3; F3=24; F2=22; F5=12.
 
-**Limite de prova:** as 132 branches dessas PRs apresentavam pelo menos um commit à frente de `main` na comparação de ancestralidade. Isso não prova que suas alterações não tenham sido reaplicadas por squash/cherry-pick. A classe INCORPORADA só pode ser confirmada com comparação do conteúdo aplicado; sem prova, conservar. A classe DUPLICADA requer confronto do patch ou comportamento equivalente, não apenas caminhos repetidos ou PRs empilhadas. Portanto os zeros não são atestado de ausência de duplicatas; significam **nenhuma classificação confirmada para fechamento**.
+**Limite de prova:** as 132 branches conferidas dessas PRs apresentavam pelo menos um commit à frente de `main` na comparação de ancestralidade. Isso não prova que suas alterações não tenham sido reaplicadas por squash/cherry-pick. A classe INCORPORADA só pode ser confirmada com comparação do conteúdo aplicado; sem prova, conservar. A classe DUPLICADA requer confronto do patch ou comportamento equivalente, não apenas caminhos repetidos ou PRs empilhadas. Portanto os zeros não são atestado de ausência de duplicatas; significam **nenhuma classificação confirmada para fechamento**.
 
 **OBSOLETAS aqui = PRs inadequadas para merge como estão:** pode haver parsers, validações ou rotinas de domínio úteis para extração por F3/F4. As cinco classificações decorrem dos arquivos e trechos de código de persistência Neon/SQLite, não do título. **Não fechar** antes de revisão de Claude, análise de salvamento de partes úteis e `APROVADO` de Bruno.
 
@@ -19,6 +19,9 @@
 
 | PR | Classe preliminar | Frente | Evidência de arquivos e função | Base |
 |---|---|---|---|---|
+
+| [#336](https://github.com/brunocapellari-dotcom/NIVON/pull/336) | ÚTIL | F5 | 6 arquivo(s): `.github/dependabot.yml`, `.github/workflows/ci.yml`, `.github/workflows/seguranca.yml`, `SECURITY.md`, …; **Função:** proposta de reforço da segurança/CI, depende da revisão F5 | `main`; revisão pendente |
+| [#337](https://github.com/brunocapellari-dotcom/NIVON/pull/337) | ÚTIL | F1 | 56 arquivo(s): `.github/CODEOWNERS`, `.github/ISSUE_TEMPLATE/01-bug.md`, `.github/ISSUE_TEMPLATE/02-fonte.md`, `.github/ISSUE_TEMPLATE/03-tarefa.md`, …; **Função:** governança, modelos, histórico e relatórios desta própria F1 | `main`; revisão pendente |
 
 | [#335](https://github.com/brunocapellari-dotcom/NIVON/pull/335) | ÚTIL | F4 | 3 arquivo(s): `config/fontes.yaml`, `config/gerar_fontes.py`, `docs/FONTES.md` |`main`; comparacao: 5 ahead, 0 behind |
 | [#330](https://github.com/brunocapellari-dotcom/NIVON/pull/330) | ÚTIL | F1 | 2 arquivo(s): `docs/CATALOGO_FERRAMENTAS_IA_P1_P2_20261026.md`, `docs/integracoes_ia_nivon.md` |`main`; comparacao: 3 ahead, 4 behind |
