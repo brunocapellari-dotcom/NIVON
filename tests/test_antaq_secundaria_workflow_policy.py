@@ -29,6 +29,7 @@ class TestWorkflowReplicaANTAQ(unittest.TestCase):
         for chave in (
             "vars.NIVON_ANTAQ_REPLICA_WRITE_APPROVED == 'true'",
             "vars.NIVON_GCP_COST_REVIEWED == 'true'",
+            "vars.NIVON_ANTAQ_REPLICA_BOOTSTRAP_APPROVED == 'true'",
             "vars.NIVON_GCP_PROVIDER != ''",
             "vars.NIVON_GCP_SERVICE_ACCOUNT != ''",
             "github.ref == 'refs/heads/main'",
@@ -42,6 +43,9 @@ class TestWorkflowReplicaANTAQ(unittest.TestCase):
         self.assertIn("      id-token: write",self.escrita)
         self.assertIn("NIVON_GCP_PROVIDER",self.escrita)
         self.assertIn("PYTHONPATH: src",self.escrita)
+        self.assertIn("--permitir-criar-tabela",self.escrita)
+        self.assertIn("  validar-replica-real-sem-gcp:",self.teste)
+        self.assertNotIn("google-github-actions/auth",self.teste)
 
     def test_replicacao_nunca_e_fonte_oficial(self):
         self.assertIn("DERIVADO_DE_TERCEIRO_NAO_HOMOLOGADO",

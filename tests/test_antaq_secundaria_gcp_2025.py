@@ -124,7 +124,8 @@ class Replica2025(unittest.TestCase):
     def test_idempotencia_no_bq_apartado(self):
         rows,p=self.montar()
         cli=BQ()
-        a=persistir(rows,p,cliente=cli,sdk=SDK,not_found=FakeNotFound)
+        a=persistir(rows,p,permitir_criar_tabela=True,
+                    cliente=cli,sdk=SDK,not_found=FakeNotFound)
         b=persistir(rows,p,cliente=cli,sdk=SDK,not_found=FakeNotFound)
         self.assertEqual(a["estado"],"ANTAQ_REPLICA_SECUNDARIA_2025_BQ_CONCILIADA")
         self.assertEqual(b["bq_estado"],"JA_ARQUIVADO_IDEMPOTENTE")
@@ -133,35 +134,48 @@ class Replica2025(unittest.TestCase):
         self.assertFalse(a["disponivel_na_camada_oficial"])
         self.assertTrue(all(s.startswith("SELECT ") and cap==60000000 for s,cap in cli.sqls))
 
-    def test_cache_hf_resolve_symlink_legitimo_com_revisao_fixa(self):
+    def test_cache_hf_link_simbolico_vira_copia_regular(self):
         with tempfile.TemporaryDirectory() as root:
-            cache=Path(root)/"datasets--vinicius-souza--antaq"
-            blob=cache/"blobs"/"objeto"
-            blob.parent.mkdir(parents=True)
-            blob.write_bytes(b"X"*200)
-            refs=cache/"snapshots"/HF_COMMIT
-            refs.mkdir(parents=True)
-            simb=refs/"data.parquet"
-            simb.symlink_to(blob)
-            calls=[]
-            def mocked(**kwargs):
-                calls.append(kwargs)
-                return str(simb)
-            with patch.dict("sys.modules",{"huggingface_hub":SimpleNamespace(hf_hub_download=mocked)}):
-                p=baixar_revisao_fixada()
-            self.assertEqual(p["hidrovia"],str(blob))
-            self.assertEqual(p["carga"],str(blob))
-            self.assertEqual(len(calls),2)
-            self.assertTrue(all(c["revision"]==HF_COMMIT for c in calls))
-
-    def test_cache_hf_rejeita_arquivo_fora_do_dataset(self):
-        with tempfile.TemporaryDirectory() as root:
-            p=Path(root)/"estranho.parquet"
-            p.write_bytes(b"X"*200)
+            base=Path(root)
+            blob=base/"objeto-fonte.parquet"
+            blob.write_bytes(b"X"*2048)
+            link=base/"cache.parquet"
+            link.symlink_to(blob)
+            destino=base/"staging"
+            destino.mkdir()
+            chamadas=[]
+            def downloader(**kwargs):
+                chamadas.append(kwargs)
+                return str(link)
             with patch.dict("sys.modules",{
-                "huggingface_hub":SimpleNamespace(hf_hub_download=lambda **_:str(p))}):
-                with self.assertRaisesRegex(ErroReplicaANTAQ,"cache_esperado=False"):
-                    baixar_revisao_fixada()
+                "huggingface_hub":SimpleNamespace(hf_hub_download=downloader)
+            }):
+                paths=baixar_revisao_fixada(destino)
+            self.assertEqual(len(chamadas),2)
+            self.assertTrue(all(x["revision"]==HF_COMMIT for x in chamadas))
+            for p in paths.values():
+                self.assertTrue(Path(p).is_file())
+                self.assertFalse(Path(p).is_symlink())
+                self.assertNotEqual(Path(p),blob)
+                self.assertEqual(Path(p).read_bytes(),b"X"*2048)
+
+    def test_staging_symlink_bloqueia_antes_do_download(self):
+        with tempfile.TemporaryDirectory() as root:
+            base=Path(root)
+            local=base/"real"
+            local.mkdir()
+            link=base/"alias"
+            link.symlink_to(local,target_is_directory=True)
+            with self.assertRaisesRegex(ErroReplicaANTAQ,"staging seguro ausente"):
+                baixar_revisao_fixada(link)
+
+    def test_nao_cria_tabela_sem_aprovacao_independente(self):
+        rows,plano=self.montar()
+        client=BQ()
+        with self.assertRaisesRegex(ErroReplicaANTAQ,"bootstrap exige aprovacao"):
+            persistir(rows,plano,cliente=client,sdk=SDK,not_found=FakeNotFound)
+        self.assertEqual(client.loads,0)
+        self.assertIsNone(client.table)
 
     def test_nunca_gravar_com_tag_oficial(self):
         rows,p=self.montar()

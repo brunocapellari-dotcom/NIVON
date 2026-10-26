@@ -14,6 +14,7 @@ import json
 from pathlib import Path
 import re
 import sys
+import tempfile
 
 from .antaq_replica_detalhe import resumo_agro, resumo_parquets, soma_carga_unica_2025
 from .antaq_replica_hidrovia import ErroReplicaANTAQ
@@ -137,31 +138,47 @@ def preparar_lote(hidrovia, carga, *, collected_at: datetime):
     }
 
 
-def baixar_revisao_fixada():
+def baixar_revisao_fixada(destino: str | Path):
+    """Materializar arquivos regulares do commit HF fixado em staging temporário.
+
+    O cliente HF pode devolver links simbólicos de cache. A API é restrita ao
+    repo e revisão constantes; limite de bytes é aplicado também na cópia.
+    A etapa seguinte valida SHA de conteúdo e agregados esperados de 2025.
+    """
+    raiz = Path(destino)
+    if not raiz.is_dir() or raiz.is_symlink():
+        raise ErroReplicaANTAQ("staging seguro ausente")
     from huggingface_hub import hf_hub_download
-    # huggingface_hub devolve links simbolicos internos do cache. Resolver
-    # somente o objeto do commit fixado; _digest bloqueia symlinks de entrada
-    # e exige arquivo regular dentro do limite de 65MB.
-    resultado = {}
-    for k, v in ARQUIVOS.items():
-        path = Path(hf_hub_download(
+    saida = {}
+    for chave, relativo in ARQUIVOS.items():
+        origem = Path(hf_hub_download(
             repo_id=HF_REPO, repo_type="dataset",
-            filename=v, revision=HF_COMMIT))
-        resolved = path.resolve(strict=True)
-        regular = resolved.is_file() and not resolved.is_symlink()
-        dentro_cache = "datasets--vinicius-souza--antaq" in resolved.parts
-        tamanho = resolved.stat().st_size if regular else -1
-        if not regular or not dentro_cache or not 100 <= tamanho <= 65_000_000:
-            # Apenas booleans/tamanhos: nunca divulgar caminho local,
-            # credenciais, conteudo dos parquets ou URL assinada.
-            raise ErroReplicaANTAQ(
-                f"HF_OBJETO_REJEITADO:{k}:regular={regular}:"
-                f"cache_esperado={dentro_cache}:bytes={tamanho}")
-        resultado[k] = str(resolved)
-    return resultado
+            filename=relativo, revision=HF_COMMIT,
+        ))
+        if not origem.is_file() or not 100 <= origem.stat().st_size <= 65_000_000:
+            raise ErroReplicaANTAQ("arquivo HF ausente ou tamanho invalido")
+        alvo = raiz / f"antaq_{chave}_2025.parquet"
+        if alvo.exists() or alvo.is_symlink():
+            raise ErroReplicaANTAQ("staging com arquivo preexistente")
+        total = 0
+        try:
+            with origem.open("rb") as src, alvo.open("xb") as dst:
+                while trecho := src.read(1024 * 1024):
+                    total += len(trecho)
+                    if total > 65_000_000:
+                        raise ErroReplicaANTAQ("arquivo HF mudou tamanho durante copia")
+                    dst.write(trecho)
+            if not 100 <= total <= 65_000_000 or alvo.is_symlink():
+                raise ErroReplicaANTAQ("copia HF local invalida")
+            saida[chave] = str(alvo)
+        except BaseException:
+            alvo.unlink(missing_ok=True)
+            raise
+    return saida
 
 
-def persistir(rows, plano, *, cliente=None, sdk=None, not_found=None):
+def persistir(rows, plano, *, permitir_criar_tabela=False,
+             cliente=None, sdk=None, not_found=None):
     if (plano["estado"] != "REPLICA_ANTAQ_2025_APENAS_CAMADA_SECUNDARIA"
             or not 1 <= len(rows) <= MAX_ROWS or len(rows) != plano["linhas_hidroviarias"]
             or any(r["snapshot_id"] != plano["snapshot_id"]
@@ -182,6 +199,8 @@ def persistir(rows, plano, *, cliente=None, sdk=None, not_found=None):
     try:
         tab = cliente.get_table(tabela)
     except not_found:
+        if not permitir_criar_tabela:
+            raise ErroReplicaANTAQ("tabela secundaria ausente; bootstrap exige aprovacao")
         tab = sdk.Table(tabela, schema=[sdk.SchemaField(k,v) for k,v in FIELDS.items()])
         tab.time_partitioning=sdk.TimePartitioning(
             type_=sdk.TimePartitioningType.DAY, field="data_referencia")
@@ -232,15 +251,18 @@ def main(argv=None):
     a.add_argument("--saida",required=True)
     a.add_argument("--live",action="store_true")
     a.add_argument("--aceitar-fonte-terceira",action="store_true")
+    a.add_argument("--permitir-criar-tabela",action="store_true")
     opts=a.parse_args(argv)
     if not opts.live or not opts.aceitar_fonte_terceira:
         print(json.dumps({"estado":"BLOQUEADO_SEM_CONFIRMACAO_FONTE_TERCEIRA"}),file=sys.stderr)
         return 2
     try:
-        files=baixar_revisao_fixada()
-        rows,plano=preparar_lote(files["hidrovia"],files["carga"],
-                                collected_at=datetime.now(timezone.utc))
-        doc=persistir(rows,plano)
+        with tempfile.TemporaryDirectory(prefix="nivon-antaq-2025-") as pasta:
+            files=baixar_revisao_fixada(pasta)
+            rows,plano=preparar_lote(files["hidrovia"],files["carga"],
+                                    collected_at=datetime.now(timezone.utc))
+            doc=persistir(rows,plano,
+                          permitir_criar_tabela=opts.permitir_criar_tabela)
         p=Path(opts.saida)
         p.parent.mkdir(parents=True,exist_ok=True)
         p.write_text(json.dumps(doc,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
