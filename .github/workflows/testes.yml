@@ -35,6 +35,13 @@ jobs:
           PYTHONPATH: src
           PYTHONDONTWRITEBYTECODE: '1'
         run: python scripts/smoke_ivo_pam_lote.py
+      - name: MVP go-live HTTP — painel, IVO e publicação condicionada
+        env:
+          PYTHONPATH: src
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python scripts/smoke_go_live_mvp.py
+      - name: Construir imagem Docker do MVP sem enviar a registry
+        run: docker build -f Dockerfile --tag nivon-mvp:ci .
       - name: Conferir catálogo mestre e cobertura de indicadores
         env:
           PYTHONPATH: src
