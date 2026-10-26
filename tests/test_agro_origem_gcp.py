@@ -93,19 +93,25 @@ class TestAgroIntegrado(unittest.TestCase):
 
     def test_cepea_repetir_snapshot_nao_promove_quarentena(self):
         coletar_cepea(fonte="CEPEA_SOJA",base=self.p,agora=NOW,abrir=abrir)
+        with sqlite3.connect(self.p/"fontes_reais.sqlite") as db:
+            antes=db.execute("SELECT COUNT(*) FROM observacoes").fetchone()[0]
         with self.assertRaisesRegex(ErroAgroOrigem,"ESTADO_DIVERGENTE"):
             coletar_cepea(fonte="CEPEA_SOJA",base=self.p,agora=NOW,
                           abrir=abrir,homologacao_referencia=True)
-        states,_=self._rows("CEPEA_PRECOS_FISICOS")
+        states,rows=self._rows("CEPEA_PRECOS_FISICOS")
         self.assertEqual(states,[("QUARANTINED",)])
+        self.assertEqual(len(rows),antes)
 
     def test_cepea_repetir_snapshot_nao_demove_normalizado(self):
         coletar_cepea(fonte="CEPEA_SOJA",base=self.p,agora=NOW,
                       abrir=abrir,homologacao_referencia=True)
+        with sqlite3.connect(self.p/"fontes_reais.sqlite") as db:
+            antes=db.execute("SELECT COUNT(*) FROM observacoes").fetchone()[0]
         with self.assertRaisesRegex(ErroAgroOrigem,"ESTADO_DIVERGENTE"):
             coletar_cepea(fonte="CEPEA_SOJA",base=self.p,agora=NOW,abrir=abrir)
-        states,_=self._rows("CEPEA_PRECOS_FISICOS")
+        states,rows=self._rows("CEPEA_PRECOS_FISICOS")
         self.assertEqual(states,[("NORMALIZED",)])
+        self.assertEqual(len(rows),antes)
 
     def test_imea_publicacao_nao_promove_referencia(self):
         import asyncio
