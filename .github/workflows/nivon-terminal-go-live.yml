@@ -177,9 +177,9 @@ jobs:
                   output.write("\nPara configurar na página de variáveis GitHub, revisar os candidatos abaixo. ")
                   output.write("Os nomes não garantem permissões de execução, BigQuery ou build.\n")
                   for r in candidates["repositorios_docker_existentes"]:
-                      output.write("\n- NIVON_TERMINAL_ARTIFACT_REPO = \`"+r+"\`")
+                      output.write("\n- NIVON_TERMINAL_ARTIFACT_REPO = `"+r+"`")
                   for a in candidates["contas_existentes_necessitam_revisao_iam"]:
-                      output.write("\n- NIVON_TERMINAL_EXECUTION_SA = \`"+a+"\`")
+                      output.write("\n- NIVON_TERMINAL_EXECUTION_SA = `"+a+"`")
                   output.write("\n\nNenhum candidato foi selecionado ou ativado automaticamente.\n")
               output.write("\n\nSem build, IAM, SQL ou deploy. Custos/permissões de escrita não foram testados.\n")
           print("NIVON_CLOUD_RUN_PREFLIGHT="+x["proxima_acao"])
