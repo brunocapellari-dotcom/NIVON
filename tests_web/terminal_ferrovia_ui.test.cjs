@@ -4,11 +4,10 @@ const assert=require("node:assert/strict");
 const fs=require("node:fs");
 const vm=require("node:vm");
 const path=require("node:path");
-const source=fs.readFileSync(path.join(__dirname,"../src/nivon/terminal_web.py"),"utf8");
-const html=source.split('HTML = r"""')[1].split('"""')[0];
-const script=html.match(/<script>([\s\S]*?)<\/script>/)[1].replace("}carregar();","}");
+const html=fs.readFileSync(path.join(__dirname,"../src/nivon/portal_static/index.html"),"utf8");
+const script=fs.readFileSync(path.join(__dirname,"../src/nivon/portal_static/portal.js"),"utf8").replace(/carregar\(\);\s*$/,"");
 function element(){return {textContent:"",hidden:true,children:[],style:{},
-  classList:{add(){}},append(...items){this.children.push(...items);},
+  classList:{add(){},remove(){}},addEventListener(){},append(...items){this.children.push(...items);},
   replaceChildren(...items){this.children=items;}};}
 function browser(data){
   const nodes=new Map();
@@ -48,4 +47,5 @@ test("Falha após sucesso esconde dados antigos e não inventa zero",async()=>{
   for(const name of ["cards","serie","tabela"])assert.equal(nodes.get(name).hidden,true);
   assert.equal(nodes.get("linhas").children.length,0);
   assert.match(nodes.get("estado").textContent,/DADOS INDISPONÍVEIS/);
+  assert.equal(nodes.get("competencia").textContent,"Sem dados disponíveis");
 });

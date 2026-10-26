@@ -195,6 +195,24 @@ class TestAPI(unittest.TestCase):
             self.assertEqual(r.status,200)
             self.assertEqual(json.load(r)["estado"],"PROCESSO_ATIVO")
 
+    def test_portal_unico_assets_csp_e_modulos_sem_dados(self):
+        with urlopen(self.url+"/",timeout=3) as r:
+            html=r.read().decode()
+            self.assertIn('/assets/portal.js',html)
+            self.assertIn('/assets/portal.css',html)
+            self.assertIn('FONTE NÃO DISPONÍVEL NESTE TERMINAL',html)
+            self.assertNotIn('<script>',html)
+            self.assertNotIn("unsafe-inline",r.headers["Content-Security-Policy"])
+        for name,mime in (("portal.js","text/javascript"),("portal.css","text/css")):
+            with urlopen(self.url+"/assets/"+name,timeout=3) as r:
+                self.assertTrue(r.headers["Content-Type"].startswith(mime))
+                self.assertGreater(len(r.read()),100)
+                self.assertEqual(r.headers["Cache-Control"],"no-store")
+        for route in ('/assets/../terminal_web.py','/assets/%2e%2e/terminal_web.py','/.env','/api/v1/painel'):
+            with self.assertRaises(HTTPError) as err:
+                urlopen(self.url+route,timeout=3)
+            self.assertEqual(err.exception.code,404)
+
     def test_html_nao_exibe_dados_sinteticos_antes_da_api(self):
         with urlopen(self.url+"/",timeout=3) as r:
             html=r.read().decode()

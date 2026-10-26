@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - 'src/nivon/terminal_web.py'
+      - 'src/nivon/portal_static/**'
+      - 'pyproject.toml'
       - 'tests/test_terminal_web.py'
       - 'tests_web/terminal_ferrovia_ui.test.cjs'
       - 'tests/test_terminal_go_live_policy.py'
@@ -14,6 +16,8 @@ on:
     branches: [main]
     paths:
       - 'src/nivon/terminal_web.py'
+      - 'src/nivon/portal_static/**'
+      - 'pyproject.toml'
       - 'tests/test_terminal_web.py'
       - 'tests_web/terminal_ferrovia_ui.test.cjs'
       - 'tests/test_terminal_go_live_policy.py'

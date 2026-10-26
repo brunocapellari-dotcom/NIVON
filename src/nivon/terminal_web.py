@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
+from importlib.resources import files
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import os
@@ -27,108 +28,12 @@ MAX_ANOS = 35
 # Alerta operacional explícito; não representa SLA oficial da ANTT.
 ALERTA_DEFASAGEM_MESES = 3
 
-HTML = r"""<!doctype html>
-<html lang="pt-BR"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow,noarchive">
-<title>NIVON | Terminal de Inteligência Agro</title>
-<style>
-:root{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;
-color:#e7eee9;background:#091d17}*{box-sizing:border-box}
-body{margin:0}header{padding:18px max(4vw,24px);border-bottom:1px solid #294239;
-display:flex;align-items:center;gap:22px;background:#0e261d}
-.logo{font-size:23px;color:#e6b963;font-weight:800;letter-spacing:.12em}
-header span{font-size:13px;color:#b4c8bc}
-main{max-width:1150px;margin:auto;padding:32px 20px 75px}
-h1{font-size:clamp(26px,4vw,40px);margin:2px 0 10px;font-weight:650}
-p{color:#b5c6ba;line-height:1.55}.eyebrow{color:#dab66b;font-size:12px;letter-spacing:.18em}
-.status{padding:10px 13px;border:1px solid #53614b;border-radius:8px;
-font-size:13px;display:inline-block;color:#e2cb99;margin:18px 0 25px}
-.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
-.metric,.panel{background:#10291f;border:1px solid #305043;border-radius:12px;padding:20px}
-.label{font-size:12px;color:#adc4b3}.value{font-size:clamp(22px,3vw,31px);font-weight:650;
-margin:12px 0 4px;font-variant-numeric:tabular-nums}
-small{color:#a9bda9}.section{margin-top:24px}
-h2{font-size:17px;margin:0 0 13px;font-weight:600}.chart{display:flex;gap:4px;
-align-items:end;min-height:270px;border-bottom:1px solid #55735b;padding:35px 0 0}
-.bar-col{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:end;
-height:235px;align-items:center;gap:7px}
-.bar{width:clamp(5px,70%,35px);background:#499a67;border-radius:3px 3px 0 0;min-height:2px}
-.bar.partial{background:#c2a364}
-.year{font-size:10px;color:#b0bcb1;transform:rotate(-60deg);white-space:nowrap}
-.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:13px}
-th{text-align:left;color:#aebfb2;font-weight:500}th,td{padding:10px 12px;border-bottom:1px solid #30483c}
-td:nth-child(n+2){font-variant-numeric:tabular-nums}
-footer{margin-top:30px;border-top:1px solid #355345;padding-top:14px;font-size:12px;color:#9cb3a4}
-.muted{font-size:12px}.error{color:#efb3a6}
-@media(max-width:720px){.grid{grid-template-columns:1fr}
-header{flex-wrap:wrap}.year{font-size:9px}.bar-col{gap:4px}}
-</style></head><body>
-<header><div class="logo">NIVON</div><span>Inteligência agroindustrial e logística</span></header>
-<main>
-<div class="eyebrow">TERMINAL PRIVADO · PRÉVIA OPERACIONAL</div>
-<h1>Ferrovia brasileira, em números.</h1>
-<p>Movimentação por origem–destino registrada na ANTT/SIADE, lida diretamente do BigQuery.
-Dados históricos declarados; 2026 ainda parcial. Sem mistura com volumes rodoviários ou hidroviários.</p>
-<div id="estado" class="status" role="status" aria-live="polite">Carregando dados reais…</div>
-<div class="grid" id="cards" hidden>
-<div class="metric"><div class="label">Toneladas úteis acumuladas</div><div id="tu" class="value">—</div>
-<small>Soma por ano, não equivale a cargas únicas</small></div>
-<div class="metric"><div class="label">Registros origem–destino</div><div id="od" class="value">—</div>
-<small>Histórico das ferrovias concedidas</small></div>
-<div class="metric"><div class="label">Última competência disponível</div><div id="competencia" class="value">—</div>
-<small id="atualizacao">Data de extração: —</small></div></div>
-<section class="section panel" id="serie" hidden><h2>Série anual — toneladas úteis</h2>
-<div class="chart" id="chart" role="img" aria-label="Histórico ferroviário anual"></div>
-<p class="muted">A coluna mais recente pode representar período parcial. Base revisável pela ANTT.</p>
-</section>
-<section class="section panel" id="tabela" hidden><h2>Histórico detalhado por ano</h2>
-<div class="table-wrap"><table><thead><tr><th>Ano</th><th>Toneladas úteis</th>
-<th>Registros OD</th><th>Última competência</th><th>SHA-256 da fonte</th></tr></thead><tbody id="linhas"></tbody></table></div></section>
-<footer>Fonte: Agência Nacional de Transportes Terrestres (ANTT), SIADE.
-Natureza: OBSERVADO_DECLARADO. Revisão atual da fonte; não é reconstrução point-in-time.
-NIVON — visualização privada para avaliação, ainda sem homologação editorial plena.</footer>
-</main><script>
-const fmt=new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0});
-function set(id,v){document.getElementById(id).textContent=v;}
-async function carregar(){
-  try{
-    const r=await fetch('/api/v1/ferrovia',{cache:'no-store'});
-    if(!r.ok)throw new Error('Consulta indisponível ('+r.status+').');
-    const dados=await r.json();
-    if(dados.estado!=='ANTT_SERIE_OBSERVADA_DECLARADA')throw new Error('Série não validada.');
-    set('tu',fmt.format(dados.tu_acumuladas));
-    set('od',fmt.format(dados.registros_acumulados));
-    set('competencia',dados.ultima_competencia);
-    set('atualizacao','Última coleta: '+dados.ultima_coleta_utc.slice(0,16).replace('T',' ')+' UTC');
-    const chart=document.getElementById('chart'),rows=document.getElementById('linhas');
-    chart.replaceChildren();rows.replaceChildren();
-    const peak=Math.max(...dados.serie.map(x=>Number(x.toneladas_uteis)))||1;
-    for(const a of dados.serie){
-      const col=document.createElement('div');col.className='bar-col';
-      const bar=document.createElement('div');bar.className='bar'+(a.parcial?' partial':'');
-      bar.style.height=(Number(a.toneladas_uteis)/peak*190)+'px';
-      bar.title=a.ano+': '+fmt.format(a.toneladas_uteis)+' TU';
-      const yr=document.createElement('div');yr.className='year';yr.textContent=a.ano;
-      col.append(bar,yr);chart.append(col);
-      const tr=document.createElement('tr');
-      for(const v of [String(a.ano),fmt.format(a.toneladas_uteis),
-                      fmt.format(a.registros),a.ultima_competencia,a.arquivo_sha256]){
-        const td=document.createElement('td');td.textContent=v;tr.append(td);
-      }rows.append(tr);
-    }
-    set('estado',dados.freshness.estado==='SOURCE_LAG'
-      ?'FONTE DEFASADA · Competência '+dados.ultima_competencia+' · Coleta recente não significa dado novo.'
-      :'DADOS DECLARADOS DA ANTT · Consulta real BigQuery · Última versão');
-    for(const id of ['cards','serie','tabela'])document.getElementById(id).hidden=false;
-  }catch(e){
-    for(const id of ['cards','serie','tabela'])document.getElementById(id).hidden=true;
-    document.getElementById('chart').replaceChildren();document.getElementById('linhas').replaceChildren();
-    const status=document.getElementById('estado');status.classList.add('error');
-    set('estado','DADOS INDISPONÍVEIS: '+e.message+' Nenhum número foi estimado.');
-  }
-}carregar();
-</script></body></html>"""
+# Shared visual assets from PR #276; the existing HTTP server remains the entrypoint.
+HTML = files("nivon").joinpath("portal_static", "index.html").read_text(encoding="utf-8")
+ASSETS = {
+    "/assets/portal.js": ("portal.js", "text/javascript; charset=utf-8"),
+    "/assets/portal.css": ("portal.css", "text/css; charset=utf-8"),
+}
 
 
 def _ano_valido(ano: int, fim: int) -> bool:
@@ -287,9 +192,9 @@ def servidor(state=None):
             self.send_header("X-Frame-Options","DENY")
             self.send_header("Referrer-Policy","no-referrer")
             self.send_header("Content-Security-Policy",
-                "default-src 'none'; script-src 'unsafe-inline'; "
-                "style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; "
-                "frame-ancestors 'none'")
+                "default-src 'none'; script-src 'self'; "
+                "style-src 'self'; connect-src 'self'; base-uri 'none'; "
+                "form-action 'none'; frame-ancestors 'none'")
             self.end_headers()
             self.wfile.write(corpo)
 
@@ -300,6 +205,11 @@ def servidor(state=None):
                 return
             if path in ("/", "/index.html"):
                 self.responder(200,HTML.encode("utf-8"),"text/html; charset=utf-8")
+                return
+            if path in ASSETS:
+                name,content_type=ASSETS[path]
+                body=files("nivon").joinpath("portal_static",name).read_bytes()
+                self.responder(200,body,content_type)
                 return
             if path=="/api/v1/ferrovia":
                 try:
