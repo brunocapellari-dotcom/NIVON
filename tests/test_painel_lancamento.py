@@ -169,15 +169,17 @@ class TestPrimeiroGoLive(unittest.TestCase):
         bucket=FakeBucket()
         summary=mod.publicar_no_gcs(bucket=mod.BUCKET,html=html,payload=payload,
                     corte=AS_OF,storage_client=FakeStorage(bucket))
-        self.assertEqual(summary["status"],"PUBLICADO_SOMENTE_GCS_PRIVADO")
-        self.assertEqual(summary["objetos"],4)
-        self.assertEqual(len(bucket.objects),4)
+        self.assertEqual(summary["status"],"PUBLICADO_REVISAO_PRIVADA_GCS")
+        self.assertEqual(summary["objetos"],2)
+        self.assertEqual(len(bucket.objects),2)
         self.assertTrue(all(x.startswith("nivon/painel-interno/") for x in bucket.objects))
         self.assertTrue(all(v["metadata"]["nivon-classe"]=="INTERNO_PRIVADO"
                             for v in bucket.objects.values()))
-        with self.assertRaises(AssertionError):
-            mod.publicar_no_gcs(bucket=mod.BUCKET,html=html,payload=payload,
+        duplicate=mod.publicar_no_gcs(bucket=mod.BUCKET,html=html,payload=payload,
                     corte=AS_OF,storage_client=FakeStorage(bucket))
+        self.assertEqual(duplicate["objetos_novos"],0)
+        self.assertEqual(len(bucket.objects),2)
+        self.assertNotIn("nivon/painel-interno/latest.html",bucket.objects)
 
     def test_nega_bucket_sem_prova_iam_privado(self):
         doc,html,payload=mod.criar_produto(AS_OF,leitor=lambda *a,**kw:mock_painel())
