@@ -43,6 +43,24 @@ if view.table_type!='VIEW':
 print('VIEW_E_DATASET_VALIDOS_SEM_CONSULTA_BQ')
 PY
 
+# GO-LIVE nao publica terminal sem prova de dados reais no GCS privado.
+# O snapshot foi gerado por leitura real dos conectores existentes.
+python - <<'PY'
+from nivon.terminal_snapshot_gcs import ler_gcs
+try:
+    snapshot=ler_gcs()
+except Exception:
+    raise SystemExit('GO_LIVE_BLOQUEADO_SNAPSHOT_REAL_AUSENTE_OU_DEFASADO') from None
+sources=set(snapshot['fontes_consultadas'])
+if 'ANTT_SIADE_ORIGEM_DESTINO' not in sources:
+    raise SystemExit('GO_LIVE_BLOQUEADO_SEM_FERROVIA_ANTT_REAL')
+if not any(s.startswith('LINEUP_') or s.startswith('FMI_PORTWATCH_') for s in sources):
+    raise SystemExit('GO_LIVE_BLOQUEADO_SEM_DADOS_MARITIMOS_REAIS')
+if len(snapshot['indicadores']) < 2:
+    raise SystemExit('GO_LIVE_BLOQUEADO_SEM_INDICADORES_REAIS')
+print('NIVON_GCS_SNAPSHOT_REAL_VALIDADO_SEM_SQL',len(sources),len(snapshot['indicadores']))
+PY
+
 tmp=$(mktemp)
 trap 'rm -f "$tmp"' EXIT
 gcloud run services list --project="$NIVON_PROJETO" --region="$REGION" \

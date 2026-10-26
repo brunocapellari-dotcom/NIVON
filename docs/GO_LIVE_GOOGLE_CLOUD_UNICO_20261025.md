@@ -30,3 +30,50 @@ Somente declarar `GO-LIVE INTERNO` após o job de deploy, resposta autenticada r
 
 ## Operação sem o notebook ligado
 Google Cloud executa o runtime. GitHub faz CI e pode acionar o deploy manual. O computador é terminal de supervisão. Neon e Vercel não são dependências do go-live; o legado não deve ser usado para coletar ou publicar dados novos.
+
+## Integração funcional do terminal com o snapshot privado
+
+Além de `/api/v1/ferrovia` (consulta direta na view ANTT no BigQuery), o mesmo
+serviço `nivon-terminal` passa a servir o **painel real já implementado**
+em `/portal` e `/api/v1/painel`, com os assets do projeto existente
+`src/nivon/portal_static`. Não haverá uma segunda implantação de frontend.
+
+O segundo endpoint lê exclusivamente
+`gs://nivon-data-raw-2026/interno/nivon/portal/v1/painel.json`, produzido
+pela rotina `scripts/atualizar_snapshot_portal_gcp.py`. Essa rotina já
+consulta dados ANTT, programação Imbituba e PortWatch; nenhum conteúdo é
+inventado pelo serviço web. O leitor novo exige:
+- bucket em `southamerica-east1` com *Public Access Prevention enforced*;
+- geração consistente, arquivo de até 2 MB, metadados `nivon_modo` e
+  SHA-256 verificado sobre o conteúdo bruto;
+- estrutura `nivon.portal.interno.v1`, `publicavel=false`,
+  `go_live_publico=false` e ao menos um indicador real;
+- snapshot de no máximo 24 horas, com tolerância de relógio de 5 minutos;
+- execução IAM privada no Cloud Run, sem conceder acesso anônimo.
+
+A API retorna HTTP **503** quando o snapshot está ausente, desatualizado
+ou incorreto, sem publicar dados artificiais nem erros de credenciais.
+`/readyz` testa leitura real do snapshot; `/healthz` testa somente
+processo. O leitor usa cache de até cinco minutos e não executa SQL;
+consultas GCS podem ter custo, embora pequenas.
+
+O script de deploy `scripts/deploy_terminal_privado.sh` agora recusa
+build e publicação caso esse snapshot não esteja comprovadamente recente
+e contenha ferrovia ANTT mais ao menos uma fonte marítima, com dois
+indicadores reais. A mera existência do HTML ou o sucesso do CI não bastam.
+
+**Ordem para um go-live operacional legítimo:** (1) revisão dos gates
+econômicos já existentes, (2) execução autorizada de
+`.github/workflows/portal-interno-gcp.yml` com readback e hash,
+(3) garantir à service account de execução do terminal permissão
+de leitura limitada ao objeto GCS e leitura da view ANTT, (4) execução
+manual protegida de `.github/workflows/nivon-terminal-go-live.yml`,
+(5) testar autenticadamente `/portal`, `/readyz`,
+`/api/v1/painel` e `/api/v1/ferrovia` no Cloud Run.
+
+A prova anterior de publicação em `nivon/painel-interno` é **outro
+contrato de snapshot**, e não deve ser copiada para
+`interno/nivon/portal/v1/painel.json` sem passar pelo transformador
+canônico. A presença desse objeto específico e as permissões reais
+de runtime ainda precisam ser comprovadas. A integração de código não
+comprova um serviço acessível.

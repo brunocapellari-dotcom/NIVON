@@ -5,6 +5,8 @@ on:
       - 'src/nivon/terminal_web.py'
       - 'src/nivon/diagnostico_terminal_cloudrun.py'
       - 'tests/test_diagnostico_terminal_cloudrun.py'
+      - 'src/nivon/terminal_snapshot_gcs.py'
+      - 'tests/test_terminal_snapshot_gcs.py'
       - 'tests/test_terminal_web.py'
       - 'tests/test_terminal_go_live_policy.py'
       - 'infra/google_cloud/Dockerfile.terminal'
@@ -15,6 +17,8 @@ on:
     branches: [main]
     paths:
       - 'src/nivon/terminal_web.py'
+      - 'src/nivon/terminal_snapshot_gcs.py'
+      - 'tests/test_terminal_snapshot_gcs.py'
       - 'tests/test_terminal_web.py'
       - 'tests/test_terminal_go_live_policy.py'
       - 'infra/google_cloud/Dockerfile.terminal'
@@ -32,7 +36,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: nivon-terminal-deploy-controlado
+  group: nivon-terminal-deploy-controlado-${{ github.event_name == 'pull_request' && github.event.pull_request.number || 'main' }}
   cancel-in-progress: false
 
 jobs:
@@ -53,6 +57,7 @@ jobs:
           bash -n scripts/deploy_terminal_privado.sh
           python -m compileall -q src/nivon/terminal_web.py
           python -m unittest discover -s tests -p 'test_terminal_web.py' -v
+          python -m unittest discover -s tests -p 'test_terminal_snapshot_gcs.py' -v
           python -m unittest discover -s tests -p 'test_terminal_go_live_policy.py' -v
           python -m unittest discover -s tests -p 'test_diagnostico_terminal_cloudrun.py' -v
       - name: Ensaiar bloqueio de deploy fora de main sem acessar GCP
