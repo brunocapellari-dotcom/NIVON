@@ -160,7 +160,7 @@ class Replica2025(unittest.TestCase):
             p.write_bytes(b"X"*200)
             with patch.dict("sys.modules",{
                 "huggingface_hub":SimpleNamespace(hf_hub_download=lambda **_:str(p))}):
-                with self.assertRaisesRegex(ErroReplicaANTAQ,"cache esperado"):
+                with self.assertRaisesRegex(ErroReplicaANTAQ,"cache_esperado=False"):
                     baixar_revisao_fixada()
 
     def test_nunca_gravar_com_tag_oficial(self):
