@@ -49,7 +49,7 @@ A CI própria testa ponta a ponta e faz um GET real somente na PR da branch auto
 
 **Este PR não habilita go-live por si só.** Banco Central publicamente acessível não implica licença de armazenamento/redistribuição concedida à plataforma. A maturidade de código não substitui persistência GCP, monitoramento 24h, backup e segurança, nem repositório integrador consolidado. `status=BLOQUEADO_PARA_GO_LIVE` permanece enquanto qualquer gate crítico estiver pendente.
 
-**Release e integração:** empilhado sobre a PR #13 de coordenação; não mudar `main` nem usar Vercel, Neon ou novos serviços pagos. Usar Google Cloud com componentes portáteis somente após revisão da configuração existente e autorização aplicável. Nenhuma credencial no GitHub público.
+**Release e integração:** proposta pequena e isolada sobre a `main` pelo PR #317. A PR #305 mantém o trabalho original como referência, mas não precisa ter sua árvore divergente mesclada. Não executar merge, deploy ou habilitar cobrança sem os gates correspondentes; Vercel está fora do NIVON. Usar Google Cloud com componentes portáteis somente após revisão da configuração existente e autorização aplicável. Nenhuma credencial no GitHub público.
 
 
 ## Portabilidade de integração em `main`
