@@ -173,7 +173,7 @@
       "licenca_codigo": "MIT",
       "decisao": "REFERENCIA",
       "uso_nivon": "PTAX/SGS já coletados no NIVON",
-      "modulo_existente": "src/nivon/ptax_bigquery_incremental.py",
+      "modulo_existente": "scripts/ptax_bigquery_incremental.py",
       "coleta_comprovada_nesta_entrega": false
     },
     {
@@ -429,6 +429,11 @@
       "executado_20261026": false
     },
     {
+      "id": "embarques_anec",
+      "integracao": "CATALOGADO_DIREITOS_PENDENTES",
+      "executado_20261026": false
+    },
+    {
       "id": "embarques_mensais_anec",
       "integracao": "CATALOGADO_DIREITOS_PENDENTES",
       "executado_20261026": false
@@ -598,6 +603,15 @@
     "adapter_agrobr_extra": "CODIGO_SEM_TESTES",
     "nuvem": "NAO_EXECUTADA",
     "dados_reais": "NAO_COMPROVADOS",
-    "go_live": "NAO_HOMOLOGADO"
+    "go_live": "NAO_HOMOLOGADO",
+    "datasets_catalogados": 55,
+    "coletores_setoriais_registrados": [
+      "pecuaria_municipal",
+      "abate_trimestral",
+      "leite_industrial",
+      "producao_anual",
+      "precos_diesel",
+      "pib_agro"
+    ]
   }
 }
