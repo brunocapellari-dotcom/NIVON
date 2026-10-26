@@ -15,66 +15,21 @@
   },
   "repositorios": [
     {
-      "id": "bruno-portfolio/agrobr",
-      "github": "https://github.com/bruno-portfolio/agrobr",
-      "licenca_codigo": "MIT",
-      "decisao": "ADOPT",
-      "uso_nivon": "Núcleo de 41 fontes, 55 datasets; reutilizar contratos existentes",
-      "modulo_existente": "src/nivon/conab_agrobr.py;src/nivon/agrobr_mercados.py",
-      "coleta_comprovada_nesta_entrega": false
-    },
-    {
-      "id": "jmagomez/anp-ppi-dashboard",
-      "github": "https://github.com/jmagomez/anp-ppi-dashboard",
-      "licenca_codigo": "MIT",
-      "decisao": "INTEGRADO",
-      "uso_nivon": "PPI semanal oficial ANP; código adaptado e incorporado",
-      "modulo_existente": "src/nivon/anp_ppi.py",
-      "coleta_comprovada_nesta_entrega": false
-    },
-    {
-      "id": "StrategicProjects/comexpy",
-      "github": "https://github.com/StrategicProjects/comexpy",
-      "licenca_codigo": "MIT",
-      "decisao": "RESERVA",
-      "uso_nivon": "Comex Stat complementar; evitar duplicar agrobr",
-      "modulo_existente": "src/nivon/agrobr_mercados.py",
-      "coleta_comprovada_nesta_entrega": false
-    },
-    {
-      "id": "Mcamin/cftc-cot",
-      "github": "https://github.com/Mcamin/cftc-cot",
-      "licenca_codigo": "MIT",
-      "decisao": "RESERVA",
-      "uso_nivon": "Arquivos COT históricos; agrobr usa Socrata",
-      "modulo_existente": "src/nivon/agrobr_mercados.py",
-      "coleta_comprovada_nesta_entrega": false
-    },
-    {
-      "id": "NDelventhal/cot_reports",
-      "github": "https://github.com/NDelventhal/cot_reports",
-      "licenca_codigo": "INDETERMINADA",
+      "id": "aisstream/aisstream",
+      "github": "https://github.com/aisstream/aisstream",
+      "licenca_codigo": "A_CONFIRMAR",
       "decisao": "REFERENCIA",
-      "uso_nivon": "CFTC COT: comparar só quando faltar arquivo histórico",
-      "modulo_existente": "src/nivon/agrobr_mercados.py",
+      "uso_nivon": "AIS já tem parser/motor no NIVON",
+      "modulo_existente": "src/nivon/maritime/ais_stream.py",
       "coleta_comprovada_nesta_entrega": false
     },
     {
-      "id": "McNultyyy/cot-reports",
-      "github": "https://github.com/McNultyyy/cot-reports",
-      "licenca_codigo": "INDETERMINADA",
-      "decisao": "REFERENCIA",
-      "uso_nivon": "Visualizações COT; evitar copiar telas",
-      "modulo_existente": "src/nivon/agrobr_mercados.py",
-      "coleta_comprovada_nesta_entrega": false
-    },
-    {
-      "id": "fdfoneill/wasdeparser",
-      "github": "https://github.com/fdfoneill/wasdeparser",
-      "licenca_codigo": "NAO_IDENTIFICADA",
+      "id": "AlanTaranti/sidrapy",
+      "github": "https://github.com/AlanTaranti/sidrapy",
+      "licenca_codigo": "A_CONFIRMAR",
       "decisao": "RESERVA",
-      "uso_nivon": "Parser WASDE antigo; preferir USDA PSD via agrobr",
-      "modulo_existente": null,
+      "uso_nivon": "SIDRA IBGE; usar módulos NIVON já existentes",
+      "modulo_existente": "src/nivon/coletores_agro_ibge_wdi.py",
       "coleta_comprovada_nesta_entrega": false
     },
     {
@@ -87,56 +42,11 @@
       "coleta_comprovada_nesta_entrega": false
     },
     {
-      "id": "ropensci/rnassqs",
-      "github": "https://github.com/ropensci/rnassqs",
-      "licenca_codigo": "NOASSERTION",
-      "decisao": "REFERENCIA",
-      "uso_nivon": "Cliente R USDA NASS; usar API oficial em Python",
-      "modulo_existente": null,
-      "coleta_comprovada_nesta_entrega": false
-    },
-    {
-      "id": "ropensci/nasapower",
-      "github": "https://github.com/ropensci/nasapower",
-      "licenca_codigo": "NOASSERTION",
-      "decisao": "REFERENCIA",
-      "uso_nivon": "Cliente R NASA POWER; agrobr já dispõe da fonte",
-      "modulo_existente": null,
-      "coleta_comprovada_nesta_entrega": false
-    },
-    {
-      "id": "FAOSTAT/faostat-api",
-      "github": "https://github.com/FAOSTAT/faostat-api",
-      "licenca_codigo": "GPL-2.0",
+      "id": "basedosdados/mais",
+      "github": "https://github.com/basedosdados/mais",
+      "licenca_codigo": "A_CONFIRMAR",
       "decisao": "RESERVA",
-      "uso_nivon": "API antiga FAOSTAT; não usar código como backend",
-      "modulo_existente": null,
-      "coleta_comprovada_nesta_entrega": false
-    },
-    {
-      "id": "earthaccess-dev/earthaccess",
-      "github": "https://github.com/earthaccess-dev/earthaccess",
-      "licenca_codigo": "MIT",
-      "decisao": "RESERVA",
-      "uso_nivon": "Dados NASA Earthdata para sensoriamento remoto",
-      "modulo_existente": null,
-      "coleta_comprovada_nesta_entrega": false
-    },
-    {
-      "id": "meteostat/meteostat",
-      "github": "https://github.com/meteostat/meteostat",
-      "licenca_codigo": "MIT",
-      "decisao": "RESERVA",
-      "uso_nivon": "Meteorologia histórica para validação",
-      "modulo_existente": null,
-      "coleta_comprovada_nesta_entrega": false
-    },
-    {
-      "id": "ecmwf/ecmwf-opendata",
-      "github": "https://github.com/ecmwf/ecmwf-opendata",
-      "licenca_codigo": "Apache-2.0",
-      "decisao": "RESERVA",
-      "uso_nivon": "Download GRIB e previsões ECMWF; comparar com INMET",
+      "uso_nivon": "Metadados e dados brasileiros de qualidade variável",
       "modulo_existente": null,
       "coleta_comprovada_nesta_entrega": false
     },
@@ -150,47 +60,83 @@
       "coleta_comprovada_nesta_entrega": false
     },
     {
-      "id": "ipea/geobr",
-      "github": "https://github.com/ipea/geobr",
-      "licenca_codigo": "NAO_IDENTIFICADA",
-      "decisao": "RESERVA",
-      "uso_nivon": "Geometrias e identificadores; privilegiar IBGE oficial",
-      "modulo_existente": null,
-      "coleta_comprovada_nesta_entrega": false
-    },
-    {
-      "id": "AlanTaranti/sidrapy",
-      "github": "https://github.com/AlanTaranti/sidrapy",
+      "id": "BrasilAPI/BrasilAPI",
+      "github": "https://github.com/BrasilAPI/BrasilAPI",
       "licenca_codigo": "A_CONFIRMAR",
-      "decisao": "RESERVA",
-      "uso_nivon": "SIDRA IBGE; usar módulos NIVON já existentes",
-      "modulo_existente": "src/nivon/coletores_agro_ibge_wdi.py",
-      "coleta_comprovada_nesta_entrega": false
-    },
-    {
-      "id": "wilsonfreitas/python-bcb",
-      "github": "https://github.com/wilsonfreitas/python-bcb",
-      "licenca_codigo": "MIT",
-      "decisao": "REFERENCIA",
-      "uso_nivon": "PTAX/SGS já coletados no NIVON",
-      "modulo_existente": "scripts/ptax_bigquery_incremental.py",
-      "coleta_comprovada_nesta_entrega": false
-    },
-    {
-      "id": "ipea/pyIpeaData",
-      "github": "https://github.com/ipea/pyIpeaData",
-      "licenca_codigo": "NAO_IDENTIFICADA",
-      "decisao": "RESERVA",
-      "uso_nivon": "Macroeconomia IpeaData",
+      "decisao": "EXISTENTE_CATALOGO",
+      "uso_nivon": "Complemento NCM/PTAX/Taxas/IBGE/CPTEC, não primário",
       "modulo_existente": null,
       "coleta_comprovada_nesta_entrega": false
     },
     {
-      "id": "mapbiomas-brazil/user-toolkit",
-      "github": "https://github.com/mapbiomas-brazil/user-toolkit",
+      "id": "bruno-portfolio/agrobr",
+      "github": "https://github.com/bruno-portfolio/agrobr",
+      "licenca_codigo": "MIT",
+      "decisao": "ADOPT",
+      "uso_nivon": "Núcleo de 41 fontes, 55 datasets; reutilizar contratos existentes",
+      "modulo_existente": "src/nivon/conab_agrobr.py;src/nivon/agrobr_mercados.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "ckan/ckanapi",
+      "github": "https://github.com/ckan/ckanapi",
+      "licenca_codigo": "MIT (arquivo COPYING)",
+      "decisao": "RESERVA_P1",
+      "uso_nivon": "Reutilizar cliente CKAN para pesquisar, selecionar e baixar datasets de portais públicos que operam CKAN; comparar previamente com implementação atual da CCEE, sem crawling irrestrito.",
+      "modulo_existente": "src/nivon/coletores_dados_reais.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "duartejr/pyHidroWeb",
+      "github": "https://github.com/duartejr/pyHidroWeb",
+      "licenca_codigo": "NAO_IDENTIFICADA",
+      "decisao": "REFERENCIA",
+      "uso_nivon": "ANA; NIVON já tem Hidrowebservice",
+      "modulo_existente": "src/nivon/ana_hidrowebservice.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "earthaccess-dev/earthaccess",
+      "github": "https://github.com/earthaccess-dev/earthaccess",
+      "licenca_codigo": "MIT",
+      "decisao": "RESERVA",
+      "uso_nivon": "Dados NASA Earthdata para sensoriamento remoto",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "ecmwf/ecmwf-opendata",
+      "github": "https://github.com/ecmwf/ecmwf-opendata",
+      "licenca_codigo": "Apache-2.0",
+      "decisao": "RESERVA",
+      "uso_nivon": "Download GRIB e previsões ECMWF; comparar com INMET",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "FAOSTAT/faostat-api",
+      "github": "https://github.com/FAOSTAT/faostat-api",
+      "licenca_codigo": "GPL-2.0",
+      "decisao": "RESERVA",
+      "uso_nivon": "API antiga FAOSTAT; não usar código como backend",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "fdfoneill/wasdeparser",
+      "github": "https://github.com/fdfoneill/wasdeparser",
       "licenca_codigo": "NAO_IDENTIFICADA",
       "decisao": "RESERVA",
-      "uso_nivon": "Mudanças de uso da terra; dependente GEE/licença",
+      "uso_nivon": "Parser WASDE antigo; preferir USDA PSD via agrobr",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "geo-credito-rural/sicor",
+      "github": "https://github.com/geo-credito-rural/sicor",
+      "licenca_codigo": "GPL-3.0",
+      "decisao": "RESERVA",
+      "uso_nivon": "Crédito rural BCB SICOR via contratos agrobr",
       "modulo_existente": null,
       "coleta_comprovada_nesta_entrega": false
     },
@@ -204,56 +150,11 @@
       "coleta_comprovada_nesta_entrega": false
     },
     {
-      "id": "aisstream/aisstream",
-      "github": "https://github.com/aisstream/aisstream",
+      "id": "GlobalFishingWatch/pipe-events",
+      "github": "https://github.com/GlobalFishingWatch/pipe-events",
       "licenca_codigo": "A_CONFIRMAR",
       "decisao": "REFERENCIA",
-      "uso_nivon": "AIS já tem parser/motor no NIVON",
-      "modulo_existente": "src/nivon/maritime/ais_stream.py",
-      "coleta_comprovada_nesta_entrega": false
-    },
-    {
-      "id": "xang1234/neptune",
-      "github": "https://github.com/xang1234/neptune",
-      "licenca_codigo": "NAO_IDENTIFICADA",
-      "decisao": "REFERENCIA",
-      "uso_nivon": "Fusão AIS e visitas a porto; sem licença identificada",
-      "modulo_existente": "src/nivon/maritime/ais_geofence_inference.py",
-      "coleta_comprovada_nesta_entrega": false
-    },
-    {
-      "id": "duartejr/pyHidroWeb",
-      "github": "https://github.com/duartejr/pyHidroWeb",
-      "licenca_codigo": "NAO_IDENTIFICADA",
-      "decisao": "REFERENCIA",
-      "uso_nivon": "ANA; NIVON já tem Hidrowebservice",
-      "modulo_existente": "src/nivon/ana_hidrowebservice.py",
-      "coleta_comprovada_nesta_entrega": false
-    },
-    {
-      "id": "Wwerneck/FuelPrice-Analytics",
-      "github": "https://github.com/Wwerneck/FuelPrice-Analytics",
-      "licenca_codigo": "NAO_IDENTIFICADA",
-      "decisao": "REFERENCIA",
-      "uso_nivon": "ANP diesel; não copiar sem licença",
-      "modulo_existente": "src/nivon/anp_ppi.py",
-      "coleta_comprovada_nesta_entrega": false
-    },
-    {
-      "id": "geo-credito-rural/sicor",
-      "github": "https://github.com/geo-credito-rural/sicor",
-      "licenca_codigo": "GPL-3.0",
-      "decisao": "RESERVA",
-      "uso_nivon": "Crédito rural BCB SICOR via contratos agrobr",
-      "modulo_existente": null,
-      "coleta_comprovada_nesta_entrega": false
-    },
-    {
-      "id": "BrasilAPI/BrasilAPI",
-      "github": "https://github.com/BrasilAPI/BrasilAPI",
-      "licenca_codigo": "A_CONFIRMAR",
-      "decisao": "EXISTENTE_CATALOGO",
-      "uso_nivon": "Complemento NCM/PTAX/Taxas/IBGE/CPTEC, não primário",
+      "uso_nivon": "Eventos marítimos; foco pesqueiro, não escala confirmada",
       "modulo_existente": null,
       "coleta_comprovada_nesta_entrega": false
     },
@@ -276,12 +177,93 @@
       "coleta_comprovada_nesta_entrega": false
     },
     {
-      "id": "basedosdados/mais",
-      "github": "https://github.com/basedosdados/mais",
-      "licenca_codigo": "A_CONFIRMAR",
-      "decisao": "RESERVA",
-      "uso_nivon": "Metadados e dados brasileiros de qualidade variável",
+      "id": "ioos/erddapy",
+      "github": "https://github.com/ioos/erddapy",
+      "licenca_codigo": "BSD-3-Clause",
+      "decisao": "RESERVA_P2",
+      "uso_nivon": "Cliente ERDDAP para dados oceanográficos e ambientais observados; viabilidade depende de servidores ERDDAP com cobertura pertinente ao Brasil.",
       "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "ipea/geobr",
+      "github": "https://github.com/ipea/geobr",
+      "licenca_codigo": "NAO_IDENTIFICADA",
+      "decisao": "RESERVA",
+      "uso_nivon": "Geometrias e identificadores; privilegiar IBGE oficial",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "ipea/pyIpeaData",
+      "github": "https://github.com/ipea/pyIpeaData",
+      "licenca_codigo": "NAO_IDENTIFICADA",
+      "decisao": "RESERVA",
+      "uso_nivon": "Macroeconomia IpeaData",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "jmagomez/anp-ppi-dashboard",
+      "github": "https://github.com/jmagomez/anp-ppi-dashboard",
+      "licenca_codigo": "MIT",
+      "decisao": "INTEGRADO",
+      "uso_nivon": "PPI semanal oficial ANP; código adaptado e incorporado",
+      "modulo_existente": "src/nivon/anp_ppi.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "mapbiomas-brazil/user-toolkit",
+      "github": "https://github.com/mapbiomas-brazil/user-toolkit",
+      "licenca_codigo": "NAO_IDENTIFICADA",
+      "decisao": "RESERVA",
+      "uso_nivon": "Mudanças de uso da terra; dependente GEE/licença",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "Mcamin/cftc-cot",
+      "github": "https://github.com/Mcamin/cftc-cot",
+      "licenca_codigo": "MIT",
+      "decisao": "RESERVA",
+      "uso_nivon": "Arquivos COT históricos; agrobr usa Socrata",
+      "modulo_existente": "src/nivon/agrobr_mercados.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "McNultyyy/cot-reports",
+      "github": "https://github.com/McNultyyy/cot-reports",
+      "licenca_codigo": "INDETERMINADA",
+      "decisao": "REFERENCIA",
+      "uso_nivon": "Visualizações COT; evitar copiar telas",
+      "modulo_existente": "src/nivon/agrobr_mercados.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "mercator-ocean/copernicus-marine-toolbox",
+      "github": "https://github.com/mercator-ocean/copernicus-marine-toolbox",
+      "licenca_codigo": "EUPL-1.2",
+      "decisao": "RESERVA_P2",
+      "uso_nivon": "Dados oceânicos observados e modelados (correntes, ondas, temperatura e previsão), com seleção espacial para portos e corredores oceânicos; exige credenciais e avaliação de licenças e custo; não substituir AIS.",
+      "modulo_existente": "src/nivon/maritime/ais_stream.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "meteostat/meteostat",
+      "github": "https://github.com/meteostat/meteostat",
+      "licenca_codigo": "MIT",
+      "decisao": "RESERVA",
+      "uso_nivon": "Meteorologia histórica para validação",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "NDelventhal/cot_reports",
+      "github": "https://github.com/NDelventhal/cot_reports",
+      "licenca_codigo": "INDETERMINADA",
+      "decisao": "REFERENCIA",
+      "uso_nivon": "CFTC COT: comparar só quando faltar arquivo histórico",
+      "modulo_existente": "src/nivon/agrobr_mercados.py",
       "coleta_comprovada_nesta_entrega": false
     },
     {
@@ -303,12 +285,66 @@
       "coleta_comprovada_nesta_entrega": false
     },
     {
-      "id": "GlobalFishingWatch/pipe-events",
-      "github": "https://github.com/GlobalFishingWatch/pipe-events",
-      "licenca_codigo": "A_CONFIRMAR",
+      "id": "ropensci/nasapower",
+      "github": "https://github.com/ropensci/nasapower",
+      "licenca_codigo": "NOASSERTION",
       "decisao": "REFERENCIA",
-      "uso_nivon": "Eventos marítimos; foco pesqueiro, não escala confirmada",
+      "uso_nivon": "Cliente R NASA POWER; agrobr já dispõe da fonte",
       "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "ropensci/rnassqs",
+      "github": "https://github.com/ropensci/rnassqs",
+      "licenca_codigo": "NOASSERTION",
+      "decisao": "REFERENCIA",
+      "uso_nivon": "Cliente R USDA NASS; usar API oficial em Python",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "stac-utils/pystac-client",
+      "github": "https://github.com/stac-utils/pystac-client",
+      "licenca_codigo": "Apache-2.0 (arquivo LICENSE)",
+      "decisao": "RESERVA_P2",
+      "uso_nivon": "Consulta de catálogos STAC para imagens agrícolas, água e uso do solo; precisar avaliar endpoint, cobertura, licenciamento e orçamento de download antes de coletar.",
+      "modulo_existente": null,
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "StrategicProjects/comexpy",
+      "github": "https://github.com/StrategicProjects/comexpy",
+      "licenca_codigo": "MIT",
+      "decisao": "RESERVA",
+      "uso_nivon": "Comex Stat complementar; evitar duplicar agrobr",
+      "modulo_existente": "src/nivon/agrobr_mercados.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "wilsonfreitas/python-bcb",
+      "github": "https://github.com/wilsonfreitas/python-bcb",
+      "licenca_codigo": "MIT",
+      "decisao": "REFERENCIA",
+      "uso_nivon": "PTAX/SGS já coletados no NIVON",
+      "modulo_existente": "scripts/ptax_bigquery_incremental.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "Wwerneck/FuelPrice-Analytics",
+      "github": "https://github.com/Wwerneck/FuelPrice-Analytics",
+      "licenca_codigo": "NAO_IDENTIFICADA",
+      "decisao": "REFERENCIA",
+      "uso_nivon": "ANP diesel; não copiar sem licença",
+      "modulo_existente": "src/nivon/anp_ppi.py",
+      "coleta_comprovada_nesta_entrega": false
+    },
+    {
+      "id": "xang1234/neptune",
+      "github": "https://github.com/xang1234/neptune",
+      "licenca_codigo": "NAO_IDENTIFICADA",
+      "decisao": "REFERENCIA",
+      "uso_nivon": "Fusão AIS e visitas a porto; sem licença identificada",
+      "modulo_existente": "src/nivon/maritime/ais_geofence_inference.py",
       "coleta_comprovada_nesta_entrega": false
     }
   ],
@@ -612,6 +648,8 @@
       "producao_anual",
       "precos_diesel",
       "pib_agro"
-    ]
+    ],
+    "repositorios_catalogados": 37,
+    "fontes_complementares_ultima_revisao": "2026-10-26"
   }
 }
