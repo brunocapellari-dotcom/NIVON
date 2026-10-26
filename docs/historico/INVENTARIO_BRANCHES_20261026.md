@@ -1,0 +1,206 @@
+# Inventário de branches sem PR aberta — 26/10/2026
+
+**NÃO APAGAR SEM APROVADO.** O inventário abaixo parte da coleção real de branches e das PRs abertas. O sufixo de data no nome é apenas *indício*, não prova da última atividade. A confirmação de **mesclada** exige análise de ancestralidade; a de **abandonada há mais de três dias** exige a data real do último commit. Não classificar nome como prova.
+
+- Branches totais no momento da consulta: **319**.
+- PRs abertas consultadas: **133**.
+- Branches sem PR aberta (exceto `main`): **185**.
+- Com nome indicando data anterior a 23/10: **39** (somente candidatas a abandono).
+- Com nome indicando 23/10 ou posterior: **135**.
+- Sem data interpretável no nome: **11**.
+
+## Branches sem PR aberta
+
+| Branch | Sinal do nome | Mesclada na main? | Último commit > 3 dias? |
+|---|---|---|---|
+| `ci/antaq-2025-repetir-hf-realpath-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `ci/antt-rgi-reexecucao-corrigida-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `claude/auto-cepea-disponibilidade` | sem data | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `claude/auto-monitor-frescor` | sem data | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `claude/auto-testes-agrobr-setoriais` | sem data | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `codex/go-live-checkpoint` | sem data | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `codex/286-remove-vercel` | sem data | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `codex/287-single-private-interface` | sem data | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `codex/288-gcp-readiness` | sem data | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `codex/289-antt-reader-contract` | sem data | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `codex/290-operation-smoke` | sem data | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `codex/291-source-health` | sem data | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `docs/antt-21anos-corredores-operacional-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `docs/antt-gcp-operacao-atualizada-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `docs/antt-rodovia-rgi-2025-provas-custo-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `docs/catalogo-faostat-qcl-validado-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `docs/evidencia-antt-gcp-operacional-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `docs/evidencias-smoke-fontes-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `docs/homologacao-eurostat-faostat-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `docs/homologacao-flood-ensemble-fpma-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `docs/nivon-github-fontes-complementares-20261026` | 20261026 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `docs/trimodal-real-2025-consolidar-e-desarmar-push-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/agro-live-probe-temporario-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/agro-staging-replay-gcs-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/agrobr-comex-cftc-ledger-20261026` | 20261026 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/antaq-aquarela-nova-fonte-saude-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/antaq-hf-metadata-source-size-audit-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/antaq-hidrovia-derivada-2025-bq-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/antaq-hidrovia-produtos-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/antaq-historico-qualidade-lineup-20261019` | 20261019 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/antaq-monitor-disponibilidade-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/antt-2025-readonly-gcp-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/antt-2026-primeira-carga-unica-gcp-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/antt-anuario-rgi-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/antt-auditoria-historico-bq-21anos-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/antt-backfill-2006-2021-cargas-limitadas-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/antt-backfill-2022-2025-gcp-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/antt-mdfe-volumes-od-20261022` | 20261022 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/antt-piloto-gcp-preparacao-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/antt-rgi-gcp-rebased-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/antt-rgi-rodovia-gcp-top16-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/antt-vigia-revisoes-gcp-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/apis-flood-ensemble-fao-fpma-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/argentina-magyp-live-evidencia` | sem data | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/bcb-focus-expectativas-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/bcb-sgs11-gcp-main-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/bibliotecas-coleta-avancada-20261026` | 20261026 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/bootstrap-acessos-protegidos-main-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/bootstrap-duas-tabelas-gcp-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/brasilapi-refs-nivon-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/catalogo-fontes-gratuitas-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/coleta-gcp-nucleo-main-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/coleta-real-camadas-20261022` | 20261022 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/coletores-apis-gratuitas-reais-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/conectores-gcp-conab-sgs-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/conectores-google-cloud-lote1-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/connectores-gtr-noaa-pinksheet-geodata-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/connectores-publicos-inpe-cftc-antt-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/consulta-analitica-bq-fontes-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/corredores-ferrovia-historico-21anos-bq-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/corredores-ferroviarios-estacoes-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/corredores-primeira-view-bq-real-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/earthsearch-usda-gtr-bases-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/eurostat-faostat-qcl-api-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/expansao-50-fontes-20261022` | 20261022 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/faostat-bulk-manifest-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/faostat-qcl-bigquery-contract-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/faostat-qcl-stream-sqlite-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/fontes-complementares-glam-wapor-portwatch-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/fontes-ibge-worldbank-operacionais-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/gcp-ativacao-carga-integrada-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/gcp-bootstrap-tabelas-consolidadas-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/gcp-main-integracao-resiliente-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/gcp-preflight-iam-readonly-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/gcp-readonly-infra-audit-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/gcp-wif-smoke-leitura-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/go-live-portal-interno-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/go-live-terminal-interno-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/go-live-terminal-leitura-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/go-live-terminal-ptax-gcp-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/hidromet-fontes-publicas-power-glofas-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/integracoes-ia-p0-p2-optin-20261026` | 20261026 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/integracoes-lineup-nacional-20261019` | 20261019 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/inteligencia-corredores-intermodais-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/ivo-cerebro-historico-20261019` | 20261019 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/lineup-itaqui-codeba-20261019` | 20261019 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/maritimo-cloudrun-deploy-seguro-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/maritimo-gcp-esquema-real-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/maritimo-gcp-primeira-coleta-real-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/maritimo-gcp-principal-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/maritimo-go-live-gha-6h-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/maritimo-preflight-main-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/maritimo-scheduler-seguro-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/mercado-bcb-portal-existente-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/meteo-publica-inmet-cptec-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/migracao-neon-para-gcp-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/nivon-ais-geocercas-evidencia-inferida-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/nivon-ais-ledger-replay-e2e-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/nivon-catalogo-total-github-20261026` | 20261026 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/nivon-go-live-painel-interno-gcs-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/nivon-go-live-rotina-dias-uteis-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/nivon-ia-evidencias-ci-20261026` | 20261026 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/nivon-ia-pilotos-operacionais-20261026` | 20261026 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/nivon-maritime-readonly-bigquery-panel-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/nivon-painel-integrado-logistica-maritimo-quant-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/nivon-terminal-interno-golive-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/nivon-terminal-privado-go-live-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/nivon-terminal-web-go-live-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/nivon-web-mvp-real-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/painel-trimodal-2025-fonte-hidrovia-isolada-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/piloto-gcp-wdi-e2e-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/portal-gcs-cloudrun-privado-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/preflight-golive-cloudrun-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/prova-real-sgs-gcp-fontes-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/ptax-bcb-agendamento-wif-escritor-unico-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/series-corredores-antt-bigquery-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/sisfogo-roi-fonte-oficial-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/soilgrids-embrapa-solos-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/terminal-gcs-dados-reais-unificado-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/terminal-nivon-go-live-visao-publica-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/verificacao-cloud-gcp-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/visao-multimodal-anttrgi-ferrovia-2025-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feature/nivon-anp-ppi-direto-20261026` | 20261026 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feature/transporte-antt-antaq-20261022` | 20261022 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/agro-http-seguro-e-bq-custo-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/antaq-hf-cache-inspecao-estrita-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/antaq-hf-cache-realpath-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/antaq-hf-revision-file-size-pinned-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/antaq-hf-staging-manual-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/antaq-parquet-cache-staging-safe-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/antaq-replica-manual-isolada-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/antt-2025-inspecao-schema-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/antt-backfill-manual-gates-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/antt-bq-readiness-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/antt-ckan-fallback-verificado-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/antt-ckan-historico-provas-sha-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/antt-ckan-retry-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/antt-fallback-csv-oficial-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/antt-gcp-precise-gates-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/antt-gcp-unificar-config-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/antt-piloto-manual-unico-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/antt-piloto-sem-reexecucao-automatica-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/antt-rgi-gcp-google-api-notfound-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/antt-rgi-smoke-main-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/antt-vigia-fonte-indisponivel-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/antt-vigia-retry-fonte-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/auditoria-gcp-diaria-sem-escrita-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/bigquery-merge-particoes-custo-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/cepea-estado-ledger-verificado-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/formatos-reais-noaa-gtr-wb-esa-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/gcp-auditoria-estado-por-tabela-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/gcp-auditoria-schema-integral-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/gcp-preflight-particao-e-regiao-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/gcp-provider-canonico-migracoes-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/gcp-regiao-inventario-destinos-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/go-live-cloudrun-authenticated-acceptance-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/go-live-controlar-gcp-execucoes-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/go-live-descoberta-recursos-existentes-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/go-live-estado-bloqueios-log-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/go-live-terminal-container-e2e-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/golive-gate-sha-atual-e-preflight-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/golive-gate-smoke-auth-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/golive-p0-piloto-gcp-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/golive-readonly-staging-opcional-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/monitor-p0-main-codigo-atual-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/nivon-gcp-migracao-controle-operacional-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/nivon-go-live-gcs-append-only-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/noaa-mei-missing-sentinel-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/open-meteo-ensemble-control-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/p0-antt-rgi-ci-separado-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/ptax-ponte-ci-isolada-diagnostico-http-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/workflow-inmet-runner-context-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `integration/base-gcp-coletor-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `release/nivon-go-live-conab-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `release/nivon-go-live-interno-gates-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `release/ptax-mainline-go-live-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `release/terminal-privado-aceite-live-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `release/validacao-terminal-privado-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `reorg/f1-governanca-20261026` | 20261026 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `review/nivon-ciencia-base-20261019` | 20261019 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `test/qa-faostat-qcl-zip-once-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `test/smoke-eurostat-faostat-qcl-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `test/smoke-flood-ensemble-fpma-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `test/smoke-fontes-publicas-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `tmp/ptax-fastlane-reconcile-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+
+## Decisão solicitada ao proprietário (após auditoria conclusiva)
+
+1. Revisar a lista comprovada de branches mescladas e abandonadas.
+2. Autorizar expressamente `APROVADO` para a exclusão **apenas** do conjunto apresentado.
+3. Ativar GitHub → **Settings → General → Pull Requests → Automatically delete head branches** para apagar automaticamente a branch de PR após futuros merges (não elimina branches antigas sem PR).
