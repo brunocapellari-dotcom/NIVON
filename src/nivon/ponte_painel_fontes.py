@@ -13,6 +13,7 @@ from .conciliacao_corredores_ferrovia import analisar_staging, quadro_intermodal
 from .painel_operacional import ErroMotor, montar_painel
 from .adaptadores_operacionais import adaptar_fretes_consolidados, ler_replay_ais_sqlite
 from .ferrovia_painel_bq import consultar_ferrovia
+from .maritime.ais_geofence_inference import inferir_permanencias
 from .maritimo_painel_bigquery import consultar_maritimo
 
 
@@ -175,6 +176,22 @@ def analisar_fontes(
             resultado.get("passagem")!=consulta.get("passagem")):
             raise ErroMotor("retorno do BigQuery maritimo com fonte divergente")
         maritimo_bq.append(resultado)
+    # Candidatos de permanencia por geocerca declarada; nunca alimente
+    # automaticamente a contagem de navios em fila do motor quantitativo.
+    geocercas_cfg=config.get("inferencias_ais_geocerca", [])
+    if not isinstance(geocercas_cfg,list) or len(geocercas_cfg)>5:
+        raise ErroMotor("maximo 5 recortes AIS para geocerca")
+    candidatos_ais=[]
+    for cfg in geocercas_cfg:
+        if not isinstance(cfg,dict) or any(
+            not isinstance(cfg.get(k),str) or not cfg[k]
+            for k in ("banco","porto_id","inicio","fim")
+        ) or not isinstance(cfg.get("areas"),dict):
+            raise ErroMotor("configuracao geocerca AIS incompleta")
+        candidatos_ais.append(inferir_permanencias(
+            banco=cfg["banco"],porto_id=cfg["porto_id"],
+            inicio=cfg["inicio"],fim=cfg["fim"],
+            as_of=as_of,areas=cfg["areas"]))
     for cfg in config_queries:
         if not isinstance(cfg, dict):
             raise ErroMotor("consulta BigQuery invalida")
@@ -244,6 +261,7 @@ def analisar_fontes(
         {k:v for k,v in fretes_meta.items() if k!="series"} if fretes_meta else None
     )
     painel["replays_ais"] = replays
+    painel["candidatos_geocercas_ais"] = candidatos_ais
     painel["fontes_maritimas_bigquery"] = maritimo_bq
     painel["fontes_bigquery"] = fontes
     painel["executou_bigquery"] = executar_bigquery is True and bool(

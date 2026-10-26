@@ -73,3 +73,38 @@ account de runtime precisa de BigQuery jobs + escrita apenas no dataset
 e de escrita/leitura controlada no bucket. Verificar o papel efetivamente
 usado por Cloud Build antes de ampliar grants. Ativar Cloud Scheduler
 apenas depois de um job Cloud Run real com dados GCS e BQ verificados.
+
+## Agendamento Cloud Scheduler (ainda desabilitado)
+
+O workflow maritimo-gcp-cloudscheduler.yml pode criar o agendamento
+a cada seis horas, após a homologação real no Cloud Run. Exige
+acionamento manual na main, a opção autorizar_agendamento e a variável
+NIVON_MARITIMO_E2E_CLOUDRUN_CONFIRMADO=true. Também exige uma identidade
+NIVON_MARITIMO_SCHEDULER_SA existente com autorização run.jobs.run somente
+sobre o Job nivon-maritimo. O script verifica labels de propriedade,
+execução Cloud Run concluída com sucesso e eventual agendamento preexistente.
+Ele não habilita APIs nem altera IAM.
+
+## Go-live incremental sem Cloud Run: execução por GitHub Actions
+
+Enquanto o projeto Google Cloud não disponibiliza as APIs de Cloud Run e
+Artifact Registry, o workflow `.github/workflows/maritimo-gcp-primeiro-lote.yml`
+executa **em runner na nuvem a cada seis horas** (17 minutos após
+00, 06, 12 e 18 UTC). Ele usa credencial temporária OIDC/WIF, coleta apenas
+Imbituba e PortWatch e persiste em GCS/BigQuery existentes. O notebook do
+usuário não precisa permanecer ligado. O destino canônico continua Google Cloud.
+
+Regras: uma execução por vez (concurrency), nenhuma coleta dos portos CDP
+em quarentena, MERGE BigQuery idempotente, hash e manifesto GCS, falha
+explícita em caso de ausência de dados/evidências, métricas em resumo do job.
+O cron NÃO executa Cloud Run, NÃO cria infraestrutura e NÃO implementa
+projeções ETA ou carga efetivamente movimentada. Consome minutos de GitHub
+Actions e pode gerar custos no BigQuery/GCS; medir e acompanhar cotas.
+
+Para evitar cron em duplicidade quando o Cloud Scheduler estiver homologado,
+definir no GitHub Actions a variável de repositório
+`NIVON_MARITIMO_GITHUB_SCHEDULE=disabled` antes de habilitar Scheduler.
+O workflow manual continua disponível para recuperação/diagnóstico.
+
+A liberação atual é um **go-live técnico da ingestão marítima piloto**,
+não um go-live completo de toda a plataforma de produtos NIVON.

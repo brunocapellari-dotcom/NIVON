@@ -1,9 +1,13 @@
-name: NIVON - Primeiro lote maritimo real GCS + BigQuery
+name: NIVON - Maritimo operacional (GCS + BigQuery, 6h)
 on:
   push:
     branches: [main]
     paths:
       - '.github/workflows/maritimo-gcp-primeiro-lote.yml'
+  schedule:
+    # GitHub Actions executa remotamente, sem notebook e sem depender
+    # das APIs Cloud Run/Artifact Registry atualmente bloqueadas.
+    - cron: '17 */6 * * *'
   workflow_dispatch:
 
 permissions:
@@ -16,7 +20,12 @@ concurrency:
 
 jobs:
   piloto-imbituba-e-portwatch:
-    if: ${{ github.ref == 'refs/heads/main' }}
+    # Quando o Scheduler Cloud Run for homologado, definir a variável
+    # NIVON_MARITIMO_GITHUB_SCHEDULE=disabled para evitar cron duplo.
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name != 'schedule' ||
+       vars.NIVON_MARITIMO_GITHUB_SCHEDULE != 'disabled')
     runs-on: ubuntu-latest
     timeout-minutes: 13
     env:
@@ -52,9 +61,45 @@ jobs:
         run: |
           set -euo pipefail
           python -m nivon.maritimo_gcp_job
-      - name: Confirmar metadados sem despejar cargas
+      - name: Conferir historico de objetos e tabelas apos execucao
+        env:
+          PYTHONUNBUFFERED: '1'
+        run: |
+          python - <<'PY'
+          import json,os
+          from google.cloud import bigquery,storage
+          project=os.environ['GOOGLE_CLOUD_PROJECT']
+          dataset=os.environ['NIVON_BQ_DATASET']
+          bucket=os.environ['NIVON_GCS_BUCKET']
+          bc=bigquery.Client(project=project,location='southamerica-east1')
+          # Metadados sem query: nao iniciar scans adicionais a cada rodada.
+          required=('maritimo_capturas','maritimo_escalas_revisoes',
+                    'maritimo_fluxos_passagens','maritimo_coleta_execucoes')
+          counts={name:int(bc.get_table(f'{project}.{dataset}.{name}').num_rows)
+                  for name in required}
+          prefixes=('imbituba/','fmi_portwatch/','_manifestos/')
+          gcs=storage.Client(project=project)
+          found={prefix:next(gcs.list_blobs(bucket,
+              prefix='nivon/maritimo/raw/'+prefix,page_size=1),None) is not None
+                 for prefix in prefixes}
+          result={'resultado':'PERSISTENCIA_OBSERVAVEL',
+                  'tabelas':counts,'evidencias_gcs':found,
+                  'fonte_marinha':'PORTWATCH_ESTIMADO_NAO_CARGA_REAL'}
+          print(json.dumps(result,ensure_ascii=False,sort_keys=True))
+          if not all(found.values()):
+              raise RuntimeError('GCS_EVIDENCIA_AUSENTE')
+          if not all(n>0 for n in counts.values()):
+              raise RuntimeError('BIGQUERY_SEM_DADOS_MARITIMOS')
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as dest:
+              dest.write('### NIVON marítimo — execução de coleta\n\n')
+              dest.write('**Coleta e persistência:** verificadas em GCS e BigQuery.\n\n')
+              for key,value in counts.items():
+                  dest.write(f'- {key}: {value} registros nos metadados\n')
+              dest.write('\nPortWatch indica tráfego AIS e volume modelado; **não comprova carga realizada**.\n')
+          PY
+      - name: Resumir status sem despejar cargas
         if: always()
         run: |
-          echo '### NIVON — Primeiro lote marítimo' >> "$GITHUB_STEP_SUMMARY"
-          echo 'Execução limitada a Imbituba e PortWatch; consultar status e objetos via logs protegidos do job.' >> "$GITHUB_STEP_SUMMARY"
-          echo 'Nenhum cron nem Cloud Run Job foram criados.' >> "$GITHUB_STEP_SUMMARY"
+          echo '### NIVON — Coleta recorrente marítima' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Coleta restrita a Imbituba e PortWatch; consultar auditoria no resumo e logs protegidos.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Cron GitHub Actions de 6h; nenhum Cloud Run Job ou Scheduler foi criado.' >> "$GITHUB_STEP_SUMMARY"

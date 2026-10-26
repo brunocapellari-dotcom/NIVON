@@ -4,21 +4,47 @@
 name: NIVON PTAX - ponte privada para Google Cloud
 on:
   push:
+    branches: [main]
     paths:
       - '.github/workflows/ptax-neon-private-export.yml'
+      - 'scripts/ptax_neon_private_export.py'
+      - 'tests/test_ptax_neon_bridge_policy.py'
+  pull_request:
+    paths:
+      - '.github/workflows/ptax-neon-private-export.yml'
+      - 'scripts/ptax_neon_private_export.py'
+      - 'tests/test_ptax_neon_bridge_policy.py'
   workflow_dispatch:
   schedule:
-    # Dias uteis 19:45 em America/Cuiaba, apos janela usual BCB.
     - cron: '45 23 * * 1-5'
 permissions:
   contents: read
-  id-token: write
 concurrency:
   group: nivon-ptax-neon-bigquery
   cancel-in-progress: false
 jobs:
-  exportar-e-sincronizar:
+  validar:
     runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Validar ponte privada sem Cloud ou Neon
+        run: |
+          python -m unittest discover -s tests -p 'test_ptax_neon_bridge_policy.py' -v
+          python -m unittest discover -s tests -p 'test_ptax_bcb_workflow_policy.py' -v
+
+  exportar-e-sincronizar:
+    needs: validar
+    if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     timeout-minutes: 22
     env:
       NIVON_PTAX_PRIVATE_ENDPOINT: https://br-twilight-cell-b77ukd6x-ptaxbridge.compute.c-13.us-east-1.aws.neon.tech
@@ -26,11 +52,10 @@ jobs:
       NIVON_GCP_COST_REVIEWED: ${{ vars.NIVON_GCP_COST_REVIEWED }}
       NIVON_GCP_ENABLED: ${{ vars.NIVON_GCP_WRITE_APPROVED == 'true' && vars.NIVON_GCP_COST_REVIEWED == 'true' && vars.NIVON_GCP_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && vars.NIVON_PTAX_DIRECT_WRITER_APPROVED != 'true' && 'true' || 'false' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          ref: 31ce2bd7b83f1356efa15159a55e564125eb7b95
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.11'
       - name: Credencial GCP efemera somente depois dos gates

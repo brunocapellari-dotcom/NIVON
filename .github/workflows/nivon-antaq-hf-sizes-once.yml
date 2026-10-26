@@ -1,0 +1,69 @@
+name: NIVON - Conferir parquets ANTAQ terceiro somente metadados
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/nivon-antaq-hf-sizes-once.yml'
+      - 'src/nivon/antaq_hf_tamanho_arquivos.py'
+      - 'tests/test_antaq_hf_tamanho_arquivos.py'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/nivon-antaq-hf-sizes-once.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Testar verificador sem rede
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m unittest discover -s tests -p 'test_antaq_hf_tamanho_arquivos.py' -v
+  inspecionar:
+    needs: validar
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Instalar acesso público HF
+        run: python -m pip install --disable-pip-version-check --quiet 'huggingface_hub>=0.30,<2'
+      - name: Consultar apenas metadados dos dois arquivos da revisao fixa
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m nivon.antaq_hf_tamanho_arquivos \
+            --saida "$RUNNER_TEMP/hf-antaq-tamanhos-2025.json"
+      - name: Resumir limites de arquivo, sem importar dados
+        run: |
+          python - <<'PY'
+          import os,json
+          from pathlib import Path
+          j=json.loads((Path(os.environ["RUNNER_TEMP"])/"hf-antaq-tamanhos-2025.json").read_text(encoding='utf8'))
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a",encoding="utf8") as f:
+              f.write("### ANTAQ réplica 2025: limites de download\n\n")
+              f.write("| Arquivo | Bytes declarados | Aceito no parser |\n|---|---:|---|\n")
+              for r in j["arquivos"]:
+                  f.write(f"| {r['tipo']} | {r['bytes_informados']} | {r['tamanho_aprovado']} |\n")
+              f.write("\nSomente metadados de terceiro, sem download ou GCP.\n")
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: success()
+        with:
+          name: tamanho-antaq-hf-2025-${{ github.run_id }}
+          path: ${{ runner.temp }}/hf-antaq-tamanhos-2025.json
+          retention-days: 30

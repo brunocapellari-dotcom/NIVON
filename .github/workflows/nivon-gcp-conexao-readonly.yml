@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/nivon-gcp-conexao-readonly.yml'
+      - '.github/workflows/ativar-tabelas-nivon-gcp.yml'
       - 'scripts/inventario_gcp_readonly.py'
       - 'scripts/auditar_permissoes_gcp.py'
       - 'tests/test_auditoria_permissoes_gcp.py'
@@ -13,6 +14,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/nivon-gcp-conexao-readonly.yml'
+      - '.github/workflows/ativar-tabelas-nivon-gcp.yml'
       - 'scripts/inventario_gcp_readonly.py'
       - 'scripts/auditar_permissoes_gcp.py'
       - 'tests/test_auditoria_permissoes_gcp.py'
