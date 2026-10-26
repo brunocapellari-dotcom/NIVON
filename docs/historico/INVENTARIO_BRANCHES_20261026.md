@@ -30,23 +30,23 @@
 | `docs/antt-rodovia-rgi-2025-provas-custo-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente |2026-10-23T19:25:16Z — RECENTE |
 | `docs/catalogo-faostat-qcl-validado-20261021` | 20261021 | NÃO MESCLADA — 461 commit(s) à frente |2026-10-22T00:18:57Z — MAIS DE 3 DIAS |
 | `docs/evidencia-antt-gcp-operacional-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente |2026-10-23T16:09:58Z — MAIS DE 3 DIAS |
-| `docs/evidencias-smoke-fontes-20261021` | 20261021 | NÃO MESCLADA — 450 commit(s) à frente | PENDENTE — conferir commit |
-| `docs/homologacao-eurostat-faostat-20261021` | 20261021 | NÃO MESCLADA — 456 commit(s) à frente | PENDENTE — conferir commit |
-| `docs/homologacao-flood-ensemble-fpma-20261021` | 20261021 | NÃO MESCLADA — 453 commit(s) à frente | PENDENTE — conferir commit |
-| `docs/nivon-github-fontes-complementares-20261026` | 20261026 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `docs/trimodal-real-2025-consolidar-e-desarmar-push-20261025` | 20261025 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/agro-live-probe-temporario-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/agro-staging-replay-gcs-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/agrobr-comex-cftc-ledger-20261026` | 20261026 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/antaq-aquarela-nova-fonte-saude-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/antaq-hf-metadata-source-size-audit-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/antaq-hidrovia-derivada-2025-bq-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/antaq-hidrovia-produtos-20261023` | 20261023 | NÃO MESCLADA — 14 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/antaq-historico-qualidade-lineup-20261019` | 20261019 | NÃO MESCLADA — 231 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/antaq-monitor-disponibilidade-20261023` | 20261023 | NÃO MESCLADA — 6 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/antt-2025-readonly-gcp-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/antt-2026-primeira-carga-unica-gcp-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/antt-anuario-rgi-20261023` | 20261023 | NÃO MESCLADA — 15 commit(s) à frente | PENDENTE — conferir commit |
+| `docs/evidencias-smoke-fontes-20261021` | 20261021 | NÃO MESCLADA — 450 commit(s) à frente |2026-10-21T21:00:22Z — MAIS DE 3 DIAS |
+| `docs/homologacao-eurostat-faostat-20261021` | 20261021 | NÃO MESCLADA — 456 commit(s) à frente |2026-10-21T23:09:36Z — MAIS DE 3 DIAS |
+| `docs/homologacao-flood-ensemble-fpma-20261021` | 20261021 | NÃO MESCLADA — 453 commit(s) à frente |2026-10-21T21:24:42Z — MAIS DE 3 DIAS |
+| `docs/nivon-github-fontes-complementares-20261026` | 20261026 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-26T15:34:23Z — RECENTE |
+| `docs/trimodal-real-2025-consolidar-e-desarmar-push-20261025` | 20261025 | NÃO MESCLADA — 2 commit(s) à frente |2026-10-26T01:41:09Z — RECENTE |
+| `feat/agro-live-probe-temporario-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-26T01:23:24Z — RECENTE |
+| `feat/agro-staging-replay-gcs-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente |2026-10-23T19:07:42Z — RECENTE |
+| `feat/agrobr-comex-cftc-ledger-20261026` | 20261026 | NÃO MESCLADA — 5 commit(s) à frente |2026-10-26T15:12:48Z — RECENTE |
+| `feat/antaq-aquarela-nova-fonte-saude-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-26T01:26:46Z — RECENTE |
+| `feat/antaq-hf-metadata-source-size-audit-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-26T01:29:56Z — RECENTE |
+| `feat/antaq-hidrovia-derivada-2025-bq-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-26T01:10:35Z — RECENTE |
+| `feat/antaq-hidrovia-produtos-20261023` | 20261023 | NÃO MESCLADA — 14 commit(s) à frente |2026-10-23T11:50:49Z — MAIS DE 3 DIAS |
+| `feat/antaq-historico-qualidade-lineup-20261019` | 20261019 | NÃO MESCLADA — 231 commit(s) à frente |2026-10-20T02:34:36Z — MAIS DE 3 DIAS |
+| `feat/antaq-monitor-disponibilidade-20261023` | 20261023 | NÃO MESCLADA — 6 commit(s) à frente |2026-10-23T12:13:49Z — MAIS DE 3 DIAS |
+| `feat/antt-2025-readonly-gcp-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente |2026-10-23T17:51:29Z — RECENTE |
+| `feat/antt-2026-primeira-carga-unica-gcp-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-23T16:01:18Z — MAIS DE 3 DIAS |
+| `feat/antt-anuario-rgi-20261023` | 20261023 | NÃO MESCLADA — 15 commit(s) à frente |2026-10-23T11:22:44Z — MAIS DE 3 DIAS |
 | `feat/antt-auditoria-historico-bq-21anos-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/antt-backfill-2006-2021-cargas-limitadas-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/antt-backfill-2022-2025-gcp-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
