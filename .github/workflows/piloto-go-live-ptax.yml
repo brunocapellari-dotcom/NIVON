@@ -57,6 +57,10 @@ jobs:
         env:
           PYTHONPATH: src
         run: python -m unittest discover -s tests -p 'test_painel_local_mvp.py' -v
+      - name: Validar política do disparo manual e proteção de metadados
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -p 'test_piloto_ptax_workflow_policy.py' -v
       - name: GET oficial BCB e normalizacao real, sem publicar precos
         env:
           PYTHONPATH: src
