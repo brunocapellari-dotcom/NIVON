@@ -1,0 +1,9 @@
+FROM python:3.11-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 NIVON_TERMINAL_PRIVATE=true PORT=8080
+WORKDIR /app
+COPY pyproject.toml ./
+COPY src ./src
+RUN python -m pip install --no-cache-dir '.[gcp]'
+USER 65532:65532
+EXPOSE 8080
+CMD ["python","-m","nivon.terminal_web"]
