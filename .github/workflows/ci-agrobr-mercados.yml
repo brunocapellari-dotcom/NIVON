@@ -1,0 +1,45 @@
+name: CI Agrobr Mercados (offline)
+on:
+  push:
+    paths:
+      - "src/nivon/agrobr_mercados.py"
+      - "tests/test_agrobr_mercados.py"
+      - ".github/workflows/ci-agrobr-mercados.yml"
+  pull_request:
+    paths:
+      - "src/nivon/agrobr_mercados.py"
+      - "tests/test_agrobr_mercados.py"
+      - ".github/workflows/ci-agrobr-mercados.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mercados:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Instalar extra já definido no NIVON
+        run: python -m pip install -e '.[agro]' pytest
+      - name: Verificar contratos públicos reais do agrobr
+        run: |
+          python - <<'PY'
+          import inspect
+          import agrobr
+          from agrobr import datasets
+          assert agrobr.__version__.startswith("2."), agrobr.__version__
+          for name in ("exportacao", "importacao", "posicionamento_fundos"):
+              method = getattr(datasets, name)
+              params = inspect.signature(method).parameters
+              assert "return_meta" in params, name
+          assert "ano" in inspect.signature(datasets.exportacao).parameters
+          assert "inicio" in inspect.signature(datasets.posicionamento_fundos).parameters
+          print("API agrobr v2 verificada, sem rede com fontes de dados")
+          PY
+      - name: Testes ponta a ponta com fixtures sintéticas
+        run: python -m pytest -q tests/test_agrobr_mercados.py
