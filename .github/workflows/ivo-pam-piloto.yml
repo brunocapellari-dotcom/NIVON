@@ -248,5 +248,10 @@ jobs:
             ${{ runner.temp }}/nivon-pam/ciclo/auditoria.json
             ${{ runner.temp }}/nivon-pam/ciclo/alertas_pam.json
             ${{ runner.temp }}/nivon-pam/ciclo/entrega_ivo_pam.json
+            ${{ runner.temp }}/nivon-pam/ciclo/relatorio_pam.html
+            ${{ runner.temp }}/nivon-pam/ciclo/relatorio_pam.md
+            ${{ runner.temp }}/nivon-pam/ciclo/relatorio_pam_metadados.json
+            ${{ runner.temp }}/nivon-pam/ciclo/alertas_pam.json
+            ${{ runner.temp }}/nivon-pam/ciclo/entrega_ivo_pam.json
           retention-days: 30
           if-no-files-found: error
