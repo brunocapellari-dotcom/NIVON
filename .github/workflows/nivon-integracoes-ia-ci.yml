@@ -33,7 +33,9 @@ jobs:
       - name: Testar contratos sem rede, credenciais ou servicos pagos
         env:
           PYTHONPATH: src
-        run: |\n          python -m unittest discover -s tests -p 'test_integracoes_ia.py' -v\n          python -m unittest discover -s tests -p 'test_integracoes_ia_pilotos.py' -v
+        run: |
+          python -m unittest discover -s tests -p 'test_integracoes_ia.py' -v
+          python -m unittest discover -s tests -p 'test_integracoes_ia_pilotos.py' -v
       - name: Verificar sintaxe offline das integrações
         run: |
           python -m compileall -q src/nivon/integracoes_ia
