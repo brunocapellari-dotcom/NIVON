@@ -70,7 +70,8 @@ def executar_bootstrap(*, projeto, dataset, bucket, alvo="ambas",
     for nome in escolhidas:
         estado=tabela_por_nome[nome]
         if estado.get("existe") and (estado.get("schema_conforme") is not True
-                                   or estado.get("particao_conforme") is not True):
+                                   or estado.get("particao_conforme") is not True
+                                   or estado.get("cluster_conforme") is not True):
             raise ErroBootstrap(f"tabela {nome} existente mas incompatível; não modificar")
     resposta={
         "projeto":projeto,"dataset":dataset,"bucket":bucket,
@@ -88,9 +89,13 @@ def executar_bootstrap(*, projeto, dataset, bucket, alvo="ambas",
     if ausentes:
         raise PermissionError("bootstrap bloqueado; aprovações ausentes: "+", ".join(ausentes))
     if "nivon_observacoes" in escolhidas:
-        canonico(projeto=projeto,dataset=dataset,bucket=bucket,
-                 criar_tabela=not tabela_por_nome["nivon_observacoes"]["existe"])
+        confirmado=canonico(projeto=projeto,dataset=dataset,bucket=bucket,
+                            criar_tabela=not tabela_por_nome["nivon_observacoes"]["existe"])
+        if not isinstance(confirmado,dict) or confirmado.get("tabela_validada") is not True:
+            raise ErroBootstrap("bootstrap canônico não confirmou schema")
         if not tabela_por_nome["nivon_observacoes"]["existe"]:
+            if confirmado.get("tabela_criada") is not True:
+                raise ErroBootstrap("bootstrap canônico não confirmou criação")
             resposta["criou_tabelas"].append("nivon_observacoes")
     if "agro_publicacoes_staging" in escolhidas:
         staging=agro(projeto=projeto,dataset=dataset,verificar=True,
@@ -109,6 +114,7 @@ def executar_bootstrap(*, projeto, dataset, bucket, alvo="ambas",
     if not all(estado_final.get(n,{}).get("existe") is True
                and estado_final[n].get("schema_conforme") is True
                and estado_final[n].get("particao_conforme") is True
+               and estado_final[n].get("cluster_conforme") is True
                for n in escolhidas):
         raise ErroBootstrap("leitura após bootstrap não confirmou as tabelas")
     resposta["executou_escrita"]=bool(resposta["criou_tabelas"])
