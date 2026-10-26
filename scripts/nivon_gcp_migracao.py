@@ -7,7 +7,7 @@ Dados CEPEA/IMEA nao sao declarados precos atuais. Nao altera o Neon.
 from __future__ import annotations
 
 import argparse
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timezone, timedelta
 from decimal import Decimal
 import hashlib
 import json
@@ -304,10 +304,12 @@ def carregar_bigquery(arquivo:Path)->dict:
     sql=f"""MERGE `{TARGET}` T USING `{stage}` S
     ON T.id_registro=S.id_registro AND T.data_particao=S.data_particao
        AND T.data_particao BETWEEN @start AND @end
-    WHEN MATCHED AND T.payload_sha256!=S.payload_sha256 THEN UPDATE SET
-      payload_sha256=S.payload_sha256,payload_json=S.payload_json,
-      data_coleta=S.data_coleta,status_qualidade=S.status_qualidade
     WHEN NOT MATCHED THEN INSERT ({fields}) VALUES ({cols})"""
+    conflitos=f"""SELECT COUNT(*) AS conflito FROM `{stage}` S
+      JOIN `{TARGET}` T ON T.id_registro=S.id_registro
+      AND T.data_particao=S.data_particao
+      AND T.data_particao BETWEEN @start AND @end
+      WHERE T.payload_sha256 != S.payload_sha256"""
     check=f"""SELECT COUNT(*) AS failed FROM `{stage}` S
       LEFT JOIN `{TARGET}` T ON T.id_registro=S.id_registro
       AND T.data_particao=S.data_particao AND T.data_particao BETWEEN @start AND @end
@@ -320,8 +322,14 @@ def carregar_bigquery(arquivo:Path)->dict:
     try:
         with arquivo.open("rb") as handle:
             client.load_table_from_file(handle,stage,job_config=cfg).result(timeout=180)
-        for statement in (sql,check,duplicate):
+        tabela_tmp=client.get_table(stage)
+        tabela_tmp.expires=datetime.now(timezone.utc)+timedelta(hours=6)
+        client.update_table(tabela_tmp,["expires"])
+        for statement in (sql,conflitos,check,duplicate):
             client.query(statement,job_config=qconf(True))
+        divergencias=list(client.query(conflitos,job_config=qconf(False)).result(timeout=180))
+        if len(divergencias)!=1 or int(divergencias[0]["conflito"])!=0:
+            raise MigracaoBloqueada("CONFLITO_VINTAGE_ORIGEM: lote bloqueado antes do MERGE")
         client.query(sql,job_config=qconf(False)).result(timeout=180)
         invalid=list(client.query(check,job_config=qconf(False)).result(timeout=180))
         dupes=list(client.query(duplicate,job_config=qconf(False)).result(timeout=180))

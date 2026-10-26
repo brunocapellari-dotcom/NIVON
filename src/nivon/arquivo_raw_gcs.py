@@ -11,6 +11,7 @@ import hashlib
 import json
 import re
 import sqlite3
+import tempfile
 from pathlib import Path
 
 BUCKET = re.compile(r"^[a-z0-9][a-z0-9._-]{1,61}[a-z0-9]$")
@@ -119,6 +120,17 @@ def arquivar_gcs(*, banco, raw_dir, bucket, executar=False, client=None,
     recipiente = client.bucket(bucket)
     novos = 0
     ja_existiam = 0
+    def verificar_bytes(blob_existente, item):
+        # Comparar o SHA dos bytes remotos, nunca apenas metadados.
+        with tempfile.TemporaryDirectory() as tmp:
+            caminho = Path(tmp) / "raw-verificado"
+            try:
+                blob_existente.download_to_filename(str(caminho))
+            except Exception as exc:
+                raise ErroArquivoCloud("falha na leitura de RAW GCS") from exc
+            if (caminho.stat().st_size != item["bytes"]
+                    or hashlib.sha256(caminho.read_bytes()).hexdigest() != item["sha256"]):
+                raise ErroArquivoCloud("RAW remoto corrompido ou divergente do SHA")
     for item in manifest["objetos"]:
         blob = recipiente.blob(item["objeto"])
         esperado = {"sha256":item["sha256"],"snapshot_id":item["snapshot_id"],
@@ -130,6 +142,7 @@ def arquivar_gcs(*, banco, raw_dir, bucket, executar=False, client=None,
                     existe.metadata.get("sha256") != item["sha256"] or
                     existe.metadata.get("snapshot_id") != item["snapshot_id"]):
                 raise ErroArquivoCloud("objeto existente diverge do SHA/tamanho")
+            verificar_bytes(existe, item)
             ja_existiam += 1
             continue
         blob.metadata = esperado
@@ -137,6 +150,10 @@ def arquivar_gcs(*, banco, raw_dir, bucket, executar=False, client=None,
             blob.upload_from_filename(item["arquivo_local"],
                 content_type=item["content_type"], if_generation_match=0,
                 checksum="crc32c", timeout=90)
+            confirmado = recipiente.get_blob(item["objeto"])
+            if confirmado is None:
+                raise ErroArquivoCloud("RAW enviado nao encontrado para verificacao")
+            verificar_bytes(confirmado, item)
             novos += 1
         except Exception as exc:
             # Uma corrida de uploads simultâneos deve continuar fail-closed,

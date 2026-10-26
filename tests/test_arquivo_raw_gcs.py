@@ -23,8 +23,11 @@ class Blob:
 
 class Stored:
     def __init__(self,raw,metadata):
+        self.raw=raw
         self.size=len(raw)
         self.metadata=metadata
+    def download_to_filename(self,path):
+        Path(path).write_bytes(self.raw)
 
 
 class Bucket:
@@ -76,6 +79,17 @@ class ArquivoRawTest(unittest.TestCase):
         self.assertEqual(len(client.value.existing),1)
         self.assertTrue(a["executado"])
         self.assertFalse(a["bigquery_executado"])
+
+    def test_mesmo_tamanho_e_metadata_nao_mascaram_corrupcao(self):
+        client=Client()
+        arquivar_gcs(banco=self.db,raw_dir=self.raw,bucket="nivon-raw-archive",
+                     client=client,executar=True)
+        key=next(iter(client.value.existing))
+        original,metadata=client.value.existing[key]
+        client.value.existing[key]=(b"X"*len(original),metadata)
+        with self.assertRaisesRegex(ErroArquivoCloud,"corrompido"):
+            arquivar_gcs(banco=self.db,raw_dir=self.raw,bucket="nivon-raw-archive",
+                         client=client,executar=True)
 
     def test_rejeitar_fraude_e_tampering(self):
         client=Client()

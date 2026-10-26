@@ -113,6 +113,15 @@ def _conferir_objeto(bucket_obj, name, sha, tamanho):
             or not isinstance(objeto.metadata, dict)
             or objeto.metadata.get("sha256") != sha):
         raise ErroLoteCloud("objeto GCS ausente ou metadados/hash divergentes")
+    # Metadados do uploader nao bastam; conferir bytes efetivos.
+    with tempfile.TemporaryDirectory() as tmp:
+        local = Path(tmp) / "objeto-verificado"
+        try:
+            objeto.download_to_filename(str(local))
+        except Exception as exc:
+            raise ErroLoteCloud("nao foi possivel ler bytes do GCS") from exc
+        if local.stat().st_size != tamanho or _sha(local) != sha:
+            raise ErroLoteCloud("conteudo GCS diverge do SHA do manifesto")
     return objeto
 
 

@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS `${PROJECT_ID}.${DATASET_ID}.nivon_observacoes` (
 PARTITION BY data_referencia
 CLUSTER BY dataset_id, identidade, fingerprint
 OPTIONS (
+  require_partition_filter=true,
   description='NIVON: observacoes informadas/observadas versionadas por fingerprint e SHA RAW; sem promocao editorial automatica'
 );
 

@@ -126,6 +126,14 @@ class VerifyCloudTest(unittest.TestCase):
         with self.assertRaises(ErroVerificacaoCloud):
             self.call(rows=self.rows[:1])
 
+    def test_corrupcao_no_segundo_raw_tambem_bloqueia(self):
+        corrupted=dict(self.blobs)
+        key=sorted(corrupted)[1]
+        original=corrupted[key]
+        corrupted[key]=FakeObject(original.raw,original.metadata,alterar=True)
+        with self.assertRaisesRegex(ErroVerificacaoCloud,"conteudo RAW"):
+            self.call(blobs=corrupted)
+
     def test_gcs_inexistente_ou_alterado_reprova(self):
         with self.assertRaises(ErroVerificacaoCloud):
             self.call(blobs={})

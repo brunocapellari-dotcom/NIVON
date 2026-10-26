@@ -9,7 +9,7 @@ const jwks=createRemoteJWKSet(new URL('https://token.actions.githubusercontent.c
 const REPO='brunocapellari-dotcom/NIVON';
 const AUDIENCE='urn:nivon:ptax:export:v1';
 const WORKFLOW='.github/workflows/ptax-neon-private-export.yml';
-const ALLOWED=new Set(['refs/heads/plan/gcp-data-platform-20261021','refs/heads/main']);
+const ALLOWED=new Set(['refs/heads/main']);
 const MAX_LIMIT=150, MAX_ID=Number.MAX_SAFE_INTEGER;
 
 function json(body,status=200){
@@ -36,7 +36,7 @@ async function authorize(req){
   });
   if(payload.repository!==REPO || !ALLOWED.has(payload.ref) ||
     payload.workflow_ref!==REPO+'/'+WORKFLOW+'@'+payload.ref ||
-    !['push','workflow_dispatch'].includes(payload.event_name)){
+    !['schedule','workflow_dispatch'].includes(payload.event_name)){
     throw new Error('WORKFLOW_NOT_AUTHORIZED');
   }
 }

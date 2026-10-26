@@ -54,7 +54,7 @@ def verificar_publicacao(*, banco, raw_dir, bucket, arquivo_jsonl,
                         project_id, dataset_id, executar=False,
                         client_storage=None, client_bq=None,
                         max_bytes_billed=100_000_000):
-    """Verifica todos os metadados RAW, conteúdo de 1 snapshot e BQ samples.
+    """Verifica todos os RAWs por bytes SHA-256 e amostras BigQuery.
 
     Leitura sem alterações no destino; toda inconsistência encerra com erro.
     """
@@ -82,15 +82,16 @@ def verificar_publicacao(*, banco, raw_dir, bucket, arquivo_jsonl,
             remote.metadata.get("sha256")!=item["sha256"] or
             remote.metadata.get("snapshot_id")!=item["snapshot_id"]):
             raise ErroVerificacaoCloud("RAW nao encontrado/identidade invalida no GCS")
-    # Confrontar bytes de pelo menos 1 arquivo bruto, além de metadados.
-    primeiro=manifesto["objetos"][0]
-    blob=recipiente.get_blob(primeiro["objeto"])
-    try:
-        bruto=blob.download_as_bytes(timeout=90)
-    except Exception as exc:
-        raise ErroVerificacaoCloud("impossivel verificar bytes GCS") from exc
-    if not isinstance(bruto,bytes) or hashlib.sha256(bruto).hexdigest()!=primeiro["sha256"]:
-        raise ErroVerificacaoCloud("conteudo RAW do GCS difere do SHA original")
+    # Auditoria integral: adulteracao no segundo objeto tambem bloqueia o lote.
+    for item in manifesto["objetos"]:
+        blob=recipiente.get_blob(item["objeto"])
+        try:
+            bruto=blob.download_as_bytes(timeout=90)
+        except Exception as exc:
+            raise ErroVerificacaoCloud("impossivel verificar bytes GCS") from exc
+        if (not isinstance(bruto,bytes) or len(bruto)!=item["bytes"]
+                or hashlib.sha256(bruto).hexdigest()!=item["sha256"]):
+            raise ErroVerificacaoCloud("conteudo RAW do GCS difere do SHA original")
 
     # Uma query parametrizada, data_referencia é coluna de partição (preflight).
     # Por segurança, limita a 30 fingerprints e 15 datasets por job.
@@ -127,7 +128,8 @@ def verificar_publicacao(*, banco, raw_dir, bucket, arquivo_jsonl,
             f"BigQuery sem todas as amostras: presentes={len(esperados & vistos)}/{len(esperados)}"
         )
     return {**plan,"executado":True,"objetos_gcs_confirmados":manifesto["quantidade"],
-            "raw_byte_sha_validado":primeiro["sha256"],
+            "raw_byte_sha_validado": True,
+            "raw_sha256_conferidos": manifesto["quantidade"],
             "amostras_bigquery_confirmadas":len(esperados),
             "publicacao_operacional":"ARQUIVAMENTO_E_CONSULTA_CONFIRMADOS",
             "dados_publicados_externamente":False}
