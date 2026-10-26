@@ -1,0 +1,101 @@
+name: NIVON - Coleta oficial CONAB agora
+
+# Apenas uma captura, sem agendamento, banco pago, GCS, BigQuery ou servicos.
+# A execucao publica nao armazena XLSX bruto; disponibiliza CSV derivado
+# e manifesto de origem em artifact por 7 dias, conforme origem oficial.
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/conab-coleta-real-pontual.yml
+
+permissions:
+  contents: read
+
+jobs:
+  coletar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Preparar diretorio privado e executar coleta CONAB real
+        env:
+          PYTHONPATH: src
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -m 700 "$RUNNER_TEMP/conab_coleta"
+          mkdir -m 700 "$RUNNER_TEMP/conab_coleta/raw"
+          python -m nivon.conab_incremental \
+            --banco "$RUNNER_TEMP/conab_coleta/base.sqlite" \
+            --pasta-raw "$RUNNER_TEMP/conab_coleta/raw" \
+            --quantidade 4 --executar \
+            --direitos-consulta --direitos-coleta --direitos-armazenamento \
+            > "$RUNNER_TEMP/conab_coleta/resultado_lote.json"
+      - name: Gerar arquivo de indicadores e manifesto de proveniencia
+        env:
+          PYTHONPATH: src
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import csv,json,os,sqlite3,hashlib
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])/"conab_coleta"
+          out=root/"entrega"
+          out.mkdir(mode=0o700)
+          conn=sqlite3.connect("file:"+str((root/"base.sqlite").resolve())+"?mode=ro",uri=True)
+          conn.row_factory=sqlite3.Row
+          rows=conn.execute("""SELECT e.id_edicao,e.sha256_raw,e.pagina_url,e.url_anexo,
+                         e.publicacao_data,e.competencia,e.coletado_utc,
+                         o.registro_json
+                         FROM conab_real_edicoes_quarentena e
+                         JOIN conab_real_observacoes_quarentena o
+                         ON e.id_edicao=o.id_edicao AND e.sha256_raw=o.sha256_raw
+                         ORDER BY e.competencia,e.id_edicao,o.chave_semantica""").fetchall()
+          editions=[dict(x) for x in conn.execute(
+             "SELECT id_edicao,sha256_raw,publicacao_data,competencia,quantidade_observacoes "
+             "FROM conab_real_edicoes_quarentena ORDER BY competencia")]
+          conn.close()
+          campos=["edicao","sha256_raw","pagina_oficial","url_xlsx","publicacao",
+                  "competencia","coletado_utc","operacao","cultura","safra","uf",
+                  "pct_semana_atual","pct_semana_anterior","pct_ano_anterior","pct_media_5_anos"]
+          with (out/"conab_progresso_real.csv").open("w",encoding="utf-8",newline="") as fp:
+              writer=csv.DictWriter(fp,fieldnames=campos)
+              writer.writeheader()
+              for r in rows:
+                  obs=json.loads(r["registro_json"])
+                  writer.writerow({
+                    "edicao":r["id_edicao"],"sha256_raw":r["sha256_raw"],
+                    "pagina_oficial":r["pagina_url"],"url_xlsx":r["url_anexo"],
+                    "publicacao":r["publicacao_data"],"competencia":r["competencia"],
+                    "coletado_utc":r["coletado_utc"],
+                    **{k:obs.get(k) for k in campos[7:]}})
+          blob=(out/"conab_progresso_real.csv").read_bytes()
+          manifest={"fonte":"CONAB","natureza":"DADO_OFICIAL_CAPTURADO_REVISADO_NAO_HOMOLOGADO_PARA_PUBLICACAO",
+                    "periodos":editions,"observacoes":len(rows),
+                    "arquivo":"conab_progresso_real.csv",
+                    "sha256_csv":hashlib.sha256(blob).hexdigest(),
+                    "google_cloud_gravado":False,
+                    "licenca_distribuicao_revisar":True}
+          (out/"manifesto.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2))
+          print("CONAB_COLETA_REAL_OK",json.dumps(manifest,ensure_ascii=False))
+          assert rows and all(len(x["sha256_raw"])==64 for x in editions)
+          PY
+      - name: Disponibilizar extrato derivado do dado oficial (sem XLSX bruto)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nivon-conab-progresso-oficial-20261025
+          path: ${{ runner.temp }}/conab_coleta/entrega/
+          retention-days: 7
+          if-no-files-found: error
+      - name: Apagar banco e arquivos locais temporarios
+        if: always()
+        shell: bash
+        run: rm -rf "$RUNNER_TEMP/conab_coleta"

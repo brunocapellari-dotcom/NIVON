@@ -7,6 +7,8 @@ on:
       - 'src/nivon/aceite_golive_terminal.py'
       - 'tests/test_aceite_golive_terminal.py'
       - 'tests/test_diagnostico_terminal_cloudrun.py'
+      - 'src/nivon/terminal_snapshot_gcs.py'
+      - 'tests/test_terminal_snapshot_gcs.py'
       - 'tests/test_terminal_web.py'
       - 'tests/test_terminal_go_live_policy.py'
       - 'infra/google_cloud/Dockerfile.terminal'
@@ -19,6 +21,8 @@ on:
       - 'src/nivon/terminal_web.py'
       - 'src/nivon/aceite_golive_terminal.py'
       - 'tests/test_aceite_golive_terminal.py'
+      - 'src/nivon/terminal_snapshot_gcs.py'
+      - 'tests/test_terminal_snapshot_gcs.py'
       - 'tests/test_terminal_web.py'
       - 'tests/test_terminal_go_live_policy.py'
       - 'infra/google_cloud/Dockerfile.terminal'
@@ -36,7 +40,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: nivon-terminal-deploy-controlado
+  group: nivon-terminal-deploy-controlado-${{ github.event_name == 'pull_request' && github.event.pull_request.number || 'main' }}
   cancel-in-progress: false
 
 jobs:
@@ -57,6 +61,7 @@ jobs:
           bash -n scripts/deploy_terminal_privado.sh
           python -m compileall -q src/nivon/terminal_web.py
           python -m unittest discover -s tests -p 'test_terminal_web.py' -v
+          python -m unittest discover -s tests -p 'test_terminal_snapshot_gcs.py' -v
           python -m unittest discover -s tests -p 'test_terminal_go_live_policy.py' -v
           python -m unittest discover -s tests -p 'test_diagnostico_terminal_cloudrun.py' -v
           python -m unittest discover -s tests -p 'test_aceite_golive_terminal.py' -v
@@ -120,7 +125,7 @@ jobs:
         run: python -m pip install --disable-pip-version-check -e '.[gcp]'
       - name: Build e deploy somente com recursos existentes e IAM privado
         run: bash scripts/deploy_terminal_privado.sh
-      - name: Homologar autenticacao e resposta real do terminal privado
+      - name: Homologar autenticacao e painel privado real no Cloud Run
         shell: bash
         run: |
           set -euo pipefail

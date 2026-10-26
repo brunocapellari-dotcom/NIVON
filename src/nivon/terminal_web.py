@@ -9,12 +9,14 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from importlib.resources import files
 import json
 import os
 from threading import Lock
 import time
 from urllib.parse import urlsplit
 
+from .terminal_snapshot_gcs import EstadoSnapshot
 from .antt_bigquery import DestinoBQ
 from .transporte_multimodal import ErroTransporte
 
@@ -64,6 +66,7 @@ header{flex-wrap:wrap}.year{font-size:9px}.bar-col{gap:4px}}
 </style></head><body>
 <header><div class="logo">NIVON</div><span>Inteligência agroindustrial e logística</span></header>
 <main>
+<p><a href="/portal" style="color:#e6b963">Painel integrado: ferrovia, programação marítima e PortWatch ↗</a></p>
 <div class="eyebrow">TERMINAL PRIVADO · PRÉVIA OPERACIONAL</div>
 <h1>Ferrovia brasileira, em números.</h1>
 <p>Movimentação por origem–destino registrada na ANTT/SIADE, lida diretamente do BigQuery.
@@ -246,8 +249,9 @@ class TerminalState:
             return self.dados
 
 
-def servidor(state=None):
+def servidor(state=None, snapshot=None):
     estado=state or TerminalState()
+    dados_integrados=snapshot or EstadoSnapshot()
 
     class Handler(BaseHTTPRequestHandler):
         def responder(self, status:int, corpo:bytes, content_type:str):
@@ -259,8 +263,8 @@ def servidor(state=None):
             self.send_header("X-Frame-Options","DENY")
             self.send_header("Referrer-Policy","no-referrer")
             self.send_header("Content-Security-Policy",
-                "default-src 'none'; script-src 'unsafe-inline'; "
-                "style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; "
+                "default-src 'none'; script-src 'self' 'unsafe-inline'; "
+                "style-src 'self' 'unsafe-inline'; connect-src 'self'; base-uri 'none'; "
                 "frame-ancestors 'none'")
             self.end_headers()
             self.wfile.write(corpo)
@@ -272,6 +276,30 @@ def servidor(state=None):
                 return
             if path in ("/", "/index.html"):
                 self.responder(200,HTML.encode("utf-8"),"text/html; charset=utf-8")
+                return
+            if path in ("/portal", "/portal/"):
+                html=files("nivon").joinpath("portal_static","index.html").read_bytes()
+                self.responder(200,html,"text/html; charset=utf-8")
+                return
+            if path in ("/assets/portal.css", "/assets/portal.js"):
+                asset=path.rsplit("/",1)[-1]
+                doc=files("nivon").joinpath("portal_static",asset).read_bytes()
+                mime="text/css; charset=utf-8" if asset.endswith(".css") else "text/javascript; charset=utf-8"
+                self.responder(200,doc,mime)
+                return
+            if path in ("/api/v1/painel", "/readyz"):
+                try:
+                    snapshot_real=dados_integrados.obter()
+                except Exception:
+                    self.responder(503,b'{"status":"SNAPSHOT_REAL_INDISPONIVEL"}',
+                                   "application/json; charset=utf-8")
+                    return
+                if path == "/readyz":
+                    self.responder(200,b'{"status":"PAINEL_PRIVADO_COM_DADOS_REAIS"}',
+                                   "application/json; charset=utf-8")
+                    return
+                body=json.dumps(snapshot_real,ensure_ascii=False).encode("utf-8")
+                self.responder(200,body,"application/json; charset=utf-8")
                 return
             if path=="/api/v1/ferrovia":
                 try:
