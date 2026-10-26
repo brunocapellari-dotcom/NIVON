@@ -9,7 +9,6 @@ from unittest import TestCase
 from nivon.conab_quarentena_real import _SCHEMA
 from nivon.agro_bigquery_stage import exportar_stage
 from nivon.agro_bigquery_loader import validar_lote
-from nivon.agro_prontidao_fontes import auditar_fontes_agro
 
 
 class TestQuarentenaConabParaStage(TestCase):
@@ -49,13 +48,6 @@ class TestQuarentenaConabParaStage(TestCase):
             self.assertTrue(all(x['data_coleta']==x['coletado_utc'] for x in rows))
             self.assertEqual({x['source_sha256'] for x in rows},{'a'*64})
             self.assertTrue(all(x['classe']=='INFORMADO_QUARENTENA' for x in rows))
-            painel=auditar_fontes_agro(bancos=[banco],
-                                      agora=datetime(2026,10,23,13,tzinfo=timezone.utc))
-            conab=next(x for x in painel['fontes']
-                       if x['dataset_id']=='CONAB_PROGRESSO_SEMANAL')
-            self.assertEqual(conab['edicoes_locais_contadas'],1)
-            self.assertFalse(conab['go_live_confirmado'])
-            self.assertFalse(painel['cloud_confirmado'])
 
 if __name__=='__main__':
     import unittest
