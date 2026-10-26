@@ -1,4 +1,4 @@
-name: NIVON - Primeira Edicao Operacional Interna
+name: NIVON - Painel Operacional Interno Diario
 
 on:
   pull_request:
@@ -54,7 +54,7 @@ jobs:
       (github.event_name == 'push' ||
       (github.event_name == 'workflow_dispatch' && inputs.publicar == true) ||
       (github.event_name == 'schedule' &&
-       vars.NIVON_PAINEL_INTERNO_AGENDADO == 'true'))
+       vars.NIVON_PAINEL_INTERNO_AGENDADO != 'false'))
     runs-on: ubuntu-latest
     timeout-minutes: 12
     permissions:
