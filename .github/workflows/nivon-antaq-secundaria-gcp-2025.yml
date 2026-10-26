@@ -46,6 +46,49 @@ jobs:
           python -m unittest discover -s tests -p 'test_antaq_replica_detalhe.py' -v
           python -m unittest discover -s tests -p 'test_antaq_secundaria_workflow_policy.py' -v
 
+  validar-replica-real-sem-gcp:
+    needs: testar-contrato
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    permissions:
+      contents: read
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Instalar leitor local sem SDK Google Cloud
+        run: python -m pip install --disable-pip-version-check --quiet 'duckdb>=1.2,<2' 'huggingface_hub>=0.30,<2'
+      - name: Validar Parquets 2025 por revisao fixada, sem gravar na nuvem
+        run: |
+          python - <<'PY'
+          from tempfile import TemporaryDirectory
+          from datetime import datetime,timezone
+          import json
+          from nivon.antaq_secundaria_gcp_2025 import baixar_revisao_fixada,preparar_lote
+          with TemporaryDirectory(prefix='nivon-antaq-readonly-') as tmp:
+              arquivos=baixar_revisao_fixada(tmp)
+              rows,plano=preparar_lote(
+                  arquivos['hidrovia'],arquivos['carga'],
+                  collected_at=datetime.now(timezone.utc))
+              assert plano['estado']=='REPLICA_ANTAQ_2025_APENAS_CAMADA_SECUNDARIA'
+              assert not plano['fonte_direta_antaq']
+              print('ANTAQ_SECUNDARIA_2025_VALIDADA_READONLY',json.dumps({
+                  'hf_commit':plano['hf_revision'],
+                  'grupos':len(rows),
+                  'sha_hidrovia':plano['sha256_hidrovia'],
+                  'sha_carga':plano['sha256_carga'],
+                  'ton_unicas_interior':plano['toneladas_navegacao_interior_idcarga_unica'],
+                  'dados_primarios':False,
+                  'gravacoes_cloud':False,
+              },ensure_ascii=False))
+          PY
+
   publicar-somente-terceiro:
     needs: testar-contrato
     if: >-
@@ -54,6 +97,7 @@ jobs:
       inputs.aceitar_fonte_secundaria == true &&
       vars.NIVON_ANTAQ_REPLICA_WRITE_APPROVED == 'true' &&
       vars.NIVON_GCP_COST_REVIEWED == 'true' &&
+      vars.NIVON_ANTAQ_REPLICA_BOOTSTRAP_APPROVED == 'true' &&
       vars.NIVON_GCP_PROVIDER != '' &&
       vars.NIVON_GCP_SERVICE_ACCOUNT != ''
     runs-on: ubuntu-latest
@@ -95,7 +139,7 @@ jobs:
       - name: Obter parquets de revisao FIXA e gravar so tabela separada
         run: |
           python -m nivon.antaq_secundaria_gcp_2025 \
-            --live --aceitar-fonte-terceira \
+            --live --aceitar-fonte-terceira --permitir-criar-tabela \
             --saida "$RUNNER_TEMP/antaq-terceiro-2025-prova.json"
       - name: Registrar auditoria da origem e lacuna oficial
         run: |
