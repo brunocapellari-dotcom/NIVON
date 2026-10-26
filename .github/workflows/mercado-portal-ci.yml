@@ -1,0 +1,44 @@
+name: NIVON - Mercado BCB no portal existente
+on:
+  pull_request:
+    paths:
+      - 'api/mercado.js'
+      - 'public/index.html'
+      - 'public/assets/mercado.js'
+      - 'public/assets/nivon.css'
+      - 'vercel.json'
+      - 'tests_web/mercado_portal.test.cjs'
+      - '.github/workflows/mercado-portal-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mercado-portal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Testes funcionais Node nativo
+        run: |
+          node --version
+          node --test tests_web/mercado_portal.test.cjs
+      - name: Verificar fonte oficial em HTTPS (sem gravar dados)
+        continue-on-error: true
+        run: |
+          node - <<'JS'
+          (async()=>{
+            const api=require("./api/mercado.js");
+            const d=await api.collect();
+            console.log(JSON.stringify({
+              status:d.status,
+              fonte:"BCB_SGS_1_11",
+              referencias:Object.fromEntries(Object.entries(d.series).map(([key,v])=>[
+                key,{estado:v.status,referencia:v.referencia,idade_dias:v.idade_dias??null}
+              ])),
+              nuvem_google_atualizada:false
+            }));
+            if(d.status==="INDISPONIVEL")process.exitCode=2;
+          })().catch(err=>{console.error("BCB_SMOKE_FALHOU",err.name);process.exitCode=2});
+          JS
