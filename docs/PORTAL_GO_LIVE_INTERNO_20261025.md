@@ -31,3 +31,11 @@ Esta entrega cria servidor WSGI sem dependências extras, interface responsiva e
 
 Workflow portal-interno-ci.yml testa contrato, snapshot atomico, UI servida no pacote, headers e bloqueios usando somente fixtures sintéticas.
 CI não comprova autenticação real, permissão de licença, aplicação no Cloud Run ou disponibilidade pública.
+
+## Renovação Google Cloud preparada (desativada por padrão)
+
+O script scripts/atualizar_snapshot_portal_gcp.py executa uma única leitura de três recortes BigQuery existentes (ANTT/SIADE MT, Imbituba, passagem Panamá), cria o snapshot em memória e escreve no objeto privado do bucket existente com condicionamento de geração, CRC32C e readback SHA-256.
+
+O workflow .github/workflows/portal-interno-gcp.yml usa WIF sem chaves persistentes. Não roda em PR: precisa estar em main e ter aprovações específicas de leitura, escrita, bucket privado e custos. A execução programada ainda exige NIVON_PORTAL_E2E_VERIFIED=true; enquanto esse gate estiver ausente, a agenda permanece bloqueada. Não cria Cloud Run, não libera acesso anônimo e não registra valores privados em artefatos do GitHub.
+
+A criação do snapshot no Cloud Storage não coloca o serviço web em funcionamento: falta uma implantação privada autenticada e a política de leitura da interface a partir do bucket.

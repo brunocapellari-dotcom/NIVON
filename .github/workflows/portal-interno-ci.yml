@@ -6,6 +6,9 @@ on:
       - 'src/nivon/portal_static/**'
       - 'scripts/gerar_painel_interno.py'
       - 'tests/test_portal_interno.py'
+      - 'tests/test_portal_interno_cloud_policy.py'
+      - 'scripts/atualizar_snapshot_portal_gcp.py'
+      - '.github/workflows/portal-interno-gcp.yml'
       - 'pyproject.toml'
       - '.github/workflows/portal-interno-ci.yml'
   push:
@@ -15,6 +18,9 @@ on:
       - 'src/nivon/portal_static/**'
       - 'scripts/gerar_painel_interno.py'
       - 'tests/test_portal_interno.py'
+      - 'tests/test_portal_interno_cloud_policy.py'
+      - 'scripts/atualizar_snapshot_portal_gcp.py'
+      - '.github/workflows/portal-interno-gcp.yml'
       - 'pyproject.toml'
   workflow_dispatch:
 permissions:
@@ -35,7 +41,9 @@ jobs:
       - name: Compilar rotas do portal e conversor
         run: python -m compileall -q src/nivon/portal_interno.py scripts/gerar_painel_interno.py tests/test_portal_interno.py
       - name: Testar readback -> snapshot -> interface WSGI
-        run: python -m unittest discover -s tests -p 'test_portal_interno.py' -v
+        run: |
+          python -m unittest discover -s tests -p 'test_portal_interno.py' -v
+          python -m unittest discover -s tests -p 'test_portal_interno_cloud_policy.py' -v
       - name: Garantir arquivos da interface no pacote
         run: |
           python - <<'PY'

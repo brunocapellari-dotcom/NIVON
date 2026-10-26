@@ -58,8 +58,11 @@ def executar(*, projeto, dataset, bucket, competencia,
         raise ErroPortal("snapshot fora de limite")
     if storage_factory is None:
         from google.cloud import storage
+        from google.api_core.exceptions import NotFound
         storage_factory=storage.Client
-    from google.api_core.exceptions import NotFound
+    else:
+        # Permite E2E estritamente offline com storage injetado, sem SDK GCP.
+        NotFound=FileNotFoundError
     cli=storage_factory(project=projeto)
     b=cli.get_bucket(bucket)
     if str(b.location).lower()!="southamerica-east1":
