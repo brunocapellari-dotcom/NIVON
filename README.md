@@ -1,5 +1,7 @@
 # NIVON — Inteligência de Mercado, Indústria e Logística
 
+**[Situação operacional, bloqueios, responsáveis e previsão de go-live](STATUS_NIVON.md)** — painel de acompanhamento com evidências e datas condicionais.
+
 Plataforma independente de análise agroindustrial, de granéis e de logística do Brasil, com foco inicial em Mato Grosso.
 
 ## Estado
