@@ -68,9 +68,15 @@ def diagnostico() -> list[dict]:
         elif binario:
             instalado = shutil.which(binario) is not None
         elif nome == "magnitude":
-            instalado = shutil.which("node") is not None  # Node nao significa que Magnitude esteja instalado
-        else:
+            # Node sozinho nao comprova magnitude-core. So declarar disponibilidade
+            # apos verificacao dedicada no runner isolado.
+            instalado = None
+        elif v["tipo"] == "interno":
             instalado = True
+        else:
+            # Conectores por API/arquivo nao exigem pacote Python instalado,
+            # nem isso prova acesso real a um servico.
+            instalado = None
         chave = v.get("chave")
         saida.append({"id": nome, "prioridade": v["prioridade"],
                       "dependencia_detectada": instalado,
