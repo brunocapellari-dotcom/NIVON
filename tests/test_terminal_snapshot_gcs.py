@@ -177,6 +177,19 @@ class GCSPrivateTests(unittest.TestCase):
         finally:
             server.shutdown();server.server_close();task.join(timeout=3)
 
+    def test_deploy_rejeita_painel_de_fachada_antes_do_build(self):
+        from pathlib import Path
+        script=(Path(__file__).resolve().parents[1] /
+                "scripts/deploy_terminal_privado.sh").read_text(encoding="utf-8")
+        self.assertIn("from nivon.terminal_snapshot_gcs import ler_gcs",script)
+        self.assertIn("GO_LIVE_BLOQUEADO_SNAPSHOT_REAL_AUSENTE_OU_DEFASADO",script)
+        self.assertIn("GO_LIVE_BLOQUEADO_SEM_FERROVIA_ANTT_REAL",script)
+        self.assertIn("GO_LIVE_BLOQUEADO_SEM_DADOS_MARITIMOS_REAIS",script)
+        self.assertLess(script.index("GO_LIVE_BLOQUEADO_SNAPSHOT_REAL"),
+                        script.index("gcloud builds submit"))
+        self.assertIn("--no-allow-unauthenticated",script)
+        self.assertIn("--min-instances=0",script)
+
     def test_falha_leitura_retorna_503_sem_informacao_privada(self):
         def broken():
             raise RuntimeError("SECRET_BQ_IAM_DONT_LEAK")
