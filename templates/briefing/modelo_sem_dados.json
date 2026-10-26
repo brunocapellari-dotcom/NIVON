@@ -1,0 +1,16 @@
+{
+  "versao_modelo": 2,
+  "status": "MODELO — SEM DADOS REAIS. NÃO PUBLICAR COMO BOLETIM.",
+  "edicao": {
+    "data_extenso": "Data a definir",
+    "corte_mt": "Horário a definir",
+    "janela": "Notícias das últimas 24 horas"
+  },
+  "cotacoes": {},
+  "fretes": {},
+  "noticias": [],
+  "_auditoria": {
+    "nota": "Referências internas e evidências obrigatórias para cada cotação e notícia, mesmo sem rodapé de fontes na arte.",
+    "nenhum_valor_real_publicado": true
+  }
+}
