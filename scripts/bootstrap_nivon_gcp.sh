@@ -59,7 +59,7 @@ import re,sys
 expression, repo=sys.argv[1:]
 parts=[p.strip().strip("() ").strip() for p in expression.split("&&")]
 allowed={f"assertion.repository == '{repo}'",f"assertion.ref == 'refs/heads/main'"}
-normalized={re.sub(r'\\s*==\\s*',' == ',p.replace('"',"'")) for p in parts}
+normalized={re.sub(r'\s*==\s*',' == ',p.replace('"',"'")) for p in parts}
 if len(parts)!=2 or normalized!=allowed or '||' in expression:
     raise SystemExit('WIF_CONDICAO_NAO_HOMOLOGADA: revisar no IAM sem ampliar grants')
 PY
