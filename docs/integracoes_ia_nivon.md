@@ -1,5 +1,11 @@
 # NIVON — Integrações de apoio (P0–P2)
 
+## Catálogo adicional aprovado para avaliação (26/10/2026)
+
+As seis capacidades **P1–P2** avaliadas nas referências externas (Docling, OpenWiki, Future AGI, Skills for Real Engineers, Caveman e Qdrant) estão registradas em [CATALOGO_FERRAMENTAS_IA_P1_P2_20261026.md](CATALOGO_FERRAMENTAS_IA_P1_P2_20261026.md), com escopo, pontos de reuso, critérios de aceite, limites de custo e regras para evitar serviços duplicados.
+
+**Situação:** catalogadas para testes posteriores; não instaladas, nem ativas, nem homologadas por esta inclusão. Nenhuma dependência nova no M1. O GitHub permanece canônico para o trabalho e BigQuery/RAW auditado para dados.
+
 Estado: **implementação de contratos locais e conectores opt-in**. **Não habilitado em produção**. **Não altera M1**.
 
 ## Princípios e responsabilidades
