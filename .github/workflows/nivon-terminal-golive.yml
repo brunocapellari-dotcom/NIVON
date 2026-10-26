@@ -1,0 +1,146 @@
+name: NIVON - Go-live terminal privado
+on:
+  pull_request:
+    paths:
+      - 'src/nivon/terminal_web.py'
+      - 'tests/test_terminal_web.py'
+      - 'infra/google_cloud/Dockerfile.terminal'
+      - 'infra/google_cloud/cloudbuild.terminal.yaml'
+      - 'scripts/nivon_terminal_deploy.sh'
+      - '.github/workflows/nivon-terminal-golive.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/nivon/terminal_web.py'
+      - 'tests/test_terminal_web.py'
+      - 'infra/google_cloud/Dockerfile.terminal'
+      - 'infra/google_cloud/cloudbuild.terminal.yaml'
+      - 'scripts/nivon_terminal_deploy.sh'
+      - '.github/workflows/nivon-terminal-golive.yml'
+  workflow_dispatch:
+    inputs:
+      publicar:
+        description: 'Publicar serviço PRIVADO Cloud Run (pode gerar custo)'
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-terminal-golive-privado
+  cancel-in-progress: false
+
+jobs:
+  validacao-integrada:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Compilar app e testar HTTP cache BigQuery e bloqueios
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python -m compileall -q src/nivon/terminal_web.py tests/test_terminal_web.py
+          python -m unittest discover -s tests -p 'test_terminal_web.py' -v
+          bash -n scripts/nivon_terminal_deploy.sh
+      - name: Auditar configuracao da implantacao privada
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          script=Path('scripts/nivon_terminal_deploy.sh').read_text()
+          docker=Path('infra/google_cloud/Dockerfile.terminal').read_text()
+          wf=Path('.github/workflows/nivon-terminal-golive.yml').read_text()
+          for s in ('--no-allow-unauthenticated','--min-instances=0',
+                    '--max-instances=1','--service-account',
+                    'NIVON_GCP_COST_REVIEWED','NIVON_TERMINAL_DEPLOY_APPROVED'):
+              assert s in script,s
+          assert '--allow-unauthenticated' not in script.replace('--no-allow-unauthenticated','')
+          assert 'USER 65532:65532' in docker
+          assert 'github.event_name == \'workflow_dispatch\'' in wf
+          assert 'inputs.publicar == true' in wf
+          assert 'id-token: write' not in wf.split('jobs:',1)[0]
+          print('GO_LIVE_PRIVADO_SEM_DEPLOY_AUTOMATICO=OK')
+          PY
+      - name: Falhar fechado se faltam flags de autorizacao
+        env:
+          NIVON_PROJETO: nivon-data
+          NIVON_DATASET: nivon_raw
+          NIVON_TERMINAL_REPO: nivon
+          NIVON_TERMINAL_READONLY_SA: nivon-readonly@nivon-data.iam.gserviceaccount.com
+          NIVON_TERMINAL_DEPLOY_APPROVED: 'false'
+          NIVON_GCP_COST_REVIEWED: 'false'
+          GITHUB_REF: refs/heads/main
+          GITHUB_SHA: '0000000000000000000000000000000000000000'
+        run: |
+          if bash scripts/nivon_terminal_deploy.sh; then
+            echo 'ERRO: deploy sem autorizacao'
+            exit 1
+          fi
+          echo 'BLOQUEIO_DEPLOY_SEM_APROVACAO=OK'
+
+  publicar-privado:
+    needs: validacao-integrada
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.publicar == true &&
+      vars.NIVON_TERMINAL_DEPLOY_APPROVED == 'true' &&
+      vars.NIVON_GCP_COST_REVIEWED == 'true' &&
+      vars.NIVON_TERMINAL_READONLY_SA != '' &&
+      vars.NIVON_TERMINAL_ARTIFACT_REPO != '' &&
+      vars.NIVON_GCP_PROVIDER != '' &&
+      vars.NIVON_GCP_SERVICE_ACCOUNT != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      NIVON_PROJETO: ${{ vars.NIVON_BQ_PROJECT }}
+      NIVON_DATASET: ${{ vars.NIVON_BQ_DATASET }}
+      NIVON_TERMINAL_REPO: ${{ vars.NIVON_TERMINAL_ARTIFACT_REPO }}
+      NIVON_TERMINAL_READONLY_SA: ${{ vars.NIVON_TERMINAL_READONLY_SA }}
+      NIVON_TERMINAL_DEPLOY_APPROVED: ${{ vars.NIVON_TERMINAL_DEPLOY_APPROVED }}
+      NIVON_GCP_COST_REVIEWED: ${{ vars.NIVON_GCP_COST_REVIEWED }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Confirmar escopo GCP do NIVON
+        run: |
+          test "$NIVON_PROJETO" = nivon-data
+          test "$NIVON_DATASET" = nivon_raw
+          test "$NIVON_GCP_COST_REVIEWED" = true
+          test "$NIVON_TERMINAL_DEPLOY_APPROVED" = true
+      - name: Autenticar com OIDC, nunca com chave permanente
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ vars.NIVON_BQ_PROJECT }}
+          create_credentials_file: true
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ vars.NIVON_BQ_PROJECT }}
+      - name: Cliente BigQuery e validacao do script
+        run: |
+          python -m pip install --disable-pip-version-check --quiet 'google-cloud-bigquery>=3,<4'
+          bash -n scripts/nivon_terminal_deploy.sh
+      - name: Build e publicacao PRIVADA do terminal
+        run: bash scripts/nivon_terminal_deploy.sh
+      - name: Resumo operacional
+        run: |
+          echo '### NIVON: terminal privado implantado' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Autenticacao Cloud Run IAM OBRIGATORIA. Nao foi criado acesso publico nem cron.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Configuracao: min-instances=0, max-instances=1; imagem versionada pelo commit.' >> "$GITHUB_STEP_SUMMARY"
