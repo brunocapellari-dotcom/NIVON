@@ -1,0 +1,12 @@
+# NIVON — terminal interno, imagem sem credenciais nem dados embutidos.
+# Implantação não é automática. Deploy privado deve exigir IAM e orçamento.
+FROM python:3.11-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /app
+COPY pyproject.toml README.md /app/
+COPY src /app/src
+RUN pip install --no-cache-dir '.[gcp,mvp]' && \
+    useradd --create-home --uid 10001 nivon
+USER nivon
+EXPOSE 8080
+CMD ["sh","-c","exec gunicorn --workers 1 --threads 2 --timeout 210 --bind 0.0.0.0:${PORT:-8080} nivon.terminal_mvp:app"]
