@@ -127,9 +127,9 @@
       "nome": "Banco Central — PTAX",
       "orgao": "Banco Central do Brasil",
       "url_oficial": "https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/",
-      "licenca": "a confirmar",
-      "url_termos": null,
-      "situacao_licenca": "pendente",
+      "licenca": "ODbL 1.0",
+      "url_termos": "https://opendatacommons.org/licenses/odbl/1-0/",
+      "situacao_licenca": "identificada",
       "pode_publicar_no_repositorio": false,
       "pode_exportar": false,
       "frequencia_esperada": "dia_util",
@@ -137,16 +137,16 @@
       "classe_dado": "OBSERVADO",
       "tabela_destino": "nivon_core.ptax_quotes",
       "estado_atual": "parado",
-      "observacao": "Existem registros legados Neon; escrita efetiva BigQuery não validada na auditoria documental."
+      "observacao": "Licença ODbL verificada na ficha oficial do conjunto PTAX; exportação bloqueada até garantir atribuição e obrigações aplicáveis."
     },
     {
       "id": "BCB_SGS",
       "nome": "Banco Central — SGS",
       "orgao": "Banco Central do Brasil",
       "url_oficial": "https://api.bcb.gov.br/dados/serie/bcdata.sgs.11/dados",
-      "licenca": "a confirmar",
-      "url_termos": null,
-      "situacao_licenca": "pendente",
+      "licenca": "ODbL 1.0",
+      "url_termos": "https://opendatacommons.org/licenses/odbl/1-0/",
+      "situacao_licenca": "identificada",
       "pode_publicar_no_repositorio": false,
       "pode_exportar": false,
       "frequencia_esperada": "dia_util",
@@ -154,7 +154,7 @@
       "classe_dado": "OBSERVADO",
       "tabela_destino": "nivon_stage.bcb_sgs",
       "estado_atual": "so_conector",
-      "observacao": "Série 11 e demais séries não devem ser confundidas com PTAX."
+      "observacao": "Licença ODbL verificada na ficha oficial da série SGS 11; o serviço pode impor limites de consulta diária."
     },
     {
       "id": "ANP_PPI",
@@ -246,9 +246,9 @@
       "nome": "Open-Meteo — previsão",
       "orgao": "Open-Meteo",
       "url_oficial": "https://open-meteo.com/en/docs",
-      "licenca": "a confirmar",
-      "url_termos": null,
-      "situacao_licenca": "pendente",
+      "licenca": "CC BY 4.0 (dados); API gratuita apenas não comercial",
+      "url_termos": "https://open-meteo.com/en/terms",
+      "situacao_licenca": "identificada",
       "pode_publicar_no_repositorio": false,
       "pode_exportar": false,
       "frequencia_esperada": "horaria",
@@ -256,7 +256,7 @@
       "classe_dado": "ESTIMADO",
       "tabela_destino": "nivon_stage.openmeteo_previsoes",
       "estado_atual": "so_conector",
-      "observacao": "Uso pessoal não comercial; verificar termos e limites de API antes de executar."
+      "observacao": "Termos oficiais: API gratuita não comercial, com limites e atribuição; licenciamento dos dados não elimina limite do serviço."
     },
     {
       "id": "ARG_MAGYP",
@@ -385,14 +385,14 @@
       "licenca": "MIT (somente software)",
       "url_termos": "https://github.com/bruno-portfolio/agrobr/blob/main/LICENSE",
       "situacao_licenca": "identificada",
-      "pode_publicar_no_repositorio": true,
+      "pode_publicar_no_repositorio": false,
       "pode_exportar": false,
       "frequencia_esperada": "por_versao",
       "prazo_frescor_horas": 8760,
       "classe_dado": "CONFIRMADO_EXTERNAMENTE",
       "tabela_destino": "nivon_stage.agrobr_metadados",
       "estado_atual": "so_conector",
-      "observacao": "MIT cobre o software, NÃO os dados da fonte subjacente; não habilitar exportação por herança."
+      "observacao": "MIT cobre o software, NÃO os dados da fonte subjacente; não habilitar exportação por herança. Software MIT pode ser usado no código; metadados de terceiros não são liberados."
     }
   ]
 }
