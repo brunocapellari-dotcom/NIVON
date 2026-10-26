@@ -46,6 +46,11 @@ class ContratosTest(unittest.TestCase):
         self.assertTrue(catalogo())
         self.assertTrue(diagnostico())
         self.assertEqual({x["prioridade"] for x in catalogo()}, {"P0", "P1", "P2"})
+        atual = {x["id"]: x for x in diagnostico()}
+        self.assertIsNone(atual["magnitude"]["dependencia_detectada"])
+        self.assertIsNone(atual["firecrawl"]["dependencia_detectada"])
+        self.assertTrue(atual["skills"]["dependencia_detectada"])
+        self.assertEqual(atual["magnitude"]["estado"], "NAO_VALIDADO")
 
     def test_externo_bloqueado_por_padrao(self):
         with self.assertRaisesRegex(ErroIntegracao, "REDE_EXTERNA_NAO_AUTORIZADA"):
