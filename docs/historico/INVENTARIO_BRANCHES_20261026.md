@@ -128,23 +128,23 @@
 | `feat/preflight-golive-cloudrun-20261025` | 20261025 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/prova-real-sgs-gcp-fontes-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/ptax-bcb-agendamento-wif-escritor-unico-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/series-corredores-antt-bigquery-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/sisfogo-roi-fonte-oficial-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/soilgrids-embrapa-solos-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/terminal-gcs-dados-reais-unificado-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/terminal-nivon-go-live-visao-publica-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/verificacao-cloud-gcp-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/visao-multimodal-anttrgi-ferrovia-2025-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feature/nivon-anp-ppi-direto-20261026` | 20261026 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feature/transporte-antt-antaq-20261022` | 20261022 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/agro-http-seguro-e-bq-custo-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/antaq-hf-cache-inspecao-estrita-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/antaq-hf-cache-realpath-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/antaq-hf-revision-file-size-pinned-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/antaq-hf-staging-manual-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/antaq-parquet-cache-staging-safe-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/antaq-replica-manual-isolada-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/antt-2025-inspecao-schema-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/series-corredores-antt-bigquery-20261023` | 20261023 | NÃO MESCLADA — 7 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/sisfogo-roi-fonte-oficial-20261021` | 20261021 | NÃO MESCLADA — 445 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/soilgrids-embrapa-solos-20261021` | 20261021 | NÃO MESCLADA — 449 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/terminal-gcs-dados-reais-unificado-20261025` | 20261025 | NÃO MESCLADA — 8 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/terminal-nivon-go-live-visao-publica-20261025` | 20261025 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/verificacao-cloud-gcp-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/visao-multimodal-anttrgi-ferrovia-2025-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
+| `feature/nivon-anp-ppi-direto-20261026` | 20261026 | NÃO MESCLADA — 7 commit(s) à frente | PENDENTE — conferir commit |
+| `feature/transporte-antt-antaq-20261022` | 20261022 | NÃO MESCLADA — 50 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/agro-http-seguro-e-bq-custo-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/antaq-hf-cache-inspecao-estrita-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/antaq-hf-cache-realpath-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/antaq-hf-revision-file-size-pinned-20261025` | 20261025 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
+| `fix/antaq-hf-staging-manual-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/antaq-parquet-cache-staging-safe-20261025` | 20261025 | NÃO MESCLADA — 6 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/antaq-replica-manual-isolada-20261025` | 20261025 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/antt-2025-inspecao-schema-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
 | `fix/antt-backfill-manual-gates-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
 | `fix/antt-bq-readiness-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
 | `fix/antt-ckan-fallback-verificado-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
