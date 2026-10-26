@@ -34,3 +34,57 @@ jobs:
         run: |
           python -m compileall -q src/nivon/integracoes_ia
           node --check scripts/nivon_magnitude_piloto.mjs
+      - name: Gerar grafo real do codigo e estado das integracoes
+        env:
+          PYTHONPATH: src
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/nivon-integracoes-evidencias"
+          python -m nivon.integracoes_ia.cli grafo-local src/nivon > "$RUNNER_TEMP/nivon-integracoes-evidencias/grafo-python.json"
+          python -m nivon.integracoes_ia.cli diagnostico > "$RUNNER_TEMP/nivon-integracoes-evidencias/diagnostico.json"
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          base = Path(os.environ['RUNNER_TEMP']) / 'nivon-integracoes-evidencias'
+          dados = json.loads((base/'grafo-python.json').read_text(encoding='utf-8'))
+          diagn = json.loads((base/'diagnostico.json').read_text(encoding='utf-8'))
+          if dados.get('schema') != 'nivon.integracao.grafo.v1':
+              raise SystemExit('GRAFO_SCHEMA_INVALIDO')
+          if dados.get('erros_parse'):
+              raise SystemExit('GRAFO_COM_ERROS_DE_PARSER')
+          if dados.get('arquivos_inspecionados',0) < 20:
+              raise SystemExit('GRAFO_NAO_COBRIU_CODIGO_NIVON')
+          if not isinstance(diagn,list) or {x['prioridade'] for x in diagn} != {'P0','P1','P2'}:
+              raise SystemExit('DIAGNOSTICO_P0_P2_INCOMPLETO')
+          relatorio = {
+              'schema': 'nivon.integracoes.evidencia_ci.v1',
+              'natureza': 'CODIGO_INSPECIONADO_OFFLINE',
+              'commit': os.environ['GITHUB_SHA'],
+              'run_id': os.environ['GITHUB_RUN_ID'],
+              'gerado_utc': datetime.now(timezone.utc).isoformat(),
+              'arquivos_python': dados['arquivos_inspecionados'],
+              'arestas_importacao': len(dados['arestas']),
+              'sha256_grafo': hashlib.sha256((base/'grafo-python.json').read_bytes()).hexdigest(),
+              'capacidades_catalogadas': len(diagn),
+              'homologacao_producao': False,
+              'frescor_dados_validado': False,
+              'servicos_externos_executados': False,
+              'implantacao_cloud_run': False,
+          }
+          (base/'evidencia.json').write_text(json.dumps(relatorio,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as f:
+              f.write('## NIVON - inventario real de codigo P0-P2 (offline)\n')
+              f.write(f"Commit: `{relatorio['commit']}` | Python: **{relatorio['arquivos_python']}** arquivos | Imports: **{relatorio['arestas_importacao']}** | Capacidades: **{relatorio['capacidades_catalogadas']}**\n\n")
+              f.write('**Nao prova coleta de dados, autenticacao, deploy, PageIndex/Firecrawl/Paperclip/Hindsight ativos ou go-live.**\n')
+          PY
+      - name: Anexar evidencias reproduziveis ao workflow
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: nivon-integracoes-evidencias
+          path: ${{ runner.temp }}/nivon-integracoes-evidencias/
+          if-no-files-found: error
+          retention-days: 7
