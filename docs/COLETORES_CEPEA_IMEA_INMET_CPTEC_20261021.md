@@ -12,7 +12,7 @@ SOJA_SORRISO_MT;Soja;Sorriso - MT;2026-10;2026-10-20;125,50;BRL/SC60KG
 
 **Exemplo sintético**, não cotação observada. Nenhum layout CEPEA/IMEA foi alegado. Dados reais exigem documentação externa de licença, proveniência e exportação, com uso **não comercial** conforme escopo NIVON.
 
-Metadados da chamada: `fonte_id` CEPEA/IMEA, `fonte_url` em HTTPS oficial, `edicao_id`, `coletado_em` com timezone e datas `publicado_em`/`disponivel_em` quando comprovadas. O parser rejeita série/mês duplicados, datas contraditórias, unidades desconhecidas, CSV malformado, host inseguro e preços ambíguos. Preserva SHA do bruto e as quatro dimensões temporais em `ArmazemVintages`. Mesmo com datas declaradas, `disponibilidade_verificada=False`, sem acesso ao as-of, backtest, briefing ou publicação. Importação local opt-in idempotente, por item (não atômica no lote).
+Metadados da chamada: `fonte_id` CEPEA/IMEA, `fonte_url` em HTTPS oficial, `edicao_id`, `coletado_em` com timezone e datas `publicado_em`/`disponivel_em` quando comprovadas. O parser rejeita série/data duplicadas, datas contraditórias, unidades desconhecidas, CSV malformado, host inseguro e preços ambíguos. Aceita várias datas da mesma série em cada mês sem colisão de chave de edição. Preserva SHA do bruto e as quatro dimensões temporais em `ArmazemVintages`. Mesmo com datas declaradas, `disponibilidade_verificada=False`, sem acesso ao as-of, backtest, briefing ou publicação. Importação local opt-in idempotente e atômica por lote no SQLite; checksum do pacote detecta alterações acidentais entre normalização e persistência, mas não comprova autenticidade de origem.
 
 ## APIs aproveitadas
 - INMET: `https://apitempo.inmet.gov.br/estacoes/T` ou `/M`, *catálogo de estações*, não dado meteorológico horário.

@@ -28,6 +28,25 @@ class TestImportacaoCotacoes(unittest.TestCase):
             self.assertFalse(p["registros"][0]["disponibilidade_verificada"])
             self.assertIsNone(p["registros"][0]["publicado_em"])
 
+    def test_multiplos_dias_da_mesma_serie_e_replay(self):
+        txt = (HDR + "SOJA_SORRISO_MT;Soja;Sorriso;2026-10;2026-10-19;120,01;BRL/SC60KG\n"
+               + "SOJA_SORRISO_MT;Soja;Sorriso;2026-10;2026-10-20;120,02;BRL/SC60KG\n")
+        pacote = montar(txt=txt)
+        self.assertEqual(pacote["linhas"],2)
+        self.assertNotEqual(pacote["registros"][0]["edicao_id"], pacote["registros"][1]["edicao_id"])
+        self.assertTrue(pacote["registros"][0]["edicao_id"].endswith("REF_20261019"))
+        db = ArmazemVintages()
+        try:
+            self.assertEqual(persistir_quarentena(db,pacote,operador_autorizou_importacao=True)["novas"],2)
+            self.assertEqual(persistir_quarentena(db,pacote,operador_autorizou_importacao=True)["duplicadas"],2)
+            self.assertEqual(db.contar(),2)
+            self.assertIsNone(db.consultar_asof(dataset_id="IMEA_FISICO",serie_id="SOJA_SORRISO_MT",
+                              competencia="2026-10",instante_decisao="2026-10-22T00:00:00Z"))
+        finally:
+            db.fechar()
+        with self.assertRaises(ErroImportacaoCotacoes):
+            montar(txt=txt.replace("2026-10-19", "2026-10-20"))
+
     def test_quatro_datas_sem_promocao_automatica(self):
         p = montar(publicado_em="2026-10-20T18:00:00-04:00",
                    disponivel_em="2026-10-20T19:00:00-04:00")
@@ -82,6 +101,10 @@ class TestImportacaoCotacoes(unittest.TestCase):
                 instante_decisao="2026-10-22T00:00:00Z"))
             adulterado = deepcopy(pacote)
             adulterado["registros"][0]["disponibilidade_verificada"] = True
+            with self.assertRaises(ErroImportacaoCotacoes):
+                persistir_quarentena(db, adulterado, operador_autorizou_importacao=True)
+            adulterado = deepcopy(pacote)
+            adulterado["registros"][0]["valor"] = "999.99"
             with self.assertRaises(ErroImportacaoCotacoes):
                 persistir_quarentena(db, adulterado, operador_autorizou_importacao=True)
         finally:

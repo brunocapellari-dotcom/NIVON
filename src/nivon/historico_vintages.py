@@ -107,8 +107,8 @@ class ArmazemVintages:
 
     def fechar(self):self.conn.close()
 
-    def gravar(self,registro:dict) -> str:
-        d=normalizar_edicao(registro)
+    def _gravar_normalizado(self,d:dict) -> str:
+        """Somente sob transacao controlada pelo metodo chamador."""
         pk=(d["dataset_id"],d["serie_id"],d["competencia"],d["edicao_id"])
         linhas=self.conn.execute(
             "SELECT * FROM edicoes WHERE dataset_id=? AND serie_id=? AND competencia=? AND edicao_id=?",pk
@@ -122,10 +122,22 @@ class ArmazemVintages:
             return "DUPLICATA_IDEMPOTENTE"
         cols=sorted(_CAMPOS)
         placeholders=",".join("?" for _ in cols)
-        with self.conn:
-            self.conn.execute(f"INSERT INTO edicoes ({','.join(cols)}) VALUES ({placeholders})",
-                              [d[k] for k in cols])
+        self.conn.execute(f"INSERT INTO edicoes ({','.join(cols)}) VALUES ({placeholders})",
+                          [d[k] for k in cols])
         return "EDICAO_PERSISTIDA_LOCALMENTE"
+
+    def gravar(self,registro:dict) -> str:
+        d=normalizar_edicao(registro)
+        with self.conn:
+            return self._gravar_normalizado(d)
+
+    def gravar_lote(self,registros:list[dict]) -> list[str]:
+        """Validacao completa e commit unico; erro em qualquer linha reverte o lote."""
+        if not isinstance(registros,list) or not registros:
+            raise ErroCientifico("lote vazio ou invalido")
+        normalizados=[normalizar_edicao(registro) for registro in registros]
+        with self.conn:
+            return [self._gravar_normalizado(d) for d in normalizados]
 
     def consultar_asof(self,*,dataset_id:str,serie_id:str,
                        competencia:str,instante_decisao:str) -> dict|None:

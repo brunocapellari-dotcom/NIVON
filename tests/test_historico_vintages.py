@@ -77,6 +77,19 @@ class TestVintages(unittest.TestCase):
         self.s.gravar(a)
         self.assertEqual(self.q("2026-10-19T12:00:00-04:00")["valor"],"1000.025")
 
+    def test_lote_atomico_com_conflito_na_segunda_linha(self):
+        a=item("2026-01","1000","2026-01-12T09:00:00-04:00")
+        b=item("2026-02","1100","2026-02-12T09:00:00-04:00")
+        self.assertEqual(self.s.gravar_lote([a,b]),["EDICAO_PERSISTIDA_LOCALMENTE"]*2)
+        self.assertEqual(self.s.contar(),2)
+        self.assertEqual(self.s.gravar_lote([a,b]),["DUPLICATA_IDEMPOTENTE"]*2)
+        c=item("2026-03","1300","2026-03-12T09:00:00-04:00")
+        with self.assertRaises(ErroCientifico):
+            self.s.gravar_lote([c,{**b,"valor":"9999"}])
+        self.assertEqual(self.s.contar(),2)
+        with self.assertRaises(ErroCientifico):
+            self.s.gravar_lote([])
+
     def test_nao_inferir_licenca_ou_go_live(self):
         self.assertEqual(self.s.contar(),0)
         # Persistência local é apenas índice para edição; RAW/licença/backup fora.

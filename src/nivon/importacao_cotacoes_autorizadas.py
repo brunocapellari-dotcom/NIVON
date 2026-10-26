@@ -8,6 +8,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import io
+import json
 import re
 from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
@@ -111,14 +112,15 @@ def normalizar_arquivo_cotacoes(*, bruto: bytes, fonte_id: str, fonte_url: str,
             raise ErroImportacaoCotacoes("preco fora do dominio")
         if linha["unidade"] not in _UNIDADES:
             raise ErroImportacaoCotacoes("unidade desconhecida, conversao proibida")
-        chave = (serie, competencia)
+        chave = (serie, referencia)
         if chave in vistos:
-            raise ErroImportacaoCotacoes("serie e competencia duplicadas")
+            raise ErroImportacaoCotacoes("serie e data de referencia duplicadas")
         vistos.add(chave)
         registros.append({
             "source_id": fonte_id, "dataset_id": dataset_id,
             "serie_id": serie, "competencia": competencia, "referencia": referencia,
-            "edicao_id": edicao, "unidade": linha["unidade"], "valor": str(valor),
+            "edicao_id": f"{edicao}__REF_{referencia.replace(chr(45), '')}",
+            "unidade": linha["unidade"], "valor": str(valor),
             "classe_evidencia": "INFORMADO", "publicado_em": publicacao,
             "disponivel_em": disponibilidade, "coletado_em": coleta,
             "fonte_url": fonte_url, "raw_sha256": sha,
@@ -128,13 +130,21 @@ def normalizar_arquivo_cotacoes(*, bruto: bytes, fonte_id: str, fonte_url: str,
     return {
         "fonte_id": fonte_id, "dataset_id": dataset_id, "edicao_id": edicao,
         "sha256": sha, "bytes": len(bruto), "linhas": len(registros),
+        "registros_fingerprint": _assinatura_registros(registros),
         "registros": registros, "metadados_linhas": metadados, "estado": _ESTADO,
         "api_confirmada": False, "coleta_automatica": False,
         "autorizado_publicar": False, "autorizado_backtest": False,
     }
 
+def _assinatura_registros(registros: list[dict]) -> str:
+    """Checksum contra alteracoes acidentais em memoria; nao e assinatura de origem."""
+    serializado = json.dumps(registros, ensure_ascii=False, sort_keys=True,
+                              separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(serializado).hexdigest()
+
+
 def persistir_quarentena(armazem, pacote: dict, *, operador_autorizou_importacao: bool = False) -> dict:
-    """Reutiliza o storage versionado. Replay idempotente; lote nao atomico."""
+    """Reutiliza o storage versionado; lote atomico e replay idempotente."""
     if operador_autorizou_importacao is not True:
         raise PermissionError("importacao supervisionada requer opt-in")
     if not isinstance(pacote, dict) or pacote.get("estado") != _ESTADO:
@@ -142,15 +152,29 @@ def persistir_quarentena(armazem, pacote: dict, *, operador_autorizou_importacao
     registros = pacote.get("registros")
     if not isinstance(registros, list) or not 1 <= len(registros) <= _MAX_ROWS or len(registros) != pacote.get("linhas"):
         raise ErroImportacaoCotacoes("numero de linhas inconsistente")
+    if pacote.get("fonte_id") not in _ORIGENS or pacote.get("dataset_id") != _ORIGENS[pacote["fonte_id"]][0]:
+        raise ErroImportacaoCotacoes("identidade de fonte inconsistente")
+    if pacote.get("registros_fingerprint") != _assinatura_registros(registros):
+        raise ErroImportacaoCotacoes("registros alterados desde a normalizacao")
     from .historico_vintages import normalizar_edicao
+    vistos = set()
     for row in registros:
         if (not isinstance(row, dict) or row.get("source_id") != pacote.get("fonte_id")
                 or row.get("dataset_id") != pacote.get("dataset_id")
                 or row.get("raw_sha256") != pacote.get("sha256")
-                or row.get("disponibilidade_verificada") is not False):
+                or row.get("disponibilidade_verificada") is not False
+                or row.get("prova_disponibilidade_sha256") is not None
+                or row.get("classe_evidencia") != "INFORMADO"
+                or row.get("edicao_id") != f"{pacote['edicao_id']}__REF_{str(row.get('referencia', '')).replace(chr(45), '')}"):
             raise ErroImportacaoCotacoes("registro de quarentena adulterado")
+        if row.get("competencia") != str(row.get("referencia", ""))[:7]:
+            raise ErroImportacaoCotacoes("data diaria fora da competencia mensal")
+        chave = (row["serie_id"], row["referencia"])
+        if chave in vistos:
+            raise ErroImportacaoCotacoes("observacao diaria duplicada no pacote")
+        vistos.add(chave)
         normalizar_edicao(row)
-    estados = [armazem.gravar(row) for row in registros]
+    estados = armazem.gravar_lote(registros)
     return {"dataset_id": pacote["dataset_id"], "linhas": len(estados),
             "novas": estados.count("EDICAO_PERSISTIDA_LOCALMENTE"),
             "duplicadas": estados.count("DUPLICATA_IDEMPOTENTE"),
