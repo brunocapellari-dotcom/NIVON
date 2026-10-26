@@ -25,14 +25,14 @@ ROAD_VIEW=f"{PROJECT}.{DATASET}.vw_antt_rodovia_rgi_top16_atual"
 
 RAIL_SQL=(
     "SELECT polo_id, CAST(SUM(toneladas_uteis) AS STRING) AS tu "
-    f"FROM \`{RAIL_VIEW}\` "
+    f"FROM `{RAIL_VIEW}` "
     "WHERE data_referencia BETWEEN DATE '2025-01-01' AND DATE '2025-12-31' "
     "AND polo_id IN ('MT_RONDONOPOLIS_FERRO','MT_ITIQUIRA_FERRO','MT_ALTO_ARAGUAIA_FERRO') "
     "GROUP BY polo_id ORDER BY polo_id LIMIT 3"
 )
 ROAD_SQL=(
     "SELECT COUNT(*) AS n, CAST(SUM(toneladas) AS STRING) AS tu, "
-    f"COUNT(DISTINCT sha256) AS revisions FROM \`{ROAD_VIEW}\` WHERE ano=2025"
+    f"COUNT(DISTINCT sha256) AS revisions FROM `{ROAD_VIEW}` WHERE ano=2025"
 )
 
 class FalhaTerminal(Exception):
