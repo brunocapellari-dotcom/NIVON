@@ -1,0 +1,8 @@
+FROM python:3.11-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /app
+COPY pyproject.toml ./
+COPY src ./src
+RUN python -m pip install --no-cache-dir '.[gcp]' 'gunicorn>=22,<24'
+USER 65532:65532
+CMD ["sh", "-c", "exec gunicorn --bind 0.0.0.0:8080 --workers 1 --threads 4 --timeout 40 --access-logfile - nivon.portal_gcs:application"]
