@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import json
 import sqlite3
+import hashlib
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -55,6 +56,25 @@ def _guardar(base, ds, url, payload, registros, estado, agora, tipo="application
         dataset_id=ds, origem=url, raw=payload, tipo=tipo,
         coletado_em=agora.isoformat(), registros=registros, estado=estado)
 
+
+
+def _verificar_estado_previa(*, base, dataset, raw, esperado):
+    """Bloquear transição silenciosa ANTES de gravar observações novas."""
+    banco=Path(base)/"fontes_reais.sqlite"
+    if banco.is_symlink():
+        raise ErroAgroOrigem("ledger CEPEA em symlink")
+    if not banco.exists():
+        return
+    snapshot=hashlib.sha256(
+        (dataset+"|"+hashlib.sha256(raw).hexdigest()).encode()).hexdigest()
+    with sqlite3.connect(f"file:{banco.resolve().as_posix()}?mode=ro",uri=True) as db:
+        linha=db.execute(
+            "SELECT estado FROM snapshots WHERE dataset_id=? AND snapshot_id=?",
+            (dataset,snapshot)).fetchone()
+    if linha is not None and linha[0]!=esperado:
+        raise ErroAgroOrigem(
+            "CEPEA_SNAPSHOT_ESTADO_DIVERGENTE: bloqueio antes da escrita; "
+            "reclassificacao exige transicao auditada")
 
 
 def _conferir_estado_persistido(*, base, dataset, snapshot_id, esperado):
@@ -109,6 +129,7 @@ def coletar_cepea(*, fonte, base, agora=None, abrir=None,
     # HTML extraído completo (sem bytes HTTP originais); não simular JSON de preços.
     raw = html.encode("utf-8")
     estado = "NORMALIZED" if homologacao_referencia else "QUARANTINED"
+    _verificar_estado_previa(base=base,dataset=ds,raw=raw,esperado=estado)
     salvo = _guardar(base, ds, url, raw, registros, estado, instante, "text/html")
     _conferir_estado_persistido(
         base=base,dataset=ds,snapshot_id=salvo["snapshot_id"],esperado=estado)
