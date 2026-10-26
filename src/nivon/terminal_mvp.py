@@ -124,10 +124,9 @@ def montar_resumo(*, projeto, dataset, mes, passagem, instante=None,
         output["consultas_reais_confirmadas"]+=1
         output["fontes"]["maritimo"]={
             k:v for k,v in mar.items() if k in (
-                "estado","passagem","inicio","fim","dias_com_observacoes",
-                "transitos_ais_no_periodo","volume_transito_estimado_t",
-                "volume_estimado_t","contagens_por_dia","publicavel","nota",
-                "transitos","dias","observacoes","qtd_dias")
+                "estado","passagem","inicio","fim","dias_distintos","revisoes_visiveis",
+                "vintages_descartadas_para_soma","transitos_ais_reportados",
+                "volume_estimado_modelo_t","publicavel","nota")
         }
         output["fontes"]["maritimo"]["volume_realizado_confirmado"]=False
         output["fontes"]["maritimo"]["fonte"]="FMI_PORTWATCH_DERIVADO"
