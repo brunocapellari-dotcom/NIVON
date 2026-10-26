@@ -30,7 +30,7 @@ class TestTerminalPublico(unittest.TestCase):
         cls.html=(ROOT/"index.html").read_text(encoding="utf-8")
         cls.js=(ROOT/"app.js").read_text(encoding="utf-8")
         cls.css=(ROOT/"styles.css").read_text(encoding="utf-8")
-        cls.config=json.loads((ROOT/"vercel.json").read_text(encoding="utf-8"))
+        cls.config=json.loads((ROOT/"security-headers.json").read_text(encoding="utf-8"))
 
     def test_terminal_minimo_e_responsivo(self):
         checker=Estrutura()
@@ -75,8 +75,7 @@ class TestTerminalPublico(unittest.TestCase):
         self.assertIn("ANTT",self.js)
 
     def test_hospedagem_com_isolamento_de_segredos(self):
-        headers={h["key"]:h["value"] for group in self.config["headers"]
-                 for h in group["headers"]}
+        headers=self.config
         self.assertIn("default-src 'none'",headers["Content-Security-Policy"])
         self.assertIn("connect-src https://api.github.com",headers["Content-Security-Policy"])
         self.assertIn("frame-ancestors 'none'",headers["Content-Security-Policy"])

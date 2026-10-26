@@ -38,7 +38,7 @@ jobs:
         run: |
           set -euo pipefail
           node --check apps/nivon-terminal/app.js
-          python -m json.tool apps/nivon-terminal/vercel.json > /dev/null
+          python -m json.tool apps/nivon-terminal/security-headers.json > /dev/null
       - name: Testar HTTP real em localhost com todos os arquivos
         shell: bash
         run: |
@@ -61,4 +61,4 @@ jobs:
         run: |
           echo '### NIVON Terminal — prévia estática aprovada' >> "$GITHUB_STEP_SUMMARY"
           echo 'Código, segurança editorial, JS, configuração e HTTP local validados.' >> "$GITHUB_STEP_SUMMARY"
-          echo 'Não testa hospedagem Vercel nem acesso produtivo ao BigQuery; não libera dados privados.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Não testa hospedagem Google Cloud nem acesso produtivo ao BigQuery; não libera dados privados.' >> "$GITHUB_STEP_SUMMARY"

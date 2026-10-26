@@ -60,7 +60,7 @@ test("Portal único mantém CSP segura e liga widget ao mesmo domínio",()=>{
   const root=path.join(__dirname,"..");
   const html=readFileSync(path.join(root,"public","index.html"),"utf8");
   const js=readFileSync(path.join(root,"public","assets","mercado.js"),"utf8");
-  const v=JSON.parse(readFileSync(path.join(root,"vercel.json"),"utf8"));
+  const v=JSON.parse(readFileSync(path.join(root,"infra/google_cloud/portal-security-headers.json"),"utf8"));
   assert.match(html,/\/assets\/nivon\.js/);
   assert.match(html,/\/assets\/mercado\.js/);
   assert.match(html,/mkt-usd-value/);
@@ -68,8 +68,6 @@ test("Portal único mantém CSP segura e liga widget ao mesmo domínio",()=>{
   assert.match(js,/textContent/);
   assert.match(js,/\/api\/mercado/);
   assert.doesNotMatch(js,/localStorage|innerHTML|document\.write/);
-  assert.equal(v.outputDirectory,"public");
-  assert.equal(v.functions["api/mercado.js"].maxDuration,10);
   assert.match(JSON.stringify(v),/script-src 'self'/);
   assert.doesNotMatch(JSON.stringify(v),/unsafe-inline/);
   assert.doesNotMatch(html,/5,0523|0,050788/);

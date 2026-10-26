@@ -3,14 +3,14 @@ on:
   pull_request:
     paths:
       - 'public/**'
-      - 'vercel.json'
+      - 'infra/google_cloud/portal-security-headers.json'
       - 'tests/terminal_publico.test.js'
       - '.github/workflows/ci-terminal-web.yml'
   push:
     branches: [main]
     paths:
       - 'public/**'
-      - 'vercel.json'
+      - 'infra/google_cloud/portal-security-headers.json'
       - 'tests/terminal_publico.test.js'
       - '.github/workflows/ci-terminal-web.yml'
   workflow_dispatch:
@@ -27,7 +27,7 @@ jobs:
       - name: Verificar JavaScript e integridade do MVP
         run: |
           node --check public/assets/nivon.js
-          node --test tests/terminal_publico.test.js
+          node --test tests/terminal_publico.test.js tests_web/mercado_portal.test.cjs
       - name: Comprovar build estático, sem fontes internas expostas
         shell: bash
         run: |
@@ -42,11 +42,9 @@ jobs:
           python3 - <<'PY'
           import json
           from pathlib import Path
-          manifest=json.loads(Path('vercel.json').read_text())
-          assert manifest['outputDirectory']=='public'
-          assert manifest.get('functions') == {'api/mercado.js': {'maxDuration': 10}}
-          assert not any(k in manifest for k in ('crons','rewrites'))
+          headers=json.loads(Path('infra/google_cloud/portal-security-headers.json').read_text())
+          assert "default-src 'none'" in headers['Content-Security-Policy']
           assert Path('api/mercado.js').is_file()
           assert Path('public/assets/mercado.js').is_file()
-          print('NIVON_WEB_BCB_FUNC_ALLOWLIST_OK')
+          print('NIVON_GOOGLE_CLOUD_PORTAL_OK')
           PY
