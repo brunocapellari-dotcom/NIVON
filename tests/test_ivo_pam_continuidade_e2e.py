@@ -47,6 +47,44 @@ class TestIVOPAMContinuidadeE2E(unittest.TestCase):
         cfg.update(kw)
         return executar_ciclo_pam(**cfg)
 
+    def test_primeiro_ciclo_gera_relatorio_pam_html_e_markdown(self):
+        ciclo=self.ciclo(1,iniciar_novo=True)
+        pasta=self.root/"ciclo1"
+        html_doc=(pasta/"relatorio_pam.html").read_text(encoding="utf-8")
+        markdown=(pasta/"relatorio_pam.md").read_text(encoding="utf-8")
+        entrega=json.loads((pasta/"entrega_ivo_pam.json").read_text())
+        metadata=json.loads((pasta/"relatorio_pam_metadados.json").read_text())
+        self.assertIn("<!doctype html>",html_doc)
+        self.assertIn("IBGE / SIDRA",html_doc)
+        self.assertIn("5107958",html_doc)
+        self.assertIn("SOJA_EM_GRAO",html_doc)
+        self.assertIn("100",markdown)
+        self.assertIn("SHA-256",markdown)
+        self.assertEqual(metadata["celulas"],1)
+        self.assertEqual(metadata["alteracoes_relevantes"],0)
+        self.assertEqual(entrega["celulas_unicas"],1)
+        self.assertFalse(ciclo["treinamento_real_habilitado"])
+        self.assertFalse(metadata["referencia_data_publicacao_verificada"])
+
+    def test_segundo_ciclo_publica_alerta_material_no_relatorio(self):
+        self.ciclo(1,iniciar_novo=True)
+        self.arquivo.write_bytes(sidra(150))
+        ciclo=self.ciclo(2,arquivo_anterior=self.root/"ciclo1"/"estado_pam.zip")
+        self.assertEqual(ciclo["alertas"]["alteracoes_relevantes"],1)
+        doc=(self.root/"ciclo2"/"relatorio_pam.md").read_text(encoding="utf-8")
+        self.assertIn("VALOR_ALTERADO",doc)
+        self.assertIn("50",doc)
+        self.assertEqual(json.loads(
+            (self.root/"ciclo2"/"relatorio_pam_metadados.json").read_text())
+            ["alteracoes_relevantes"],1)
+
+    def test_recoleta_igual_nao_inventa_revisao_para_relatorio(self):
+        self.ciclo(1,iniciar_novo=True)
+        ciclo=self.ciclo(2,arquivo_anterior=self.root/"ciclo1"/"estado_pam.zip")
+        self.assertEqual(ciclo["alertas"]["alteracoes_relevantes"],0)
+        doc=(self.root/"ciclo2"/"relatorio_pam.html").read_text(encoding="utf-8")
+        self.assertIn("Nenhuma alteração de valor ou de estado",doc)
+
     def test_duas_coletas_persistem_e_revisao_real_do_mesmo_banco(self):
         a=self.ciclo(1,iniciar_novo=True)
         self.assertEqual(a["backup"]["capturas"],1)
