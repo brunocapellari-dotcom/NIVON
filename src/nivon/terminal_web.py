@@ -211,13 +211,19 @@ def servidor(state=None):
                 body=files("nivon").joinpath("portal_static",name).read_bytes()
                 self.responder(200,body,content_type)
                 return
-            if path=="/api/v1/ferrovia":
+            if path in ("/api/v1/ferrovia","/readyz"):
                 try:
                     doc=estado.obter()
                 except Exception:
                     # Jamais enviar mensagens do BigQuery, IAM ou paths internos.
                     self.responder(503,b'{"estado":"FONTE_TEMPORARIAMENTE_INDISPONIVEL"}',
                                    "application/json; charset=utf-8")
+                    return
+                if path=="/readyz":
+                    fresh=doc.get("freshness",{}).get("estado")=="DENTRO_DA_JANELA_DE_ALERTA"
+                    self.responder(200 if fresh else 503,
+                        json.dumps({"estado":"PRONTO_PARA_LEITURA" if fresh else "SOURCE_LAG"}).encode(),
+                        "application/json; charset=utf-8")
                     return
                 body=json.dumps(doc,ensure_ascii=False,default=str).encode("utf-8")
                 self.responder(200,body,"application/json; charset=utf-8")

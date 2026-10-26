@@ -195,6 +195,25 @@ class TestAPI(unittest.TestCase):
             self.assertEqual(r.status,200)
             self.assertEqual(json.load(r)["estado"],"PROCESSO_ATIVO")
 
+    def test_readiness_separada_do_health(self):
+        with urlopen(self.url+'/readyz',timeout=3) as r:
+            self.assertEqual(json.load(r)['estado'],'PRONTO_PARA_LEITURA')
+
+    def test_readiness_fonte_defasada_503_api_preserva_competencia(self):
+        data=rows();data[-1].update(ultima_competencia='2026-03',ultima_referencia=date(2026,3,1))
+        doc=interpretar_serie(data,ultimo_ano=2026,agora=NOW)
+        app=ThreadingHTTPServer(('127.0.0.1',0),servidor(TerminalState(consulta=lambda:doc)))
+        task=threading.Thread(target=app.serve_forever,daemon=True);task.start()
+        base=f'http://127.0.0.1:{app.server_port}'
+        try:
+            with urlopen(base+'/healthz',timeout=3) as r:self.assertEqual(r.status,200)
+            with self.assertRaises(HTTPError) as err:urlopen(base+'/readyz',timeout=3)
+            self.assertEqual(err.exception.code,503)
+            self.assertEqual(json.load(err.exception)['estado'],'SOURCE_LAG')
+            with urlopen(base+'/api/v1/ferrovia',timeout=3) as r:
+                self.assertEqual(json.load(r)['ultima_competencia'],'2026-03')
+        finally:app.shutdown();app.server_close();task.join(timeout=3)
+
     def test_portal_unico_assets_csp_e_modulos_sem_dados(self):
         with urlopen(self.url+"/",timeout=3) as r:
             html=r.read().decode()
