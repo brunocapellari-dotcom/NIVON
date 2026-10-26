@@ -182,5 +182,13 @@ jobs:
                       output.write("\n- NIVON_TERMINAL_EXECUTION_SA = `"+a+"`")
                   output.write("\n\nNenhum candidato foi selecionado ou ativado automaticamente.\n")
               output.write("\n\nSem build, IAM, SQL ou deploy. Custos/permissões de escrita não foram testados.\n")
+          for nome, estado in sorted(x["componentes"].items()):
+              print("NIVON_GOLIVE_GATE_"+nome.upper().replace("-","_").replace(".","_")+"="+estado)
+          c=x.get("descoberta_candidatos")
+          if c is not None:
+              print("NIVON_GOLIVE_ARTIFACT_REGISTRY_DESCOVERY="+c["consulta_artifact_registry"])
+              print("NIVON_GOLIVE_EXISTING_DOCKER_REPOS="+str(c["repositorios_encontrados"]))
+              print("NIVON_GOLIVE_SA_DISCOVERY="+c["consulta_service_accounts"])
+              print("NIVON_GOLIVE_EXISTING_SERVICE_ACCOUNTS="+str(c["contas_encontradas"]))
           print("NIVON_CLOUD_RUN_PREFLIGHT="+x["proxima_acao"])
           PY
