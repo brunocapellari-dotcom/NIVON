@@ -34,3 +34,36 @@
 **Critério para publicação privada:** CI E2E aprovada; deploy autenticado em Cloud Run; IAM restrito; endpoint real respondendo; retorno com versão/competência/fonte e sem dados fabricados; nenhum custo ou permissão além do aprovado.
 
 **Extensões seguintes após go-live:** preços físicos, CBOT, PTAX, fretes e line-up somente quando as consultas canônicas e as licenças estiverem reconciliadas. O terminal modular aceita novas seções sem redesenhar autenticação.
+
+
+## Critério de aceite técnico automático após o deploy privado
+
+O procedimento `scripts/deploy_terminal_privado.sh` continua **manual**, acionado exclusivamente por `workflow_dispatch` na `main`, com `confirmar_deploy=true` e as duas autorizações distintas `NIVON_GO_LIVE_DEPLOY_APPROVED=true` e `NIVON_GCP_COST_REVIEWED=true`. Isso pode consumir recursos faturáveis; não supor gratuidade.
+
+Após o deploy, o workflow `.github/workflows/nivon-terminal-go-live.yml` invoca **`scripts/aceitar_terminal_privado.sh`** como segundo gate, sob a mesma sessão WIF explicitamente autorizada:
+
+1. Recupera os metadados do serviço e o IAM efetivo (`gcloud run services describe` e `get-iam-policy`), sem alteração de permissões.
+2. Rejeita URL diferente de HTTPS padrão `*.run.app`, recurso de outro projeto, service account externa, revisão não Ready, tráfego diferente de 100% na revisão testada ou imagem cuja tag não corresponda ao commit exato.
+3. Confirma que o serviço **não** permite `allUsers` / `allAuthenticatedUsers` em `roles/run.invoker`; uma chamada sem token ao `/healthz` deve resultar em HTTP **401 ou 403**.
+4. Emite identity token **apenas em memória** pela identidade WIF autorizada; chama `/healthz` e `/api/v1/ferrovia` com autenticação. Se a conta do job não possuir `roles/run.invoker`, o aceite falha: a permissão mínima deve ser aprovada por administrador, nunca concedida automaticamente pelo workflow.
+5. Reconciliam-se anos 2006 até o ano corrente, totais de toneladas e registros, competência mais recente, data de coleta, rótulos de observação e a restrição de **250 MB processados por consulta**. Não basta que `/healthz` esteja ativo ou que HTML abra: o endpoint BigQuery deve funcionar e a resposta não pode conter valores inventados.
+6. O resultado resumido marca `GO_LIVE_PRIVADO_01_ACEITE_TECNICO`, informa URL e revisão **privadas**, sem imprimir credenciais nem corpo original da consulta. Nenhum dado CEPEA/IMEA, AIS inferido, frete anunciado ou meteorologia shadow é promovido.
+7. A prova atesta um **aceite técnico no instante do teste**, não estabilidade contínua, custo zero, direitos de fontes futuras ou acesso concedido automaticamente a outros usuários.
+
+O teste de aceitação não roda em `push` ou PR, não faz BigQuery read real durante CI offline e **não** dispensa o gate de custo. O Cloud Run pode ter sido criado antes de um smoke falhar; um deploy concluído **sem aceite** não é anunciado como go-live.
+
+### Recuperação/rollback
+
+`scripts/rollback_terminal_privado.sh` é preparado para execução humana somente na `main`. Requer:
+`NIVON_ROLLBACK_APPROVED=true`,
+`NIVON_GO_LIVE_DEPLOY_APPROVED=true`,
+`NIVON_GCP_COST_REVIEWED=true` e uma
+`NIVON_ROLLBACK_TARGET_REVISION` existente e Ready no serviço `nivon-terminal`.
+
+A operação altera **somente o tráfego** para uma revisão previamente aprovada por `gcloud run services update-traffic --to-revisions=REVISAO=100`. Não muda IAM nem elimina a revisão defeituosa automaticamente. A mudança exige credenciais/IAM autorizados, custos revisados e verificação autenticada posterior. Não executar rollback sem revisão-alvo comprovada.
+
+### Decisão arquitetural para go-live 0.1
+
+**Único runtime web implantado:** `nivon.terminal_web` no Cloud Run `nivon-terminal`, iniciado com ANTT/SIADE. O `portal_interno.py` já presente na `main` continua como consumidor/gerador de snapshot privado em evolução, **não** como segundo servidor exposto no primeiro deploy. Isso evita duplicar autenticação, service account, endpoint, custos e monitoramento.
+
+**Ponto exato ainda pendente:** não há evidência nesta PR de URL Cloud Run implantada e acessível, nem de IAM runtime efetivo ou do custo real de build/consulta. O operador responsável deve revisar recursos/custos/identidades existentes e fazer o dispatch aprovado. Sem essas evidências, o estado correto é **CANDIDATA_DE_GO_LIVE**, nunca `LIVE`.
