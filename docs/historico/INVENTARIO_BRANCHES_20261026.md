@@ -111,23 +111,23 @@
 | `feat/migracao-neon-para-gcp-20261023` | 20261023 | NÃO MESCLADA — 12 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/nivon-ais-geocercas-evidencia-inferida-20261025` | 20261025 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
 | `feat/nivon-ais-ledger-replay-e2e-20261025` | 20261025 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
-| `feat/nivon-catalogo-total-github-20261026` | 20261026 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/nivon-go-live-painel-interno-gcs-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/nivon-go-live-rotina-dias-uteis-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/nivon-ia-evidencias-ci-20261026` | 20261026 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/nivon-ia-pilotos-operacionais-20261026` | 20261026 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/nivon-maritime-readonly-bigquery-panel-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/nivon-painel-integrado-logistica-maritimo-quant-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/nivon-terminal-interno-golive-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/nivon-terminal-privado-go-live-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/nivon-terminal-web-go-live-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/nivon-web-mvp-real-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/painel-trimodal-2025-fonte-hidrovia-isolada-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/piloto-gcp-wdi-e2e-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/portal-gcs-cloudrun-privado-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/preflight-golive-cloudrun-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/prova-real-sgs-gcp-fontes-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/ptax-bcb-agendamento-wif-escritor-unico-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/nivon-catalogo-total-github-20261026` | 20261026 | NÃO MESCLADA — 7 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/nivon-go-live-painel-interno-gcs-20261025` | 20261025 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
+| `feat/nivon-go-live-rotina-dias-uteis-20261025` | 20261025 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
+| `feat/nivon-ia-evidencias-ci-20261026` | 20261026 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/nivon-ia-pilotos-operacionais-20261026` | 20261026 | NÃO MESCLADA — 7 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/nivon-maritime-readonly-bigquery-panel-20261023` | 20261023 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
+| `feat/nivon-painel-integrado-logistica-maritimo-quant-20261023` | 20261023 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
+| `feat/nivon-terminal-interno-golive-20261025` | 20261025 | NÃO MESCLADA — 9 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/nivon-terminal-privado-go-live-20261025` | 20261025 | NÃO MESCLADA — 9 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/nivon-terminal-web-go-live-20261025` | 20261025 | NÃO MESCLADA — 6 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/nivon-web-mvp-real-20261025` | 20261025 | NÃO MESCLADA — 6 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/painel-trimodal-2025-fonte-hidrovia-isolada-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/piloto-gcp-wdi-e2e-20261023` | 20261023 | NÃO MESCLADA — 6 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/portal-gcs-cloudrun-privado-20261025` | 20261025 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
+| `feat/preflight-golive-cloudrun-20261025` | 20261025 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/prova-real-sgs-gcp-fontes-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/ptax-bcb-agendamento-wif-escritor-unico-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/series-corredores-antt-bigquery-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
 | `feat/sisfogo-roi-fonte-oficial-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
 | `feat/soilgrids-embrapa-solos-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
