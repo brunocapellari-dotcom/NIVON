@@ -1,0 +1,10 @@
+FROM python:3.11-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /app
+COPY pyproject.toml ./
+COPY src ./src
+RUN python -m pip install --no-cache-dir '.[gcp]' 'gunicorn==23.0.0'
+USER 65532:65532
+EXPOSE 8080
+# Cloud Run MUST enforce IAM private access, never --allow-unauthenticated.
+CMD ["gunicorn","nivon.terminal_ro:application","--bind","0.0.0.0:8080","--workers","1","--threads","4","--timeout","210","--access-logfile","-"]
