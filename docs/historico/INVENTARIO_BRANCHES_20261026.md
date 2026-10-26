@@ -162,23 +162,23 @@
 | `fix/auditoria-gcp-diaria-sem-escrita-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
 | `fix/bigquery-merge-particoes-custo-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
 | `fix/cepea-estado-ledger-verificado-20261025` | 20261025 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/formatos-reais-noaa-gtr-wb-esa-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/gcp-auditoria-estado-por-tabela-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/gcp-auditoria-schema-integral-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/gcp-preflight-particao-e-regiao-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/gcp-provider-canonico-migracoes-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/gcp-regiao-inventario-destinos-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/go-live-cloudrun-authenticated-acceptance-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/go-live-controlar-gcp-execucoes-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/go-live-descoberta-recursos-existentes-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/go-live-estado-bloqueios-log-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/go-live-terminal-container-e2e-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/golive-gate-sha-atual-e-preflight-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/golive-gate-smoke-auth-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/golive-p0-piloto-gcp-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/golive-readonly-staging-opcional-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/monitor-p0-main-codigo-atual-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/nivon-gcp-migracao-controle-operacional-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/formatos-reais-noaa-gtr-wb-esa-20261021` | 20261021 | NÃO MESCLADA — 453 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/gcp-auditoria-estado-por-tabela-20261025` | 20261025 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/gcp-auditoria-schema-integral-20261025` | 20261025 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/gcp-preflight-particao-e-regiao-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/gcp-provider-canonico-migracoes-20261023` | 20261023 | NÃO MESCLADA — 12 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/gcp-regiao-inventario-destinos-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/go-live-cloudrun-authenticated-acceptance-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/go-live-controlar-gcp-execucoes-20261025` | 20261025 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
+| `fix/go-live-descoberta-recursos-existentes-20261025` | 20261025 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/go-live-estado-bloqueios-log-20261025` | 20261025 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/go-live-terminal-container-e2e-20261025` | 20261025 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/golive-gate-sha-atual-e-preflight-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/golive-gate-smoke-auth-20261025` | 20261025 | NÃO MESCLADA — 9 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/golive-p0-piloto-gcp-20261025` | 20261025 | NÃO MESCLADA — 6 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/golive-readonly-staging-opcional-20261025` | 20261025 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
+| `fix/monitor-p0-main-codigo-atual-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/nivon-gcp-migracao-controle-operacional-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
 | `fix/nivon-go-live-gcs-append-only-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
 | `fix/noaa-mei-missing-sentinel-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
 | `fix/open-meteo-ensemble-control-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
