@@ -8,7 +8,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from nivon.antaq_secundaria_gcp_2025 import (
-    preparar_lote,persistir,HF_COMMIT,FIELDS
+    preparar_lote,persistir,baixar_revisao_fixada,HF_COMMIT,FIELDS
 )
 from nivon.antaq_replica_hidrovia import ErroReplicaANTAQ
 
@@ -132,6 +132,36 @@ class Replica2025(unittest.TestCase):
         self.assertIn("terceiro",a["bq_tabela"])
         self.assertFalse(a["disponivel_na_camada_oficial"])
         self.assertTrue(all(s.startswith("SELECT ") and cap==60000000 for s,cap in cli.sqls))
+
+    def test_cache_hf_resolve_symlink_legitimo_com_revisao_fixa(self):
+        with tempfile.TemporaryDirectory() as root:
+            cache=Path(root)/"datasets--vinicius-souza--antaq"
+            blob=cache/"blobs"/"objeto"
+            blob.parent.mkdir(parents=True)
+            blob.write_bytes(b"X"*200)
+            refs=cache/"snapshots"/HF_COMMIT
+            refs.mkdir(parents=True)
+            simb=refs/"data.parquet"
+            simb.symlink_to(blob)
+            calls=[]
+            def mocked(**kwargs):
+                calls.append(kwargs)
+                return str(simb)
+            with patch.dict("sys.modules",{"huggingface_hub":SimpleNamespace(hf_hub_download=mocked)}):
+                p=baixar_revisao_fixada()
+            self.assertEqual(p["hidrovia"],str(blob))
+            self.assertEqual(p["carga"],str(blob))
+            self.assertEqual(len(calls),2)
+            self.assertTrue(all(c["revision"]==HF_COMMIT for c in calls))
+
+    def test_cache_hf_rejeita_arquivo_fora_do_dataset(self):
+        with tempfile.TemporaryDirectory() as root:
+            p=Path(root)/"estranho.parquet"
+            p.write_bytes(b"X"*200)
+            with patch.dict("sys.modules",{
+                "huggingface_hub":SimpleNamespace(hf_hub_download=lambda **_:str(p))}):
+                with self.assertRaisesRegex(ErroReplicaANTAQ,"cache esperado"):
+                    baixar_revisao_fixada()
 
     def test_nunca_gravar_com_tag_oficial(self):
         rows,p=self.montar()

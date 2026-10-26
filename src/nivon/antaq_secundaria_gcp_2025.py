@@ -139,11 +139,21 @@ def preparar_lote(hidrovia, carga, *, collected_at: datetime):
 
 def baixar_revisao_fixada():
     from huggingface_hub import hf_hub_download
-    return {
-        k: hf_hub_download(repo_id=HF_REPO, repo_type="dataset",
-                           filename=v, revision=HF_COMMIT)
-        for k, v in ARQUIVOS.items()
-    }
+    # huggingface_hub devolve links simbolicos internos do cache. Resolver
+    # somente o objeto do commit fixado; _digest bloqueia symlinks de entrada
+    # e exige arquivo regular dentro do limite de 65MB.
+    resultado = {}
+    for k, v in ARQUIVOS.items():
+        path = Path(hf_hub_download(
+            repo_id=HF_REPO, repo_type="dataset",
+            filename=v, revision=HF_COMMIT))
+        resolved = path.resolve(strict=True)
+        if (not resolved.is_file() or resolved.is_symlink()
+                or "datasets--vinicius-souza--antaq" not in resolved.parts
+                or not 100 <= resolved.stat().st_size <= 65_000_000):
+            raise ErroReplicaANTAQ("arquivo HF fora de cache esperado ou tamanho inseguro")
+        resultado[k] = str(resolved)
+    return resultado
 
 
 def persistir(rows, plano, *, cliente=None, sdk=None, not_found=None):
