@@ -41,7 +41,7 @@ class ErroAgrobrMercados(ValueError):
     pass
 
 
-def _numero(v, *, obrigatorio=False):
+def _numero(v, *, obrigatorio=False, permitir_negativo=False):
     """Número decimal não negativo, ausente permanece ausente."""
     if v is None or isinstance(v, bool):
         if obrigatorio:
@@ -58,7 +58,7 @@ def _numero(v, *, obrigatorio=False):
         d = Decimal(texto)
     except (InvalidOperation, ValueError) as exc:
         raise ErroAgrobrMercados("valor fora do contrato decimal") from exc
-    if not d.is_finite() or d < 0:
+    if not d.is_finite() or (d < 0 and not permitir_negativo):
         raise ErroAgrobrMercados("valor negativo/não-finito")
     return format(d, "f")
 
@@ -194,9 +194,10 @@ def _normalizar_cftc(produto, rows, meta, *, inicio, fim):
         if (d, contrato) in chaves:
             raise ErroAgrobrMercados("chave CFTC semanal duplicada")
         chaves.add((d, contrato))
-        medidas = {m: _numero(r.get(m), obrigatorio=True) for m in METRICAS_CFTC}
+        medidas = {m: _numero(r.get(m), obrigatorio=True,
+                             permitir_negativo=(m == "fundos_saldo"))
+                   for m in METRICAS_CFTC}
         if Decimal(medidas["fundos_saldo"]) != (Decimal(medidas["fundos_compra"]) - Decimal(medidas["fundos_venda"])):
-            # saldo líquido pode ser negativo; tratado separadamente abaixo
             raise ErroAgrobrMercados("saldo dos fundos não reconcilia")
         for metrica, val in medidas.items():
             observacoes.append({
