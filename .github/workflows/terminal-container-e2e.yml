@@ -1,0 +1,56 @@
+name: NIVON - Go-live contêiner Cloud Run smoke E2E
+
+on:
+  pull_request:
+    paths:
+      - 'src/nivon/terminal_web.py'
+      - 'src/nivon/antt_bigquery.py'
+      - 'src/nivon/transporte_multimodal.py'
+      - 'infra/google_cloud/Dockerfile.terminal'
+      - 'scripts/smoke_terminal_container.py'
+      - '.github/workflows/terminal-container-e2e.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-terminal-container-smoke-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-e-http:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout sem token reutilizável
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Buildar exata imagem de Cloud Run sem deploy
+        run: docker build --file infra/google_cloud/Dockerfile.terminal --tag nivon-terminal-smoke:ci .
+      - name: Iniciar contêiner restrito e exercitar HTTP real
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --detach \
+            --name nivon-terminal-smoke-ci \
+            --read-only \
+            --cap-drop=ALL \
+            --security-opt=no-new-privileges \
+            --pids-limit=64 \
+            --memory=512m --cpus=1 \
+            --tmpfs /tmp:rw,noexec,nosuid,size=16m \
+            --publish 127.0.0.1:18765:8080 \
+            --env NIVON_BQ_PROJECT=nivon-data \
+            --env NIVON_BQ_DATASET=nivon_raw \
+            --env GOOGLE_APPLICATION_CREDENTIALS=/tmp/nivon-credentials-inexistentes.json \
+            nivon-terminal-smoke:ci
+          python scripts/smoke_terminal_container.py --url http://127.0.0.1:18765
+      - name: Limpar contêiner de smoke
+        if: always()
+        run: docker rm --force nivon-terminal-smoke-ci || true
