@@ -121,6 +121,7 @@ class PortalTests(unittest.TestCase):
             self.assertEqual(request(app,"/")[0],"200 OK")
             self.assertEqual(request(app,"/assets/portal.js")[0],"200 OK")
             snapshot=montar_snapshot(amostra(),gerado_em=CUT)
+            snapshot["gerado_em"] = (datetime.now(timezone.utc)-timedelta(days=2)).isoformat()
             path.write_text(json.dumps(snapshot),encoding="utf-8")
             code, hdr, body = request(app,"/api/v1/painel")
             self.assertEqual(code,"200 OK")
