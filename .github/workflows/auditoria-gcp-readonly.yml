@@ -80,9 +80,16 @@ jobs:
           with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as saida:
               saida.write('### NIVON — auditoria BigQuery/GCS somente leitura\n\n')
               saida.write('Região: São Paulo. Nenhum SQL, upload, custo de consulta ou alteração de recursos.\n\n')
-              saida.write('| Tabela | Existe | Contrato | Partição |\n|---|---|---|---|\n')
+              saida.write('| Tabela | Existe | Schema integral | Partição + filtro | Clustering |\n|---|---|---|---|---|\n')
               for t in tabelas:
-                  saida.write(f"| {t['tabela']} | {t['existe']} | {t['schema_conforme']} | {t['particao_conforme']} |\n")
+                  resumo={key:t.get(key) for key in (
+                      'tabela','existe','schema_conforme',
+                      'particao_conforme','cluster_conforme',
+                      'colunas_pendentes_ou_incorretas')}
+                  print('NIVON_GCP_TABELA='+json.dumps(resumo,ensure_ascii=False,sort_keys=True))
+                  saida.write(
+                      f"| {t['tabela']} | {t['existe']} | {t['schema_conforme']} | "
+                      f"{t['particao_conforme']} | {t['cluster_conforme']} |\n")
               saida.write('\n**Isto não comprova permissão de escrita, carga nem atualização de dados.**\n')
           print('NIVON_GCP_DESTINOS='+('ESQUEMAS_EXISTENTES' if validas else 'PENDENTES'))
           PY
