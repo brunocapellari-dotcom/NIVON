@@ -47,23 +47,23 @@
 | `feat/antt-2025-readonly-gcp-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente |2026-10-23T17:51:29Z — RECENTE |
 | `feat/antt-2026-primeira-carga-unica-gcp-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-23T16:01:18Z — MAIS DE 3 DIAS |
 | `feat/antt-anuario-rgi-20261023` | 20261023 | NÃO MESCLADA — 15 commit(s) à frente |2026-10-23T11:22:44Z — MAIS DE 3 DIAS |
-| `feat/antt-auditoria-historico-bq-21anos-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/antt-backfill-2006-2021-cargas-limitadas-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/antt-backfill-2022-2025-gcp-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/antt-mdfe-volumes-od-20261022` | 20261022 | NÃO MESCLADA — 16 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/antt-piloto-gcp-preparacao-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/antt-rgi-gcp-rebased-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/antt-rgi-rodovia-gcp-top16-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/antt-vigia-revisoes-gcp-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/apis-flood-ensemble-fao-fpma-20261021` | 20261021 | NÃO MESCLADA — 459 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/argentina-magyp-live-evidencia` | sem data | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/bcb-focus-expectativas-20261021` | 20261021 | NÃO MESCLADA — 449 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/bcb-sgs11-gcp-main-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/bibliotecas-coleta-avancada-20261026` | 20261026 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/bootstrap-acessos-protegidos-main-20261021` | 20261021 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
-| `feat/bootstrap-duas-tabelas-gcp-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/brasilapi-refs-nivon-20261021` | 20261021 | NÃO MESCLADA — 443 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/catalogo-fontes-gratuitas-20261021` | 20261021 | NÃO MESCLADA — 451 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/antt-auditoria-historico-bq-21anos-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente |2026-10-23T18:11:51Z — RECENTE |
+| `feat/antt-backfill-2006-2021-cargas-limitadas-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente |2026-10-23T17:56:35Z — RECENTE |
+| `feat/antt-backfill-2022-2025-gcp-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente |2026-10-23T17:51:21Z — RECENTE |
+| `feat/antt-mdfe-volumes-od-20261022` | 20261022 | NÃO MESCLADA — 16 commit(s) à frente |2026-10-23T03:24:57Z — MAIS DE 3 DIAS |
+| `feat/antt-piloto-gcp-preparacao-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente |2026-10-23T15:50:55Z — MAIS DE 3 DIAS |
+| `feat/antt-rgi-gcp-rebased-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-23T19:06:22Z — RECENTE |
+| `feat/antt-rgi-rodovia-gcp-top16-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente |2026-10-23T19:03:57Z — RECENTE |
+| `feat/antt-vigia-revisoes-gcp-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente |2026-10-23T19:04:39Z — RECENTE |
+| `feat/apis-flood-ensemble-fao-fpma-20261021` | 20261021 | NÃO MESCLADA — 459 commit(s) à frente |2026-10-21T21:15:31Z — MAIS DE 3 DIAS |
+| `feat/argentina-magyp-live-evidencia` | sem data | NÃO MESCLADA — 2 commit(s) à frente |2026-10-26T01:54:48Z — RECENTE |
+| `feat/bcb-focus-expectativas-20261021` | 20261021 | NÃO MESCLADA — 449 commit(s) à frente |2026-10-21T19:42:41Z — MAIS DE 3 DIAS |
+| `feat/bcb-sgs11-gcp-main-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente |2026-10-23T17:58:53Z — RECENTE |
+| `feat/bibliotecas-coleta-avancada-20261026` | 20261026 | NÃO MESCLADA — 4 commit(s) à frente |2026-10-26T15:40:03Z — RECENTE |
+| `feat/bootstrap-acessos-protegidos-main-20261021` | 20261021 | MESCLADA — ancestral da main |2026-10-21T17:42:23Z — MAIS DE 3 DIAS |
+| `feat/bootstrap-duas-tabelas-gcp-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente |2026-10-23T19:00:07Z — RECENTE |
+| `feat/brasilapi-refs-nivon-20261021` | 20261021 | NÃO MESCLADA — 443 commit(s) à frente |2026-10-21T17:30:50Z — MAIS DE 3 DIAS |
+| `feat/catalogo-fontes-gratuitas-20261021` | 20261021 | NÃO MESCLADA — 451 commit(s) à frente |2026-10-21T18:30:55Z — MAIS DE 3 DIAS |
 | `feat/coleta-gcp-nucleo-main-20261023` | 20261023 | NÃO MESCLADA — 26 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/coleta-real-camadas-20261022` | 20261022 | NÃO MESCLADA — 629 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/coletores-apis-gratuitas-reais-20261021` | 20261021 | NÃO MESCLADA — 447 commit(s) à frente | PENDENTE — conferir commit |
