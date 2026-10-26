@@ -1,0 +1,118 @@
+name: NIVON - Hidrovia secundaria 2025 no BigQuery
+on:
+  pull_request:
+    paths:
+      - 'src/nivon/antaq_secundaria_gcp_2025.py'
+      - 'tests/test_antaq_secundaria_gcp_2025.py'
+      - '.github/workflows/nivon-antaq-secundaria-gcp-2025.yml'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/nivon-antaq-secundaria-gcp-2025.yml'
+  workflow_dispatch:
+    inputs:
+      aceitar_fonte_secundaria:
+        description: 'Carga isolada de replica HF 2025, sem homologacao da ANTAQ'
+        required: true
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: nivon-antaq-replica-terceiro-2025
+  cancel-in-progress: false
+
+jobs:
+  testar-contrato:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Validar isolamentos, SHA, unicidade e nao aditividade
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m compileall -q src/nivon/antaq_secundaria_gcp_2025.py
+          python -m unittest discover -s tests -p 'test_antaq_secundaria_gcp_2025.py' -v
+          python -m unittest discover -s tests -p 'test_antaq_replica_detalhe.py' -v
+
+  publicar-somente-terceiro:
+    needs: testar-contrato
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && inputs.aceitar_fonte_secundaria == true))
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      PYTHONPATH: src
+      NIVON_PROJETO: ${{ vars.NIVON_BQ_PROJECT }}
+      NIVON_DATASET: ${{ vars.NIVON_BQ_DATASET }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Verificar projeto, dataset, proveniencia e limites
+        run: |
+          set -euo pipefail
+          test "$NIVON_PROJETO" = 'nivon-data'
+          test "$NIVON_DATASET" = 'nivon_raw'
+          python - <<'PY'
+          from nivon.antaq_secundaria_gcp_2025 import HF_COMMIT,PROJECT,DATASET,ARQUIVOS
+          assert PROJECT=='nivon-data' and DATASET=='nivon_raw'
+          assert len(HF_COMMIT)==40 and set(ARQUIVOS)=={'hidrovia','carga'}
+          PY
+      - name: Identidade temporaria do Google Cloud
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ vars.NIVON_BQ_PROJECT }}
+          create_credentials_file: true
+      - name: Instalar analisador local e SDK BigQuery
+        run: |
+          python -m pip install --disable-pip-version-check --quiet 'duckdb>=1.2,<2' 'huggingface_hub>=0.30,<2' 'google-cloud-bigquery>=3,<4'
+      - name: Obter parquets de revisao FIXA e gravar so tabela separada
+        run: |
+          python -m nivon.antaq_secundaria_gcp_2025 \
+            --live --aceitar-fonte-terceira \
+            --saida "$RUNNER_TEMP/antaq-terceiro-2025-prova.json"
+      - name: Registrar auditoria da origem e lacuna oficial
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          x=json.loads((Path(os.environ['RUNNER_TEMP'])/'antaq-terceiro-2025-prova.json').read_text(encoding='utf8'))
+          assert x['estado']=='ANTAQ_REPLICA_SECUNDARIA_2025_BQ_CONCILIADA'
+          assert not x['fonte_direta_antaq'] and not x['aditividade_rio_confirmada']
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf8') as f:
+              f.write('### NIVON: réplica histórica ANTAQ 2025 no BigQuery (TERCEIRO)\n\n')
+              f.write(f"**{x['linhas_conciliadas']} grupos navegação interior por rio/produto/sentido**.\n\n")
+              f.write(f"Status: {x['estado']} / {x['classificacao']}\n\n")
+              f.write(f"Revisão HF fixada: {x['hf_revision']}\n\n")
+              f.write(f"SHA Carga_Hidrovia: {x['sha256_hidrovia']}\n\n")
+              f.write(f"SHA Carga: {x['sha256_carga']}\n\n")
+              f.write(f"Interior por IDCarga ÚNICA na réplica: {x['toneladas_navegacao_interior_idcarga_unica']} t.\n\n")
+              f.write(f"Com identificação por hidrovia: {x['toneladas_com_hidrovia_identificada_idcarga_unica']} t.\n\n")
+              f.write('**NÃO é total oficial homologado. NÃO somar rios nem criar transbordos inferidos.**\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: success()
+        with:
+          name: nivon-antaq-hf-secundario-2025-${{ github.run_id }}
+          path: ${{ runner.temp }}/antaq-terceiro-2025-prova.json
+          retention-days: 90
+      - name: Descartar relatorio temporario
+        if: always()
+        run: rm -f "$RUNNER_TEMP/antaq-terceiro-2025-prova.json"
