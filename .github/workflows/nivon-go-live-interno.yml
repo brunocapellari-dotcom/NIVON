@@ -51,10 +51,11 @@ jobs:
     needs: qualidade
     if: >-
       github.ref == 'refs/heads/main' &&
-      (github.event_name == 'push' ||
-      (github.event_name == 'workflow_dispatch' && inputs.publicar == true) ||
-      (github.event_name == 'schedule' &&
-       vars.NIVON_PAINEL_INTERNO_AGENDADO != 'false'))
+      vars.NIVON_PAINEL_INTERNO_WRITE_APPROVED == 'true' &&
+      vars.NIVON_GCP_COST_REVIEWED == 'true' &&
+      ((github.event_name == 'workflow_dispatch' && inputs.publicar == true) ||
+       (github.event_name == 'schedule' &&
+        vars.NIVON_PAINEL_INTERNO_AGENDADO == 'true'))
     runs-on: ubuntu-latest
     timeout-minutes: 12
     permissions:
