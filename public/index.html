@@ -8,6 +8,7 @@
   <title>NIVON | Centro de Operações</title>
   <link rel="stylesheet" href="/assets/nivon.css">
   <script src="/assets/nivon.js" defer></script>
+  <script src="/assets/mercado.js" defer></script>
 </head>
 <body>
   <div class="shell">
@@ -53,6 +54,21 @@
           <span id="network-label">Conectando ao registro de execuções…</span>
           <span id="updated-at" class="updated"></span>
         </div>
+        <section class="section market-section" id="mercado" aria-label="Indicadores oficiais de mercado">
+          <div class="section-head"><div>
+            <p class="eyebrow">MERCADO / BANCO CENTRAL</p>
+            <h2>Indicadores econômicos oficiais</h2>
+            <p>Valores de referência do BCB/SGS, com data própria. Dólar SGS 1 não deve ser confundido com cotação negociada ou PTAX oficial.</p>
+          </div></div>
+          <div class="market-grid">
+            <article class="market-card"><span class="market-label">Dólar de venda • Série SGS 1</span>
+              <strong id="mkt-usd-value">—</strong><small id="mkt-usd-meta">Aguardando fonte oficial</small></article>
+            <article class="market-card"><span class="market-label">Selic efetiva diária • Série SGS 11</span>
+              <strong id="mkt-selic-value">—</strong><small id="mkt-selic-meta">Aguardando fonte oficial</small></article>
+          </div>
+          <p id="mkt-status" role="status" aria-live="polite" class="market-status">Leitura de mercado ainda não executada.</p>
+          <p class="market-note">Fonte: <a href="https://www.bcb.gov.br/" rel="noopener noreferrer" target="_blank">Banco Central do Brasil</a>. Valor ausente não é zero; SOURCE_LAG indica defasagem. Estes números não comprovam atualização da base Google Cloud.</p>
+        </section>
         <section class="kpis" aria-label="Indicadores de operação">
           <div class="kpi"><span>Integrações monitoradas</span><strong id="kpi-total">—</strong><small>Fluxos com evidência encontrada</small></div>
           <div class="kpi"><span>Últimas execuções aprovadas</span><strong id="kpi-success">—</strong><small>Sucesso de workflow, não de dados</small></div>

@@ -57,6 +57,6 @@ test("página não embute scripts externos, dados fictícios nem chaves",()=>{
   const html=fs.readFileSync(path.join(root,"public/index.html"),"utf8");
   assert.match(html,/src="\/assets\/nivon\.js"/);
   assert.match(html,/execução bem-sucedida não confirma dado novo/i);
-  assert.doesNotMatch(html,/<iframe|<script(?![^>]*src="\/assets\/nivon\.js")/i);
+  assert.doesNotMatch(html,/<iframe|<script(?![^>]*src="\/assets\/(?:nivon|mercado)\.js")/i);
   assert.doesNotMatch(html,/apikey|private_key|client_secret/i);
 });
