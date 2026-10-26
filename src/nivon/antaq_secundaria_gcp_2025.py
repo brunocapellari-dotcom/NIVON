@@ -148,10 +148,15 @@ def baixar_revisao_fixada():
             repo_id=HF_REPO, repo_type="dataset",
             filename=v, revision=HF_COMMIT))
         resolved = path.resolve(strict=True)
-        if (not resolved.is_file() or resolved.is_symlink()
-                or "datasets--vinicius-souza--antaq" not in resolved.parts
-                or not 100 <= resolved.stat().st_size <= 65_000_000):
-            raise ErroReplicaANTAQ("arquivo HF fora de cache esperado ou tamanho inseguro")
+        regular = resolved.is_file() and not resolved.is_symlink()
+        dentro_cache = "datasets--vinicius-souza--antaq" in resolved.parts
+        tamanho = resolved.stat().st_size if regular else -1
+        if not regular or not dentro_cache or not 100 <= tamanho <= 65_000_000:
+            # Apenas booleans/tamanhos: nunca divulgar caminho local,
+            # credenciais, conteudo dos parquets ou URL assinada.
+            raise ErroReplicaANTAQ(
+                f"HF_OBJETO_REJEITADO:{k}:regular={regular}:"
+                f"cache_esperado={dentro_cache}:bytes={tamanho}")
         resultado[k] = str(resolved)
     return resultado
 
