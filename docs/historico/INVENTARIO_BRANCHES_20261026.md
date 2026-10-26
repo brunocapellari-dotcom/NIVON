@@ -77,23 +77,23 @@
 | `feat/corredores-primeira-view-bq-real-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/earthsearch-usda-gtr-bases-20261021` | 20261021 | NÃO MESCLADA — 453 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/eurostat-faostat-qcl-api-20261021` | 20261021 | NÃO MESCLADA — 460 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/expansao-50-fontes-20261022` | 20261022 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/faostat-bulk-manifest-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/faostat-qcl-bigquery-contract-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/faostat-qcl-stream-sqlite-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/fontes-complementares-glam-wapor-portwatch-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/fontes-ibge-worldbank-operacionais-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/gcp-ativacao-carga-integrada-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/gcp-bootstrap-tabelas-consolidadas-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/gcp-main-integracao-resiliente-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/gcp-preflight-iam-readonly-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/gcp-readonly-infra-audit-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/gcp-wif-smoke-leitura-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/go-live-portal-interno-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/go-live-terminal-interno-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/go-live-terminal-leitura-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/go-live-terminal-ptax-gcp-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/hidromet-fontes-publicas-power-glofas-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/expansao-50-fontes-20261022` | 20261022 | NÃO MESCLADA — 549 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/faostat-bulk-manifest-20261021` | 20261021 | NÃO MESCLADA — 460 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/faostat-qcl-bigquery-contract-20261021` | 20261021 | NÃO MESCLADA — 464 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/faostat-qcl-stream-sqlite-20261021` | 20261021 | NÃO MESCLADA — 461 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/fontes-complementares-glam-wapor-portwatch-20261021` | 20261021 | NÃO MESCLADA — 453 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/fontes-ibge-worldbank-operacionais-20261023` | 20261023 | NÃO MESCLADA — 16 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/gcp-ativacao-carga-integrada-20261025` | 20261025 | NÃO MESCLADA — 6 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/gcp-bootstrap-tabelas-consolidadas-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/gcp-main-integracao-resiliente-20261023` | 20261023 | NÃO MESCLADA — 62 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/gcp-preflight-iam-readonly-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/gcp-readonly-infra-audit-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/gcp-wif-smoke-leitura-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/go-live-portal-interno-20261025` | 20261025 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
+| `feat/go-live-terminal-interno-20261025` | 20261025 | NÃO MESCLADA — 11 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/go-live-terminal-leitura-20261025` | 20261025 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/go-live-terminal-ptax-gcp-20261025` | 20261025 | NÃO MESCLADA — 11 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/hidromet-fontes-publicas-power-glofas-20261021` | 20261021 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
 | `feat/integracoes-ia-p0-p2-optin-20261026` | 20261026 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
 | `feat/integracoes-lineup-nacional-20261019` | 20261019 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
 | `feat/inteligencia-corredores-intermodais-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
