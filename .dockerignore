@@ -1,0 +1,7 @@
+# Contexto mínimo: nenhum .git, arquivo de usuário, dados ou credenciais.
+*
+!Dockerfile
+!src/
+!src/**
+!config/
+!config/**
