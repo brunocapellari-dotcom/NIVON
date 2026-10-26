@@ -136,6 +136,26 @@ class PortalTests(unittest.TestCase):
             self.assertEqual(request(app,"/readyz")[0],"200 OK")
             self.assertEqual(json.loads(request(app,"/api/v1/painel")[2])["frescor_snapshot"],"ATUAL")
 
+    def test_portwatch_estimado_nao_e_fluxo_real(self):
+        x = amostra()
+        x["fontes_maritimas_bigquery"] = [{
+            "executado": True, "publicavel": False, "as_of": CUT,
+            "fonte": None, "passagem": "panama",
+            "estado": "PORTWATCH_TRANSITOS_ESTIMADOS_SHADOW",
+            "transitos_ais_reportados": 6,
+            "volume_movimentado_real": None,
+            "transitos_portuarios_confirmados": None,
+            "inicio": "2026-10-01", "fim": "2026-10-25",
+        }]
+        r = montar_snapshot(x,gerado_em=CUT)
+        i = next(z for z in r["indicadores"] if z["id"] == "portwatch_panama")
+        self.assertEqual(i["valor"],"6")
+        self.assertEqual(i["natureza"],"INFORMADO_AIS")
+        self.assertFalse(i["publicavel"])
+        x["fontes_maritimas_bigquery"][0]["volume_movimentado_real"] = "150000"
+        with self.assertRaises(ErroPortal):
+            montar_snapshot(x,gerado_em=CUT)
+
     def test_snapshots_publicaveis_e_dados_sinteticos_rejeitados(self):
         x=montar_snapshot(amostra(),gerado_em=CUT)
         x["publicavel"]=True

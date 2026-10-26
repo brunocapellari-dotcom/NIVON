@@ -176,8 +176,11 @@ def montar_snapshot(readback: dict, *, gerado_em: str) -> dict:
             if m.get("estado") == "SEM_DADOS_NAO_EQUIVALE_A_ZERO":
                 avisos.append(f"PortWatch {passagem}: dados ausentes; nao presumir zero.")
                 continue
-            if m.get("estado") != "PORTWATCH_HISTORICO_READONLY_SHADOW":
+            if m.get("estado") != "PORTWATCH_TRANSITOS_ESTIMADOS_SHADOW":
                 raise ErroPortal("estado PortWatch invalido")
+            if (m.get("volume_movimentado_real") is not None
+                    or m.get("transitos_portuarios_confirmados") is not None):
+                raise ErroPortal("PortWatch nao comprova movimentacao realizada")
             n = _contagem(m.get("transitos_ais_reportados"))
             indicadores.append(_item(
                 id="portwatch_" + passagem, grupo="maritimo",
