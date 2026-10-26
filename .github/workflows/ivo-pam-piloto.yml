@@ -21,7 +21,7 @@ concurrency:
 jobs:
   coleta-incremental-pam:
     # No schedule sem destino GCS/WIF configurado, nao alocar runner.
-    if: github.event_name != 'schedule' || (vars.NIVON_PAM_GCS_BUCKET != '' && vars.NIVON_GCP_WIF_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '')
+    if: github.event_name != 'schedule' || (vars.NIVON_GCS_BUCKET != '' && vars.NIVON_GCP_PROVIDER != '' && vars.NIVON_GCP_SERVICE_ACCOUNT != '' && vars.NIVON_PAM_GCS_WRITE_APPROVED == 'true' && vars.NIVON_GCP_COST_REVIEWED == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 6
     steps:
@@ -37,15 +37,19 @@ jobs:
         id: gcs
         shell: bash
         env:
-          GCS_BUCKET: ${{ vars.NIVON_PAM_GCS_BUCKET }}
-          GCS_PROVIDER: ${{ vars.NIVON_GCP_WIF_PROVIDER }}
+          GCS_BUCKET: ${{ vars.NIVON_GCS_BUCKET }}
+          GCS_PROVIDER: ${{ vars.NIVON_GCP_PROVIDER }}
           GCS_SERVICE: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          GCS_WRITE_APPROVED: ${{ vars.NIVON_PAM_GCS_WRITE_APPROVED }}
+          GCP_COST_REVIEWED: ${{ vars.NIVON_GCP_COST_REVIEWED }}
         run: |
           set -euo pipefail
           if test "$GITHUB_REF" = "refs/heads/main" \
              && test -n "$GCS_BUCKET" \
              && test -n "$GCS_PROVIDER" \
-             && test -n "$GCS_SERVICE"; then
+             && test -n "$GCS_SERVICE" \
+             && test "$GCS_WRITE_APPROVED" = "true" \
+             && test "$GCP_COST_REVIEWED" = "true"; then
             echo "active=true" >> "$GITHUB_OUTPUT"
             echo "ARMAZENAMENTO_GCS=CONFIGURADO"
           else
@@ -57,7 +61,7 @@ jobs:
         id: auth
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
         with:
-          workload_identity_provider: ${{ vars.NIVON_GCP_WIF_PROVIDER }}
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
           service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
           token_format: access_token
           access_token_lifetime: 900s
@@ -67,7 +71,7 @@ jobs:
         env:
           PYTHONPATH: src
           NIVON_GCS_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
-          BUCKET: ${{ vars.NIVON_PAM_GCS_BUCKET }}
+          BUCKET: ${{ vars.NIVON_GCS_BUCKET }}
           BOOTSTRAP_AUTORIZADO: ${{ vars.NIVON_PAM_GCS_BOOTSTRAP }}
         run: |
           set -euo pipefail
@@ -227,7 +231,7 @@ jobs:
         env:
           PYTHONPATH: src
           NIVON_GCS_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
-          BUCKET: ${{ vars.NIVON_PAM_GCS_BUCKET }}
+          BUCKET: ${{ vars.NIVON_GCS_BUCKET }}
         run: |
           set -euo pipefail
           parametros=()
