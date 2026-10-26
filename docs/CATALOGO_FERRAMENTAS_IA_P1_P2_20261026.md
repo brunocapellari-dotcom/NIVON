@@ -23,7 +23,7 @@
 | IA-P1-01 | [Docling](https://github.com/docling-project/docling) | P1 | Extração estruturada de PDF, tabelas, DOCX e outros relatórios de fontes agro/logísticas | CATALOGADO — avaliação pendente |
 | IA-P1-02 | [OpenWiki](https://github.com/langchain-ai/openwiki) | P1 | Documentação derivada de código/testes para orientar o Claude, com evidência por arquivo | CATALOGADO — avaliação pendente |
 | IA-P1-03 | [Future AGI](https://github.com/future-agi/future-agi) | P1 | Métricas e avaliações do IVO: groundedness, citações, uso de ferramentas e falhas | CATALOGADO — avaliação pendente |
-| IA-P1-04 | [Skills for Real Engineers](https://github.com/commit-ai/mattpocock-skills) | P1 | Melhoria pontual de TDD, revisão de código e clareza das entregas | CATALOGADO — curadoria pendente |
+| IA-P1-04 | [Skills for Real Engineers](https://github.com/mattpocock/skills) | P1 | Melhoria pontual de TDD, revisão de código e clareza das entregas | CATALOGADO — curadoria pendente |
 | IA-P2-01 | [Caveman](https://github.com/JuliusBrussee/caveman) | P2 | Benchmark de redução do consumo de tokens em tarefas de desenvolvimento | CATALOGADO — benchmark pendente |
 | IA-P2-02 | [Qdrant](https://github.com/qdrant/qdrant) | P2 | Índice vetorial de documentos apenas se a busca disponível não atender as necessidades | CATALOGADO — análise de necessidade pendente |
 
