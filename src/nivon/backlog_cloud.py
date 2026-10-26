@@ -27,7 +27,7 @@ def safe_path(raw, root=ROOT):
     if not isinstance(raw, str) or len(raw) > 200 or "\\" in raw or raw.startswith("/"):
         raise ValueError("Caminho absoluto/inválido")
     parts = PurePosixPath(raw).parts
-    if len(parts) < 2 or parts[0] not in {"src", "docs", "tests", ".github", "scripts"}:
+    if len(parts) < 2 or parts[0] not in {"src", "docs", "tests", ".github", "scripts", "apps", "public", "infra"}:
         raise ValueError("Arquivo fora do repositório")
     if any(x in {"..", "."} or x.startswith(".env") for x in parts):
         raise ValueError("Travessia de diretório ou secrets")
