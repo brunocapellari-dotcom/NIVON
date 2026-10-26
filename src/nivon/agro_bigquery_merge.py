@@ -14,6 +14,8 @@ from .agro_bigquery_loader import ErroUploadAgro, _FIELDS, _TIPOS, _TABELA
 # Sem update/delete: preserva vintages anteriores e novos registros.
 # Todos os campos participam da identidade exata e comparação NULL-safe.
 _COLUNAS=tuple(_FIELDS)
+# Mesmo RAW com nova hora de download nao define nova vintage.
+_IDENTIDADE=tuple(c for c in _COLUNAS if c not in ('coletado_utc','data_coleta'))
 
 
 def sql_mesclagem(*, origem:str, destino:str)->str:
@@ -26,10 +28,13 @@ def sql_mesclagem(*, origem:str, destino:str)->str:
             raise ErroUploadAgro('identificador BigQuery invalido')
     campos=', '.join(_COLUNAS)
     valores=', '.join('S.'+k for k in _COLUNAS)
-    comparacoes=' AND\n    '.join('T.'+k+' IS NOT DISTINCT FROM S.'+k for k in _COLUNAS)
+    chaves=', '.join(_IDENTIDADE)
+    comparacoes=' AND\n    '.join('T.'+k+' IS NOT DISTINCT FROM S.'+k for k in _IDENTIDADE)
     return (
         f'MERGE \`{destino}\` AS T\n'
-        f'USING (SELECT DISTINCT {campos} FROM \`{origem}\`) AS S\n'
+        f'USING (SELECT * EXCEPT(_rn) FROM (SELECT {campos}, '
+        f'ROW_NUMBER() OVER (PARTITION BY {chaves} ORDER BY data_coleta ASC) AS _rn '
+        f'FROM \`{origem}\`) WHERE _rn=1) AS S\n'
         f'ON {comparacoes}\n'
         f'WHEN NOT MATCHED THEN INSERT ({campos}) VALUES ({valores})'
     ).replace('\\`','`')
