@@ -8,7 +8,7 @@ ID token já provido pelo runtime federado. Nenhum dado de série ou token
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from hashlib import sha256
 from http.client import HTTPResponse
 import json
@@ -187,15 +187,58 @@ def validar_terminal_privado(*, url: str, token: str,
     if (coleta.utcoffset() is None or coleta>agora
             or serie[-1]["ultima_competencia"]>agora.strftime("%Y-%m")):
         raise ErroAceite("dados temporalmente inconsistentes")
+    # Uma pagina operacional só é usável quando o snapshot PRIVADO de
+    # BigQuery -> GCS está íntegro, recente e efetivamente disponível.
+    ready=_consultar(client,origin,token,"/readyz")
+    try:
+        saude_painel=json.loads(ready)
+    except ValueError as exc:
+        raise ErroAceite("readyz do portal não contém JSON válido") from exc
+    if saude_painel != {"status":"PAINEL_PRIVADO_COM_DADOS_REAIS"}:
+        raise ErroAceite("portal ainda não tem snapshot privado íntegro")
+    portal_raw=_consultar(client,origin,token,"/api/v1/painel")
+    try:
+        portal=json.loads(portal_raw)
+    except ValueError as exc:
+        raise ErroAceite("snapshot privado do portal não contém JSON válido") from exc
+    if (not isinstance(portal,dict)
+            or portal.get("schema")!="nivon.portal.interno.v1"
+            or portal.get("modo")!="INTERNO_SHADOW"
+            or portal.get("publicavel") is not False
+            or portal.get("go_live_publico") is not False
+            or portal.get("redistribuicao_autorizada") is not False
+            or portal.get("precos_homologados") is not False
+            or portal.get("frescor_snapshot")!="ATUAL"
+            or portal.get("origem_terminal")!="GCS_PRIVADO_COM_SHA256"
+            or not isinstance(portal.get("snapshot_sha256"),str)
+            or not _SHA.fullmatch(portal["snapshot_sha256"])):
+        raise ErroAceite("portal não comprova origem privada e estado interno")
+    try:
+        snapshot_em=datetime.fromisoformat(portal["gerado_em"].replace("Z","+00:00"))
+    except (ValueError,AttributeError,KeyError) as exc:
+        raise ErroAceite("portal sem instante válido de snapshot") from exc
+    if (snapshot_em.utcoffset() is None
+            or not -timedelta(minutes=5) <= agora-snapshot_em <= timedelta(hours=24)):
+        raise ErroAceite("portal apresenta snapshot vencido ou futuro")
+    indicadores=portal.get("indicadores")
+    if (not isinstance(indicadores,list) or not indicadores
+            or len(indicadores)>300 or any(
+                not isinstance(item,dict) or item.get("publicavel") is not False
+                or item.get("fonte") in ("",None)
+                or item.get("natureza") in ("",None,"SINTETICO")
+                for item in indicadores)):
+        raise ErroAceite("portal sem indicadores reais, rastreáveis e privados")
     html=_consultar(client,origin,token,"/")
     if b"NIVON" not in html or b"noindex" not in html.lower():
         raise ErroAceite("HTML do terminal não corresponde ao NIVON privado")
     return {
         "status":"SMOKE_PRIVADO_AUTENTICADO_PASSOU",
-        "rotas_verificadas":["/healthz","/api/v1/ferrovia","/"],
+        "rotas_verificadas":["/healthz","/api/v1/ferrovia","/readyz","/api/v1/painel","/"],
         "fonte":"ANTT_SIADE","anos":doc["anos"],
         "ultima_competencia":doc["ultima_competencia"],
         "sha256_resposta_api":sha256(raw).hexdigest(),
+        "sha256_resposta_painel":sha256(portal_raw).hexdigest(),
+        "indicadores_painel_privado":len(indicadores),
         "identidade_iam_foi_aceita":True,
         "dados_reais_com_proveniencia_aparente":True,
         "go_live_final_homologado":False,
