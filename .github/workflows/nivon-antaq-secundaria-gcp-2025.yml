@@ -1,5 +1,5 @@
 name: NIVON - Hidrovia secundaria 2025 no BigQuery
-# Única reexecução: resolver caminho real de cache Hugging Face fixado.
+# Prova de cache HF: reportar booleans e bytes sem expor paths (execução limitada).
 on:
   pull_request:
     paths:
