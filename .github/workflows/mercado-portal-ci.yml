@@ -6,7 +6,7 @@ on:
       - 'public/index.html'
       - 'public/assets/mercado.js'
       - 'public/assets/nivon.css'
-      - 'vercel.json'
+      - 'infra/google_cloud/portal-security-headers.json'
       - 'tests_web/mercado_portal.test.cjs'
       - '.github/workflows/mercado-portal-ci.yml'
   workflow_dispatch:

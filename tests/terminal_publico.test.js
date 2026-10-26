@@ -13,15 +13,11 @@ vm.createContext(ctx);
 vm.runInContext(js+"\nglobalThis.NIVON_TEST={classify,safeRunUrl,GROUPS};",ctx);
 const {classify,safeRunUrl,GROUPS}=ctx.NIVON_TEST;
 
-test("Vercel publica somente assets publicos e impõe headers de proteção",()=>{
-  const conf=JSON.parse(fs.readFileSync(path.join(root,"vercel.json"),"utf8"));
-  assert.equal(conf.outputDirectory,"public");
-  assert.equal(conf.framework,null);
-  const headers=conf.headers.flatMap(r=>r.headers);
-  const policy=headers.find(h=>h.key==="Content-Security-Policy");
-  assert.match(policy.value,/default-src 'none'/);
-  assert.match(policy.value,/connect-src https:\/\/api\.github\.com/);
-  assert.match(headers.find(h=>h.key==="X-Robots-Tag").value,/noindex/);
+test("Contrato de assets preserva headers de proteção para consolidação GCP",()=>{
+  const conf=JSON.parse(fs.readFileSync(path.join(root,"infra/google_cloud/portal-security-headers.json"),"utf8"));
+  assert.match(conf["Content-Security-Policy"],/default-src 'none'/);
+  assert.match(conf["Content-Security-Policy"],/connect-src 'self' https:\/\/api\.github\.com/);
+  assert.match(conf["X-Robots-Tag"],/noindex/);
 });
 test("fonte externa limitada ao repositório público NIVON",()=>{
   assert.match(js,/https:\/\/api\.github\.com\/repos\/|const REPO = "brunocapellari-dotcom\/NIVON"/);
@@ -59,4 +55,9 @@ test("página não embute scripts externos, dados fictícios nem chaves",()=>{
   assert.match(html,/execução bem-sucedida não confirma dado novo/i);
   assert.doesNotMatch(html,/<iframe|<script(?![^>]*src="\/assets\/(?:nivon|mercado)\.js")/i);
   assert.doesNotMatch(html,/apikey|private_key|client_secret/i);
+});
+
+test("Configs de deployment do host anterior foram removidas",()=>{
+  for(const name of ["vercel.json","apps/nivon-terminal/vercel.json"])
+    assert.equal(fs.existsSync(path.join(root,name)),false);
 });

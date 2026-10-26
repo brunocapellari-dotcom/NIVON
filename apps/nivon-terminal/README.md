@@ -2,6 +2,13 @@
 
 Primeira interface executável do NIVON, em `apps/nivon-terminal`.
 
+**Hospedagem de destino: Google Cloud, com acesso privado.** Esta prévia é
+preservada como referência para consolidação na #287; não deve ser publicada
+como um segundo produto. A configuração específica do host anterior foi
+removida. `security-headers.json` documenta o contrato de proteção da prévia.
+O servidor privado existente é `src/nivon/terminal_web.py`; veja
+[`infra/google_cloud/PORTAL.md`](../../infra/google_cloud/PORTAL.md).
+
 - Não acessa Neon, BigQuery, GCS, dados privados, AIS, fretes ou credenciais.
 - Mostra apenas 2022–2025 ANTT/SIADE e a amostra rodoviária RGI 2025 já demonstradas em logs públicos do repositório.
 - Monitora exclusivamente *metadados públicos* de execuções do GitHub Actions em tempo de visita.
