@@ -179,23 +179,23 @@
 | `fix/golive-readonly-staging-opcional-20261025` | 20261025 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
 | `fix/monitor-p0-main-codigo-atual-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
 | `fix/nivon-gcp-migracao-controle-operacional-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/nivon-go-live-gcs-append-only-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/noaa-mei-missing-sentinel-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/open-meteo-ensemble-control-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/p0-antt-rgi-ci-separado-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/ptax-ponte-ci-isolada-diagnostico-http-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/workflow-inmet-runner-context-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `integration/base-gcp-coletor-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `release/nivon-go-live-conab-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `release/nivon-go-live-interno-gates-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `release/ptax-mainline-go-live-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `release/terminal-privado-aceite-live-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `release/validacao-terminal-privado-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `reorg/f1-governanca-20261026` | 20261026 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `review/nivon-ciencia-base-20261019` | 20261019 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `test/qa-faostat-qcl-zip-once-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `test/smoke-eurostat-faostat-qcl-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `test/smoke-flood-ensemble-fpma-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/nivon-go-live-gcs-append-only-20261025` | 20261025 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
+| `fix/noaa-mei-missing-sentinel-20261021` | 20261021 | NÃO MESCLADA — 450 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/open-meteo-ensemble-control-20261021` | 20261021 | NÃO MESCLADA — 453 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/p0-antt-rgi-ci-separado-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/ptax-ponte-ci-isolada-diagnostico-http-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/workflow-inmet-runner-context-20261021` | 20261021 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
+| `integration/base-gcp-coletor-20261023` | 20261023 | NÃO MESCLADA — 632 commit(s) à frente | PENDENTE — conferir commit |
+| `release/nivon-go-live-conab-20261025` | 20261025 | NÃO MESCLADA — 15 commit(s) à frente | PENDENTE — conferir commit |
+| `release/nivon-go-live-interno-gates-20261025` | 20261025 | NÃO MESCLADA — 7 commit(s) à frente | PENDENTE — conferir commit |
+| `release/ptax-mainline-go-live-20261025` | 20261025 | NÃO MESCLADA — 10 commit(s) à frente | PENDENTE — conferir commit |
+| `release/terminal-privado-aceite-live-20261025` | 20261025 | NÃO MESCLADA — 7 commit(s) à frente | PENDENTE — conferir commit |
+| `release/validacao-terminal-privado-20261025` | 20261025 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
+| `reorg/f1-governanca-20261026` | 20261026 | NÃO MESCLADA — 23 commit(s) à frente | PENDENTE — conferir commit |
+| `review/nivon-ciencia-base-20261019` | 20261019 | NÃO MESCLADA — 238 commit(s) à frente | PENDENTE — conferir commit |
+| `test/qa-faostat-qcl-zip-once-20261021` | 20261021 | NÃO MESCLADA — 458 commit(s) à frente | PENDENTE — conferir commit |
+| `test/smoke-eurostat-faostat-qcl-20261021` | 20261021 | NÃO MESCLADA — 456 commit(s) à frente | PENDENTE — conferir commit |
+| `test/smoke-flood-ensemble-fpma-20261021` | 20261021 | NÃO MESCLADA — 456 commit(s) à frente | PENDENTE — conferir commit |
 | `test/smoke-fontes-publicas-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
 | `tmp/ptax-fastlane-reconcile-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
 
