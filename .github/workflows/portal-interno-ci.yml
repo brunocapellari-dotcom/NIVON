@@ -1,4 +1,4 @@
-name: NIVON - Portal interno: contrato e interface
+name: "NIVON - Portal interno: contrato e interface"
 on:
   pull_request:
     paths:
