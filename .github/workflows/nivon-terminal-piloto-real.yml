@@ -1,9 +1,14 @@
 name: NIVON - Gate real do terminal privado
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/nivon-terminal-piloto-real.yml'
+      - 'tests/test_golive_readiness_workflow.py'
   push:
     branches: [main]
     paths:
       - '.github/workflows/nivon-terminal-piloto-real.yml'
+      - 'tests/test_golive_readiness_workflow.py'
   workflow_dispatch:
 permissions:
   contents: read
@@ -12,7 +17,21 @@ concurrency:
   group: nivon-terminal-readiness
   cancel-in-progress: false
 jobs:
+  validar-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Testar politica de checkout e de publicacao
+        run: python -m unittest discover -s tests -p 'test_golive_readiness_workflow.py' -v
   piloto-real:
+    needs: validar-preflight
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 17
     env:
@@ -25,7 +44,7 @@ jobs:
           test "$NIVON_BQ_DATASET" = "nivon_raw" || { echo 'GCP_DATASET_NOT_APPROVED'; exit 1; }
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          ref: 1abd6d5daa032797b6d377db572878a3862b243d
+          # Avalia o mesmo commit da main que disparou o workflow; sem SHA legado.
           persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
@@ -83,6 +102,66 @@ jobs:
                         for x in data if 'nivon' in x.get('metadata',{}).get('name','').lower()]
               print('NIVON_CLOUD_RUN_EXISTING_SERVICES='+json.dumps(selected,ensure_ascii=False))
           PY
+      - name: Diagnosticar gates de publicacao e recursos sem alteracoes
+        env:
+          NIVON_GO_LIVE_DEPLOY_APPROVED: ${{ vars.NIVON_GO_LIVE_DEPLOY_APPROVED }}
+          NIVON_GCP_COST_REVIEWED: ${{ vars.NIVON_GCP_COST_REVIEWED }}
+          NIVON_TERMINAL_ARTIFACT_REPO: ${{ vars.NIVON_TERMINAL_ARTIFACT_REPO }}
+          NIVON_TERMINAL_EXECUTION_SA: ${{ vars.NIVON_TERMINAL_EXECUTION_SA }}
+        run: |
+          python - <<'PY'
+          import json,os,re,subprocess
+          def flag(name):
+              return 'APROVADO' if os.getenv(name)=='true' else 'PENDENTE'
+          def exists_var(name):
+              return 'CONFIGURADA' if os.getenv(name) else 'AUSENTE'
+          region='southamerica-east1'
+          project='nivon-data'
+          repo=os.getenv('NIVON_TERMINAL_ARTIFACT_REPO','')
+          sa=os.getenv('NIVON_TERMINAL_EXECUTION_SA','')
+          def describe(cmd, ok_to_run):
+              if not ok_to_run: return 'DEPENDENCIA_AUSENTE'
+              try:
+                  p=subprocess.run(cmd,check=False,capture_output=True,text=True,timeout=28)
+              except (OSError,subprocess.TimeoutExpired):
+                  return 'VERIFICACAO_INDISPONIVEL'
+              if p.returncode==0:return 'EXISTENTE'
+              msg=p.stderr.lower()
+              if 'permission_denied' in msg or 'permission denied' in msg or '403' in msg:
+                  return 'SEM_PERMISSAO_DE_CONSULTA'
+              if 'not found' in msg or 'not_found' in msg or '404' in msg:
+                  return 'NAO_ENCONTRADO'
+              return 'NAO_COMPROVADO'
+          reg_ok=bool(re.fullmatch(r'[a-z][a-z0-9-]{1,62}',repo))
+          sa_ok=bool(re.fullmatch(r'[a-z][a-z0-9-]{4,28}[a-z0-9]@nivon-data\.iam\.gserviceaccount\.com',sa))
+          results={
+              'aprovar_deploy':flag('NIVON_GO_LIVE_DEPLOY_APPROVED'),
+              'revisao_custos':flag('NIVON_GCP_COST_REVIEWED'),
+              'repositorio_docker_config':exists_var('NIVON_TERMINAL_ARTIFACT_REPO'),
+              'conta_runtime_config':exists_var('NIVON_TERMINAL_EXECUTION_SA'),
+              'repositorio_docker':describe(['gcloud','artifacts','repositories','describe',repo,
+                   '--project='+project,'--location='+region,'--format=value(name)'],reg_ok),
+              'conta_runtime':describe(['gcloud','iam','service-accounts','describe',sa,
+                   '--project='+project,'--format=value(email)'],sa_ok),
+              'servico_cloud_run':describe(['gcloud','run','services','describe','nivon-terminal',
+                   '--project='+project,'--region='+region,'--format=value(status.url)'],True),
+          }
+          # "Nao encontrado" para o serviço é compatível com primeiro deploy.
+          ok=(results['aprovar_deploy']=='APROVADO' and
+              results['revisao_custos']=='APROVADO' and
+              results['repositorio_docker']=='EXISTENTE' and
+              results['conta_runtime']=='EXISTENTE')
+          results['liberacao_para_dispatch_manual']='PRONTO_PRELIMINAR' if ok else 'GATES_PENDENTES'
+          results['deploy_realizado_nesta_execucao']=False
+          results['conta_de_faturamento_verificada']=False
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf8') as f:
+              f.write('\n### NIVON: checklist único para ativar o terminal privado\n\n')
+              f.write('| Gate | Resultado |\n|---|---|\n')
+              for k,v in results.items():f.write(f'| {k} | {v} |\n')
+              f.write('\n**Esta é uma leitura de configuração, não autorização de custos nem go-live.**\n')
+          print('NIVON_GO_LIVE_PREFLIGHT='+json.dumps(results,ensure_ascii=False))
+          PY
+
       - name: Registrar evidencias sem anunciar go-live inexistente
         if: ${{ always() }}
         run: |
