@@ -5,11 +5,14 @@ on:
     paths:
       - 'src/nivon/antaq_secundaria_gcp_2025.py'
       - 'tests/test_antaq_secundaria_gcp_2025.py'
+      - 'tests/test_antaq_secundaria_workflow_policy.py'
       - '.github/workflows/nivon-antaq-secundaria-gcp-2025.yml'
   push:
     branches: [main]
     paths:
       - '.github/workflows/nivon-antaq-secundaria-gcp-2025.yml'
+      - 'src/nivon/antaq_secundaria_gcp_2025.py'
+      - 'tests/test_antaq_secundaria_workflow_policy.py'
   workflow_dispatch:
     inputs:
       aceitar_fonte_secundaria:
@@ -41,13 +44,18 @@ jobs:
           python -m compileall -q src/nivon/antaq_secundaria_gcp_2025.py
           python -m unittest discover -s tests -p 'test_antaq_secundaria_gcp_2025.py' -v
           python -m unittest discover -s tests -p 'test_antaq_replica_detalhe.py' -v
+          python -m unittest discover -s tests -p 'test_antaq_secundaria_workflow_policy.py' -v
 
   publicar-somente-terceiro:
     needs: testar-contrato
     if: >-
       github.ref == 'refs/heads/main' &&
-      (github.event_name == 'push' ||
-      (github.event_name == 'workflow_dispatch' && inputs.aceitar_fonte_secundaria == true))
+      github.event_name == 'workflow_dispatch' &&
+      inputs.aceitar_fonte_secundaria == true &&
+      vars.NIVON_ANTAQ_REPLICA_WRITE_APPROVED == 'true' &&
+      vars.NIVON_GCP_COST_REVIEWED == 'true' &&
+      vars.NIVON_GCP_PROVIDER != '' &&
+      vars.NIVON_GCP_SERVICE_ACCOUNT != ''
     runs-on: ubuntu-latest
     timeout-minutes: 16
     permissions:
