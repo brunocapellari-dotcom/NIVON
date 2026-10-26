@@ -40,8 +40,10 @@ class Client:
 class TestSchemaConab(TestCase):
     def setUp(self):self.db=Client()
     def kw(self,**overrides):
-        return dict(projeto='nivon-data',dataset='nivon_raw',
-                    cliente=self.db,sdk=FakeSDK,not_found=NaoExiste,**overrides)
+        args=dict(projeto='nivon-data',dataset='nivon_raw',
+                  cliente=self.db,sdk=FakeSDK,not_found=NaoExiste)
+        args.update(overrides)
+        return args
 
     def test_diagnostico_nao_cria(self):
         r=verificar_ou_criar(**self.kw())
