@@ -2,7 +2,7 @@
 import json
 import unittest
 from types import SimpleNamespace
-from nivon.diagnostico_terminal_cloudrun import diagnosticar, ErroDiagnostico
+from nivon.diagnostico_terminal_cloudrun import diagnosticar, descobrir_recursos_existentes, ErroDiagnostico
 
 SA="terminal-readonly@nivon-data.iam.gserviceaccount.com"
 
@@ -77,5 +77,83 @@ class TesteDiagnostico(unittest.TestCase):
         self.assertEqual(result["componentes"]["execution_service_account"],"NAO_CONFIGURADO")
         self.assertEqual(result["componentes"]["artifact_repository"],"NAO_CONFIGURADO")
         self.assertFalse(result["metadados_basicos_confirmados"])
+
+
+class CmdInventario(Cmd):
+    def __call__(self, cmd, **kwargs):
+        if cmd[:4] == ["gcloud","artifacts","repositories","list"]:
+            self.calls.append(list(cmd))
+            body=[
+                {"name":"projects/nivon-data/locations/southamerica-east1/repositories/nivon-images",
+                 "format":"DOCKER"},
+                {"name":"projects/nivon-data/locations/southamerica-east1/repositories/raw-datasets",
+                 "format":"GENERIC"},
+                {"name":"projects/nivon-data/locations/southamerica-east1/repositories/nivon-images",
+                 "format":"DOCKER"},
+            ]
+            return SimpleNamespace(returncode=0,stderr="",stdout=json.dumps(body))
+        if cmd[:4] == ["gcloud","iam","service-accounts","list"]:
+            self.calls.append(list(cmd))
+            body=[{"email":SA, "disabled":False},
+                  {"email":"old-disabled@nivon-data.iam.gserviceaccount.com",
+                   "disabled":True},
+                  {"email":"rogue@externo.iam.gserviceaccount.com",
+                   "disabled":False}]
+            return SimpleNamespace(returncode=0,stderr="",stdout=json.dumps(body))
+        return super().__call__(cmd,**kwargs)
+
+
+class TesteDescobertaSemAlteracoes(unittest.TestCase):
+    def test_inventario_existente_metadados_apenas(self):
+        run=CmdInventario()
+        result=descobrir_recursos_existentes(runner=run)
+        self.assertEqual(result["consulta_artifact_registry"],"CONFIRMADO")
+        self.assertEqual(result["consulta_service_accounts"],"CONFIRMADO")
+        self.assertEqual(result["repositorios_docker_existentes"],["nivon-images"])
+        self.assertEqual(result["contas_existentes_necessitam_revisao_iam"],[SA])
+        self.assertFalse(result["selecao_automatica"])
+        self.assertFalse(result["autorizacao_de_deploy_verificada"])
+        self.assertFalse(result["orcamento_verificado"])
+        self.assertEqual(result["alteracoes_cloud"],0)
+        self.assertEqual(len(run.calls),2)
+        for cmd in run.calls:
+            self.assertEqual(cmd[0],"gcloud")
+            self.assertIn("list",cmd)
+            self.assertNotIn("create",cmd)
+            self.assertNotIn("deploy",cmd)
+            self.assertNotIn("delete",cmd)
+
+    def test_preflight_descobre_mas_nao_promove_sem_variaveis(self):
+        run=CmdInventario(missing="run services describe")
+        result=diagnosticar(runner=run,reader=Client(),descobrir_candidatos=True)
+        self.assertEqual(result["componentes"]["artifact_repository"],"NAO_CONFIGURADO")
+        self.assertEqual(result["componentes"]["execution_service_account"],"NAO_CONFIGURADO")
+        self.assertFalse(result["metadados_basicos_confirmados"])
+        self.assertFalse(result["go_live_homologado"])
+        self.assertFalse(result["permissao_de_escrita_verificada"])
+        self.assertEqual(result["descoberta_candidatos"]["repositorios_docker_existentes"],["nivon-images"])
+        self.assertEqual(result["descoberta_candidatos"]["contas_existentes_necessitam_revisao_iam"],[SA])
+
+    def test_configuracao_ja_informada_nao_lista_recursos_desnecessariamente(self):
+        run=Cmd()
+        result=diagnosticar(
+            repositoriodeimagens="nivon-images",contaexecucao=SA,
+            runner=run,reader=Client(),descobrir_candidatos=True,
+        )
+        self.assertTrue(result["metadados_basicos_confirmados"])
+        self.assertIsNone(result["descoberta_candidatos"])
+        self.assertEqual(len(run.calls),7)
+
+    def test_falhas_de_descoberta_nao_viram_aprovacao(self):
+        class Deny:
+            def __call__(self,cmd,**kwargs):
+                return SimpleNamespace(returncode=1,stderr="403 permission denied",stdout="")
+        x=descobrir_recursos_existentes(runner=Deny())
+        self.assertEqual(x["consulta_artifact_registry"],"SEM_PERMISSAO")
+        self.assertEqual(x["consulta_service_accounts"],"SEM_PERMISSAO")
+        self.assertEqual(x["repositorios_encontrados"],0)
+        self.assertEqual(x["contas_encontradas"],0)
+        self.assertFalse(x["selecao_automatica"])
+
 
 if __name__=="__main__":unittest.main()
