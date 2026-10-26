@@ -117,7 +117,7 @@ jobs:
           with open(os.environ["GITHUB_STEP_SUMMARY"],"a",encoding="utf-8") as stream:
               stream.write("### NIVON — primeira edição operacional interna\n\n")
               stream.write("Resultado em bucket privado existente, sem URL pública.\n\n")
-              stream.write("Caminho: nivon/painel-interno/latest.html\n\n")
+              stream.write("Revisão HTML: "+status["revisao_html"]+"\n\n")
               stream.write("Fontes: ANTT SIADE (histórico), Imbituba (programação), PortWatch (estimativa).\n\n")
               stream.write("Status: SHADOW. Não representa operações concluídas.\n")
           PY
