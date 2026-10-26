@@ -9,6 +9,106 @@
 - Com nome indicando 23/10 ou posterior: **135**.
 - Sem data interpretável no nome: **11**.
 
+**Apuração técnica de 26/10/2026.** Mesclada = zero commits à frente da main; corte de inatividade: 23/10/2026 17:09 UTC. Atenção: squash/cherry-pick pode incorporar conteúdo sem ancestralidade; não excluir até revisão. A branch F1 saiu da relação pois tem PR #337 aberta.
+
+## Resultado da conferência
+
+| Situação | Quantidade |
+|---|---:|
+| Branches órfãs no snapshot, sem F1 | 184 |
+| Mescladas por ancestralidade | 16 |
+| Não mescladas por ancestralidade | 168 |
+| Último commit há mais de três dias | 70 |
+| Não mescladas e antigas | 66 |
+| Com commit recente | 114 |
+| Data não confirmada | 0 |
+
+## Já mescladas por ancestralidade
+- `feat/bootstrap-acessos-protegidos-main-20261021`
+- `feat/go-live-portal-interno-20261025`
+- `feat/hidromet-fontes-publicas-power-glofas-20261021`
+- `feat/meteo-publica-inmet-cptec-20261021`
+- `feat/nivon-ais-geocercas-evidencia-inferida-20261025`
+- `feat/nivon-ais-ledger-replay-e2e-20261025`
+- `feat/nivon-go-live-painel-interno-gcs-20261025`
+- `feat/nivon-go-live-rotina-dias-uteis-20261025`
+- `feat/nivon-maritime-readonly-bigquery-panel-20261023`
+- `feat/nivon-painel-integrado-logistica-maritimo-quant-20261023`
+- `feat/portal-gcs-cloudrun-privado-20261025`
+- `fix/antaq-hf-revision-file-size-pinned-20261025`
+- `fix/go-live-controlar-gcp-execucoes-20261025`
+- `fix/golive-readonly-staging-opcional-20261025`
+- `fix/nivon-go-live-gcs-append-only-20261025`
+- `fix/workflow-inmet-runner-context-20261021`
+
+## Não mescladas e sem commit há mais de três dias — NÃO EXCLUIR
+- `docs/antt-gcp-operacao-atualizada-20261023`
+- `docs/catalogo-faostat-qcl-validado-20261021`
+- `docs/evidencia-antt-gcp-operacional-20261023`
+- `docs/evidencias-smoke-fontes-20261021`
+- `docs/homologacao-eurostat-faostat-20261021`
+- `docs/homologacao-flood-ensemble-fpma-20261021`
+- `feat/antaq-hidrovia-produtos-20261023`
+- `feat/antaq-historico-qualidade-lineup-20261019`
+- `feat/antaq-monitor-disponibilidade-20261023`
+- `feat/antt-2026-primeira-carga-unica-gcp-20261023`
+- `feat/antt-anuario-rgi-20261023`
+- `feat/antt-mdfe-volumes-od-20261022`
+- `feat/antt-piloto-gcp-preparacao-20261023`
+- `feat/apis-flood-ensemble-fao-fpma-20261021`
+- `feat/bcb-focus-expectativas-20261021`
+- `feat/brasilapi-refs-nivon-20261021`
+- `feat/catalogo-fontes-gratuitas-20261021`
+- `feat/coleta-gcp-nucleo-main-20261023`
+- `feat/coleta-real-camadas-20261022`
+- `feat/coletores-apis-gratuitas-reais-20261021`
+- `feat/conectores-gcp-conab-sgs-20261023`
+- `feat/conectores-google-cloud-lote1-20261023`
+- `feat/connectores-gtr-noaa-pinksheet-geodata-20261021`
+- `feat/connectores-publicos-inpe-cftc-antt-20261021`
+- `feat/consulta-analitica-bq-fontes-20261023`
+- `feat/corredores-ferroviarios-estacoes-20261023`
+- `feat/corredores-primeira-view-bq-real-20261023`
+- `feat/earthsearch-usda-gtr-bases-20261021`
+- `feat/eurostat-faostat-qcl-api-20261021`
+- `feat/expansao-50-fontes-20261022`
+- `feat/faostat-bulk-manifest-20261021`
+- `feat/faostat-qcl-bigquery-contract-20261021`
+- `feat/faostat-qcl-stream-sqlite-20261021`
+- `feat/fontes-complementares-glam-wapor-portwatch-20261021`
+- `feat/fontes-ibge-worldbank-operacionais-20261023`
+- `feat/gcp-wif-smoke-leitura-20261023`
+- `feat/integracoes-lineup-nacional-20261019`
+- `feat/inteligencia-corredores-intermodais-20261023`
+- `feat/ivo-cerebro-historico-20261019`
+- `feat/lineup-itaqui-codeba-20261019`
+- `feat/migracao-neon-para-gcp-20261023`
+- `feat/ptax-bcb-agendamento-wif-escritor-unico-20261023`
+- `feat/series-corredores-antt-bigquery-20261023`
+- `feat/sisfogo-roi-fonte-oficial-20261021`
+- `feat/soilgrids-embrapa-solos-20261021`
+- `feat/verificacao-cloud-gcp-20261023`
+- `feature/transporte-antt-antaq-20261022`
+- `fix/antt-bq-readiness-20261023`
+- `fix/antt-ckan-fallback-verificado-20261023`
+- `fix/antt-ckan-retry-20261023`
+- `fix/antt-fallback-csv-oficial-20261023`
+- `fix/antt-gcp-precise-gates-20261023`
+- `fix/antt-gcp-unificar-config-20261023`
+- `fix/antt-rgi-smoke-main-20261023`
+- `fix/formatos-reais-noaa-gtr-wb-esa-20261021`
+- `fix/gcp-regiao-inventario-destinos-20261023`
+- `fix/nivon-gcp-migracao-controle-operacional-20261023`
+- `fix/noaa-mei-missing-sentinel-20261021`
+- `fix/open-meteo-ensemble-control-20261021`
+- `fix/p0-antt-rgi-ci-separado-20261023`
+- `integration/base-gcp-coletor-20261023`
+- `review/nivon-ciencia-base-20261019`
+- `test/qa-faostat-qcl-zip-once-20261021`
+- `test/smoke-eurostat-faostat-qcl-20261021`
+- `test/smoke-flood-ensemble-fpma-20261021`
+- `test/smoke-fontes-publicas-20261021`
+
 ## Branches sem PR aberta
 
 | Branch | Sinal do nome | Mesclada na main? | Último commit > 3 dias? |
@@ -191,7 +291,6 @@
 | `release/ptax-mainline-go-live-20261025` | 20261025 | NÃO MESCLADA — 10 commit(s) à frente |2026-10-26T03:04:18Z — RECENTE |
 | `release/terminal-privado-aceite-live-20261025` | 20261025 | NÃO MESCLADA — 7 commit(s) à frente |2026-10-26T03:00:08Z — RECENTE |
 | `release/validacao-terminal-privado-20261025` | 20261025 | NÃO MESCLADA — 4 commit(s) à frente |2026-10-26T02:59:41Z — RECENTE |
-| `reorg/f1-governanca-20261026` | 20261026 | NÃO MESCLADA — 23 commit(s) à frente |2026-10-26T17:39:46Z — RECENTE |
 | `review/nivon-ciencia-base-20261019` | 20261019 | NÃO MESCLADA — 238 commit(s) à frente |2026-10-20T02:47:43Z — MAIS DE 3 DIAS |
 | `test/qa-faostat-qcl-zip-once-20261021` | 20261021 | NÃO MESCLADA — 458 commit(s) à frente |2026-10-22T00:17:10Z — MAIS DE 3 DIAS |
 | `test/smoke-eurostat-faostat-qcl-20261021` | 20261021 | NÃO MESCLADA — 456 commit(s) à frente |2026-10-21T23:07:54Z — MAIS DE 3 DIAS |
