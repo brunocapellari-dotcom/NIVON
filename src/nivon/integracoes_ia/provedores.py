@@ -151,11 +151,13 @@ def consultar_pageindex(pdf: Path, pergunta: str, politica: PoliticaIntegracao, 
         raise ErroIntegracao("MODELOS_PAGEINDEX_AUSENTES")
     if cliente is None:
         try:
-            from pageindex import PageIndexClient
+            from pageindex import PageIndexLocalClient
         except ImportError:
             raise ErroIntegracao("PAGEINDEX_SDK_AUSENTE") from None
-        cliente = PageIndexClient(index=os.environ["NIVON_PAGEINDEX_MODELO"],
-                                 chat=os.environ["NIVON_PAGEINDEX_CHAT_MODELO"])
+        # Evita fallback acidental para PageIndex Cloud se a maquina possuir
+        # credenciais PAGEINDEX_API_KEY herdadas de outro trabalho.
+        cliente = PageIndexLocalClient(index=os.environ["NIVON_PAGEINDEX_MODELO"],
+                                      chat=os.environ["NIVON_PAGEINDEX_CHAT_MODELO"])
     resposta = cliente.submit_document(str(caminho), wait=True)
     doc_id = resposta.get("doc_id")
     if not isinstance(doc_id, str) or not doc_id:

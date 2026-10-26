@@ -83,3 +83,25 @@ O workflow `.github/workflows/nivon-integracoes-ia-ci.yml` executa, sem credenci
 Em cada PR ou push que alterar o pacote de integrações, salva por sete dias um artefato de GitHub Actions, `nivon-integracoes-evidencias`, com `grafo-python.json`, `diagnostico.json` e `evidencia.json`. O sumário exibe contagem real de módulos, relações de importação e capacidades encontradas. Erros de sintaxe ou redução anormal de cobertura fazem a execução falhar.
 
 **Limites:** o grafo representa apenas imports estáticos em Python e não substitui Graphify externo, integração real de provedores, dependências dinâmicas, inventário BigQuery nem aceite do Cloud Run. Os diagnósticos diferenciam `None` (dependência não averiguada ou não aplicável) de `True` (pacote detectado). Ter Node.js no executor não comprova instalação de Magnitude. Um workflow bem-sucedido não confirma dados atualizados nem go-live.
+
+## Pilotos operacionais sob demanda (26/10/2026)
+
+Novo fluxo `.github/workflows/nivon-integracoes-ia-pilotos.yml`: execução **manual**, uma capacidade por vez, em um runner GitHub descartável, sem instalação no dispositivo do proprietário e sem criação de infraestrutura Google Cloud. O executor é `python -m nivon.integracoes_ia.pilotos`, e todos os resultados são **metadados sanitizados, não publicáveis**, anexados ao GitHub Actions por sete dias.
+
+- `diagnostico` e `grafo`: execuções reais locais (código atual), sem chaves ou custo de API de modelo.
+- `firecrawl`: necessita `FIRECRAWL_API_KEY`, input da URL HTTPS e domínio exato em `vars.NIVON_AI_APPROVED_HOSTS`; faz uma única extração de Markdown. Nenhuma observação é publicada.
+- `pageindex`: necessita `secrets.NIVON_IA_OPENAI_API_KEY`, `vars.NIVON_PAGEINDEX_MODELO`, `vars.NIVON_PAGEINDEX_CHAT_MODELO`, input de pergunta e um PDF **já versionado dentro de `docs/`**. O conector usa `PageIndexLocalClient` (índice local, LLM externo apenas se autorizado), evitando upload acidental à nuvem PageIndex.
+- `hindsight`: necessita `secrets.NIVON_HINDSIGHT_API_KEY`, `vars.NIVON_HINDSIGHT_URL`, `vars.NIVON_HINDSIGHT_BANK_ID` e hostname permitido. Faz exclusivamente `recall` em um banco existente; não cria nem retém memórias.
+- `paperclip`: necessita `secrets.PAPERCLIP_API_KEY`, `vars.NIVON_PAPERCLIP_ORIGEM`, `vars.NIVON_PAPERCLIP_COMPANY_ID` e hostname permitido. Lê tarefas existentes, **não** cria agentes, tarefas, cobranças nem recursos.
+- `magnitude`: o piloto Node separado continua preparado mas **não roda em runner genérico sem isolamento de egress**. A navegação visual exige ambiente de browser protegido e chave de modelo. Não constitui bloqueador da coleta estruturada nem do terminal.
+- `graphify`: o AST existente executa de fato; importar exportações Graphify ainda requer análise semântica. Nenhuma classificação de grafo inferido vira dado canônico.
+- `rtk`/`llmtrim`: substituto determinístico com limites e hash está disponível; invocar executáveis externos sem benchmark não foi liberado.
+- `book-to-skill`: rascunhos são gerados de arquivos de texto locais autorizados; promoção a skill executável permanece sujeita à revisão.
+
+### Como executar sem instalar programas no computador ou celular
+
+No GitHub: **Actions → NIVON - Pilotos P0-P2 sob demanda → Run workflow → main → capacidade**. Para capacidades externas, marque **confirmar_custo_e_envio** depois de verificar custo, autorização e configuração dos secrets/variables na interface GitHub. O workflow cancela a execução externa se essa confirmação não estiver marcada. Nunca coloque tokens, nomes de pessoas ou dados privados nos inputs.
+
+Requisitos de aceitação **individuais**: log do workflow concluído, artefato `resultado.json` com `execucao=PILOTO_EXTERNO_REAL` e hash/contagens, conferência do fornecedor/consumo, comprovação de que dados não foram automaticamente publicados, e revisão dos contratos antes de promover o serviço à operação. Uma execução verde prova somente aquela ação; não valida frescor de fonte, qualidade de extração ou disponibilidade contínua.
+
+**Status em 26/10/2026:** código e runner versionados; **não afirmamos execução externa real sem workflow de fornecedor e credenciais comprovadas**. Integrações P0–P2 continuam independentes do marco M1.
