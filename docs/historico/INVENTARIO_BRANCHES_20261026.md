@@ -145,23 +145,23 @@
 | `fix/antaq-parquet-cache-staging-safe-20261025` | 20261025 | NÃO MESCLADA — 6 commit(s) à frente | PENDENTE — conferir commit |
 | `fix/antaq-replica-manual-isolada-20261025` | 20261025 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
 | `fix/antt-2025-inspecao-schema-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/antt-backfill-manual-gates-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/antt-bq-readiness-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/antt-ckan-fallback-verificado-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/antt-ckan-historico-provas-sha-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/antt-ckan-retry-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/antt-fallback-csv-oficial-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/antt-gcp-precise-gates-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/antt-gcp-unificar-config-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/antt-piloto-manual-unico-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/antt-piloto-sem-reexecucao-automatica-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/antt-rgi-gcp-google-api-notfound-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/antt-rgi-smoke-main-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/antt-vigia-fonte-indisponivel-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/antt-vigia-retry-fonte-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/auditoria-gcp-diaria-sem-escrita-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/bigquery-merge-particoes-custo-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `fix/cepea-estado-ledger-verificado-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `fix/antt-backfill-manual-gates-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/antt-bq-readiness-20261023` | 20261023 | NÃO MESCLADA — 6 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/antt-ckan-fallback-verificado-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/antt-ckan-historico-provas-sha-20261023` | 20261023 | NÃO MESCLADA — 8 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/antt-ckan-retry-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/antt-fallback-csv-oficial-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/antt-gcp-precise-gates-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/antt-gcp-unificar-config-20261023` | 20261023 | NÃO MESCLADA — 8 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/antt-piloto-manual-unico-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/antt-piloto-sem-reexecucao-automatica-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/antt-rgi-gcp-google-api-notfound-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/antt-rgi-smoke-main-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/antt-vigia-fonte-indisponivel-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/antt-vigia-retry-fonte-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/auditoria-gcp-diaria-sem-escrita-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/bigquery-merge-particoes-custo-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/cepea-estado-ledger-verificado-20261025` | 20261025 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
 | `fix/formatos-reais-noaa-gtr-wb-esa-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
 | `fix/gcp-auditoria-estado-por-tabela-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
 | `fix/gcp-auditoria-schema-integral-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
