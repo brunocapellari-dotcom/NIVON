@@ -77,13 +77,21 @@ jobs:
           try:
               tbl=bq.get_table(f'{project}.{dataset}.agro_fonte_stage')
           except NotFound:
-              result['tabela_agro_fonte_stage']='AUSENTE'
+              # A tabela de ingestão agro NÃO é pré-requisito do portal
+              # interno que consulta séries já existentes, como ANTT.
+              # Sinalizar NO-GO para a carga correspondente, sem
+              # registrar falso erro do acesso read-only ao GCP.
+              result['tabela_agro_fonte_stage']='AUSENTE_OPCIONAL_PARA_PORTAL'
+              result['carga_agro_stage_pronta']=False
+              result['portal_em_producao_comprovado']=False
               print(json.dumps(result,sort_keys=True))
-              sys.exit(4)
+              sys.exit(0)
           cols={f.name:f.field_type.upper() for f in tbl.schema}
           p=getattr(tbl,'time_partitioning',None)
           valido=(cols==_TIPOS and p is not None and p.field=='coletado_utc')
           result['tabela_agro_fonte_stage']='SCHEMA_OK' if valido else 'SCHEMA_DIVERGENTE'
+          result['carga_agro_stage_pronta']=bool(valido)
+          result['portal_em_producao_comprovado']=False
           print(json.dumps(result,sort_keys=True))
           if not valido:sys.exit(5)
           PY
