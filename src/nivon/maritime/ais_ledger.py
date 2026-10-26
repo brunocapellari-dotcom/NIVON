@@ -43,7 +43,9 @@ SCHEMA="""CREATE TABLE IF NOT EXISTS maritime_ais(
  source_payload_sha256 TEXT NOT NULL,source_payload_json TEXT NOT NULL,
  latitude REAL NOT NULL,longitude REAL NOT NULL);
 CREATE INDEX IF NOT EXISTS idx_ais_port_mmsi_time
- ON maritime_ais(port_id,mmsi,observed_at);"""
+ ON maritime_ais(port_id,mmsi,observed_at);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ais_raw_unique
+ ON maritime_ais(source_id,port_id,source_payload_sha256);"""
 
 def registrar_lote(*,banco,porto_id,mensagens,as_of):
     if not isinstance(porto_id,str) or not PORT.fullmatch(porto_id):
@@ -96,7 +98,9 @@ def registrar_lote(*,banco,porto_id,mensagens,as_of):
         added=0;quality={}
         for r in valid:
             event_id=_sha(SOURCE+"|"+r[5])
-            if conn.execute("SELECT 1 FROM maritime_ais WHERE event_id=?",(event_id,)).fetchone():
+            if conn.execute("""SELECT 1 FROM maritime_ais
+                WHERE event_id=? OR (source_id=? AND port_id=? AND source_payload_sha256=?)""",
+                (event_id,SOURCE,porto_id,r[7])).fetchone():
                 continue
             prior=conn.execute("""SELECT observed_at,latitude,longitude FROM maritime_ais
                 WHERE port_id=? AND mmsi=? AND observed_at<?
