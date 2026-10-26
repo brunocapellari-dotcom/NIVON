@@ -44,11 +44,12 @@ class Response:
 
 
 class Opener:
-    def __init__(self,*,payload=None,error_path=None,headers=None):
+    def __init__(self,*,payload=None,error_path=None,headers=None,portal_patch=None):
         self.requests=[]
         self.payload=payload or serie()
         self.error_path=error_path
         self.headers=headers or {}
+        self.portal_patch=portal_patch or {}
     def open(self,req,timeout):
         self.requests.append((req.full_url,req.get_header("Authorization"),timeout))
         if req.full_url.endswith("/healthz"):
@@ -57,6 +58,26 @@ class Opener:
             if self.error_path:
                 raise OSError("IAM-MANAGED-SECRET-WITH-TOKEN")
             return Response(json.dumps(self.payload).encode(),headers=self.headers)
+        if req.full_url.endswith("/readyz"):
+            return Response(b'{"status":"PAINEL_PRIVADO_COM_DADOS_REAIS"}',headers=self.headers)
+        if req.full_url.endswith("/api/v1/painel"):
+            portal={
+                "schema":"nivon.portal.interno.v1",
+                "modo":"INTERNO_SHADOW",
+                "gerado_em":NOW.isoformat(),
+                "publicavel":False,"go_live_publico":False,
+                "redistribuicao_autorizada":False,"precos_homologados":False,
+                "frescor_snapshot":"ATUAL",
+                "origem_terminal":"GCS_PRIVADO_COM_SHA256",
+                "snapshot_sha256":"a"*64,
+                "indicadores":[{
+                    "id":"ferrovia_tu","fonte":"ANTT/SIADE",
+                    "natureza":"OBSERVADO_DECLARADO","publicavel":False,
+                    "valor":"10000",
+                }],
+            }
+            portal.update(self.portal_patch)
+            return Response(json.dumps(portal).encode(),headers=self.headers)
         if req.full_url.endswith("/"):
             return Response(b'<html><title>NIVON</title><meta name="robots" content="noindex"></html>',
                             mime="text/html",headers=self.headers)
@@ -127,14 +148,14 @@ class TestSmoke(unittest.TestCase):
         self.assertEqual(r["status"],"SMOKE_PRIVADO_AUTENTICADO_PASSOU")
         self.assertEqual(r["anos"],21)
         self.assertEqual(r["ultima_competencia"],"2026-08")
-        self.assertEqual(r["rotas_verificadas"],["/healthz","/api/v1/ferrovia","/"])
+        self.assertEqual(r["rotas_verificadas"],["/healthz","/api/v1/ferrovia","/readyz","/api/v1/painel","/"])
         self.assertTrue(r["identidade_iam_foi_aceita"])
         self.assertFalse(r["go_live_final_homologado"])
         self.assertFalse(r["custos_medidos"])
         self.assertFalse(r["publicavel"])
         self.assertNotIn(TOKEN,str(r))
         self.assertNotIn("210000",str(r))
-        self.assertEqual(len(client.requests),3)
+        self.assertEqual(len(client.requests),5)
         self.assertTrue(all(x[1]=="Bearer "+TOKEN and x[2]==12 for x in client.requests))
 
     def test_reject_public_domains_ip_http_port_query_credentials(self):
@@ -152,6 +173,22 @@ class TestSmoke(unittest.TestCase):
         for url in urls:
             with self.subTest(url=url),self.assertRaises(ErroAceite):
                 _url_valida(url)
+
+    def test_portal_privado_invalido_bloqueia_deploy(self):
+        for patch in (
+            {"frescor_snapshot":"DEFASADO"},
+            {"origem_terminal":"GCS_PUBLICO"},
+            {"publicavel":True},
+            {"go_live_publico":True},
+            {"snapshot_sha256":"0"},
+            {"gerado_em":"2026-10-21T00:00:00+00:00"},
+            {"indicadores":[]},
+            {"indicadores":[{"natureza":"SINTETICO",
+                             "fonte":"TESTE","publicavel":False}]},
+        ):
+            with self.subTest(patch=patch),self.assertRaises(ErroAceite):
+                validar_terminal_privado(url=URL,token=TOKEN,agora=NOW,
+                    opener=Opener(portal_patch=patch))
 
     def test_no_network_without_token(self):
         c=Opener()
