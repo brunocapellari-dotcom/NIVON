@@ -44,7 +44,9 @@ PY
 
 gcloud iam service-accounts describe "$NIVON_SCHEDULER_SA" --project="$NIVON_PROJETO" --format='value(email)' >/dev/null
 TARGET="https://run.googleapis.com/v2/projects/nivon-data/locations/southamerica-east1/jobs/nivon-maritimo:run"
-if gcloud scheduler jobs describe "$NAME" --project="$NIVON_PROJETO" --location="$REGION" --format=json > "$tmp_scheduler" 2>/dev/null; then
+err_file="$(mktemp)"
+trap 'rm -f "$tmp_job" "$tmp_exec" "$tmp_scheduler" "$err_file"' EXIT
+if gcloud scheduler jobs describe "$NAME" --project="$NIVON_PROJETO" --location="$REGION" --format=json > "$tmp_scheduler" 2>"$err_file"; then
   python3 - "$tmp_scheduler" "$TARGET" "$NIVON_SCHEDULER_SA" <<'PY'
 import json,sys
 data=json.load(open(sys.argv[1]))
@@ -56,6 +58,13 @@ if target.get("uri")!=sys.argv[2] or email!=sys.argv[3]:
 print("SCHEDULER_EXISTENTE_SEM_ALTERACOES")
 PY
   exit 0
+else
+  # Só criar se o Google Cloud confirmar que o recurso NÃO EXISTE.
+  # 403, API desabilitada ou falha de rede nunca equivalem a ausência.
+  if ! grep -Eqi '(NOT_FOUND|does not exist|not found|404)' "$err_file"; then
+    echo 'SCHEDULER_NAO_VERIFICAVEL_NAO_CRIAR'
+    exit 4
+  fi
 fi
 gcloud scheduler jobs create http "$NAME" --project="$NIVON_PROJETO" --location="$REGION" \
   --schedule='12 */6 * * *' --time-zone='Etc/UTC' --uri="$TARGET" \
