@@ -15,6 +15,13 @@ class GoLiveCostPolicy(unittest.TestCase):
         self.assertIn("NIVON_PAINEL_INTERNO_AGENDADO == 'true'",job)
         self.assertIn("github.event_name == 'workflow_dispatch'",job)
 
+    def test_job_publicacao_tem_id_token_isolado(self):
+        text=(ROOT/"nivon-go-live-interno.yml").read_text(encoding="utf-8")
+        quality=text.split("  qualidade:",1)[1].split("  primeira-publicacao:",1)[0]
+        publish=text.split("  primeira-publicacao:",1)[1]
+        self.assertNotIn("id-token: write",quality)
+        self.assertIn("id-token: write",publish)
+
     def test_piloto_real_read_uses_manual_double_gate(self):
         text=(ROOT/"nivon-terminal-piloto-real.yml").read_text(encoding="utf-8")
         job=text.split("  piloto-real:",1)[1].split("    runs-on:",1)[0]
