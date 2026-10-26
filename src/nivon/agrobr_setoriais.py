@@ -243,10 +243,11 @@ def coletar_setorial_agrobr(*, dataset, banco, raw_dir, executar=False,
             valor = _numero(linha.get(metrica), aceita_negativo=metrica == "margem")
             if valor is None:
                 continue
-            unidade = (
-                linha.get("unidade") if tipo_unidade is None else
-                linha.get(tipo_unidade) if tipo_unidade in linha else tipo_unidade
-            )
+            # "unidade*" nomeia a coluna do agrobr que traz a unidade; sem ela
+            # a unidade não é comprovada (nunca usar o nome da coluna como unidade).
+            coluna = "unidade" if tipo_unidade is None else tipo_unidade
+            unidade = (linha.get(coluna) if coluna.startswith("unidade")
+                       else tipo_unidade)
             if not isinstance(unidade, str) or not unidade.strip():
                 raise ErroFontesSetoriais("unidade métrica não comprovada")
             identity_hash = hashlib.sha256(dim.encode("utf-8")).hexdigest()[:20]
