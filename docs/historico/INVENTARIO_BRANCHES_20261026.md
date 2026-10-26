@@ -60,23 +60,23 @@
 | `feat/bcb-focus-expectativas-20261021` | 20261021 | NÃO MESCLADA — 449 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/bcb-sgs11-gcp-main-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/bibliotecas-coleta-avancada-20261026` | 20261026 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/bootstrap-acessos-protegidos-main-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/bootstrap-duas-tabelas-gcp-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/brasilapi-refs-nivon-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/catalogo-fontes-gratuitas-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/coleta-gcp-nucleo-main-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/coleta-real-camadas-20261022` | 20261022 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/coletores-apis-gratuitas-reais-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/conectores-gcp-conab-sgs-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/conectores-google-cloud-lote1-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/connectores-gtr-noaa-pinksheet-geodata-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/connectores-publicos-inpe-cftc-antt-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/consulta-analitica-bq-fontes-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/corredores-ferrovia-historico-21anos-bq-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/corredores-ferroviarios-estacoes-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/corredores-primeira-view-bq-real-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/earthsearch-usda-gtr-bases-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/eurostat-faostat-qcl-api-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/bootstrap-acessos-protegidos-main-20261021` | 20261021 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
+| `feat/bootstrap-duas-tabelas-gcp-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/brasilapi-refs-nivon-20261021` | 20261021 | NÃO MESCLADA — 443 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/catalogo-fontes-gratuitas-20261021` | 20261021 | NÃO MESCLADA — 451 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/coleta-gcp-nucleo-main-20261023` | 20261023 | NÃO MESCLADA — 26 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/coleta-real-camadas-20261022` | 20261022 | NÃO MESCLADA — 629 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/coletores-apis-gratuitas-reais-20261021` | 20261021 | NÃO MESCLADA — 447 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/conectores-gcp-conab-sgs-20261023` | 20261023 | NÃO MESCLADA — 658 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/conectores-google-cloud-lote1-20261023` | 20261023 | NÃO MESCLADA — 628 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/connectores-gtr-noaa-pinksheet-geodata-20261021` | 20261021 | NÃO MESCLADA — 459 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/connectores-publicos-inpe-cftc-antt-20261021` | 20261021 | NÃO MESCLADA — 450 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/consulta-analitica-bq-fontes-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/corredores-ferrovia-historico-21anos-bq-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/corredores-ferroviarios-estacoes-20261023` | 20261023 | NÃO MESCLADA — 14 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/corredores-primeira-view-bq-real-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/earthsearch-usda-gtr-bases-20261021` | 20261021 | NÃO MESCLADA — 453 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/eurostat-faostat-qcl-api-20261021` | 20261021 | NÃO MESCLADA — 460 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/expansao-50-fontes-20261022` | 20261022 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
 | `feat/faostat-bulk-manifest-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
 | `feat/faostat-qcl-bigquery-contract-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
