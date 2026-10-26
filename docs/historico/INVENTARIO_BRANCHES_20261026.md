@@ -13,21 +13,21 @@
 
 | Branch | Sinal do nome | Mesclada na main? | Último commit > 3 dias? |
 |---|---|---|---|
-| `ci/antaq-2025-repetir-hf-realpath-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `ci/antt-rgi-reexecucao-corrigida-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `claude/auto-cepea-disponibilidade` | sem data | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `claude/auto-monitor-frescor` | sem data | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `claude/auto-testes-agrobr-setoriais` | sem data | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `codex/go-live-checkpoint` | sem data | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `codex/286-remove-vercel` | sem data | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `codex/287-single-private-interface` | sem data | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `codex/288-gcp-readiness` | sem data | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `codex/289-antt-reader-contract` | sem data | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `codex/290-operation-smoke` | sem data | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `codex/291-source-health` | sem data | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `docs/antt-21anos-corredores-operacional-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `docs/antt-gcp-operacao-atualizada-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `docs/antt-rodovia-rgi-2025-provas-custo-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `ci/antaq-2025-repetir-hf-realpath-20261025` | 20261025 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
+| `ci/antt-rgi-reexecucao-corrigida-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
+| `claude/auto-cepea-disponibilidade` | sem data | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
+| `claude/auto-monitor-frescor` | sem data | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
+| `claude/auto-testes-agrobr-setoriais` | sem data | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
+| `codex/go-live-checkpoint` | sem data | NÃO MESCLADA — 11 commit(s) à frente | PENDENTE — conferir commit |
+| `codex/286-remove-vercel` | sem data | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
+| `codex/287-single-private-interface` | sem data | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
+| `codex/288-gcp-readiness` | sem data | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
+| `codex/289-antt-reader-contract` | sem data | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
+| `codex/290-operation-smoke` | sem data | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `codex/291-source-health` | sem data | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
+| `docs/antt-21anos-corredores-operacional-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
+| `docs/antt-gcp-operacao-atualizada-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
+| `docs/antt-rodovia-rgi-2025-provas-custo-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
 | `docs/catalogo-faostat-qcl-validado-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
 | `docs/evidencia-antt-gcp-operacional-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
 | `docs/evidencias-smoke-fontes-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
