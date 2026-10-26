@@ -11,6 +11,7 @@ from datetime import date,datetime,timedelta,timezone
 from pathlib import Path
 
 from nivon.coletor_bcra_v4 import coletar_bcra
+from nivon.anp_ppi import coletar_anp_ppi
 from nivon.coletor_granos_ar import coletar_granos_ar
 from nivon.coletores_dados_reais import executar_coleta, descobrir_recurso_ccee_ano
 from nivon.ingestao_fontes_reais import exportar_jsonl
@@ -21,7 +22,8 @@ def safra_canadense(hoje):
     return f"{inicio}-{(inicio+1)%100:02d}"
 
 def operar(*,base="data/nivon",hoje=None,coletar_canada=False,coletar_ccee=False,
-           coletar_ibge=False,coletar_banco_mundial=False,publicar_bigquery=False,
+           coletar_ibge=False,coletar_banco_mundial=False,coletar_anp_ppi=False,
+           publicar_bigquery=False,
            projeto=None,dataset=None):
     hoje=date.today() if hoje is None else hoje
     if not isinstance(hoje,date):
@@ -38,6 +40,9 @@ def operar(*,base="data/nivon",hoje=None,coletar_canada=False,coletar_ccee=False
         ("ARG_GRANOS_AR_PIZARRA", lambda:coletar_granos_ar(endpoint="pizarra",
                 banco=db,raw_dir=raw,executar=True)),
     ]
+    if coletar_anp_ppi:
+        jobs.append(("BR_ANP_PPI_SEMANAL", lambda:coletar_anp_ppi(
+            banco=db,raw_dir=raw,executar=True,hoje=hoje)))
     if coletar_canada:
         jobs.append(("CAN_GRAINS_WEEKLY", lambda:executar_coleta(
             fonte="CAN_GRAINS_WEEKLY",banco=db,raw_dir=raw,
@@ -93,6 +98,7 @@ def main(argv=None):
     p.add_argument("--base",default="data/nivon")
     p.add_argument("--canada",action="store_true")
     p.add_argument("--ccee",action="store_true")
+    p.add_argument("--anp-ppi",action="store_true",help="coleta PPI semanal oficial da ANP")
     p.add_argument("--ibge-pam",action="store_true")
     p.add_argument("--wdi",action="store_true")
     p.add_argument("--bigquery",action="store_true")
@@ -104,6 +110,7 @@ def main(argv=None):
           coletar_ccee=args.ccee,
           coletar_ibge=args.ibge_pam,
           coletar_banco_mundial=args.wdi,
+          coletar_anp_ppi=args.anp_ppi,
           publicar_bigquery=args.bigquery,projeto=args.projeto,dataset=args.dataset)
     output=json.dumps(result,ensure_ascii=False,indent=2)
     if args.relatorio:
