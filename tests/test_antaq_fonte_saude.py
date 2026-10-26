@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from urllib.error import HTTPError
 
 from nivon.antaq_fonte_saude import (
-    OFFICIAL_PAGE, OFFICIAL_ZIP, OFFICIAL_NOTICE, SECONDARY_API,
+    OFFICIAL_PAGE, OFFICIAL_ZIP, OFFICIAL_NOTICE, OFFICIAL_AQUARELA, SECONDARY_API,
     KNOWN_SECONDARY, monitorar, sondar,
 )
 
@@ -36,14 +36,28 @@ class TestFonte(unittest.TestCase):
             (OFFICIAL_PAGE,"GET"):(200,"text/html",b"Estatistico Aquaviario em manutencao"),
             (OFFICIAL_ZIP,"HEAD"):(200,"application/zip",b""),
             (OFFICIAL_NOTICE,"HEAD"):(200,"text/html",b""),
+            (OFFICIAL_AQUARELA,"GET"):(200,"text/html",b"<html>Qlik Sense</html>"),
             (SECONDARY_API,"GET"):(200,"application/json",
                 json.dumps({"sha":KNOWN_SECONDARY}).encode()),
         })
         doc=monitorar(transport=c,relogio=datetime(2026,10,23,tzinfo=timezone.utc))
-        self.assertEqual(len(c.calls),4)
+        self.assertEqual(len(c.calls),5)
         self.assertEqual(doc["sinais"][1]["estado"],"CANDIDATO_A_DOWNLOAD_OFICIAL")
-        self.assertEqual(doc["sinais"][3]["estado"],"REPLICA_SEM_REVISAO")
+        self.assertEqual(doc["sinais"][3]["estado"],"PAINEL_AQUARELA_HTML_SEM_MICRODADOS")
+        self.assertEqual(doc["sinais"][4]["estado"],"REPLICA_SEM_REVISAO")
         self.assertEqual(doc["decisao"],"NENHUMA_FONTE_E_HOMOLOGADA_POR_STATUS_HTTP")
+
+    def test_novo_painel_nao_equivale_a_microdados(self):
+        c=Transporte({(OFFICIAL_AQUARELA,"GET"):(200,"text/html",
+                      b"<html>Qlik Sense - Estatitico Aquaviario</html>")})
+        resposta=sondar(OFFICIAL_AQUARELA,transport=c)
+        self.assertEqual(resposta["estado"],"PAINEL_AQUARELA_HTML_SEM_MICRODADOS")
+        self.assertEqual(len(c.calls),1)
+
+    def test_qlik_bloqueado_nao_vira_csv_disponivel(self):
+        c=Transporte({(OFFICIAL_AQUARELA,"GET"):
+                      HTTPError(OFFICIAL_AQUARELA,403,"Forbidden",{},None)})
+        self.assertEqual(sondar(OFFICIAL_AQUARELA,transport=c)["estado"],"ACESSO_BLOQUEADO")
 
     def test_acesso_bloqueado_e_nova_revisao_requer_auditoria(self):
         blocked=HTTPError(OFFICIAL_PAGE,403,"Forbidden",{},None)
