@@ -98,23 +98,23 @@
 | `feat/integracoes-lineup-nacional-20261019` | 20261019 | NÃO MESCLADA — 216 commit(s) à frente |2026-10-19T23:46:39Z — MAIS DE 3 DIAS |
 | `feat/inteligencia-corredores-intermodais-20261023` | 20261023 | NÃO MESCLADA — 7 commit(s) à frente |2026-10-23T11:45:58Z — MAIS DE 3 DIAS |
 | `feat/ivo-cerebro-historico-20261019` | 20261019 | NÃO MESCLADA — 226 commit(s) à frente |2026-10-20T02:30:36Z — MAIS DE 3 DIAS |
-| `feat/lineup-itaqui-codeba-20261019` | 20261019 | NÃO MESCLADA — 212 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/maritimo-cloudrun-deploy-seguro-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/maritimo-gcp-esquema-real-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/maritimo-gcp-primeira-coleta-real-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/maritimo-gcp-principal-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/maritimo-go-live-gha-6h-20261025` | 20261025 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/maritimo-preflight-main-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/maritimo-scheduler-seguro-20261025` | 20261025 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/mercado-bcb-portal-existente-20261025` | 20261025 | NÃO MESCLADA — 9 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/meteo-publica-inmet-cptec-20261021` | 20261021 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
-| `feat/migracao-neon-para-gcp-20261023` | 20261023 | NÃO MESCLADA — 12 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/nivon-ais-geocercas-evidencia-inferida-20261025` | 20261025 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
-| `feat/nivon-ais-ledger-replay-e2e-20261025` | 20261025 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
-| `feat/nivon-catalogo-total-github-20261026` | 20261026 | NÃO MESCLADA — 7 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/nivon-go-live-painel-interno-gcs-20261025` | 20261025 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
-| `feat/nivon-go-live-rotina-dias-uteis-20261025` | 20261025 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
-| `feat/nivon-ia-evidencias-ci-20261026` | 20261026 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/lineup-itaqui-codeba-20261019` | 20261019 | NÃO MESCLADA — 212 commit(s) à frente |2026-10-19T23:51:40Z — MAIS DE 3 DIAS |
+| `feat/maritimo-cloudrun-deploy-seguro-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente |2026-10-23T19:09:56Z — RECENTE |
+| `feat/maritimo-gcp-esquema-real-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente |2026-10-23T17:57:58Z — RECENTE |
+| `feat/maritimo-gcp-primeira-coleta-real-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente |2026-10-23T18:05:02Z — RECENTE |
+| `feat/maritimo-gcp-principal-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente |2026-10-23T17:49:55Z — RECENTE |
+| `feat/maritimo-go-live-gha-6h-20261025` | 20261025 | NÃO MESCLADA — 1 commit(s) à frente |2026-10-26T01:57:21Z — RECENTE |
+| `feat/maritimo-preflight-main-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente |2026-10-23T17:54:47Z — RECENTE |
+| `feat/maritimo-scheduler-seguro-20261025` | 20261025 | NÃO MESCLADA — 2 commit(s) à frente |2026-10-26T01:23:42Z — RECENTE |
+| `feat/mercado-bcb-portal-existente-20261025` | 20261025 | NÃO MESCLADA — 9 commit(s) à frente |2026-10-26T02:18:53Z — RECENTE |
+| `feat/meteo-publica-inmet-cptec-20261021` | 20261021 | MESCLADA — ancestral da main |2026-10-21T20:51:34Z — MAIS DE 3 DIAS |
+| `feat/migracao-neon-para-gcp-20261023` | 20261023 | NÃO MESCLADA — 12 commit(s) à frente |2026-10-23T12:21:15Z — MAIS DE 3 DIAS |
+| `feat/nivon-ais-geocercas-evidencia-inferida-20261025` | 20261025 | MESCLADA — ancestral da main |2026-10-26T01:32:08Z — RECENTE |
+| `feat/nivon-ais-ledger-replay-e2e-20261025` | 20261025 | MESCLADA — ancestral da main |2026-10-26T01:25:48Z — RECENTE |
+| `feat/nivon-catalogo-total-github-20261026` | 20261026 | NÃO MESCLADA — 7 commit(s) à frente |2026-10-26T15:29:29Z — RECENTE |
+| `feat/nivon-go-live-painel-interno-gcs-20261025` | 20261025 | MESCLADA — ancestral da main |2026-10-26T02:06:48Z — RECENTE |
+| `feat/nivon-go-live-rotina-dias-uteis-20261025` | 20261025 | MESCLADA — ancestral da main |2026-10-26T02:09:03Z — RECENTE |
+| `feat/nivon-ia-evidencias-ci-20261026` | 20261026 | NÃO MESCLADA — 4 commit(s) à frente |2026-10-26T14:16:19Z — RECENTE |
 | `feat/nivon-ia-pilotos-operacionais-20261026` | 20261026 | NÃO MESCLADA — 7 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/nivon-maritime-readonly-bigquery-panel-20261023` | 20261023 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
 | `feat/nivon-painel-integrado-logistica-maritimo-quant-20261023` | 20261023 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
