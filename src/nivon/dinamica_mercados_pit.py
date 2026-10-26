@@ -11,7 +11,8 @@ from decimal import Decimal
 
 from .dinamica_tendencias import comparar_forca_tendencia
 from .motor_tendencias import ErroTendencia
-from .painel_operacional import CLASSES_PRECO, ErroMotor, _decimal, _tempo
+from .painel_operacional import (CLASSES_PRECO, ErroMotor, _decimal, _tempo,
+                                 disponivel_pela_coleta)
 
 
 CHAVES_IDENTIDADE = {
@@ -47,6 +48,7 @@ def avaliar_dinamica_historica(observacoes, *, classe, serie_id, as_of,
         return _bloqueado("sem_observacoes", classe=classe, serie_id=serie_id)
     referencia = None
     por_dia = {}
+    por_coleta = 0
     for obs in observacoes:
         if not isinstance(obs, dict) or not isinstance(obs.get("campos"), dict):
             raise ErroMotor("observacao sem campos")
@@ -73,14 +75,17 @@ def avaliar_dinamica_historica(observacoes, *, classe, serie_id, as_of,
             continue
         try:
             dia = date.fromisoformat(obs["data_referencia"])
-            pub = _tempo(obs.get("data_publicacao"))
             coleta = _tempo(obs.get("data_coleta"))
+            sem_publicacao = (not obs.get("data_publicacao")
+                              and disponivel_pela_coleta(obs, classe))
+            pub = coleta if sem_publicacao else _tempo(obs.get("data_publicacao"))
         except (KeyError, ValueError, TypeError) as exc:
             raise ErroMotor("proveniencia temporal invalida") from exc
         if not (dia <= pub.date() and pub <= coleta):
             raise ErroMotor("cronologia da fonte inconsistente")
         if coleta > corte or pub > corte or dia > corte.date():
             continue
+        por_coleta += sem_publicacao
         fingerprint = obs.get("fingerprint")
         if not isinstance(fingerprint, str) or len(fingerprint) != 64 or any(
             ch not in "0123456789abcdef" for ch in fingerprint
@@ -98,6 +103,8 @@ def avaliar_dinamica_historica(observacoes, *, classe, serie_id, as_of,
         anterior = por_dia[dia].get(chave)
         if anterior is None or coleta > anterior["coleta_dt"]:
             por_dia[dia][chave] = {
+                # Interno ao motor (não exposto): sem publicação declarada,
+                # a coleta é apenas o limite de disponibilidade da cronologia.
                 "periodo": dia.isoformat(), "publicacao": pub.date().isoformat(),
                 "coleta": coleta.date().isoformat(), "valor": val_float,
                 "fonte_id": fonte, "edicao_sha256": fingerprint,
@@ -143,4 +150,5 @@ def avaliar_dinamica_historica(observacoes, *, classe, serie_id, as_of,
         "probabilidades_calibradas": None,
         "natureza": "DESCRITIVA_HISTORICA_NAO_PREVISAO",
         "revisoes_as_of": True, "agrupamento_diario_frete": "MAIOR_DIVULGACAO_MESMAS_CONDICOES",
+        "observacoes_disponiveis_pela_coleta": por_coleta,
     }

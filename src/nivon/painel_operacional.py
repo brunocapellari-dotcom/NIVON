@@ -64,6 +64,15 @@ def _quantil(valores: list[Decimal], p: Decimal) -> Decimal | None:
     return ordered[baixo] + (ordered[alto] - ordered[baixo]) * (indice - baixo)
 
 
+DISPONIBILIDADE_COLETA = "DATA_COLETA_CONSERVADORA"
+
+
+def disponivel_pela_coleta(obs: dict, classe: str) -> bool:
+    """Preço físico sem publicação declarada (ex.: página CEPEA) pode usar a
+    coleta como instante de disponibilidade, se a fonte marcar isso."""
+    return classe == "PRECO_FISICO" and obs.get("tipo_disponibilidade") == DISPONIBILIDADE_COLETA
+
+
 def _bloqueio(motivo: str, **campos: Any) -> dict:
     return {"status": "DADOS_INSUFICIENTES", "publicavel": False,
             "motivos": [motivo], **campos}
@@ -93,6 +102,7 @@ def tendencia_precos(
     contrato = None
     unidade = None
     excluidos = 0
+    por_coleta = 0
     for obs in observacoes:
         if not isinstance(obs, dict) or not isinstance(obs.get("campos"), dict):
             raise ErroMotor("observacao e campos devem ser objetos")
@@ -133,12 +143,19 @@ def tendencia_precos(
             raise ErroMotor("data_referencia invalida") from exc
         coleta = _tempo(obs.get("data_coleta"))
         publicacao = _tempo(obs["data_publicacao"]) if obs.get("data_publicacao") else None
-        if publicacao is None:
+        if publicacao is None and disponivel_pela_coleta(obs, classe):
+            # Sem publicação declarada: a coleta é o limite conservador de
+            # disponibilidade; nunca é reportada como data de publicação.
+            disponivel = coleta
+        elif publicacao is None:
             excluidos += 1
             continue
-        if coleta > momento or publicacao > momento or ref > momento.date():
+        else:
+            disponivel = publicacao
+        if coleta > momento or disponivel > momento or ref > momento.date():
             excluidos += 1
             continue
+        por_coleta += publicacao is None
         valor = _decimal(obs.get("valor"), positivo=True)
         identificador = str(obs.get("identidade") or obs.get("fingerprint") or "")
         if not identificador:
@@ -170,6 +187,7 @@ def tendencia_precos(
         "variacao_pct": str(round(variacao, 4)),
         "dias_validos": len(diaria), "data_mais_recente": diaria[-1][0].isoformat(),
         "registros_excluidos": excluidos, "natureza_resultado": "INFERIDO",
+        "observacoes_disponiveis_pela_coleta": por_coleta,
         "metodologia": "MEDIANAS_METADES_V1_SEM_PREVISAO",
         "regra_intradia": "MAIOR_ANUNCIO_MESMAS_CONDICOES" if classe == "FRETE_ANUNCIADO"
                          else "MEDIANA_DIA",
