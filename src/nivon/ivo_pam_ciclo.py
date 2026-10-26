@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 
 from .ivo_pam_alertas import alertas_revisoes_pam
 from .ivo_pam_entrega import montar_entrega_pam_ivo
+from .ivo_pam_relatorio import salvar_relatorio_pam
 
 from .ivo_pam_backup import ErroBackupPAM, criar_backup_pam, restaurar_backup_pam
 from .ivo_pam_operacao import abrir_operacao_pam, executar_lote_pam
@@ -87,6 +88,9 @@ def executar_ciclo_pam(*,saida, tarefas, modo="PUBLICO_IBGE",
         json.dumps(radar,indent=2,ensure_ascii=False),encoding="utf-8")
     (destino/"entrega_ivo_pam.json").write_text(
         json.dumps(entrega,indent=2,ensure_ascii=False),encoding="utf-8")
+    relatorio=salvar_relatorio_pam(entrega,diretorio=destino)
+    (destino/"relatorio_pam_metadados.json").write_text(
+        json.dumps(relatorio,indent=2,ensure_ascii=False),encoding="utf-8")
     return payload
 
 
