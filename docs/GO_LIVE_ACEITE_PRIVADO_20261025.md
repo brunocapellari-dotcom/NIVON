@@ -44,3 +44,8 @@ não ativa CEPEA/IMEA/CONAB e não autoriza envio WhatsApp.
 **Critério de go-live 0.1:** job de deploy manual aprovado, CI verde no
 mesmo SHA, smoke autenticado completo, IAM privado e confirmação de custo
 pelo operador. Nenhuma integração Vercel.
+
+
+## Consolidação com o portal real incorporado na main
+
+A mesma aplicação privada integra `/`, `/portal`, `/healthz`, `/readyz`, `/api/v1/ferrovia` e `/api/v1/painel`. O aceite depois do deploy autorizado exige HTTP autenticado para todas as seis rotas, série ferroviária ANTT/SIADE coerente, snapshot GCS privado SHA-256, pelo menos duas fontes reais e atualização dentro de 24 horas. Falhas de dados ou de IAM impedem classificar o deploy como pronto. Não há segundo frontend, Vercel, IAM público ou liberação de custos automática.
