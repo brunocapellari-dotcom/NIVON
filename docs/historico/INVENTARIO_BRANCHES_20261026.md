@@ -196,8 +196,8 @@
 | `test/qa-faostat-qcl-zip-once-20261021` | 20261021 | NÃO MESCLADA — 458 commit(s) à frente | PENDENTE — conferir commit |
 | `test/smoke-eurostat-faostat-qcl-20261021` | 20261021 | NÃO MESCLADA — 456 commit(s) à frente | PENDENTE — conferir commit |
 | `test/smoke-flood-ensemble-fpma-20261021` | 20261021 | NÃO MESCLADA — 456 commit(s) à frente | PENDENTE — conferir commit |
-| `test/smoke-fontes-publicas-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `tmp/ptax-fastlane-reconcile-20261025` | 20261025 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `test/smoke-fontes-publicas-20261021` | 20261021 | NÃO MESCLADA — 455 commit(s) à frente | PENDENTE — conferir commit |
+| `tmp/ptax-fastlane-reconcile-20261025` | 20261025 | NÃO MESCLADA — 10 commit(s) à frente | PENDENTE — conferir commit |
 
 ## Decisão solicitada ao proprietário (após auditoria conclusiva)
 
