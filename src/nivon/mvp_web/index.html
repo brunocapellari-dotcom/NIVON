@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>NIVON | Terminal interno</title>
+<link rel="stylesheet" href="/terminal.css">
+<script src="/terminal.js" defer></script>
+</head><body>
+<header class="top">
+  <div class="brand"><span class="mark">N</span><div><strong>NIVON</strong><small>Inteligência agrícola e logística · Terminal interno</small></div></div>
+  <div class="tag">BETA RESTRITA · DADOS REAIS</div>
+</header>
+<main>
+<section class="intro"><p class="eyebrow">MÓDULO OPERACIONAL</p><h1>Logística e inteligência marítima</h1>
+  <p>Fontes verificadas e períodos explícitos. Nenhum indicador estimado é tratado como operação realizada.</p>
+</section>
+<form id="filtros" autocomplete="off">
+ <label>Credencial de acesso <input id="chave" type="password" minlength="24" autocomplete="off" placeholder="Token de acesso interno" required></label>
+ <label>Mês ferroviário <input id="mes" type="month" min="2020-01" max="2026-12" value="2025-12" required></label>
+ <label>Passagem marítima <select id="passagem"><option value="panama">Canal do Panamá</option><option value="suez">Canal de Suez</option><option value="hormuz">Estreito de Ormuz</option><option value="bab_el_mandeb">Bab el-Mandeb</option></select></label>
+ <button id="consultar" type="submit">Consultar fontes</button>
+</form>
+<p id="status" role="status" aria-live="polite">Informe sua credencial para consultar as fontes autorizadas.</p>
+<section class="grid" aria-label="Resultados operacionais">
+  <article class="panel"><div class="panelhead"><span>01 / FERROVIÁRIO</span><span>ANTT · SIADE</span></div>
+    <h2>Fluxos ferroviários por polo</h2><p class="sub">Revisão atual da fonte por competência; não reconstrói vintage histórico.</p>
+    <div id="ferrovia" class="results"><p class="muted">Aguardando consulta.</p></div></article>
+  <article class="panel"><div class="panelhead"><span>02 / MARÍTIMO</span><span>FMI · PORTWATCH</span></div>
+    <h2>Passagens estratégicas</h2><p class="sub">Sinais de trânsito e estimativas do modelo, não carga portuária realizada.</p>
+    <div id="maritimo" class="results"><p class="muted">Aguardando consulta.</p></div></article>
+</section>
+<section class="footnote">
+  <strong>Política de interpretação</strong>
+  <p>Não somamos toneladas de modais diferentes. Dados históricos não são denominados tempo real. Ausência de observação não significa valor zero. Acesso e consultas podem gerar cobrança limitada no BigQuery.</p>
+  <p id="corte"></p>
+</section>
+</main>
+<footer>NIVON · Beta interna · Indicadores não homologados para decisões comerciais</footer>
+</body></html>
