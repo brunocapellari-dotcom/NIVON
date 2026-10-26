@@ -243,8 +243,14 @@ def carregar_snapshot(caminho: Path):
     return validar_snapshot(doc)
 
 
-def criar_app(caminho: str | Path):
-    caminho = Path(caminho)
+def criar_app(caminho: str | Path | None, *, leitor_snapshot=None):
+    """API privada: snapshot de arquivo local ou leitor GCS injetado."""
+    if leitor_snapshot is None:
+        if caminho is None:
+            raise ErroPortal("caminho ou leitor do snapshot obrigatorio")
+        caminho = Path(caminho)
+    elif not callable(leitor_snapshot):
+        raise ErroPortal("leitor do snapshot nao e callable")
     assets = {
         "/": ("text/html; charset=utf-8", "index.html"),
         "/assets/portal.css": ("text/css; charset=utf-8", "portal.css"),
@@ -272,7 +278,8 @@ def criar_app(caminho: str | Path):
             return response("200 OK", "application/json", b'{"status":"PROCESSO_ATIVO"}')
         if path in ("/api/v1/painel", "/readyz"):
             try:
-                doc = carregar_snapshot(caminho)
+                doc = (carregar_snapshot(caminho) if leitor_snapshot is None
+                       else validar_snapshot(leitor_snapshot()))
                 age = datetime.now(timezone.utc) - _tempo(doc["gerado_em"])
                 if age < timedelta(minutes=-5):
                     raise ErroPortal("snapshot do futuro")
