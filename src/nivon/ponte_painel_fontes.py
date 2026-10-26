@@ -11,7 +11,8 @@ from .consulta_analitica_bq import consultar, planejar_consulta
 from .inteligencia_corredores import consultar_corredores
 from .conciliacao_corredores_ferrovia import analisar_staging, quadro_intermodal
 from .painel_operacional import ErroMotor, montar_painel
-from .adaptadores_operacionais import adaptar_fretes_consolidados, ler_replay_ais_sqlite
+from .adaptadores_operacionais import (adaptar_fretes_consolidados, ler_cepea_ledger_sqlite,
+                                      ler_replay_ais_sqlite)
 from .ferrovia_painel_bq import consultar_ferrovia
 from .maritime.ais_geofence_inference import inferir_permanencias
 from .maritimo_painel_bigquery import consultar_maritimo
@@ -124,6 +125,29 @@ def analisar_fontes(
             series.append(s)
         if len(series) + len(config_queries) > 50:
             raise ErroMotor("excesso de series; particionar as ofertas")
+    cepea_config = config.get("cepea_sqlite", [])
+    if not isinstance(cepea_config, list) or len(cepea_config) > 10:
+        raise ErroMotor("maximo 10 series CEPEA por lote")
+    cepea_meta = []
+    for entrada in cepea_config:
+        if not isinstance(entrada, dict) or any(
+            not isinstance(entrada.get(k), str) or not entrada[k] for k in ("banco", "serie_id")
+        ):
+            raise ErroMotor("parametros CEPEA incompletos")
+        lido = ler_cepea_ledger_sqlite(
+            banco=entrada["banco"], serie_id=entrada["serie_id"], as_of=as_of,
+            aceitar_quarentena=entrada.get("aceitar_quarentena") is True,
+        )
+        chave = ("PRECO_FISICO", lido["serie_id"])
+        if chave in chaves:
+            raise ErroMotor("serie CEPEA duplicada entre fontes")
+        chaves.add(chave)
+        series.append({"classe": "PRECO_FISICO", "serie_id": lido["serie_id"],
+                       "observacoes": lido["observacoes"]})
+        cepea_meta.append({k: v for k, v in lido.items() if k != "observacoes"}
+                          | {"linhas": len(lido["observacoes"])})
+    if len(series) + len(config_queries) > 50:
+        raise ErroMotor("excesso de series")
     ais_config = config.get("replays_ais_sqlite", [])
     if not isinstance(ais_config, list) or len(ais_config) > 25:
         raise ErroMotor("maximo 25 replays AIS por lote")
@@ -260,6 +284,7 @@ def analisar_fontes(
     painel["fretes_consolidados"] = (
         {k:v for k,v in fretes_meta.items() if k!="series"} if fretes_meta else None
     )
+    painel["fontes_cepea"] = cepea_meta
     painel["replays_ais"] = replays
     painel["candidatos_geocercas_ais"] = candidatos_ais
     painel["fontes_maritimas_bigquery"] = maritimo_bq

@@ -250,3 +250,72 @@ def ler_replay_ais_sqlite(*, banco: str, porto_id: str, inicio: str,
         "apto_para_indice_fila":False,
         "nota":"MMSI confirmado por sequencia nao comprova chegada, geocerca, berco ou carga.",
     }
+
+
+CEPEA_DATASET = "CEPEA_PRECOS_FISICOS"
+CEPEA_SERIE = re.compile(r"^[a-z][a-z0-9_]{2,60}$")
+
+
+def ler_cepea_ledger_sqlite(*, banco: str, serie_id: str, as_of: str,
+                            aceitar_quarentena: bool = False,
+                            limite: int = 2000) -> dict:
+    """Série CEPEA do ledger local (SQLite RO) no formato PRECO_FISICO do painel.
+
+    A página CEPEA não declara publicação: `data_publicacao` fica ausente e
+    a coleta vira o instante conservador de disponibilidade (decisão #303).
+    Por padrão só lê snapshots NORMALIZED; quarentena exige opt-in explícito.
+    """
+    if not isinstance(serie_id, str) or not CEPEA_SERIE.fullmatch(serie_id):
+        raise ErroMotor("serie CEPEA inválida")
+    if type(limite) is not int or not 1 <= limite <= 10000:
+        raise ErroMotor("limite CEPEA inválido")
+    corte = _tempo(as_of)
+    if not isinstance(banco, str):
+        raise ErroMotor("banco deve ser caminho local")
+    path = Path(banco)
+    if path.is_symlink() or not path.is_file():
+        raise ErroMotor("SQLite CEPEA precisa existir e não pode ser symlink")
+    estados = ("NORMALIZED", "QUARANTINED") if aceitar_quarentena is True else ("NORMALIZED",)
+    uri = "file:" + quote(str(path.resolve())) + "?mode=ro"
+    with sqlite3.connect(uri, uri=True, timeout=5) as con:
+        con.execute("PRAGMA query_only=ON")
+        linhas = con.execute(
+            "SELECT o.identidade, o.referencia, o.coletado_em, o.unidade, o.valor,"
+            " o.natureza, o.publicacao, o.campos_json, s.sha256, s.estado"
+            " FROM observacoes o JOIN snapshots s USING(snapshot_id)"
+            " WHERE o.dataset_id=? AND s.estado IN (" + ",".join("?" * len(estados)) + ")"
+            " ORDER BY o.referencia, o.coletado_em LIMIT ?",
+            [CEPEA_DATASET, *estados, limite + 1]).fetchall()
+    if len(linhas) > limite:
+        raise ErroMotor("ledger CEPEA acima do limite; particionar a leitura")
+    observacoes = []
+    contagem = Counter()
+    for ident, ref, coletado, unidade, valor, natureza, publicacao, payload, sha, estado in linhas:
+        campos = json.loads(payload)
+        if campos.get("serie_id") != serie_id:
+            continue
+        if publicacao is not None:
+            raise ErroMotor("CEPEA com publicação no ledger: conferir proveniência")
+        if not SHA.fullmatch(sha or ""):
+            raise ErroMotor("snapshot CEPEA sem SHA-256")
+        if _tempo(coletado) > corte:
+            continue
+        contagem[estado] += 1
+        observacoes.append({
+            "identidade": ident, "fingerprint": sha, "dataset_id": CEPEA_DATASET,
+            "data_referencia": ref, "data_publicacao": None, "data_coleta": coletado,
+            "tipo_disponibilidade": "DATA_COLETA_CONSERVADORA",
+            "valor": valor, "unidade": unidade, "natureza": natureza,
+            "campos": {
+                "serie_id": "CEPEA:" + serie_id, "classe": "PRECO_FISICO",
+                "produto": campos.get("produto"), "praca": campos.get("praca"),
+                "tipo_preco": "INDICADOR_CEPEA", "regime": "NAO_APLICAVEL",
+            },
+        })
+    return {
+        "fonte": "CEPEA", "dataset_id": CEPEA_DATASET, "serie_id": "CEPEA:" + serie_id,
+        "observacoes": observacoes, "estados_snapshot": dict(contagem),
+        "publicacao_declarada": False,
+        "tipo_disponibilidade": "DATA_COLETA_CONSERVADORA",
+        "homologado": not aceitar_quarentena and bool(observacoes),
+    }
