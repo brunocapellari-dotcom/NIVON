@@ -8,6 +8,20 @@ Colocar o **NIVON utilizável o mais rápido possível**, começando por um term
 
 ## P0 — rumo ao go-live mínimo
 
+**DECISÃO DE ESCOPO:** Vercel excluído. Toda hospedagem do produto NIVON será no **Google Cloud** e deve reaproveitar recursos existentes. A issue [#281](https://github.com/brunocapellari-dotcom/NIVON/issues/281) é o **único gate de GO-LIVE**. Código, CI e prova de BigQuery não provam que Cloud Run foi publicado.
+
+**Fila atual:** 30 issues únicas (15 novas desta rodada: #286–#300; 4 anteriores: #277–#280; 11 já existentes reutilizadas, incluindo #281). Outras PRs abertas são trabalho candidato a revisão, **não autorização para duplicar**. Controles de custo/IAM impedem deploy, não desenvolvimento seguro offline.
+
+**Ordem Codex recomendada para chegar ao go-live com o menor retrabalho:**
+1. **#286** remover Vercel do código; **#288** pré-voo GCP read-only; **#289** contratos de readback/freshness. Os três podem ter implementações isoladas.
+2. **#287** unificar portal draft #276 com terminal real da main; **#290** testes de rollback e segurança; **#291** saúde das fontes.
+3. **#296** reconciliar Neon→BigQuery sem cortar writer; **#292** homologar CEPEA/IMEA/CONAB sem promover fonte não autorizada; **#294** replay idempotente.
+4. **#297–#300** continuidade de coleta, observabilidade, teste PIT e relatórios; marítimo #278/#293, hidromet #279, Argentina #280 e ANP #295 sem bloquear o primeiro terminal privado.
+
+O Codex pode avançar automaticamente de uma issue para outra **dentro da sessão e dos limites da plataforma**, sem pedir aprovação entre commits e testes. Se a sessão terminar, o estado deve ficar registrado nas PRs/issues para retomada; **não prometer sessões infinitas ou agendamento automático**.
+
+## P0 — rumo ao go-live mínimo
+
 | Ordem | Trabalho e evidência | Execução sugerida | Dependências e gate |
 |---|---|---|---|
 | 1 | [#263](https://github.com/brunocapellari-dotcom/NIVON/issues/263) proteção main, WIF/IAM e faturamento; [#264](https://github.com/brunocapellari-dotcom/NIVON/issues/264) auditoria remanescente | Claude / governança + Codex em PRs de código não sobrepostos | Evidência de administrador necessária para gates; não autoaprovar |
@@ -55,3 +69,14 @@ Crie **uma tarefa por issue**, apontando o Codex ao repositório `brunocapellari
 Depois de iniciar #277, há tarefas independentes #278, #279 e #280 que podem usar ambientes Codex distintos (respeitando a cota real da assinatura). O mesmo vale para Claude em #143/#94, evitando conflitos de escopo. **Os chats do ChatGPT não são conectados automaticamente à fila**; novas decisões devem virar alteração no GitHub via issue/PR.
 
 **Painel de acompanhamento:** GitHub Issues e PRs. Arquivo de máquina complementar: `docs/NIVON_BACKLOG_EXECUCAO.json`. O backlog é uma projeção e não substitui a prova de status no GitHub.
+
+## Pacotes adicionais do backlog unificado
+
+| Bloco | Issues prioritárias | Objetivo de aceite |
+|---|---|---|
+| Hospedagem GCP, sem Vercel | [#281](https://github.com/brunocapellari-dotcom/NIVON/issues/281), [#286](https://github.com/brunocapellari-dotcom/NIVON/issues/286), [#288](https://github.com/brunocapellari-dotcom/NIVON/issues/288) | Google Cloud como única hospedagem; IAM/custos bloqueados até autorização |
+| Interface e prova dos dados | [#277](https://github.com/brunocapellari-dotcom/NIVON/issues/277), [#287](https://github.com/brunocapellari-dotcom/NIVON/issues/287), [#289](https://github.com/brunocapellari-dotcom/NIVON/issues/289), [#290](https://github.com/brunocapellari-dotcom/NIVON/issues/290) | Um terminal privado, fonte/competência, erro legítimo e regressão/rollback |
+| Fontes, freshness e cadeia de dados | [#291](https://github.com/brunocapellari-dotcom/NIVON/issues/291), [#292](https://github.com/brunocapellari-dotcom/NIVON/issues/292), [#294](https://github.com/brunocapellari-dotcom/NIVON/issues/294), [#296](https://github.com/brunocapellari-dotcom/NIVON/issues/296), [#297](https://github.com/brunocapellari-dotcom/NIVON/issues/297) | Coleta incremental, integridade temporal, replay e shadow-read seguros |
+| Operações e inteligência | [#278](https://github.com/brunocapellari-dotcom/NIVON/issues/278), [#279](https://github.com/brunocapellari-dotcom/NIVON/issues/279), [#280](https://github.com/brunocapellari-dotcom/NIVON/issues/280), [#293](https://github.com/brunocapellari-dotcom/NIVON/issues/293), [#295](https://github.com/brunocapellari-dotcom/NIVON/issues/295), [#298](https://github.com/brunocapellari-dotcom/NIVON/issues/298), [#299](https://github.com/brunocapellari-dotcom/NIVON/issues/299), [#300](https://github.com/brunocapellari-dotcom/NIVON/issues/300) | Módulos independentes, qualidade, não confundir inferido/observado, custo baixo |
+
+**Lembrete:** o número de issues não representa o número de tarefas ainda não implementadas. Checar primeiro CI, PRs #276/#283 e trabalhos draft antigos; fechar/consolidar issues comprovadamente concluídas com evidência, sem reabrir projetos paralelos.
