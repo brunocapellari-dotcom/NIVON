@@ -15,9 +15,12 @@ OFFICIAL_PAGE = "https://estatistica.antaq.gov.br/ea/sense/download.html"
 OFFICIAL_ZIP = "https://estatistica.antaq.gov.br/ea/txt/2025.zip"
 OFFICIAL_NOTICE = ("https://www.gov.br/antaq/pt-br/central-de-conteudos/"
                    "publicacoes-da-antaq/publicacoes-off/painel-estatistico-aquaviario-indisponivel")
+# Novo painel apontado diretamente pelo portal GOV.BR da ANTAQ em 25/10/2026.
+# HTML Qlik não constitui disponibilização de CSV/API com microdados.
+OFFICIAL_AQUARELA = "https://aquarela.antaq.gov.br/single/?appid=56c32604-37bd-4993-9904-1b2c87706808&bookmark=6ac0a531-792e-470a-8056-dbbfbc36d93e&opt=currsel,ctxmenu&sheet=NnpdyU"
 SECONDARY_API = "https://huggingface.co/api/datasets/vinicius-souza/antaq"
 KNOWN_SECONDARY = "ff0349fa6dc8cebcec161ee3ce48f6f73f7f3ba8"
-_ALLOWED = {OFFICIAL_PAGE, OFFICIAL_ZIP, OFFICIAL_NOTICE, SECONDARY_API}
+_ALLOWED = {OFFICIAL_PAGE, OFFICIAL_ZIP, OFFICIAL_NOTICE, OFFICIAL_AQUARELA, SECONDARY_API}
 
 
 class SemRedirecionamento(HTTPRedirectHandler):
@@ -62,6 +65,12 @@ def sondar(url: str, *, metodo: str = "GET", transport=None) -> dict:
         estado = "HTTP_NAO_CONFIRMADO"
     elif url == OFFICIAL_ZIP:
         estado = "CANDIDATO_A_DOWNLOAD_OFICIAL" if ("zip" in ct or "octet-stream" in ct) else "FORMATO_NAO_COMPROVADO"
+    elif url == OFFICIAL_AQUARELA:
+        # '200 OK' prova somente acesso ao shell Qlik, nunca download
+        # integral de volumes, mercadorias nem autorização de API.
+        estado = ("PAINEL_AQUARELA_HTML_SEM_MICRODADOS"
+                  if "html" in ct or raw.startswith((b"<!doctype", b"<html"))
+                  else "PAINEL_AQUARELA_RESPOSTA_NAO_COMPROVADA")
     elif url == OFFICIAL_PAGE:
         txt = raw.decode("utf-8", errors="replace").lower()
         estado = ("AVISO_DE_INDISPONIBILIDADE" if any(
@@ -96,6 +105,7 @@ def monitorar(*, transport=None, relogio=None) -> dict:
             sondar(OFFICIAL_PAGE, transport=transport),
             sondar(OFFICIAL_ZIP, metodo="HEAD", transport=transport),
             sondar(OFFICIAL_NOTICE, metodo="HEAD", transport=transport),
+            sondar(OFFICIAL_AQUARELA, transport=transport),
             sondar(SECONDARY_API, transport=transport),
         ],
         "decisao": "NENHUMA_FONTE_E_HOMOLOGADA_POR_STATUS_HTTP",
