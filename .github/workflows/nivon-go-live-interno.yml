@@ -1,4 +1,4 @@
-name: NIVON - Primeira Edicao Operacional Interna
+name: NIVON - Painel Operacional Interno Diario
 
 on:
   pull_request:
@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
     inputs:
       publicar:
-        description: 'Publicar um retrato interno com 3 consultas read-only e dois objetos GCS'
+        description: 'Publicar um retrato interno com 3 consultas read-only e dois objetos GCS imutaveis'
         required: true
         type: boolean
         default: false
@@ -101,21 +101,24 @@ jobs:
           from pathlib import Path
           path=Path(os.environ["RUNNER_TEMP"])/"nivon-lancamento-status.json"
           status=json.loads(path.read_text(encoding="utf-8"))
-          if (status.get("status")!="PUBLICADO_SOMENTE_GCS_PRIVADO"
-              or status.get("objetos")!=4 or not status.get("sem_url_publica")
-              or not status.get("sha256_json")):
+          if (status.get("status")!="PUBLICADO_REVISAO_PRIVADA_GCS"
+              or status.get("objetos")!=2 or not status.get("sem_url_publica")
+              or not status.get("sha256_json")
+              or status.get("latest_atualizado") is not False):
               raise RuntimeError("LANÇAMENTO_INTERNO_SEM_PROVA_DE_READBACK")
           print("NIVON_LANCAMENTO_INTERNO_OK",json.dumps({
               "status":status["status"],
               "corte":status["data_corte"],
               "objetos":status["objetos"],
               "prefixo":status["prefixo"],
+              "revisao_html":status["revisao_html"],
+              "latest_atualizado":status["latest_atualizado"],
               "sha256_json":status["sha256_json"],
           },ensure_ascii=False))
           with open(os.environ["GITHUB_STEP_SUMMARY"],"a",encoding="utf-8") as stream:
               stream.write("### NIVON — primeira edição operacional interna\n\n")
               stream.write("Resultado em bucket privado existente, sem URL pública.\n\n")
-              stream.write("Caminho: nivon/painel-interno/latest.html\n\n")
+              stream.write("Revisão HTML: "+status["revisao_html"]+"\n\n")
               stream.write("Fontes: ANTT SIADE (histórico), Imbituba (programação), PortWatch (estimativa).\n\n")
               stream.write("Status: SHADOW. Não representa operações concluídas.\n")
           PY

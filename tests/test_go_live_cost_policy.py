@@ -25,7 +25,8 @@ class GoLiveCostPolicy(unittest.TestCase):
     def test_piloto_real_read_uses_manual_double_gate(self):
         text=(ROOT/"nivon-terminal-piloto-real.yml").read_text(encoding="utf-8")
         job=text.split("  piloto-real:",1)[1].split("    runs-on:",1)[0]
-        self.assertNotIn("  push:",text)
+        self.assertIn("  push:",text)  # apenas o preflight offline, sem leitura GCP
+        self.assertIn("  validar-preflight:",text)
         self.assertIn("github.event_name == 'workflow_dispatch'",job)
         self.assertIn("NIVON_TERMINAL_READ_APPROVED == 'true'",job)
         self.assertIn("NIVON_GCP_COST_REVIEWED == 'true'",job)

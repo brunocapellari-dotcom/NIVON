@@ -8,6 +8,8 @@
 const REPO = "brunocapellari-dotcom/NIVON";
 const ACTIONS_URL = "https://github.com/" + REPO + "/actions";
 const API_URL = "https://api.github.com/repos/" + REPO + "/actions/runs?per_page=100";
+const P0_WORKFLOWS=["cepea-neon-ingest.yml","imea-neon-stage.yml","conab-neon-ingest.yml"];
+const P0_URLS=P0_WORKFLOWS.map(f=>"https://api.github.com/repos/"+REPO+"/actions/workflows/"+f+"/runs?branch=main&per_page=2");
 const GROUPS = [
   {id:"cepea",name:"CEPEA • Preços físicos",area:"Mercados",detail:"Coleta primária de soja e milho; execução ≠ novo preço.",match:/CEPEA coleta primaria para Neon/i},
   {id:"imea",name:"IMEA • Mercado MT",area:"Mercados",detail:"Staging oficial; publicação não equivale à data de referência.",match:/IMEA - staging oficial Neon/i},
@@ -123,19 +125,29 @@ async function load(){
   lookup("network-label").textContent="Conferindo execuções no GitHub…";
   lookup("network-dot").className="network-dot";
   try{
-    const res=await fetch(API_URL,{headers:{"Accept":"application/vnd.github+json"},
-      cache:"no-store",signal:AbortSignal.timeout(12000)});
-    if(!res.ok)throw new Error("GitHub retornou HTTP "+res.status);
-    const parsed=await res.json();
-    if(!parsed || !Array.isArray(parsed.workflow_runs))throw new Error("Formato de fonte inválido");
-    const verified=parsed.workflow_runs.filter(r=>r&&typeof r.name==="string"
-      && r.repository && r.repository.full_name===REPO
+    const urls=[API_URL,...P0_URLS];
+    const responses=await Promise.allSettled(urls.map(async url=>{
+      const res=await fetch(url,{headers:{"Accept":"application/vnd.github+json"},
+        cache:"no-store",signal:AbortSignal.timeout(12000)});
+      if(!res.ok)throw new Error("GitHub retornou HTTP "+res.status);
+      const data=await res.json();
+      if(!data||!Array.isArray(data.workflow_runs))throw new Error("Resposta sem execuções");
+      return data.workflow_runs;
+    }));
+    const available=responses.filter(r=>r.status==="fulfilled");
+    if(!available.length)throw new Error("Fontes de execuções indisponíveis");
+    const verified=available.flatMap(r=>r.value).filter(r=>r&&typeof r.name==="string"
+      && r.repository&&r.repository.full_name===REPO
       && /^https:\/\/github\.com\/brunocapellari-dotcom\/NIVON\/actions\/runs\/[0-9]+$/.test(String(r.html_url||"")));
-    if(parsed.workflow_runs.length>0 && verified.length===0)throw new Error("Fonte sem URLs verificadas");
-    allRuns=verified;
+    if(!verified.length)throw new Error("Nenhuma evidência verificável");
+    allRuns=[...new Map(verified.map(r=>[r.id,r])).values()]
+      .sort((a,b)=>Date.parse(b.created_at)-Date.parse(a.created_at));
     lastFetch=new Date();
-    lookup("network-label").textContent="Registro público do GitHub consultado — não equivale a dado atualizado";
-    lookup("network-dot").className="network-dot good";
+    const complete=available.length===urls.length;
+    lookup("network-label").textContent=complete
+      ?"Execuções GitHub verificadas — não equivalem a preços atualizados"
+      :"Consulta parcial ("+available.length+"/"+urls.length+"); sem evidências não significa fonte saudável.";
+    lookup("network-dot").className=complete?"network-dot good":"network-dot";
     lookup("updated-at").textContent="Consulta: "+formatTime(lastFetch.toISOString());
     render();
   }catch(err){
@@ -164,7 +176,8 @@ function init(){
   }
   load();
   setInterval(clock,60000);
-  setInterval(()=>{if(!document.hidden)load();},300000);
+  // Limitar consultas públicas à API para evitar HTTP 403 por rate limit.
+  setInterval(()=>{if(!document.hidden)load();},900000);
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);
 else init();

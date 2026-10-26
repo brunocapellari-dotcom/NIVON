@@ -86,7 +86,7 @@ def _bucket_privado(bucket):
 
 
 def publicar_no_gcs(*,bucket,html,payload,corte,storage_client=None):
-    """Escreve snapshot imutavel e um apontador atomico na GCS privada.
+    """Escreve snapshots imutaveis, sem sobrescrever aliases ou permissões.
 
     Sem URLs assinadas. Sem modificar ACL, IAM, lifecycle ou criar bucket.
     """
@@ -114,38 +114,33 @@ def publicar_no_gcs(*,bucket,html,payload,corte,storage_client=None):
               "nivon-data-corte":dt.isoformat()}
     files=[(path+".html",html,"text/html; charset=utf-8"),
            (path+".json",payload,"application/json; charset=utf-8")]
-    writes=[]
+    # Conservar privilégio minimo storage.objects.create. Substituir latest
+    # exigiria storage.objects.delete e NAO sera feito automaticamente.
+    criados=0
     for name,body,mime in files:
         blob=target.blob(name)
+        if blob.exists():
+            # Retry idempotente: somente aceitar a mesma evidencia.
+            if sha256(blob.download_as_bytes()).digest()!=sha256(body).digest():
+                raise ErroLancamento("revisao GCS existente diverge do SHA")
+            continue
         blob.cache_control="private, no-store, max-age=0"
         blob.metadata=metadata
         blob.upload_from_string(body,content_type=mime,if_generation_match=0)
-        writes.append(name)
-    # Apontador idem: as revisoes persistem mesmo se concorrencia impedir
-    # atualizacao de latest. Sem sobrescrever release historico.
-    for name,body,mime in (
-        (PREFIX+"/latest.html",html,"text/html; charset=utf-8"),
-        (PREFIX+"/latest.json",payload,"application/json; charset=utf-8")
-    ):
-        blob=target.blob(name)
-        exists=blob.exists()
-        generation=blob.generation if exists else 0
-        blob.cache_control="private, no-store, max-age=0"
-        blob.metadata=metadata
-        blob.upload_from_string(body,content_type=mime,
-                                if_generation_match=generation)
-        writes.append(name)
-    # Readback das mesmas evidencias, por SHA, sem publicar conteudo nos logs.
+        criados+=1
+    # Readback de ambos: inclui objetos reutilizados de tentativa anterior.
     for name,body,_ in files:
-        blob=target.blob(name)
-        stored=blob.download_as_bytes()
+        stored=target.blob(name).download_as_bytes()
         if sha256(stored).digest()!=sha256(body).digest():
             raise ErroLancamento("readback GCS nao corresponde a evidencia escrita")
     return {
-        "status":"PUBLICADO_SOMENTE_GCS_PRIVADO",
-        "bucket":bucket,"prefixo":PREFIX,"objetos":len(writes),
+        "status":"PUBLICADO_REVISAO_PRIVADA_GCS",
+        "bucket":bucket,"prefixo":PREFIX,
+        "objetos":len(files),"objetos_novos":criados,
+        "revisao_html":files[0][0],"revisao_json":files[1][0],
         "data_corte":dt.isoformat(),"sha256_json":revision,
         "sem_url_publica":True,"sem_novos_recursos":True,
+        "latest_atualizado":False,
     }
 
 

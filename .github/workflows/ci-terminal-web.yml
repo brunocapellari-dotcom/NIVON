@@ -44,6 +44,9 @@ jobs:
           from pathlib import Path
           manifest=json.loads(Path('vercel.json').read_text())
           assert manifest['outputDirectory']=='public'
-          assert not any(k in manifest for k in ('functions','crons','rewrites'))
-          print('NIVON_WEB_STATIC_ONLY_OK')
+          assert manifest.get('functions') == {'api/mercado.js': {'maxDuration': 10}}
+          assert not any(k in manifest for k in ('crons','rewrites'))
+          assert Path('api/mercado.js').is_file()
+          assert Path('public/assets/mercado.js').is_file()
+          print('NIVON_WEB_BCB_FUNC_ALLOWLIST_OK')
           PY
