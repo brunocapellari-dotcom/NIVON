@@ -62,6 +62,17 @@ def executar_edicao_conab(*,banco:str|Path,raw_dir:str|Path,
         raise ErroExecucaoConab('arquivo SQLite deve estar em local existente')
     if os.name=='posix' and (stat.S_IMODE(path.parent.stat().st_mode)&0o077):
         raise ErroExecucaoConab('SQLite deve ficar em diretorio privado 0700')
+    # SQLite cria novos bancos com modo influenciado pelo umask: nunca
+    # expor histórico de dados reais num arquivo 0644.
+    if not path.exists():
+        try:
+            fd=os.open(path,os.O_RDWR|os.O_CREAT|os.O_EXCL|getattr(os,'O_NOFOLLOW',0),0o600)
+        except FileExistsError:
+            raise ErroExecucaoConab('banco criado concorrentemente: reavaliar') from None
+        else:
+            os.close(fd)
+    if not path.is_file() or (os.name=='posix' and stat.S_IMODE(path.stat().st_mode)&0o077):
+        raise ErroExecucaoConab('banco SQLite deve ser arquivo privado modo 0600')
     indice=buscar_indice(executar=True,abridor=abridor)
     edicoes=indice.get('edicoes_candidatas',[])
     if not edicoes:
