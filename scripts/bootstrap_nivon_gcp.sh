@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # NIVON: bootstrap executado SOMENTE no Google Cloud Shell autorizado.
-# Modo padrao diagnostico. --aplicar provisiona recursos potencialmente faturaveis.
+# Modo padrao diagnostico. --aplicar so cria datasets/tabelas se IAM/APIs ja estiverem aprovados.
+# Revisao C1: scripts/bootstrap_nivon_gcp.sh nao pode mais habilitar APIs nem alterar IAM.
+# Uma condicao WIF mais forte que repo+main deve ser validada separadamente pelo administrador.
+
 set -euo pipefail
 
 PROJECT="nivon-data"
@@ -35,10 +38,8 @@ fi
 [[ "$BILLING" == "True" || "$BILLING" == "true" ]] ||
     { echo 'FATURAMENTO_NAO_ATIVO: nao provisionado'; exit 3; }
 
-# APIs (habilitar gera possibilidade de consumo; apenas apos --aplicar).
-gcloud services enable --project "$PROJECT" \
-    bigquery.googleapis.com iam.googleapis.com \
-    iamcredentials.googleapis.com sts.googleapis.com
+# Esta ferramenta NAO habilita APIs, altera IAM ou amplia WIF.
+# Preparacao administrativa separada e obrigatoria, sob revisao do titular.
 
 # A identidade ja foi validada por GitHub Actions com leitura GCS/BigQuery
 # e carga real de ANTT 2026. Nao criar outra SA nem outro WIF no NIVON.
@@ -51,17 +52,17 @@ EXISTING="$(gcloud iam workload-identity-pools providers describe "$PROVIDER" \
   --format='value(attributeCondition)')" || {
     echo 'PROVEDOR_EXISTENTE_AUSENTE; nao criar outro WIF'; exit 3;
   }
-# Nao alargar a condicao nem conceder novo Workload Identity User.
-# Se a condicao atual nao garante repo+main, exigir revisao humana em IAM.
-[[ "$EXISTING" == *"assertion.repository"* &&
-   "$EXISTING" == *"$REPO"* &&
-   "$EXISTING" == *"assertion.ref"* &&
-   "$EXISTING" == *"refs/heads/main"* ]] ||
-  { echo 'PROVEDOR_EXISTENTE_SEM_ESCOPO_VERIFICAVEL: revisar WIF'; exit 3; }
-
-gcloud projects add-iam-policy-binding "$PROJECT" \
-    --member="serviceAccount:$SA_EMAIL" \
-    --role="roles/bigquery.jobUser" --quiet >/dev/null
+# Validacao estrita de uma condicao CEL MINIMA, sem substring enganosa.
+# Expressoes mais complexas/superiores necessitam auditoria humana e ficam bloqueadas.
+python3 - "$EXISTING" "$REPO" <<'PY'
+import re,sys
+expression, repo=sys.argv[1:]
+parts=[p.strip().strip("() ").strip() for p in expression.split("&&")]
+allowed={f"assertion.repository == '{repo}'",f"assertion.ref == 'refs/heads/main'"}
+normalized={re.sub(r'\\s*==\\s*',' == ',p.replace('"',"'")) for p in parts}
+if len(parts)!=2 or normalized!=allowed or '||' in expression:
+    raise SystemExit('WIF_CONDICAO_NAO_HOMOLOGADA: revisar no IAM sem ampliar grants')
+PY
 
 for dataset in nivon_stage nivon_core; do
   if ! bq --project_id="$PROJECT" show --dataset "${PROJECT}:${dataset}" >/dev/null 2>&1; then
@@ -70,26 +71,8 @@ for dataset in nivon_stage nivon_core; do
   fi
 done
 
-# Permissao apenas nos dois datasets do NIVON. Codigo Python usa ADC do Cloud Shell.
-TMPENV="$(mktemp -d)"
-trap 'rm -rf "$TMPENV"' EXIT
-python3 -m venv "$TMPENV/venv"
-"$TMPENV/venv/bin/pip" -q install --disable-pip-version-check google-cloud-bigquery==3.38.0
-NIVON_SA_EMAIL="$SA_EMAIL" "$TMPENV/venv/bin/python" - <<'PY'
-import os
-from google.cloud import bigquery
-project="nivon-data"
-client=bigquery.Client(project=project)
-sa=os.environ["NIVON_SA_EMAIL"]
-for name in ("nivon_stage","nivon_core"):
-    dataset=client.get_dataset(f"{project}.{name}")
-    entries=list(dataset.access_entries)
-    if not any(e.entity_type=="userByEmail" and e.entity_id==sa and e.role in ("WRITER","OWNER") for e in entries):
-        entries.append(bigquery.AccessEntry(role="WRITER",entity_type="userByEmail",entity_id=sa))
-        dataset.access_entries=entries
-        client.update_dataset(dataset,["access_entries"])
-print("GCP_DATASET_MINIMUM_PERMISSIONS_APPLIED")
-PY
+# Permissoes IAM e datasets sao administrados fora deste script, sob revisao humana.
+# Nao adicionar WRITER, OWNER nem bindings pelo bootstrap de schema.
 
 bq --project_id="$PROJECT" --location="$REGION" query \
     --use_legacy_sql=false < "$ROOT/database/bigquery/nivon_neon_legado_schema.sql"
