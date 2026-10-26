@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "project": "NIVON",
+  "snapshot_date": "2026-10-25",
+  "repository": "brunocapellari-dotcom/NIVON",
+  "default_branch": "main",
+  "notice": "Fila GitHub curada; não inicia Codex Cloud nem equivale a execução LIVE.",
+  "tasks": [
+    {
+      "id": "p0-go-live-terminal",
+      "issue": 277,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/277",
+      "priority": "P0",
+      "preferred_agent": "codex",
+      "readiness": "ready_code",
+      "files": [
+        "src/nivon/terminal_web.py"
+      ],
+      "depends_on": [],
+      "acceptance": "E2E read-only e gates de prontidão; deploy e custo exigem decisão humana"
+    },
+    {
+      "id": "p0-seguranca-iam",
+      "issue": 263,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/263",
+      "priority": "P0",
+      "preferred_agent": "human",
+      "readiness": "external_gate",
+      "files": [
+        ".github/workflows/monitor-p0-operacao.yml"
+      ],
+      "depends_on": [],
+      "acceptance": "Administradores precisam comprovar branch protection, IAM e billing; não autoliberar"
+    },
+    {
+      "id": "p0-auditoria",
+      "issue": 264,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/264",
+      "priority": "P0",
+      "preferred_agent": "claude",
+      "readiness": "ready_code",
+      "files": [
+        "src/nivon/monitor_p0_workflows.py"
+      ],
+      "depends_on": [],
+      "acceptance": "Implementar apenas itens de código ainda não resolvidos pela PR #246"
+    },
+    {
+      "id": "p0-antt-ferrovia-gcp",
+      "issue": 143,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/143",
+      "priority": "P0",
+      "preferred_agent": "claude",
+      "readiness": "ready_code",
+      "files": [
+        "src/nivon/antt_gcp_pipeline.py"
+      ],
+      "depends_on": [],
+      "acceptance": "Persistência incremental e prova de readback GCP; não criar recursos duplicados"
+    },
+    {
+      "id": "p0-agro-p0",
+      "issue": 94,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/94",
+      "priority": "P0",
+      "preferred_agent": "claude",
+      "readiness": "ready_code",
+      "files": [
+        "src/nivon/agro_origem_gcp.py"
+      ],
+      "depends_on": [],
+      "acceptance": "CEPEA/IMEA/CONAB: staging e temporalidade, direitos; nenhum merge canônico indevido"
+    },
+    {
+      "id": "p0-antaq",
+      "issue": 144,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/144",
+      "priority": "P0",
+      "preferred_agent": "codex",
+      "readiness": "ready_code",
+      "files": [
+        "src/nivon/antaq_replica_hidrovia.py"
+      ],
+      "depends_on": [],
+      "acceptance": "Fonte oficial volumes hidroviários; distinguir replica/inferência vs observado"
+    },
+    {
+      "id": "p1-ais-maritime",
+      "issue": 278,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/278",
+      "priority": "P1",
+      "preferred_agent": "codex",
+      "readiness": "ready_code",
+      "files": [
+        "src/nivon/maritime/ais_geofence_inference.py"
+      ],
+      "depends_on": [],
+      "acceptance": "Conciliação AIS/CDP e Itacoatiara sob incerteza"
+    },
+    {
+      "id": "p1-hidrometeorologia",
+      "issue": 279,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/279",
+      "priority": "P1",
+      "preferred_agent": "codex",
+      "readiness": "ready_code",
+      "files": [
+        "src/nivon/hidromet_publico_global.py"
+      ],
+      "depends_on": [],
+      "acceptance": "Dados oficiais, SOURCE_LAG e testes E2E offline"
+    },
+    {
+      "id": "p1-argentina",
+      "issue": 280,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/280",
+      "priority": "P1",
+      "preferred_agent": "codex",
+      "readiness": "ready_code",
+      "files": [
+        "src/nivon/argentina_magyp.py"
+      ],
+      "depends_on": [],
+      "acceptance": "MAGyP, idempotência e freshness sem novos recursos"
+    },
+    {
+      "id": "p1-cepea-freshness",
+      "issue": 145,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/145",
+      "priority": "P1",
+      "preferred_agent": "claude",
+      "readiness": "ready_code",
+      "files": [
+        "src/nivon/cepea_web_primario.py"
+      ],
+      "depends_on": [],
+      "acceptance": "HTTP 522 e frescor; nunca gerar valores quando fonte falha"
+    },
+    {
+      "id": "p1-antt-mdfe",
+      "issue": 142,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/142",
+      "priority": "P1",
+      "preferred_agent": "human",
+      "readiness": "external_gate",
+      "files": [
+        "src/nivon/antt_mdfe_catalogo.py"
+      ],
+      "depends_on": [],
+      "acceptance": "API/dataset oficial de matriz OD pendente"
+    },
+    {
+      "id": "p1-fretes-quant",
+      "issue": 25,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/25",
+      "priority": "P1",
+      "preferred_agent": "codex",
+      "readiness": "ready_code",
+      "files": [
+        "src/nivon/motor_tendencias.py"
+      ],
+      "depends_on": [],
+      "acceptance": "Não somar fretes anunciados com condições divergentes"
+    },
+    {
+      "id": "p1-ptax",
+      "issue": 59,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/59",
+      "priority": "P1",
+      "preferred_agent": "claude",
+      "readiness": "review_required",
+      "files": [
+        "docs/NIVON_PTAX_NEON_BIGQUERY_OPERACAO.md"
+      ],
+      "depends_on": [],
+      "acceptance": "Revisar integração Neon->GCP sem interromper persistência atual"
+    },
+    {
+      "id": "p1-ibge-pam",
+      "issue": 131,
+      "issue_url": "https://github.com/brunocapellari-dotcom/NIVON/issues/131",
+      "priority": "P1",
+      "preferred_agent": "claude",
+      "readiness": "review_required",
+      "files": [
+        "src/nivon/coletores_agro_ibge_wdi.py"
+      ],
+      "depends_on": [],
+      "acceptance": "Vintages IBGE/PAM e direitos antes de promover dados"
+    }
+  ]
+}
