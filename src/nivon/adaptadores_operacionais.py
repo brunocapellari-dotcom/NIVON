@@ -165,9 +165,14 @@ def ler_replay_ais_sqlite(*, banco: str, porto_id: str, inicio: str,
     with sqlite3.connect(uri, uri=True, timeout=5) as con:
         con.execute("PRAGMA query_only=ON")
         try:
+            colunas={item[1] for item in con.execute("PRAGMA table_info(maritime_ais)").fetchall()}
+            if ("source_payload_sha256" in colunas) != ("source_payload_json" in colunas):
+                raise ErroMotor("RAW AIS com schema incompleto")
+            bruto_verificavel="source_payload_sha256" in colunas
+            extras=", source_payload_sha256, source_payload_json" if bruto_verificavel else ""
             eventos = con.execute(
                 """SELECT event_id, source_id, observed_at, collected_at,
-                          quality_status, mmsi, payload_sha256, payload_json
+                          quality_status, mmsi, payload_sha256, payload_json""" + extras + """
                    FROM maritime_ais
                    WHERE port_id=? AND observed_at>=? AND observed_at<=?
                      AND collected_at<=?
@@ -183,7 +188,20 @@ def ler_replay_ais_sqlite(*, banco: str, porto_id: str, inicio: str,
     identidades=set()
     qualidades=Counter()
     ultima = None
-    for event_id, source_id, observed_at, collected_at, quality, mmsi, raw_sha, raw_json in eventos:
+    for linha in eventos:
+        event_id, source_id, observed_at, collected_at, quality, mmsi, raw_sha, raw_json = linha[:8]
+        if bruto_verificavel:
+            source_sha, source_json=linha[8:]
+            if (not isinstance(source_sha,str) or not SHA.fullmatch(source_sha)
+                or not isinstance(source_json,str) or
+                hashlib.sha256(source_json.encode("utf-8")).hexdigest()!=source_sha):
+                raise ErroMotor("prova RAW AIS original corrompida")
+            try:
+                dados_normalizados=json.loads(raw_json)
+            except ValueError as exc:
+                raise ErroMotor("payload AIS normalizado invalido") from exc
+            if dados_normalizados.get("source_raw_sha256") != source_sha:
+                raise ErroMotor("RAW original nao corresponde ao evento normalizado")
         if (not isinstance(event_id, str) or not SHA.fullmatch(event_id)
                 or not isinstance(raw_sha, str) or not SHA.fullmatch(raw_sha)
                 or not isinstance(raw_json, str) or len(raw_json.encode("utf-8"))>2_000_000
