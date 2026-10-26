@@ -1,0 +1,64 @@
+name: NIVON - Terminal publico release gate
+on:
+  pull_request:
+    paths:
+      - 'apps/nivon-terminal/**'
+      - 'tests/test_terminal_publico.py'
+      - '.github/workflows/nivon-terminal-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/nivon-terminal/**'
+      - 'tests/test_terminal_publico.py'
+      - '.github/workflows/nivon-terminal-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-terminal-static-ci
+  cancel-in-progress: false
+
+jobs:
+  homologar-previa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Testar contrato, privacidade e integridade editorial
+        run: python -m unittest discover -s tests -p 'test_terminal_publico.py' -v
+      - name: Verificar codigo JavaScript e configuração estática
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check apps/nivon-terminal/app.js
+          python -m json.tool apps/nivon-terminal/vercel.json > /dev/null
+      - name: Testar HTTP real em localhost com todos os arquivos
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m http.server 8765 --bind 127.0.0.1 --directory apps/nivon-terminal > "$RUNNER_TEMP/terminal-http.log" 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in 1 2 3 4 5 6 7 8; do
+            if curl --silent --fail http://127.0.0.1:8765/ > "$RUNNER_TEMP/terminal.html"; then break; fi
+            sleep 1
+          done
+          grep -q 'NIVON' "$RUNNER_TEMP/terminal.html"
+          grep -q 'Logística' "$RUNNER_TEMP/terminal.html"
+          curl --fail --silent http://127.0.0.1:8765/app.js > "$RUNNER_TEMP/terminal.js"
+          grep -q 'api.github.com' "$RUNNER_TEMP/terminal.js"
+          curl --fail --silent http://127.0.0.1:8765/styles.css > /dev/null
+          curl --fail --silent http://127.0.0.1:8765/robots.txt > /dev/null
+          echo 'NIVON_TERMINAL_STATIC_HTTP_SMOKE=OK'
+      - name: Registrar escopo real da aprovação
+        run: |
+          echo '### NIVON Terminal — prévia estática aprovada' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Código, segurança editorial, JS, configuração e HTTP local validados.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Não testa hospedagem Vercel nem acesso produtivo ao BigQuery; não libera dados privados.' >> "$GITHUB_STEP_SUMMARY"
