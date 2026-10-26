@@ -17,7 +17,7 @@ Código:
 
 - `src/nivon/painel_lancamento.py`: valida o contrato de dados e renderiza o relatório sem rede.
 - `scripts/publicar_painel_interno.py`: consulta as três fontes usando `analisar_fontes`, bloqueia alterações de projeto/dataset/bucket, valida que o bucket tem **Public Access Prevention enforced**, grava uma revisão HTML e JSON imutável e atualiza os dois arquivos `latest` com precondição de geração, conferindo SHA após o upload.
-- `.github/workflows/nivon-go-live-interno.yml`: testes em PR, leitura BQ com WIF e publicação privada em merge na `main`. Agendamento em dias úteis só será efetivado com `NIVON_PAINEL_INTERNO_AGENDADO=true`.
+- `.github/workflows/nivon-go-live-interno.yml`: testes em PR, leitura BQ com WIF e publicação privada em merge na `main`. Agendamento em dias úteis ativo por padrão (12h20 UTC, aproximadamente 08h20 em Mato Grosso), com opção de pausa por `NIVON_PAINEL_INTERNO_AGENDADO=false` nas variáveis do GitHub.
 
 Destinos previstos (não são links públicos):
 
