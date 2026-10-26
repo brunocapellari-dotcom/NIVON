@@ -1,0 +1,89 @@
+# Fast Lane: ANTT no terminal privado + PTAX BCB read-only.
+# Sem build/deploy GCP, IAM, BigQuery ou GCS.
+name: NIVON - Fast Lane Terminal PTAX interno
+
+on:
+  pull_request:
+    paths:
+      - 'src/nivon/terminal_web.py'
+      - 'src/nivon/bcb_ptax.py'
+      - 'src/nivon/ptax_plano.py'
+      - 'src/nivon/piloto_ptax_readonly.py'
+      - 'tests/test_piloto_ptax_readonly.py'
+      - 'tests/test_terminal_ptax_go_live.py'
+      - '.github/workflows/nivon-go-live-interno.yml'
+      - '.github/workflows/nivon-terminal-piloto-real.yml'
+      - '.github/workflows/nivon-terminal-ptax-fastlane.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-terminal-ptax-interno-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  terminal-integrado-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Integrar APIs ferroviaria e cambial, bloqueios GCP, sem rede
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python -m compileall -q src/nivon/terminal_web.py src/nivon/piloto_ptax_readonly.py
+          python -m unittest discover -s tests -p 'test_terminal_web.py' -v
+          python -m unittest discover -s tests -p 'test_terminal_ptax_go_live.py' -v
+          python -m unittest discover -s tests -p 'test_piloto_ptax_readonly.py' -v
+          python -m unittest discover -s tests -p 'test_go_live_cost_policy.py' -v
+          python -m unittest discover -s tests -p 'test_golive_readiness_workflow.py' -v
+          # Dependencia opcional de parsing CEPEA declarada em pyproject.toml.
+          python -m pip install --disable-pip-version-check 'beautifulsoup4==4.12.3'
+          # Regression integrada da base (sem credenciais nem fontes externas).
+          python -m unittest discover -s tests -v
+  ptax-oficial-real-readonly:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == 'brunocapellari-dotcom/NIVON' &&
+      github.event.pull_request.head.ref == 'feat/go-live-terminal-ptax-gcp-20261025'
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: GET oficial BCB com saida restrita a metadados
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python -m nivon.piloto_ptax_readonly --consultar-bcb > "$RUNNER_TEMP/ptax-privado-sem-precos.json"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          doc=json.loads((Path(os.environ["RUNNER_TEMP"])/"ptax-privado-sem-precos.json").read_text())
+          assert doc["status"]=="PREVIA_INTERNA_VALIDA"
+          assert doc["consulta_ao_vivo_executada"] is True
+          assert doc["aprovado_go_live"] is False
+          assert doc["dados_coletados_nao_persistidos"] is True
+          assert doc["publicacao_autorizada"] is False
+          assert doc["whatsapp_enviado"] is False
+          assert "cotacao_compra" not in doc
+          assert "cotacao_venda" not in doc
+          assert "variacao_venda_pct_vs_dia_anterior_observado" not in doc
+          print("NIVON_BCB_LEITURA_REAL=OK,SEM_PRECOS_EM_LOG,SEM_PERSISTENCIA")
+          PY
+          rm -f "$RUNNER_TEMP/ptax-privado-sem-precos.json"
