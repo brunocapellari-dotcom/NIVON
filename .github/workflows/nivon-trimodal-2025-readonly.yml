@@ -5,10 +5,6 @@ on:
       - '.github/workflows/nivon-trimodal-2025-readonly.yml'
       - 'src/nivon/painel_trimodal_2025.py'
       - 'tests/test_painel_trimodal_2025.py'
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/nivon-trimodal-2025-readonly.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -35,7 +31,7 @@ jobs:
 
   obter-relatorio-real:
     needs: testar
-    if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     timeout-minutes: 16
     permissions:
