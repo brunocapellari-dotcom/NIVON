@@ -83,4 +83,23 @@ O catálogo passou de **33 para 37 repositórios** com quatro clientes de aquisi
 | [stac-utils/pystac-client](https://github.com/stac-utils/pystac-client) | Pesquisa de imagens de satélite em catálogos STAC para agricultura e hidrologia | P2 | Apache-2.0, arquivo LICENSE |
 | [ioos/erddapy](https://github.com/ioos/erddapy) | Cliente ERDDAP para dados meteo-oceanográficos; disponibilidade brasileira não comprovada | P2 | BSD-3-Clause |
 
+### Registro das quatro bibliotecas como dependências Python
+
+Em 26/10/2026, as quatro ferramentas foram **incluídas no manifesto de dependências do NIVON** (`pyproject.toml`) por meio do extra opcional `fontes`. Versões fixas confirmadas no PyPI:
+
+| Repositório | Pacote | Versão | Estado |
+|---|---|---|---|
+| ckan/ckanapi | `ckanapi` | `4.11` | Dependência declarada |
+| mercator-ocean/copernicus-marine-toolbox | `copernicusmarine` | `2.5.0` | Dependência declarada |
+| stac-utils/pystac-client | `pystac-client` | `0.9.1` | Dependência declarada |
+| ioos/erddapy | `erddapy` | `3.3.1` | Dependência declarada |
+
+Instalação **no ambiente executor da coleta**, quando habilitada na imagem ou job correspondente:
+
+```bash
+python -m pip install -e '.[fontes]'
+```
+
+O extra é propositalmente opcional: nenhuma dependência pesada de análise oceânica deve ser adicionada ao terminal M1 por padrão. **Registro em `pyproject.toml` não equivale a instalação de pacotes no Google Cloud.** Nenhum deploy, agendamento, download ou teste foi executado nesta etapa, conforme decisão anterior do proprietário. A utilização efetiva dos pacotes depende de um adaptador de fonte com dataset/endpoints oficiais determinados, limites, credenciais quando necessárias e licença dos dados verificada.
+
 **Gate para ativação:** localizar endpoint oficial, comprovar cobertura geográfica, datas, atualização e permissões dos dados; preservar snapshots e proveniência no ledger NIVON; estimar custos e confrontar coletores já existentes. Não implantar serviço separado, não incluir nas rotinas automáticas e não divulgar dados não homologados. Os testes permanecem adiados conforme solicitação do proprietário.
