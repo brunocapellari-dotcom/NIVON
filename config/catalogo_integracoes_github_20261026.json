@@ -84,7 +84,12 @@
       "decisao": "RESERVA_P1",
       "uso_nivon": "Reutilizar cliente CKAN para pesquisar, selecionar e baixar datasets de portais públicos que operam CKAN; comparar previamente com implementação atual da CCEE, sem crawling irrestrito.",
       "modulo_existente": "src/nivon/coletores_dados_reais.py",
-      "coleta_comprovada_nesta_entrega": false
+      "coleta_comprovada_nesta_entrega": false,
+      "dependencia_python": "ckanapi==4.11",
+      "extra_nivon": "fontes",
+      "incluido_no_manifesto": true,
+      "instalado_em_producao": false,
+      "estado_execucao": "DECLARADO_NO_PYPROJECT_INSTALACAO_RUNTIME_PENDENTE"
     },
     {
       "id": "duartejr/pyHidroWeb",
@@ -183,7 +188,12 @@
       "decisao": "RESERVA_P2",
       "uso_nivon": "Cliente ERDDAP para dados oceanográficos e ambientais observados; viabilidade depende de servidores ERDDAP com cobertura pertinente ao Brasil.",
       "modulo_existente": null,
-      "coleta_comprovada_nesta_entrega": false
+      "coleta_comprovada_nesta_entrega": false,
+      "dependencia_python": "erddapy==3.3.1",
+      "extra_nivon": "fontes",
+      "incluido_no_manifesto": true,
+      "instalado_em_producao": false,
+      "estado_execucao": "DECLARADO_NO_PYPROJECT_INSTALACAO_RUNTIME_PENDENTE"
     },
     {
       "id": "ipea/geobr",
@@ -246,7 +256,12 @@
       "decisao": "RESERVA_P2",
       "uso_nivon": "Dados oceânicos observados e modelados (correntes, ondas, temperatura e previsão), com seleção espacial para portos e corredores oceânicos; exige credenciais e avaliação de licenças e custo; não substituir AIS.",
       "modulo_existente": "src/nivon/maritime/ais_stream.py",
-      "coleta_comprovada_nesta_entrega": false
+      "coleta_comprovada_nesta_entrega": false,
+      "dependencia_python": "copernicusmarine==2.5.0",
+      "extra_nivon": "fontes",
+      "incluido_no_manifesto": true,
+      "instalado_em_producao": false,
+      "estado_execucao": "DECLARADO_NO_PYPROJECT_INSTALACAO_RUNTIME_PENDENTE"
     },
     {
       "id": "meteostat/meteostat",
@@ -309,7 +324,12 @@
       "decisao": "RESERVA_P2",
       "uso_nivon": "Consulta de catálogos STAC para imagens agrícolas, água e uso do solo; precisar avaliar endpoint, cobertura, licenciamento e orçamento de download antes de coletar.",
       "modulo_existente": null,
-      "coleta_comprovada_nesta_entrega": false
+      "coleta_comprovada_nesta_entrega": false,
+      "dependencia_python": "pystac-client==0.9.1",
+      "extra_nivon": "fontes",
+      "incluido_no_manifesto": true,
+      "instalado_em_producao": false,
+      "estado_execucao": "DECLARADO_NO_PYPROJECT_INSTALACAO_RUNTIME_PENDENTE"
     },
     {
       "id": "StrategicProjects/comexpy",
@@ -650,6 +670,14 @@
       "pib_agro"
     ],
     "repositorios_catalogados": 37,
-    "fontes_complementares_ultima_revisao": "2026-10-26"
+    "fontes_complementares_ultima_revisao": "2026-10-26",
+    "bibliotecas_coleta_avancada": {
+      "extra": "fontes",
+      "quantidade": 4,
+      "versoes_fixas": true,
+      "estado": "DECLARADAS_NO_MANIFESTO_PYTHON",
+      "ambiente_gcp": "NAO_INSTALADO_NESTA_OPERACAO",
+      "testes": "ADIADOS_CONFORME_ORIENTACAO"
+    }
   }
 }

@@ -35,5 +35,7 @@ O trabalho de implementação inicial ficará em uma branch e em PR para revisã
 - **Coletores já incorporados:** `src/nivon/anp_ppi.py` (PPI ANP) e `src/nivon/agrobr_mercados.py` (Comex Stat/CFTC).
 - **Novos adaptadores setoriais, ainda sem testes:** `src/nivon/agrobr_setoriais.py` (IBGE PPM, abate, leite, produção anual, PIB agro e ANP diesel revenda). Reutilizam o ledger existente; não criam serviços novos.
 - **Registro de inclusão e pendências:** `docs/INCLUSAO_INTEGRAL_FONTES_GITHUB_NIVON_20261026.md`.
+- **Bibliotecas de coleta disponíveis como dependências opcionais:** `ckanapi==4.11`, `copernicusmarine==2.5.0`, `pystac-client==0.9.1` e `erddapy==3.3.1`. Estão declaradas em `pyproject.toml` no extra `fontes`. A instalação acontece **somente no ambiente coletor que escolher esse extra**, com `pip install -e '.[fontes]'`. Não alteram a imagem do terminal M1 nem instalam automaticamente no Google Cloud; ver `docs/INCLUSAO_INTEGRAL_FONTES_GITHUB_NIVON_20261026.md`.
+
 
 **Registro no GitHub não é coleta comprovada.** Os testes foram adiados a pedido do proprietário. Nenhum dado novo foi publicado no terminal ou carregado no Google Cloud por essa inclusão; componentes com licença ou permissão não confirmada continuam apenas referenciados.
