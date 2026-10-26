@@ -124,7 +124,10 @@ class TestBigQueryLoader(TestCase):
         sql=sql_mesclagem(origem='nivon-data.nivon_stage._nivon_lote',
                            destino=self.tabela)
         self.assertIn('MERGE `nivon-data.nivon_stage.agro_fonte_stage`',sql)
-        self.assertIn('SELECT DISTINCT',sql)
+        self.assertIn('ROW_NUMBER() OVER (PARTITION BY',sql)
+        self.assertIn('WHERE _rn=1',sql)
+        self.assertNotIn('T.coletado_utc IS NOT DISTINCT',sql)
+        self.assertNotIn('T.data_coleta IS NOT DISTINCT',sql)
         self.assertIn('T.safra IS NOT DISTINCT FROM S.safra',sql)
         self.assertNotIn('DELETE',sql)
         self.assertNotIn('UPDATE SET',sql)
