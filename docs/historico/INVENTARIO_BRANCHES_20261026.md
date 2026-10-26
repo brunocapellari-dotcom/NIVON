@@ -43,23 +43,23 @@
 | `feat/antaq-hidrovia-derivada-2025-bq-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/antaq-hidrovia-produtos-20261023` | 20261023 | NÃO MESCLADA — 14 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/antaq-historico-qualidade-lineup-20261019` | 20261019 | NÃO MESCLADA — 231 commit(s) à frente | PENDENTE — conferir commit |
-| `feat/antaq-monitor-disponibilidade-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/antt-2025-readonly-gcp-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/antt-2026-primeira-carga-unica-gcp-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/antt-anuario-rgi-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/antt-auditoria-historico-bq-21anos-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/antt-backfill-2006-2021-cargas-limitadas-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/antt-backfill-2022-2025-gcp-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/antt-mdfe-volumes-od-20261022` | 20261022 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/antt-piloto-gcp-preparacao-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/antt-rgi-gcp-rebased-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/antt-rgi-rodovia-gcp-top16-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/antt-vigia-revisoes-gcp-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/apis-flood-ensemble-fao-fpma-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/argentina-magyp-live-evidencia` | sem data | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/bcb-focus-expectativas-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/bcb-sgs11-gcp-main-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
-| `feat/bibliotecas-coleta-avancada-20261026` | 20261026 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
+| `feat/antaq-monitor-disponibilidade-20261023` | 20261023 | NÃO MESCLADA — 6 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/antt-2025-readonly-gcp-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/antt-2026-primeira-carga-unica-gcp-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/antt-anuario-rgi-20261023` | 20261023 | NÃO MESCLADA — 15 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/antt-auditoria-historico-bq-21anos-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/antt-backfill-2006-2021-cargas-limitadas-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/antt-backfill-2022-2025-gcp-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/antt-mdfe-volumes-od-20261022` | 20261022 | NÃO MESCLADA — 16 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/antt-piloto-gcp-preparacao-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/antt-rgi-gcp-rebased-20261023` | 20261023 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/antt-rgi-rodovia-gcp-top16-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/antt-vigia-revisoes-gcp-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/apis-flood-ensemble-fao-fpma-20261021` | 20261021 | NÃO MESCLADA — 459 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/argentina-magyp-live-evidencia` | sem data | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/bcb-focus-expectativas-20261021` | 20261021 | NÃO MESCLADA — 449 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/bcb-sgs11-gcp-main-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
+| `feat/bibliotecas-coleta-avancada-20261026` | 20261026 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
 | `feat/bootstrap-acessos-protegidos-main-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
 | `feat/bootstrap-duas-tabelas-gcp-20261023` | 20261023 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
 | `feat/brasilapi-refs-nivon-20261021` | 20261021 | PENDENTE — confirmar ancestralidade | PENDENTE — conferir commit |
