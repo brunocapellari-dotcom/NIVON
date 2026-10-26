@@ -166,23 +166,23 @@
 | `fix/gcp-auditoria-estado-por-tabela-20261025` | 20261025 | NÃO MESCLADA — 1 commit(s) à frente |2026-10-26T01:25:52Z — RECENTE |
 | `fix/gcp-auditoria-schema-integral-20261025` | 20261025 | NÃO MESCLADA — 5 commit(s) à frente |2026-10-26T01:22:46Z — RECENTE |
 | `fix/gcp-preflight-particao-e-regiao-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente |2026-10-23T17:57:27Z — RECENTE |
-| `fix/gcp-provider-canonico-migracoes-20261023` | 20261023 | NÃO MESCLADA — 12 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/gcp-regiao-inventario-destinos-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/go-live-cloudrun-authenticated-acceptance-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/go-live-controlar-gcp-execucoes-20261025` | 20261025 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
-| `fix/go-live-descoberta-recursos-existentes-20261025` | 20261025 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/go-live-estado-bloqueios-log-20261025` | 20261025 | NÃO MESCLADA — 1 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/go-live-terminal-container-e2e-20261025` | 20261025 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/golive-gate-sha-atual-e-preflight-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/golive-gate-smoke-auth-20261025` | 20261025 | NÃO MESCLADA — 9 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/golive-p0-piloto-gcp-20261025` | 20261025 | NÃO MESCLADA — 6 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/golive-readonly-staging-opcional-20261025` | 20261025 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
-| `fix/monitor-p0-main-codigo-atual-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/nivon-gcp-migracao-controle-operacional-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/nivon-go-live-gcs-append-only-20261025` | 20261025 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
-| `fix/noaa-mei-missing-sentinel-20261021` | 20261021 | NÃO MESCLADA — 450 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/open-meteo-ensemble-control-20261021` | 20261021 | NÃO MESCLADA — 453 commit(s) à frente | PENDENTE — conferir commit |
-| `fix/p0-antt-rgi-ci-separado-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente | PENDENTE — conferir commit |
+| `fix/gcp-provider-canonico-migracoes-20261023` | 20261023 | NÃO MESCLADA — 12 commit(s) à frente |2026-10-23T17:55:42Z — RECENTE |
+| `fix/gcp-regiao-inventario-destinos-20261023` | 20261023 | NÃO MESCLADA — 1 commit(s) à frente |2026-10-23T15:52:35Z — MAIS DE 3 DIAS |
+| `fix/go-live-cloudrun-authenticated-acceptance-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-26T03:10:08Z — RECENTE |
+| `fix/go-live-controlar-gcp-execucoes-20261025` | 20261025 | MESCLADA — ancestral da main |2026-10-26T02:53:28Z — RECENTE |
+| `fix/go-live-descoberta-recursos-existentes-20261025` | 20261025 | NÃO MESCLADA — 4 commit(s) à frente |2026-10-26T02:57:28Z — RECENTE |
+| `fix/go-live-estado-bloqueios-log-20261025` | 20261025 | NÃO MESCLADA — 1 commit(s) à frente |2026-10-26T03:01:13Z — RECENTE |
+| `fix/go-live-terminal-container-e2e-20261025` | 20261025 | NÃO MESCLADA — 2 commit(s) à frente |2026-10-26T02:55:06Z — RECENTE |
+| `fix/golive-gate-sha-atual-e-preflight-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente |2026-10-26T02:09:38Z — RECENTE |
+| `fix/golive-gate-smoke-auth-20261025` | 20261025 | NÃO MESCLADA — 9 commit(s) à frente |2026-10-26T03:07:09Z — RECENTE |
+| `fix/golive-p0-piloto-gcp-20261025` | 20261025 | NÃO MESCLADA — 6 commit(s) à frente |2026-10-26T03:02:51Z — RECENTE |
+| `fix/golive-readonly-staging-opcional-20261025` | 20261025 | MESCLADA — ancestral da main |2026-10-26T02:57:23Z — RECENTE |
+| `fix/monitor-p0-main-codigo-atual-20261023` | 20261023 | NÃO MESCLADA — 4 commit(s) à frente |2026-10-23T19:05:29Z — RECENTE |
+| `fix/nivon-gcp-migracao-controle-operacional-20261023` | 20261023 | NÃO MESCLADA — 2 commit(s) à frente |2026-10-23T12:40:07Z — MAIS DE 3 DIAS |
+| `fix/nivon-go-live-gcs-append-only-20261025` | 20261025 | MESCLADA — ancestral da main |2026-10-26T02:12:10Z — RECENTE |
+| `fix/noaa-mei-missing-sentinel-20261021` | 20261021 | NÃO MESCLADA — 450 commit(s) à frente |2026-10-21T20:55:54Z — MAIS DE 3 DIAS |
+| `fix/open-meteo-ensemble-control-20261021` | 20261021 | NÃO MESCLADA — 453 commit(s) à frente |2026-10-21T21:21:54Z — MAIS DE 3 DIAS |
+| `fix/p0-antt-rgi-ci-separado-20261023` | 20261023 | NÃO MESCLADA — 5 commit(s) à frente |2026-10-23T12:22:42Z — MAIS DE 3 DIAS |
 | `fix/ptax-ponte-ci-isolada-diagnostico-http-20261025` | 20261025 | NÃO MESCLADA — 3 commit(s) à frente | PENDENTE — conferir commit |
 | `fix/workflow-inmet-runner-context-20261021` | 20261021 | MESCLADA — ancestral da main | PENDENTE — conferir commit |
 | `integration/base-gcp-coletor-20261023` | 20261023 | NÃO MESCLADA — 632 commit(s) à frente | PENDENTE — conferir commit |
