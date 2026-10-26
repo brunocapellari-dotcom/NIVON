@@ -34,3 +34,27 @@
 **Critério para publicação privada:** CI E2E aprovada; deploy autenticado em Cloud Run; IAM restrito; endpoint real respondendo; retorno com versão/competência/fonte e sem dados fabricados; nenhum custo ou permissão além do aprovado.
 
 **Extensões seguintes após go-live:** preços físicos, CBOT, PTAX, fretes e line-up somente quando as consultas canônicas e as licenças estiverem reconciliadas. O terminal modular aceita novas seções sem redesenhar autenticação.
+
+## Gate automático de aceite privado após implantação (25/10/2026)
+
+**Código:** `src/nivon/validar_terminal_go_live.py`. Esta rotina não efetua deploy, build, IAM, SQL livre ou escrita em Google Cloud. Seu modo padrão apenas mostra o plano, sem acessar rede e sem gastar recursos. Foi integrada ao workflow existente `.github/workflows/nivon-terminal-go-live.yml` somente na suíte offline de PR.
+
+**Prévia segura, sem rede:**
+
+```bash
+PYTHONPATH=src python -m nivon.validar_terminal_go_live --url https://URL-DO-SERVICO.a.run.app
+```
+
+**Aceite REAL apenas depois de** aprovar custos, implantar o Cloud Run privado e atribuir `roles/run.invoker` à identidade de teste. Obter um ID token de curta validade por fluxo Google Cloud autorizado, compatível com a audiência (URL) do serviço, e fornecê-lo via variável de ambiente `NIVON_TERMINAL_ID_TOKEN`. Nunca gravar o token em arquivos, comandos versionados, logs de CI ou links. Executar manualmente:
+
+```bash
+PYTHONPATH=src python -m nivon.validar_terminal_go_live --url https://URL-DO-SERVICO.a.run.app --executar
+```
+
+O teste verifica nesta ordem: (1) requisição sem token recebe 401/403, nunca 200; (2) `/healthz` com token recebe `PROCESSO_ATIVO`; (3) `/api/v1/ferrovia` retorna JSON privado, `no-store`, série anual contínua a partir de 2006, proveniência, competência não futura, somatórios coerentes e estados metodológicos que proíbem homologação editorial ou soma multimodal.
+
+**Importante:** URL deve ser raiz HTTPS oficial `*.run.app` (não domínio arbitrário); redirects e proxies não são seguidos, evitando encaminhamento de identidade. O teste não imprime token nem números de volume da base. Mesmo quando `go_live_interno_validado=true`, isso certifica somente o recorte 0.1 privado ANTT e não o go-live integral do NIVON.
+
+**Bloqueio ainda externo:** a inspeção anterior do runner reportou `CLOUD_RUN_READ_ONLY_STATUS=NO_LIST_PERMISSION_OR_SERVICE` no [CI #40257187154](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/40257187154). Não interpretar como serviço inexistente com certeza; pode ser falta de permissão. É necessário resolver capacidade de inspecionar/implantar Cloud Run, confirmar repositório Docker e identidade BigQuery readonly, revisar custos e liberar o deploy manual. Nenhuma dessas ações é executada pelo novo smoke.
+
+**Aceite técnico:** CI offline + diagnóstico metadata-only + implantação privada manual aprovada + smoke autenticado real. Sem todos esses sinais, manter status `NAO_GO_LIVE` e não divulgar URL como sistema pronto.
