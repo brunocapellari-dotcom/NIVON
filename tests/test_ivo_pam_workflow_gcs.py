@@ -27,6 +27,17 @@ class TestIVOPAMGCSWorkflow(unittest.TestCase):
         self.assertIn('test -n "$GCS_PROVIDER"',w)
         self.assertIn('test -n "$GCS_SERVICE"',w)
         self.assertIn("if: steps.gcs.outputs.active == 'true'",w)
+        # Usa as variáveis que já existem no projeto Google Cloud,
+        # evitando outro WIF, outro bucket e configuração duplicada.
+        self.assertIn("vars.NIVON_GCP_PROVIDER",w)
+        self.assertIn("vars.NIVON_GCP_SERVICE_ACCOUNT",w)
+        self.assertIn("vars.NIVON_GCS_BUCKET",w)
+        self.assertNotIn("vars.NIVON_GCP_WIF_PROVIDER",w)
+        self.assertNotIn("vars.NIVON_PAM_GCS_BUCKET",w)
+        self.assertIn("vars.NIVON_PAM_GCS_WRITE_APPROVED == 'true'",w)
+        self.assertIn("vars.NIVON_GCP_COST_REVIEWED == 'true'",w)
+        self.assertIn('test "$GCS_WRITE_APPROVED" = "true"',w)
+        self.assertIn('test "$GCP_COST_REVIEWED" = "true"',w)
         self.assertIn("id-token: write",w)
         self.assertIn("token_format: access_token",w)
         self.assertIn("google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093",w)
