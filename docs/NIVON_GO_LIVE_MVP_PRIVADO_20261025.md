@@ -1,4 +1,6 @@
-# NIVON — Go-live acelerado do MVP privado
+# NIVON — Protótipo de consulta IVO (não é o terminal de go-live)
+
+**ATENÇÃO — Decisão de integração 25/10/2026:** a main já contém o terminal web CANÔNICO `src/nivon/terminal_web.py`, com dados ferroviários ANTT reais via BigQuery e fluxo Google Cloud Run privado. Este documento descreve um **protótipo independente** de painel/IVO desenvolvido na PR #78, que **NÃO deve ser implantado como segundo frontend**. Para go-live real usar [issue #281](https://github.com/brunocapellari-dotcom/NIVON/issues/281), [PR #306](https://github.com/brunocapellari-dotcom/NIVON/pull/306), `docs/GO_LIVE_PRIVADO_NIVON_20261025.md` e `scripts/deploy_terminal_privado.sh` da main. Reaproveitar apenas o gate editorial e o planejador IVO de forma compatível com o terminal existente, após resolver o P0 de URL privada. Os comandos Cloud Run abaixo são **referência técnica de protótipo, NÃO roteiro oficial de implantação**.
 
 **Corte de engenharia:** 25/10/2026. **Não confundir:** MVP implementado e testado em CI **não** significa serviço implantado, go-live público, autenticação validada em Google Cloud, coleta real ou acesso a cotações CEPEA/IMEA/CONAB.
 
