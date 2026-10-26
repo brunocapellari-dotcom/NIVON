@@ -1,25 +1,22 @@
-# Boletim diário: arte, dados e texto curto
+# Produtos editoriais NIVON
 
-O modelo do **RESUMO ESTRATÉGICO DO AGRONEGÓCIO** está aqui como fonte editável e governada. Esta pasta faz parte do NIVON internamente, mas o **nome e o logo do NIVON não aparecem na arte pública**.
+## 1. Resumo Estratégico do Agronegócio — diário
 
-## Arquivos
-- PADRAO_EDITORIAL.md — especificação aprovada e regra para o texto que acompanha a imagem.
-- ../../templates/briefing/modelo_visual.html — apresentação vertical verde/dourado, sem imagens nos corredores.
-- ../../templates/briefing/edicao_exemplo_2026-10-21.json — estrutura preenchível com um exemplo histórico.
-- ../../scripts/briefing/render_briefing.py — gera PDF do HTML + JSON.
+Modelo oficial fixado em [PADRAO_EDITORIAL.md](PADRAO_EDITORIAL.md) (versão 2, 26/10/2026): **uma página**, agricultura e pecuária juntas, verde/dourado, mercado físico e futuros, diesel municipal, seis fretes somente em R$/t, até oito notícias em duas colunas, **sem rodapé de fontes na arte**. Preservar fontes e datas no pacote de auditoria da edição.
 
-## Preenchimento diário
-1. Copiar o JSON da edição anterior para um novo arquivo de data; substituir **todos os fechamentos e as notícias** com dados confirmados. Atualizar contrato, fonte, data e unidade. Não reaproveitar cotações como atuais.
-2. Atualizar **os três corredores principais** (Sorriso–Rondonópolis, Sorriso–Dom Aquino e Sinop–Miritituba) e as três referências adicionais, distinguindo frete informado e volumes de referência de volumes realizados.
-3. Preparar a frase de WhatsApp no campo whatsapp_intro, factual e sem caráter comercial.
-4. Fazer a revisão editorial e de proveniência.
-5. Renderizar PDF, conferir visualmente e exportar PNG para o WhatsApp.
+- `../../templates/briefing/modelo_sem_dados.json`: esqueleto v2 sem números reais.
+- `../../templates/briefing/modelo_visual.html` e `../../scripts/briefing/render_briefing.py`: **renderizador legado em processo de atualização** para a v2; **não usar para publicar a versão aprovada enquanto não houver compatibilidade completa**, principalmente eliminação de volumes e notas de rodapé.
+- `../../templates/briefing/edicao_exemplo_2026-10-21.json`: edição histórica v1, **nunca usar como fonte atual**.
 
-## Renderização local
+## 2. Relatório Semanal de Plantio e Colheita — terça-feira
 
-Requisitos: Python 3.11 ou superior, Jinja2, WeasyPrint.
+Novo produto **separado** do briefing diário. Leia [RELATORIO_SEMANAL_PLANTIO_COLHEITA.md](RELATORIO_SEMANAL_PLANTIO_COLHEITA.md).
 
-    pip install Jinja2 WeasyPrint
-    python scripts/briefing/render_briefing.py templates/briefing/edicao_exemplo_2026-10-21.json briefing.pdf
+- Base de atualização: CONAB e IMEA publicadas na segunda-feira anterior, verificadas na terça.
+- **Um mapa por cultura + operação**. Exemplo: colheita da soja, plantio do milho e plantio do algodão = **3 mapas**; não misturar atividades em um mapa.
+- Respeitar a granularidade geográfica oficial e mostrar fonte, safra, percentual e data; sem preenchimento sintético.
+- Destino inicial: ChatGPT na terça de manhã. Coleta automatizada, mapas de produção e integração NIVON **não estão homologados** por esta especificação.
 
-O exemplo não comprova ingestão atualizada, validade das notícias na janela de 24h ou funcionamento de publicador WhatsApp. Não efetuar publicação sem revisão dos dados.
+## Regras transversais
+
+Não criar outro aplicativo, banco ou projeto de infraestrutura para estes produtos; no futuro, reutilizar os conectores CONAB/IMEA, os registros auditados e o template editorial existente. Nenhuma alteração em cronograma ou prompt de entrega comprova coleta real no Google Cloud.
