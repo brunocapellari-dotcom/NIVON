@@ -3,8 +3,13 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '45 12 * * *'
+  pull_request:
+    paths:
+      - '.github/workflows/antaq-vigia-fontes.yml'
+      - 'src/nivon/antaq_fonte_saude.py'
+      - 'tests/test_antaq_fonte_saude.py'
   push:
-    branches: [main, feat/antaq-monitor-disponibilidade-20261023]
+    branches: [main]
     paths:
       - '.github/workflows/antaq-vigia-fontes.yml'
       - 'src/nivon/antaq_fonte_saude.py'
@@ -33,12 +38,13 @@ jobs:
           PYTHONPATH: src
         run: python -m unittest discover -s tests -p 'test_antaq_fonte_saude.py' -v
       - name: Consultar metadados oficiais e revisao secundaria
+        if: ${{ github.event_name != 'pull_request' }}
         env:
           PYTHONPATH: src
         run: |
           python -m nivon.antaq_fonte_saude --arquivo "${RUNNER_TEMP}/status_antaq.json"
       - name: Resumo do sinal sem declarar coleta
-        if: always()
+        if: ${{ github.event_name != 'pull_request' && always() }}
         run: |
           python - <<'PY'
           import json,os
@@ -56,7 +62,7 @@ jobs:
               f.write("\n".join(lines)+"\n")
           PY
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always()
+        if: ${{ github.event_name != 'pull_request' && always() }}
         with:
           name: status-antaq-${{ github.run_id }}
           path: ${{ runner.temp }}/status_antaq.json
