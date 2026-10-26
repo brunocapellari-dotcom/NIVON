@@ -1,3 +1,9 @@
+## Recuperação do CEPEA — verificada em 25/10/2026
+
+O canal primário HTML voltou a operar nas execuções aprovadas em 24/10 UTC (23/10 MT). A rotina inseriu **4 registros de soja** e **15 de milho**; PostgreSQL confirmou **49 preços oficiais** nas séries soja Paraná (17), soja Paranaguá (17) e milho (15), todos com `reference_date=2026-10-23`. Eventos posteriores aos HTTP 522 registram status OK no `nivon_p0_source_checks`, e `nivon_p0_frescor` retorna `CURRENT_AND_ACTIVE` para CEPEA. Evidências: [soja](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/40049627785) e [milho](https://github.com/brunocapellari-dotcom/NIVON/actions/runs/40052325202).
+
+A recuperação **não garante** estabilidade futura. Dias úteis programados, validação de origem, idempotência, controle de frescor e registro automático de falhas continuam. Próxima verificação agendada: segunda-feira 26/10/2026 após 19h/19h45 MT. API contratada é opção se a instabilidade voltar a ser persistente; sem autorização/credenciais, não há migração a fazer.
+
 # NIVON — operação P0 de CEPEA, IMEA e CONAB
 
 **Estado verificado em 23/10/2026, horário de Mato Grosso.** Os dados do Google Drive não são tratados como atualização oficial. Um arquivo modificado não altera datas de referência ou publicação. Estado descrito conforme PostgreSQL Neon e execuções GitHub Actions.
