@@ -7,7 +7,7 @@ from types import SimpleNamespace
 import unittest
 
 from nivon.terminal_live_acceptance import (
-    AceiteBloqueado, aceitar, validar_url, validar_payload, metadados_e_token,
+    AceiteBloqueado, aceitar, validar_url, validar_payload, validar_portal, metadados_e_token,
 )
 
 NOW = datetime(2026,10,25,23,0,tzinfo=timezone.utc)
@@ -53,6 +53,29 @@ class Opener:
         elif path=="/":
             data=b'<html>NIVON Carregando dados reais</html>'
             mime="text/html"
+        elif path=="/portal":
+            data=b'<html>NIVON Portal operacional</html>'
+            mime="text/html"
+        elif path=="/readyz":
+            data=b'{"status":"PAINEL_PRIVADO_COM_DADOS_REAIS"}'
+            mime="application/json"
+        elif path=="/api/v1/painel":
+            data=json.dumps({
+                "schema":"nivon.portal.interno.v1",
+                "modo":"INTERNO_SHADOW",
+                "estado":"DADOS_REAIS_EM_REVISAO_INTERNA_NAO_HOMOLOGADOS",
+                "frescor_snapshot":"ATUAL",
+                "origem_terminal":"GCS_PRIVADO_COM_SHA256",
+                "snapshot_sha256":"a"*64,
+                "go_live_publico":False,
+                "publicavel":False,
+                "redistribuicao_autorizada":False,
+                "precos_homologados":False,
+                "fontes_consultadas":["ANTT_SIADE_ORIGEM_DESTINO","LINEUP_IMBITUBA"],
+                "indicadores":[{"publicavel":False},{"publicavel":False}],
+                "gerado_em":"2026-10-25T20:00:00+00:00",
+            }).encode()
+            mime="application/json"
         else:
             data=json.dumps(self.body).encode()
             mime="application/json"
@@ -65,7 +88,9 @@ class TestLiveAcceptance(unittest.TestCase):
         self.assertEqual(report["estado"],"VALIDACAO_PRIVADA_TECNICA_COMPLETA")
         self.assertEqual(report["ultima_competencia"],"2026-08")
         self.assertFalse(report["go_live_publico"])
-        self.assertEqual(len(op.urls),3)
+        self.assertEqual(len(op.urls),6)
+        self.assertTrue(report['portal_privado_gcs_verificado'])
+        self.assertEqual(report['indicadores_gcs'],2)
 
     def test_urls_estritas_e_sem_redirecionamento(self):
         for url in ("https://evil.example","http://"+URL[8:],URL+"/another",
@@ -112,6 +137,14 @@ class TestLiveAcceptance(unittest.TestCase):
         policy["bindings"][0]["members"].append("allUsers")
         with self.assertRaises(AceiteBloqueado):
             metadados_e_token(run=fake_run)
+
+    def test_portal_ausente_ou_nao_confiavel_impede_aceite(self):
+        with self.assertRaises(AceiteBloqueado):
+            validar_portal(b'{"status":"SNAPSHOT_INDISPONIVEL"}',
+                           b'<html>NIVON</html>',
+                           b'{"estado":"fixture"}',now=NOW)
+        with self.assertRaises(AceiteBloqueado):
+            aceitar(URL,"token",opener=Opener(redirect=True),now=NOW)
 
     def test_fluxo_de_publicacao_so_aprovado_manualmente(self):
         root=Path(__file__).resolve().parents[1]

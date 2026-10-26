@@ -108,11 +108,11 @@ def metadados_e_token(*, run=subprocess.run):
 
 
 def _ler(url: str, token: str, path: str, *, opener=None, timeout=20) -> bytes:
-    if path not in ("/", "/healthz", "/api/v1/ferrovia"):
+    if path not in ("/", "/healthz", "/api/v1/ferrovia", "/portal", "/readyz", "/api/v1/painel"):
         raise AceiteBloqueado("rota não homologada")
     req = Request(url + path, headers={
         "Authorization": "Bearer " + token,
-        "Accept": "text/html" if path == "/" else "application/json",
+        "Accept": "text/html" if path in ("/", "/portal") else "application/json",
         "User-Agent": "NIVON-Private-GoLive-Acceptance/0.1",
     }, method="GET")
     op = opener or build_opener(_NoRedirect())
@@ -121,7 +121,7 @@ def _ler(url: str, token: str, path: str, *, opener=None, timeout=20) -> bytes:
             if res.status != 200 or res.geturl() != url + path:
                 raise AceiteBloqueado("resposta privada inválida")
             mime = res.headers.get("Content-Type", "").split(";", 1)[0].lower().strip()
-            if mime != ("text/html" if path == "/" else "application/json"):
+            if mime != ("text/html" if path in ("/", "/portal") else "application/json"):
                 raise AceiteBloqueado("MIME de resposta incompatível")
             raw = res.read(MAX_RESPONSE + 1)
             if not 0 < len(raw) <= MAX_RESPONSE:
@@ -218,13 +218,65 @@ def validar_payload(health: bytes, page: bytes, body: bytes,
     }
 
 
+
+def validar_portal(ready: bytes, html: bytes, payload: bytes, *, now: datetime) -> dict:
+    if _json(ready) != {"status": "PAINEL_PRIVADO_COM_DADOS_REAIS"}:
+        raise AceiteBloqueado("readiness do painel privado ausente")
+    if b"NIVON" not in html:
+        raise AceiteBloqueado("portal web divergente")
+    d = _json(payload)
+    if (d.get("schema") != "nivon.portal.interno.v1"
+        or d.get("modo") != "INTERNO_SHADOW"
+        or d.get("estado") != "DADOS_REAIS_EM_REVISAO_INTERNA_NAO_HOMOLOGADOS"
+        or d.get("frescor_snapshot") != "ATUAL"
+        or d.get("origem_terminal") != "GCS_PRIVADO_COM_SHA256"
+        or d.get("go_live_publico") is not False
+        or d.get("publicavel") is not False
+        or d.get("redistribuicao_autorizada") is not False
+        or d.get("precos_homologados") is not False):
+        raise AceiteBloqueado("snapshot privado real não homologado")
+    digest = d.get("snapshot_sha256")
+    if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
+        raise AceiteBloqueado("snapshot sem SHA-256 confirmado")
+    fontes = d.get("fontes_consultadas")
+    if (not isinstance(fontes, list)
+        or "ANTT_SIADE_ORIGEM_DESTINO" not in fontes
+        or not any(isinstance(x, str) and (
+            x.startswith("LINEUP_") or x.startswith("FMI_PORTWATCH_")) for x in fontes)):
+        raise AceiteBloqueado("fontes terrestres ou marítimas ausentes")
+    indicadores = d.get("indicadores")
+    if not isinstance(indicadores, list) or len(indicadores) < 2:
+        raise AceiteBloqueado("painel sem indicadores suficientes")
+    if any(not isinstance(x, dict) or x.get("publicavel") is not False
+           for x in indicadores):
+        raise AceiteBloqueado("indicador não homologado")
+    try:
+        instante = datetime.fromisoformat(d["gerado_em"])
+        atraso = now.astimezone(timezone.utc) - instante.astimezone(timezone.utc)
+    except (TypeError, KeyError, ValueError, AttributeError) as exc:
+        raise AceiteBloqueado("snapshot sem data rastreável") from exc
+    if atraso.total_seconds() < -300 or atraso.total_seconds() > 86400:
+        raise AceiteBloqueado("snapshot GCS fora da janela de 24 horas")
+    return {
+        "portal_privado_gcs_verificado": True,
+        "indicadores_gcs": len(indicadores),
+        "fontes_reais_gcs_verificadas": len(fontes),
+        "snapshot_gerado_utc": instante.astimezone(timezone.utc).isoformat(),
+        "snapshot_atual": True,
+        "redistribuicao_autorizada": False,
+    }
+
 def aceitar(url: str, token: str, *, opener=None, now=None) -> dict:
     url = validar_url(url)
     current = now or datetime.now(timezone.utc)
     health = _ler(url, token, "/healthz", opener=opener)
     page = _ler(url, token, "/", opener=opener)
     data = _ler(url, token, "/api/v1/ferrovia", opener=opener, timeout=105)
-    return validar_payload(health, page, data, now=current)
+    ferrovia = validar_payload(health, page, data, now=current)
+    portal = _ler(url, token, "/portal", opener=opener)
+    ready = _ler(url, token, "/readyz", opener=opener, timeout=40)
+    integrated = _ler(url, token, "/api/v1/painel", opener=opener, timeout=40)
+    return {**ferrovia, **validar_portal(ready, portal, integrated, now=current)}
 
 
 def main(argv=None) -> int:
