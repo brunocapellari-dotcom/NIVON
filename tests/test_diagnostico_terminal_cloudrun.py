@@ -21,7 +21,7 @@ class Cmd:
         joined=" ".join(cmd)
         if self.missing in joined and self.missing:
             return SimpleNamespace(returncode=1,stderr="404 Not found",stdout="")
-        if "services describe" in joined:
+        if cmd[:3]==["gcloud","services","describe"]:
             body={"state":"ENABLED"}
         elif "repositories describe" in joined:
             body={"format":"DOCKER"}
