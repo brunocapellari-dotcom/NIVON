@@ -1,5 +1,11 @@
 name: NIVON - CI unico
 
+# Fase 1 (obrigatória): instalar extras, compileall e pytest em toda PR e push da main.
+# Etapas futuras só rodam quando o artefato da frente responsável existir (hashFiles):
+#   F2 -> requirements/ci.lock (Ruff + dependências travadas)
+#   F4 -> config/fontes.yaml (barreira de publicação restrita)
+#   F3 -> infra/google_cloud/Dockerfile.terminal (build + smoke do terminal)
+#   F4 -> infra/google_cloud/Dockerfile.coletor (build + smoke do coletor; absorve ci-coletor.yml)
 on:
   pull_request:
   push:
@@ -30,54 +36,35 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Verificar contratos finais F2/F3/F4
-        shell: bash
-        run: |
-          set -euo pipefail
-          for arquivo in \
-            requirements/ci.lock \
-            infra/google_cloud/Dockerfile.terminal \
-            infra/google_cloud/Dockerfile.coletor \
-            config/fontes.yaml \
-            scripts/auditar_publicacao_restrita.py; do
-              if [[ ! -f "$arquivo" ]]; then
-                echo "::error::DEPENDENCIA_NAO_ENTREGUE: $arquivo"
-                exit 1
-              fi
-          done
-          echo 'CONTRATOS_F2_F3_F4_PRESENTES'
-
-      - name: Instalar dependencias travadas do CI
-        shell: bash
-        run: |
-          set -euo pipefail
-          python -m pip install --disable-pip-version-check -r requirements/ci.lock
-          python -m pip install --disable-pip-version-check --no-deps -e .
-          python - <<'PY'
-          import importlib.util
-          for modulo in ('pytest', 'ruff', 'yaml', 'nivon'):
-              assert importlib.util.find_spec(modulo), f"Dependencia ausente: {modulo}"
-          PY
+      # ---------- Fase 1 ----------
+      - name: Instalar pacote com extras e pytest
+        run: python -m pip install --disable-pip-version-check -e '.[agro,excel,analytics,auth,gcp,ports]' pytest
 
       - name: Checar sintaxe de todos os pacotes Python
         run: python -m compileall -q src scripts tests
 
-      - name: Ruff
-        run: python -m ruff check src tests scripts
-
       - name: Pytest
         run: python -m pytest -q tests
 
-      - name: Bloquear publicacao de serie restrita em artefatos
-        run: python scripts/auditar_publicacao_restrita.py --catalogo config/fontes.yaml
+      # ---------- Etapas futuras (ativadas pelo artefato da frente) ----------
+      - name: Ruff com dependencias travadas (F2)
+        if: ${{ hashFiles('requirements/ci.lock') != '' }}
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements/ci.lock
+          python -m ruff check src tests scripts
 
-      - name: Build do terminal sem credenciais
-        run: docker build --file infra/google_cloud/Dockerfile.terminal --tag nivon-terminal:ci .
+      - name: Bloquear publicacao de serie restrita em artefatos (F4)
+        if: ${{ hashFiles('config/fontes.yaml') != '' }}
+        run: |
+          python -m pip install --disable-pip-version-check pyyaml
+          python scripts/auditar_publicacao_restrita.py --catalogo config/fontes.yaml
 
-      - name: Smoke HTTP local do terminal sem acessar Google Cloud
+      - name: Build e smoke HTTP local do terminal sem Google Cloud (F3)
+        if: ${{ hashFiles('infra/google_cloud/Dockerfile.terminal') != '' }}
         shell: bash
         run: |
           set -euo pipefail
+          docker build --file infra/google_cloud/Dockerfile.terminal --tag nivon-terminal:ci .
           contenedor="$(docker run --rm --detach --publish 127.0.0.1:18080:8080 \
             --env PORT=8080 nivon-terminal:ci)"
           trap 'docker logs "$contenedor" || true; docker rm -f "$contenedor" >/dev/null 2>&1 || true' EXIT
@@ -95,18 +82,29 @@ jobs:
           fi
           echo 'TERMINAL_LOCAL_SMOKE=OK'
 
-      - name: Build e smoke offline do coletor
+      - name: Build e smoke offline do coletor (F4)
+        if: ${{ hashFiles('infra/google_cloud/Dockerfile.coletor') != '' }}
         shell: bash
         run: |
           set -euo pipefail
+          bash -n scripts/deploy_coletor_job.sh scripts/preparar_coletor_gcp.sh
           docker build --file infra/google_cloud/Dockerfile.coletor --tag nivon-coletor:ci .
-          docker run --rm --network none --entrypoint python nivon-coletor:ci \
-            -c 'import nivon.carga; import nivon.fontes; print("COLETOR_OFFLINE_IMPORT_OK")'
+          docker run --rm --network none --entrypoint python nivon-coletor:ci -c \
+            'import nivon.carga.coletor, nivon.carga.registro_fontes, nivon.fontes, scripts.ptax_bcb_bigquery_direto, nivon.antt_gcp_pipeline, nivon.conab_incremental, nivon.maritimo_gcp_job, google.cloud.bigquery; print("COLETOR_OFFLINE_IMPORT_OK")'
+          test "$(docker run --rm --network none --entrypoint id nivon-coletor:ci -u)" = 65532
+          set +e
+          docker run --rm --network none nivon-coletor:ci
+          rc=$?
+          set -e
+          test "$rc" = 3 || { echo "::error::coletor sem habilitacao deveria sair com 3, saiu $rc"; exit 1; }
+          echo 'COLETOR_FAIL_CLOSED_OK'
 
-      - name: Sumario de testes
+      - name: Sumario
         if: success()
         shell: bash
         run: |
-          echo '### NIVON — CI único' >> "$GITHUB_STEP_SUMMARY"
-          echo 'Python 3.11, Ruff, pytest, sintaxe, publicações, builds e smoke sem credenciais: OK.' >> "$GITHUB_STEP_SUMMARY"
-          echo 'CI verde NÃO comprova IAM, dados atualizados, preço de consulta ou deploy em produção.' >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo '### NIVON — CI único'
+            echo 'Fase 1 (extras + compileall + pytest): OK. Etapas futuras rodam quando o artefato da frente existe.'
+            echo 'CI verde NÃO comprova IAM, dados atualizados, custo de consulta ou deploy em produção.'
+          } >> "$GITHUB_STEP_SUMMARY"
