@@ -46,7 +46,7 @@ def texto_pdf(pdf, *, comando=None):
     programa = comando or shutil.which("pdftotext")
     if not programa:
         # Runner Ubuntu mínimo pode não incluir Poppler. Alternativa auditável
-        # pure Python, pypdf==5.9.0 (licença BSD-3-Clause).
+        # pure Python, pypdf==6.21.2 (licença BSD-3-Clause).
         import io
         try:
             from pypdf import PdfReader
