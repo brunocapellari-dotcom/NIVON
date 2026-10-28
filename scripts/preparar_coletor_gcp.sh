@@ -53,9 +53,18 @@ passo "4/6 Permissões mínimas da conta do coletor"
 echo "- bigquery.jobUser no projeto (executar consultas e cargas)"
 gcloud projects add-iam-policy-binding "$P" --member="serviceAccount:$SA" \
   --role=roles/bigquery.jobUser --condition=None --format=none
+# Datasets ausentes são criados na mesma localização do nivon_raw (onde já estão os dados).
+LOCAL_BQ=$(bq show --format=json "$P:nivon_raw" | python3 -c 'import json,sys; print(json.load(sys.stdin)["location"])')
+[[ -n "$LOCAL_BQ" ]] || { echo "Localização do nivon_raw não encontrada"; exit 3; }
+echo "- localização BigQuery (lida do nivon_raw): $LOCAL_BQ"
 for ds in "${DATASETS[@]}"; do
+  if bq show --format=none "$P:$ds" >/dev/null 2>&1; then
+    echo "- dataset $ds já existe"
+  else
+    echo "- criando dataset $ds em $LOCAL_BQ"
+    bq mk --dataset --location="$LOCAL_BQ" --description="NIVON $ds" "$P:$ds"
+  fi
   echo "- bigquery.dataEditor só no dataset $ds"
-  bq show --format=none "$P:$ds"
   bq add-iam-policy-binding --member="serviceAccount:$SA" --role=roles/bigquery.dataEditor "$P:$ds" >/dev/null
 done
 echo "- storage.objectAdmin só no bucket gs://$BUCKET (bruto com hash e readback)"
@@ -74,7 +83,7 @@ gcloud storage buckets add-iam-policy-binding "$FONTE_BUILD" --member="serviceAc
   --role=roles/storage.objectViewer --format=none
 
 passo "6/6 Tabela nivon_core.saude_fontes (CREATE TABLE IF NOT EXISTS)"
-bq query --project_id="$P" --location="$R" --use_legacy_sql=false --quiet \
+bq query --project_id="$P" --location="$LOCAL_BQ" --use_legacy_sql=false --quiet \
   < database/bigquery/nivon_saude_fontes.sql
 bq show --format=none "$P:nivon_core.saude_fontes"
 

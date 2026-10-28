@@ -253,6 +253,11 @@ class Artefatos(unittest.TestCase):
         self.assertIn("run.googleapis.com cloudbuild.googleapis.com", t)
         self.assertIn("cloudscheduler.googleapis.com bigquery.googleapis.com", t)
         self.assertIn("bash scripts/deploy_coletor_job.sh", t)
+        # datasets ausentes (ex.: nivon_core) criados na localização lida do nivon_raw
+        self.assertIn('bq show --format=json "$P:nivon_raw"', t)
+        self.assertIn('bq mk --dataset --location="$LOCAL_BQ"', t)
+        self.assertIn('bq query --project_id="$P" --location="$LOCAL_BQ"', t)
+        self.assertLess(t.index("bq mk --dataset"), t.index("roles/bigquery.dataEditor"))
 
     def test_fontes_fica_vazio_para_a_f2(self):
         self.assertEqual((RAIZ / "src/nivon/fontes/__init__.py").read_text(), "")
