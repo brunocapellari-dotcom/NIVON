@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Deploy do Cloud Run Job nivon-coletor + Cloud Scheduler de hora em hora.
+# Deploy do Cloud Run Job nivon-coletor + Cloud Scheduler 3x/dia (07:15, 13:15, 19:15 MT).
 # Executar pelo DONO no Cloud Shell do projeto nivon-data, na raiz do clone,
-# depois de criar a tabela database/bigquery/nivon_saude_fontes.sql.
+# depois de scripts/preparar_coletor_gcp.sh. Cada fonte só roda se estiver vencida.
 # Não concede IAM amplo, não cria buckets/datasets, não torna nada público.
 set -euo pipefail
 P=nivon-data
@@ -11,7 +11,7 @@ REPO="${NIVON_COLETOR_ARTIFACT_REPO:?Informe o repositório Docker EXISTENTE (Ar
 SA="${NIVON_COLETOR_SA:-nivon-coletor-de-dados@nivon-data.iam.gserviceaccount.com}"
 DATASET="${NIVON_BQ_DATASET:-nivon_raw}"
 BUCKET="${NIVON_GCS_BUCKET:-nivon-data-raw-2026}"
-CRON="${NIVON_COLETOR_CRON:-7 * * * *}"
+CRON="${NIVON_COLETOR_CRON:-15 11,17,23 * * *}"
 [[ "$(gcloud config get-value project 2>/dev/null)" == "$P" ]] || { echo "PROJETO_ATIVO_NAO_E_$P"; exit 3; }
 [[ "$REPO" =~ ^[a-z][a-z0-9-]{1,62}$ ]] || { echo REPOSITORIO_INVALIDO; exit 3; }
 [[ "$SA" =~ ^[a-z][a-z0-9-]{4,28}[a-z0-9]@nivon-data\.iam\.gserviceaccount\.com$ ]] || { echo SA_INVALIDA; exit 3; }

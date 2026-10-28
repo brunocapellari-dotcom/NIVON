@@ -1,11 +1,12 @@
 """Coletor nivon-coletor: orquestração, fail-closed e saúde idempotente (offline)."""
 import subprocess
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from nivon.carga.coletor import executar_fonte, main, registrar_saude
-from nivon.fontes import FONTES, Contexto
+from nivon.carga.coletor import (executar_fonte, fontes_vencidas, main, registrar_saude,
+                                 ultimas_execucoes_ok)
+from nivon.carga.registro_fontes import FONTES, Contexto
 
 RAIZ = Path(__file__).resolve().parents[1]
 ENV = {"NIVON_COLETOR_HABILITADO": "true", "NIVON_BQ_PROJECT": "nivon-data",
@@ -66,12 +67,23 @@ class Execucao(unittest.TestCase):
         self.assertEqual(r.cmds[0][1]["NIVON_MARITIMO_COLETA_HABILITADA"], "true")
 
 
+AGORA = datetime(2026, 10, 28, 17, 15, tzinfo=timezone.utc)
+
+
+def sem_historico(projeto):
+    return {}
+
+
 class Main(unittest.TestCase):
     def setUp(self):
         self.registros = []
 
     def registrar(self, resultados, **kw):
         self.registros.append((resultados, kw))
+
+    def rodar(self, argv, env=ENV, runner=None, consultar=sem_historico):
+        return main(argv, env=env, runner=runner or Runner(), registrar=self.registrar,
+                    consultar_ultimas=consultar, agora=lambda: AGORA)
 
     def test_fail_closed_sem_habilitacao(self):
         r = Runner()
@@ -87,7 +99,7 @@ class Main(unittest.TestCase):
 
     def test_falha_de_uma_fonte_nao_bloqueia_as_outras(self):
         r = Runner(falhar={"scripts.ptax_bcb_bigquery_direto"})
-        code = main([], env=ENV, runner=r, registrar=self.registrar)
+        code = self.rodar([], runner=r)
         self.assertEqual(code, 1)
         resultados, kw = self.registros[0]
         self.assertEqual([x["status"] for x in resultados], ["FALHA", "OK", "OK", "OK"])
@@ -95,19 +107,80 @@ class Main(unittest.TestCase):
         self.assertEqual(kw["revisao"], "deadbeef")
 
     def test_tudo_ok_retorna_zero_e_subconjunto(self):
-        self.assertEqual(main(["--fontes", "ptax,maritimo"], env=ENV, runner=Runner(),
-                              registrar=self.registrar), 0)
+        self.assertEqual(self.rodar(["--fontes", "ptax,maritimo"]), 0)
         self.assertEqual([x["fonte"] for x in self.registros[0][0]], ["ptax", "maritimo"])
 
     def test_fontes_invalidas_ou_duplicadas(self):
         for f in ("cepea", "ptax,ptax", ""):
             with self.subTest(f=f), self.assertRaises(SystemExit):
-                main(["--fontes", f], env=ENV, runner=Runner(), registrar=self.registrar)
+                self.rodar(["--fontes", f])
 
     def test_plano_nao_executa(self):
         r = Runner()
         self.assertEqual(main(["--plano"], env={}, runner=r, registrar=self.registrar), 0)
         self.assertEqual((r.cmds, self.registros), ([], []))
+
+
+    def test_so_roda_fontes_vencidas(self):
+        ultimas = {"ptax": AGORA - timedelta(hours=6, minutes=1),     # 11:14 -> vencida
+                   "maritimo": AGORA - timedelta(hours=2),            # não vencida
+                   "conab": AGORA - timedelta(hours=23),              # não vencida
+                   "antt_ferrovia": AGORA - timedelta(days=8)}        # vencida
+        r = Runner()
+        self.assertEqual(self.rodar([], runner=r, consultar=lambda p: ultimas), 0)
+        self.assertEqual([x["fonte"] for x in self.registros[0][0]], ["ptax", "antt_ferrovia"])
+        self.assertEqual({c[0][2] for c in r.cmds},
+                         {"scripts.ptax_bcb_bigquery_direto", "nivon.antt_gcp_pipeline"})
+
+    def test_nada_vencido_nao_executa_nem_registra(self):
+        ultimas = {n: AGORA for n in FONTES}
+        r = Runner()
+        self.assertEqual(self.rodar([], runner=r, consultar=lambda p: ultimas), 0)
+        self.assertEqual((r.cmds, self.registros), ([], []))
+
+    def test_consulta_falha_roda_todas(self):
+        def quebrada(projeto):
+            raise RuntimeError("BigQuery indisponível")
+        self.assertEqual(self.rodar([], consultar=quebrada), 0)
+        self.assertEqual(len(self.registros[0][0]), 4)
+
+    def test_forcar_ignora_intervalo(self):
+        ultimas = {n: AGORA for n in FONTES}
+        self.assertEqual(self.rodar(["--forcar"], consultar=lambda p: ultimas), 0)
+        self.assertEqual(len(self.registros[0][0]), 4)
+
+
+class Vencimento(unittest.TestCase):
+    def test_intervalos_pedidos(self):
+        self.assertEqual({n: f.intervalo for n, f in FONTES.items()},
+                         {"ptax": timedelta(hours=6), "maritimo": timedelta(hours=6),
+                          "conab": timedelta(hours=24), "antt_ferrovia": timedelta(days=7)})
+
+    def test_folga_da_agenda_tres_vezes_ao_dia(self):
+        # Execução anterior começou 11:15:40; a próxima checagem é 17:15:10.
+        anterior = datetime(2026, 10, 28, 11, 15, 40, tzinfo=timezone.utc)
+        agora = datetime(2026, 10, 28, 17, 15, 10, tzinfo=timezone.utc)
+        self.assertEqual(fontes_vencidas(["ptax"], {"ptax": anterior}, agora), ["ptax"])
+        self.assertEqual(fontes_vencidas(["ptax"], {"ptax": agora - timedelta(hours=5)}, agora), [])
+
+    def test_consulta_de_ultimas_limitada(self):
+        class Cfg:
+            def __init__(self, maximum_bytes_billed):
+                self.limite = maximum_bytes_billed
+
+        class SDK:
+            QueryJobConfig = Cfg
+
+        class Cliente:
+            def query(self, sql, job_config):
+                self.sql, self.cfg = sql, job_config
+                return type("J", (), {"result": lambda _: [{"fonte": "ptax", "ultima": AGORA}]})()
+
+        c = Cliente()
+        self.assertEqual(ultimas_execucoes_ok("nivon-data", cliente=c, sdk=SDK), {"ptax": AGORA})
+        self.assertIn("status = 'OK'", c.sql)
+        self.assertIn("INTERVAL 8 DAY", c.sql)
+        self.assertLessEqual(c.cfg.limite, 100_000_000)
 
 
 class Saude(unittest.TestCase):
@@ -162,6 +235,27 @@ class Artefatos(unittest.TestCase):
             self.assertNotIn(proibido, t)
         self.assertIn("NIVON_COLETOR_HABILITADO=true", t)
         self.assertIn("TABELA_SAUDE_AUSENTE", t)
+        self.assertIn('CRON="${NIVON_COLETOR_CRON:-15 11,17,23 * * *}"', t)
+
+    def test_preparacao_minima_e_idempotente(self):
+        t = (RAIZ / "scripts/preparar_coletor_gcp.sh").read_text()
+        self.assertIn("set -euo pipefail", t)
+        for proibido in ("allUsers", "allAuthenticatedUsers", "roles/owner", "roles/editor"):
+            self.assertNotIn(proibido, t)
+        papeis_projeto = [l.split("--role=")[1].split()[0] for l in t.splitlines()
+                          if "--role=" in l and "projects add-iam-policy-binding" in
+                          t.splitlines()[t.splitlines().index(l) - 1]]
+        self.assertEqual(sorted(papeis_projeto), ["roles/bigquery.jobUser", "roles/logging.logWriter"])
+        self.assertIn("DATASETS=(nivon_core nivon_raw)", t)
+        self.assertIn('"keepCount": 3', t)
+        for recurso in ("repositories describe", "service-accounts describe"):
+            self.assertIn(recurso, t)  # consulta antes de criar
+        self.assertIn("run.googleapis.com cloudbuild.googleapis.com", t)
+        self.assertIn("cloudscheduler.googleapis.com bigquery.googleapis.com", t)
+        self.assertIn("bash scripts/deploy_coletor_job.sh", t)
+
+    def test_fontes_fica_vazio_para_a_f2(self):
+        self.assertEqual((RAIZ / "src/nivon/fontes/__init__.py").read_text(), "")
 
 
 if __name__ == "__main__":

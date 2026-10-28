@@ -3,10 +3,11 @@ on:
   pull_request:
     paths:
       - 'src/nivon/carga/**'
-      - 'src/nivon/fontes/**'
+      - 'src/nivon/fontes/__init__.py'
       - 'infra/google_cloud/Dockerfile.coletor'
       - 'infra/google_cloud/cloudbuild.coletor.yaml'
       - 'scripts/deploy_coletor_job.sh'
+      - 'scripts/preparar_coletor_gcp.sh'
       - 'database/bigquery/nivon_saude_fontes.sql'
       - 'tests/test_coletor_cloud_run_job.py'
       - '.github/workflows/ci-coletor.yml'
@@ -30,7 +31,7 @@ jobs:
         env:
           PYTHONPATH: 'src:.'
         run: |
-          bash -n scripts/deploy_coletor_job.sh
+          bash -n scripts/deploy_coletor_job.sh scripts/preparar_coletor_gcp.sh
           python -m unittest discover -s tests -p 'test_coletor_cloud_run_job.py' -v
       - name: Build da imagem real e smoke sem rede nem credenciais
         shell: bash
@@ -38,7 +39,7 @@ jobs:
           set -euo pipefail
           docker build --file infra/google_cloud/Dockerfile.coletor --tag nivon-coletor:ci .
           docker run --rm --network none --entrypoint python nivon-coletor:ci -c \
-            'import nivon.carga.coletor, nivon.fontes, scripts.ptax_bcb_bigquery_direto, nivon.antt_gcp_pipeline, nivon.conab_incremental, nivon.maritimo_gcp_job, google.cloud.bigquery; print("COLETOR_OFFLINE_IMPORT_OK")'
+            'import nivon.carga.coletor, nivon.carga.registro_fontes, nivon.fontes, scripts.ptax_bcb_bigquery_direto, nivon.antt_gcp_pipeline, nivon.conab_incremental, nivon.maritimo_gcp_job, google.cloud.bigquery; print("COLETOR_OFFLINE_IMPORT_OK")'
           test "$(docker run --rm --network none --entrypoint id nivon-coletor:ci -u)" = 65532
           set +e
           docker run --rm --network none nivon-coletor:ci
