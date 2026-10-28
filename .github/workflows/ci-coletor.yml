@@ -1,0 +1,49 @@
+name: NIVON - CI coletor Cloud Run Job (sem nuvem)
+on:
+  pull_request:
+    paths:
+      - 'src/nivon/carga/**'
+      - 'src/nivon/fontes/__init__.py'
+      - 'infra/google_cloud/Dockerfile.coletor'
+      - 'infra/google_cloud/cloudbuild.coletor.yaml'
+      - 'scripts/deploy_coletor_job.sh'
+      - 'scripts/preparar_coletor_gcp.sh'
+      - 'database/bigquery/nivon_saude_fontes.sql'
+      - 'tests/test_coletor_cloud_run_job.py'
+      - '.github/workflows/ci-coletor.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  coletor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Testes do coletor
+        env:
+          PYTHONPATH: 'src:.'
+        run: |
+          bash -n scripts/deploy_coletor_job.sh scripts/preparar_coletor_gcp.sh
+          python -m unittest discover -s tests -p 'test_coletor_cloud_run_job.py' -v
+      - name: Build da imagem real e smoke sem rede nem credenciais
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build --file infra/google_cloud/Dockerfile.coletor --tag nivon-coletor:ci .
+          docker run --rm --network none --entrypoint python nivon-coletor:ci -c \
+            'import nivon.carga.coletor, nivon.carga.registro_fontes, nivon.fontes, scripts.ptax_bcb_bigquery_direto, nivon.antt_gcp_pipeline, nivon.conab_incremental, nivon.maritimo_gcp_job, google.cloud.bigquery; print("COLETOR_OFFLINE_IMPORT_OK")'
+          test "$(docker run --rm --network none --entrypoint id nivon-coletor:ci -u)" = 65532
+          set +e
+          docker run --rm --network none nivon-coletor:ci
+          rc=$?
+          set -e
+          test "$rc" = 3 || { echo "::error::coletor sem habilitacao deveria sair com 3, saiu $rc"; exit 1; }
+          echo 'COLETOR_FAIL_CLOSED_OK'
