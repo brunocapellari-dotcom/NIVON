@@ -9,6 +9,7 @@ Bruto com hash, carga idempotente e readback ficam com esses pipelines.
 """
 from __future__ import annotations
 
+import os
 import sys
 from dataclasses import dataclass, field
 from datetime import timedelta
@@ -51,6 +52,10 @@ def _antt(c):
 
 def _conab(c):
     banco, raw, stage = c.trabalho / "conab.sqlite", c.trabalho / "conab_raw", c.trabalho / "conab.jsonl"
+    # conab_execucao_edicao exige a pasta RAW já existente e privada (0700);
+    # o workflow antigo criava a pasta antes; a verificação do módulo é mantida.
+    raw.mkdir(mode=0o700, exist_ok=True)
+    os.chmod(raw, 0o700)  # mkdir respeita umask e não corrige pasta já existente
     return [
         # Sem --aplicar: só verifica a tabela existente, nunca cria.
         _py("nivon.conab_gcp_schema", "--projeto", c.projeto, "--dataset", c.dataset),
@@ -70,8 +75,10 @@ def _maritimo(c):
 
 
 FONTES = {
+    # O script só carrega com os dois gates; ficam restritos à fonte ptax no job implantado.
     "ptax": Fonte("ptax", "PTAX BCB -> nivon_core.ptax_quotes (MERGE por quote_id)", _ptax,
-                  timedelta(hours=6)),
+                  timedelta(hours=6), env={"NIVON_GCP_WRITE_APPROVED": "true",
+                                           "NIVON_GCP_COST_REVIEWED": "true"}),
     "antt_ferrovia": Fonte("antt_ferrovia", "ANTT SIADE ferroviário -> GCS por SHA + BigQuery",
                            _antt, timedelta(days=7)),
     "conab": Fonte("conab", "CONAB XLSX oficiais -> GCS por SHA + BigQuery só novos", _conab,

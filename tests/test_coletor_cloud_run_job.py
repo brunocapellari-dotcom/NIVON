@@ -1,5 +1,8 @@
 """Coletor nivon-coletor: orquestração, fail-closed e saúde idempotente (offline)."""
+import os
+import stat
 import subprocess
+import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -12,7 +15,8 @@ RAIZ = Path(__file__).resolve().parents[1]
 ENV = {"NIVON_COLETOR_HABILITADO": "true", "NIVON_BQ_PROJECT": "nivon-data",
        "NIVON_BQ_DATASET": "nivon_raw", "NIVON_GCS_BUCKET": "nivon-data-raw-2026",
        "CLOUD_RUN_EXECUTION": "nivon-coletor-abc12", "NIVON_REVISAO": "deadbeef"}
-CTX = Contexto("nivon-data", "nivon_raw", "nivon-data-raw-2026", Path("/tmp/x"), 2026)
+_TMP = tempfile.TemporaryDirectory(prefix="nivon-teste-coletor-")
+CTX = Contexto("nivon-data", "nivon_raw", "nivon-data-raw-2026", Path(_TMP.name), 2026)
 
 
 class Runner:
@@ -45,6 +49,32 @@ class Fontes(unittest.TestCase):
         self.assertEqual(antt[antt.index("--inicio") + 1:antt.index("--fim") + 2],
                          ["2025", "--fim", "2026"])
         self.assertNotIn("--permitir-criar-tabela", antt)
+
+
+    def test_conab_cria_pasta_raw_privada_antes_das_etapas(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ctx = Contexto("nivon-data", "nivon_raw", "nivon-data-raw-2026", Path(tmp), 2026)
+            etapas = FONTES["conab"].etapas(ctx)
+            raw = Path(tmp) / "conab_raw"
+            self.assertTrue(raw.is_dir() and not raw.is_symlink())
+            self.assertEqual(stat.S_IMODE(raw.stat().st_mode), 0o700)
+            self.assertIn(str(raw), etapas[1])  # --pasta-raw do conab_incremental
+            os.chmod(raw, 0o755)  # pasta já existente com modo aberto volta a 0700
+            FONTES["conab"].etapas(ctx)
+            self.assertEqual(stat.S_IMODE(raw.stat().st_mode), 0o700)
+
+    def test_conab_pasta_passa_na_verificacao_do_modulo(self):
+        from nivon.conab_execucao_edicao import _privado
+        with tempfile.TemporaryDirectory() as tmp:
+            ctx = Contexto("nivon-data", "nivon_raw", "nivon-data-raw-2026", Path(tmp), 2026)
+            FONTES["conab"].etapas(ctx)
+            _privado(Path(tmp) / "conab_raw")  # não levanta ErroExecucaoConab
+
+    def test_gates_de_carga_so_na_ptax(self):
+        gates = {"NIVON_GCP_WRITE_APPROVED": "true", "NIVON_GCP_COST_REVIEWED": "true"}
+        self.assertEqual(FONTES["ptax"].env, gates)
+        for nome in ("antt_ferrovia", "conab", "maritimo"):
+            self.assertFalse(set(gates) & set(FONTES[nome].env), nome)
 
 
 class Execucao(unittest.TestCase):
@@ -258,6 +288,13 @@ class Artefatos(unittest.TestCase):
         self.assertIn('bq mk --dataset --location="$LOCAL_BQ"', t)
         self.assertIn('bq query --project_id="$P" --location="$LOCAL_BQ"', t)
         self.assertLess(t.index("bq mk --dataset"), t.index("roles/bigquery.dataEditor"))
+        self.assertNotIn("bq add-iam-policy-binding", t)
+        self.assertIn("GRANT \\`roles/bigquery.dataEditor\\` ON SCHEMA", t)
+        for sql, tabela in (("database/bigquery/nivon_saude_fontes.sql", "nivon_core.saude_fontes"),
+                            ("database/bigquery/nivon_ptax_schema.sql", "nivon_core.ptax_quotes"),
+                            ("sql/bigquery/002_agro_fontes_staging.sql", "nivon_raw.agro_fonte_stage")):
+            self.assertIn(f"criar_tabela {sql} {tabela}", t)
+            self.assertTrue((RAIZ / sql).is_file(), sql)
 
     def test_fontes_fica_vazio_para_a_f2(self):
         self.assertEqual((RAIZ / "src/nivon/fontes/__init__.py").read_text(), "")
