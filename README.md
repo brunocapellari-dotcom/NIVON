@@ -1,6 +1,6 @@
 # NIVON — inteligência do agronegócio e logística
 
-Projeto de uso **não comercial** para pesquisa e inteligência sobre agricultura, pecuária, preços, transporte de granéis, portos, clima e cadeias de suprimento.
+Plataforma de inteligência sobre agricultura, pecuária, preços, transporte de granéis, portos, clima e cadeias de suprimento. A utilização e a redistribuição de cada fonte dependem de seus respectivos direitos, inclusive quando houver aplicação comercial.
 
 ## Situação do projeto (26/10/2026)
 **Em reorganização. Go-live e acesso privado NÃO comprovados por esta documentação.** A verdade operacional é o código mesclado na `main`, evidências dos testes e o estado conferido diretamente no Google Cloud; PR aberta, plano e teste sintético não significam produção.
