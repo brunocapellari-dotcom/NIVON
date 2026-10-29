@@ -53,10 +53,20 @@ passo "4/6 Permissões mínimas da conta do coletor"
 echo "- bigquery.jobUser no projeto (executar consultas e cargas)"
 gcloud projects add-iam-policy-binding "$P" --member="serviceAccount:$SA" \
   --role=roles/bigquery.jobUser --condition=None --format=none
+# Datasets ausentes são criados na mesma localização do nivon_raw (onde já estão os dados).
+LOCAL_BQ=$(bq show --format=json "$P:nivon_raw" | python3 -c 'import json,sys; print(json.load(sys.stdin)["location"])')
+[[ -n "$LOCAL_BQ" ]] || { echo "Localização do nivon_raw não encontrada"; exit 3; }
+echo "- localização BigQuery (lida do nivon_raw): $LOCAL_BQ"
 for ds in "${DATASETS[@]}"; do
-  echo "- bigquery.dataEditor só no dataset $ds"
-  bq show --format=none "$P:$ds"
-  bq add-iam-policy-binding --member="serviceAccount:$SA" --role=roles/bigquery.dataEditor "$P:$ds" >/dev/null
+  if bq show --format=none "$P:$ds" >/dev/null 2>&1; then
+    echo "- dataset $ds já existe"
+  else
+    echo "- criando dataset $ds em $LOCAL_BQ"
+    bq mk --dataset --location="$LOCAL_BQ" --description="NIVON $ds" "$P:$ds"
+  fi
+  echo "- bigquery.dataEditor só no dataset $ds (GRANT ON SCHEMA)"
+  bq query --project_id="$P" --location="$LOCAL_BQ" --use_legacy_sql=false --quiet \
+    "GRANT \`roles/bigquery.dataEditor\` ON SCHEMA \`$P.$ds\` TO \"serviceAccount:$SA\""
 done
 echo "- storage.objectAdmin só no bucket gs://$BUCKET (bruto com hash e readback)"
 gcloud storage buckets add-iam-policy-binding "gs://$BUCKET" --member="serviceAccount:$SA" \
@@ -73,10 +83,16 @@ gcloud storage buckets describe "$FONTE_BUILD" --format=none >/dev/null 2>&1 ||
 gcloud storage buckets add-iam-policy-binding "$FONTE_BUILD" --member="serviceAccount:$BUILD_SA" \
   --role=roles/storage.objectViewer --format=none
 
-passo "6/6 Tabela nivon_core.saude_fontes (CREATE TABLE IF NOT EXISTS)"
-bq query --project_id="$P" --location="$R" --use_legacy_sql=false --quiet \
-  < database/bigquery/nivon_saude_fontes.sql
-bq show --format=none "$P:nivon_core.saude_fontes"
+passo "6/6 Tabelas que o coletor grava (CREATE TABLE IF NOT EXISTS, nada é recriado)"
+criar_tabela() {  # $1 = SQL versionado, $2 = tabela esperada, $3 = dataset do placeholder
+  echo "- $2"
+  sed -e "s/\${PROJECT_ID}/$P/g" -e "s/\${DATASET_ID}/$3/g" "$1" |
+    bq query --project_id="$P" --location="$LOCAL_BQ" --use_legacy_sql=false --quiet
+  bq show --format=none "$P:$2"
+}
+criar_tabela database/bigquery/nivon_saude_fontes.sql nivon_core.saude_fontes nivon_core
+criar_tabela database/bigquery/nivon_ptax_schema.sql nivon_core.ptax_quotes nivon_core
+criar_tabela sql/bigquery/002_agro_fontes_staging.sql nivon_raw.agro_fonte_stage nivon_raw
 
 printf '\nPREPARACAO_CONCLUIDA. Próximo passo, no mesmo terminal:\n\n'
 echo "  NIVON_COLETOR_ARTIFACT_REPO=$REPO NIVON_COLETOR_SA=$SA bash scripts/deploy_coletor_job.sh"
