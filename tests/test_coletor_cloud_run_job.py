@@ -351,7 +351,7 @@ class DeployColetorActions(unittest.TestCase):
         self.assertIn("ROW_NUMBER() OVER (PARTITION BY fonte", workflow)
         self.assertIn("GITHUB_STEP_SUMMARY", workflow)
         self.assertIn("--maximum_bytes_billed=100000000", workflow)
-        self.assertIn('--args="^|^--fontes=$FONTES_SELECIONADAS"', workflow)
+        self.assertIn('--update-env-vars="^|^NIVON_COLETOR_FONTES=$FONTES_SELECIONADAS"', workflow)
         self.assertNotIn("--forcar", workflow)
 
     def test_sintaxe_script_deploy(self):
