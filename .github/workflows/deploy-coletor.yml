@@ -109,10 +109,10 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -n "$FONTES_SELECIONADAS" ]]; then
-            # Delimitador alternativo preserva vírgulas no argumento --fontes.
-            gcloud run jobs execute nivon-coletor               --project=nivon-data --region=southamerica-east1 --wait               --args="^|^--fontes=$FONTES_SELECIONADAS"
+            # Override somente desta execução; preserva o CMD python da imagem.
+            gcloud run jobs execute nivon-coletor --project=nivon-data --region=southamerica-east1 --wait --update-env-vars="^|^NIVON_COLETOR_FONTES=$FONTES_SELECIONADAS"
           else
-            gcloud run jobs execute nivon-coletor               --project=nivon-data --region=southamerica-east1 --wait
+            gcloud run jobs execute nivon-coletor --project=nivon-data --region=southamerica-east1 --wait
           fi
 
       - name: Resumo — saúde das quatro fontes
@@ -143,7 +143,7 @@ jobs:
             AND fonte IN ('ptax','antt_ferrovia','conab','maritimo')
           QUALIFY ROW_NUMBER() OVER (PARTITION BY fonte ORDER BY inicio DESC, registrado_em DESC) = 1
           ORDER BY fonte"
-          if ! bq query --project_id=nivon-data --location=southamerica-east1              --use_legacy_sql=false --format=csv --max_rows=4              --maximum_bytes_billed=100000000 "$SQL" > "$RUNNER_TEMP/nivon-saude.csv"; then
+          if ! bq query --project_id=nivon-data --location=southamerica-east1 --use_legacy_sql=false --quiet --format=csv --max_rows=4 --maximum_bytes_billed=100000000 "$SQL" > "$RUNNER_TEMP/nivon-saude.csv"; then
             echo 'Consulta de saúde: FALHA (checar leitura BigQuery da conta WIF).' >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
