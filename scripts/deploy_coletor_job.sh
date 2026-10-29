@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Deploy do Cloud Run Job nivon-coletor + Cloud Scheduler 3x/dia (07:15, 13:15, 19:15 MT).
-# Executar pelo DONO no Cloud Shell do projeto nivon-data, na raiz do clone,
-# depois de scripts/preparar_coletor_gcp.sh. Cada fonte só roda se estiver vencida.
+# Pode ser executado via GitHub Actions no ambiente 'producao' ou manualmente.
+# Requer recursos e IAM ja preparados pela Frente 5; NAO altera politicas IAM.
+# Cada fonte so roda se estiver vencida.
 # Não concede IAM amplo, não cria buckets/datasets, não torna nada público.
 set -euo pipefail
 P=nivon-data
@@ -24,11 +25,10 @@ gcloud builds submit . --project="$P" --region="$R" \
 gcloud run jobs deploy "$JOB" --project="$P" --region="$R" --image="$IMAGE" \
   --service-account="$SA" --tasks=1 --max-retries=0 --task-timeout=50m \
   --cpu=1 --memory=1Gi \
-  --labels=nivon-component=coletor,managed-by=cloud-shell \
+  --labels=nivon-component=coletor,managed-by=nivon-deploy \
   --set-env-vars="NIVON_COLETOR_HABILITADO=true,NIVON_BQ_PROJECT=$P,NIVON_BQ_DATASET=$DATASET,NIVON_GCS_BUCKET=$BUCKET,NIVON_REVISAO=$REV"
-# Scheduler chama a API do Cloud Run com a própria SA do job (run.invoker só neste job).
-gcloud run jobs add-iam-policy-binding "$JOB" --project="$P" --region="$R" \
-  --member="serviceAccount:$SA" --role=roles/run.invoker
+# F5 deve ter concedido run.invoker para a conta usada pelo Scheduler.
+# Este deploy deliberadamente NAO cria/edita IAM.
 URI="https://run.googleapis.com/v2/projects/$P/locations/$R/jobs/$JOB:run"
 if gcloud scheduler jobs describe "$JOB-horario" --project="$P" --location="$R" >/dev/null 2>&1; then
   gcloud scheduler jobs update http "$JOB-horario" --project="$P" --location="$R" \
