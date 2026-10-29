@@ -43,6 +43,9 @@ jobs:
       - name: Checar sintaxe de todos os pacotes Python
         run: python -m compileall -q src scripts tests
 
+      - name: Validar script IAM sem credenciais (somente sintaxe)
+        run: bash -n scripts/conceder_deploy_github.sh
+
       - name: Pytest
         run: python -m pytest -q tests
 
