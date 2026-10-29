@@ -1,0 +1,114 @@
+name: NIVON - CI unico
+
+# Fase 1 (obrigatória): instalar extras, compileall e pytest em toda PR e push da main.
+# Etapas futuras só rodam quando o artefato da frente responsável existir (hashFiles):
+#   F2 -> requirements/ci.lock (Ruff + dependências travadas)
+#   F4 -> config/fontes.yaml (barreira de publicação restrita)
+#   F3 -> infra/google_cloud/Dockerfile.terminal (build + smoke do terminal)
+#   F4 -> infra/google_cloud/Dockerfile.coletor (build + smoke do coletor; absorve ci-coletor.yml)
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - name: Obter codigo sem manter token Git
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.11'
+
+      # ---------- Fase 1 ----------
+      - name: Instalar pacote com extras e pytest
+        run: python -m pip install --disable-pip-version-check -e '.[agro,excel,analytics,auth,gcp,ports]' pytest
+
+      - name: Checar sintaxe de todos os pacotes Python
+        run: python -m compileall -q src scripts tests
+
+      - name: Validar script IAM sem credenciais (somente sintaxe)
+        run: bash -n scripts/conceder_deploy_github.sh
+
+      - name: Pytest
+        run: python -m pytest -q tests
+
+      # ---------- Etapas futuras (ativadas pelo artefato da frente) ----------
+      - name: Ruff com dependencias travadas (F2)
+        if: ${{ hashFiles('requirements/ci.lock') != '' }}
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements/ci.lock
+          python -m ruff check src tests scripts
+
+      - name: Bloquear publicacao de serie restrita em artefatos (F4)
+        if: ${{ hashFiles('config/fontes.yaml') != '' }}
+        run: |
+          python -m pip install --disable-pip-version-check pyyaml
+          python scripts/auditar_publicacao_restrita.py --catalogo config/fontes.yaml
+
+      - name: Build e smoke HTTP local do terminal sem Google Cloud (F3)
+        if: ${{ hashFiles('infra/google_cloud/Dockerfile.terminal') != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build --file infra/google_cloud/Dockerfile.terminal --tag nivon-terminal:ci .
+          contenedor="$(docker run --rm --detach --publish 127.0.0.1:18080:8080 \
+            --env PORT=8080 --env NIVON_BQ_PROJECT=nivon-data --env NIVON_BQ_DATASET=nivon_raw \
+            nivon-terminal:ci)"
+          trap 'docker logs "$contenedor" || true; docker rm -f "$contenedor" >/dev/null 2>&1 || true' EXIT
+          pronto=0
+          for i in $(seq 1 30); do
+            if curl --silent --fail --max-time 2 http://127.0.0.1:18080/healthz >/dev/null; then
+              pronto=1
+              break
+            fi
+            sleep 1
+          done
+          if [[ "$pronto" != 1 ]]; then
+            echo '::error::Terminal nao respondeu HTTP 200 no /healthz local sem credenciais.'
+            exit 1
+          fi
+          echo 'TERMINAL_LOCAL_SMOKE=OK'
+
+      - name: Build e smoke offline do coletor (F4)
+        if: ${{ hashFiles('infra/google_cloud/Dockerfile.coletor') != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n scripts/deploy_coletor_job.sh scripts/preparar_coletor_gcp.sh
+          docker build --file infra/google_cloud/Dockerfile.coletor --tag nivon-coletor:ci .
+          docker run --rm --network none --entrypoint python nivon-coletor:ci -c \
+            'import nivon.carga.coletor, nivon.carga.registro_fontes, nivon.fontes, scripts.ptax_bcb_bigquery_direto, nivon.antt_gcp_pipeline, nivon.conab_incremental, nivon.maritimo_gcp_job, google.cloud.bigquery; print("COLETOR_OFFLINE_IMPORT_OK")'
+          test "$(docker run --rm --network none --entrypoint id nivon-coletor:ci -u)" = 65532
+          set +e
+          docker run --rm --network none nivon-coletor:ci
+          rc=$?
+          set -e
+          test "$rc" = 3 || { echo "::error::coletor sem habilitacao deveria sair com 3, saiu $rc"; exit 1; }
+          echo 'COLETOR_FAIL_CLOSED_OK'
+
+      - name: Sumario
+        if: success()
+        shell: bash
+        run: |
+          {
+            echo '### NIVON — CI único'
+            echo 'Fase 1 (extras + compileall + pytest): OK. Etapas futuras rodam quando o artefato da frente existe.'
+            echo 'CI verde NÃO comprova IAM, dados atualizados, custo de consulta ou deploy em produção.'
+          } >> "$GITHUB_STEP_SUMMARY"
