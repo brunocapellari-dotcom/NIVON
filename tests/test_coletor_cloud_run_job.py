@@ -300,8 +300,6 @@ class Artefatos(unittest.TestCase):
         self.assertEqual((RAIZ / "src/nivon/fontes/__init__.py").read_text(), "")
 
 
-if __name__ == "__main__":
-    unittest.main()
 
 
 class DeployColetorActions(unittest.TestCase):
@@ -359,3 +357,6 @@ class DeployColetorActions(unittest.TestCase):
         subprocess.run(["bash", "-n", str(RAIZ / "scripts/deploy_coletor_job.sh")],
                        check=True, timeout=10)
 
+
+if __name__ == "__main__":
+    unittest.main()
