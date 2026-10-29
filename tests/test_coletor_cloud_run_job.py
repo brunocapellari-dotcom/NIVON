@@ -300,5 +300,63 @@ class Artefatos(unittest.TestCase):
         self.assertEqual((RAIZ / "src/nivon/fontes/__init__.py").read_text(), "")
 
 
+
+
+class DeployColetorActions(unittest.TestCase):
+    """Contrato de segurança da entrada manual; sem autenticar na nuvem."""
+
+    def test_workflow_somente_main_com_aprovacao_de_producao(self):
+        texto = (RAIZ / ".github/workflows/deploy-coletor.yml").read_text(encoding="utf-8")
+        self.assertIn("workflow_dispatch:", texto)
+        self.assertNotIn("\n  push:", texto)
+        self.assertNotIn("\n  pull_request:", texto)
+        self.assertNotIn("\n  schedule:", texto)
+        self.assertIn("github.ref == 'refs/heads/main'", texto)
+        self.assertIn("environment: producao", texto)
+        self.assertIn("id-token: write", texto)
+        self.assertIn("vars.NIVON_GCP_PROVIDER", texto)
+        self.assertIn("vars.NIVON_GCP_SERVICE_ACCOUNT", texto)
+        self.assertIn("default: true", texto)
+        self.assertIn("executar_agora:", texto)
+        self.assertIn("fontes:", texto)
+
+    def test_cloud_build_nao_envelopa_credenciais_github(self):
+        texto = (RAIZ / ".github/workflows/deploy-coletor.yml").read_text(encoding="utf-8")
+        self.assertIn("path: nivon", texto)
+        self.assertIn("working-directory: nivon", texto)
+        self.assertIn("persist-credentials: false", texto)
+        self.assertIn("uses: google-github-actions/auth@", texto)
+        self.assertIn("create_credentials_file: true", texto)
+
+    def test_deploy_sem_concessoes_iam(self):
+        workflow = (RAIZ / ".github/workflows/deploy-coletor.yml").read_text(encoding="utf-8")
+        script = (RAIZ / "scripts/deploy_coletor_job.sh").read_text(encoding="utf-8")
+        for conteudo in (workflow, script):
+            self.assertNotIn("add-iam-policy-binding", conteudo)
+            self.assertNotIn("set-iam-policy", conteudo)
+            self.assertNotIn("projects add-iam-policy-binding", conteudo)
+        self.assertIn("bash scripts/deploy_coletor_job.sh", workflow)
+        self.assertIn("gcloud builds submit", script)
+        self.assertIn("gcloud run jobs deploy", script)
+        self.assertIn("gcloud scheduler jobs update http", script)
+        self.assertIn("gcloud scheduler jobs create http", script)
+        self.assertIn("15 11,17,23 * * *", workflow)
+
+    def test_resumo_real_e_filtragem(self):
+        workflow = (RAIZ / ".github/workflows/deploy-coletor.yml").read_text(encoding="utf-8")
+        for coluna in ("fonte", "status", "etapa_falha", "duracao_s"):
+            self.assertIn(coluna, workflow)
+        self.assertIn("ROW_NUMBER() OVER (PARTITION BY fonte", workflow)
+        self.assertIn("GITHUB_STEP_SUMMARY", workflow)
+        self.assertIn("--maximum_bytes_billed=100000000", workflow)
+        self.assertIn('--update-env-vars="^|^NIVON_COLETOR_FONTES=$FONTES_SELECIONADAS"', workflow)
+        self.assertNotIn("--forcar", workflow)
+
+    def test_sintaxe_script_deploy(self):
+        import subprocess
+        subprocess.run(["bash", "-n", str(RAIZ / "scripts/deploy_coletor_job.sh")],
+                       check=True, timeout=10)
+
+
 if __name__ == "__main__":
     unittest.main()
