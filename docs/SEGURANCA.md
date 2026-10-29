@@ -32,9 +32,15 @@ Data de corte: 26/10/2026. **Este documento é um plano e um checklist, não uma
 
 Referências GitHub: [rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/creating-rulesets-for-a-repository), [environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments), [secret scanning](https://docs.github.com/en/code-security/how-tos/secure-your-secrets/detect-secret-leaks/enable-secret-scanning), [Dependabot](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/secure-your-dependencies/configure-dependabot-alerts).
 
+## Situação operacional — atualização de 29/10/2026
+
+A PR #336 tem **fase 1 aprovada na execução 40700885495**: Python 3.11, extras `agro,excel,analytics,auth,gcp,ports`, `compileall`, `pytest`, build e smoke do terminal e coletor. A F2 ainda não forneceu `requirements/ci.lock` e a F4 ainda não publicou `config/fontes.yaml`, portanto Ruff e auditoria por catálogo **não foram executados**. O check obrigatório para a regra da main é somente **`ci`**. Pip-audit permanece fora do check obrigatório e com falha real se detectar vulnerabilidades.
+
+O script `scripts/conceder_deploy_github.sh` está **proposto, não executado**. Permissões e o bloqueio de IAM amplo devem ser conferidos na execução pelo Bruno. Aguardar primeiro o merge da PR e a revisão dos workflows `deploy-terminal.yml`/`deploy-coletor.yml` pelas F3/F4.
+
 ## 2. Pipeline único CI e migração sem indisponibilidade
 
-Arquivo-alvo: `.github/workflows/ci.yml` com job obrigatório `ci`, disparado em **todo** PR e push da `main`, sem filtros de caminho. Executa Python 3.11, `compileall`, `pytest`, `ruff` (F2), build + smoke offline de `Dockerfile.terminal` (F3) e `Dockerfile.coletor` (F4), sem OIDC e sem segredos. O teste de publicação examina o catálogo `config/fontes.yaml` (F4) e impede qualquer anexo público de séries restritas. Faltando contrato ou artefato de F2/F3/F4, deve **falhar fechado**; não marcar verde com `continue-on-error` nem mascarar módulos ausentes.
+O arquivo `.github/workflows/ci.yml` executa na **fase 1 obrigatória** em toda PR e push da main: Python 3.11, instalação `pip install -e '.[agro,excel,analytics,auth,gcp,ports]' pytest`, `compileall` e `pytest`. Também faz a validação sintática do script IAM sem executá-lo. Etapas posteriores são ativadas com `hashFiles(...)` quando seus insumos existirem: `requirements/ci.lock` (Ruff/F2), `config/fontes.yaml` (catálogo/F4), `Dockerfile.terminal` (terminal/F3) e `Dockerfile.coletor` (coletor/F4). Não tornar a ausência de uma etapa futura uma falsa prova de aprovação dessa etapa. O `ci-coletor.yml` foi absorvido pelo `ci.yml` na PR #336.
 
 Não eliminar CI antigo antes de **dois dias de execuções verdes reais** do novo `ci` e da validação das três frentes. Remoções só após revisão dos respectivos donos de arquivo/workflow. Os workflows de deploy devem permanecer separados, protegidos e sem implantação em PR.
 
@@ -106,3 +112,29 @@ Nenhum segredo deve ser excluído até mapear consumidores efetivos no novo cole
 7. Fazer aceite demonstrável: ruleset `main` ativo, `ci` obrigatório verde durante dois dias, segurança e CodeQL executando, IAM real com menor privilégio, orçamento visível, terminal privado autenticado e catálogo F4 auditado.
 
 **Situação na criação desta documentação:** inspeção realizada; controles do Console, WIF, orçamento, remoções e homologação **não executados**.
+
+## 8. Concessão única de IAM para deploys GitHub — script disponível, NÃO executado
+
+Arquivo: `scripts/conceder_deploy_github.sh`. Após merge e revisão de Claude, abrir o Cloud Shell no navegador do celular e executar uma única linha:
+
+```bash
+cd NIVON && git pull --ff-only && bash scripts/conceder_deploy_github.sh
+```
+
+O script pede por texto somente **o e-mail**, e nunca uma chave, da conta configurada na variável GitHub `NIVON_GCP_SERVICE_ACCOUNT`. Também aceita `NIVON_GCP_SERVICE_ACCOUNT=conta@nivon-data.iam.gserviceaccount.com bash scripts/conceder_deploy_github.sh` se essa variável já estiver disponível na sessão.
+
+**Confere antes de gravar:** projeto selecionado `nivon-data`, conta WIF existente e distinta das contas de execução, Artifact Registry `nivon`, bucket de staging Cloud Build, bucket do snapshot, coletor em produção, datasets e tabela de saúde. Interrompe se a conta WIF já possuir papéis amplos diretos no projeto; não os revoga sem decisão humana.
+
+**Concede sem Owner/Editor básicos:** `roles/run.developer`, `roles/cloudbuild.builds.editor`, `roles/cloudscheduler.admin`, `roles/serviceusage.serviceUsageConsumer` no projeto; `iam.serviceAccountUser` apenas nas duas contas de execução; `artifactregistry.writer` só no repositório `nivon`; `storage.objectCreator` só no bucket `nivon-data_cloudbuild`. Cria `nivon-terminal-leitura` somente se faltar, concede `bigquery.jobUser` no projeto e `dataViewer` via `GRANT ON SCHEMA` nos datasets `nivon_raw` e `nivon_core`. À conta WIF, dá leitura apenas na tabela `nivon_core.saude_fontes`. Para o leitor GCS do terminal já existente, dá leitura de metadados do bucket e de objetos condicionada ao prefixo `interno/nivon/portal/v1/`. Concede `run.invoker` ao coletor somente no job `nivon-coletor` existente.
+
+**Coordenação obrigatória com F4:** o script antigo `deploy_coletor_job.sh` tenta editar IAM do Job em cada deploy. A conta WIF com `run.developer` não pode fazer isso. F4 deve remover do workflow de deploy essa operação, mantendo a concessão feita uma vez pelo proprietário. Nenhum novo papel administrativo amplo deve ser adicionado como atalho.
+
+**Limite de evidência:** a atualização foi escrita no repositório e verificada apenas por CI/sintaxe offline. Não foi executada em Google Cloud; não atesta IAM, WIF, Cloud Build, terminal nem orçamento em produção.
+
+## 9. Checklist compacto do proprietário (celular)
+
+1. **GitHub → NIVON → Settings → Environments → New environment:** nome `producao`; Required reviewers = `brunocapellari-dotcom`; desmarcar *Prevent self-reviews*; Deployment branches = Selected branches = `main`. Conferir que os dois jobs de deploy realmente referenciam `environment: producao` antes de publicar.
+2. **GitHub → Settings → Rules → Rulesets → New branch ruleset:** incluir `main`, Require pull request (0 aprovações), Block force pushes, Restrict deletions, sem bypass administrativo. **Exigir check `ci` apenas depois** de a #336 ter sido mesclada e executada verde na main.
+3. **GitHub → Settings → Advanced Security:** ativar Secret scanning, Push protection e Dependabot alerts (conforme disponibilidade da conta).
+4. **Google Cloud Console → Billing → Budgets & alerts → Create budget:** escopo projeto `nivon-data`, período mensal, R$ 10 quando a moeda de faturamento for BRL, alertas 50%, 90%, 100%. Alerta de orçamento não bloqueia despesas.
+5. **Cloud Shell:** apenas depois dos requisitos acima e aprovação da arquitetura IAM pelo Claude, executar o script único conforme a seção 8. Se falhar, anotar **o passo e a mensagem de erro**, sem repetir comandos isolados ou conceder papéis amplos por tentativa.
