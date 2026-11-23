@@ -1,0 +1,168 @@
+name: NIVON - Deploy coletor (producao)
+
+on:
+  workflow_dispatch:
+    inputs:
+      executar_agora:
+        description: "Executar coletor após o deploy (somente fontes vencidas)"
+        required: true
+        type: boolean
+        default: true
+      fontes:
+        description: "Opcional: ptax,antt_ferrovia,conab,maritimo (separadas por vírgula)"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nivon-deploy-coletor-producao
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.repository == 'brunocapellari-dotcom/NIVON' }}
+    runs-on: ubuntu-latest
+    environment: producao
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      NIVON_COLETOR_ARTIFACT_REPO: nivon
+      NIVON_COLETOR_SA: nivon-coletor-de-dados@nivon-data.iam.gserviceaccount.com
+      NIVON_BQ_DATASET: nivon_raw
+      NIVON_GCS_BUCKET: nivon-data-raw-2026
+      NIVON_COLETOR_CRON: "15 11,17,23 * * *"
+    steps:
+      # O checkout fica num subdiretório: credenciais OIDC ficam FORA do contexto
+      # enviado por "gcloud builds submit .", sem subir tokens no Cloud Build.
+      - name: Checkout main
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          path: nivon
+
+      - name: Validar seleção e destino, sem escrita
+        env:
+          FONTES_SELECIONADAS: ${{ inputs.fontes }}
+          WIF_PROVIDER: ${{ vars.NIVON_GCP_PROVIDER }}
+          WIF_SERVICE_ACCOUNT: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$WIF_PROVIDER" && test -n "$WIF_SERVICE_ACCOUNT" || {
+            echo "::error::FALTAM_NIVON_GCP_PROVIDER_OU_SERVICE_ACCOUNT"; exit 2;
+          }
+          if [[ -n "$FONTES_SELECIONADAS" ]]; then
+            [[ "$FONTES_SELECIONADAS" =~ ^(ptax|antt_ferrovia|conab|maritimo)(,(ptax|antt_ferrovia|conab|maritimo))*$ ]] || {
+              echo "::error::FONTES_INVALIDAS"; exit 2;
+            }
+            declare -A visitadas=()
+            IFS=',' read -ra fontes <<< "$FONTES_SELECIONADAS"
+            for fonte in "${fontes[@]}"; do
+              [[ ! -v "visitadas[$fonte]" ]] || { echo "::error::FONTE_DUPLICADA"; exit 2; }
+              visitadas[$fonte]=1
+            done
+          fi
+
+      - name: Autenticar no Google Cloud via WIF
+        id: auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ vars.NIVON_GCP_PROVIDER }}
+          service_account: ${{ vars.NIVON_GCP_SERVICE_ACCOUNT }}
+          project_id: nivon-data
+          create_credentials_file: true
+
+      - name: Preparar Google Cloud SDK e bq
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: nivon-data
+
+      - name: Preflight mínimo de recursos existentes (sem IAM)
+        shell: bash
+        working-directory: nivon
+        run: |
+          set -euo pipefail
+          test "$(gcloud config get-value project 2>/dev/null)" = nivon-data
+          gcloud artifacts repositories describe nivon --project=nivon-data --location=southamerica-east1 --format='value(name)' >/dev/null
+          gcloud iam service-accounts describe "$NIVON_COLETOR_SA" --project=nivon-data --format='value(email)' >/dev/null
+          bq show --format=none 'nivon-data:nivon_core.saude_fontes'
+          gcloud run jobs describe nivon-coletor --project=nivon-data --region=southamerica-east1 --format='value(metadata.name)' >/dev/null
+          echo 'PREFLIGHT_MINIMO_OK; validação profunda de schema é a PR seguinte (--verificar-nuvem)'
+
+      - name: Build, deploy Cloud Run Job e Scheduler (sem modificar IAM)
+        id: publicar
+        shell: bash
+        working-directory: nivon
+        run: bash scripts/deploy_coletor_job.sh
+
+      - name: Executar agora (apenas fontes vencidas)
+        id: executar
+        if: ${{ inputs.executar_agora }}
+        shell: bash
+        env:
+          FONTES_SELECIONADAS: ${{ inputs.fontes }}
+        run: |
+          set -euo pipefail
+          if [[ -n "$FONTES_SELECIONADAS" ]]; then
+            # Override somente desta execução; preserva o CMD python da imagem.
+            gcloud run jobs execute nivon-coletor --project=nivon-data --region=southamerica-east1 --wait --update-env-vars="^|^NIVON_COLETOR_FONTES=$FONTES_SELECIONADAS"
+          else
+            gcloud run jobs execute nivon-coletor --project=nivon-data --region=southamerica-east1 --wait
+          fi
+
+      - name: Resumo — saúde das quatro fontes
+        if: ${{ always() && steps.auth.outcome == 'success' }}
+        shell: bash
+        env:
+          FONTES_SELECIONADAS: ${{ inputs.fontes }}
+          EXECUTAR_AGORA: ${{ inputs.executar_agora }}
+          DEPLOY_RESULTADO: ${{ steps.publicar.outcome }}
+          EXECUCAO_RESULTADO: ${{ steps.executar.outcome }}
+        run: |
+          set -euo pipefail
+          {
+            echo '## NIVON — Coletor'
+            echo
+            echo "- Revisão solicitada: \`${GITHUB_SHA:0:12}\`"
+            echo "- Deploy: $DEPLOY_RESULTADO"
+            echo "- Executar agora: $EXECUTAR_AGORA (resultado: $EXECUCAO_RESULTADO)"
+            echo "- Fontes selecionadas: ${FONTES_SELECIONADAS:-todas as vencidas}"
+            echo "- Scheduler: 11:15, 17:15 e 23:15 UTC"
+            echo
+            echo '### Última execução registrada por fonte (até 8 dias)'
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+          SQL="SELECT fonte, status, COALESCE(etapa_falha, '') AS etapa_falha, duracao_s
+          FROM \`nivon-data.nivon_core.saude_fontes\`
+          WHERE DATE(inicio) >= DATE_SUB(CURRENT_DATE('UTC'), INTERVAL 8 DAY)
+            AND fonte IN ('ptax','antt_ferrovia','conab','maritimo')
+          QUALIFY ROW_NUMBER() OVER (PARTITION BY fonte ORDER BY inicio DESC, registrado_em DESC) = 1
+          ORDER BY fonte"
+          if ! bq query --project_id=nivon-data --location=southamerica-east1 --use_legacy_sql=false --quiet --format=csv --max_rows=4 --maximum_bytes_billed=100000000 "$SQL" > "$RUNNER_TEMP/nivon-saude.csv"; then
+            echo 'Consulta de saúde: FALHA (checar leitura BigQuery da conta WIF).' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          python - <<'PY'
+          import csv, os
+          from pathlib import Path
+
+          arquivo = Path(os.environ["RUNNER_TEMP"]) / "nivon-saude.csv"
+          linhas = list(csv.DictReader(arquivo.open(encoding="utf-8", newline="")))
+          resumo = Path(os.environ["GITHUB_STEP_SUMMARY"])
+          def seguro(v):
+              return str(v or "").replace("|", r"\|").replace("\r", " ").replace("\n", " ")[:120]
+          with resumo.open("a", encoding="utf-8") as saida:
+              saida.write("| Fonte | Status | Etapa da falha | Duração (s) |\n")
+              saida.write("|---|---|---|---:|\n")
+              for r in linhas:
+                  saida.write("| " + " | ".join(seguro(r.get(c)) for c in (
+                      "fonte", "status", "etapa_falha", "duracao_s")) + " |\n")
+              if not linhas:
+                  saida.write("| — | SEM REGISTROS RECENTES | — | — |\n")
+              saida.write("\nRegistro de execução não confirma, por si só, frescor dos dados de origem.\n")
+          PY
