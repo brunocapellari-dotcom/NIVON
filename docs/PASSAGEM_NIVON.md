@@ -120,15 +120,16 @@ O repositório não responde a estas perguntas. Combine com o Bruno antes de ava
 
 **Com falha recorrente:** CONAB → Neon, ponte privada PTAX → GCP e "P0 — Saúde real das fontes". Investigar depois do coletor; não bloqueiam a primeira meta.
 
+**Repositório:** branches sem PR aberta foram arquivadas em tags `arquivo/<nome>` e apagadas em 23/11; para recuperar uma, `git fetch origin tag arquivo/<nome>` e crie a branch a partir da tag.
+
 **Coletor `nivon-coletor`:** o job existe no Cloud Run. A última execução conhecida falhou na CONAB (pasta privada), problema corrigido na `main` pela #339. **Ainda não há evidência de uma execução com as 4 fontes em OK.** Esse é o próximo marco.
+
+**Já mescladas em 23/11:** #340 (`pypdf` 6.21.4), #341 (Vercel e interfaces públicas removidas), #337 (governança; documentos datados movidos para `docs/historico/`) e esta passagem.
 
 **PRs abertas:**
 
 | PR | O que é | Situação |
 |---|---|---|
-| #340 | `pypdf` 6.21.4 (segurança) | Revisada e aprovada; mesclar **antes** da #336 |
-| #341 | Remove Vercel e interfaces públicas antigas | Revisada e aprovada |
-| #337 | Governança e documentação (F1) | Revisada e aprovada |
 | #336 | CI único + script de IAM para deploy pelo GitHub (F5) | **2 ajustes**: `roles/bigquery.jobUser` para a conta WIF; no bucket `nivon-data_cloudbuild`, `storage.objectAdmin` + `storage.legacyBucketReader` no lugar de `objectCreator`. Depois, trazer a `main` e aceitar o `pypdf` 6.21.4 |
 | #343 | Deploy do coletor via GitHub Actions (WIF, ambiente `producao`) | **1 ajuste**: `--suppress-logs` no `gcloud builds submit` de `deploy_coletor_job.sh` |
 | #324 | Terminal privado com IAP (M1) | Aberta desde 26/10; base para a F3 |
@@ -139,7 +140,7 @@ Os pareceres detalhados estão nos comentários de cada PR.
 ## 6. Próximos passos, em ordem
 
 1. **Coletor rodando com as 4 fontes em OK.** No Cloud Shell do `nivon-data`: `git pull`, `bash scripts/preparar_coletor_gcp.sh`, depois o comando de deploy que ele imprime e, por fim, `gcloud run jobs execute nivon-coletor --region=southamerica-east1 --wait`. Conferir `nivon_core.saude_fontes`; se alguma fonte aparecer em `FALHA`, a coluna `etapa_falha` diz qual módulo corrigir. Lacuna conhecida: a PTAX não preserva o bruto OData byte a byte.
-2. **Mesclar #340 → #341 → #337.**
+2. ~~Mesclar #340 → #341 → #337~~ — feito em 23/11.
 3. **Ajustar a #336**, mesclar e rodar uma vez `scripts/conceder_deploy_github.sh` (IAM mínimo para o deploy via WIF). Criar o ambiente `producao` no GitHub.
 4. **Ajustar a #343** e mesclar. A partir daí, o deploy e a execução do coletor podem ser feitos pelo GitHub Actions, sem depender do Cloud Shell.
 5. **Terminal (F3):** ler `nivon_core.saude_fontes` e as datas de referência de cada fonte (`ptax_quotes.reference_date`, a view ferroviária, `nivon_raw.agro_fonte_stage`, as tabelas marítimas) e mostrar no celular status, última execução OK, data de referência e frescor, separados. Em seguida, deploy no Cloud Run com IAP e acesso só do Bruno.
@@ -150,4 +151,4 @@ Os pareceres detalhados estão nos comentários de cada PR.
 
 ## 7. O que é decisão do Bruno
 
-Merge na `main`; deploy; qualquer concessão de IAM; custos, orçamento e cotas; variáveis `*_APPROVED`; acesso ao terminal; licença e direitos de uso de fontes; apagar branches (há ~315 sem PR; arquivar em tags `arquivo/<nome>` antes de apagar).
+Merge na `main`; deploy; qualquer concessão de IAM; custos, orçamento e cotas; variáveis `*_APPROVED`; acesso ao terminal; licença e direitos de uso de fontes; apagar branches (as antigas já foram arquivadas em tags `arquivo/<nome>`).

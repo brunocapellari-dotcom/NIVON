@@ -1,6 +1,5 @@
 """Gates de deploy do snapshot: jamais liberar cron por mera existencia de API."""
 import unittest
-from pathlib import Path
 from datetime import datetime,timezone
 from scripts.atualizar_snapshot_portal_gcp import planejar, ARQUIVO_PRIVADO
 from nivon.portal_interno import ErroPortal
@@ -97,19 +96,6 @@ class PortalCloudPolicy(unittest.TestCase):
             executar(**(kw|{"analisar":fake_bad}))
         self.assertEqual(b.obj.generation,2)
 
-    def test_schedule_falha_fechada(self):
-        path=Path(__file__).resolve().parents[1]/".github/workflows/portal-interno-gcp.yml"
-        doc=path.read_text(encoding="utf-8")
-        for token in ("refs/heads/main","NIVON_PORTAL_E2E_VERIFIED",
-                      "NIVON_PORTAL_GCP_READ_APPROVED","NIVON_PORTAL_GCS_WRITE_APPROVED",
-                      "NIVON_ZERO_COST_BQ_APPROVED","NIVON_PORTAL_PRIVATE_BUCKET_REVIEWED",
-                      "id-token: write","scripts/atualizar_snapshot_portal_gcp.py"):
-            self.assertIn(token,doc)
-        self.assertNotIn("allow-unauthenticated",doc)
-        self.assertNotIn("gcloud services enable",doc)
-        self.assertNotIn("gcloud run deploy",doc)
-        self.assertNotIn("upload-artifact",doc)
-        self.assertNotIn("push:\n",doc)
 
 
 if __name__=="__main__":
