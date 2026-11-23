@@ -120,7 +120,7 @@ O repositório não responde a estas perguntas. Combine com o Bruno antes de ava
 
 **Com falha recorrente:** CONAB → Neon, ponte privada PTAX → GCP e "P0 — Saúde real das fontes". Investigar depois do coletor; não bloqueiam a primeira meta.
 
-**Repositório:** branches sem PR aberta foram arquivadas em tags `arquivo/<nome>` e apagadas em 23/11; para recuperar uma, `git fetch origin tag arquivo/<nome>` e crie a branch a partir da tag.
+**Repositório:** 319 branches antigas, sem PR aberta, aguardam arquivamento. Rodar uma vez, num clone com permissão de push: `bash scripts/arquivar_branches.sh` (simulação) e depois `bash scripts/arquivar_branches.sh --executar`. O script cria uma tag `arquivo/<nome>` para cada branch, confere que as tags existem no GitHub e só então apaga as branches. Recuperar uma: `git fetch origin tag arquivo/<nome> && git switch -c <nome> arquivo/<nome>`.
 
 **Coletor `nivon-coletor`:** o job existe no Cloud Run. A última execução conhecida falhou na CONAB (pasta privada), problema corrigido na `main` pela #339. **Ainda não há evidência de uma execução com as 4 fontes em OK.** Esse é o próximo marco.
 
@@ -151,4 +151,4 @@ Os pareceres detalhados estão nos comentários de cada PR.
 
 ## 7. O que é decisão do Bruno
 
-Merge na `main`; deploy; qualquer concessão de IAM; custos, orçamento e cotas; variáveis `*_APPROVED`; acesso ao terminal; licença e direitos de uso de fontes; apagar branches (as antigas já foram arquivadas em tags `arquivo/<nome>`).
+Merge na `main`; deploy; qualquer concessão de IAM; custos, orçamento e cotas; variáveis `*_APPROVED`; acesso ao terminal; licença e direitos de uso de fontes; apagar branches (usar `scripts/arquivar_branches.sh`, que arquiva em tags antes de apagar; já aprovado pelo Bruno em 23/11).
