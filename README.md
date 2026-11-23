@@ -2,6 +2,8 @@
 
 Plataforma independente de análise agroindustrial, de granéis e de logística do Brasil, com foco inicial em Mato Grosso.
 
+> **Quem está assumindo o projeto: comece por [docs/PASSAGEM_NIVON.md](docs/PASSAGEM_NIVON.md).**
+
 ## Estado
 
 **Implementação inicial em andamento; NÃO HOMOLOGADO para uso operacional.**
