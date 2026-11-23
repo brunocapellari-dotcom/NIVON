@@ -91,11 +91,12 @@ else
 fi
 gcloud iam service-accounts describe "$TERMINAL" --project="$P" --format='value(email)'
 
-passo "Papéis de orquestração de deploy no projeto (sem Owner/Editor básicos)"
+passo "Papéis de orquestração de deploy no projeto (sem Owner/Editor básicos; jobUser só cria jobs, leitura continua restrita à saude_fontes)"
 for papel in \
   roles/run.developer \
   roles/cloudbuild.builds.editor \
   roles/cloudscheduler.admin \
+  roles/bigquery.jobUser \
   roles/serviceusage.serviceUsageConsumer; do
   printf '%s => %s\n' "$DEPLOY" "$papel"
   gcloud projects add-iam-policy-binding "$P" --member="$MEMBER" \
@@ -115,9 +116,12 @@ gcloud artifacts repositories add-iam-policy-binding "$REPO" \
   --project="$P" --location="$REGIAO" --member="$MEMBER" \
   --role=roles/artifactregistry.writer --format=none --quiet
 
-passo "Criar objetos SOMENTE no bucket de staging do Cloud Build"
-gcloud storage buckets add-iam-policy-binding "gs://$BUCKET_BUILD" \
-  --member="$MEMBER" --role=roles/storage.objectCreator --format=none --quiet
+passo "Objetos e metadados SOMENTE no bucket de staging do Cloud Build"
+# gcloud builds submit envia o código-fonte e precisa de storage.buckets.get nesse bucket.
+for papel in roles/storage.objectAdmin roles/storage.legacyBucketReader; do
+  gcloud storage buckets add-iam-policy-binding "gs://$BUCKET_BUILD" \
+    --member="$MEMBER" --role="$papel" --format=none --quiet
+done
 
 passo "BigQuery jobUser para execução do terminal, sem privilégio de edição"
 gcloud projects add-iam-policy-binding "$P" \
