@@ -17,6 +17,60 @@ Plataforma **privada** de inteligência de mercado, indústria e logística do a
 
 Ordem de prioridade: (1) coletor em produção → (2) terminal com IAP → (3) todo o resto (documentação final, limpeza, Ruff, núcleo `nucleo/`, novas fontes). O item 3 não pode atrasar os itens 1 e 2.
 
+## 2A. Visão completa (tudo o que o NIVON deve cobrir depois da primeira meta)
+
+Levantado de 32 issues, 135 PRs (128 arquivadas na issue #342, com o código preservado no histórico de cada PR), ~120 módulos em `src/nivon/` e do catálogo `config/catalogo_integracoes_github_20261026.json`. A coluna "Estado" diz o que existe **hoje** na `main`.
+
+### Domínios e fontes
+
+| Domínio | Fontes / conteúdo | Estado | Onde procurar |
+|---|---|---|---|
+| **Câmbio** | PTAX USD/EUR (BCB), SGS (série 11 e outras), expectativas de mercado | PTAX direta → BigQuery rodando; SGS11 com gate fechado | `scripts/ptax_bcb_bigquery_direto.py`, `sgs11_gcp.py`, issue #59 |
+| **Preços físicos** | CEPEA (soja Paranaguá/Paraná, milho), IMEA (cadeias MT), preço atacado | Coletores reais funcionam; CEPEA/IMEA → Neon rodando; para GCP com gate fechado; CEPEA no painel com coleta como disponibilidade | `cepea_web_primario.py`, `imea_publico.py`, `agro_origem_gcp.py`, issues #94, #145, #292 |
+| **Safra e oferta** | CONAB (levantamentos, progresso semanal, séries históricas MT 2010–2025, balanço), IBGE PAM/LSPA, USDA (oferta e demanda global), WDI | CONAB real em quarentena + GCS/BigQuery pelo coletor; PAM/WDI com prova E2E; IBGE setoriais via agrobr testados | `conab_*.py`, `coletores_agro_ibge_wdi.py`, `agrobr_setoriais.py`, issues #94, #131, PRs arquivadas #16, #34, #58, #115 |
+| **Pecuária** | IBGE PPM, abate trimestral, leite industrial; motores por cadeia | Coletores agrobr na `main` (sem execução recorrente); motores na PR #22 arquivada | `agrobr_setoriais.py`, PR #22 |
+| **Mercados futuros e fluxos** | CBOT, CFTC (posição de fundos), ComexStat (exportação/importação), ANEC (embarques, com direitos pendentes) | ComexStat/CFTC via agrobr na `main`; CBOT no motor de tendências (PR #12 arquivada) | `agrobr_mercados.py`, `cftc`, PR #12 |
+| **Transporte ferroviário** | ANTT/SIADE 2006–2026 (OD, TU, corredores MT), revisões | **No BigQuery** (21 anos), view atual, vigia de revisões rodando | `antt_*.py`, `corredores_bigquery.py`, issue #143 |
+| **Transporte rodoviário** | ANTT RGI (anuário, top fluxos), MDF-e OD (amostral) | Anuário RGI extraído (Tabela 12); MDF-e só monitor de catálogo, pendente arquivo oficial | `antt_anuario_rgi.py`, `antt_mdfe_*.py`, issue #142 |
+| **Transporte hidroviário** | ANTAQ (toneladas por hidrovia e produto), painel Aquarela | Vigia rodando; extração oficial pendente; réplica secundária só como referência | `antaq_*.py`, issue #144 |
+| **Comparação multimodal** | Rodovia × ferrovia × hidrovia 2025, corredores intermodais | Painel trimodal 2025 em somente leitura | `painel_trimodal_2025.py`, `corredores_multimodais_2025.py` |
+| **Marítimo e portos** | Line-ups (Imbituba, Suape, Santarém, Vila do Conde), PortWatch (Ormuz, Bab-el-Mandeb, Suez, Panamá), AIS/geocercas, DUV/Nº Prog, filas e ETA | Imbituba + PortWatch → GCS/BigQuery rodando (6 h); AIS/geocercas em replay; line-up multi-porto e conciliação CDP/AIS pendentes | `maritimo_*.py`, `maritime/`, `lineup_portos.py`, issues #278, #293 |
+| **Fretes** | Fretes anunciados (inclusive WhatsApp) por estabelecimento, transportadora, condições e unidade; tendência sem viés de composição; avaliação 7/30/90 dias | Motores e ledger em PRs arquivadas (#18, #82, #91, #123, #151); P0 aberto contra tendência agregada por município | issue #25, PRs #12, #18, #30, #42 |
+| **Combustível** | ANP diesel (revenda), ANP PPI | PPI integrado; diesel via agrobr; fonte oficial de revenda a confirmar | `anp_ppi.py`, issue #295 |
+| **Meteorologia e hidrologia** | INMET (BDMEP, horário), CPTEC, CEMADEN, ANA (vazão), NOAA RONI/ENSO, MJO/RMM, NASA POWER | Conectores na `main`; pipelines completos em PRs arquivadas (#11, #19, #46, #129, #191) | `inmet_*.py`, `ana_hidrowebservice.py`, `hidromet_*.py`, issue #279 |
+| **Argentina** | MAGyP (séries 1969–2025), BCRA, granos | Coleta real no ledger e prova GCS na `main` | `argentina_magyp.py`, `coletor_bcra_v4.py`, `coletor_granos_ar.py`, issue #280 |
+| **Agro/ambiental (catálogo a priorizar)** | 35 bases agrobr: crédito e seguro rural, custo de produção, defensivos, cultivares, desmatamento, queimadas, uso do solo, ZARC, CAR, censo agro, açúcar e etanol, entre outras | Só catalogado | `config/catalogo_integracoes_github_20261026.json` |
+| **Núcleo v0.1** | Consumo, indústria, fluxos e contratos portuários | PR #1 arquivada; reorganização planejada em `nucleo/` (PR 0 da F2, adiada) | PR #1 |
+
+### Produtos que o Bruno quer receber
+
+| Produto | Estado |
+|---|---|
+| **Terminal privado no celular** (fontes, frescor, ferrovia, mercado) | Base existe (`terminal_web.py`, PR #324 com IAP); falta saúde/frescor, deploy e IAP |
+| **Painel operacional interno** (logística, marítimo, quantitativo) | `painel_operacional.py` + workflow diário rodando; issue #300 |
+| **Motores de tendência e análise** (preços físicos, CBOT, fretes; backtest point-in-time; sem previsão apresentada como fato) | `motor_tendencias.py`, `dinamica_*.py` na `main`; issue #299; PRs #12, #20, #21 |
+| **Resumo diário de 1 página e mapas semanais CONAB/IMEA** (editorial) | PRs #26, #45, #49 arquivadas |
+| **Radar 24h e briefing** (incluindo envio por WhatsApp com consentimento e outbox) | PRs #8, #40, #95, #110 arquivadas; **nada em produção** |
+| **IVO** (relatório PAM, histórico incremental, inteligência agrícola) | PRs #7, #24, #50, #78 arquivadas; issue #131 (direitos e vintages antes de promover) |
+| **Identidade visual NIVON** | PR #48 arquivada (v0.3) |
+| **Camada de IA opcional** (P0–P2) | Na `main`, opt-in (`integracoes_ia/`) |
+
+**Como usar esta lista:** as PRs arquivadas não estão perdidas. O código continua acessível em cada PR (links na issue #342). Para retomar um produto, reaproveite a PR correspondente sobre a `main` atual, em PR pequena, **depois** da primeira meta.
+
+## 2B. Perguntas que só o Bruno pode responder
+
+O repositório não responde a estas perguntas. Combine com o Bruno antes de avançar além da primeira meta.
+
+1. **Ordem dos produtos depois do terminal:** resumo diário? Radar 24h? tendências de fretes? IVO?
+2. **WhatsApp:** os fretes e o briefing ainda passam por WhatsApp? Qual número ou conta, e com que consentimento dos participantes?
+3. **Fretes:** de onde vêm hoje (grupos, transportadoras, planilhas)? Quem fornece, e com que direito de uso?
+4. **Usuários:** só o Bruno, ou também a esposa, a equipe ou clientes? Isso define o IAP e se o NIVON será um produto vendido.
+5. **Direitos de CEPEA, IMEA, ANEC e futuros:** existe assinatura ou licença? Sem isso, esses dados ficam fora do que é exibido.
+6. **Portos e praças prioritários:** além de Imbituba e das praças de MT, quais acompanhar primeiro?
+7. **Neon:** qual a data para desligar, depois da reconciliação com o BigQuery?
+8. **Orçamento mensal máximo** aceito no Google Cloud.
+9. **Quem aprova merges** e o que o responsável pela execução pode fazer sozinho.
+
 ## 3. Regras que não mudam
 
 **Infraestrutura**
