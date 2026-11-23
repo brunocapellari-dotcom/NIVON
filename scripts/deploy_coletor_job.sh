@@ -20,7 +20,9 @@ REV=$(git rev-parse --short=12 HEAD)
 [[ -z "$(git status --porcelain)" ]] || { echo ARVORE_COM_ALTERACOES_LOCAIS; exit 3; }
 bq show --format=none "$P:nivon_core.saude_fontes" || { echo TABELA_SAUDE_AUSENTE; exit 3; }
 IMAGE="$R-docker.pkg.dev/$P/$REPO/$JOB:$REV"
-gcloud builds submit . --project="$P" --region="$R" \
+# --suppress-logs: sem Viewer no projeto a conta WIF não acompanha o log do build e o
+# gcloud sairia com erro mesmo com build OK; ele continua esperando e falha se o build falhar.
+gcloud builds submit . --project="$P" --region="$R" --suppress-logs \
   --config=infra/google_cloud/cloudbuild.coletor.yaml --substitutions="_IMAGE_URI=$IMAGE"
 gcloud run jobs deploy "$JOB" --project="$P" --region="$R" --image="$IMAGE" \
   --service-account="$SA" --tasks=1 --max-retries=0 --task-timeout=50m \

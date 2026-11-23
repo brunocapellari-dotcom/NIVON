@@ -337,6 +337,7 @@ class DeployColetorActions(unittest.TestCase):
             self.assertNotIn("projects add-iam-policy-binding", conteudo)
         self.assertIn("bash scripts/deploy_coletor_job.sh", workflow)
         self.assertIn("gcloud builds submit", script)
+        self.assertIn("--suppress-logs", script)  # conta WIF sem Viewer não acompanha o log
         self.assertIn("gcloud run jobs deploy", script)
         self.assertIn("gcloud scheduler jobs update http", script)
         self.assertIn("gcloud scheduler jobs create http", script)
