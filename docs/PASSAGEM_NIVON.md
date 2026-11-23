@@ -130,8 +130,8 @@ O repositório não responde a estas perguntas. Combine com o Bruno antes de ava
 
 | PR | O que é | Situação |
 |---|---|---|
-| #336 | CI único + script de IAM para deploy pelo GitHub (F5) | **2 ajustes**: `roles/bigquery.jobUser` para a conta WIF; no bucket `nivon-data_cloudbuild`, `storage.objectAdmin` + `storage.legacyBucketReader` no lugar de `objectCreator`. Depois, trazer a `main` e aceitar o `pypdf` 6.21.4 |
-| #343 | Deploy do coletor via GitHub Actions (WIF, ambiente `producao`) | **1 ajuste**: `--suppress-logs` no `gcloud builds submit` de `deploy_coletor_job.sh` |
+| #336 | CI único + script de IAM para deploy pelo GitHub (F5) | Ajustes aplicados em 23/11 (`bigquery.jobUser` para a conta WIF; `objectAdmin` + `legacyBucketReader` no bucket de build; `pypdf` 6.21.4). CI verde. **Pronta para merge**; depois rodar `scripts/conceder_deploy_github.sh` uma vez no Cloud Shell |
+| #343 | Deploy do coletor via GitHub Actions (WIF, ambiente `producao`) | Ajuste `--suppress-logs` aplicado em 23/11. CI verde. **Pronta para merge, depois da #336** e do script de IAM |
 | #324 | Terminal privado com IAP (M1) | Aberta desde 26/10; base para a F3 |
 | #335, #246 | Catálogo de fontes; controles de auditoria | Rascunhos, fora do caminho crítico |
 
@@ -141,8 +141,8 @@ Os pareceres detalhados estão nos comentários de cada PR.
 
 1. **Coletor rodando com as 4 fontes em OK.** No Cloud Shell do `nivon-data`: `git pull`, `bash scripts/preparar_coletor_gcp.sh`, depois o comando de deploy que ele imprime e, por fim, `gcloud run jobs execute nivon-coletor --region=southamerica-east1 --wait`. Conferir `nivon_core.saude_fontes`; se alguma fonte aparecer em `FALHA`, a coluna `etapa_falha` diz qual módulo corrigir. Lacuna conhecida: a PTAX não preserva o bruto OData byte a byte.
 2. ~~Mesclar #340 → #341 → #337~~ — feito em 23/11.
-3. **Ajustar a #336**, mesclar e rodar uma vez `scripts/conceder_deploy_github.sh` (IAM mínimo para o deploy via WIF). Criar o ambiente `producao` no GitHub.
-4. **Ajustar a #343** e mesclar. A partir daí, o deploy e a execução do coletor podem ser feitos pelo GitHub Actions, sem depender do Cloud Shell.
+3. **Mesclar a #336** (já ajustada) e rodar uma vez `scripts/conceder_deploy_github.sh` (IAM mínimo para o deploy via WIF). Criar o ambiente `producao` no GitHub.
+4. **Mesclar a #343** (já ajustada). A partir daí, o deploy e a execução do coletor podem ser feitos pelo GitHub Actions, sem depender do Cloud Shell.
 5. **Terminal (F3):** ler `nivon_core.saude_fontes` e as datas de referência de cada fonte (`ptax_quotes.reference_date`, a view ferroviária, `nivon_raw.agro_fonte_stage`, as tabelas marítimas) e mostrar no celular status, última execução OK, data de referência e frescor, separados. Em seguida, deploy no Cloud Run com IAP e acesso só do Bruno.
 6. **Sete dias seguidos** sem intervenção, comprovados pela `saude_fontes`.
 7. Só depois disso: lock de dependências com hash e Ruff (F2), núcleo `nucleo/` (PR 0 da F2), novas fontes, tendências e análises.
