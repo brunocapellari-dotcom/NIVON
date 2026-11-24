@@ -12,6 +12,10 @@ on:
       - 'infra/google_cloud/Dockerfile.terminal'
       - 'infra/google_cloud/cloudbuild.terminal.yaml'
       - 'scripts/deploy_terminal_privado.sh'
+      - 'scripts/smoke_terminal_container.py'
+      - 'src/nivon/aceite_terminal_privado.py'
+      - 'tests/test_aceite_terminal_privado.py'
+      - 'tests/test_terminal_m1_iap_policy.py'
       - '.github/workflows/nivon-terminal-go-live.yml'
   push:
     branches: [main]
@@ -23,6 +27,10 @@ on:
       - 'tests/test_terminal_go_live_policy.py'
       - 'infra/google_cloud/Dockerfile.terminal'
       - 'scripts/deploy_terminal_privado.sh'
+      - 'scripts/smoke_terminal_container.py'
+      - 'src/nivon/aceite_terminal_privado.py'
+      - 'tests/test_aceite_terminal_privado.py'
+      - 'tests/test_terminal_m1_iap_policy.py'
       - '.github/workflows/nivon-terminal-go-live.yml'
   workflow_dispatch:
     inputs:
@@ -57,6 +65,8 @@ jobs:
           bash -n scripts/deploy_terminal_privado.sh
           python -m compileall -q src/nivon/terminal_web.py
           python -m unittest discover -s tests -p 'test_terminal_web.py' -v
+          python -m unittest discover -s tests -p 'test_aceite_terminal_privado.py' -v
+          python -m unittest discover -s tests -p 'test_terminal_m1_iap_policy.py' -v
           python -m unittest discover -s tests -p 'test_terminal_snapshot_gcs.py' -v
           python -m unittest discover -s tests -p 'test_terminal_go_live_policy.py' -v
           python -m unittest discover -s tests -p 'test_diagnostico_terminal_cloudrun.py' -v
@@ -76,8 +86,38 @@ jobs:
           fi
           echo 'DEPLOY_PROTEGIDO_POR_TESTE=OK'
 
+  # Mesmo Dockerfile e mesmo servidor do Cloud Run, sem qualquer credencial GCP.
+  testes-conteiner:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Construir imagem real sem publicar
+        run: docker build -f infra/google_cloud/Dockerfile.terminal -t nivon-terminal-m1:ci .
+      - name: Smoke HTTP seguro somente em 127.0.0.1
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run -d --name nivon-terminal-m1-smoke \
+            --read-only --cap-drop=ALL --security-opt=no-new-privileges \
+            --pids-limit=64 --memory=512m --cpus=1 \
+            --tmpfs /tmp:rw,noexec,nosuid,size=16m \
+            -p 127.0.0.1:18765:8080 \
+            -e NIVON_BQ_PROJECT=nivon-data -e NIVON_BQ_DATASET=nivon_raw \
+            -e GOOGLE_APPLICATION_CREDENTIALS=/tmp/nao-existe.json \
+            nivon-terminal-m1:ci
+          python scripts/smoke_terminal_container.py --url http://127.0.0.1:18765
+      - name: Remover contêiner local de teste
+        if: always()
+        run: docker rm -f nivon-terminal-m1-smoke || true
+
   publicar-privado:
-    needs: testes-e2e
+    needs: [testes-e2e, testes-conteiner]
     if: >-
       github.ref == 'refs/heads/main' &&
       github.event_name == 'workflow_dispatch' &&
@@ -118,7 +158,7 @@ jobs:
           project_id: ${{ vars.NIVON_BQ_PROJECT }}
       - name: Instalar SDK de leitura para preflight sem consultas
         run: python -m pip install --disable-pip-version-check -e '.[gcp]'
-      - name: Build e deploy somente com recursos existentes e IAM privado
+      - name: Build e deploy com --iap, vedação de público e gate IAM de leitura
         run: bash scripts/deploy_terminal_privado.sh
 
   diagnostico-metadados:
